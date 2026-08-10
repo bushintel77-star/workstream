@@ -42,10 +42,6 @@ const ALLOW = new Map([
     "StudioCoachMarks",
     "Never mounted, so first-run onboarding has never appeared. Three-step tour with cc_coach_done localStorage gating, ready to wire.",
   ],
-  [
-    "CanvasMeasureSummary",
-    "Never mounted. Its buildCanvasMeasureSummary helper IS used and has passing tests, so the logic is covered while the card never renders.",
-  ],
 ]);
 
 function walk(dir, out = []) {

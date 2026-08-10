@@ -30,7 +30,6 @@ test.describe("Canvas design craft", () => {
     await expect(page.getByTestId("variation-filmstrip")).toHaveCount(0);
     await expect(page.getByTestId("view-north-control")).toHaveCount(0);
     await expect(page.getByTestId("garden-viewpoint-strip")).toHaveCount(0);
-    await expect(page.getByTestId("canvas-measure-summary")).toHaveCount(0);
 
     await page.getByTestId("canvas-tool-add").click();
     const panel = page.getByTestId("asset-panel");

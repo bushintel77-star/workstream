@@ -387,11 +387,25 @@ Deliberately marked `_`-prefixed or allowlisted rather than deleted.
       two teaching surfaces would stack — which is exactly what
       `STUDIO-STYLING-AND-UX.md` §6 item 11 forbids. Delete it or fold its
       copy into the cue when someone owns that call; do not mount both.
-- [ ] **`CanvasMeasureSummary` is never mounted.** "Small, stage-aware
-      measurement card; click for the full live ledger." Its pure helper
-      `buildCanvasMeasureSummary` *is* imported and has four passing tests, so
-      the logic is covered while the card never renders — a clean illustration
-      of why green unit tests were not evidence of a shipped feature.
+- [x] **`CanvasMeasureSummary` deleted — superseded, not merely unmounted.**
+      "Small, stage-aware measurement card; click for the full live ledger."
+      It could not ship as designed: a 236px frosted card at `position:
+      absolute; right: 14px; top: 12px` is idle chrome on the drawing, and the
+      §6 item 1b ratchet allows only +0.75pp of jitter over a 4.1% survey
+      baseline — the card is comparable in area to the Vicmap chip cluster that
+      was removed for costing 2.09%. Relocating it does not help: the
+      `kind: "dock"` placement still paints over the board (that is what
+      `header-context-strip` costs 1.8% for), and a persistent readout in the
+      frame band is the new top-level element §6 item 9 exists to refuse.
+      Meanwhile `live-measures-rail` already serves measurements on demand via
+      Cmd+K, satisfying items 10 and 13. So this is the `QuoteSurface` →
+      `LiveCostRail` situation, and the rule is to delete rather than keep a
+      shim. Removed with its helper, that helper's four tests and its orphan
+      stylesheet; nothing live imported `buildCanvasMeasureSummary` (the
+      previous note here implied otherwise — only the unmounted card and its
+      own test did). Four vacuous `toHaveCount(0)` assertions naming the dead
+      testid went too: an assertion for a testid that cannot exist is passing
+      theatre, which is the failure mode this whole section was written about.
 
 - [x] **`scripts/check-feature-reachability.mjs` — built and wired into
       `pnpm ci`.** Walks the canvas feature folders, collects PascalCase
@@ -402,7 +416,8 @@ Deliberately marked `_`-prefixed or allowlisted rather than deleted.
       up forces its exception to be removed.
 
       Two notes on its limits, kept honest rather than hidden. It found
-      `StudioCoachMarks` and `CanvasMeasureSummary` that ESLint could not see,
+      `StudioCoachMarks` and `CanvasMeasureSummary` that ESLint could not see
+      (the latter is now deleted, the former still allowlisted),
       but it would only have caught one of the original six — the other five
       left an unused binding, which the lint gate now catches. And it cannot see
       a component that *is* imported yet rendered behind a condition that is

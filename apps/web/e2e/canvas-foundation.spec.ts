@@ -56,9 +56,7 @@ test.describe("Canvas foundation honesty", () => {
     await expect(page.getByTestId("survey-checklist")).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByTestId("canvas-measure-summary")).toHaveCount(0);
     await page.getByRole("button", { name: "Close checklist" }).click();
-    await expect(page.getByTestId("canvas-measure-summary")).toHaveCount(0);
     await expect(page.getByTestId("cad-title-area")).toBeVisible();
     await expect(page.getByTestId("cad-building-area")).toHaveCount(0);
   });
@@ -122,7 +120,6 @@ test.describe("Canvas foundation honesty", () => {
     await expect(page.getByTestId("cad-building-area")).toBeVisible();
     await expect(page.getByTestId("cad-outdoor-area")).toBeVisible();
 
-    await expect(page.getByTestId("canvas-measure-summary")).toHaveCount(0);
     await openCommandPalette(page);
     await page.getByTestId("canvas-command-measures").click();
     await expect(page.getByTestId("live-measures-rail")).toBeVisible();
