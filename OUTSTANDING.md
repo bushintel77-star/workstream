@@ -214,11 +214,11 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       `canvas-chrome-*` specs. Deliberately deferred so the gate could go on.
       Do not widen the hooks config without scoping this first.
 
-- [ ] **Google Fonts `<link>` → `next/font`.** `@next/next/no-page-custom-font`
-      fires on `app/layout.tsx`. The rule's `pages/_document.js` premise does not
-      apply under App Router, but its advice does. Migrating Fraunces / Sora /
-      IBM Plex loading is a real change to studio typography — rule is off in
-      config, not suppressed inline.
+- [x] **Google Fonts `<link>` → `next/font`.** `app/layout.tsx` now self-hosts
+      Fraunces, Sora, IBM Plex Sans/Mono/Serif, Inter, and Architects Daughter
+      through `next/font/google` variables. The old external stylesheet and
+      preconnect tags are removed, preserving the existing studio font roles
+      while avoiding render-blocking third-party font requests.
 
 - [ ] **`HandoffDesignStudio` keyboard-shortcut effect can go stale.** The
       global `keydown` effect (~:1763) cannot list `planOn` or `setFitSheetOn` in
