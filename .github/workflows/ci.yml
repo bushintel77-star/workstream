@@ -37,6 +37,8 @@ jobs:
 
       - run: pnpm mobile:check-placeholders
 
+      - run: pnpm mobile:check-distribution
+
       - run: pnpm web:check-portal-edge
 
       - run: pnpm web:check-handoff-colors
@@ -48,6 +50,8 @@ jobs:
       - run: pnpm web:check-reachability
 
       - run: pnpm web:check-css-scales
+
+      - run: pnpm web:check-bundle-size
 
       - run: pnpm typecheck
 
