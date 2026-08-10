@@ -33,6 +33,9 @@ import type {
   TaskStatus,
   UpdateCrewMemberInput,
   UpsertSkuLinkInput,
+  DesignAssistResponse,
+  VoiceIntentKind,
+  VoiceIntentSource,
 } from "@workstream/contracts";
 
 export type ApiClientOptions = {
@@ -41,7 +44,7 @@ export type ApiClientOptions = {
 };
 
 export class WorkstreamClient {
-  constructor(private options: ApiClientOptions) {}
+  constructor(private options: ApiClientOptions) { }
 
   async healthz(): Promise<{ status: string; timestamp: string }> {
     return this.request("GET", "/healthz");
@@ -192,6 +195,56 @@ export class WorkstreamClient {
     return res.overrides;
   }
 
+  async submitVoiceIntent(
+    projectId: string,
+    transcript: string,
+    options: {
+      confidence?: number;
+      source?: VoiceIntentSource;
+    } = {},
+  ): Promise<{
+    kind: VoiceIntentKind;
+    transcript: string;
+    confidence: number | null;
+    reply: string;
+    design: DesignAssistResponse | null;
+    events: unknown[];
+    dil_recorded: false;
+  }> {
+    const trimmed = transcript.trim();
+    const kind: VoiceIntentKind = /\b(add|create|draw|place|move|align|path|bed|plant|planting|paving|deck|lawn|hedge|tree|garden|north|south|east|west|setback|wide|metre|meter|m)\b/i.test(
+      trimmed,
+    )
+      ? "design"
+      : "dictation";
+    if (kind === "design") {
+      const design = await this.request<DesignAssistResponse>(
+        "POST",
+        `/projects/${projectId}/design/assist`,
+        { message: trimmed },
+      );
+      return {
+        kind,
+        transcript: trimmed,
+        confidence: options.confidence ?? null,
+        reply: design.reply,
+        design,
+        events: [],
+        dil_recorded: false,
+      };
+    }
+    const dictation = await this.runDictation(projectId, trimmed);
+    return {
+      kind,
+      transcript: trimmed,
+      confidence: options.confidence ?? null,
+      reply: dictation.reply,
+      design: null,
+      events: dictation.events,
+      dil_recorded: false,
+    };
+  }
+
   async runDictation(
     projectId: string,
     transcript: string,
@@ -200,20 +253,20 @@ export class WorkstreamClient {
     events: Array<
       | { kind: "task_created"; task_id: string; payload: CreateTaskInput }
       | {
-          kind: "ledger_updated";
-          entry: {
-            id: string;
-            material_type: string;
-            measurement_type:
-              | "area_sqm"
-              | "volume_cum"
-              | "linear_meters"
-              | "unit_count";
-            quantity: number;
-            zone: string | null;
-            created_at: string;
-          };
-        }
+        kind: "ledger_updated";
+        entry: {
+          id: string;
+          material_type: string;
+          measurement_type:
+          | "area_sqm"
+          | "volume_cum"
+          | "linear_meters"
+          | "unit_count";
+          quantity: number;
+          zone: string | null;
+          created_at: string;
+        };
+      }
     >;
   }> {
     return this.request("POST", `/projects/${projectId}/dictation`, {

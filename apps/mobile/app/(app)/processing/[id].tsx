@@ -48,6 +48,9 @@ export default function ProcessingScreen() {
 
   const [status, setStatus] = useState<ProjectStatus | null>(null);
   const [hasTranscript, setHasTranscript] = useState(false);
+  const [latestTranscript, setLatestTranscript] = useState("");
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const [voiceReply, setVoiceReply] = useState<string | null>(null);
   const [hasSurvey, setHasSurvey] = useState(false);
   const [hasDesign, setHasDesign] = useState(false);
   const [hasCosting, setHasCosting] = useState(false);
@@ -69,7 +72,9 @@ export default function ProcessingScreen() {
         api.getAudit(id),
       ]);
       setStatus(p.status);
-      setHasTranscript(recs.some((r) => !!r.transcript));
+      const transcript = recs.find((r) => !!r.transcript)?.transcript ?? "";
+      setLatestTranscript(transcript);
+      setHasTranscript(Boolean(transcript));
       setHasSurvey(survey != null);
       setHasDesign(design != null);
       setHasCosting(costings.length > 0);
@@ -106,6 +111,26 @@ export default function ProcessingScreen() {
       if (slowRef.current) clearTimeout(slowRef.current);
     };
   }, [id, tick]);
+
+  const submitToCanvas = useCallback(async () => {
+    if (!id || !latestTranscript || voiceBusy) return;
+    setVoiceBusy(true);
+    setVoiceReply(null);
+    try {
+      const result = await api.submitVoiceIntent(id, latestTranscript, {
+        source: "mobile_recording",
+      });
+      setVoiceReply(
+        result.kind === "design"
+          ? `Canvas proposal ready. ${result.reply}`
+          : result.reply,
+      );
+    } catch (e) {
+      setVoiceReply(e instanceof Error ? e.message : "Voice intent failed");
+    } finally {
+      setVoiceBusy(false);
+    }
+  }, [api, id, latestTranscript, voiceBusy]);
 
   const stages = buildStages({
     hasTranscript,
@@ -157,6 +182,21 @@ export default function ProcessingScreen() {
             style={styles.spinner}
           />
         )}
+
+        {hasTranscript && !voiceReply && (
+          <Pressable
+            onPress={() => void submitToCanvas()}
+            disabled={voiceBusy}
+            accessibilityRole="button"
+            accessibilityLabel="Send walkthrough to canvas assist"
+            style={styles.voiceAction}
+          >
+            <Text style={styles.voiceActionText}>
+              {voiceBusy ? "Sending to canvas…" : "Send transcript to canvas"}
+            </Text>
+          </Pressable>
+        )}
+        {voiceReply ? <Text style={styles.voiceReply}>{voiceReply}</Text> : null}
 
         {slow && (
           <Text style={styles.slow}>
@@ -247,6 +287,23 @@ const styles = StyleSheet.create({
   },
   spinner: {
     marginTop: tokens.space[6],
+  },
+  voiceAction: {
+    minHeight: 44,
+    paddingHorizontal: tokens.space[4],
+    justifyContent: "center",
+    backgroundColor: tokens.color.accent.default,
+    borderRadius: tokens.radius.md,
+  },
+  voiceActionText: {
+    color: tokens.color.ink.inverted,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  voiceReply: {
+    color: tokens.color.ink.inverted,
+    fontSize: tokens.type.body.fontSize,
+    lineHeight: tokens.type.body.lineHeight,
   },
   slow: {
     fontSize: tokens.type.caption.fontSize,

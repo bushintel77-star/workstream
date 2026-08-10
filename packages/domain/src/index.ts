@@ -64,6 +64,7 @@ export * from './tidy-sketch';
 export * from './envelope-brief';
 export * from './studio-strokes';
 export * from './canvas-geometry';
+export * from './voice-intent';
 export * from './canvas-snap';
 export * from './rectangle-completion';
 export * from './stale-ghosts';

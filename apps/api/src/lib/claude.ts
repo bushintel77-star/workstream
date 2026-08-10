@@ -1202,7 +1202,7 @@ export async function dissectPlanWithVision(
 
   try {
     // Render the plan to a PNG image for Claude's vision model
-    const { renderPlanPng } = await import("./plan-render");
+    const { renderPlanPng } = await import("./plan-render.js");
     const pngBuffer = await renderPlanPng(canvas);
     const imageBase64 = pngBuffer.toString("base64");
 

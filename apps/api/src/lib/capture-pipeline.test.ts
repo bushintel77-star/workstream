@@ -28,8 +28,8 @@ describe("runCapturePipeline", () => {
     const recording = await store.createRecording(owner, project.id, "", 120);
     if (!recording) throw new Error("recording missing");
 
-    const { runTranscription } = await import("./transcription-job");
-    const { runSurvey } = await import("./survey-job");
+    const { runTranscription } = await import("./transcription-job.js");
+    const { runSurvey } = await import("./survey-job.js");
 
     await runCapturePipeline(
       store,
@@ -46,7 +46,7 @@ describe("runCapturePipeline", () => {
   });
 
   it("reverts to recording status when survey throws", async () => {
-    const { runSurvey } = await import("./survey-job");
+    const { runSurvey } = await import("./survey-job.js");
     vi.mocked(runSurvey).mockRejectedValueOnce(new Error("boom"));
 
     const store = createMemoryStore();

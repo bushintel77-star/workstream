@@ -200,7 +200,7 @@ export default async function boundaryRoutes(fastify: FastifyInstance) {
       }
       try {
         const { ingestStormwaterGeoJson } = await import(
-          "../lib/stormwater-ingest"
+          "../lib/stormwater-ingest.js"
         );
         const result = await ingestStormwaterGeoJson(
           fastify.store,

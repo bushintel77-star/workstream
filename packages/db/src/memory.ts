@@ -264,7 +264,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
 
     async seedDefaults() {
       if (seeded) return;
-      const { seedRateCard, seedPlantPalette } = await import("./seed");
+      const { seedRateCard, seedPlantPalette } = await import("./seed.js");
       _rateCard.push(...seedRateCard());
       _plantPalette.push(...seedPlantPalette());
       seeded = true;

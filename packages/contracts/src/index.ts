@@ -34,3 +34,4 @@ export * from "./schemas/documentation-package";
 export * from "./schemas/board-telemetry";
 export * from "./schemas/operator-profile";
 export * from "./schemas/resource-pool";
+export * from "./schemas/voice-intent";
