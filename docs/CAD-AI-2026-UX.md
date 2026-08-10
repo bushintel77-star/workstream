@@ -1,7 +1,7 @@
 # CAD–AI 2026 UX (binding)
 
 **Status:** Binding for `HandoffDesignStudio` and CAD/AI chrome.  
-**Companions:** [STUDIO-STYLING-AND-UX.md](./STUDIO-STYLING-AND-UX.md) (tokens + chrome laws) · [CANVAS-FIRST-UX.md](./CANVAS-FIRST-UX.md) · [DESIGN-KIT-INVENTORY.md](./DESIGN-KIT-INVENTORY.md) · Fitts proximity (`features/reach/fittsProximity.ts`).
+**Companions:** [STUDIO-STYLING-AND-UX.md](./STUDIO-STYLING-AND-UX.md) (tokens + chrome laws) · [CANVAS-FIRST-UX.md](./CANVAS-FIRST-UX.md) · [DESIGN-KIT-INVENTORY.md](./DESIGN-KIT-INVENTORY.md) · Fitts proximity (`features/reach/fittsProximity.ts`) · [CAD-TILT-2026-UX.md](./CAD-TILT-2026-UX.md) (draft — tilt/2.5D pivot proposal for the "1:1 CAD plan ↔ 3D AI lock" gap below).
 
 Gold-standard UX for an AI-powered landscape / architectural CAD platform balances two paradigms:
 
@@ -78,7 +78,7 @@ Object-local actions (lock, delete, Ask AI, DBH) orbit **outside** the glyph so 
 | AI sidecar (dialogue + analytics) | **Partial** — utility + live measures gated by `aiSidecar`; ghost review in right lane via header **Ask AI** |
 | Structure rail left, collapsed | **Yes** — Layers left; gated by `structureRail` |
 | Variation filmstrip | **Partial** — `VariationFilmstrip` A/B/C under shared title; plan thumbs; not generative 16:9 |
-| 1:1 CAD plan ↔ 3D AI lock | **Not started** (Workflow 1 2D) |
+| 1:1 CAD plan ↔ 3D AI lock | **Not started** (Workflow 1 2D) — draft pivot proposal: [CAD-TILT-2026-UX.md](./CAD-TILT-2026-UX.md) |
 | Non-destructive zone regen | **Partial** — ghosts / flora; no mask paint yet |
 | Constraint-first setback explain | **Partial** — council ambient + compliance |
 | Flora Ring (planting Add) | **Partial** — summoned when `floraSession` active (`floraRing` chrome) |
