@@ -1373,26 +1373,6 @@ export async function deleteCrewApi(id: string): Promise<void> {
   await apiDelete(`/crew/${id}`);
 }
 
-/* -- Suppliers --------------------------------------------------------- */
-
-export type SupplierPrice = {
-  sku: string;
-  label: string;
-  unit: string;
-  rate: number;
-};
-
-export type SupplierList = {
-  supplier: string;
-  fetched_at: string;
-  prices: SupplierPrice[];
-};
-
-export async function listSuppliers(): Promise<SupplierList[]> {
-  const body = await apiGet<{ suppliers: SupplierList[] }>("/suppliers/");
-  return body.suppliers;
-}
-
 /* -- Rate card & plant palette ---------------------------------------- */
 
 export type RateCardItem = {

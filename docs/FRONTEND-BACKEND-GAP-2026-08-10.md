@@ -49,13 +49,19 @@ These exist in the API but no `apps/web` code calls them. Grouped by likely inte
 
 The web only calls `GET /myob/status` and `GET /xero/status` (for the settings integrations panel). The full accounting CRUD surface (customers, items, SKU links, invoice drafting) is backend-only. This is either deferred UI or intended for a future accounting workspace.
 
-### A3 — Suppliers (partial consumption)
+### A3 — Suppliers (dead surface — both list and per-supplier)
 
-| Endpoint | File |
-|---|---|
-| `GET /suppliers/:supplier` | `suppliers.ts` |
+The audit said only the per-supplier fetch was orphaned and that
+`listSuppliers()` consumed the list. That was half wrong: `listSuppliers()`
+was **exported but never called** anywhere in `apps/web/src` — no server
+action, no client component, no BFF route. Both endpoints were equally
+unconsumed, so the entire supplier surface was backend-only.
 
-`GET /suppliers` (list all) is consumed via `listSuppliers()`. The per-supplier fetch is not.
+Removed the dead `listSuppliers()`, `SupplierList` and `SupplierPrice`
+exports from `lib/api.ts` per the repo rule ("don't add backwards-compat
+shims for removed code. Delete it."). The backend routes stay — they back
+the `suppliers.ts` price feed stubs which are tracked separately in
+OUTSTANDING.md as a production placeholder.
 
 ### A4 — Crew (consumed via lib/api.ts but verify UI wiring)
 
@@ -113,4 +119,8 @@ Acting on the analysis in priority order:
   catch-all proxies it binary-safe via `arrayBuffer()` with
   `content-disposition` forwarded. Counted orphans in A1 should therefore read
   10, not 11.
+- **A3 suppliers:** resolved — the dead `listSuppliers()` client helper and
+  its types are deleted. The backend routes stay (price-feed stubs are tracked
+  separately). The gap analysis was wrong to claim the list endpoint was
+  consumed: `listSuppliers()` was exported but never called.
 - **A1 remainder + A2 accounting surface:** deferred until product roadmap prioritises them.
