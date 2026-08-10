@@ -651,6 +651,11 @@
   white-space: nowrap;
 }
 
+.sortSelect {
+  flex-shrink: 0;
+  min-width: 7.5rem;
+}
+
 /* --- Project list (dense rows, hairline dividers — spreadsheet-lite) --- */
 
 .cardGrid {

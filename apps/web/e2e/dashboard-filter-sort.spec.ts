@@ -4,11 +4,11 @@ import { test, expect } from "@playwright/test";
 const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 /**
- * Dashboard — seed N projects; hard-expect search empty / match / Dialog delete + undo.
- * Filter chips and sort buttons were removed from live /home (editorial redesign);
- * those soft branches are gone — this file covers the surfaces that ship today.
+ * Dashboard — seed N projects; hard-expect search empty / match, sort order,
+ * and Dialog delete + undo. Status filter chips were removed from live /home
+ * (editorial redesign); the sort control is back as a select, so it is covered.
  */
-test.describe("Dashboard — search, delete, undo", () => {
+test.describe("Dashboard — search, sort, delete, undo", () => {
   test("seeded projects: search empty/match, Dialog delete, Undo restores", async ({
     page,
     request,
@@ -53,6 +53,20 @@ test.describe("Dashboard — search, delete, undo", () => {
     await expect(cardName(seeds[0]!.name)).toBeVisible({ timeout: 5_000 });
     await expect(cardName(seeds[1]!.name)).toHaveCount(0);
     await expect(cardName(seeds[2]!.name)).toHaveCount(0);
+
+    // Sort — scope to this run's three seeds so the order is deterministic
+    // against a store that already holds unrelated projects.
+    await search.fill(run);
+    const runCards = page.locator('[class*="cardName"]');
+    await expect(runCards).toHaveCount(3, { timeout: 5_000 });
+    const sortSelect = page.getByRole("combobox", { name: "Sort projects" });
+    await sortSelect.selectOption("name");
+    await expect(runCards).toHaveText([
+      seeds[0]!.name,
+      seeds[1]!.name,
+      seeds[2]!.name,
+    ]);
+    await sortSelect.selectOption("activity");
 
     await search.clear();
     await expect(cardName(seeds[1]!.name)).toBeVisible({ timeout: 5_000 });

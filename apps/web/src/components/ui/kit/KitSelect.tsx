@@ -3,7 +3,13 @@
 import { forwardRef, type SelectHTMLAttributes } from "react";
 import s from "./kit.module.css";
 
-type Props = SelectHTMLAttributes<HTMLSelectElement> & {
+/**
+ * `size` is omitted from the native attributes before being redeclared: the DOM
+ * `size` is a row count (number), so intersecting it with the variant union
+ * collapsed to `never` and made `size="sm"` unusable despite the stylesheet
+ * shipping it. Same shape as KitButton.
+ */
+type Props = Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> & {
   size?: "sm" | "md";
 };
 

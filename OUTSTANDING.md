@@ -182,11 +182,14 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       card-wide severity tints on the coaching cards spent the whole contrast
       budget (3.64:1 on blush) — those are now hairline + 24x2 accent bars, per
       the house rule that accents are top bars, not fills.
-- [ ] **`dashboard-filter-sort.spec.ts` is stale.** Two of its five tests fail on
-      a clean tree: they look for `[class*="projectGrid"]` / `emptyState` and a
-      search input, all of which `ebf1872` removed when `/home` became the
-      editorial index. Rewrite against the current hairline-row markup or delete
-      the assertions — they have been red since that redesign.
+- [x] **`dashboard-filter-sort.spec.ts` was stale — rewritten.** It looked for
+      `[class*="projectGrid"]` / `emptyState` and controls that `ebf1872` removed
+      when `/home` became the editorial index. Now a single test against the
+      live hairline-row markup: search empty/match, **sort order**, and Dialog
+      delete + Undo. The sort leg filters to the run's own three seeds first,
+      because the store holds unrelated projects and a bare
+      `[class*="cardName"]` ordering assertion would be non-deterministic.
+      Verified to fail when the expected order is reversed.
 - [ ] **Quote line table header crowds at wide viewports.** `.row`
       `grid-template-columns: 1fr 36px 72px 84px 108px minmax(120px, 180px)` runs
       `TOTAL` and `ACTIONS` together with no gutter, and a long unit note
@@ -309,10 +312,13 @@ Deliberately marked `_`-prefixed or allowlisted rather than deleted.
 - [x] **`edgeLabels` / `showEdgeLabels`** — ground-grid metre labels computed and
       never rendered; all three call sites passed `false`. Superseded by the
       sibling ruler overlay, so **deleted** (`0c997a8`).
-- [ ] **`setSort` (`DashboardProjects`) — live defect, not inert code.** The sort
-      comparator runs (name / cost / activity) but no control calls `setSort`, so
-      sorting is permanently locked to "activity". This is why
-      `dashboard-filter-sort.spec.ts` is red. Resolve together with that spec.
+- [x] **`setSort` (`DashboardProjects`) — was a live defect, not inert code.** The
+      sort comparator ran (name / cost / activity) but no control called
+      `setSort`, so sorting was permanently locked to "activity". **Fixed**: a
+      `KitSelect` (Recent / Name / Cost, `aria-label="Sort projects"`) now sits
+      in the search row and drives the existing comparator. Covered by
+      `dashboard-filter-sort.spec.ts`, which filters to the run's three seeds so
+      name-order is deterministic against a shared store.
 - [ ] **`PointerMarkSettings` is never mounted.** A finished 91-line component
       with its own stylesheet, `data-testid="pointer-mark-settings"`, full
       `role="listbox"` / `aria-selected` a11y and passing unit tests. Nothing

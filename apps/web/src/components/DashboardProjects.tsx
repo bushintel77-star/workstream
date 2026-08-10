@@ -5,7 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { deleteProjectAction, restoreProjectAction } from "../app/actions";
 import { useToast } from "./ToastHost";
 import { Dialog } from "./ui";
-import { KitButton } from "./ui/kit";
+import { KitButton, KitSelect } from "./ui/kit";
 import home from "../app/home.module.css";
 
 type DashboardStatus = "draft" | "active" | "review" | "complete" | "deleted";
@@ -56,14 +56,7 @@ export function DashboardProjects({
   const toast = useToast();
   const [items, setItems] = useState(projects);
   const [query, setQuery] = useState("");
-  /*
-   * `_setSort` is unused: the sort control was removed from /home in the
-   * editorial redesign and never replaced, so sorting is locked to "activity"
-   * while the name/cost comparators below stay reachable-in-principle only.
-   * Kept, not deleted — see OUTSTANDING.md. This is also why
-   * dashboard-filter-sort.spec.ts is red.
-   */
-  const [sort, _setSort] = useState<DashboardSort>("activity");
+  const [sort, setSort] = useState<DashboardSort>("activity");
   const [isPending, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState<DashboardProject | null>(null);
 
@@ -165,6 +158,17 @@ export function DashboardProjects({
             placeholder="Search by name or address"
             aria-label="Search projects"
           />
+          <KitSelect
+            size="sm"
+            value={sort}
+            onChange={(event) => setSort(event.target.value as DashboardSort)}
+            aria-label="Sort projects"
+            className={home.sortSelect}
+          >
+            <option value="activity">Recent</option>
+            <option value="name">Name</option>
+            <option value="cost">Cost</option>
+          </KitSelect>
           <span className={home.searchHint}>
             {visibleProjects.length} shown
           </span>
