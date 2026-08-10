@@ -9,7 +9,7 @@ import {
 } from "./sketchCursors";
 import css from "./sketchDock.module.css";
 
-type SketchTool = "pen" | "eraser";
+type SketchTool = "pen" | "eraser" | "line" | "rect" | "circle";
 
 /**
  * Landscape-relevant pen colours — the semantic drawing colours operators
@@ -208,6 +208,59 @@ function FormalizeIcon() {
   );
 }
 
+function LineIcon() {
+  return (
+    <svg
+      className={css.icon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M5 19L19 5" />
+      <circle cx="5" cy="19" r="1.5" fill="currentColor" />
+      <circle cx="19" cy="5" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+function RectIcon() {
+  return (
+    <svg
+      className={css.icon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="4" y="6" width="16" height="12" rx="1" />
+    </svg>
+  );
+}
+
+function CircleIcon() {
+  return (
+    <svg
+      className={css.icon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="8" />
+    </svg>
+  );
+}
+
 /**
  * Clean Procreate-style sketch tool dock.
  *
@@ -304,6 +357,50 @@ export function SketchDock({
           onClick={() => setTool("eraser")}
         >
           <EraserIcon />
+        </button>
+
+        <div className={css.divider} aria-hidden />
+
+        <button
+          type="button"
+          className={`${css.tool}${tool === "line" ? ` ${css.toolActive}` : ""}`}
+          data-testid="sketch-line"
+          aria-pressed={tool === "line"}
+          aria-label={tool === "line" ? "Line" : "Switch to line"}
+          disabled={formalizing}
+          title="Line — drag to draw a straight line"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => setTool("line")}
+        >
+          <LineIcon />
+        </button>
+
+        <button
+          type="button"
+          className={`${css.tool}${tool === "rect" ? ` ${css.toolActive}` : ""}`}
+          data-testid="sketch-rect"
+          aria-pressed={tool === "rect"}
+          aria-label={tool === "rect" ? "Rectangle" : "Switch to rectangle"}
+          disabled={formalizing}
+          title="Rectangle — drag to draw a rectangle"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => setTool("rect")}
+        >
+          <RectIcon />
+        </button>
+
+        <button
+          type="button"
+          className={`${css.tool}${tool === "circle" ? ` ${css.toolActive}` : ""}`}
+          data-testid="sketch-circle"
+          aria-pressed={tool === "circle"}
+          aria-label={tool === "circle" ? "Circle" : "Switch to circle"}
+          disabled={formalizing}
+          title="Circle — drag to draw an ellipse"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => setTool("circle")}
+        >
+          <CircleIcon />
         </button>
 
         <div className={css.divider} aria-hidden />

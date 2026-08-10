@@ -19,8 +19,8 @@ export type StudioCursorContext = {
   tiltViewActive?: boolean;
   /** Board reports drag / insert affordance while editing. */
   boardCursor?: "default" | "move" | "add" | "paint" | null;
-  /** Sketch pad — pen tip grade / eraser (single cursor authority). */
-  sketchTool?: "pen" | "eraser";
+  /** Sketch pad — pen tip grade / eraser / shape tools (single cursor authority). */
+  sketchTool?: "pen" | "eraser" | "line" | "rect" | "circle";
   sketchTip?: SketchTipGrade;
 };
 

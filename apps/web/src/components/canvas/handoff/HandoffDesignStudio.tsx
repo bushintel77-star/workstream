@@ -671,12 +671,12 @@ export function HandoffDesignStudio({
     y: number;
   } | null>(null);
   const [sketchChrome, setSketchChrome] = useState<{
-    tool: "pen" | "eraser";
+    tool: "pen" | "eraser" | "line" | "rect" | "circle";
     tip: import("./features/sketch/sketchCursors").SketchTipGrade;
   }>({ tool: "pen", tip: "medium" });
   const onSketchChromeChange = useCallback(
     (chrome: {
-      tool: "pen" | "eraser";
+      tool: "pen" | "eraser" | "line" | "rect" | "circle";
       tip: import("./features/sketch/sketchCursors").SketchTipGrade;
     }) => {
       setSketchChrome(chrome);

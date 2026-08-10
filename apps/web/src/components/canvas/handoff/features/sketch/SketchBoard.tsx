@@ -19,9 +19,15 @@ import {
   type SketchTipGrade,
 } from "./sketchCursors";
 import { SketchDock, type SketchPenColour, PEN_COLOUR_VALUE } from "./SketchDock";
+import { shapePoints } from "./sketchShapes";
 import css from "./sketch.module.css";
 
-type SketchTool = "pen" | "eraser";
+type SketchTool = "pen" | "eraser" | "line" | "rect" | "circle";
+
+/** True for tools that use drag-to-draw (start → end) rather than freehand. */
+function isShapeTool(t: SketchTool): t is "line" | "rect" | "circle" {
+  return t === "line" || t === "rect" || t === "circle";
+}
 
 type Props = {
   strokes: SketchStroke[];
@@ -71,6 +77,13 @@ type ActiveStroke = {
   pressureCount: number;
 };
 
+/** Shape-draw state — start point fixed on pointer-down, end tracks drag. */
+type ActiveShape = {
+  pointerId: number;
+  start: PctPoint;
+  end: PctPoint;
+};
+
 /**
  * Stripped sketch pad — finger / stylus ink only.
  * CadPlanBoard hides symbols while this mounts; site boundary stays faint.
@@ -97,6 +110,7 @@ export function SketchBoard({
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const drawing = useRef<ActiveStroke | null>(null);
+  const shaping = useRef<ActiveShape | null>(null);
   const idn = useRef(0);
   const [tool, setTool] = useState<SketchTool>("pen");
   const [tip, setTip] = useState<SketchTipGrade>("medium");
@@ -111,6 +125,14 @@ export function SketchBoard({
     if (readOnly) return;
     onChromeChange?.({ tool, tip });
   }, [tool, tip, readOnly, onChromeChange]);
+
+  /** Switching to a shape tool auto-arms the pen (shapes are pen-dialect). */
+  useEffect(() => {
+    if (isShapeTool(tool) && !active) {
+      onActivate?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot arm on tool change
+  }, [tool]);
 
   useLayoutEffect(() => {
     const el = rootRef.current;
@@ -192,8 +214,18 @@ export function SketchBoard({
           if (strokeId) onErase?.(strokeId);
           return;
         }
-        if (drawing.current) return;
+        if (drawing.current || shaping.current) return;
         e.currentTarget.setPointerCapture(e.pointerId);
+
+        if (isShapeTool(tool)) {
+          shaping.current = { pointerId: e.pointerId, start: p, end: p };
+          setLive({
+            points: shapePoints(tool, p, p),
+            widthPx: sketchWidthForPointer(e.pointerType, null, tip),
+          });
+          return;
+        }
+
         const pressure =
           e.pointerType === "pen" && e.pressure > 0 ? e.pressure : null;
         drawing.current = {
@@ -209,6 +241,19 @@ export function SketchBoard({
         });
       }}
       onPointerMove={(e) => {
+        // Shape tools — track end point, regenerate points.
+        const shape = shaping.current;
+        if (shape && shape.pointerId === e.pointerId) {
+          const p = toPct(e.currentTarget, e.clientX, e.clientY);
+          shape.end = p;
+          setLive({
+            points: shapePoints(tool as "line" | "rect" | "circle", shape.start, p),
+            widthPx: sketchWidthForPointer(e.pointerType, null, tip),
+          });
+          return;
+        }
+
+        // Freehand pen — append points with decimation.
         const active = drawing.current;
         if (!active || active.pointerId !== e.pointerId) return;
         const p = toPct(e.currentTarget, e.clientX, e.clientY);
@@ -232,9 +277,36 @@ export function SketchBoard({
           ),
         });
       }}
-      onPointerUp={(e) => finishDrawing(e, true)}
-      onPointerCancel={(e) => finishDrawing(e, false)}
-      onLostPointerCapture={(e) => finishDrawing(e, false)}
+      onPointerUp={(e) => {
+        // Shape commit
+        const shape = shaping.current;
+        if (shape && shape.pointerId === e.pointerId) {
+          shaping.current = null;
+          setLive(null);
+          if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+          }
+          const pts = shapePoints(tool as "line" | "rect" | "circle", shape.start, shape.end);
+          if (pts.length >= 2 && onCommit) {
+            idn.current += 1;
+            onCommit({
+              id: `sk${Date.now()}_${idn.current}`,
+              points: pts,
+              widthPx: sketchWidthForPointer(e.pointerType, null, tip),
+            });
+          }
+          return;
+        }
+        finishDrawing(e, true);
+      }}
+      onPointerCancel={(e) => {
+        shaping.current = null;
+        finishDrawing(e, false);
+      }}
+      onLostPointerCapture={(e) => {
+        shaping.current = null;
+        finishDrawing(e, false);
+      }}
     >
       <svg
         className={css.svg}
