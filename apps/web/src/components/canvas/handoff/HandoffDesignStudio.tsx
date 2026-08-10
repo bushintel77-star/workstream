@@ -455,6 +455,7 @@ export function HandoffDesignStudio({
     forcePresentation: ui.clientView || ui.frameOn,
   });
   const boardRef = useRef<HTMLDivElement>(null);
+  const fitSheetToggleRef = useRef<(on: boolean) => void>(() => undefined);
   const [boardSize, setBoardSize] = useState({ w: 960, h: 640 });
   /** Phone vs desktop chrome — adaptive shell; board engines unchanged. */
   const studioLayout = useStudioLayout();
@@ -1466,6 +1467,11 @@ export function HandoffDesignStudio({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
+      const planMode =
+        ui.mode !== "elevation" &&
+        ui.mode !== "quote" &&
+        ui.mode !== "share" &&
+        ui.mode !== "present";
       const typing =
         target &&
         (target.tagName === "INPUT" ||
@@ -1625,7 +1631,7 @@ export function HandoffDesignStudio({
         !e.metaKey &&
         !e.ctrlKey &&
         !e.altKey &&
-        planOn &&
+        planMode &&
         !ui.frameOn
       ) {
         e.preventDefault();
@@ -1648,7 +1654,7 @@ export function HandoffDesignStudio({
           if (!ui.frameOn) studio.fitSelectionView();
           return;
         }
-        setFitSheetOn(!ui.frameOn);
+        fitSheetToggleRef.current(!ui.frameOn);
         return;
       }
       /* Q flips back to the previous tool — no toolbar round trip. */
@@ -1657,7 +1663,7 @@ export function HandoffDesignStudio({
         !e.metaKey &&
         !e.ctrlKey &&
         !e.altKey &&
-        planOn &&
+        planMode &&
         !ui.frameOn
       ) {
         const next = toggleTool(toolStackRef.current);
@@ -1853,13 +1859,6 @@ export function HandoffDesignStudio({
     // Depends on `studio` and `ui` wholesale, so it already re-binds on most
     // state changes; the rest are listed so the shortcut closure cannot go stale.
     //
-    // `planOn` and `setFitSheetOn` are deliberately absent: both are declared
-    // below this effect, so naming them in the dependency array is a temporal
-    // dead zone reference (TS2448). The effect body reads them when a key fires,
-    // which is after render, so the closure is correct — only the dep array
-    // cannot see them. Fixing this properly means reordering declarations in a
-    // 5,700-line component; tracked in OUTSTANDING.md.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     studio,
     ui,
@@ -2527,6 +2526,13 @@ export function HandoffDesignStudio({
     },
     [studio],
   );
+
+  useEffect(() => {
+    fitSheetToggleRef.current = setFitSheetOn;
+    return () => {
+      fitSheetToggleRef.current = () => undefined;
+    };
+  }, [setFitSheetOn]);
 
   /**
    * Leaving CAD (or Fit/client) — park camera at north so Sketch stays clean.

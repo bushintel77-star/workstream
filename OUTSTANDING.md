@@ -223,7 +223,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       preconnect tags are removed, preserving the existing studio font roles
       while avoiding render-blocking third-party font requests.
 
-- [ ] **`HandoffDesignStudio` keyboard-shortcut effect can go stale.** The
+- [x] **`HandoffDesignStudio` keyboard-shortcut effect can go stale.** The
       global `keydown` effect (~:1763) cannot list `planOn` or `setFitSheetOn` in
       its dependency array because both are declared *below* it — naming them is
       a temporal dead zone reference (TS2448). The closure is correct at call
