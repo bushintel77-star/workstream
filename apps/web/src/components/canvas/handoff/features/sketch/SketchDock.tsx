@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { CameraChrome } from "../../CameraChrome";
 import {
   SKETCH_TIP_GRADES,
@@ -294,9 +294,8 @@ export function SketchDock({
 
   const setTool = (next: SketchTool) => {
     onTool(next);
-    if (next === "eraser") {
-      setTipOpen(false);
-    }
+    setTipOpen(false);
+    setColourOpen(false);
     onActivate?.();
   };
 
@@ -319,6 +318,19 @@ export function SketchDock({
   };
 
   const currentColour = PEN_COLOURS.find((c) => c.id === penColour) ?? PEN_COLOURS[0]!;
+
+  // Outside-click: close whichever popover is open. Both popovers stop
+  // propagation on their own pointer-down, so a click that reaches the
+  // document is by definition outside.
+  useEffect(() => {
+    if (!tipOpen && !colourOpen) return;
+    const onDown = () => {
+      setTipOpen(false);
+      setColourOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown, { once: true });
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [tipOpen, colourOpen]);
 
   return (
     <CameraChrome anchorRef={anchorRef}>
@@ -446,6 +458,7 @@ export function SketchDock({
             role="group"
             aria-label="Pen colour"
             data-testid="sketch-colour-picker"
+            onPointerDown={(e) => e.stopPropagation()}
           >
             {PEN_COLOURS.map((c) => (
               <button
@@ -564,6 +577,7 @@ export function SketchDock({
             role="group"
             aria-label="Pen tip grade"
             data-testid="sketch-tip-grade"
+            onPointerDown={(e) => e.stopPropagation()}
           >
             {SKETCH_TIP_GRADES.map((grade) => (
               <button

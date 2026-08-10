@@ -45,13 +45,53 @@ export function circlePoints(start: PctPoint, end: PctPoint): PctPoint[] {
   return points;
 }
 
+/**
+ * Constrain a point to the nearest 0/45/90° angle from start.
+ * Universal in professional drawing tools (Illustrator, Figma, AutoCAD).
+ */
+function constrainAngle(start: PctPoint, end: PctPoint): PctPoint {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const angle = Math.atan2(dy, dx);
+  const dist = Math.hypot(dx, dy);
+  // Snap to nearest 45° increment
+  const snapped = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+  return {
+    x: start.x + dist * Math.cos(snapped),
+    y: start.y + dist * Math.sin(snapped),
+  };
+}
+
+/** Constrain a bounding box to a square (equal width/height). */
+function constrainSquare(start: PctPoint, end: PctPoint): PctPoint {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const size = Math.max(Math.abs(dx), Math.abs(dy));
+  return {
+    x: start.x + Math.sign(dx || 1) * size,
+    y: start.y + Math.sign(dy || 1) * size,
+  };
+}
+
 /** Generate shape points based on the active shape tool. */
 export function shapePoints(
   shape: "line" | "rect" | "circle",
   start: PctPoint,
   end: PctPoint,
+  shiftHeld = false,
 ): PctPoint[] {
-  if (shape === "line") return linePoints(start, end);
-  if (shape === "rect") return rectPoints(start, end);
+  if (shape === "line") {
+    const e = shiftHeld ? constrainAngle(start, end) : end;
+    return linePoints(start, e);
+  }
+  if (shape === "rect") {
+    const e = shiftHeld ? constrainSquare(start, end) : end;
+    return rectPoints(start, e);
+  }
+  // Circle — Shift makes it a perfect circle (equal rx/ry)
+  if (shiftHeld) {
+    const e = constrainSquare(start, end);
+    return circlePoints(start, e);
+  }
   return circlePoints(start, end);
 }

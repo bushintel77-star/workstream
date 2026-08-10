@@ -157,6 +157,15 @@ export function SketchBoard({
     };
   };
 
+  /** Esc cancels an in-progress stroke or shape without committing. */
+  const cancelActive = () => {
+    if (drawing.current || shaping.current) {
+      drawing.current = null;
+      shaping.current = null;
+      setLive(null);
+    }
+  };
+
   const finishDrawing = (
     event: ReactPointerEvent<HTMLDivElement>,
     commit: boolean,
@@ -183,6 +192,7 @@ export function SketchBoard({
         averagePressure,
         tip,
       ),
+      color: ink,
     });
   };
 
@@ -200,6 +210,13 @@ export function SketchBoard({
       data-read-only={readOnly ? "true" : "false"}
       data-active={active ? "true" : "false"}
       data-tool={tool}
+      tabIndex={readOnly ? -1 : 0}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && !readOnly) {
+          e.preventDefault();
+          cancelActive();
+        }
+      }}
       onPointerDown={(e) => {
         if (readOnly || formalizing || !active || !e.isPrimary) return;
         if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -247,7 +264,7 @@ export function SketchBoard({
           const p = toPct(e.currentTarget, e.clientX, e.clientY);
           shape.end = p;
           setLive({
-            points: shapePoints(tool as "line" | "rect" | "circle", shape.start, p),
+            points: shapePoints(tool as "line" | "rect" | "circle", shape.start, p, e.shiftKey),
             widthPx: sketchWidthForPointer(e.pointerType, null, tip),
           });
           return;
@@ -256,20 +273,31 @@ export function SketchBoard({
         // Freehand pen — append points with decimation.
         const active = drawing.current;
         if (!active || active.pointerId !== e.pointerId) return;
-        const p = toPct(e.currentTarget, e.clientX, e.clientY);
-        const previous = active.points[active.points.length - 1]!;
-        if (!shouldAppendSketchPoint(previous, p)) return;
-        active.points = [...active.points, p];
-        if (active.pointerType === "pen" && e.pressure > 0) {
-          active.pressureTotal += e.pressure;
-          active.pressureCount += 1;
+
+        // Coalesced events: high-refresh pens fire many intermediate samples
+        // between animation frames. Without reading them, fast strokes are
+        // jagged. getCoalescedEvents returns all points since the last
+        // pointermove; fall back to the single event if unavailable.
+        const coalesced =
+          typeof e.nativeEvent.getCoalescedEvents === "function"
+            ? e.nativeEvent.getCoalescedEvents()
+            : [e.nativeEvent];
+        for (const ev of coalesced) {
+          const p = toPct(e.currentTarget, ev.clientX, ev.clientY);
+          const previous = active.points[active.points.length - 1]!;
+          if (!shouldAppendSketchPoint(previous, p)) continue;
+          active.points.push(p);
+          if (active.pointerType === "pen" && "pressure" in ev && ev.pressure > 0) {
+            active.pressureTotal += ev.pressure;
+            active.pressureCount += 1;
+          }
         }
         const averagePressure =
           active.pressureCount > 0
             ? active.pressureTotal / active.pressureCount
             : null;
         setLive({
-          points: active.points,
+          points: [...active.points],
           widthPx: sketchWidthForPointer(
             active.pointerType,
             averagePressure,
@@ -286,13 +314,14 @@ export function SketchBoard({
           if (e.currentTarget.hasPointerCapture(e.pointerId)) {
             e.currentTarget.releasePointerCapture(e.pointerId);
           }
-          const pts = shapePoints(tool as "line" | "rect" | "circle", shape.start, shape.end);
+          const pts = shapePoints(tool as "line" | "rect" | "circle", shape.start, shape.end, e.shiftKey);
           if (pts.length >= 2 && onCommit) {
             idn.current += 1;
             onCommit({
               id: `sk${Date.now()}_${idn.current}`,
               points: pts,
               widthPx: sketchWidthForPointer(e.pointerType, null, tip),
+              color: ink,
             });
           }
           return;
