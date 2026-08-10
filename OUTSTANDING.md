@@ -231,49 +231,52 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       `exhaustive-deps` suppression. Fixing it properly means reordering
       declarations in a 5,700-line component.
 
-## Idle chrome coverage — the canvas is not yet the hero
+## Idle chrome coverage — resolved, ratchet now holds the line
 
 `STUDIO-STYLING-AND-UX.md` §6 item 1 has two clauses: no fixed inventory bar,
 **and** the idle view is mostly drawing. Only the first was ever probed, and a
 width test passes happily while many small cards accumulate — no single element
-is a bar, but a fifth of the plan is covered.
+is a bar, but a fifth of the plan was covered.
 
-Measured 2026-08-04 at 1280x720, union of painted chrome intersected with the
-board (`e2e/canvas-checklist-s6.spec.ts`, item 1b). Ratchets both ways: a rise
-fails, and a real drop fails too until the baseline is lowered.
+Union of painted chrome intersected with the board
+(`e2e/canvas-checklist-s6.spec.ts`, item 1b). Ratchets both ways: a rise fails,
+and a real drop fails too until the baseline is lowered, so the numbers below
+cannot silently drift — they are the live `COVERAGE_BASELINE` in that spec.
 
-| Mode | Idle chrome over the drawing |
-|---|---|
-| Survey | **18.8%** |
-| Sketch | 12.7% |
-| CAD | 9.4% |
-| Elevation | 0.1% |
+| Mode | 2026-08-04 | Now | 
+|---|---|---|
+| Survey | 18.8% | **4.1%** |
+| Sketch | 12.7% | **4.4%** |
+| CAD | 9.4% | **2.3%** |
+| Elevation | 0.1% | 0.1% |
 
-Survey contributors, largest first:
+All four ordered items are done; the spec's own changelog records each drop:
 
-| Element | Share of board |
-|---|---|
-| `right-data-lane-checklist` | 7.57% |
-| `building-footprint-empty` (trace-dwelling modal) | 2.47% |
-| `vic-gov-status-chips-context` | 2.09% |
-| `vic-gov-status-chips-title` | 1.82% |
-| `utility-honesty-footer` | 1.80% |
-| `header-context-strip` | 1.76% |
-| `phase-manager` | 0.73% |
+- [x] **Trace-dwelling modal off the optical centre.** `building-footprint-empty`
+      (2.47%) was a 44px dashed glass card centred on the artwork that also
+      swallowed clicks on the plan beneath. Now paper-haloed ink with no surface
+      of its own, projected to the lot's top edge, `pointer-events: none` in the
+      read-only variant.
+- [x] **`SELECT` chip anchored to its selection.** `selected-shape-readout`
+      renders through `CameraChrome place={{ kind: "project", pct: selected }}`,
+      so it tracks the object instead of floating in whitespace.
+- [x] **Dock the two Vicmap clusters into the frame band.** 4.57% removed. They
+      had been escaping their `FrameDrawer` via `position: absolute` plus a
+      nested `CameraChrome`; `placement="header"` keeps them in the drawer,
+      which handles overflow with its own scrollbar. Two corner clusters kept —
+      a single full-width strip regresses the lane collision the layout was
+      written to fix (00-DISCOVERY §6).
+- [x] **Survey checklist has a permanent home.** The 7.57% occupier is now
+      reachable from a "2/5" progress pill in the frame band, which does not
+      paint over the board. Collapsed by default (§6 item 7).
+- [x] **`PhaseManagerChip` floating over the board** (0.73%) folded into the
+      header left zone as `HeaderPhaseSelect`.
 
-Ordered work to bring it down:
-
-- [ ] **Trace-dwelling modal off the optical centre.** `building-footprint-empty`
-      is a blocking card parked over the middle of the artwork for what is an
-      empty state. Make it a non-blocking affordance anchored to where the
-      dwelling would be.
-- [ ] **`SELECT` chip anchored to its selection**, not floating in whitespace.
-- [ ] **Dock the two Vicmap clusters into the frame band.** 3.9% combined.
-      Keep two corner clusters — a single full-width strip regresses the lane
-      collision that the current layout was written to fix (00-DISCOVERY §6).
-- [ ] **Survey checklist needs a permanent home.** At 7.57% it is the single
-      largest occupier, and it is good product thinking presented as a
-      dismissible card floating over the drawing.
+Remaining survey contributors are `utility-honesty-footer` (1.8%),
+`header-context-strip` (1.8%) and the Vicmap chips' residue (0.5%). Both of the
+first two are honesty copy rather than controls, so removing them is a content
+decision, not a layout one — leave them unless product wants the disclosure
+moved into the frame band.
 
 Elevation reporting 0.1% is **unverified, not clean**: 13 painted chrome
 elements were found but none intersected the board. Plausible, since its chrome
