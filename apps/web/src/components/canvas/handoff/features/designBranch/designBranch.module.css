@@ -66,6 +66,34 @@
   color: inherit;
 }
 
+.tree {
+  margin-top: 0.85rem;
+  border-top: 1px solid var(--ws-frame-hair);
+  padding-top: 0.65rem;
+}
+
+.treeIntro {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.treeKicker {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ws-frame-ink);
+}
+
+.treeHint {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--text-nano);
+  color: var(--ws-frame-ink-dim);
+}
+
 .list {
   list-style: none;
   margin: 0;
@@ -76,11 +104,65 @@
 }
 
 .row {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  padding-bottom: 0.65rem;
+  padding: 0.45rem 0 0.65rem 0.8rem;
   border-bottom: 1px solid color-mix(in srgb, var(--ws-frame-hair) 70%, transparent);
+}
+
+.row:not([data-branch-root="true"])::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.2rem;
+  border-left: 1px solid color-mix(in srgb, var(--ws-frame-hair) 70%, transparent);
+}
+
+.row:not([data-branch-root="true"])::after {
+  content: "";
+  position: absolute;
+  top: 1.3rem;
+  left: 0.2rem;
+  width: 0.45rem;
+  border-top: 1px solid color-mix(in srgb, var(--ws-frame-hair) 70%, transparent);
+}
+
+.branchVisual {
+  display: grid;
+  grid-template-columns: 4rem 1fr;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.thumbnail {
+  width: 4rem;
+  height: 3rem;
+  border: 1px solid var(--ws-frame-hair);
+  border-radius: var(--hc-r-control);
+  background: color-mix(in srgb, var(--sheet-paper) 92%, transparent);
+}
+
+.thumbnailBoundary {
+  fill: color-mix(in srgb, var(--hc-ink) 8%, transparent);
+  stroke: color-mix(in srgb, var(--hc-ink) 50%, transparent);
+  stroke-width: 1.1;
+}
+
+.thumbnailBuilding {
+  fill: color-mix(in srgb, var(--hc-ink) 16%, transparent);
+  stroke: color-mix(in srgb, var(--hc-ink) 70%, transparent);
+  stroke-width: 0.9;
+}
+
+.thumbnailItem {
+  fill: var(--hc-success);
+}
+
+.row[data-status="open"] .thumbnailItem {
+  fill: var(--hc-water);
 }
 
 .row[data-status="merged"],

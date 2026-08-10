@@ -131,6 +131,10 @@ test.describe("Design branch VCS", () => {
     await page.getByLabel("Search assets").fill("design branches");
     await page.getByTestId("canvas-command-design-branches").click();
     await expect(page.getByTestId("design-branch-dock")).toBeVisible();
+    await expect(page.getByTestId("design-branch-tree")).toBeVisible();
+    await expect(
+      page.getByTestId("design-branch-tree").getByTestId("design-branch-thumbnail"),
+    ).toHaveCount(3);
 
     await openCommandPalette(page);
     await page.getByLabel("Search assets").fill("ops schedules");
