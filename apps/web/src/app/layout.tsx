@@ -1,8 +1,60 @@
 import type { Metadata, Viewport } from "next";
+import {
+  Architects_Daughter,
+  Fraunces,
+  IBM_Plex_Mono,
+  IBM_Plex_Sans,
+  IBM_Plex_Serif,
+  Inter,
+  Sora,
+} from "next/font/google";
 import "../styles/globals.css";
 import { ToastHost } from "../components/ToastHost";
 import { clerkEnabled } from "../lib/auth";
 import { ClerkProvider } from "@clerk/nextjs";
+
+const fontBody = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-body",
+  display: "swap",
+});
+const fontDisplay = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+const fontMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-mono",
+  display: "swap",
+});
+const fontSerif = IBM_Plex_Serif({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-serif",
+  display: "swap",
+});
+const fontHand = Architects_Daughter({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-hand",
+  display: "swap",
+});
+const fontUi = Sora({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-ui",
+  display: "swap",
+});
+const fontInter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Workstream",
@@ -49,19 +101,8 @@ export default function RootLayout({
 
   return (
     <html lang="en-AU">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Fraunces:opsz,wght@9..144,400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
       <body
+        className={`${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable} ${fontSerif.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable}`}
         data-build={
           process.env.NEXT_PUBLIC_BUILD_SHA ??
           process.env.RAILWAY_GIT_COMMIT_SHA ??
