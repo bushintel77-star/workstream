@@ -477,6 +477,14 @@
   place-items: center;
   border-radius: var(--hc-r-control, 8px);
   /*
+   * Override --canvas so SVG glyph fills (which mix planting/hardscape
+   * colours against var(--canvas)) render against dark, not cream. On the
+   * drawing surface --canvas is correctly light, but inside the asset panel
+   * tiles the background is dark frost — without this override, 7% green on
+   * cream = nearly white, making every glyph washed out and invisible.
+   */
+  --canvas: var(--ws-frame);
+  /*
    * Slightly darker than the tile (which uses ws-frame-raise) so the glyph
    * well reads as a recessed cell — the icon sits inside a frame, not
    * floating on the tile surface.
