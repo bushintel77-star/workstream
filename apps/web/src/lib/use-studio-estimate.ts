@@ -29,10 +29,10 @@ function argsKey(args: StudioEstimateArgs): string {
     .filter((t) => !t.ghost)
     .map(
       (t) =>
-        `${t.id}:${t.kind}:${t.points.map((p) => `${p.x_pct},${p.y_pct}`).join(";")}`,
+        `${t.id}:${t.kind}:${t.points.map((p) => `${p.x_pct.toFixed(3)},${p.y_pct.toFixed(3)}`).join(";")}`,
     )
     .join("/");
-  return `${args.outdoorM2}|${boundary}|${items}|${args.accessConstrained ? 1 : 0}|${trenches}`;
+  return `${args.outdoorM2.toFixed(2)}|${boundary}|${items}|${args.accessConstrained ? 1 : 0}|${trenches}`;
 }
 
 /**

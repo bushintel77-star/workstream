@@ -200,9 +200,9 @@
   min-width: 44px;
   min-height: 44px;
   padding: 0 8px;
-  border: 1px solid var(--hc-line);
+  border: 1px solid var(--ws-frame-hair);
   border-radius: var(--hc-r-control);
-  background: var(--hc-glass-soft);
+  background: var(--ws-frame-wash);
   color: var(--ink-soft);
   font: inherit;
   font-size: var(--text-xs);
@@ -243,7 +243,7 @@
 
 .backBtn:hover {
   color: var(--ink);
-  background: var(--hc-glass-soft);
+  background: var(--ws-frame-wash);
 }
 
 .placingKicker {
@@ -381,7 +381,7 @@
 }
 
 .sectionHead:hover {
-  background: var(--hc-glass-soft);
+  background: var(--ws-frame-wash);
   color: var(--ink);
 }
 
@@ -407,7 +407,7 @@
   min-width: 20px;
   padding: 1px var(--s-1);
   border-radius: var(--hc-r-pill, 999px);
-  background: var(--hc-glass-soft);
+  background: var(--ws-frame-wash);
   color: var(--ink-faint);
   font-size: var(--hc-fs-1);
   font-weight: 600;
@@ -589,7 +589,7 @@
 
 .craftChip[data-active="true"] {
   background: var(--ink);
-  color: var(--hc-invert);
+  color: var(--ws-frame);
   border-color: var(--ink);
 }
 
@@ -612,9 +612,9 @@
 }
 
 :global(.rootPrecision) .panel {
-  background: var(--hc-glass);
+  background: color-mix(in srgb, var(--ws-frame) 88%, transparent);
   box-shadow: var(--hc-elev-2);
-  border: 1px solid var(--hc-line);
+  border: 1px solid var(--ws-frame-hair);
 }
 
 :global(.rootPrecision) .swatch {
