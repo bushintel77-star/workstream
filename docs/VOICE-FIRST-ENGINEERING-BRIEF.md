@@ -38,6 +38,53 @@ The report describes the desired end state. The current repository is intentiona
 
 The latency figures in the report are design targets, not current measurements. The current batch flow should be measured before a streaming transport is selected.
 
+## Review of suggested voice tooling
+
+The suggested tools are valuable options, but they are not interchangeable and should not all be added at once.
+
+### Current baseline
+
+The mobile app currently uses `expo-av` with metering and a rolling heuristic VAD classifier. This is a sensible Phase 1 baseline because it already supports the existing Expo/EAS setup, keeps the current upload path stable, and has no new native model or binary-size risk.
+
+### `whisper.rn`
+
+Potential Phase 2 option for private, offline-capable transcription. Before adopting it, validate:
+
+- Expo SDK 57 / React Native 0.76 compatibility.
+- New Architecture compatibility.
+- iOS Metal/Core ML and Android NDK build behaviour in EAS.
+- Model download size, cold-start time, memory use, battery drain, and thermal behaviour on the supported field devices.
+- Australian accents, construction noise, botanical names, dimensions, and metres/millimetres accuracy.
+
+Do not add it merely because it is open source. It creates a native build and model-distribution commitment.
+
+### Silero VAD
+
+Useful if the product moves to continuous or chunked transcription. The current rolling metering heuristic is sufficient for push-to-record and batch upload, but it is not equivalent to neural endpointing. Silero should be benchmarked against the existing classifier using real site recordings before replacing it.
+
+### Native OS speech recognition
+
+A native OS speech fallback can be useful for a small-bundle path, but any package must be checked for current React Native / Expo compatibility and a maintained config plugin. It should be treated as a fallback adapter behind the same `VoiceIntent` contract, not as a separate UI or data path.
+
+### WebSockets and binary audio
+
+The binary WebSocket recommendation is correct for a future streaming backend: raw binary frames should be used instead of base64. However, `expo-av` currently records files; it is not a PCM streaming transport. A streaming prototype therefore needs both:
+
+1. A native audio-frame capture module with lifecycle, permissions, interruption, and background behaviour.
+2. A streaming ASR service with authentication, endpointing, reconnect, backpressure, and retention controls.
+
+Do not introduce a WebSocket merely to transport the existing completed audio files.
+
+### Recommended decision sequence
+
+1. Instrument the existing batch path: capture end, upload start/end, transcript available, intent routed, response available.
+2. Test the existing heuristic VAD against real Melbourne site recordings.
+3. Prototype one local-transcription branch with `whisper.rn` on the actual EAS device matrix.
+4. Compare it with a native OS speech adapter on accuracy, latency, bundle size, privacy, and battery.
+5. Only then select continuous streaming and a binary WebSocket protocol.
+
+The first mockup should therefore show streaming as a future target while implementing against the current explicit `Send transcript to canvas` flow.
+
 ### Mobile
 
 The mobile recording surface is at:
