@@ -67,6 +67,47 @@ describe("interpretSketchStrokesToCad", () => {
     expect(g[0]!.reason.toLowerCase()).toMatch(/shade|canopy/);
   });
 
+  it("disambiguates identical reason text when several strokes classify the same way", () => {
+    // Three separate tree-dot marks west of the house, spread far enough
+    // apart that they don't cluster into one mass — each is a genuinely
+    // distinct proposal, but classifyStroke gives them the same boilerplate
+    // reason text.
+    const dot = (cx: number, cy: number) => [
+      { x: cx, y: cy },
+      { x: cx + 1, y: cy + 1 },
+      { x: cx, y: cy + 2 },
+    ];
+    const strokes = [
+      { id: "d1", points: dot(24, 40) },
+      { id: "d2", points: dot(24, 55) },
+      { id: "d3", points: dot(24, 70) },
+    ];
+    const g = interpretSketchStrokesToCad(strokes, { boundary, building });
+    expect(g).toHaveLength(3);
+    expect(g.every((s) => s.symbol_id === "canopy")).toBe(true);
+    const reasons = g.map((s) => s.reason);
+    // Distinct now — no two rows read as literal duplicates.
+    expect(new Set(reasons).size).toBe(reasons.length);
+    for (const r of reasons) {
+      expect(r).toMatch(/\(\d of 3\)$/);
+    }
+  });
+
+  it("leaves a single unique reason untouched (no needless ordinal)", () => {
+    const strokes = [
+      {
+        id: "s3b",
+        points: [
+          { x: 28, y: 58 },
+          { x: 30, y: 59 },
+          { x: 29, y: 61 },
+        ],
+      },
+    ];
+    const g = interpretSketchStrokesToCad(strokes, { boundary, building });
+    expect(g[0]!.reason).not.toMatch(/\(\d of \d\)$/);
+  });
+
   it("only emits ids from the published sketch vocabulary", () => {
     // The API allow-filter is built from SKETCH_CAD_SYMBOL_IDS — an id
     // outside it would be silently dropped and formalize would look broken.

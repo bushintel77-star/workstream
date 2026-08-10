@@ -447,5 +447,31 @@ export function interpretSketchStrokesToCad(
     const outline = decimateOutline(convexHull(allPoints));
     out.push(classifyStroke(merged, ctx, outline));
   }
-  return out;
+  return disambiguateReasons(out);
+}
+
+/**
+ * Several strokes classified the same way (e.g. a few tree dots drawn on the
+ * west side, or a couple of closed pads near the rear door) share an
+ * identical templated `reason` string — they are genuinely separate
+ * proposals (different positions), but with no distinguishing detail they
+ * read as literal duplicates in the ghost review list. Tag repeats with an
+ * ordinal so "Sketch mark west of house → shade canopy…" becomes
+ * "… (2 of 3)" instead of three identical-looking rows.
+ */
+function disambiguateReasons(
+  suggestions: SketchCadSuggestion[],
+): SketchCadSuggestion[] {
+  const counts = new Map<string, number>();
+  for (const s of suggestions) {
+    counts.set(s.reason, (counts.get(s.reason) ?? 0) + 1);
+  }
+  const seen = new Map<string, number>();
+  return suggestions.map((s) => {
+    const total = counts.get(s.reason) ?? 1;
+    if (total < 2) return s;
+    const index = (seen.get(s.reason) ?? 0) + 1;
+    seen.set(s.reason, index);
+    return { ...s, reason: `${s.reason} (${index} of ${total})` };
+  });
 }
