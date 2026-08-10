@@ -276,27 +276,25 @@ Elevation reporting 0.1% is **unverified, not clean**: 13 painted chrome
 elements were found but none intersected the board. Plausible, since its chrome
 sits in the frame band — confirm before trusting it.
 
-## Canvas a11y — needs product/design sign-off
+## Canvas a11y — resolved
 
-Two items from the 2026-08-05 a11y pass that are UX calls, not mechanical
-annotation swaps. Logged here pending direction; do not implement blind.
+Two items from the 2026-08-05 a11y pass that were UX calls. Both resolved
+2026-08-09 after product direction: the operator's first screen after entering
+an address is the survey canvas — that IS the main content. Quote is a mode
+within the canvas, not a separate page.
 
-- [ ] **`CompactModeNav` mode-switcher uses `role="menu"`/`role="menuitem"`
-      without arrow-key roving.** The overflow tray (lines 65–73) promises
-      arrow-key roving, Home/End, and typeahead — none of which it implements
-      (its only extra keyboard handling is a pointerdown-outside-close effect).
-      A screen reader announces "menu" and sets expectations this doesn't meet.
-      The full-width mode switcher in `HandoffDesignStudio.tsx:3468` correctly
-      uses `<nav>` with plain buttons and `aria-current="page"` — the same
-      control has two different (and differently wrong) semantics depending on
-      viewport width. Fix: pick a real pattern (tablist/tab with
-      `aria-selected`, or a correctly-behaved menu with arrow keys
-      implemented). That's a UX call.
-- [ ] **Exactly one `<main>` landmark in the canvas surface**, scoped inside
-      `QuoteBuilder.tsx:147` — not the primary drawing/CAD board. The thing
-      people spend most of their time in has no landmark at all. What *is* the
-      primary landmark for a canvas-first app where the "main content" is a
-      drawing surface, not a document? Product/design question, not a chore.
+- [x] **`CompactModeNav` mode-switcher used `role="menu"`/`role="menuitem"`
+      without arrow-key roving.** Fixed: replaced `role="menu"`/`role="menuitem"`
+      with `role="list"` + plain buttons + `aria-disabled`, matching the
+      full-width `<nav>` + buttons + `aria-current="page"` pattern. The overflow
+      tray is now a list of workflow-stage buttons, not a menu of commands.
+      Also added `aria-keyshortcuts` (digit 1–6) to both the full-width and
+      compact current-mode buttons.
+- [x] **Exactly one `<main>` landmark in the canvas surface.** Fixed: wrapped
+      `HandoffDesignStudio` in `<main aria-label="Design canvas">` on the
+      project page (`app/projects/[id]/page.tsx`). Demoted `QuoteBuilder`'s
+      `<main>` to `<section aria-label="Quote">` — it's a mode within the
+      canvas, not a separate page.
 
 ## Shipped inert — features complete except for one connection
 

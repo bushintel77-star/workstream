@@ -293,11 +293,24 @@
     }
   ],
   "schema": 1,
-  "updated": "2026-08-09T23:50:00+10:00",
+  "updated": "2026-08-09T17:47:01.803Z",
   "current_branch": "feat/web-instant-planner-onsite-density",
   "main_sha": "75c9e33",
   "origin_main_sha": "75c9e33",
   "railway_api_sha": "163227a",
   "railway_web_sha": "unknown",
-  "transitions": []
+  "transitions": [
+    {
+      "timestamp": "2026-08-09T17:47:01.768Z",
+      "event": "item-advanced",
+      "itemId": "a11y-pass",
+      "changes": []
+    },
+    {
+      "timestamp": "2026-08-09T17:47:01.802Z",
+      "event": "item-advanced",
+      "itemId": "elevation-mode-wiring",
+      "changes": []
+    }
+  ]
 }
