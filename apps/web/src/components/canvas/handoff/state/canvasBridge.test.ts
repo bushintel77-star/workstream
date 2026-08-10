@@ -539,4 +539,45 @@ describe("site_frame bridge", () => {
     expect(roundTrip[0]?.widthPx).toBe(3.2);
     expect(roundTrip[0]?.color).toBe("#241318");
   });
+
+  it("round-trips shape-tool crisp geometry (kind/shapeTool/start/end) through persistence", () => {
+    const canvas = strokesToCanvas([
+      {
+        id: "sketch-2",
+        points: [
+          { x: 10, y: 10 },
+          { x: 60, y: 10 },
+          { x: 60, y: 40 },
+          { x: 10, y: 40 },
+          { x: 10, y: 10 },
+        ],
+        color: "#2450c7",
+        widthPx: 2.4,
+        kind: "shape",
+        shapeTool: "rect",
+        shapeStart: { x: 10, y: 10 },
+        shapeEnd: { x: 60, y: 40 },
+      },
+    ]);
+    expect(canvas[0]?.kind).toBe("shape");
+    expect(canvas[0]?.shape_tool).toBe("rect");
+    expect(canvas[0]?.shape_start).toEqual({ x_pct: 10, y_pct: 10 });
+    expect(canvas[0]?.shape_end).toEqual({ x_pct: 60, y_pct: 40 });
+
+    const roundTrip = canvasToStrokes(canvas);
+    expect(roundTrip[0]?.kind).toBe("shape");
+    expect(roundTrip[0]?.shapeTool).toBe("rect");
+    expect(roundTrip[0]?.shapeStart).toEqual({ x: 10, y: 10 });
+    expect(roundTrip[0]?.shapeEnd).toEqual({ x: 60, y: 40 });
+  });
+
+  it("leaves legacy ink strokes without shape fields on the wire", () => {
+    const canvas = strokesToCanvas([
+      { id: "sketch-3", points: [{ x: 1, y: 1 }, { x: 2, y: 2 }] },
+    ]);
+    expect(canvas[0]?.kind).toBeUndefined();
+    expect(canvas[0]?.shape_tool).toBeUndefined();
+    expect(canvas[0]?.shape_start).toBeUndefined();
+    expect(canvas[0]?.shape_end).toBeUndefined();
+  });
 });

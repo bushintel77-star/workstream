@@ -1,0 +1,133 @@
+/*
+ * Shared snap-feedback visual language — crosshair, snap glyph, radial pulse.
+ * One definition so CadPlanBoard (vertex/grid/align/ortho drafting) and
+ * SketchBoard (shape-tool line/rect/circle drafting) never fork the look.
+ * Colour language: sprout green = grid/align magnetism, crimson = vertex
+ * lock (matches --existing-stroke used everywhere else for "locked onto
+ * something concrete"). Both pairs clear WCAG 1.4.11 3:1 non-text contrast
+ * against --panel (verified: sprout ~3.6:1, crimson ~4.8:1 in light mode).
+ */
+
+.crosshairV,
+.crosshairH {
+  position: absolute;
+  pointer-events: none;
+  z-index: var(--ws-z-interact);
+  background: color-mix(in srgb, var(--planting-new-stroke) 72%, transparent);
+  box-shadow: 0 0 0 0.5px var(--canvas);
+}
+
+.crosshairV {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-0.5px);
+}
+
+.crosshairH {
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-0.5px);
+}
+
+.snapGlyph {
+  position: absolute;
+  z-index: var(--ws-z-interact);
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 2px;
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--planting-new-text);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: var(--text-micro);
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--planting-new-stroke) 40%, transparent);
+}
+
+.snapGlyph[data-snap="vertex"] {
+  color: var(--existing-text);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--existing-stroke) 40%, transparent);
+}
+
+.snapPulse {
+  position: absolute;
+  z-index: var(--ws-z-interact);
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle,
+      color-mix(in srgb, var(--planting-new-stroke) 28%, transparent) 0%,
+      color-mix(in srgb, var(--planting-new-stroke) 20%, transparent) 34%,
+      transparent 72%);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--planting-new-stroke) 16%, transparent);
+  animation: snapPulse 520ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+/* Soft approach glow while drafting — before a hard snap lock. */
+.snapPulseApproach {
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle,
+      color-mix(in srgb, var(--planting-new-stroke) 18%, transparent) 0%,
+      color-mix(in srgb, var(--planting-new-stroke) 12%, transparent) 42%,
+      transparent 78%);
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--planting-new-stroke) 10%, transparent);
+  animation: snapPulseApproach 720ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+/* Hard snap lock — tighter, stronger pulse. */
+.snapPulseLocked {
+  width: 32px;
+  height: 32px;
+  box-shadow: 0 0 0 9px color-mix(in srgb, var(--planting-new-stroke) 22%, transparent);
+  animation: snapPulse 420ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.snapPulseLocked[data-snap="vertex"] {
+  background: radial-gradient(circle,
+      color-mix(in srgb, var(--existing-stroke) 32%, transparent) 0%,
+      color-mix(in srgb, var(--existing-stroke) 16%, transparent) 40%,
+      transparent 74%);
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--existing-stroke) 20%, transparent);
+}
+
+@keyframes snapPulse {
+  from {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+
+  to {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(1.18);
+  }
+}
+
+@keyframes snapPulseApproach {
+  from {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+
+  to {
+    opacity: 0.2;
+    transform: translate(-50%, -50%) scale(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .snapPulse,
+  .snapPulseApproach,
+  .snapPulseLocked {
+    animation: none;
+  }
+}

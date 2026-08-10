@@ -123,6 +123,7 @@ import { TiltBuildingExtrusion } from "../tilt/TiltBuildingExtrusion";
 import { isTiltActive, pxPerMetre } from "../tilt/tiltMath";
 import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
+import snapVisualCss from "../../geometry/snapVisual.module.css";
 
 /** Area types whose sketched outline renders as a plan region polygon. */
 const REGION_TYPES: ReadonlySet<StudioItemType> = new Set([
@@ -2974,27 +2975,27 @@ export function CadPlanBoard({
         {crosshair ? (
           <>
             <div
-              className={`${css.snapPulse}${snapKind ? ` ${css.snapPulseLocked}` : ` ${css.snapPulseApproach}`}`}
+              className={`${snapVisualCss.snapPulse}${snapKind ? ` ${snapVisualCss.snapPulseLocked}` : ` ${snapVisualCss.snapPulseApproach}`}`}
               data-testid="snap-radial-pulse"
               data-plan-geometry="1"
               data-snap={snapKind ?? "approach"}
               style={{ left: `${crosshair.x}%`, top: `${crosshair.y}%` }}
             />
             <div
-              className={`${css.crosshairV}`}
+              className={`${snapVisualCss.crosshairV}`}
               data-testid="draft-crosshair-v"
               data-plan-geometry="1"
               style={{ left: `${crosshair.x}%` }}
             />
             <div
-              className={`${css.crosshairH}`}
+              className={`${snapVisualCss.crosshairH}`}
               data-testid="draft-crosshair-h"
               data-plan-geometry="1"
               style={{ top: `${crosshair.y}%` }}
             />
             {snapKind ? (
               <div
-                className={css.snapGlyph}
+                className={snapVisualCss.snapGlyph}
                 data-testid="snap-glyph"
                 data-plan-geometry="1"
                 data-snap={snapKind}

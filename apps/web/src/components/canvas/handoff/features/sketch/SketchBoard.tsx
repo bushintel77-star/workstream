@@ -19,7 +19,13 @@ import {
   type SketchTipGrade,
 } from "./sketchCursors";
 import { SketchDock, type SketchPenColour, PEN_COLOUR_VALUE } from "./SketchDock";
-import { shapePoints } from "./sketchShapes";
+import {
+  constrainedShapeEnd,
+  shapePoints,
+  snapShapePoint,
+  type ShapeSnapKind,
+} from "./sketchShapes";
+import snapVisualCss from "../../geometry/snapVisual.module.css";
 import css from "./sketch.module.css";
 
 type SketchTool = "pen" | "eraser" | "line" | "rect" | "circle";
@@ -118,8 +124,23 @@ export function SketchBoard({
   const [live, setLive] = useState<{
     points: PctPoint[];
     widthPx: number;
+    kind?: "shape";
+    shapeTool?: "line" | "rect" | "circle";
+    shapeStart?: PctPoint;
+    shapeEnd?: PctPoint;
   } | null>(null);
   const [size, setSize] = useState({ w: 960, h: 640 });
+  /**
+   * Shape-tool magnetic feedback — CAD-style vertex lock / grid snap, using
+   * the same snap engine + visual language as CadPlanBoard (geometry/snap.ts,
+   * geometry/snapVisual.module.css). Null while pen/eraser are active, or
+   * while Shift overrides ambient snap for an explicit angle/square drag.
+   */
+  const [shapeSnap, setShapeSnap] = useState<{
+    x: number;
+    y: number;
+    kind: ShapeSnapKind;
+  } | null>(null);
 
   useEffect(() => {
     if (readOnly) return;
@@ -157,12 +178,35 @@ export function SketchBoard({
     };
   };
 
+  /**
+   * Candidate snap targets for shape drafting: every existing stroke's
+   * endpoints (shape corners, or the first/last point of a freehand line).
+   * Deliberately excludes interior ink points — snapping a new line/rect/
+   * circle onto the middle of someone's pen scribble would be noise, not
+   * precision.
+   */
+  const shapeAnchors = (): PctPoint[] => {
+    const anchors: PctPoint[] = [];
+    for (const s of strokes) {
+      if (s.shapeStart && s.shapeEnd) {
+        anchors.push(s.shapeStart, s.shapeEnd);
+        continue;
+      }
+      const first = s.points[0];
+      const last = s.points[s.points.length - 1];
+      if (first) anchors.push(first);
+      if (last && last !== first) anchors.push(last);
+    }
+    return anchors;
+  };
+
   /** Esc cancels an in-progress stroke or shape without committing. */
   const cancelActive = () => {
     if (drawing.current || shaping.current) {
       drawing.current = null;
       shaping.current = null;
       setLive(null);
+      setShapeSnap(null);
     }
   };
 
@@ -196,10 +240,22 @@ export function SketchBoard({
     });
   };
 
-  const all = live
-    ? [...strokes, { id: "__live", points: live.points, widthPx: live.widthPx }]
-    : strokes;
   const ink = PEN_COLOUR_VALUE(penColour);
+  const all: SketchStroke[] = live
+    ? [
+      ...strokes,
+      {
+        id: "__live",
+        points: live.points,
+        widthPx: live.widthPx,
+        kind: live.kind,
+        shapeTool: live.shapeTool,
+        shapeStart: live.shapeStart,
+        shapeEnd: live.shapeEnd,
+        color: ink,
+      },
+    ]
+    : strokes;
 
   return (
     <div
@@ -235,10 +291,25 @@ export function SketchBoard({
         e.currentTarget.setPointerCapture(e.pointerId);
 
         if (isShapeTool(tool)) {
-          shaping.current = { pointerId: e.pointerId, start: p, end: p };
+          // Ambient CAD-style snap on the start corner too — unless Shift is
+          // already held, in which case the explicit angle/square constraint
+          // (applied on move) takes priority over passive magnetism.
+          let start = p;
+          if (!e.shiftKey) {
+            const snapped = snapShapePoint(p, shapeAnchors(), size.w, size.h);
+            start = snapped.point;
+            setShapeSnap({ x: start.x, y: start.y, kind: snapped.kind });
+          } else {
+            setShapeSnap(null);
+          }
+          shaping.current = { pointerId: e.pointerId, start, end: start };
           setLive({
-            points: shapePoints(tool, p, p),
+            points: shapePoints(tool, start, start),
             widthPx: sketchWidthForPointer(e.pointerType, null, tip),
+            kind: "shape",
+            shapeTool: tool,
+            shapeStart: start,
+            shapeEnd: start,
           });
           return;
         }
@@ -261,11 +332,28 @@ export function SketchBoard({
         // Shape tools — track end point, regenerate points.
         const shape = shaping.current;
         if (shape && shape.pointerId === e.pointerId) {
-          const p = toPct(e.currentTarget, e.clientX, e.clientY);
-          shape.end = p;
+          const shapeTool = tool as "line" | "rect" | "circle";
+          const raw = toPct(e.currentTarget, e.clientX, e.clientY);
+          // Shift = explicit angle/square constraint, always wins over the
+          // ambient vertex/grid snap (matches the start-point priority).
+          let end = raw;
+          if (!e.shiftKey) {
+            const anchors = shapeAnchors();
+            const snapped = snapShapePoint(raw, anchors, size.w, size.h);
+            end = snapped.point;
+            setShapeSnap({ x: end.x, y: end.y, kind: snapped.kind });
+          } else {
+            setShapeSnap(null);
+          }
+          const finalEnd = constrainedShapeEnd(shapeTool, shape.start, end, e.shiftKey);
+          shape.end = finalEnd;
           setLive({
-            points: shapePoints(tool as "line" | "rect" | "circle", shape.start, p, e.shiftKey),
+            points: shapePoints(shapeTool, shape.start, finalEnd, false),
             widthPx: sketchWidthForPointer(e.pointerType, null, tip),
+            kind: "shape",
+            shapeTool,
+            shapeStart: shape.start,
+            shapeEnd: finalEnd,
           });
           return;
         }
@@ -306,15 +394,18 @@ export function SketchBoard({
         });
       }}
       onPointerUp={(e) => {
-        // Shape commit
+        // Shape commit — shape.end already carries the final (snapped and/or
+        // Shift-constrained) point from the last pointermove.
         const shape = shaping.current;
         if (shape && shape.pointerId === e.pointerId) {
           shaping.current = null;
           setLive(null);
+          setShapeSnap(null);
           if (e.currentTarget.hasPointerCapture(e.pointerId)) {
             e.currentTarget.releasePointerCapture(e.pointerId);
           }
-          const pts = shapePoints(tool as "line" | "rect" | "circle", shape.start, shape.end, e.shiftKey);
+          const shapeTool = tool as "line" | "rect" | "circle";
+          const pts = shapePoints(shapeTool, shape.start, shape.end, false);
           if (pts.length >= 2 && onCommit) {
             idn.current += 1;
             onCommit({
@@ -322,6 +413,10 @@ export function SketchBoard({
               points: pts,
               widthPx: sketchWidthForPointer(e.pointerType, null, tip),
               color: ink,
+              kind: "shape",
+              shapeTool,
+              shapeStart: shape.start,
+              shapeEnd: shape.end,
             });
           }
           return;
@@ -330,10 +425,12 @@ export function SketchBoard({
       }}
       onPointerCancel={(e) => {
         shaping.current = null;
+        setShapeSnap(null);
         finishDrawing(e, false);
       }}
       onLostPointerCapture={(e) => {
         shaping.current = null;
+        setShapeSnap(null);
         finishDrawing(e, false);
       }}
     >
@@ -345,6 +442,76 @@ export function SketchBoard({
         {all.map((s) => {
           const scaleX = size.w / 100;
           const scaleY = size.h / 100;
+          const opacity = s.id === "__live" ? 0.55 : 0.88;
+          const strokeColour = s.color ?? ink;
+
+          // Shape-tool strokes (line/rect/circle) render as crisp,
+          // non-scaling SVG primitives — a deliberate visual break from
+          // organic freehand ink, matching the CAD board's construction
+          // lines. `vector-effect="non-scaling-stroke"` keeps the line a
+          // true 1:1 hairline regardless of board resize / DPR.
+          if (s.kind === "shape" && s.shapeStart && s.shapeEnd) {
+            const x1 = s.shapeStart.x * scaleX;
+            const y1 = s.shapeStart.y * scaleY;
+            const x2 = s.shapeEnd.x * scaleX;
+            const y2 = s.shapeEnd.y * scaleY;
+            const strokeWidth = s.widthPx ?? 2;
+            if (s.shapeTool === "line") {
+              return (
+                <line
+                  key={s.id}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={strokeColour}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                  opacity={opacity}
+                  style={{ pointerEvents: "none" }}
+                />
+              );
+            }
+            const rx1 = Math.min(x1, x2);
+            const ry1 = Math.min(y1, y2);
+            const rx2 = Math.max(x1, x2);
+            const ry2 = Math.max(y1, y2);
+            if (s.shapeTool === "rect") {
+              return (
+                <rect
+                  key={s.id}
+                  x={rx1}
+                  y={ry1}
+                  width={rx2 - rx1}
+                  height={ry2 - ry1}
+                  fill="none"
+                  stroke={strokeColour}
+                  strokeWidth={strokeWidth}
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                  opacity={opacity}
+                  style={{ pointerEvents: "none" }}
+                />
+              );
+            }
+            return (
+              <ellipse
+                key={s.id}
+                cx={(rx1 + rx2) / 2}
+                cy={(ry1 + ry2) / 2}
+                rx={(rx2 - rx1) / 2}
+                ry={(ry2 - ry1) / 2}
+                fill="none"
+                stroke={strokeColour}
+                strokeWidth={strokeWidth}
+                vectorEffect="non-scaling-stroke"
+                opacity={opacity}
+                style={{ pointerEvents: "none" }}
+              />
+            );
+          }
+
           const points = s.points.map((p) => ({
             x: p.x * scaleX,
             y: p.y * scaleY,
@@ -360,13 +527,47 @@ export function SketchBoard({
             <path
               key={s.id}
               d={d}
-              fill={ink}
-              opacity={s.id === "__live" ? 0.55 : 0.88}
+              fill={strokeColour}
+              opacity={opacity}
               style={{ pointerEvents: "none" }}
             />
           );
         })}
       </svg>
+      {shapeSnap ? (
+        <>
+          <div
+            className={`${snapVisualCss.snapPulse} ${snapVisualCss.snapPulseLocked}`}
+            data-testid="sketch-snap-pulse"
+            data-snap={shapeSnap.kind}
+            style={{ left: `${shapeSnap.x}%`, top: `${shapeSnap.y}%` }}
+          />
+          <div
+            className={snapVisualCss.crosshairV}
+            data-testid="sketch-snap-crosshair-v"
+            style={{ left: `${shapeSnap.x}%` }}
+          />
+          <div
+            className={snapVisualCss.crosshairH}
+            data-testid="sketch-snap-crosshair-h"
+            style={{ top: `${shapeSnap.y}%` }}
+          />
+          <div
+            className={snapVisualCss.snapGlyph}
+            data-testid="sketch-snap-glyph"
+            data-snap={shapeSnap.kind}
+            style={{ left: `${shapeSnap.x}%`, top: `${shapeSnap.y}%` }}
+            title={
+              shapeSnap.kind === "vertex"
+                ? "Snapped to endpoint"
+                : "Snapped to grid"
+            }
+            aria-hidden
+          >
+            {shapeSnap.kind === "vertex" ? "●" : "□"}
+          </div>
+        </>
+      ) : null}
       {!readOnly && !hideChrome ? (
         <SketchDock
           tool={tool}

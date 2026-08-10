@@ -260,6 +260,16 @@ export function strokesToCanvas(strokes: SketchStroke[]): CanvasStroke[] {
     })),
     color: s.color ?? "var(--text-primary)",
     width_px: s.widthPx ?? 2,
+    // Shape-tool strokes round-trip their crisp geometry so a reload keeps
+    // the line/rect/circle look instead of degrading to freehand ink.
+    ...(s.kind ? { kind: s.kind } : {}),
+    ...(s.shapeTool ? { shape_tool: s.shapeTool } : {}),
+    ...(s.shapeStart
+      ? { shape_start: { x_pct: clampPct(s.shapeStart.x), y_pct: clampPct(s.shapeStart.y) } }
+      : {}),
+    ...(s.shapeEnd
+      ? { shape_end: { x_pct: clampPct(s.shapeEnd.x), y_pct: clampPct(s.shapeEnd.y) } }
+      : {}),
   }));
 }
 
@@ -269,6 +279,14 @@ export function canvasToStrokes(strokes: CanvasStroke[]): SketchStroke[] {
     points: s.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
     color: s.color,
     widthPx: s.width_px,
+    ...(s.kind ? { kind: s.kind } : {}),
+    ...(s.shape_tool ? { shapeTool: s.shape_tool } : {}),
+    ...(s.shape_start
+      ? { shapeStart: { x: s.shape_start.x_pct, y: s.shape_start.y_pct } }
+      : {}),
+    ...(s.shape_end
+      ? { shapeEnd: { x: s.shape_end.x_pct, y: s.shape_end.y_pct } }
+      : {}),
   }));
 }
 

@@ -321,6 +321,18 @@ export type SketchStroke = {
   /** Existing DesignCanvas stroke width; pen pressure resolves to this on commit. */
   widthPx?: number;
   color?: string;
+  /**
+   * "shape" strokes (line/rect/circle tool) render as crisp construction-line
+   * vector geometry — a deliberate visual break from organic "ink" freehand
+   * pen strokes. `points` still carries a polyline/polygon approximation for
+   * hit-testing (eraser) and the AI-vision raster capture; `shapeStart` /
+   * `shapeEnd` are the exact drag corners used for the crisp render.
+   * Undefined / "ink" = unchanged legacy freehand behaviour.
+   */
+  kind?: "ink" | "shape";
+  shapeTool?: "line" | "rect" | "circle";
+  shapeStart?: Pt;
+  shapeEnd?: Pt;
 };
 
 export const MODE_TABS = [

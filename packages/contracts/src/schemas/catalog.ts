@@ -89,17 +89,26 @@ export const CatalogPlacementSchema = z.object({
 });
 export type CatalogPlacement = z.infer<typeof CatalogPlacementSchema>;
 
+const CanvasStrokePointSchema = z.object({
+  x_pct: z.number(),
+  y_pct: z.number(),
+});
+
 /** Freehand stroke — populated when Apple Pencil / PencilKit lands (phase 2). */
 export const CanvasStrokeSchema = z.object({
   id: z.string().uuid(),
-  points: z.array(
-    z.object({
-      x_pct: z.number(),
-      y_pct: z.number(),
-    }),
-  ),
+  points: z.array(CanvasStrokePointSchema),
   color: z.string().default("#ff2ef6"),
   width_px: z.number().positive().default(2),
+  /**
+   * "shape" strokes (sketch line/rect/circle tool) render as crisp vector
+   * geometry instead of organic freehand ink — see handoff SketchBoard /
+   * FreehandLayer. Optional / absent = legacy ink stroke, unchanged.
+   */
+  kind: z.enum(["ink", "shape"]).optional(),
+  shape_tool: z.enum(["line", "rect", "circle"]).optional(),
+  shape_start: CanvasStrokePointSchema.optional(),
+  shape_end: CanvasStrokePointSchema.optional(),
 });
 export type CanvasStroke = z.infer<typeof CanvasStrokeSchema>;
 
