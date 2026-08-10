@@ -297,8 +297,8 @@
   "current_branch": "main",
   "main_sha": "220d544",
   "origin_main_sha": "90bfae4",
-  "railway_api_sha": "163227a",
-  "railway_web_sha": "unknown",
+  "railway_api_sha": "89176ee",
+  "railway_web_sha": "89176ee",
   "transitions": [
     {
       "timestamp": "2026-08-09T17:47:01.768Z",
