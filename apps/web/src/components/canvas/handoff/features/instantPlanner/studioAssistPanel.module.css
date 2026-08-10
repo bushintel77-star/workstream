@@ -24,7 +24,7 @@
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  background: var(--hc-glass-soft);
+  background: var(--hc-frost);
   box-shadow: 0 4px 14px var(--hc-neu-shadow);
 }
 
@@ -33,7 +33,7 @@
   padding: 0.7rem 0.8rem;
   border-radius: var(--hc-r-pop, 14px);
   border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   box-shadow: 0 10px 28px var(--hc-neu-shadow);
   display: flex;
   flex-direction: column;
@@ -46,7 +46,7 @@
   font-size: 8.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
 }
 
 .btn {
@@ -65,7 +65,7 @@
 .meta {
   margin: 0;
   font-size: 0.65rem;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   line-height: 1.35;
 }
 
@@ -87,7 +87,7 @@
 .link {
   font-size: 0.68rem;
   font-weight: 600;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -108,14 +108,14 @@
   gap: 0.5rem;
   font-size: 0.62rem;
   line-height: 1.3;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 .checkReason {
   flex: 1 1 100%;
   margin: 0;
   font-size: 0.58rem;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
   line-height: 1.3;
 }
 
@@ -124,12 +124,12 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
 }
 
 .checklist li[data-status="generated"] .checkStatus,
 .checklist li[data-status="ready"] .checkStatus {
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
 }
 
 .checkLink {
@@ -139,7 +139,7 @@
   padding: 0;
   margin: 0;
   font: inherit;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   text-align: left;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -147,5 +147,5 @@
 }
 
 .checkLink:hover {
-  color: var(--hc-accent, var(--hc-ink));
+  color: var(--hc-accent, var(--ws-frame-ink));
 }

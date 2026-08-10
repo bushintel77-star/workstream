@@ -491,7 +491,7 @@
   padding: var(--s-2) var(--s-3) var(--s-2) var(--s-3);
   border-radius: var(--hc-r-panel, 12px);
   border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass-soft);
+  background: var(--hc-frost);
   backdrop-filter: blur(14px) saturate(1.06);
   -webkit-backdrop-filter: blur(14px) saturate(1.06);
   box-shadow: var(--hc-elev-2);
@@ -669,7 +669,7 @@
   color: var(--hc-invert);
   box-shadow:
     var(--hc-elev-1),
-    inset 0 1px 0 color-mix(in srgb, var(--hc-invert) 24%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--ws-frame-ink) 24%, transparent),
     inset 0 -1px 0 color-mix(in srgb, var(--hc-ink) 40%, transparent);
 }
 
@@ -807,7 +807,7 @@
 
 .rootDark .toolBtn {
   border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass-soft);
+  background: var(--hc-frost);
   color: var(--hc-ink-faint);
   box-shadow: none;
 }
@@ -916,14 +916,14 @@
 
 .rootDark .iconBtn {
   color: var(--hc-ink-faint);
-  background: var(--hc-glass-soft);
+  background: var(--hc-frost);
   border: 1px solid var(--hc-line-soft);
   box-shadow: none;
 }
 
 .rootDark .iconBtn:hover {
-  background: var(--hc-glass-soft);
-  color: var(--hc-invert);
+  background: var(--hc-frost);
+  color: var(--ws-frame-ink);
 }
 
 .rootDark .iconBtnActive,
@@ -1524,7 +1524,7 @@
   padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pill);
   border: 1px solid var(--hc-line);
-  background: var(--hc-glass-soft);
+  background: var(--hc-frost);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   box-shadow: var(--hc-elev-1);
@@ -1670,7 +1670,7 @@
   height: 28px;
   border: 1px solid var(--hc-line);
   border-radius: var(--hc-r-control);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   cursor: pointer;
 }
 
@@ -1688,7 +1688,7 @@
   padding: var(--s-2) var(--s-2);
   border: 1px solid var(--hc-line-soft);
   border-radius: var(--hc-r-control);
-  background: var(--hc-glass-soft);
+  background: var(--hc-frost);
   color: var(--hc-ink-muted);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--hc-fs-2);
@@ -1767,7 +1767,7 @@
   padding: var(--s-1) var(--s-2);
   border: 1px solid var(--hc-line);
   border-radius: 4px;
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   font-family: "Architects Daughter", "Segoe Print", cursive;
   font-size: var(--text-base);
   letter-spacing: 0.04em;
@@ -1981,7 +1981,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2000,7 +2000,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
   border-radius: var(--hc-r-glass);
@@ -2064,7 +2064,7 @@
   z-index: var(--ws-z-interact);
   max-height: 44%;
   overflow: auto;
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
   border-radius: var(--hc-r-glass);
@@ -2083,7 +2083,7 @@
   flex-direction: column;
   gap: var(--s-2);
   z-index: var(--ws-z-interact);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
   border-radius: var(--hc-r-glass);
@@ -2104,7 +2104,7 @@
   gap: var(--s-2);
   z-index: var(--ws-z-interact);
   overflow: auto;
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
   border-radius: var(--hc-r-glass);
@@ -2350,7 +2350,7 @@
   padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   backdrop-filter: none;
   box-shadow: var(--hc-elev);
   color: var(--hc-ink);
@@ -2400,7 +2400,7 @@
   padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-pop);
   border: 1px solid var(--hc-line);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   backdrop-filter: none;
   box-shadow: var(--hc-elev);
   color: var(--hc-ink);
@@ -2435,7 +2435,7 @@
   padding: 4px 2px;
   border-radius: var(--r-lg);
   border: 1px solid var(--hc-line);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   color: var(--hc-ink-muted);
   font: inherit;
   font-size: var(--text-nano);
@@ -2445,7 +2445,7 @@
 
 .zoneSlot:hover {
   border-color: color-mix(in srgb, var(--hc-danger) 35%, transparent);
-  background: var(--hc-invert);
+  background: var(--hc-frost);
 }
 
 .zoneSlotOn {
@@ -2473,7 +2473,7 @@
   padding: var(--s-1) var(--s-2);
   border-radius: var(--r-xl);
   border: 1px solid var(--hc-line);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   backdrop-filter: none;
   box-shadow: 0 8px 28px var(--hc-neu-shadow);
   color: var(--hc-ink);
@@ -2535,7 +2535,7 @@
   padding: var(--s-1) var(--s-1);
   border-radius: var(--hc-r-control);
   border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   opacity: 0.4;
   transition: opacity 220ms var(--ws-ease);
   animation: chromeIn 200ms var(--ws-ease) both;
@@ -2561,7 +2561,7 @@
   padding: 0 var(--s-2);
   border: 1px solid var(--hc-line);
   border-radius: var(--hc-r-panel, 12px);
-  background: var(--hc-glass-soft);
+  background: var(--hc-frost);
   backdrop-filter: blur(14px) saturate(1.06);
   -webkit-backdrop-filter: blur(14px) saturate(1.06);
   box-shadow: var(--hc-elev-2);
@@ -2633,7 +2633,7 @@
   width: min(420px, 90%);
   padding: var(--s-5);
   z-index: var(--ws-z-panel);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   backdrop-filter: none;
   border: 1px solid var(--hc-neu-light);
   border-radius: var(--hc-r-glass);

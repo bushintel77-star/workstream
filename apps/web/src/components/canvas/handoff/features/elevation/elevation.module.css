@@ -25,7 +25,7 @@
  */
 .rootNight {
   background:
-    linear-gradient(180deg, var(--hc-paper) 0%, var(--hc-invert) 100%);
+    linear-gradient(180deg, var(--hc-paper) 0%, var(--ws-frame) 100%);
   color: var(--hc-ink);
 }
 

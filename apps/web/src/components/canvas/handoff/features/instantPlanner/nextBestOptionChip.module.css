@@ -31,9 +31,9 @@
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   backdrop-filter: blur(12px);
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   box-shadow: 0 4px 14px var(--hc-neu-shadow);
 }
 
@@ -42,8 +42,9 @@
   padding: 0.7rem 0.8rem;
   border-radius: var(--hc-r-pop, 14px);
   border: 1px solid var(--hc-line-soft);
-  background: var(--hc-glass);
+  background: var(--hc-frost);
   backdrop-filter: blur(16px);
+  color: var(--ws-frame-ink);
   box-shadow: 0 10px 28px var(--hc-neu-shadow);
   display: flex;
   flex-direction: column;
@@ -59,7 +60,7 @@
 .hint {
   margin: 0;
   font-size: 0.65rem;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 .actions,
@@ -90,7 +91,7 @@
 .prefBtn {
   border: none;
   background: transparent;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
   font: inherit;
   font-size: 0.6rem;
   font-weight: 600;
