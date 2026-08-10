@@ -13,9 +13,9 @@ export type VoiceIntentKind = z.infer<typeof VoiceIntentKindSchema>;
 
 export const VoiceIntentRequestSchema = z.object({
   transcript: z.string().trim().min(1).max(10_000),
-  confidence: z.number().min(0).max(1).optional(),
+  confidence: z.number().min(0).max(1),
   source: VoiceIntentSourceSchema.default("mobile_recording"),
-  dil_consent: z.boolean().default(false),
+  dil_consent: z.boolean(),
 });
 export type VoiceIntentRequest = z.infer<typeof VoiceIntentRequestSchema>;
 

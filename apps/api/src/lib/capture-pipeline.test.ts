@@ -7,7 +7,71 @@ vi.mock("./transcription-job", () => ({
 }));
 
 vi.mock("./survey-job", () => ({
-  runSurvey: vi.fn().mockResolvedValue({ id: "s1" }),
+  runSurvey: vi.fn().mockResolvedValue({
+    id: "s1",
+    title_polygon: { type: "Polygon", coordinates: [[]] },
+    house_polygon: { type: "Polygon", coordinates: [] },
+    garden_polygon: { type: "Polygon", coordinates: [] },
+    lot_area_m2: 450,
+    house_area_m2: 120,
+    garden_area_m2: 330,
+    measurements: [],
+    aerial_uri: "https://example.com/aerial.jpg",
+  }),
+}));
+
+vi.mock("./design-job", () => ({
+  runDesign: vi.fn().mockResolvedValue({
+    id: "d1",
+    project_id: "p1",
+    version: 1,
+    mode: "auto",
+    proposal: {
+      zones: [
+        {
+          id: "z1",
+          name: "Front garden",
+          treatment: "mixed",
+          plantings: [{ species: "test", common_name: "Test", count: 1, form: "shrub", sku: "PLT-TEST-001" }],
+          hardscape: [],
+          lighting: [],
+          irrigation: [],
+        },
+      ],
+      estimated_complexity: "standard",
+    },
+    gaps: [],
+    rationale: "rationale",
+  }),
+}));
+
+vi.mock("./cost-job", () => ({
+  runCosting: vi.fn().mockResolvedValue([
+    { scenario: "lean", line_items: [], subtotal: 0, gst: 0, total: 0 },
+    { scenario: "standard", line_items: [{ sku: "PLT-TEST-001", label: "Test", unit: "ea", qty: 1, rate: 100, total: 100 }], subtotal: 100, gst: 10, total: 110 },
+    { scenario: "buffer", line_items: [], subtotal: 0, gst: 0, total: 0 },
+  ]),
+}));
+
+vi.mock("./audit-job", () => ({
+  runProjectAudit: vi.fn().mockResolvedValue({
+    id: "a1",
+    design_id: "d1",
+    findings: [],
+    blocking_count: 0,
+    advisory_count: 0,
+    passed: true,
+  }),
+}));
+
+vi.mock("./output-job", () => ({
+  runOutput: vi.fn().mockResolvedValue({
+    id: "o1",
+    project_id: "p1",
+    kind: "quote",
+    uri: "https://example.com/outputs/o1.html",
+    generated_at: new Date().toISOString(),
+  }),
 }));
 
 describe("runCapturePipeline", () => {
@@ -17,7 +81,7 @@ describe("runCapturePipeline", () => {
     vi.clearAllMocks();
   });
 
-  it("transcribes then runs survey and sets survey_review", async () => {
+  it("runs all stages and sets complete", async () => {
     const store = createMemoryStore();
     await store.seedDefaults();
     const project = await store.createProject(owner, {
@@ -25,29 +89,33 @@ describe("runCapturePipeline", () => {
       lat: -37.85,
       lng: 145.0,
     });
-    const recording = await store.createRecording(owner, project.id, "", 120);
+    const recording = await store.createRecording(owner, project.id, "https://example.com/audio.m4a", 120);
     if (!recording) throw new Error("recording missing");
+    await store.updateRecordingTranscript(recording.id, "fake transcript for testing", 0.95);
 
-    const { runTranscription } = await import("./transcription-job.js");
-    const { runSurvey } = await import("./survey-job.js");
-
-    await runCapturePipeline(
+    const logs = await runCapturePipeline(
       store,
       owner,
       project.id,
       recording.id,
       "/tmp/fake.m4a",
+      "https://example.com",
     );
 
-    expect(runTranscription).toHaveBeenCalledOnce();
-    expect(runSurvey).toHaveBeenCalledOnce();
     const updated = await store.getProject(owner, project.id);
-    expect(updated?.status).toBe("survey_review");
+    expect(updated?.status).toBe("complete");
+    expect(logs.length).toBeGreaterThan(0);
+    expect(logs.every((l) => l.passed)).toBe(true);
   });
 
-  it("reverts to recording status when survey throws", async () => {
-    const { runSurvey } = await import("./survey-job.js");
-    vi.mocked(runSurvey).mockRejectedValueOnce(new Error("boom"));
+  it("fails fast with stage log on guard failure", async () => {
+    const { runTranscription } = await import("./transcription-job.js");
+    vi.mocked(runTranscription).mockImplementationOnce(async (_store, _recordingId) => {
+      const store = await import("@workstream/db").then((m) => m.createMemoryStore());
+      await store.seedDefaults();
+      // Cannot update transcript without owner; rely on default recording having no transcript
+      return undefined;
+    });
 
     const store = createMemoryStore();
     await store.seedDefaults();
@@ -57,17 +125,17 @@ describe("runCapturePipeline", () => {
     const recording = await store.createRecording(owner, project.id, "", 60);
     if (!recording) throw new Error("recording missing");
 
-    await expect(
-      runCapturePipeline(
-        store,
-        owner,
-        project.id,
-        recording.id,
-        "/tmp/fake.m4a",
-      ),
-    ).rejects.toThrow("boom");
+    const logs = await runCapturePipeline(
+      store,
+      owner,
+      project.id,
+      recording.id,
+      "/tmp/fake.m4a",
+      "https://example.com",
+    );
 
     const updated = await store.getProject(owner, project.id);
-    expect(updated?.status).toBe("recording");
+    expect(updated?.status).toBe("transcription_failed");
+    expect(logs[0]?.passed).toBe(false);
   });
 });

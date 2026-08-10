@@ -62,6 +62,7 @@ export default async function recordingRoutes(fastify: FastifyInstance) {
         projectId,
         recording.id,
         filePath,
+        baseUrl,
         fastify.log,
       ).catch((err) => {
         fastify.log.error(err, "Capture pipeline failed");

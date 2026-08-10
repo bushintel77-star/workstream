@@ -17,7 +17,20 @@ type Stage = {
   label: string;
   done: boolean;
   active: boolean;
+  failed: boolean;
 };
+
+const STAGE_LABELS: Record<string, string> = {
+  transcription: "Transcribing walkthrough",
+  survey: "Surveying site",
+  design: "Generating design",
+  costing: "Costing scenarios",
+  audit: "Self-audit",
+  outputs: "Packaging outputs",
+  complete: "Complete",
+};
+
+const FAILED_SUFFIX = "_failed";
 
 function buildStages(args: {
   hasTranscript: boolean;
@@ -25,20 +38,34 @@ function buildStages(args: {
   hasDesign: boolean;
   hasCosting: boolean;
   hasAudit: boolean;
+  hasOutputs: boolean;
   status: ProjectStatus | null;
 }): Stage[] {
+  const status = args.status ?? "processing";
   const order = [
-    { key: "transcript", label: "Transcribing walkthrough", done: args.hasTranscript },
-    { key: "survey", label: "Surveying site", done: args.hasSurvey },
-    { key: "design", label: "Generating design", done: args.hasDesign },
-    { key: "costing", label: "Costing scenarios", done: args.hasCosting },
-    { key: "audit", label: "Self-audit", done: args.hasAudit },
+    { key: "transcription", done: args.hasTranscript },
+    { key: "survey", done: args.hasSurvey },
+    { key: "design", done: args.hasDesign },
+    { key: "costing", done: args.hasCosting },
+    { key: "audit", done: args.hasAudit },
+    { key: "outputs", done: args.hasOutputs },
+    { key: "complete", done: status === "complete" },
   ];
+
+  const failedKey = status.endsWith(FAILED_SUFFIX) ? status.replace(FAILED_SUFFIX, "") : null;
   const firstOpen = order.findIndex((s) => !s.done);
-  return order.map((s, i) => ({
-    ...s,
-    active: i === firstOpen && args.status === "processing",
-  }));
+
+  return order.map((s, i) => {
+    const failed = failedKey === s.key;
+    const active = !s.done && (failed || i === firstOpen) && status !== "complete";
+    return {
+      key: s.key,
+      label: STAGE_LABELS[s.key] ?? s.key,
+      done: s.done,
+      active,
+      failed,
+    };
+  });
 }
 
 export default function ProcessingScreen() {
@@ -49,12 +76,11 @@ export default function ProcessingScreen() {
   const [status, setStatus] = useState<ProjectStatus | null>(null);
   const [hasTranscript, setHasTranscript] = useState(false);
   const [latestTranscript, setLatestTranscript] = useState("");
-  const [voiceBusy, setVoiceBusy] = useState(false);
-  const [voiceReply, setVoiceReply] = useState<string | null>(null);
   const [hasSurvey, setHasSurvey] = useState(false);
   const [hasDesign, setHasDesign] = useState(false);
   const [hasCosting, setHasCosting] = useState(false);
   const [hasAudit, setHasAudit] = useState(false);
+  const [hasOutputs, setHasOutputs] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slow, setSlow] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -79,17 +105,12 @@ export default function ProcessingScreen() {
       setHasDesign(design != null);
       setHasCosting(costings.length > 0);
       setHasAudit(audit != null);
+      setHasOutputs(p.status === "outputs" || p.status === "complete");
 
-      const ready =
-        audit != null ||
-        p.status === "survey_review" ||
-        p.status === "design_review" ||
-        p.status === "cost_review" ||
-        p.status === "audit" ||
-        p.status === "outputs" ||
-        p.status === "complete";
+      const failed = p.status.endsWith("_failed");
+      const ready = p.status === "complete";
 
-      if (ready) {
+      if (failed || ready) {
         if (pollRef.current) clearInterval(pollRef.current);
         if (slowRef.current) clearTimeout(slowRef.current);
         router.replace(`/(app)/project/${id}`);
@@ -112,32 +133,13 @@ export default function ProcessingScreen() {
     };
   }, [id, tick]);
 
-  const submitToCanvas = useCallback(async () => {
-    if (!id || !latestTranscript || voiceBusy) return;
-    setVoiceBusy(true);
-    setVoiceReply(null);
-    try {
-      const result = await api.submitVoiceIntent(id, latestTranscript, {
-        source: "mobile_recording",
-      });
-      setVoiceReply(
-        result.kind === "design"
-          ? `Canvas proposal ready. ${result.reply}`
-          : result.reply,
-      );
-    } catch (e) {
-      setVoiceReply(e instanceof Error ? e.message : "Voice intent failed");
-    } finally {
-      setVoiceBusy(false);
-    }
-  }, [api, id, latestTranscript, voiceBusy]);
-
   const stages = buildStages({
     hasTranscript,
     hasSurvey,
     hasDesign,
     hasCosting,
     hasAudit,
+    hasOutputs,
     status,
   });
 
@@ -158,18 +160,20 @@ export default function ProcessingScreen() {
                 style={[
                   styles.stageDot,
                   s.done && styles.stageDotDone,
-                  s.active && styles.stageDotActive,
+                  s.active && !s.failed && styles.stageDotActive,
+                  s.failed && styles.stageDotFailed,
                 ]}
               />
               <Text
                 style={[
                   styles.stageLabel,
                   s.done && styles.stageLabelDone,
-                  s.active && styles.stageLabelActive,
+                  s.active && !s.failed && styles.stageLabelActive,
+                  s.failed && styles.stageLabelFailed,
                 ]}
               >
                 {s.label}
-                {s.active ? "…" : s.done ? " ✓" : ""}
+                {s.active && !s.failed ? "…" : s.done ? " ✓" : s.failed ? " ✗" : ""}
               </Text>
             </View>
           ))}
@@ -183,20 +187,11 @@ export default function ProcessingScreen() {
           />
         )}
 
-        {hasTranscript && !voiceReply && (
-          <Pressable
-            onPress={() => void submitToCanvas()}
-            disabled={voiceBusy}
-            accessibilityRole="button"
-            accessibilityLabel="Send walkthrough to canvas assist"
-            style={styles.voiceAction}
-          >
-            <Text style={styles.voiceActionText}>
-              {voiceBusy ? "Sending to canvas…" : "Send transcript to canvas"}
-            </Text>
-          </Pressable>
-        )}
-        {voiceReply ? <Text style={styles.voiceReply}>{voiceReply}</Text> : null}
+        {status && status.endsWith("_failed") && latestTranscript ? (
+          <Text style={styles.voiceReply}>
+            Stage failed. Transcript still available for manual review.
+          </Text>
+        ) : null}
 
         {slow && (
           <Text style={styles.slow}>
@@ -274,6 +269,9 @@ const styles = StyleSheet.create({
   stageDotActive: {
     backgroundColor: tokens.color.accent.default,
   },
+  stageDotFailed: {
+    backgroundColor: tokens.color.semantic.block,
+  },
   stageLabel: {
     fontSize: tokens.type.body.fontSize,
     color: tokens.color.ink.tertiary,
@@ -285,20 +283,12 @@ const styles = StyleSheet.create({
     color: tokens.color.accent.default,
     fontWeight: "600",
   },
+  stageLabelFailed: {
+    color: tokens.color.semantic.block,
+    fontWeight: "600",
+  },
   spinner: {
     marginTop: tokens.space[6],
-  },
-  voiceAction: {
-    minHeight: 44,
-    paddingHorizontal: tokens.space[4],
-    justifyContent: "center",
-    backgroundColor: tokens.color.accent.default,
-    borderRadius: tokens.radius.md,
-  },
-  voiceActionText: {
-    color: tokens.color.ink.inverted,
-    fontWeight: "700",
-    textAlign: "center",
   },
   voiceReply: {
     color: tokens.color.ink.inverted,

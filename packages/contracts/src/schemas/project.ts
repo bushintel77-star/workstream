@@ -4,11 +4,18 @@ export const ProjectStatusSchema = z.enum([
   "draft",
   "recording",
   "processing",
+  "transcribed",
+  "transcription_failed",
   "survey_review",
+  "survey_failed",
   "design_review",
+  "design_failed",
   "cost_review",
+  "costing_failed",
   "audit",
+  "audit_failed",
   "outputs",
+  "outputs_failed",
   "complete",
 ]);
 export type ProjectStatus = z.infer<typeof ProjectStatusSchema>;
