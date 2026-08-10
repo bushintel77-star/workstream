@@ -247,8 +247,8 @@
       "id": "branch-tree",
       "title": "§4.5 Branch tree of thumbnails (variation explorer)",
       "spec": "Landscape_CAD_AI_App_Design_Specification.pdf §4.5",
-      "stage": "spec",
-      "location": "none",
+      "stage": "merged",
+      "location": "main",
       "relevance": "low",
       "patch": "patches/stash-8.patch",
       "hash": "EF0D76EADED067A7D9DEE178A09A8830653881FBA81A602EEC2B8F0576DC1977"
@@ -293,7 +293,7 @@
     }
   ],
   "schema": 1,
-  "updated": "2026-08-10T15:36:11.095Z",
+  "updated": "2026-08-10T15:57:56.260Z",
   "current_branch": "main",
   "main_sha": "220d544",
   "origin_main_sha": "90bfae4",
@@ -406,6 +406,18 @@
       "changes": [
         {
           "itemId": "supplier-order-overlay-prices",
+          "newRelevance": "low",
+          "reason": "Merged: no longer at risk of loss"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T15:57:56.259Z",
+      "event": "item-advanced",
+      "itemId": "branch-tree",
+      "changes": [
+        {
+          "itemId": "branch-tree",
           "newRelevance": "low",
           "reason": "Merged: no longer at risk of loss"
         }
