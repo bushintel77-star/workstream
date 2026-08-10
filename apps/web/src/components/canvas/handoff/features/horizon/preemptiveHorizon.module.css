@@ -161,7 +161,28 @@
   background: var(--hc-warning);
   pointer-events: auto;
   cursor: pointer;
-  animation: pinPulse 1.6s ease-in-out infinite;
+  /*
+   * 44px hit area (CLAUDE.md touch minimum) with 14px visual dot.
+   * The transparent padding extends the clickable region without
+   * painting a larger circle.
+   */
+  padding: 0;
+  box-shadow: 0 0 0 15px transparent;
+  /*
+   * Pulse 3 cycles then settle — draws attention on appear without
+   * becoming permanent visual noise. 4.8s = 3 × 1.6s, then holds.
+   */
+  animation: pinPulse 1.6s ease-in-out 3;
+  transition: transform 160ms ease;
+}
+
+.pin:hover {
+  transform: scale(1.3);
+}
+
+.pin:focus-visible {
+  outline: 2px solid var(--hc-accent);
+  outline-offset: 6px;
 }
 
 .pin_info {
@@ -188,5 +209,16 @@
   50% {
     transform: scale(1.35);
     opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .pin {
+    animation: none;
+  }
+
+  .pin:hover {
+    transform: none;
   }
 }

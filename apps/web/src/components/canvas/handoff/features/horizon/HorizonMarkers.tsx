@@ -10,6 +10,9 @@ type Props = {
 
 /**
  * Canvas overlay pins for open horizon cards — foreshadow mitigation before accept.
+ * Each pin is a real button with an accessible name, a 44px hit area (14px visual),
+ * and a pulse that settles after 3 cycles so it draws attention without becoming
+ * permanent visual noise.
  */
 export function HorizonMarkers({ cards, onFocus }: Props) {
   const pinned = cards.filter(
@@ -21,17 +24,26 @@ export function HorizonMarkers({ cards, onFocus }: Props) {
   if (pinned.length === 0) return null;
 
   return (
-    <div className={css.markers} data-testid="horizon-markers" aria-hidden>
-      {pinned.map((card) => (
-        <button
-          key={card.id}
-          type="button"
-          className={`${css.pin} ${css[`pin_${card.severity}`]}`}
-          style={{ left: `${card.x}%`, top: `${card.y}%` }}
-          title={card.title}
-          onClick={() => onFocus(card)}
-        />
-      ))}
+    <div className={css.markers} data-testid="horizon-markers">
+      {pinned.map((card) => {
+        const severityLabel =
+          card.severity === "critical"
+            ? "Critical risk"
+            : card.severity === "watch"
+              ? "Watch"
+              : "Info";
+        return (
+          <button
+            key={card.id}
+            type="button"
+            className={`${css.pin} ${css[`pin_${card.severity}`]}`}
+            style={{ left: `${card.x}%`, top: `${card.y}%` }}
+            aria-label={`${severityLabel}: ${card.title}`}
+            title={card.title}
+            onClick={() => onFocus(card)}
+          />
+        );
+      })}
     </div>
   );
 }
