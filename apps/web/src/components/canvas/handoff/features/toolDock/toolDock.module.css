@@ -57,15 +57,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
 }
 
 .slotTrail {
-  margin-top: 6px;
-  padding-top: 7px;
+  margin-top: 4px;
+  padding-top: 5px;
   border-top: 1px solid var(--ws-frame-hair);
-  /* Hairline divider spans the band, engraved into the frame. */
-  width: 22px;
+  /* Full-width hairline — zero-tolerance parting line. */
+  width: 100%;
   display: flex;
   justify-content: center;
 }
@@ -80,20 +80,22 @@
   min-width: var(--ws-frame-tap);
   min-height: var(--ws-frame-tap);
   padding: 0;
-  border: none;
-  border-radius: var(--ws-r-2, 4px);
+  border: 1px solid transparent;
+  border-radius: 3px;
   background: transparent;
   color: var(--ws-frame-ink-dim);
   font: inherit;
   cursor: pointer;
   transition:
     background var(--ws-dur-1, 120ms) var(--ws-ease-out, ease),
+    border-color var(--ws-dur-1, 120ms) var(--ws-ease-out, ease),
     color var(--ws-dur-1, 120ms) var(--ws-ease-out, ease),
     transform var(--ws-dur-1, 120ms) var(--ws-ease-out, ease);
 }
 
 .btn:hover {
   background: var(--ws-frame-wash);
+  border-color: var(--ws-frame-hair);
   color: var(--ws-frame-ink);
 }
 
@@ -108,23 +110,26 @@
 .btnActive,
 .btnActive:hover {
   background: var(--ws-frame-wash);
-  box-shadow: inset 0 0 0 1px var(--ws-frame-hair);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ws-frame-ink) 8%, transparent),
+    inset 0 0 0 1px var(--ws-frame-hair);
   color: var(--ws-frame-ink);
 }
 
 /*
- * Active indicator — a red hairline on the canvas-facing edge, no glow.
+ * LED pinhole — a 3px bright dot with a short-radius glow, mimicking a
+ * fiber-optic status indicator on precision instrument hardware.
  */
 .activeBar {
   position: absolute;
-  right: 0;
+  right: 4px;
   top: 50%;
   transform: translateY(-50%);
-  width: 2px;
-  height: 18px;
-  border-radius: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
   background: var(--existing-stroke);
-  box-shadow: none;
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--existing-stroke) 80%, transparent);
 }
 
 .btn:focus-visible {
