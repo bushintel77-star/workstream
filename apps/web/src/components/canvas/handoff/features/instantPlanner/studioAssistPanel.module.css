@@ -201,7 +201,7 @@
 
 .chipBtn:disabled,
 .chipBtnActive:disabled {
-  opacity: 0.5;
+  opacity: var(--hc-opacity-disabled, 0.5);
   cursor: not-allowed;
 }
 

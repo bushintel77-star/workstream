@@ -81,7 +81,7 @@
   min-height: var(--ws-frame-tap);
   padding: 0;
   border: 1px solid transparent;
-  border-radius: 3px;
+  border-radius: var(--hc-r-control);
   background: transparent;
   color: var(--ws-frame-ink-dim);
   font: inherit;

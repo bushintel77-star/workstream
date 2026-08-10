@@ -30,10 +30,6 @@
     "radius": 2,
     "opacity": 2
   },
-  "apps/web/src/components/canvas/handoff/StudioSkeleton.module.css": {
-    "radius": 3,
-    "opacity": 3
-  },
   "apps/web/src/components/canvas/handoff/features/aerial/aerialSlot.module.css": {
     "radius": 1,
     "opacity": 1
@@ -49,8 +45,8 @@
   },
   "apps/web/src/components/canvas/handoff/features/cadPlan/cadPlan.module.css": {
     "zIndex": 1,
-    "radius": 10,
-    "opacity": 12
+    "radius": 8,
+    "opacity": 8
   },
   "apps/web/src/components/canvas/handoff/features/compliance/compliance.module.css": {
     "opacity": 1
@@ -104,9 +100,6 @@
     "radius": 2
   },
   "apps/web/src/components/canvas/handoff/features/lighting/lightingBeams.module.css": {
-    "opacity": 1
-  },
-  "apps/web/src/components/canvas/handoff/features/liveMeasures/canvasMeasureSummary.module.css": {
     "opacity": 1
   },
   "apps/web/src/components/canvas/handoff/features/liveMeasures/liveMeasures.module.css": {
@@ -224,8 +217,12 @@
     "opacity": 1
   },
   "apps/web/src/components/canvas/handoff/handoffStudio.module.css": {
-    "radius": 7,
+    "radius": 3,
     "opacity": 11
+  },
+  "apps/web/src/components/canvas/handoff/StudioSkeleton.module.css": {
+    "radius": 3,
+    "opacity": 3
   },
   "apps/web/src/components/canvas/siteCanvas.module.css": {
     "zIndex": 17,
