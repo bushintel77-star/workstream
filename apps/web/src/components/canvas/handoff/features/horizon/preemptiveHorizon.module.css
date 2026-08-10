@@ -27,11 +27,11 @@
   position: relative;
   overflow: hidden;
   padding: var(--s-2) var(--s-3);
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid var(--ws-frame-hair);
   background: var(--hc-frost);
   backdrop-filter: blur(12px);
-  box-shadow: none;
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--gray-d-0) 25%, transparent);
   font-family: var(--font-body);
   color: var(--ws-frame-ink);
   animation: hzIn 180ms ease both;
