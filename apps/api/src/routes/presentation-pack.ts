@@ -136,7 +136,7 @@ export default async function presentationPackRoutes(fastify: FastifyInstance) {
       }
 
       const sunCastUri = studioLink(projectId, "mode=cad&shade=1");
-      const elevationsUri = studioLink(projectId, "mode=elevation");
+      const elevationsUri = studioLink(projectId, "mode=elevation&look=N");
       const freezeUri = studioLink(projectId, "mode=cad&branches=1");
 
       const supplierChecklist = (() => {
@@ -206,7 +206,8 @@ export default async function presentationPackRoutes(fastify: FastifyInstance) {
           label: "Elevations and simple sections",
           status: "ready" as const,
           uri: elevationsUri,
-          reason: null,
+          reason:
+            "Opens the live elevation board (indicative silhouettes) — not a separate construction PDF.",
         },
         {
           id: "sun-cast",

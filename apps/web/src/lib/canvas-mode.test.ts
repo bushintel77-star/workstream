@@ -103,4 +103,5 @@ describe("canvas progressive disclosure", () => {
     expect(modeForLegacyPath("/projects/x/overview")).toBe("sketch");
     expect(modeForLegacyPath("/projects/x/processing")).toBe("sketch");
   });
+
 });

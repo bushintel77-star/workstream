@@ -147,5 +147,61 @@
 }
 
 .checkLink:hover {
-  color: var(--hc-accent, var(--ws-frame-ink));
+  color: var(--hc-accent, var(--hc-ink));
+}
+
+.editBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.35rem 0 0.15rem;
+  border-top: 1px solid var(--hc-line-soft);
+}
+
+.live {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--hc-ink);
+  line-height: 1.35;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.chipBtn,
+.chipBtnActive {
+  border: 1px solid var(--hc-line);
+  border-radius: var(--hc-r-control, 12px);
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0.25rem 0.55rem;
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--hc-glass-soft);
+  color: var(--hc-ink);
+}
+
+.chipBtnActive {
+  background: var(--hc-ink);
+  color: var(--hc-invert);
+  border-color: var(--hc-ink);
+}
+
+.chipBtn:disabled,
+.chipBtnActive:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nudgeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(36px, 1fr));
+  gap: 0.3rem;
+  width: min(9.5rem, 100%);
 }

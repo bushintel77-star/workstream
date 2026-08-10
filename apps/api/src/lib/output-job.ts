@@ -5,6 +5,7 @@ import type { Output, OutputKind } from "@workstream/contracts";
 import { generateForKind, type GeneratorArgs } from "./output-generators";
 import { renderHtml } from "./html-render";
 import { dispatchQuoteGenerated } from "./integration-dispatch";
+import { collectLiveSupplierOverlayPrices } from "./suppliers";
 
 const OUTPUT_DIR = path.join(process.cwd(), "data", "outputs");
 
@@ -79,6 +80,11 @@ export async function runOutput(
     }
   }
 
+  const supplierOverlayPrices =
+    kind === "supplier_order"
+      ? (await collectLiveSupplierOverlayPrices()).prices
+      : undefined;
+
   const args: GeneratorArgs = {
     project,
     survey,
@@ -89,6 +95,7 @@ export async function runOutput(
     costings,
     audit,
     tasks,
+    supplierOverlayPrices,
   };
   const markdown = generateForKind(kind, args);
   const html = renderHtml({ kind, project, markdown });

@@ -19,6 +19,8 @@ export type TradeHubId =
 
 export type TradeMatchMode = "live_matched" | "ai_estimated";
 
+export type TradeCatalogSource = "bundled_cache" | "configured";
+
 export type MelbourneTradeOffer = {
   hubId: TradeHubId;
   hubLabel: string;

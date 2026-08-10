@@ -1,7 +1,13 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../plugins/auth";
-import { ALL_SUPPLIERS, fetchPrices, type SupplierId } from "../lib/suppliers";
+import { loadMelbourneTradeCatalog } from "../lib/melbourne-trade-catalog";
+import {
+  ALL_SUPPLIERS,
+  fetchPrices,
+  supplierFeedStatusSummary,
+  type SupplierId,
+} from "../lib/suppliers";
 
 const SupplierParamsSchema = z.object({
   supplier: z.enum([
@@ -20,7 +26,18 @@ export default async function supplierRoutes(fastify: FastifyInstance) {
     const lists = await Promise.all(
       ALL_SUPPLIERS.map((s) => fetchPrices(s as SupplierId)),
     );
-    return reply.send({ suppliers: lists });
+    const status = supplierFeedStatusSummary(lists);
+    const trade = await loadMelbourneTradeCatalog();
+    return reply.send({
+      suppliers: lists,
+      status,
+      melbourne_trade_catalog: {
+        source: trade.source,
+        offer_count: trade.offers.length,
+        path: trade.path,
+        honesty: trade.honesty,
+      },
+    });
   });
 
   fastify.get(

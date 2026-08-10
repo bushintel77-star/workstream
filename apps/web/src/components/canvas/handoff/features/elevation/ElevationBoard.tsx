@@ -147,11 +147,14 @@ export function ElevationBoard({
     });
   }, [ceilingM]);
 
+  const standingCount = bars.length;
+
   return (
     <div
       className={`${css.root}${dark ? ` ${css.rootNight}` : ""}`}
       data-testid="elevation-profile"
       data-elev-look={look}
+      data-elev-empty={standingCount === 0 ? "1" : "0"}
     >
       <div className={css.topRow}>
         <button
@@ -177,6 +180,16 @@ export function ElevationBoard({
           Site width ≈ {widthM.toFixed(1)} m
         </span>
       </div>
+      <p className={css.honesty} data-testid="elevation-honesty">
+        Indicative elevation from accepted placements — not a construction
+        section.
+      </p>
+      {standingCount === 0 ? (
+        <p className={css.emptyHint} data-testid="elevation-empty">
+          No standing profiles yet. Place planting or structures with height in
+          CAD, then return here.
+        </p>
+      ) : null}
       <div className={css.north} aria-hidden>
         N↑
       </div>

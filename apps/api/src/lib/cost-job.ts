@@ -7,6 +7,7 @@ import {
   computeMachineAccess,
   isTier1WrightsTerrace,
   machineAccessBandLabel,
+  overlayRateCardWithSupplierPrices,
   trenchLineItems,
   TIER1_WRIGHTS_SAVINGS,
   type CostScenario,
@@ -21,6 +22,7 @@ import type {
   Zone,
 } from "@workstream/contracts";
 import type { Store } from "@workstream/db";
+import { collectLiveSupplierOverlayPrices } from "./suppliers";
 
 const CONTINGENCY_SKU: Record<CostScenario, string> = {
   lean: "ALW-CONT-LEAN",
@@ -302,7 +304,10 @@ export async function runCosting(
   if (!design) throw new Error("Design is required before costing.");
 
   const canvas = await store.getDesignCanvas(ownerId, projectId);
-  const rates = await store.listRateCard(ownerId);
+  const storeRates = await store.listRateCard(ownerId);
+  const liveOverlay = await collectLiveSupplierOverlayPrices();
+  const { rates, applied, honesty: overlayHonesty } =
+    overlayRateCardWithSupplierPrices(storeRates, liveOverlay.prices);
   const rateIndex = rateCardIndex(rates);
   const zones = design.proposal.zones ?? [];
   const tier1 = isTier1WrightsTerrace(project.address);
@@ -316,6 +321,11 @@ export async function runCosting(
   );
   const assumptions: string[] = [];
   if (accessAssumption) assumptions.push(accessAssumption);
+  if (applied > 0) {
+    assumptions.push(
+      `${overlayHonesty} (${applied} SKU${applied === 1 ? "" : "s"}; suppliers: ${liveOverlay.liveSuppliers.join(", ") || "none"}).`,
+    );
+  }
 
   const scenarios: CostScenario[] = ["lean", "standard", "buffer"];
   const costings: Costing[] = [];

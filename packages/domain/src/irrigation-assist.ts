@@ -111,8 +111,8 @@ export function summariseIrrigationAssist(
   const mean_spacing_cm =
     spacings.length > 0
       ? Math.round(
-          (spacings.reduce((s, n) => s + n, 0) / spacings.length) * 10,
-        ) / 10
+        (spacings.reduce((s, n) => s + n, 0) / spacings.length) * 10,
+      ) / 10
       : 30;
   const density = mean_spacing_cm > 0 ? 30 / mean_spacing_cm : 1;
   const labour_hr =
@@ -191,6 +191,9 @@ export function clampEmitterSpacingCm(cm: number): number {
   if (!Number.isFinite(cm)) return 30;
   return Math.round(Math.min(60, Math.max(15, cm)));
 }
+
+/** Trade-standard drip emitter spacing presets, within the clamp range. */
+export const SPACING_PRESETS_CM: readonly number[] = [20, 30, 40, 50];
 
 /** Set emitter spacing on assist drip zones only (other zones untouched). */
 export function setAssistEmitterSpacing(

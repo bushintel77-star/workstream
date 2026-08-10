@@ -65,7 +65,12 @@ const EnvSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().optional(),
   RATE_LIMIT_WINDOW: z.string().optional(),
   WEATHER_DISABLED: z.enum(["true", "false"]).optional(),
+  /** Attempt rate-sheet adapters (requires SUPPLIERS_RATE_SHEET_DIR files). */
   SUPPLIERS_LIVE: z.enum(["true", "false"]).optional(),
+  /** Directory of `{supplierId}.json` trade rate sheets (see lib/suppliers.ts). */
+  SUPPLIERS_RATE_SHEET_DIR: z.string().optional(),
+  /** JSON Melbourne trade catalog override for solveLiveTradeEstimate. */
+  MELBOURNE_TRADE_CATALOG_PATH: z.string().optional(),
 
   /* Observability */
   SENTRY_DSN: z.string().url().optional(),

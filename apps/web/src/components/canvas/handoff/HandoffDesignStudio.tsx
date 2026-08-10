@@ -3443,6 +3443,7 @@ export function HandoffDesignStudio({
       data-studio-surface="handoff-v4"
       data-idle={idle ? "true" : "false"}
       data-compact={chrome.compact ? "1" : "0"}
+      data-density={isPhoneLayout ? "onsite" : "desk"}
       data-compliance={compliance.canvasSignal}
       data-fit-sheet={ui.frameOn ? "1" : "0"}
       data-shade={ui.shadeOn ? "1" : "0"}

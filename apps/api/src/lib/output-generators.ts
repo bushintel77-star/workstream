@@ -18,10 +18,12 @@ import {
   buildSupplierOrderSheet,
   formatSitePlanQuoteSection,
   isTier1WrightsTerrace,
+  overlayQuoteLinesWithSupplierPrices,
   supplierOrderSheetMarkdown,
   TIER1_WRIGHTS_SAVINGS,
   totalEmbodiedCarbon,
   type RateCardLookup,
+  type SupplierOverlayPrice,
 } from "@workstream/domain";
 
 export type GeneratorArgs = {
@@ -34,6 +36,8 @@ export type GeneratorArgs = {
   costings: Costing[];
   audit: Audit | null;
   tasks: Task[];
+  /** Optional live rate-sheet overlay (SKU → rate) for supplier_order. */
+  supplierOverlayPrices?: SupplierOverlayPrice[];
 };
 
 function rateCardLookup(rows: RateCard[]): RateCardLookup {
@@ -694,8 +698,14 @@ export function buildSupplierOrderDoc(args: Args): string {
       "Live quote / BOM lines are required before generating a supplier order.",
     );
   }
+  const firmLines = standard.line_items.filter((l) => !l.is_provisional);
+  const { lines: overlaidLines, applied, honesty: overlayHonesty } =
+    overlayQuoteLinesWithSupplierPrices(
+      firmLines,
+      args.supplierOverlayPrices ?? [],
+    );
   const sheet = buildSupplierOrderSheet({
-    lineItems: standard.line_items.filter((l) => !l.is_provisional),
+    lineItems: overlaidLines,
     rateCard: args.rateCard,
   });
   if (sheet.line_count === 0) {
@@ -703,9 +713,11 @@ export function buildSupplierOrderDoc(args: Args): string {
       "No firm quote lines to order — resolve provisional items or add costed scope first.",
     );
   }
-  return supplierOrderSheetMarkdown(sheet, {
+  const markdown = supplierOrderSheetMarkdown(sheet, {
     address: args.project.address,
   });
+  if (applied === 0) return markdown;
+  return `${markdown}\n> ${overlayHonesty}\n`;
 }
 
 export function generateForKind(kind: OutputKind, args: Args): string {

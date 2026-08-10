@@ -162,6 +162,7 @@ export * from './plan-metres';
 export * from './design-canvas-diff';
 export * from './design-canvas-merge';
 export * from './ops-schedules';
+export * from './supplier-price-overlay';
 export * from './store-zip';
 export * from './schedule-callouts';
 

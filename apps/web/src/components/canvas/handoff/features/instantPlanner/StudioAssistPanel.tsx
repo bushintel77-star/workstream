@@ -2,17 +2,27 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import type {
+  CatalogPlacement,
   DesignCanvas,
   IrrigationZone,
   LeftoverStock,
   ProjectOrchestrationWorld,
 } from "@workstream/contracts";
 import {
+  assistLightingPlacementLabel,
+  estimateIrrigationAssistLive,
+  estimateLightingAssistLive,
   featureFromRecognizedStroke,
+  listAssistIrrigationZones,
+  listAssistLightingPlacements,
   matchLeftoversToBom,
+  nudgeAssistLuminaires,
   proposeIrrigationAssist,
   proposeLightingAssist,
   recognizeStroke,
+  scaleAssistPipeRuns,
+  setAssistEmitterSpacing,
+  SPACING_PRESETS_CM,
   summariseIrrigationAssist,
   summariseLightingAssist,
 } from "@workstream/domain";
@@ -117,6 +127,12 @@ export function StudioAssistPanel({
   } | null>(null);
   const [poolNote, setPoolNote] = useState<string | null>(null);
   const [assistMetric, setAssistMetric] = useState<string | null>(null);
+  /** Draft assist irrigation for live coverage/cost editing after place. */
+  const [draftZones, setDraftZones] = useState<IrrigationZone[] | null>(null);
+  /** Draft assist luminaires for live position editing after place. */
+  const [draftLights, setDraftLights] = useState<CatalogPlacement[] | null>(
+    null,
+  );
 
   const softArea = useMemo(() => {
     return (
@@ -125,6 +141,11 @@ export function StudioAssistPanel({
         .reduce((s, f) => s + f.area_m2, 0) ?? 90
     );
   }, [world]);
+
+  const boardWidthM =
+    canvas?.site_frame?.board_width_m && canvas.site_frame.board_width_m > 0
+      ? canvas.site_frame.board_width_m
+      : 20;
 
   const lighting = useMemo(
     () => (world ? proposeLightingAssist(world.spatial_facts) : []),
@@ -147,6 +168,53 @@ export function StudioAssistPanel({
     [pool, world?.live_bom],
   );
 
+  const canvasAssistZones = useMemo(
+    () => listAssistIrrigationZones(canvas?.irrigation_zones ?? []),
+    [canvas?.irrigation_zones],
+  );
+  const canvasAssistLights = useMemo(
+    () => listAssistLightingPlacements(canvas?.placements ?? []),
+    [canvas?.placements],
+  );
+
+  // Sync drafts from canvas when assist layers appear / change externally.
+  useEffect(() => {
+    if (canvasAssistZones.length === 0) {
+      setDraftZones(null);
+      return;
+    }
+    setDraftZones(canvasAssistZones);
+  }, [canvasAssistZones]);
+
+  useEffect(() => {
+    if (canvasAssistLights.length === 0) {
+      setDraftLights(null);
+      return;
+    }
+    setDraftLights(canvasAssistLights);
+  }, [canvasAssistLights]);
+
+  const liveIrrigation = useMemo(() => {
+    if (!draftZones || draftZones.length === 0) return null;
+    return estimateIrrigationAssistLive(draftZones, softArea, boardWidthM);
+  }, [draftZones, softArea, boardWidthM]);
+
+  const liveLighting = useMemo(() => {
+    if (!draftLights || draftLights.length === 0) return null;
+    return estimateLightingAssistLive(draftLights, boardWidthM);
+  }, [draftLights, boardWidthM]);
+
+  const meanSpacingCm = useMemo(() => {
+    if (!draftZones || draftZones.length === 0) return 30;
+    const spacings = draftZones
+      .map((z) => z.emitter_spacing_cm)
+      .filter((n): n is number => typeof n === "number" && n > 0);
+    if (spacings.length === 0) return 30;
+    return Math.round(
+      spacings.reduce((s, n) => s + n, 0) / spacings.length,
+    );
+  }, [draftZones]);
+
   useEffect(() => {
     if (!open) return;
     // Do not use useTransition here — that shared `pending` disables every
@@ -167,26 +235,42 @@ export function StudioAssistPanel({
 
   if (!canvas) return null;
 
+  const mergeAssistZones = (assist: IrrigationZone[]): IrrigationZone[] => {
+    const kept = (canvas.irrigation_zones ?? []).filter(
+      (z) =>
+        !z.name.toLowerCase().includes("drip zone") &&
+        !z.name.toLowerCase().startsWith("assist:"),
+    );
+    return [...kept, ...assist];
+  };
+
+  const mergeAssistLights = (
+    assist: CatalogPlacement[],
+  ): CatalogPlacement[] => {
+    const kept = canvas.placements.filter(
+      (p) => !listAssistLightingPlacements([p]).length,
+    );
+    return [...kept, ...assist];
+  };
+
   const applyIrrigation = () => {
     startTransition(async () => {
       const zones: IrrigationZone[] = proposeIrrigationAssist({
         openAreaM2: softArea,
       });
-      const kept = (canvas.irrigation_zones ?? []).filter(
-        (z) =>
-          !z.name.toLowerCase().includes("drip zone") &&
-          !z.name.toLowerCase().startsWith("assist:"),
-      );
       const tagged = zones.map((z) => ({
         ...z,
         name: z.name.startsWith("Assist:") ? z.name : `Assist: ${z.name}`,
       }));
+      const nextZones = mergeAssistZones(tagged);
       const res = await persistCanvas(projectId, canvas, {
-        irrigation_zones: [...kept, ...tagged],
+        irrigation_zones: nextZones,
       });
       onCanvasSaved?.(res.canvas);
+      setDraftZones(tagged);
+      const live = estimateIrrigationAssistLive(tagged, softArea, boardWidthM);
       setAssistMetric(
-        `Irrigation placed — ${summariseIrrigationAssist(tagged, softArea).label}. Adjust emitters on the layer; cost updates with the live estimator.`,
+        `Irrigation placed — ${live.label}. Tune spacing and pipe runs below.`,
       );
     });
   };
@@ -221,24 +305,73 @@ export function StudioAssistPanel({
   const applyLighting = () => {
     if (lighting.length === 0) return;
     startTransition(async () => {
-      const placements = [
-        ...canvas.placements,
-        ...lighting.map((l) => ({
+      const assistPlacements: CatalogPlacement[] = lighting.flatMap((l) => {
+        const count = Math.max(1, l.count || 1);
+        return Array.from({ length: count }, (_, i) => ({
           id: crypto.randomUUID(),
           symbol_id: "path-light",
-          x_pct: l.x_pct,
-          y_pct: l.y_pct,
+          x_pct: Math.min(98, l.x_pct + i * 1.5),
+          y_pct: Math.min(98, l.y_pct + i * 0.8),
           rotation_deg: 0,
           scale: 1,
-          label: l.fixture,
-        })),
-      ];
+          label: assistLightingPlacementLabel(l.fixture),
+        }));
+      });
+      const kept = canvas.placements.filter(
+        (p) => !listAssistLightingPlacements([p]).length,
+      );
+      const placements = [...kept, ...assistPlacements];
       const res = await persistCanvas(projectId, canvas, { placements });
       onCanvasSaved?.(res.canvas);
+      setDraftLights(assistPlacements);
+      const live = estimateLightingAssistLive(assistPlacements, boardWidthM);
       setAssistMetric(
-        `Lighting placed — ${lightingSummary.label}. Move fixtures freely; Instant Planner reflects coverage cost.`,
+        `Lighting placed — ${live.label}. Nudge luminaires below; cost updates live.`,
       );
     });
+  };
+
+  const persistIrrigationDraft = (nextAssist: IrrigationZone[]) => {
+    setDraftZones(nextAssist);
+    const live = estimateIrrigationAssistLive(
+      nextAssist,
+      softArea,
+      boardWidthM,
+    );
+    setAssistMetric(`Irrigation edit — ${live.label}`);
+    startTransition(async () => {
+      const res = await persistCanvas(projectId, canvas, {
+        irrigation_zones: mergeAssistZones(nextAssist),
+      });
+      onCanvasSaved?.(res.canvas);
+    });
+  };
+
+  const persistLightingDraft = (nextAssist: CatalogPlacement[]) => {
+    setDraftLights(nextAssist);
+    const live = estimateLightingAssistLive(nextAssist, boardWidthM);
+    setAssistMetric(`Lighting edit — ${live.label}`);
+    startTransition(async () => {
+      const res = await persistCanvas(projectId, canvas, {
+        placements: mergeAssistLights(nextAssist),
+      });
+      onCanvasSaved?.(res.canvas);
+    });
+  };
+
+  const onSpacing = (cm: number) => {
+    if (!draftZones) return;
+    persistIrrigationDraft(setAssistEmitterSpacing(draftZones, cm));
+  };
+
+  const onPipeScale = (factor: number) => {
+    if (!draftZones) return;
+    persistIrrigationDraft(scaleAssistPipeRuns(draftZones, factor));
+  };
+
+  const onNudgeLights = (dx: number, dy: number) => {
+    if (!draftLights) return;
+    persistLightingDraft(nudgeAssistLuminaires(draftLights, dx, dy));
   };
 
   const runPresentationPack = () => {
@@ -335,6 +468,108 @@ export function StudioAssistPanel({
             <p className={css.chip} data-testid="assist-metric-chip">
               {assistMetric}
             </p>
+          ) : null}
+          {liveIrrigation ? (
+            <div
+              className={css.editBlock}
+              data-testid="assist-irrigation-edit"
+            >
+              <p className={css.kicker}>Edit irrigation coverage</p>
+              <p className={css.live} data-testid="assist-irrigation-live">
+                {liveIrrigation.label}
+              </p>
+              <p className={css.meta}>
+                {liveIrrigation.pipe_m} m pipe · {liveIrrigation.emitters}{" "}
+                emitters · {liveIrrigation.flow_lph} L/h
+              </p>
+              <p className={css.meta}>Emitter spacing (cm)</p>
+              <div className={css.chipRow} role="group" aria-label="Emitter spacing">
+                {SPACING_PRESETS_CM.map((cm) => (
+                  <button
+                    key={cm}
+                    type="button"
+                    className={
+                      meanSpacingCm === cm ? css.chipBtnActive : css.chipBtn
+                    }
+                    disabled={pending}
+                    data-testid={`assist-spacing-${cm}`}
+                    onClick={() => onSpacing(cm)}
+                  >
+                    {cm}
+                  </button>
+                ))}
+              </div>
+              <p className={css.meta}>Pipe runs</p>
+              <div className={css.chipRow}>
+                <button
+                  type="button"
+                  className={css.chipBtn}
+                  disabled={pending}
+                  data-testid="assist-pipe-shorter"
+                  onClick={() => onPipeScale(0.9)}
+                >
+                  Shorter
+                </button>
+                <button
+                  type="button"
+                  className={css.chipBtn}
+                  disabled={pending}
+                  data-testid="assist-pipe-longer"
+                  onClick={() => onPipeScale(1.1)}
+                >
+                  Longer
+                </button>
+              </div>
+            </div>
+          ) : null}
+          {liveLighting ? (
+            <div className={css.editBlock} data-testid="assist-lighting-edit">
+              <p className={css.kicker}>Edit lighting positions</p>
+              <p className={css.live} data-testid="assist-lighting-live">
+                {liveLighting.label}
+              </p>
+              <p className={css.meta}>Nudge luminaires</p>
+              <div className={css.nudgeGrid}>
+                <span />
+                <button
+                  type="button"
+                  className={css.chipBtn}
+                  disabled={pending}
+                  data-testid="assist-light-nudge-n"
+                  onClick={() => onNudgeLights(0, -1.5)}
+                >
+                  N
+                </button>
+                <span />
+                <button
+                  type="button"
+                  className={css.chipBtn}
+                  disabled={pending}
+                  data-testid="assist-light-nudge-w"
+                  onClick={() => onNudgeLights(-1.5, 0)}
+                >
+                  W
+                </button>
+                <button
+                  type="button"
+                  className={css.chipBtn}
+                  disabled={pending}
+                  data-testid="assist-light-nudge-s"
+                  onClick={() => onNudgeLights(0, 1.5)}
+                >
+                  S
+                </button>
+                <button
+                  type="button"
+                  className={css.chipBtn}
+                  disabled={pending}
+                  data-testid="assist-light-nudge-e"
+                  onClick={() => onNudgeLights(1.5, 0)}
+                >
+                  E
+                </button>
+              </div>
+            </div>
           ) : null}
           <p className={css.kicker}>Resource pool</p>
           <p className={css.meta} data-testid="assist-leftover">
@@ -462,10 +697,10 @@ export function StudioAssistPanel({
           ) : null}
           {packNotes
             ? packNotes.map((n) => (
-                <p key={n} className={css.meta}>
-                  {n}
-                </p>
-              ))
+              <p key={n} className={css.meta}>
+                {n}
+              </p>
+            ))
             : null}
         </div>
       ) : null}

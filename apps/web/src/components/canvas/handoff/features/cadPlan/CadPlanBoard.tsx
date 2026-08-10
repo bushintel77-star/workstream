@@ -2842,6 +2842,8 @@ export function CadPlanBoard({
                 >
                   <span
                     className={`${css.aiChip}${isCur ? ` ${css.aiChipHot}` : ""}`}
+                    title="AI suggestion — pending review"
+                    aria-hidden
                   >
                     AI
                   </span>

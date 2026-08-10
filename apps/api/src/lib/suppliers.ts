@@ -4,14 +4,20 @@
  * None of the AU trade suppliers (Bunnings Trade, Boral, Holcim, Andersons,
  * Australian Native Landscapes, Online Plants AU, Speciality Trees) publish a
  * documented public price API. Real integrations need either:
- *   - A signed trade account + scraping a JSON endpoint they expose internally
- *     for the trade portal, or
- *   - Periodic email/PDF rate-sheet ingestion via OCR/Claude.
+ *   - A signed trade account + an adapter they approve (not ToS-breaking scrapers), or
+ *   - Periodic email/PDF → JSON rate-sheet ingestion (ops drop files here).
  *
- * This file exposes a stable interface (`fetchPrices(supplier)`) returning
- * dev-fallback canned prices today and pluggable real adapters later. Set
- * SUPPLIERS_LIVE=true and supply per-supplier credentials to switch over.
+ * Honest modes:
+ *   - `dev_fallback` — canned DEV rows (default).
+ *   - `live` — only when SUPPLIERS_LIVE=true AND a per-supplier JSON sheet
+ *     loads from SUPPLIERS_RATE_SHEET_DIR. Never claims live for canned rows.
+ *
+ * Sheet file: `{SUPPLIERS_RATE_SHEET_DIR}/{supplierId}.json`
+ * Shape: `{ "fetched_at"?: iso, "prices": SupplierPrice[] }` or bare `SupplierPrice[]`.
  */
+
+import { promises as fs } from "node:fs";
+import path from "node:path";
 
 export type SupplierId =
   | "bunnings"
@@ -36,6 +42,9 @@ export type SupplierPriceList = {
   supplier_label: string;
   fetched_at: string;
   mode: "live" | "dev_fallback";
+  /** How the list was resolved — never "live" for canned DEV. */
+  feed: "rate_sheet" | "dev_canned";
+  honesty: string;
   prices: SupplierPrice[];
 };
 
@@ -84,23 +93,11 @@ const DEV: Record<SupplierId, SupplierPrice[]> = {
   ],
 };
 
-export function isSuppliersLive(): boolean {
-  return process.env.SUPPLIERS_LIVE === "true";
-}
+const DEV_HONESTY =
+  "Dev-fallback canned Melbourne trade rates — not a live supplier feed. Set SUPPLIERS_LIVE=true and drop JSON sheets in SUPPLIERS_RATE_SHEET_DIR to go live.";
 
-export async function fetchPrices(
-  supplier: SupplierId,
-): Promise<SupplierPriceList> {
-  // Real adapters not yet implemented — every supplier returns canned data
-  // until a trade-account scraper / OCR ingestion lands.
-  return {
-    supplier,
-    supplier_label: SUPPLIER_LABEL[supplier],
-    fetched_at: new Date().toISOString(),
-    mode: isSuppliersLive() ? "live" : "dev_fallback",
-    prices: DEV[supplier],
-  };
-}
+const LIVE_HONESTY =
+  "Configured supplier rate sheet (SUPPLIERS_RATE_SHEET_DIR) — confirm with trade account before tender.";
 
 export const ALL_SUPPLIERS: SupplierId[] = [
   "bunnings",
@@ -111,3 +108,157 @@ export const ALL_SUPPLIERS: SupplierId[] = [
   "online_plants_au",
   "speciality_trees",
 ];
+
+/** Gate: attempt rate-sheet adapters. Alone never makes canned rows "live". */
+export function isSuppliersLiveEnabled(): boolean {
+  return process.env.SUPPLIERS_LIVE === "true";
+}
+
+/** @deprecated Prefer isSuppliersLiveEnabled — name kept for older call sites. */
+export function isSuppliersLive(): boolean {
+  return isSuppliersLiveEnabled();
+}
+
+export function suppliersRateSheetDir(): string | null {
+  const raw = process.env.SUPPLIERS_RATE_SHEET_DIR?.trim();
+  return raw ? raw : null;
+}
+
+function isPriceRow(v: unknown): v is SupplierPrice {
+  if (!v || typeof v !== "object") return false;
+  const o = v as Record<string, unknown>;
+  return (
+    typeof o.sku === "string" &&
+    typeof o.label === "string" &&
+    typeof o.unit === "string" &&
+    typeof o.rate === "number" &&
+    Number.isFinite(o.rate) &&
+    o.rate >= 0 &&
+    (o.in_stock === null || typeof o.in_stock === "boolean") &&
+    (o.source_url === null || typeof o.source_url === "string")
+  );
+}
+
+function parseSheetJson(
+  raw: unknown,
+): { prices: SupplierPrice[]; fetched_at: string | null } | null {
+  if (Array.isArray(raw)) {
+    const prices = raw.filter(isPriceRow);
+    return prices.length > 0 ? { prices, fetched_at: null } : null;
+  }
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  if (!Array.isArray(o.prices)) return null;
+  const prices = o.prices.filter(isPriceRow);
+  if (prices.length === 0) return null;
+  const fetched_at =
+    typeof o.fetched_at === "string" && o.fetched_at.trim()
+      ? o.fetched_at
+      : null;
+  return { prices, fetched_at };
+}
+
+export async function loadSupplierRateSheet(
+  supplier: SupplierId,
+  dir: string = suppliersRateSheetDir() ?? "",
+): Promise<{ prices: SupplierPrice[]; fetched_at: string } | null> {
+  if (!dir) return null;
+  const file = path.join(dir, `${supplier}.json`);
+  try {
+    const text = await fs.readFile(file, "utf8");
+    const parsed = parseSheetJson(JSON.parse(text) as unknown);
+    if (!parsed) return null;
+    return {
+      prices: parsed.prices,
+      fetched_at: parsed.fetched_at ?? new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function cannedList(supplier: SupplierId): SupplierPriceList {
+  return {
+    supplier,
+    supplier_label: SUPPLIER_LABEL[supplier],
+    fetched_at: new Date().toISOString(),
+    mode: "dev_fallback",
+    feed: "dev_canned",
+    honesty: DEV_HONESTY,
+    prices: DEV[supplier],
+  };
+}
+
+export async function fetchPrices(
+  supplier: SupplierId,
+): Promise<SupplierPriceList> {
+  if (isSuppliersLiveEnabled()) {
+    const sheet = await loadSupplierRateSheet(supplier);
+    if (sheet) {
+      return {
+        supplier,
+        supplier_label: SUPPLIER_LABEL[supplier],
+        fetched_at: sheet.fetched_at,
+        mode: "live",
+        feed: "rate_sheet",
+        honesty: LIVE_HONESTY,
+        prices: sheet.prices,
+      };
+    }
+  }
+  // SUPPLIERS_LIVE alone must not flip mode — that lied when adapters were stubs.
+  return cannedList(supplier);
+}
+
+/** Flatten live sheets for SKU overlay into costing / supplier_order. */
+export async function collectLiveSupplierOverlayPrices(): Promise<{
+  prices: Array<{ sku: string; rate: number; supplier_label: string }>;
+  liveSuppliers: SupplierId[];
+}> {
+  if (!isSuppliersLiveEnabled() || !suppliersRateSheetDir()) {
+    return { prices: [], liveSuppliers: [] };
+  }
+  const prices: Array<{ sku: string; rate: number; supplier_label: string }> =
+    [];
+  const liveSuppliers: SupplierId[] = [];
+  for (const id of ALL_SUPPLIERS) {
+    const list = await fetchPrices(id);
+    if (list.mode !== "live") continue;
+    liveSuppliers.push(id);
+    for (const p of list.prices) {
+      prices.push({
+        sku: p.sku,
+        rate: p.rate,
+        supplier_label: list.supplier_label,
+      });
+    }
+  }
+  return { prices, liveSuppliers };
+}
+
+export function supplierFeedStatusSummary(lists: SupplierPriceList[]): {
+  live_count: number;
+  configured_dir: boolean;
+  suppliers_live_flag: boolean;
+  honesty: string;
+} {
+  const live_count = lists.filter((l) => l.mode === "live").length;
+  const configured_dir = !!suppliersRateSheetDir();
+  const suppliers_live_flag = isSuppliersLiveEnabled();
+  let honesty = DEV_HONESTY;
+  if (live_count > 0) {
+    honesty = `${live_count}/${lists.length} suppliers on configured rate sheets.`;
+  } else if (suppliers_live_flag && !configured_dir) {
+    honesty =
+      "SUPPLIERS_LIVE=true but SUPPLIERS_RATE_SHEET_DIR is unset — using canned fallback (not live).";
+  } else if (suppliers_live_flag && configured_dir) {
+    honesty =
+      "SUPPLIERS_LIVE=true and rate-sheet dir set, but no valid {supplier}.json sheets loaded — using canned fallback (not live).";
+  }
+  return {
+    live_count,
+    configured_dir,
+    suppliers_live_flag,
+    honesty,
+  };
+}

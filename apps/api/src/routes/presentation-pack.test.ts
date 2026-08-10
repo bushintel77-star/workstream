@@ -47,7 +47,8 @@ describe("POST /projects/:id/presentation-pack", () => {
     expect(sun?.status).toBe("ready");
     expect(sun?.uri).toBe(`/projects/${projectId}?mode=cad&shade=1`);
     expect(elev?.status).toBe("ready");
-    expect(elev?.uri).toBe(`/projects/${projectId}?mode=elevation`);
+    expect(elev?.uri).toBe(`/projects/${projectId}?mode=elevation&look=N`);
+    expect(elev?.reason).toMatch(/indicative|live elevation/i);
     expect(freeze?.status).toBe("ready");
     expect(freeze?.uri).toBe(`/projects/${projectId}?mode=cad&branches=1`);
     expect(supplier?.status).toBe("skipped");
