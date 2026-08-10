@@ -454,6 +454,27 @@ Use stubbed model responses if necessary, but preserve the real response shapes:
 
 The prototype should demonstrate the difference between **design intent** and **site operations**, while showing that both enter the same Workstream project context and remain subordinate to human control.
 
+## WIP and GAP coverage
+
+The authoritative autonomous-build inventory is maintained in:
+
+`docs/STAGED-AUTONOMOUS-BUILD-PLAN.md`
+
+It covers the remaining work connected to voice, capture, processing, and delivery:
+
+- W1 — mobile voice capture: batch recording is shipped; streaming and true confidence UI remain future work.
+- W2 — processing UI: staged status and failure states are being surfaced; evidence and retry-from-last-good are the next UX refinement.
+- W3 — capture pipeline: transcription → survey → design → costing → audit → outputs now runs as a guarded staged pipeline.
+- W4 — voice intent: shared contract and design/dictation routing exist; confidence population and server-backed classification remain future work.
+- W5 — asset panel categorisation/search refinement.
+- W6 — hero overlay geometry fidelity.
+- W7 — per-stage audit logs, retry and rollback durability.
+- Gap work — loading skeletons, mobile coarse-pointer affordances, branded dialogs, view transitions, evidence sheets, and consistent Accept/Refine/Undo primitives.
+- Human-only work — EAS credentials, supplier rate sheets, branch protection, Railway HA, and licensed title/utility data.
+- Explicitly deferred work — Phase 6 AI assist, brochure output, true CAD/IFC/PostGIS, and survey-grade construction documentation.
+
+The autonomous pipeline is not permission to auto-commit design geometry. It can progress data-processing stages and produce reviewable outputs, but geometry remains subject to the existing human review and acceptance model.
+
 ## Relevant source locations
 
 - Mobile recorder: `apps/mobile/app/(app)/recording.tsx`
