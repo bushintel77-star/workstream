@@ -89,7 +89,7 @@ describe("runCapturePipeline", () => {
       lat: -37.85,
       lng: 145.0,
     });
-    const recording = await store.createRecording(owner, project.id, "https://example.com/audio.m4a", 120);
+    const recording = await store.createRecording(owner, project.id, "https://example.com/audio.m4a", 120, true);
     if (!recording) throw new Error("recording missing");
     await store.updateRecordingTranscript(recording.id, "fake transcript for testing", 0.95);
 
@@ -125,7 +125,7 @@ describe("runCapturePipeline", () => {
     const project = await store.createProject(owner, {
       address: "12 Test St, Melbourne VIC 3000",
     });
-    const recording = await store.createRecording(owner, project.id, "", 60);
+    const recording = await store.createRecording(owner, project.id, "", 60, true);
     if (!recording) throw new Error("recording missing");
 
     const logs = await runCapturePipeline(

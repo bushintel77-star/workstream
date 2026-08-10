@@ -86,8 +86,7 @@ Human/infrastructure gated:
 
 Technical follow-up:
 
-- Durable stage logs and retry-from-last-good API/UI.
-- Real STT confidence propagation.
+- Replace heuristic STT confidence with provider/on-device confidence when available.
 - Server-backed voice intent classification.
 - Streaming/on-device transcription spike (`whisper.rn` versus OS speech recognition).
 - Silero VAD benchmark against Melbourne site recordings.
@@ -117,10 +116,10 @@ Explicitly deferred:
 
 ## Next recommended slice
 
-Implement durable stage evidence and retry-from-last-good:
+Implement server-backed voice intent classification while preserving the existing lexical fallback:
 
-1. Add stage-log persistence to the project/pipeline record.
-2. Add a project-scoped stage-log read endpoint.
-3. Let mobile show the failed guard and evidence.
-4. Add `Retry from last good` with idempotent stage restart.
-5. Keep design geometry proposal/review separate from autonomous data processing.
+1. Add a contracts-backed classification response with confidence and source.
+2. Route mobile walkthrough transcripts through the API classifier.
+3. Keep design intent ephemeral until human review.
+4. Fall back to the current lexical classifier when the provider is unavailable.
+5. Add deterministic contract and API tests for design versus operational language.

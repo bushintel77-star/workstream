@@ -7,5 +7,6 @@ export const RecordingSchema = z.object({
   duration_s: z.number().nonnegative(),
   transcript: z.string().nullable(),
   transcription_confidence: z.number().min(0).max(1).nullable(),
+  dil_consent: z.boolean().default(false),
 });
 export type Recording = z.infer<typeof RecordingSchema>;

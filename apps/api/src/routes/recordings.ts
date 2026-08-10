@@ -37,6 +37,17 @@ export default async function recordingRoutes(fastify: FastifyInstance) {
           .send({ error: "duration_s must be a positive integer ≤ 3600" });
       }
 
+      const consentField = file.fields.dil_consent;
+      const dilConsent =
+        consentField && "value" in consentField
+          ? consentField.value === "true"
+          : false;
+      if (!dilConsent) {
+        return reply.code(400).send({
+          error: "dil_consent must be true before transcription analysis",
+        });
+      }
+
       const buffer = await file.toBuffer();
       const ext = file.mimetype?.includes("webm") ? "webm" : "m4a";
 
@@ -44,7 +55,8 @@ export default async function recordingRoutes(fastify: FastifyInstance) {
         ownerId,
         projectId,
         "",
-        durationS
+        durationS,
+        dilConsent,
       );
 
       if (!recording) {

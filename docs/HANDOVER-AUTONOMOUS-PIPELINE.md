@@ -55,13 +55,12 @@ These are **not** authored by me; they are included in the commit to preserve th
 
 ## What remains
 
-- Store `stage_logs` persistently on the project record.
-- Mobile recording screen: DIL consent toggle and live confidence preview.
-- Voice intent contract tests (`packages/contracts/src/schemas/voice-intent.test.ts`).
-- Mobile processing tests (`apps/mobile/src/__tests__/processing.test.tsx`).
+- Replace heuristic STT confidence with provider/on-device confidence when available.
+- Server-backed voice intent classification with the lexical fallback retained.
+- A real end-to-end recording upload against a configured mobile/API environment.
 - Branded Dialog for guard-rail undo, view transitions, loading skeletons.
 - Update `docs/WORKSTREAM-STATUS.md` and `docs/GAP-ANALYSIS-CURRENT.md`.
-- Full `pnpm run ci` gate and a real end-to-end recording upload.
+- Human-gated EAS setup and production credentials.
 
 ---
 

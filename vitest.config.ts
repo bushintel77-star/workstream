@@ -6,8 +6,9 @@ export default defineConfig({
       "packages/**/*.{test,spec}.ts",
       "apps/api/**/*.{test,spec}.ts",
       "apps/web/src/**/*.{test,spec}.ts",
+      "apps/mobile/src/components/**/*.{test,spec}.ts",
     ],
-    exclude: ["**/node_modules/**", "**/dist/**", "apps/mobile/**"],
+    exclude: ["**/node_modules/**", "**/dist/**", "apps/mobile/app/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

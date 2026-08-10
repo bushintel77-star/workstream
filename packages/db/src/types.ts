@@ -196,7 +196,8 @@ export interface Store {
     ownerId: string,
     projectId: string,
     audioUri: string,
-    durationS: number
+    durationS: number,
+    dilConsent?: boolean,
   ): Promise<Recording | null>;
   updateRecordingTranscript(
     recordingId: string,

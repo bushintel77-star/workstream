@@ -11,62 +11,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import type { ProjectStatus, StageLog } from "@workstream/contracts";
 import { tokens } from "@workstream/ui";
 import { useWorkstreamApi } from "../../../src/lib/api";
-
-type Stage = {
-  key: string;
-  label: string;
-  done: boolean;
-  active: boolean;
-  failed: boolean;
-};
-
-const STAGE_LABELS: Record<string, string> = {
-  transcription: "Transcribing walkthrough",
-  survey: "Surveying site",
-  design: "Generating design",
-  costing: "Costing scenarios",
-  audit: "Self-audit",
-  outputs: "Packaging outputs",
-  complete: "Complete",
-};
-
-const FAILED_SUFFIX = "_failed";
-
-function buildStages(args: {
-  hasTranscript: boolean;
-  hasSurvey: boolean;
-  hasDesign: boolean;
-  hasCosting: boolean;
-  hasAudit: boolean;
-  hasOutputs: boolean;
-  status: ProjectStatus | null;
-}): Stage[] {
-  const status = args.status ?? "processing";
-  const order = [
-    { key: "transcription", done: args.hasTranscript },
-    { key: "survey", done: args.hasSurvey },
-    { key: "design", done: args.hasDesign },
-    { key: "costing", done: args.hasCosting },
-    { key: "audit", done: args.hasAudit },
-    { key: "outputs", done: args.hasOutputs },
-    { key: "complete", done: status === "complete" },
-  ];
-
-  const failedKey = status.endsWith(FAILED_SUFFIX) ? status.replace(FAILED_SUFFIX, "") : null;
-  const firstOpen = order.findIndex((s) => !s.done);
-
-  return order.map((s, i) => {
-    const failed = failedKey === s.key;
-    const active = !s.done && (failed || i === firstOpen) && status !== "complete";
-    return {
-      key: s.key,
-      label: STAGE_LABELS[s.key] ?? s.key,
-      done: s.done,
-      active,
-      failed,
-    };
-  });
-}
+import {
+  buildProcessingStages,
+  stageLabel,
+} from "../../../src/components/processingStages";
 
 export default function ProcessingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -76,6 +24,7 @@ export default function ProcessingScreen() {
   const [status, setStatus] = useState<ProjectStatus | null>(null);
   const [hasTranscript, setHasTranscript] = useState(false);
   const [latestTranscript, setLatestTranscript] = useState("");
+  const [transcriptionConfidence, setTranscriptionConfidence] = useState<number | null>(null);
   const [hasSurvey, setHasSurvey] = useState(false);
   const [hasDesign, setHasDesign] = useState(false);
   const [hasCosting, setHasCosting] = useState(false);
@@ -101,8 +50,10 @@ export default function ProcessingScreen() {
       ]);
       setStatus(p.status);
       setStageLogs(p.stage_logs ?? []);
-      const transcript = recs.find((r) => !!r.transcript)?.transcript ?? "";
+      const recording = recs.find((r) => !!r.transcript) ?? recs[0];
+      const transcript = recording?.transcript ?? "";
       setLatestTranscript(transcript);
+      setTranscriptionConfidence(recording?.transcription_confidence ?? null);
       setHasTranscript(Boolean(transcript));
       setHasSurvey(survey != null);
       setHasDesign(design != null);
@@ -138,7 +89,7 @@ export default function ProcessingScreen() {
 
   const failedLog = stageLogs.find((log) => !log.passed && log.status === "failed");
 
-  const stages = buildStages({
+  const stages = buildProcessingStages({
     hasTranscript,
     hasSurvey,
     hasDesign,
@@ -192,10 +143,16 @@ export default function ProcessingScreen() {
           />
         )}
 
+        {transcriptionConfidence != null ? (
+          <Text style={styles.confidence} accessibilityLiveRegion="polite">
+            Transcription confidence: {Math.round(transcriptionConfidence * 100)}%
+          </Text>
+        ) : null}
+
         {status && status.endsWith("_failed") ? (
           <View style={styles.failureBox}>
             <Text style={styles.failureHeading}>
-              {failedLog ? `${STAGE_LABELS[failedLog.stage] ?? failedLog.stage} needs attention` : "Processing needs attention"}
+              {failedLog ? `${stageLabel(failedLog.stage)} needs attention` : "Processing needs attention"}
             </Text>
             {failedLog?.findings.filter((finding) => !finding.passed).map((finding) => (
               <Text key={finding.check} style={styles.failureText}>
@@ -335,6 +292,11 @@ const styles = StyleSheet.create({
   slow: {
     fontSize: tokens.type.caption.fontSize,
     color: tokens.color.semantic.warn,
+    textAlign: "center",
+  },
+  confidence: {
+    color: tokens.color.ink.tertiary,
+    fontSize: tokens.type.caption.fontSize,
     textAlign: "center",
   },
   failureBox: {

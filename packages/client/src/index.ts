@@ -741,7 +741,8 @@ export class WorkstreamClient {
     projectId: string,
     fileUri: string,
     durationS: number,
-    mimeType = "audio/m4a"
+    mimeType = "audio/m4a",
+    dilConsent = false,
   ): Promise<Recording> {
     const form = new FormData();
     const ext = mimeType.includes("webm") ? "webm" : "m4a";
@@ -751,6 +752,7 @@ export class WorkstreamClient {
       name: `recording.${ext}`,
     } as unknown as Blob);
     form.append("duration_s", String(Math.round(durationS)));
+    form.append("dil_consent", String(dilConsent));
 
     const headers: Record<string, string> = {};
     if (this.options.getToken) {

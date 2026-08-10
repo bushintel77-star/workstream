@@ -79,6 +79,7 @@ export default function RecordingScreen() {
   const [activating, setActivating] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [dilConsent, setDilConsent] = useState(false);
   const [levels, setLevels] = useState<number[]>(() =>
     new Array(METERING_WINDOW).fill(0),
   );
@@ -232,7 +233,7 @@ export default function RecordingScreen() {
   const startRecording = useCallback(async () => {
     if (!permission || !projectId || activating || isRecording) return;
     setActivating(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
     Animated.spring(armedScale, {
       toValue: 0.94,
       useNativeDriver: true,
@@ -262,7 +263,7 @@ export default function RecordingScreen() {
       startTimer();
       Haptics.notificationAsync(
         Haptics.NotificationFeedbackType.Success,
-      ).catch(() => {});
+      ).catch(() => { });
       Animated.spring(armedScale, {
         toValue: 1,
         useNativeDriver: true,
@@ -275,7 +276,7 @@ export default function RecordingScreen() {
         useNativeDriver: true,
       }).start();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
-        () => {},
+        () => { },
       );
       Alert.alert(
         "Recording failed",
@@ -297,7 +298,7 @@ export default function RecordingScreen() {
   const pauseRecording = useCallback(async () => {
     const rec = recordingRef.current;
     if (!rec || !isRecording) return;
-    Haptics.selectionAsync().catch(() => {});
+    Haptics.selectionAsync().catch(() => { });
     if (isPaused) {
       await rec.startAsync();
       setIsPaused(false);
@@ -313,7 +314,7 @@ export default function RecordingScreen() {
     const rec = recordingRef.current;
     if (!rec || !projectId) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-      () => {},
+      () => { },
     );
     stopTimer();
     setUploading(true);
@@ -322,13 +323,13 @@ export default function RecordingScreen() {
       const uri = rec.getURI();
       if (!uri) throw new Error("No recording file");
       const durationS = Math.max(1, elapsed);
-      await api.uploadRecording(projectId, uri, durationS);
+      await api.uploadRecording(projectId, uri, durationS, "audio/m4a", dilConsent);
       recordingRef.current = null;
       setIsRecording(false);
       router.replace(`/(app)/processing/${projectId}`);
     } catch (e) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
-        () => {},
+        () => { },
       );
       Alert.alert(
         "Upload failed",
@@ -337,10 +338,10 @@ export default function RecordingScreen() {
     } finally {
       setUploading(false);
     }
-  }, [api, elapsed, projectId, router, stopTimer]);
+  }, [api, dilConsent, elapsed, projectId, router, stopTimer]);
 
   const confirmCancel = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
     Alert.alert("Discard recording?", "Your walkthrough will not be saved.", [
       { text: "Keep recording", style: "cancel" },
       {
@@ -349,7 +350,7 @@ export default function RecordingScreen() {
         onPress: async () => {
           Haptics.notificationAsync(
             Haptics.NotificationFeedbackType.Warning,
-          ).catch(() => {});
+          ).catch(() => { });
           stopTimer();
           const rec = recordingRef.current;
           if (rec) {
@@ -552,6 +553,21 @@ export default function RecordingScreen() {
         )}
       </View>
 
+      <Pressable
+        style={styles.consentRow}
+        onPress={() => setDilConsent((value) => !value)}
+        disabled={isRecording || uploading}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: dilConsent, disabled: isRecording || uploading }}
+      >
+        <View style={[styles.consentBox, dilConsent && styles.consentBoxChecked]}>
+          {dilConsent ? <Text style={styles.consentTick}>✓</Text> : null}
+        </View>
+        <Text style={styles.consentText}>
+          I consent to this walkthrough being transcribed for this project.
+        </Text>
+      </Pressable>
+
       <View style={styles.controls}>
         {isRecording ? (
           <Pressable
@@ -617,7 +633,7 @@ export default function RecordingScreen() {
                 ]}
                 onPress={isRecording ? finishAndUpload : startRecording}
                 disabled={
-                  permission !== true || activating || uploading
+                  permission !== true || !dilConsent || activating || uploading
                 }
                 accessibilityRole="button"
                 accessibilityState={{
@@ -651,7 +667,9 @@ export default function RecordingScreen() {
               ? "Tap to stop & upload"
               : activating
                 ? "Arming microphone…"
-                : "Tap to start"}
+                : dilConsent
+                  ? "Tap to start"
+                  : "Consent required to start"}
         </Text>
       </View>
     </View>
@@ -727,6 +745,37 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.micro.fontSize,
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
+  },
+  consentRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: tokens.space[3],
+    paddingVertical: tokens.space[3],
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: tokens.color.line.hairline,
+  },
+  consentBox: {
+    width: 24,
+    height: 24,
+    borderWidth: 1,
+    borderColor: tokens.color.ink.tertiary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  consentBoxChecked: {
+    backgroundColor: tokens.color.accent.default,
+    borderColor: tokens.color.accent.default,
+  },
+  consentTick: {
+    color: tokens.color.ink.inverted,
+    fontWeight: "700",
+  },
+  consentText: {
+    flex: 1,
+    color: tokens.color.ink.secondary,
+    fontSize: tokens.type.caption.fontSize,
+    lineHeight: tokens.type.caption.lineHeight,
   },
   controls: {
     alignItems: "center",

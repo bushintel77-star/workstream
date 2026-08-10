@@ -301,6 +301,17 @@ describe("RateCardSchema + PlantPaletteSchema + RecordingSchema + PhotoMeasureme
       }).success,
     ).toBe(true);
 
+    const recording = RecordingSchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      audio_uri: "https://example.com/audio.webm",
+      duration_s: 60,
+      transcript: null,
+      transcription_confidence: null,
+    });
+    expect(recording.success).toBe(true);
+    if (recording.success) expect(recording.data.dil_consent).toBe(false);
+
     expect(
       RecordingSchema.safeParse({
         id: UUID,
@@ -309,6 +320,7 @@ describe("RateCardSchema + PlantPaletteSchema + RecordingSchema + PhotoMeasureme
         duration_s: 60,
         transcript: null,
         transcription_confidence: null,
+        dil_consent: false,
       }).success,
     ).toBe(true);
 

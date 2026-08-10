@@ -656,7 +656,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         );
     },
 
-    async createRecording(ownerId, projectId, audioUri, durationS) {
+    async createRecording(ownerId, projectId, audioUri, durationS, dilConsent = false) {
       const project = _projects.find(
         (x) => x.id === projectId && x.owner_id === ownerId
       );
@@ -668,6 +668,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         duration_s: durationS,
         transcript: null,
         transcription_confidence: null,
+        dil_consent: dilConsent,
       };
       _recordings.push(recording);
       project.status = "recording";
