@@ -188,8 +188,8 @@ test.describe("Present surface states", () => {
       "ready",
     );
 
-    page.once("dialog", (dialog) => dialog.accept());
     await page.getByTestId("issue-deck-btn").click();
+    await page.getByTestId("issue-deck-confirm").click();
 
     await expect(page.getByTestId("present-surface")).toHaveAttribute(
       "data-surface-state",

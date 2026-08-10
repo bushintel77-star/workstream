@@ -14,6 +14,8 @@ import { BY_TYPE, itemCost, type StudioItem } from "../../studioCatalog";
 import { tpzRadiusPct, type PctPoint } from "../../geometry";
 import type { RejectionReason } from "../../state/sessionRejectionHints";
 import styles from "./aiGhosts.module.css";
+import { DecisionTray } from "../../../../ui";
+import { KitButton } from "../../../../ui/kit";
 import { CSS_TOKEN } from "../../../../../styles/colorTokens";
 
 type Props = {
@@ -86,8 +88,8 @@ function toTree(it: StudioItem, scaleM: number): LiveGhostTree | null {
   const { rxPct } = d.existing
     ? tpzRadiusPct(dbhM, scaleM)
     : {
-        rxPct: ((Math.max(2, 12 * dbhM) * (it.scale || 1)) / scaleM) * 100,
-      };
+      rxPct: ((Math.max(2, 12 * dbhM) * (it.scale || 1)) / scaleM) * 100,
+    };
   return {
     x: it.x,
     y: it.y,
@@ -288,26 +290,35 @@ export function AiGhostReview({
         {expanded ? <Factors factors={factors} /> : null}
 
         <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.accept}
-            data-testid="ghost-accept"
-            onClick={() => onAccept(selected.id)}
-          >
-            Accept (A / Enter)
-          </button>
-          <button type="button" className={styles.reject} onClick={() => onReject(selected.id)}>
-            {rejectReasonId === selected.id ? "Reject without reason" : "Reject (R)"}
-          </button>
-          <button type="button" className={styles.ask} onClick={() => onAskAi(selected.id)}>
-            Ask AI
-          </button>
-          <button type="button" className={styles.ask} onClick={() => onCycle(-1)}>
-            Prev
-          </button>
-          <button type="button" className={styles.ask} onClick={() => onCycle(1)}>
-            Next
-          </button>
+          <DecisionTray
+            acceptLabel="Accept (A / Enter)"
+            refineLabel="Ask AI"
+            undoLabel={
+              rejectReasonId === selected.id
+                ? "Reject without reason"
+                : "Reject (R)"
+            }
+            onAccept={() => onAccept(selected.id)}
+            onRefine={() => onAskAi(selected.id)}
+            onUndo={() => onReject(selected.id)}
+            acceptTestId="ghost-accept"
+          />
+          <div className={styles.cycle}>
+            <KitButton
+              variant="ghost"
+              size="sm"
+              onClick={() => onCycle(-1)}
+            >
+              Prev
+            </KitButton>
+            <KitButton
+              variant="ghost"
+              size="sm"
+              onClick={() => onCycle(1)}
+            >
+              Next
+            </KitButton>
+          </div>
         </div>
         {rejectReasonId === selected.id ? (
           <div

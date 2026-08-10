@@ -211,25 +211,16 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--s-1);
   margin-top: auto;
   padding-top: 8px;
 }
 
-.accept,
-.reject,
-.ask {
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--ws-frame-hair);
-  background: color-mix(in srgb, var(--ws-frame-ink) 8%, transparent);
-  color: var(--ws-frame-ink);
-  font: inherit;
-  font-size: var(--text-xs);
-  font-weight: 650;
-  cursor: pointer;
-  transition: 0.16s background, 0.16s border-color;
+.cycle {
+  display: flex;
+  gap: var(--s-1);
+  margin-left: auto;
 }
 
 .rejectReasons {
@@ -258,17 +249,6 @@
 .rejectReasons button:hover {
   border-color: color-mix(in srgb, var(--hc-danger) 48%, transparent);
   color: var(--ws-frame-ink);
-}
-
-.accept {
-  border-color: color-mix(in srgb, var(--hc-success) 40%, transparent);
-  background: color-mix(in srgb, var(--hc-success) 12%, transparent);
-  color: color-mix(in srgb, var(--ws-frame-ink) 80%, var(--hc-success));
-}
-
-.reject:hover,
-.ask:hover {
-  background: color-mix(in srgb, var(--ws-frame-ink) 14%, transparent);
 }
 
 .empty {

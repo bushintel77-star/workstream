@@ -89,6 +89,14 @@
   border-top: 1px solid var(--line-subtle);
 }
 
+/* ---- Decision tray ---- */
+.decisionTray {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ---- Popover ---- */
 .popoverRoot {
   position: relative;

@@ -26,6 +26,7 @@ import {
   listPresentationDocumentsClient,
   updatePresentationDocumentClient,
 } from "./presentClient";
+import { ConfirmDialog } from "@/components/ui";
 import {
   KitButton,
   KitInput,
@@ -248,6 +249,8 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
   const [swatchPickerPanelId, setSwatchPickerPanelId] = useState<string | null>(
     null,
   );
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmIssue, setConfirmIssue] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deckRevisionRef = useRef(0);
 
@@ -346,7 +349,13 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
   };
 
   const handleDelete = (docId: string) => {
-    if (!confirm("Delete this deck? This cannot be undone.")) return;
+    setConfirmDelete(docId);
+  };
+
+  const confirmDeleteDoc = () => {
+    if (!confirmDelete) return;
+    const docId = confirmDelete;
+    setConfirmDelete(null);
     startTransition(async () => {
       try {
         await deletePresentationDocumentClient(projectId, docId);
@@ -633,25 +642,24 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
 
   const handleIssue = () => {
     if (!activeDoc || activeDoc.status === "issued") return;
-    if (
-      !confirm(
-        "Issue this deck? Edits will be blocked and live quote figures freeze as a snapshot.",
-      )
-    ) {
-      return;
-    }
+    setConfirmIssue(true);
+  };
+
+  const confirmIssueDoc = () => {
+    if (!activeDoc || activeDoc.status === "issued") return;
+    setConfirmIssue(false);
     startTransition(async () => {
       try {
         const snapshot = estimate
           ? {
-              totalInclGst: estimate.totalInclGst,
-              materialsExGst: estimate.materialsExGst,
-              gst: estimate.gst,
-              hardscapeM2: estimate.hardscapeM2,
-              excavateM3: estimate.excavateM3,
-              lines: estimate.lines,
-              captured_at: new Date().toISOString(),
-            }
+            totalInclGst: estimate.totalInclGst,
+            materialsExGst: estimate.materialsExGst,
+            gst: estimate.gst,
+            hardscapeM2: estimate.hardscapeM2,
+            excavateM3: estimate.excavateM3,
+            lines: estimate.lines,
+            captured_at: new Date().toISOString(),
+          }
           : null;
         const updated = await updatePresentationDocumentClient(
           projectId,
@@ -712,13 +720,13 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
   const widgetEstimate =
     isLocked && activeDoc?.estimate_snapshot
       ? {
-          totalInclGst: activeDoc.estimate_snapshot.totalInclGst,
-          materialsExGst: activeDoc.estimate_snapshot.materialsExGst,
-          gst: activeDoc.estimate_snapshot.gst,
-          lines: activeDoc.estimate_snapshot.lines,
-          hardscapeM2: activeDoc.estimate_snapshot.hardscapeM2,
-          excavateM3: activeDoc.estimate_snapshot.excavateM3,
-        }
+        totalInclGst: activeDoc.estimate_snapshot.totalInclGst,
+        materialsExGst: activeDoc.estimate_snapshot.materialsExGst,
+        gst: activeDoc.estimate_snapshot.gst,
+        lines: activeDoc.estimate_snapshot.lines,
+        hardscapeM2: activeDoc.estimate_snapshot.hardscapeM2,
+        excavateM3: activeDoc.estimate_snapshot.excavateM3,
+      }
       : isLocked
         ? null
         : estimate;
@@ -994,6 +1002,41 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
           </KitButton>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete != null}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={confirmDeleteDoc}
+        title="Delete deck?"
+        destructive
+        confirmLabel="Delete"
+        confirmTestId="delete-deck-confirm"
+      >
+        {confirmDelete ? (
+          <p>
+            <strong>
+              {documents.find((d) => d.id === confirmDelete)?.title ??
+                "This deck"}
+            </strong>
+            <br />
+            <br />
+            This cannot be undone.
+          </p>
+        ) : null}
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirmIssue}
+        onClose={() => setConfirmIssue(false)}
+        onConfirm={confirmIssueDoc}
+        title="Issue deck?"
+        confirmLabel="Issue"
+        confirmTestId="issue-deck-confirm"
+      >
+        <p>
+          Edits will be blocked and live quote figures freeze as a snapshot.
+        </p>
+      </ConfirmDialog>
     </div>
   );
 }
