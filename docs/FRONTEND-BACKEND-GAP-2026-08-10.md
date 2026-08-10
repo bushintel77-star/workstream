@@ -93,6 +93,12 @@ The **canvas-critical routes** (`design-canvas.ts`, `cad.ts`, `boundary.ts`, `or
 
 Acting on the analysis in priority order:
 
-- **Step 2 (canvas-critical route tests):** in progress — dedicated `*.test.ts` for `design-canvas.ts`, `cad.ts`, `boundary.ts`, `orchestration.ts`.
-- **Step 3 (wire file delete with confirm + undo):** queued.
+- **Step 2 (canvas-critical route tests):** done — dedicated `*.test.ts` for
+  `design-canvas.ts`, `cad.ts`, `boundary.ts`, `orchestration.ts` added and
+  passing (26 tests).
+- **Step 3 (wire file delete with confirm):** done — `DELETE /projects/:id/files/:fileId`
+  consumed via a Next.js BFF proxy, `SitePackPanel` shows a "Remove" button per
+  BYDA file with a destructive `Dialog` confirm, and success/failure toasts are
+  shown via `useToast`. The delete is hard (backend unlinks the disk file), so
+  the dialog explicitly says it cannot be undone.
 - **A1 remainder + A2 accounting surface:** deferred until product roadmap prioritises them.
