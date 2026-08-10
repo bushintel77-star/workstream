@@ -27,30 +27,27 @@
   position: relative;
   overflow: hidden;
   padding: var(--s-2) var(--s-3);
-  border-radius: var(--hc-r-pop);
-  border: 1px solid var(--hc-line-soft);
-  background: var(--hc-invert);
-  backdrop-filter: none;
-  box-shadow: var(--hc-elev-2);
+  border-radius: 4px;
+  border: 1px solid var(--ws-frame-hair);
+  background: var(--hc-frost);
+  backdrop-filter: blur(12px);
+  box-shadow: none;
   font-family: var(--font-body);
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   animation: hzIn 180ms ease both;
 }
 
 .info {
-  border-color: var(--hc-line-soft);
+  border-color: var(--ws-frame-hair);
 }
 
 /*
  * Severity reads from the border plus a 24x2 accent bar, never a card-wide
- * tint. A tinted fill spends the whole contrast budget: --hc-ink-muted on the
- * old blush fill measured 3.64:1 and on the amber 4.23:1, so every label on a
- * flagged card failed AA. Keeping the paper white puts them back at ~4.9:1 and
- * matches the house rule (accents are top bars, not fills).
+ * tint. Frost face keeps text at AA in both themes.
  */
 .watch,
 .critical {
-  background: var(--hc-invert);
+  background: var(--hc-frost);
 }
 
 .watch::before,
@@ -85,7 +82,7 @@
   font-size: var(--hc-fs-1);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
 }
 
 .title {
@@ -93,13 +90,14 @@
   font-size: 12.5px;
   font-weight: 650;
   line-height: 1.25;
+  color: var(--ws-frame-ink);
 }
 
 .detail {
   margin: 4px 0 0;
   font-size: var(--text-xs);
   line-height: 1.4;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 .actions {
@@ -113,7 +111,7 @@
 .dismiss {
   min-height: 28px;
   padding: 0 var(--s-2);
-  border-radius: var(--hc-r-panel);
+  border-radius: 3px;
   font: inherit;
   font-size: var(--hc-fs-3);
   font-weight: 650;
@@ -121,15 +119,15 @@
 }
 
 .accept {
-  border: 1px solid var(--hc-ink);
-  background: var(--hc-ink);
-  color: var(--hc-accent-wash);
+  border: 1px solid var(--ws-frame-ink);
+  background: var(--ws-frame-ink);
+  color: var(--ws-frame);
 }
 
 .dismiss {
-  border: 1px solid var(--hc-line);
+  border: 1px solid var(--ws-frame-hair);
   background: transparent;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 @keyframes hzIn {
