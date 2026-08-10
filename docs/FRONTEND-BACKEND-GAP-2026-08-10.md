@@ -33,8 +33,8 @@ These exist in the API but no `apps/web` code calls them. Grouped by likely inte
 | `DELETE /projects/:id/files/:fileId` | `project-files.ts` | File delete. No web consumer — `CLAUDE.md` punch list notes "soft delete silently" concern. |
 | `POST /projects/:id/boundary/ingest` | `boundary.ts` | GeoJSON boundary ingest. `auto-trace` is used; `ingest` is not. |
 | `POST /projects/:id/orchestration/refresh` | `orchestration.ts` | Manual world refresh. `accept-overlay` / `dismiss-overlay` are used. |
-| `GET /projects/:id/documentation-packages` | `documentation-packages.ts` | List packs. Only `POST` (create) and `POST :id/issue` are consumed. |
-| `GET /projects/:id/documentation-packages/:packId/zip` | `documentation-packages.ts` | ZIP download. No web consumer. |
+| ~~`GET /projects/:id/documentation-packages`~~ | `documentation-packages.ts` | **Wired 2026-08-10** — `OpsSchedulesDock` lists issued packs for re-download. |
+| ~~`GET /projects/:id/documentation-packages/:packId/zip`~~ | `documentation-packages.ts` | **Analysis was wrong** — already consumed by `OpsSchedulesDock` (`window.open(.../zip)`) since before this audit. |
 | `POST /projects/:id/design-branches/:branchId/commit` | `design-branches.ts` | Branch commit. `checkout`/`abandon`/`diff`/`merge` are used; `commit` is not. |
 
 ### A2 — Accounting integrations (MYOB / Xero) — only status is consumed
@@ -101,4 +101,16 @@ Acting on the analysis in priority order:
   BYDA file with a destructive `Dialog` confirm, and success/failure toasts are
   shown via `useToast`. The delete is hard (backend unlinks the disk file), so
   the dialog explicitly says it cannot be undone.
+- **A1 `GET /documentation-packages` (list):** wired. Issuing a pack used to
+  mint a new one on every click and stream its zip once, so an already-issued
+  deliverable was invisible and the only way to re-obtain the file was to issue a
+  duplicate. `OpsSchedulesDock` now lists prior packs with issue date and a
+  direct zip link. Kept probe: `e2e/ops-issued-packs.spec.ts`, verified red when
+  the list load is stubbed out.
+- **Correction to section A1:** this report listed
+  `GET /documentation-packages/:packId/zip` as having no consumer. That was an
+  error — `OpsSchedulesDock` already opened it after issuing, and the BFF
+  catch-all proxies it binary-safe via `arrayBuffer()` with
+  `content-disposition` forwarded. Counted orphans in A1 should therefore read
+  10, not 11.
 - **A1 remainder + A2 accounting surface:** deferred until product roadmap prioritises them.

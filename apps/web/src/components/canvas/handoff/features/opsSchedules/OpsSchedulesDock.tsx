@@ -23,6 +23,22 @@ type SchedulePayload = {
   };
 };
 
+/** Subset of DocumentationPackage the dock renders. */
+type IssuedPack = {
+  id: string;
+  title: string;
+  status: "draft" | "issued";
+  created_at: string;
+  issued_at?: string | null;
+};
+
+const PACK_DATE = new Intl.DateTimeFormat("en-AU", {
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 const LABELS: Record<Kind, string> = {
   planting: "Planting",
   trench: "Trench dig",
@@ -42,6 +58,26 @@ export function OpsSchedulesDock({
   const [honesty, setHonesty] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [packs, setPacks] = useState<IssuedPack[]>([]);
+
+  /**
+   * Previously issued packs. Without this the dock could only ever mint a new
+   * pack, so an already-issued deliverable was invisible and un-redownloadable
+   * even though the API had been listing them all along.
+   */
+  const loadPacks = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/documentation-packages`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) return;
+      const json = (await res.json()) as { packages?: IssuedPack[] };
+      setPacks(json.packages ?? []);
+    } catch {
+      // Non-fatal — the schedule table and Issue action still work.
+    }
+  }, [projectId]);
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -68,7 +104,8 @@ export function OpsSchedulesDock({
   useEffect(() => {
     if (!open) return;
     void load();
-  }, [open, load]);
+    void loadPacks();
+  }, [open, load, loadPacks]);
 
   useEffect(() => {
     setKind(initialKind);
@@ -120,6 +157,7 @@ export function OpsSchedulesDock({
         "_blank",
         "noopener,noreferrer",
       );
+      await loadPacks();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Issue failed");
     } finally {
@@ -188,6 +226,32 @@ export function OpsSchedulesDock({
             </table>
           )}
         </div>
+        {packs.length > 0 ? (
+          <div className={css.packs} data-testid="ops-issued-packs">
+            <p className={css.packsHead}>Issued packs</p>
+            <ul className={css.packList}>
+              {packs.map((pack) => (
+                <li key={pack.id} className={css.packRow}>
+                  <span className={css.packTitle}>{pack.title}</span>
+                  <span className={css.packMeta}>
+                    {pack.status === "issued" && pack.issued_at
+                      ? `Issued ${PACK_DATE.format(new Date(pack.issued_at))}`
+                      : "Draft"}
+                  </span>
+                  <a
+                    className={css.packDownload}
+                    href={`/api/projects/${projectId}/documentation-packages/${pack.id}/zip`}
+                    target="_blank"
+                    rel="noreferrer"
+                    data-testid={`ops-pack-zip-${pack.id}`}
+                  >
+                    Download
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <div className={css.actions}>
           <button
             type="button"
