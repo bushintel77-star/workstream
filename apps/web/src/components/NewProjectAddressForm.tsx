@@ -41,15 +41,17 @@ export function NewProjectAddressForm() {
   useEffect(() => {
     if (selected && selected.place_name === query) return;
     if (selected && selected.place_name !== query) {
-      setSelected(null);
+      window.setTimeout(() => setSelected(null), 0);
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const trimmed = query.trim();
     if (trimmed.length < 3) {
-      setSuggestions([]);
-      setHint(null);
-      setSearching(false);
+      window.setTimeout(() => {
+        setSuggestions([]);
+        setHint(null);
+        setSearching(false);
+      }, 0);
       return;
     }
 

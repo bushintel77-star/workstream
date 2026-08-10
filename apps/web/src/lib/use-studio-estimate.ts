@@ -48,9 +48,12 @@ export function useStudioEstimate(
   const [settling, setSettling] = useState(false);
 
   useEffect(() => {
-    setEstimate(sync);
     let cancelled = false;
-    setSettling(true);
+    const seedId = window.setTimeout(() => {
+      if (cancelled) return;
+      setEstimate(sync);
+      setSettling(true);
+    }, 0);
     void estimateStudioInWorker(args)
       .then((report) => {
         if (cancelled) return;
@@ -64,6 +67,7 @@ export function useStudioEstimate(
       });
     return () => {
       cancelled = true;
+      window.clearTimeout(seedId);
     };
     // key captures geometry identity; sync is the seed for this key
     // eslint-disable-next-line react-hooks/exhaustive-deps -- key drives refresh

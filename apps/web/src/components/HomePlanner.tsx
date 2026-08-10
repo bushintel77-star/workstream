@@ -99,17 +99,17 @@ export function HomePlanner({ projects }: Props) {
     return () => window.clearInterval(id);
   }, []);
 
-  // Load todos from localStorage
+  // Persist todos
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(TODO_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate client-only localStorage after SSR.
       if (raw) setTodos(JSON.parse(raw) as Todo[]);
     } catch {
       // ignore
     }
   }, []);
 
-  // Persist todos
   useEffect(() => {
     try {
       window.localStorage.setItem(TODO_KEY, JSON.stringify(todos));

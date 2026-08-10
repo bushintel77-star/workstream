@@ -1,0 +1,7 @@
+{
+  "web": {
+    "directory": "apps/web/.next/static/chunks",
+    "maxBytes": 8000000,
+    "maxJavaScriptBytes": 7000000
+  }
+}

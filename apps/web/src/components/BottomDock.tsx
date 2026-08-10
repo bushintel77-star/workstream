@@ -40,21 +40,12 @@ export function BottomDock({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
-  const [animating, setAnimating] = useState(false);
   const dockRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   const reactId = useId();
   const panelId = `dock-panel-${reactId}`;
-
-  // --- Animation state ---
-
-  useEffect(() => {
-    setAnimating(true);
-    const t = setTimeout(() => setAnimating(false), ANIM_MS + 50);
-    return () => clearTimeout(t);
-  }, [open]);
 
   // --- Escape to close ---
 
@@ -182,7 +173,7 @@ export function BottomDock({
           aria-label={label}
           tabIndex={-1}
           onKeyDown={handlePanelKeyDown}
-          inert={!open && !animating ? true : undefined}
+          inert={!open ? true : undefined}
         >
           {children}
         </div>

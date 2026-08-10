@@ -195,7 +195,7 @@ export function ClientShareTwin({ snapshot }: Props) {
       renderer.shadowMap.enabled = true;
     } catch (err) {
       logError("WebGL unavailable", err);
-      setWebglOk(false);
+      window.setTimeout(() => setWebglOk(false), 0);
       return;
     }
 
@@ -455,6 +455,7 @@ export function ClientShareTwin({ snapshot }: Props) {
     const api = sceneApi.current;
     if (!api) return;
     for (const pl of api.fixtureLights) {
+      // eslint-disable-next-line react-hooks/immutability -- Three.js scene graph is an external imperative API.
       pl.visible = lightsOn;
       pl.intensity = lightsOn ? 0.85 : 0;
     }

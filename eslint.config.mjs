@@ -44,6 +44,11 @@ export default tseslint.config(
       ...nextPlugin.configs.recommended.rules,
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/set-state-in-effect": "error",
+      "react-hooks/refs": "error",
+      "react-hooks/preserve-manual-memoization": "error",
+      "react-hooks/immutability": "error",
+      "react-hooks/purity": "error",
       /*
        * App Router only — there is no `pages/` directory, and the rule warns on
        * every run when it cannot find one.
@@ -70,6 +75,16 @@ export default tseslint.config(
        * OUTSTANDING.md, not silenced with an inline comment.
        */
       "@next/next/no-page-custom-font": "off",
+    },
+  },
+  {
+    files: ["apps/web/src/components/canvas/**/*.{ts,tsx}"],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/immutability": "off",
+      "react-hooks/purity": "off",
     },
   },
   {

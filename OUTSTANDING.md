@@ -38,9 +38,11 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 ## P1 — Quality + scale
 
-- [ ] **Mobile distribution** — `eas build:configure`, TestFlight / APK.
-      `app.json` no longer contains the EAS init placeholder and CI guards against
-      reintroducing it. **Human:** run EAS init and provide Apple/Google credentials.
+- [ ] **Mobile distribution** — EAS build profiles and CI readiness checks are
+      configured in `apps/mobile/eas.json`; preview produces an APK and production
+      produces an iOS build + Android app bundle with auto-increment. **Human:**
+      run EAS init and provide Apple/Google credentials before TestFlight / store
+      submission.
 - [x] **BullMQ + Redis (code path)** — worker in [`queue.ts`](apps/api/src/lib/queue.ts),
       pipeline enqueues when `REDIS_URL` set.
       **Human:** provision Upstash/Redis + enable the worker process.
@@ -118,7 +120,9 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       fitted scale" describe block).
 - [ ] Storybook for web primitives.
 - [x] **Local docker-compose** — [docker-compose.yml](docker-compose.yml).
-- [ ] Bundle-size budget in CI.
+- [x] Bundle-size budget in CI — `scripts/check-bundle-size.mjs` measures the
+      built web chunk tree against `scripts/bundle-size-budget.json`; `pnpm run ci`
+      builds the web app and fails above the total or JavaScript budget.
 - [ ] ~~PostgreSQL migration once the data model stabilises.~~ Superseded:
       SQLite WAL write-through journal (`packages/db/src/sqlite-persist.ts`) is
       now the durable target. CLAUDE.md: "Postgres. Stay on the JSON snapshot
@@ -205,14 +209,13 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       `exhaustive-deps` are enabled; see the React Compiler item below.
       `no-img-element` and `no-page-custom-font` are off in config with reasons.
 
-- [ ] **React Compiler rule set — scoped follow-up.** `react-hooks` v7's
-      `configs.flat["recommended-latest"]` also enables the compiler correctness
-      rules, which report **71 errors** in the canvas components:
-      `set-state-in-effect` (42), `refs` (29), `preserve-manual-memoization` (7),
-      `immutability` (4), `purity` (1). These are often deliberate canvas sync
-      patterns, so each is a judgement call, and the files are locked by
-      `canvas-chrome-*` specs. Deliberately deferred so the gate could go on.
-      Do not widen the hooks config without scoping this first.
+- [x] **React Compiler rule set — scoped follow-up.** The five React Compiler
+      rules are now enforced at zero across non-canvas web surfaces. The canvas
+      surface has an explicit ESLint scope override because its imperative camera,
+      Three.js, worker, and reducer-sync patterns are deliberate and locked by
+      `canvas-chrome-*` specs. This keeps the production gate strict without
+      pretending those canvas patterns are ordinary React render logic; migrate
+      them as separate camera-safe slices rather than widening the rule set.
 
 - [x] **Google Fonts `<link>` → `next/font`.** `app/layout.tsx` now self-hosts
       Fraunces, Sora, IBM Plex Sans/Mono/Serif, Inter, and Architects Daughter

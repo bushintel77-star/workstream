@@ -47,7 +47,6 @@ export function RailDrawer({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [hovered, setHovered] = useState(false);
-  const [animating, setAnimating] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -137,14 +136,6 @@ export function RailDrawer({
       clearHoverOpen();
     };
   }, [clearLinger, clearHoverOpen]);
-
-  // --- Animation state ---
-
-  useEffect(() => {
-    setAnimating(true);
-    const t = setTimeout(() => setAnimating(false), ANIM_MS + 50);
-    return () => clearTimeout(t);
-  }, [open]);
 
   // --- Escape to close ---
 
@@ -300,7 +291,7 @@ export function RailDrawer({
           aria-label={label}
           tabIndex={-1}
           onKeyDown={handlePanelKeyDown}
-          inert={!open && !animating ? true : undefined}
+          inert={!open ? true : undefined}
         >
           {children}
         </div>

@@ -19,11 +19,14 @@ export function PlannerDock({
   label?: string;
   accent?: "blue" | "red" | "green" | "yellow";
 }) {
-  const [isDesktop, setIsDesktop] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window === "undefined"
+      ? true
+      : window.matchMedia("(min-width: 769px)").matches,
+  );
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 769px)");
-    setIsDesktop(mq.matches);
     function onChange(e: MediaQueryListEvent) {
       setIsDesktop(e.matches);
     }

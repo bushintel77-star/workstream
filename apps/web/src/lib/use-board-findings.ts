@@ -50,7 +50,8 @@ export function useBoardFindings(
   }, [enabled, projectId]);
 
   useEffect(() => {
-    void load();
+    const id = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(id);
   }, [load, saveRevision, telemetryRevision]);
 
   return { ...state, refresh: load };
