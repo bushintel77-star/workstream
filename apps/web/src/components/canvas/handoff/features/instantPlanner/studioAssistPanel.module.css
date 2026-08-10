@@ -11,8 +11,11 @@
 
 .paper .toggle,
 .paper .panel {
+  /* Paper background is theme-relative (light by day, dark by night), so it
+     needs the theme-relative ink, not the frost's invariant pale ink. */
   background: color-mix(in srgb, var(--sheet-paper, var(--hc-paper)) 96%, transparent);
   border-color: var(--hc-line);
+  color: var(--hc-ink);
 }
 
 .toggle {
@@ -24,7 +27,9 @@
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
+  /* --hc-frost is dark in both themes -- pair with the frame's pale ink. */
   background: var(--hc-frost);
+  color: var(--ws-frame-ink);
   box-shadow: 0 4px 14px var(--hc-neu-shadow);
 }
 
@@ -34,6 +39,7 @@
   border-radius: var(--hc-r-pop, 14px);
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-frost);
+  color: var(--ws-frame-ink);
   box-shadow: 0 10px 28px var(--hc-neu-shadow);
   display: flex;
   flex-direction: column;
@@ -162,7 +168,7 @@
   margin: 0;
   font-size: 0.68rem;
   font-weight: 600;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   line-height: 1.35;
 }
 

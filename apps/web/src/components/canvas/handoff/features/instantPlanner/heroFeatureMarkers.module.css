@@ -13,15 +13,17 @@
   height: 44px;
   border-radius: var(--hc-r-pill, 999px);
   border: 1px solid var(--hc-line, var(--hc-line-soft));
+  /* --hc-frost is dark in both themes (gallery-frame frost) -- pair with the
+     frame's own pale ink, not --hc-ink, which assumes a light background. */
   background: var(--hc-frost, var(--hc-glass-soft));
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--hc-ink) 22%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--ws-frame-ink) 22%, transparent);
   backdrop-filter: blur(8px) saturate(1.1);
   -webkit-backdrop-filter: blur(8px) saturate(1.1);
   font-size: 1.1rem;
   font-weight: 300;
   line-height: 1;
   cursor: pointer;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   display: grid;
   place-items: center;
   padding: 0;
@@ -42,7 +44,10 @@
 }
 
 .marker:hover {
+  /* --hc-paper is theme-relative (light by day, dark by night) -- ink flips
+     back to --hc-ink, which forks the same way and stays correctly paired. */
   background: var(--hc-paper);
+  color: var(--hc-ink);
   transform: translate(-50%, -50%) scale(1.12);
   box-shadow: 0 6px 20px color-mix(in srgb, var(--hc-ink) 30%, transparent);
   border-color: var(--hc-ink);

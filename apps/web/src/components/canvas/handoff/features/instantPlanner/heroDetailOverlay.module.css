@@ -34,7 +34,8 @@
     0 0 0 1px color-mix(in srgb, var(--hc-ink) 8%, transparent);
   backdrop-filter: blur(20px) saturate(1.15);
   -webkit-backdrop-filter: blur(20px) saturate(1.15);
-  color: var(--hc-ink);
+  /* --hc-frost is dark in both themes -- pair with the frame's pale ink. */
+  color: var(--ws-frame-ink);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -66,9 +67,9 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  background: color-mix(in srgb, var(--hc-ink) 10%, transparent);
-  color: var(--hc-ink-muted);
-  border: 1px solid color-mix(in srgb, var(--hc-ink) 12%, transparent);
+  background: color-mix(in srgb, var(--ws-frame-ink) 10%, transparent);
+  color: var(--ws-frame-ink-dim);
+  border: 1px solid color-mix(in srgb, var(--ws-frame-ink) 12%, transparent);
 }
 
 .kindBadge[data-kind="wall"] {
@@ -121,7 +122,7 @@
   font-weight: 600;
   cursor: pointer;
   background: var(--hc-frost, var(--hc-glass-soft));
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 180ms var(--ws-ease, ease-out);
@@ -130,12 +131,12 @@
 
 .back:focus-visible,
 .freeze:focus-visible {
-  outline: 2px solid var(--hc-ink);
+  outline: 2px solid var(--ws-frame-ink);
   outline-offset: 2px;
 }
 
 .specsToggle:focus-visible {
-  outline: 2px solid var(--hc-ink);
+  outline: 2px solid var(--ws-frame-ink);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -201,7 +202,7 @@
   gap: 0.45rem;
   font-size: 0.72rem;
   font-weight: 600;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 .sliderHeader {
@@ -213,7 +214,7 @@
 .sliderValue {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   font-size: 0.78rem;
 }
 
@@ -221,7 +222,7 @@
   width: 100%;
   height: 4px;
   border-radius: 2px;
-  background: color-mix(in srgb, var(--hc-ink) 20%, transparent);
+  background: color-mix(in srgb, var(--ws-frame-ink) 20%, transparent);
   appearance: none;
   cursor: pointer;
   transition: background 180ms var(--ws-ease, ease-out);
@@ -232,25 +233,25 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--hc-ink);
+  background: var(--ws-frame-ink);
   cursor: pointer;
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--hc-ink) 30%, transparent);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--ws-frame-ink) 30%, transparent);
   transition: transform 180ms var(--ws-ease, ease-out), box-shadow 180ms var(--ws-ease, ease-out);
 }
 
 .sliderLabel input::-webkit-slider-thumb:hover {
   transform: scale(1.1);
-  box-shadow: 0 4px 8px color-mix(in srgb, var(--hc-ink) 40%, transparent);
+  box-shadow: 0 4px 8px color-mix(in srgb, var(--ws-frame-ink) 40%, transparent);
 }
 
 .sliderLabel input::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--hc-ink);
+  background: var(--ws-frame-ink);
   cursor: pointer;
   border: none;
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--hc-ink) 30%, transparent);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--ws-frame-ink) 30%, transparent);
   transition: transform 180ms var(--ws-ease, ease-out), box-shadow 180ms var(--ws-ease, ease-out);
 }
 
@@ -267,7 +268,7 @@
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   padding: 0.35rem 0;
   min-height: 44px;
   transition: color 180ms var(--ws-ease, ease-out);
@@ -286,7 +287,7 @@
 }
 
 .specsToggle:hover {
-  color: color-mix(in srgb, var(--hc-ink) 20%, var(--hc-paper));
+  color: color-mix(in srgb, var(--ws-frame-ink) 80%, var(--ws-frame));
 }
 
 .specs {
@@ -311,7 +312,7 @@
 }
 
 .specs dt {
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
   font-weight: 600;
 }
 

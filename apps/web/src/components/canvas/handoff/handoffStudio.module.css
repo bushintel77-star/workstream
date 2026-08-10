@@ -495,7 +495,8 @@
   backdrop-filter: blur(14px) saturate(1.06);
   -webkit-backdrop-filter: blur(14px) saturate(1.06);
   box-shadow: var(--hc-elev-2);
-  color: var(--hc-ink-muted);
+  /* --hc-frost is dark in both themes -- pair with the frame's pale ink. */
+  color: var(--ws-frame-ink-dim);
   font-size: var(--text-xs);
   line-height: 1.35;
   pointer-events: auto;
@@ -768,9 +769,12 @@
   padding: 0 var(--s-3);
   border-radius: 4px;
   border: 1px solid var(--hc-line-soft);
-  /* Flat-but-precise chip — frost face + hairline, no soft-plastic bevel. */
+  /* Flat-but-precise chip — frost face + hairline, no soft-plastic bevel.
+     --hc-frost and --ws-frame-wash are both dark-frame-derived and stay dark
+     in both themes, so ink pairs with --ws-frame-ink, not --hc-ink (which
+     assumes a light background and was going near-invisible here). */
   background: var(--hc-frost);
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   font-size: var(--hc-fs-4);
   font-weight: 600;
   cursor: pointer;
@@ -784,7 +788,7 @@
 }
 
 .toolBtn:hover {
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   border-color: var(--hc-line);
 }
 
@@ -796,7 +800,7 @@
 
 .toolBtnActive,
 .toolBtnActive:hover {
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   background: var(--ws-frame-wash);
   box-shadow: inset 0 0 0 1px var(--hc-line);
 }
@@ -804,7 +808,7 @@
 .rootDark .toolBtn {
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-frost);
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
   box-shadow: none;
 }
 
@@ -842,7 +846,7 @@
   background: var(--hc-frost, var(--hc-glass-soft));
   box-shadow: var(--hc-elev-1);
   backdrop-filter: blur(12px);
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 700;
@@ -867,7 +871,7 @@
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-frost);
   box-shadow: none;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   cursor: pointer;
   flex: none;
   display: inline-flex;
@@ -880,7 +884,7 @@
 }
 
 .iconBtn:hover {
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   border-color: var(--hc-line);
 }
 
@@ -901,13 +905,13 @@
 
 .iconBtnActive,
 .iconBtnActive:hover {
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   background: var(--ws-frame-wash);
   box-shadow: inset 0 0 0 1px var(--hc-line);
 }
 
 .rootDark .iconBtn {
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
   background: var(--hc-frost);
   border: 1px solid var(--hc-line-soft);
   box-shadow: none;
@@ -939,7 +943,7 @@
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-frost);
   box-shadow: none;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   font-family: "IBM Plex Mono", monospace;
   font-size: var(--text-micro);
   font-weight: 500;
@@ -951,7 +955,7 @@
 }
 
 .cmdBtn:hover {
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   border-color: var(--hc-line);
 }
 
@@ -967,7 +971,7 @@
   border: 1px solid var(--hc-line-soft);
   background: var(--hc-frost);
   box-shadow: none;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0;
@@ -980,7 +984,7 @@
 }
 
 .aiPill:hover {
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   border-color: var(--hc-line);
 }
 
@@ -989,13 +993,13 @@
 }
 
 .aiPillHot {
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   background: var(--ws-frame-wash);
   box-shadow: inset 0 0 0 1px var(--hc-line);
 }
 
 .aiPillOk {
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 .segment {
@@ -1517,7 +1521,7 @@
   font-size: var(--text-micro);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   pointer-events: none;
   white-space: nowrap;
 }
@@ -1542,7 +1546,7 @@
   border-radius: var(--hc-r-pill);
   background: var(--hc-frost, var(--hc-invert));
   box-shadow: var(--hc-elev-2);
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   font-size: var(--text-xl);
   font-weight: 500;
   line-height: 1;
@@ -1757,7 +1761,7 @@
   font-size: var(--text-base);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   outline: none;
 }
 
@@ -2000,7 +2004,8 @@
   border: none;
   cursor: pointer;
   background: transparent;
-  color: var(--hc-ink-muted);
+  /* Sits directly over the dark --hc-frost rail -- pale frame ink. */
+  color: var(--ws-frame-ink-dim);
   display: flex;
   flex-direction: column;
   align-items: center;

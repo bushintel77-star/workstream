@@ -4,7 +4,8 @@
  */
 
 .sheet {
-  --ink: var(--hc-ink);
+  /* --hc-frost is dark in both themes -- pair with the frame's pale ink. */
+  --ink: var(--ws-frame-ink);
   --ease: var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 
   position: absolute;
@@ -84,7 +85,9 @@
   border: 1px solid transparent;
   border-radius: var(--hc-r-pill, 999px);
   background: transparent;
-  color: var(--hc-ink-muted);
+  /* Sits directly over the dark --hc-frost sheet -- pale frame ink, not
+     --hc-ink-muted (calibrated for light backgrounds). */
+  color: var(--ws-frame-ink-dim);
   font: inherit;
   font-size: var(--text-xs);
   font-weight: 650;
@@ -119,7 +122,7 @@
   border: none;
   border-radius: var(--hc-r-pill, 999px);
   background: transparent;
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
   font-size: var(--text-lg);
   line-height: 1;
   cursor: pointer;
@@ -139,7 +142,7 @@
   margin: 0 0 8px;
   font-size: var(--text-xs);
   font-weight: 650;
-  color: var(--hc-ink-faint);
+  color: var(--ws-frame-ink-faint);
 }
 
 .actionList {
@@ -189,7 +192,7 @@
 .empty {
   margin: 12px 0;
   font-size: var(--text-sm);
-  color: var(--hc-ink-muted);
+  color: var(--ws-frame-ink-dim);
 }
 
 @media (prefers-reduced-motion: reduce) {

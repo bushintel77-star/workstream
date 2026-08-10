@@ -12,7 +12,8 @@
   background: var(--hc-frost, var(--hc-glass-soft));
   box-shadow: var(--hc-frost-shadow, 0 8px 28px var(--hc-neu-shadow));
   backdrop-filter: blur(14px);
-  color: var(--hc-ink);
+  /* --hc-frost is dark in both themes -- pair with the frame's pale ink. */
+  color: var(--ws-frame-ink);
   pointer-events: auto;
   overflow: hidden;
   animation: cardIn 180ms var(--ws-ease, ease-out) both;
@@ -32,6 +33,7 @@
     opacity: 0;
     transform: translateX(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
