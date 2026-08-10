@@ -1,7 +1,11 @@
 "use client";
 
 import type { BoardSustainabilityMetric } from "@workstream/contracts";
-import type { StudioComplianceReport, StudioEstimateReport } from "@workstream/domain";
+import type {
+  StudioComplianceReport,
+  StudioEstimateReport,
+  TradeTelemetry,
+} from "@workstream/domain";
 import type { StudioItem } from "../../studioCatalog";
 import type { PctPoint } from "../../geometry";
 import { ComplianceDock } from "../compliance/ComplianceDock";
@@ -26,6 +30,7 @@ type Props = {
   boundary: PctPoint[];
   items: StudioItem[];
   estimate: StudioEstimateReport;
+  trade?: TradeTelemetry;
   mitigated: Record<string, boolean>;
   complianceSignal?: "ok" | "watch" | "critical";
   compliancePass?: number;
@@ -64,6 +69,7 @@ export function UtilityDrawer({
   boundary,
   items,
   estimate,
+  trade,
   mitigated,
   complianceSignal = "ok",
   compliancePass: passCount = 3,
@@ -226,6 +232,7 @@ export function UtilityDrawer({
               <LiveBomDock
                 projectId={projectId}
                 estimate={estimate}
+                trade={trade}
                 mitigated={mitigated}
                 onMitigate={onMitigate}
                 onOpenQuote={onOpenQuote}

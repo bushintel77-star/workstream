@@ -338,9 +338,9 @@ Deliberately marked `_`-prefixed or allowlisted rather than deleted.
       `zoom-world`. Verified red when the mount is forced closed, because the
       reachability gate by its own admission cannot see an import that renders
       behind an always-false condition.
-- [ ] **`_trade`** — `solveLiveTradeEstimate` is solved on every estimate change
-      and never displayed. The calculation is real and owned by
-      `@workstream/domain`; the display is missing.
+- [x] **`_trade`** — `solveLiveTradeEstimate` now feeds the Live BOM HUD and shows
+      the matched-line ratio plus trade material value, with explicit AI-estimated
+      fallback copy when no hub match exists.
 - [x] **`BuildableAreaOverlay` was gated behind `buildableAreaOn` which was never
       set to true.** The overlay was fully implemented (setbacks, TPZ, easement
       exclusion) but had no UI toggle — `ui.buildableAreaOn` was initialized

@@ -5,6 +5,7 @@ import {
   formatLabourChip,
   proposeLeftoversFromEstimateLines,
   type StudioEstimateReport,
+  type TradeTelemetry,
 } from "@workstream/domain";
 import {
   cadQuoteAction,
@@ -15,6 +16,7 @@ import css from "./bom.module.css";
 type Props = {
   projectId?: string;
   estimate: StudioEstimateReport;
+  trade?: TradeTelemetry;
   mitigated: Record<string, boolean>;
   onMitigate: (id: string) => void;
   onOpenQuote: () => void;
@@ -52,6 +54,7 @@ function friendlyPrimary(label: string): string {
 export function LiveBomDock({
   projectId,
   estimate,
+  trade,
   mitigated,
   onMitigate,
   onOpenQuote,
@@ -157,6 +160,13 @@ export function LiveBomDock({
           ? `About ${estimate.hardscapeM2.toFixed(0)} m² hardscape · trade hubs cached`
           : "Tag materials on the plan — cost updates as you draw"}
       </p>
+      {trade ? (
+        <p className={css.meta} data-testid="live-bom-trade-status">
+          {trade.matchRatio > 0
+            ? `${Math.round(trade.matchRatio * 100)}% trade matched · ${aud(trade.tradeExGst)} ex GST`
+            : "Trade estimate is AI-estimated"}
+        </p>
+      ) : null}
       <div className={css.lines}>
         {primary.slice(0, 5).map((row) => (
           <div key={row.id} className={css.line}>

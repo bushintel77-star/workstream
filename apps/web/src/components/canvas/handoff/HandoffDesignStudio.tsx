@@ -2747,13 +2747,7 @@ export function HandoffDesignStudio({
     (h) => h.kind === "drainage" || h.kind === "tpz" || h.kind === "engineer",
   );
 
-  /*
-   * `_trade` is unused: the live trade estimate is solved on every estimate
-   * change and never surfaced anywhere in the studio. Kept, not deleted — the
-   * calculation is real and owned by @workstream/domain; what is missing is the
-   * display. See OUTSTANDING.md.
-   */
-  const _trade = useMemo(
+  const trade = useMemo(
     () => solveLiveTradeEstimate({ report: estimate }),
     [estimate],
   );
@@ -5315,6 +5309,7 @@ export function HandoffDesignStudio({
                 boundary={studio.boundary}
                 items={studio.items}
                 estimate={estimate}
+                trade={trade}
                 mitigated={ui.mitigated}
                 complianceSignal={compliance.canvasSignal}
                 compliancePass={
@@ -5863,6 +5858,7 @@ export function HandoffDesignStudio({
                       embedded
                       projectId={projectId}
                       estimate={estimate}
+                      trade={trade}
                       mitigated={ui.mitigated}
                       settling={
                         estimateSettling ||

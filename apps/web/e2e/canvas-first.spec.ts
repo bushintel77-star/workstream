@@ -55,6 +55,7 @@ test.describe("Canvas-first mode chrome", () => {
       await expect(page.getByTestId("live-bom-hud")).toBeVisible({
         timeout: 10_000,
       });
+      await expect(page.getByTestId("live-bom-trade-status")).toBeVisible();
     }
 
     // Progressive disclosure: Share is unavailable until a quote is persisted.
