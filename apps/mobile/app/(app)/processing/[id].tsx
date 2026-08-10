@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import type { ProjectStatus } from "@workstream/contracts";
+import type { ProjectStatus, StageLog } from "@workstream/contracts";
 import { tokens } from "@workstream/ui";
 import { useWorkstreamApi } from "../../../src/lib/api";
 
@@ -82,6 +82,8 @@ export default function ProcessingScreen() {
   const [hasAudit, setHasAudit] = useState(false);
   const [hasOutputs, setHasOutputs] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stageLogs, setStageLogs] = useState<StageLog[]>([]);
+  const [retrying, setRetrying] = useState(false);
   const [slow, setSlow] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const slowRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -98,6 +100,7 @@ export default function ProcessingScreen() {
         api.getAudit(id),
       ]);
       setStatus(p.status);
+      setStageLogs(p.stage_logs ?? []);
       const transcript = recs.find((r) => !!r.transcript)?.transcript ?? "";
       setLatestTranscript(transcript);
       setHasTranscript(Boolean(transcript));
@@ -113,7 +116,7 @@ export default function ProcessingScreen() {
       if (failed || ready) {
         if (pollRef.current) clearInterval(pollRef.current);
         if (slowRef.current) clearTimeout(slowRef.current);
-        router.replace(`/(app)/project/${id}`);
+        if (ready) router.replace(`/(app)/project/${id}`);
       }
     } catch (e) {
       if (pollRef.current) clearInterval(pollRef.current);
@@ -132,6 +135,8 @@ export default function ProcessingScreen() {
       if (slowRef.current) clearTimeout(slowRef.current);
     };
   }, [id, tick]);
+
+  const failedLog = stageLogs.find((log) => !log.passed && log.status === "failed");
 
   const stages = buildStages({
     hasTranscript,
@@ -187,10 +192,42 @@ export default function ProcessingScreen() {
           />
         )}
 
-        {status && status.endsWith("_failed") && latestTranscript ? (
-          <Text style={styles.voiceReply}>
-            Stage failed. Transcript still available for manual review.
-          </Text>
+        {status && status.endsWith("_failed") ? (
+          <View style={styles.failureBox}>
+            <Text style={styles.failureHeading}>
+              {failedLog ? `${STAGE_LABELS[failedLog.stage] ?? failedLog.stage} needs attention` : "Processing needs attention"}
+            </Text>
+            {failedLog?.findings.filter((finding) => !finding.passed).map((finding) => (
+              <Text key={finding.check} style={styles.failureText}>
+                {finding.check}: {JSON.stringify(finding.evidence)}
+              </Text>
+            ))}
+            {failedLog?.guard.filter((guard) => !guard.passed).map((guard) => (
+              <Text key={guard.name} style={styles.failureText}>
+                {guard.name}: {guard.value} must be {guard.threshold}
+              </Text>
+            ))}
+            <Pressable
+              disabled={retrying}
+              onPress={async () => {
+                setRetrying(true);
+                setError(null);
+                try {
+                  await api.retryCapturePipeline(id);
+                  setStatus("processing");
+                  pollRef.current = setInterval(() => void tick(), 1500);
+                  await tick();
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "Retry failed");
+                } finally {
+                  setRetrying(false);
+                }
+              }}
+              accessibilityRole="button"
+            >
+              <Text style={styles.retry}>{retrying ? "Retrying…" : "Retry from last good"}</Text>
+            </Pressable>
+          </View>
         ) : null}
 
         {slow && (
@@ -299,6 +336,21 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.caption.fontSize,
     color: tokens.color.semantic.warn,
     textAlign: "center",
+  },
+  failureBox: {
+    gap: tokens.space[2],
+    padding: tokens.space[4],
+    borderWidth: 1,
+    borderColor: tokens.color.semantic.block,
+    borderRadius: 8,
+  },
+  failureHeading: {
+    color: tokens.color.ink.inverted,
+    fontWeight: "700",
+  },
+  failureText: {
+    color: tokens.color.ink.tertiary,
+    fontSize: tokens.type.caption.fontSize,
   },
   errorBox: {
     gap: tokens.space[2],

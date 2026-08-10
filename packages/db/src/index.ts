@@ -19,6 +19,7 @@ export type {
   Store,
   CreateProjectInput,
   Project,
+  StageLog,
   RateCard,
   PlantPalette,
   Survey,

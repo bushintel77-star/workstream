@@ -36,14 +36,20 @@ export async function runCapturePipeline(
   audioPath: string,
   baseUrl: string,
   log?: { error: (obj: unknown, msg?: string) => void },
+  fromStage?: string,
 ): Promise<StageLog[]> {
   const stageLogs: StageLog[] = [];
+  const stageOrder = ["transcription", "survey", "design", "costing", "audit", "outputs"];
+  const retryIndex = fromStage ? stageOrder.indexOf(fromStage) : -1;
+  const skipBefore = (stage: string) => retryIndex > stageOrder.indexOf(stage);
+
 
   await setStatus(store, ownerId, projectId, "processing");
 
   // Phase 1: Transcription
   const transcriptResult = await runStage({
     stage: "transcription",
+    skip: skipBefore("transcription"),
     store,
     ownerId,
     projectId,
@@ -86,6 +92,7 @@ export async function runCapturePipeline(
   // Phase 2: Survey
   const surveyResult = await runStage({
     stage: "survey",
+    skip: skipBefore("survey"),
     store,
     ownerId,
     projectId,
@@ -115,6 +122,7 @@ export async function runCapturePipeline(
   // Phase 3: Design
   const designResult = await runStage({
     stage: "design",
+    skip: skipBefore("design"),
     store,
     ownerId,
     projectId,
@@ -158,6 +166,7 @@ export async function runCapturePipeline(
   // Phase 4: Costing
   const costingResult = await runStage({
     stage: "costing",
+    skip: skipBefore("costing"),
     store,
     ownerId,
     projectId,
@@ -195,6 +204,7 @@ export async function runCapturePipeline(
   // Phase 5: Audit
   const auditResult = await runStage({
     stage: "audit",
+    skip: skipBefore("audit"),
     store,
     ownerId,
     projectId,
@@ -223,6 +233,7 @@ export async function runCapturePipeline(
   // Phase 6: Outputs
   const outputResult = await runStage({
     stage: "outputs",
+    skip: skipBefore("outputs"),
     store,
     ownerId,
     projectId,

@@ -1,4 +1,5 @@
 export * from "./schemas/project";
+export * from "./schemas/stage-log";
 export * from "./schemas/recording";
 export * from "./schemas/survey";
 export * from "./schemas/design";

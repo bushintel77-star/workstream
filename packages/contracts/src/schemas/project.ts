@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { StageLogSchema } from "./stage-log";
 
 export const ProjectStatusSchema = z.enum([
   "draft",
@@ -36,6 +37,8 @@ export const ProjectSchema = z.object({
   lng: z.number().nullable(),
   created_at: z.string().datetime(),
   status: ProjectStatusSchema,
+  current_stage: z.string().nullable().optional(),
+  stage_logs: z.array(StageLogSchema).optional(),
   client_name: z.string().nullable().optional(),
   client_email: z.string().email().nullable().optional(),
   crm_stage: CrmStageSchema.nullable().optional(),

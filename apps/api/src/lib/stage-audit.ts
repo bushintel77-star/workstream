@@ -1,30 +1,12 @@
 import type { Store } from "@workstream/db";
-import type { ProjectStatus } from "@workstream/contracts";
+import type {
+  ProjectStatus,
+  StageFinding,
+  StageGuard,
+  StageLog,
+} from "@workstream/contracts";
 
-export type StageFinding = {
-  check: string;
-  passed: boolean;
-  evidence: unknown;
-};
-
-export type StageGuard = {
-  name: string;
-  threshold: number;
-  value: number;
-  passed: boolean;
-};
-
-export type StageLog = {
-  stage: string;
-  startedAt: string;
-  completedAt: string | null;
-  attempts: number;
-  passed: boolean;
-  findings: StageFinding[];
-  guard: StageGuard[];
-  status: "running" | "passed" | "failed" | "skipped";
-  error: string | null;
-};
+export type { StageFinding, StageGuard, StageLog } from "@workstream/contracts";
 
 export type StageResult<T> =
   | { ok: true; value: T; log: StageLog }
@@ -63,7 +45,26 @@ export async function runStage<T>(opts: {
   maxAttempts?: number;
   baseDelayMs?: number;
   onStatus?: (status: ProjectStatus) => Promise<void>;
+  onLog?: (log: StageLog) => Promise<void>;
+  skip?: boolean;
 }): Promise<StageResult<T>> {
+  if (opts.skip) {
+    const log: StageLog = {
+      stage: opts.stage,
+      startedAt: now(),
+      completedAt: now(),
+      attempts: 0,
+      passed: true,
+      findings: [],
+      guard: [],
+      status: "skipped",
+      error: null,
+    };
+    await opts.onLog?.(log);
+    if (!opts.onLog) await opts.store.appendStageLog(opts.ownerId, opts.projectId, log, opts.stage);
+    return { ok: true, value: undefined as T, log };
+  }
+
   const maxAttempts = opts.maxAttempts ?? 3;
   const baseDelayMs = opts.baseDelayMs ?? 500;
   const startedAt = now();
@@ -98,6 +99,8 @@ export async function runStage<T>(opts: {
         error: null,
       };
 
+      await opts.onLog?.(log);
+      if (!opts.onLog) await opts.store.appendStageLog(opts.ownerId, opts.projectId, log, opts.stage);
       if (allPass) {
         return { ok: true, value, log };
       }
@@ -124,6 +127,8 @@ export async function runStage<T>(opts: {
     error,
   };
 
+  await opts.onLog?.(log);
+  if (!opts.onLog) await opts.store.appendStageLog(opts.ownerId, opts.projectId, log, opts.stage);
   return { ok: false, log };
 }
 

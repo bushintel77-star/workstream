@@ -1,6 +1,9 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { runFullPipeline } from "../lib/pipeline-job";
+import { runCapturePipeline } from "../lib/capture-pipeline";
+import { audioFilePath } from "../lib/storage";
+import { publicBaseUrl } from "../lib/public-url";
 import { runDevelopFromSketchPipeline } from "../lib/develop-pipeline";
 import { enqueuePipelineJob, runPipelineJobWithTelemetry } from "../lib/queue";
 import {
@@ -28,10 +31,38 @@ export default async function pipelineRoutes(fastify: FastifyInstance) {
         async () =>
           await runDevelopFromSketchPipeline(fastify.store, ownerId, projectId),
       ).catch((err) => {
-          request.log.error(err, "develop-from-sketch pipeline failed");
-        });
+        request.log.error(err, "develop-from-sketch pipeline failed");
+      });
 
       return reply.code(202).send({ accepted: true, pipeline: "develop" });
+    },
+  );
+
+  fastify.post(
+    "/:projectId/pipeline/retry",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { projectId } = request.params as { projectId: string };
+      const ownerId = request.userId!;
+      const project = await getOwnedProject(fastify.store, ownerId, projectId);
+      if (!project) return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      if (project.status === "complete") {
+        return reply.code(409).send({ error: "Pipeline is already complete" });
+      }
+      const recordings = await fastify.store.listRecordings(ownerId, projectId);
+      const recording = recordings[0];
+      if (!recording) return reply.code(409).send({ error: "No recording available to retry" });
+      void runCapturePipeline(
+        fastify.store,
+        ownerId,
+        projectId,
+        recording.id,
+        audioFilePath(recording.id, recording.audio_uri),
+        publicBaseUrl(request),
+        request.log,
+        project.current_stage ?? "transcription",
+      ).catch((err) => request.log.error(err, "capture pipeline retry failed"));
+      return reply.code(202).send({ accepted: true, retry_from: project.current_stage ?? "transcription" });
     },
   );
 

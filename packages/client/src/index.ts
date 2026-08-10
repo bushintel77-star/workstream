@@ -176,6 +176,10 @@ export class WorkstreamClient {
     return res.recordings;
   }
 
+  async retryCapturePipeline(projectId: string): Promise<{ accepted: boolean; retry_from: string }> {
+    return this.request("POST", `/projects/${projectId}/pipeline/retry`);
+  }
+
   async createOverride(
     projectId: string,
     input: CreateOverrideInput,

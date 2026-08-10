@@ -106,6 +106,9 @@ describe("runCapturePipeline", () => {
     expect(updated?.status).toBe("complete");
     expect(logs.length).toBeGreaterThan(0);
     expect(logs.every((l) => l.passed)).toBe(true);
+    expect(updated?.current_stage).toBe("outputs");
+    expect(updated?.stage_logs).toHaveLength(logs.length);
+    expect(updated?.stage_logs?.map((log) => log.stage)).toEqual(logs.map((log) => log.stage));
   });
 
   it("fails fast with stage log on guard failure", async () => {

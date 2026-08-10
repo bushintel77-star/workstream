@@ -18,3 +18,8 @@ export async function saveAudio(
 export function audioPublicUrl(baseUrl: string, recordingId: string, ext = "m4a") {
   return `${baseUrl}/uploads/${recordingId}.${ext}`;
 }
+
+export function audioFilePath(recordingId: string, audioUri: string): string {
+  const ext = audioUri.endsWith(".webm") ? "webm" : "m4a";
+  return path.join(UPLOAD_DIR, `${recordingId}.${ext}`);
+}

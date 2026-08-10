@@ -13,6 +13,7 @@ import type {
   PlantPalette,
   Project,
   ProjectStatus,
+  StageLog,
   ProjectMyobLink,
   RateCard,
   Recording,
@@ -84,6 +85,7 @@ export type {
   PlantPalette,
   Project,
   ProjectStatus,
+  StageLog,
   ProjectMyobLink,
   RateCard,
   Recording,
@@ -176,6 +178,12 @@ export interface Store {
     ownerId: string,
     projectId: string,
     status: ProjectStatus
+  ): Promise<Project | null>;
+  appendStageLog(
+    ownerId: string,
+    projectId: string,
+    log: StageLog,
+    currentStage?: string | null,
   ): Promise<Project | null>;
   updateProjectClient(
     ownerId: string,
@@ -410,9 +418,9 @@ export interface Store {
   ): Promise<
     | { ok: true; branch: DesignBranch; revision: DesignRevision; canvas: DesignCanvas }
     | {
-        ok: false;
-        conflicts: Array<{ kind: string; id: string; label: string }>;
-      }
+      ok: false;
+      conflicts: Array<{ kind: string; id: string; label: string }>;
+    }
   >;
   listDocumentationPackages(
     ownerId: string,

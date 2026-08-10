@@ -487,6 +487,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         lng: input.lng ?? null,
         created_at: new Date().toISOString(),
         status: "draft",
+        current_stage: null,
+        stage_logs: [],
         client_name: null,
         client_email: null,
         crm_stage: "enquiry",
@@ -509,6 +511,8 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
         client_email: p.client_email ?? null,
         crm_stage: p.crm_stage ?? null,
         crm_synced_at: p.crm_synced_at ?? null,
+        current_stage: p.current_stage ?? null,
+        stage_logs: p.stage_logs ?? [],
       };
     },
 
@@ -624,6 +628,17 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       );
       if (!p) return null;
       p.status = status;
+      flush();
+      return p;
+    },
+
+    async appendStageLog(ownerId, projectId, log, currentStage = log.stage) {
+      const p = _projects.find(
+        (x) => x.id === projectId && x.owner_id === ownerId,
+      );
+      if (!p) return null;
+      p.stage_logs = [...(p.stage_logs ?? []), structuredClone(log)];
+      p.current_stage = currentStage ?? null;
       flush();
       return p;
     },

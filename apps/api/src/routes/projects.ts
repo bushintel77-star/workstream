@@ -49,6 +49,17 @@ export default async function projectRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get(
+    "/:id/stage-logs",
+    { preHandler: requireAuth },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const project = await getOwnedProject(fastify.store, request.userId!, id);
+      if (!project) return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
+      return reply.send({ current_stage: project.current_stage ?? null, stage_logs: project.stage_logs ?? [] });
+    },
+  );
+
+  fastify.get(
     "/:id/envelope",
     { preHandler: requireAuth },
     async (request, reply) => {
