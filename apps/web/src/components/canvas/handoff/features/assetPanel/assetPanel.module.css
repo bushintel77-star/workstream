@@ -433,20 +433,29 @@
   min-height: 84px;
   padding: var(--s-2) var(--s-2);
   border-radius: var(--hc-r-control, 10px);
-  border: 1px solid var(--line, var(--hc-line-soft, var(--hc-line)));
-  background: color-mix(in srgb, var(--ws-frame) 45%, transparent);
+  /*
+   * Visible hairline — the old 12% border was invisible against the panel
+   * (also #14171c), so tiles dissolved into the surface. 24% clears the
+   * Swiss-grid requirement: each cell is delineated by a real 1px rule.
+   */
+  border: 1px solid color-mix(in srgb, var(--ws-frame-ink) 24%, transparent);
+  /*
+   * Raised surface — ws-frame-raise (#20242b) is one step lighter than
+   * ws-frame (#14171c), so the tile reads as a raised cell on the panel
+   * without needing a shadow. Swiss principle: hairlines, never shadows.
+   */
+  background: color-mix(in srgb, var(--ws-frame-raise) 88%, transparent);
   color: var(--ink);
   font: inherit;
   cursor: pointer;
-  transition: all 160ms var(--ease);
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--hc-ink) 18%, transparent);
+  transition:
+    background 160ms var(--ease),
+    border-color 160ms var(--ease);
 }
 
 .tile:hover {
-  background: color-mix(in srgb, var(--ws-frame) 70%, transparent);
-  border-color: var(--ink-soft);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--hc-ink) 28%, transparent);
+  background: color-mix(in srgb, var(--ws-frame-raise) 100%, transparent);
+  border-color: color-mix(in srgb, var(--ws-frame-ink) 40%, transparent);
 }
 
 .tile:focus-visible {
@@ -454,10 +463,10 @@
   outline-offset: 2px;
 }
 
-.tileOn {
-  background: color-mix(in srgb, var(--hc-success, var(--ok)) 16%, color-mix(in srgb, var(--ws-frame) 50%, transparent));
-  border-color: var(--hc-success, var(--hc-accent));
-  box-shadow: inset 0 0 0 1.5px var(--hc-success, var(--hc-accent)), 0 2px 8px color-mix(in srgb, var(--hc-success) 25%, transparent);
+.tileOn,
+.tileOn:hover {
+  background: color-mix(in srgb, var(--ok) 14%, var(--ws-frame-raise));
+  border-color: var(--ok);
   color: var(--ink);
 }
 
@@ -467,8 +476,13 @@
   display: grid;
   place-items: center;
   border-radius: var(--hc-r-control, 8px);
-  background: color-mix(in srgb, var(--ws-frame) 60%, transparent);
-  border: 1px solid var(--hc-line-soft, var(--hc-line));
+  /*
+   * Slightly darker than the tile (which uses ws-frame-raise) so the glyph
+   * well reads as a recessed cell — the icon sits inside a frame, not
+   * floating on the tile surface.
+   */
+  background: color-mix(in srgb, var(--ws-frame) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ws-frame-ink) 16%, transparent);
   flex-shrink: 0;
 }
 
