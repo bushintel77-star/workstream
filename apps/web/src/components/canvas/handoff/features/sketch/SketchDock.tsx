@@ -11,9 +11,34 @@ import css from "./sketchDock.module.css";
 
 type SketchTool = "pen" | "eraser";
 
+/**
+ * Landscape-relevant pen colours — the semantic drawing colours operators
+ * already know from the plan, plus annotation black/grey. Not a full wheel:
+ * the pen is for sketching site details, not painting illustrations.
+ */
+const PEN_COLOURS = [
+  { id: "ink", label: "Ink", value: "var(--text-primary)" },
+  { id: "proposed", label: "Proposed", value: "var(--proposed-stroke)" },
+  { id: "existing", label: "Existing", value: "var(--existing-stroke)" },
+  { id: "planting", label: "Planting", value: "var(--planting-new-stroke)" },
+  { id: "retain", label: "Retained", value: "var(--planting-retain-stroke)" },
+  { id: "water", label: "Water", value: "var(--water-l-500)" },
+  { id: "grey", label: "Annotation", value: "var(--gray-l-500)" },
+] as const;
+
+export type SketchPenColour = (typeof PEN_COLOURS)[number]["id"];
+
+/** Resolve a colour id to its CSS value (for stroke fill). */
+export function PEN_COLOUR_VALUE(id: SketchPenColour): string {
+  return PEN_COLOURS.find((c) => c.id === id)?.value ?? PEN_COLOURS[0]!.value;
+}
+
 type Props = {
   tool: SketchTool;
   tip: SketchTipGrade;
+  /** Pen ink colour — drives stroke fill. */
+  penColour?: SketchPenColour;
+  onPenColour?: (colour: SketchPenColour) => void;
   formalizing?: boolean;
   /**
    * Whether the pen tool is armed (see `SketchBoard`). When it is not, drags
@@ -192,6 +217,8 @@ function FormalizeIcon() {
 export function SketchDock({
   tool,
   tip,
+  penColour = "ink",
+  onPenColour,
   formalizing = false,
   active = true,
   anchorRef,
@@ -208,7 +235,9 @@ export function SketchDock({
   strokeCount = 0,
 }: Props) {
   const [tipOpen, setTipOpen] = useState(false);
+  const [colourOpen, setColourOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  const colourPopoverRef = useRef<HTMLDivElement | null>(null);
 
   const setTool = (next: SketchTool) => {
     onTool(next);
@@ -222,9 +251,21 @@ export function SketchDock({
     if (tool === "eraser") {
       setTool("pen");
     }
+    setColourOpen(false);
     setTipOpen((v) => !v);
     onActivate?.();
   };
+
+  const toggleColour = () => {
+    if (tool === "eraser") {
+      setTool("pen");
+    }
+    setTipOpen(false);
+    setColourOpen((v) => !v);
+    onActivate?.();
+  };
+
+  const currentColour = PEN_COLOURS.find((c) => c.id === penColour) ?? PEN_COLOURS[0]!;
 
   return (
     <CameraChrome anchorRef={anchorRef}>
@@ -281,6 +322,59 @@ export function SketchDock({
         >
           <TipIcon />
         </button>
+
+        <button
+          type="button"
+          className={`${css.tool}${colourOpen ? ` ${css.toolActive}` : ""}`}
+          data-testid="sketch-colour"
+          aria-pressed={colourOpen}
+          aria-expanded={colourOpen}
+          aria-label={`Colour: ${currentColour.label}`}
+          disabled={formalizing}
+          title={`Colour: ${currentColour.label}`}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={toggleColour}
+        >
+          <span
+            className={css.colourSwatch}
+            style={{ background: currentColour.value }}
+            aria-hidden
+          />
+        </button>
+
+        {colourOpen ? (
+          <div
+            ref={colourPopoverRef}
+            className={css.colourPopover}
+            role="group"
+            aria-label="Pen colour"
+            data-testid="sketch-colour-picker"
+          >
+            {PEN_COLOURS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className={`${css.colourChip}${penColour === c.id ? ` ${css.colourChipActive}` : ""}`}
+                data-testid={`sketch-colour-${c.id}`}
+                aria-label={c.label}
+                aria-pressed={penColour === c.id}
+                title={c.label}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => {
+                  onPenColour?.(c.id);
+                  setColourOpen(false);
+                  onActivate?.();
+                }}
+              >
+                <span
+                  className={css.colourDot}
+                  style={{ background: c.value }}
+                  aria-hidden
+                />
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className={css.divider} aria-hidden />
 

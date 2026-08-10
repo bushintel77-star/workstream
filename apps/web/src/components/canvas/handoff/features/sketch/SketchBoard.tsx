@@ -18,8 +18,7 @@ import {
 import {
   type SketchTipGrade,
 } from "./sketchCursors";
-import { SketchDock } from "./SketchDock";
-import { semanticForTheme } from "../../../../../styles/colorTokens";
+import { SketchDock, type SketchPenColour, PEN_COLOUR_VALUE } from "./SketchDock";
 import css from "./sketch.module.css";
 
 type SketchTool = "pen" | "eraser";
@@ -79,7 +78,7 @@ type ActiveStroke = {
  */
 export function SketchBoard({
   strokes,
-  darkOn,
+  darkOn: _darkOn,
   onCommit,
   onErase,
   onUndoLast,
@@ -101,6 +100,7 @@ export function SketchBoard({
   const idn = useRef(0);
   const [tool, setTool] = useState<SketchTool>("pen");
   const [tip, setTip] = useState<SketchTipGrade>("medium");
+  const [penColour, setPenColour] = useState<SketchPenColour>("ink");
   const [live, setLive] = useState<{
     points: PctPoint[];
     widthPx: number;
@@ -167,7 +167,7 @@ export function SketchBoard({
   const all = live
     ? [...strokes, { id: "__live", points: live.points, widthPx: live.widthPx }]
     : strokes;
-  const ink = semanticForTheme(darkOn).textPrimary;
+  const ink = PEN_COLOUR_VALUE(penColour);
 
   return (
     <div
@@ -270,6 +270,8 @@ export function SketchBoard({
         <SketchDock
           tool={tool}
           tip={tip}
+          penColour={penColour}
+          onPenColour={setPenColour}
           active={active}
           formalizing={formalizing}
           anchorRef={rootRef}
