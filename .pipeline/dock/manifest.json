@@ -112,7 +112,7 @@
       "location": "main",
       "patch": "patches/stash-2.patch",
       "hash": "5DB6905FFCC4BC209A126E180AAEBD2EB728FA1E46178076B22430B517D207E6",
-      "relevance": "low"
+      "relevance": "high"
     },
     {
       "depends_on": [],
@@ -293,7 +293,7 @@
     }
   ],
   "schema": 1,
-  "updated": "2026-08-10T15:57:56.260Z",
+  "updated": "2026-08-10T19:05:06.260Z",
   "current_branch": "main",
   "main_sha": "220d544",
   "origin_main_sha": "90bfae4",
@@ -420,6 +420,28 @@
           "itemId": "branch-tree",
           "newRelevance": "low",
           "reason": "Merged: no longer at risk of loss"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-08-10T19:05:06.259Z",
+      "event": "new-spec",
+      "itemId": null,
+      "changes": [
+        {
+          "itemId": "irrigation-edit-loop-ui",
+          "newRelevance": "critical",
+          "reason": "New spec C:\\Users\\Tim\\Downloads\\Voice_First_AI_Canvas_Integration_Spec.docx directly references this item"
+        },
+        {
+          "itemId": "supplier-rate-sheet-loading",
+          "newRelevance": "high",
+          "reason": "Downstream irrigation-edit-loop-ui affected by new spec — may need this"
+        },
+        {
+          "itemId": "irrigation-edit-loop-domain",
+          "newRelevance": "critical",
+          "reason": "New spec C:\\Users\\Tim\\Downloads\\Voice_First_AI_Canvas_Integration_Spec.docx directly references this item"
         }
       ]
     }
