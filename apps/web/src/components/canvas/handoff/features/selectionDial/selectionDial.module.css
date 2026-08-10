@@ -54,9 +54,18 @@
   gap: 1px;
   border: none;
   border-radius: var(--hc-r-pill);
+  /*
+   * --hc-frost is a dark gallery-frame frost (matches --ws-frame, near-black
+   * in both themes -- see handoffStudio.module.css). It needs the frame's own
+   * pale ink (--ws-frame-ink), not --hc-ink -- --hc-ink is calibrated for
+   * *light* backgrounds and was going near-invisible on this dark chip
+   * (accessibility bug: idle slots read as solid black until hover/focus
+   * flipped the background light, which is when the dark --hc-ink finally
+   * became legible).
+   */
   background: var(--hc-frost);
   box-shadow: 0 4px 14px var(--hc-neu-shadow);
-  color: var(--hc-ink);
+  color: var(--ws-frame-ink);
   cursor: grab;
   padding: 0;
   min-width: 44px;
@@ -65,17 +74,19 @@
 
 .slot:hover,
 .slotFocus {
+  /* Wash is light, so ink flips back to the light-background token. */
   background: var(--hc-accent-wash);
+  color: var(--hc-ink);
 }
 
 .slotDanger {
-  color: var(--hc-danger);
+  /* Same on-dark-frost idiom already used in buildableArea.module.css. */
+  color: color-mix(in srgb, var(--ws-frame-ink) 92%, var(--hc-danger));
 }
 
-.dialNight .slot {
-  background: color-mix(in srgb, var(--hc-ink) 88%, transparent);
-  color: color-mix(in srgb, var(--hc-ink) 72%, transparent);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--hc-ink) 35%, transparent);
+.slotDanger:hover,
+.slotDanger.slotFocus {
+  color: var(--hc-danger);
 }
 
 .dialNight .slot:hover,
