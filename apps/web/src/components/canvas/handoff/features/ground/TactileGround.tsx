@@ -5,13 +5,21 @@ import {
   boardScaleM,
   pickMetricStepM,
   resolveGroundPhase,
-  visibleMetres,
+  visibleMetresFromScale,
   type SheetScaleDenom,
 } from "./groundMetrics";
 import css from "./tactileGround.module.css";
 
 type Props = {
   zoom?: number;
+  /**
+   * Metres across 100% of the board — the SAME `scaleM` the dimension engine
+   * (edge lengths, lot area) and `GroundRulerOverlay` read. Free plan passes
+   * the fitted `boardWidthM`; Fit sheet omits this and passes `sheetScaleDenom`
+   * for print-plot scale. Never hardcode 1:100 here or the mesh prints 10 m
+   * grid lines on a 1.6 km rural lot while its boundary labels read ~1600 m.
+   */
+  scaleM?: number;
   sheetScaleDenom?: SheetScaleDenom;
   /** 0–1 peel when aerial present; higher = more parchment tooth. */
   parchmentPeel?: number;
@@ -45,6 +53,7 @@ type Props = {
  */
 export function TactileGround({
   zoom = 1,
+  scaleM,
   sheetScaleDenom = 100,
   parchmentPeel = 0.42,
   hasAerial = false,
@@ -58,10 +67,13 @@ export function TactileGround({
   quietChrome = false,
   hidePaper = false,
 }: Props) {
-  const scaleM = boardScaleM(sheetScaleDenom);
-  const visibleM = visibleMetres(sheetScaleDenom, zoom);
+  // Free plan passes the live fitted `scaleM`; Fit sheet falls back to the
+  // print-plot denominator. Both must agree with the dimension engine — a
+  // hardcoded 1:100 prints 10 m grid lines on a 1.6 km rural lot.
+  const resolvedScaleM = scaleM ?? boardScaleM(sheetScaleDenom);
+  const visibleM = visibleMetresFromScale(resolvedScaleM, zoom);
   const stepM = pickMetricStepM(visibleM);
-  const stepPct = (stepM / scaleM) * 100;
+  const stepPct = (stepM / resolvedScaleM) * 100;
   const phase = foundationCleanse
     ? "cadastral"
     : resolveGroundPhase({
@@ -192,7 +204,7 @@ export function TactileGround({
               </div>
               {cue ? <p className={css.siteCue}>{cue}</p> : null}
               <p className={css.scaleChip} data-testid="ground-metric-step">
-                {stepM} m · 1:{sheetScaleDenom}
+                {scaleM ? `${stepM} m` : `${stepM} m · 1:${sheetScaleDenom}`}
               </p>
             </>
           ) : null}

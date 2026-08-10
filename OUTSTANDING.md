@@ -108,27 +108,25 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 ## P3 — Nice to have
 
-- [ ] **TactileGround mesh + scale chip use hardcoded 1:100 board scale.**
-      `TactileGround` derives `scaleM = boardScaleM(sheetScaleDenom=100) = 110 m`
-      and prints "{stepM} m · 1:100" on the ground mesh / scale chip, while the
-      dimension engine and `GroundRulerOverlay` (fixed) read the fitted
-      `ui.boardWidthM`. On a rural parcel the mesh grid and scale chip show
-      10 m / 1:100 while boundary labels correctly read ~1600 m — the same
-      two-scale bug that was fixed for the ruler in
-      `GroundRulerOverlay`. Scoped out of the measurement-integrity fix because
-      it touches visible chrome (mesh density, scale chip copy) and the Fit
-      sheet legitimately uses the print denominator there. Fix: pass the live
-      `scaleM` to `TactileGround` and update the chip copy to drop the hardcoded
-      "1:100" when `boardWidthM` is fitted. Cover with the
-      `measurement-integrity.test.ts` probe pattern.
+- [x] **TactileGround mesh + scale chip use hardcoded 1:100 board scale.**
+      `TactileGround` now accepts a live `scaleM` (the fitted `boardWidthM`) and
+      uses it for the mesh density + chip copy, matching `GroundRulerOverlay`
+      and the dimension engine. The chip drops the "1:100" print denominator
+      when `scaleM` is fitted (free plan); the Fit sheet still passes
+      `sheetScaleDenom` for print-plot scale. Covered by the
+      `measurement-integrity.test.ts` probe ("TactileGround mesh + chip read the
+      fitted scale" describe block).
 - [ ] Storybook for web primitives.
 - [x] **Local docker-compose** — [docker-compose.yml](docker-compose.yml).
 - [ ] Bundle-size budget in CI.
-- [ ] PostgreSQL migration once the data model stabilises.
+- [ ] ~~PostgreSQL migration once the data model stabilises.~~ Superseded:
+      SQLite WAL write-through journal (`packages/db/src/sqlite-persist.ts`) is
+      now the durable target. CLAUDE.md: "Postgres. Stay on the JSON snapshot
+      path until SQLite migration lands" — that migration has landed.
 - [ ] Multi-region Railway deploy for HA.
 - [ ] **`moduleResolution: node` (node10) removal in TypeScript 7.** Source is
       [`tsconfig.node.json`](tsconfig.node.json) line 5, inherited by `apps/api`
-      and `packages/{contracts,db,cad,domain}`. Harmless today — TS 5.9.3 exits 0
+      and `packages/{contracts,db,cad,domain}`. Harmless today — TS 5.7.0 exits 0
       (verified uncached, not turbo cache), so `pnpm typecheck` / `pnpm run ci`
       are green; editors on a newer TS surface it as an error.
       **Do not apply the editor's suggested fix:** `"ignoreDeprecations": "6.0"`
@@ -190,11 +188,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       because the store holds unrelated projects and a bare
       `[class*="cardName"]` ordering assertion would be non-deterministic.
       Verified to fail when the expected order is reversed.
-- [ ] **Quote line table header crowds at wide viewports.** `.row`
-      `grid-template-columns: 1fr 36px 72px 84px 108px minmax(120px, 180px)` runs
-      `TOTAL` and `ACTIONS` together with no gutter, and a long unit note
-      ("~1.73 t spoil · 8 t/load") bleeds into the actions column. Content-sized
-      columns, so it needs a measured pass rather than a token swap.
+- [ ] ~~Quote line table header crowds at wide viewports.~~ Superseded: the
+      `.row` grid at `quoteBuilder.module.css:278` is now
+      `1fr 32px 56px 72px 88px 28px` — the column values this item described no
+      longer exist. Re-open with fresh measurements if crowding recurs.
 - [x] **`apps/web` is now linted, at `--max-warnings 0`.** Root `pnpm lint`
       covers `apps/api/src apps/web/src packages/domain/src
       packages/contracts/src`. The predicted "large first-run backlog" did not
@@ -229,7 +226,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       a temporal dead zone reference (TS2448). The closure is correct at call
       time; only the dep array cannot see them, so the hook carries a documented
       `exhaustive-deps` suppression. Fixing it properly means reordering
-      declarations in a 5,700-line component.
+      declarations in a 6,334-line component.
 
 ## Idle chrome coverage — resolved, ratchet now holds the line
 

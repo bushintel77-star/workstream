@@ -108,7 +108,7 @@ function scoreType(
     return recentBoost * 10 + modeBoost + catBias + (100 - name.charCodeAt(0));
   }
 
-  let band = 0;
+  let band: number;
   if (skus.some((s) => s === q)) band = 1000;
   else if (skus.some((s) => s.startsWith(q) || q.startsWith(s))) band = 900;
   else if (name.startsWith(q) || tag.startsWith(q)) band = 800;

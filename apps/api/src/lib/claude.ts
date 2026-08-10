@@ -303,6 +303,7 @@ export async function generateDesign(
   } catch (err) {
     throw new Error(
       `Failed to parse design JSON: ${err instanceof Error ? err.message : err}`,
+      { cause: err },
     );
   }
 

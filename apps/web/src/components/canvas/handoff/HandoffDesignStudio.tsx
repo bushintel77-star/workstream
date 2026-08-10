@@ -3963,6 +3963,7 @@ export function HandoffDesignStudio({
               >
                 <TactileGround
                   zoom={planZoom}
+                  scaleM={ui.frameOn && sheetPlotLayout ? undefined : scaleM}
                   sheetScaleDenom={100}
                   parchmentPeel={
                     ui.frameOn || draftingPlate || ui.foundationCleanse
@@ -4035,6 +4036,7 @@ export function HandoffDesignStudio({
                   >
                     <TactileGround
                       zoom={planZoom}
+                      scaleM={scaleM}
                       sheetScaleDenom={100}
                       parchmentPeel={
                         draftingPlate || ui.foundationCleanse ? 1 : ui.parchmentPeel
@@ -4060,6 +4062,7 @@ export function HandoffDesignStudio({
                     (ui.canopyScanning || ai.busy === "scanning")
                   }
                   zoom={planZoom}
+                  scaleM={ui.frameOn && sheetPlotLayout ? undefined : scaleM}
                   sheetScaleDenom={100}
                   darkOn={darkLens}
                   foundationCleanse={ui.foundationCleanse}

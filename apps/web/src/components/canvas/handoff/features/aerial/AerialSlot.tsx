@@ -18,6 +18,12 @@ type Props = {
   frameOn: boolean;
   scanning: boolean;
   zoom?: number;
+  /**
+   * Live metres across 100% of the board (free plan). When provided, the
+   * ground mesh + chip read this scale instead of the print-plot denom.
+   * Fit sheet omits this and passes `sheetScaleDenom`.
+   */
+  scaleM?: number;
   sheetScaleDenom?: SheetScaleDenom;
   darkOn?: boolean;
   /** Stage 1 — Vicmap title ground phase (not a stand-in for CAD/Sketch). */
@@ -80,6 +86,7 @@ export function AerialSlot({
   frameOn,
   scanning,
   zoom = 1,
+  scaleM,
   sheetScaleDenom = 100,
   darkOn = false,
   foundationCleanse = false,
@@ -240,6 +247,7 @@ export function AerialSlot({
 
       <TactileGround
         zoom={zoom}
+        scaleM={scaleM}
         sheetScaleDenom={sheetScaleDenom}
         parchmentPeel={
           foundationCleanse || !underlayEnabled

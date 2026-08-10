@@ -62,7 +62,7 @@ export async function saveDesignCanvasClient(
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`Couldn't reach the server: ${msg}`);
+    throw new Error(`Couldn't reach the server: ${msg}`, { cause: err });
   }
 
   if (!res.ok) {

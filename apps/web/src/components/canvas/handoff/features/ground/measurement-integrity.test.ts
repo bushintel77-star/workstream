@@ -112,6 +112,55 @@ describe("measurement integrity: ruler scale == dimension engine scale", () => {
   });
 });
 
+describe("measurement integrity: TactileGround mesh + chip read the fitted scale", () => {
+  /*
+   * TactileGround used to derive its mesh density and "1:100" chip copy from a
+   * hardcoded `boardScaleM(100)=110 m`, so on a rural parcel the mesh grid
+   * showed 10 m cells while the boundary labels correctly read ~1600 m. After
+   * the fix it accepts a live `scaleM` (the fitted `boardWidthM`) and the mesh
+   * step + chip follow it, matching the ruler and dimension engine. The Fit
+   * sheet still passes `sheetScaleDenom` for print-plot scale.
+   */
+  it("free-plan mesh step follows the fitted scaleM, not the hardcoded 1:100", () => {
+    const { boardWidthM } = fitParcel();
+    // TactileGround resolvedScaleM = scaleM ?? boardScaleM(sheetScaleDenom).
+    const freePlanScaleM = boardWidthM;
+    const freePlanStep = pickMetricStepM(
+      visibleMetresFromScale(freePlanScaleM, 1),
+    );
+    const fitSheetStep = pickMetricStepM(visibleMetres(100, 1));
+    // Rural board ~1900 m -> 100 m mesh cells. Hardcoded 110 m board -> 10 m.
+    expect(freePlanStep).toBeGreaterThanOrEqual(50);
+    expect(fitSheetStep).toBe(10);
+    // The two scales must disagree on a rural parcel — this is the bug class.
+    expect(freePlanScaleM).not.toBe(boardScaleM(100));
+  });
+
+  it("chip copy drops the print denominator when scaleM is fitted (free plan)", () => {
+    const { boardWidthM } = fitParcel();
+    const freePlanStep = pickMetricStepM(
+      visibleMetresFromScale(boardWidthM, 1),
+    );
+    // TactileGround chip: scaleM ? `${stepM} m` : `${stepM} m · 1:${sheetScaleDenom}`.
+    const freePlanChip = `${freePlanStep} m`;
+    const fitSheetChip = `${pickMetricStepM(visibleMetres(100, 1))} m · 1:100`;
+    expect(freePlanChip).not.toContain("1:");
+    expect(fitSheetChip).toContain("1:100");
+  });
+
+  it("default scaleM (no fit) agrees with the 1:100 fallback so urban plans don't regress", () => {
+    // When boardWidthM is unset, TactileGround falls back to boardScaleM(100)=110.
+    // The mesh + chip must match the legacy behavior on a small urban lot.
+    const fallbackScaleM = boardScaleM(100);
+    const fallbackStep = pickMetricStepM(
+      visibleMetresFromScale(fallbackScaleM, 1),
+    );
+    const legacyStep = pickMetricStepM(visibleMetres(100, 1));
+    expect(fallbackScaleM).toBe(110);
+    expect(fallbackStep).toBe(legacyStep);
+  });
+});
+
 describe("measurement integrity: displayed lot area == drawn shoelace", () => {
   it("round-trips the fitted ring through percent-space at the fitted scale", () => {
     const { boardWidthM, drawnAreaM2, perimeterM } = fitParcel();

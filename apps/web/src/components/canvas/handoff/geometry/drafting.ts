@@ -12,9 +12,6 @@ export function formatSegmentTip(
   const angleDeg =
     (Math.atan2((to.y - from.y) / boardAspect, to.x - from.x) * 180) /
     Math.PI;
-  let rot = angleDeg;
-  if (rot > 90) rot -= 180;
-  if (rot < -90) rot += 180;
   const bearing = ((angleDeg % 360) + 360) % 360;
   return {
     lengthM,
@@ -50,7 +47,7 @@ export function pointFromSegmentInput(
       Math.min(
         100,
         from.y +
-          ((length * Math.sin(radians)) / (scaleM / boardAspect)) * 100,
+        ((length * Math.sin(radians)) / (scaleM / boardAspect)) * 100,
       ),
     ),
   };

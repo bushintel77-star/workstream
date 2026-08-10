@@ -122,8 +122,8 @@ export function buildTaskList(args: Args): string {
   }
 
   lines.push("## Completion");
-  lines.push(`${n++}. Final clean + waste removal.`);
-  lines.push(`${n++}. Handover walk with client; provide care notes for planting.`);
+  lines.push(`${n}. Final clean + waste removal.`);
+  lines.push(`${n + 1}. Handover walk with client; provide care notes for planting.`);
 
   return lines.join("\n");
 }
@@ -151,7 +151,7 @@ export function buildSchedule(args: Args): string {
   if (zones(design).some((z) => z.lighting.length > 0)) {
     lines.push(`| ${week++} | Lighting install + commissioning |`);
   }
-  lines.push(`| ${week++} | Final clean, mulch top-up, handover |`);
+  lines.push(`| ${week} | Final clean, mulch top-up, handover |`);
   return lines.join("\n");
 }
 

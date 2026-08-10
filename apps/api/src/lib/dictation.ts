@@ -342,8 +342,8 @@ export async function runDictation(
     id: string;
     name: string;
     input: Record<string, unknown>;
-  }> = [];
-  let reply = "Noted.";
+  }>;
+  let reply: string;
 
   if (!apiKey) {
     const fallback = devFallback(trimmed);
