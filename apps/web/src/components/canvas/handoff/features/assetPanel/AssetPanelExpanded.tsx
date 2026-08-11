@@ -241,6 +241,10 @@ export function AssetPanelExpanded({
     () => buildSketchLibraryGroups(filteredCatalog),
     [filteredCatalog],
   );
+  const essentials = useMemo(
+    () => libraryGroups.slice(0, KIT_BAGS.length),
+    [libraryGroups],
+  );
 
   const searching = query.trim().length > 0;
   const results = useMemo(
@@ -374,6 +378,28 @@ export function AssetPanelExpanded({
             Pin
           </button>
         ) : null}
+      </div>
+
+      <div className={css.essentialsBar} data-testid="kit-essentials">
+        <span className={css.essentialsLabel}>Landscape essentials</span>
+        <div className={css.essentialsChips} aria-label="Quick sections">
+          {essentials.map((group) => (
+            <button
+              key={group.category}
+              type="button"
+              className={css.essentialsChip}
+              data-active={openSection === group.category ? "true" : "false"}
+              onClick={() => {
+                playInstrumentTick("step");
+                onOpenSection(group.category);
+                scrollRef.current?.scrollTo({ top: 0 });
+              }}
+            >
+              <span>{group.label}</span>
+              <span className={css.essentialsCount}>{group.symbols.length}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className={css.filterRow} data-testid="kit-planting-filters">

@@ -84,6 +84,9 @@ export function DeckInspectorDock({
           </svg>
         </button>
       </div>
+      <p className={css.dockLead}>
+        Tune the deck title, deliverable, template, palette, and font from one summoned control surface.
+      </p>
 
       <div className={css.dockBody}>
         <label className={css.field}>
