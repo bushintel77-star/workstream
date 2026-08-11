@@ -9,7 +9,9 @@
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  background: color-mix(in srgb, var(--ws-frame) 92%, transparent);
+  background: var(--ws-milled-surface);
+  border: 1px solid var(--ws-milled-border);
+  box-shadow: var(--ws-milled-shadow);
   backdrop-filter: blur(20px) saturate(1.15);
   -webkit-backdrop-filter: blur(20px) saturate(1.15);
   color: var(--ws-frame-ink);
@@ -354,13 +356,15 @@
 .shareBtn {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid var(--ws-frame-hair);
+  border: 1px solid var(--ws-milled-border);
   border-radius: var(--hc-r-control);
   font: inherit;
   font-size: var(--text-xs);
   font-weight: 600;
   cursor: pointer;
-  transition: background 140ms ease, border-color 140ms ease;
+  background: var(--ws-recessed-surface);
+  box-shadow: var(--ws-recessed-shadow);
+  transition: background 140ms ease, border-color 140ms ease, transform 40ms ease;
 }
 
 .expandBtn {
@@ -371,6 +375,13 @@
 .expandBtn:hover {
   background: color-mix(in srgb, var(--ws-frame-wash) 50%, var(--ws-frame-raise));
   border-color: var(--ws-frame-hair);
+}
+
+.expandBtn:active,
+.shareBtn:active {
+  background: rgb(0 0 0);
+  box-shadow: var(--ws-recessed-pressed-shadow);
+  transform: translateY(1px);
 }
 
 .shareBtn {
@@ -410,7 +421,9 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: color-mix(in srgb, var(--ws-frame) 92%, transparent);
+  background: var(--ws-milled-surface);
+  border: 1px solid var(--ws-milled-border);
+  box-shadow: var(--ws-milled-shadow);
   backdrop-filter: blur(20px) saturate(1.15);
   -webkit-backdrop-filter: blur(20px) saturate(1.15);
 }

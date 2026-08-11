@@ -187,12 +187,10 @@
   min-width: 320px;
   margin-left: 0;
   padding: 20px;
-  border: 1px solid var(--calm-border);
+  border: 1px solid var(--ws-milled-border);
   border-radius: var(--r-sm);
-  background: var(--calm-surface);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 5%),
-    0 24px 56px rgb(0 0 0 / 75%);
+  background: var(--ws-milled-surface);
+  box-shadow: var(--ws-milled-shadow);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   min-height: 0;
@@ -499,7 +497,8 @@
    * ws-frame (#14171c), so the tile reads as a raised cell on the panel
    * without needing a shadow. Swiss principle: hairlines, never shadows.
    */
-  background: rgb(10 10 10);
+  background: var(--ws-recessed-surface);
+  box-shadow: var(--ws-recessed-shadow);
   color: var(--ink);
   font: inherit;
   cursor: pointer;
@@ -514,10 +513,10 @@
 .tile:active {
   transition: all 40ms cubic-bezier(0, 0, 0, 1);
   transform: translateY(1px) scale(0.98);
-  background: rgb(255 255 255);
+  background: rgb(0 0 0);
   color: rgb(0 0 0);
   border-color: rgb(255 255 255);
-  box-shadow: inset 0 2px 4px rgb(0 0 0 / 50%);
+  box-shadow: var(--ws-recessed-pressed-shadow);
 }
 
 .tile:focus-visible {
