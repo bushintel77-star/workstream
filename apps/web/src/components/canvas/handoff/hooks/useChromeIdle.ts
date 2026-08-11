@@ -26,27 +26,37 @@ export function useChromeIdle({
   disabled?: boolean;
 } = {}) {
   const [idle, setIdle] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastAt = useRef<number>(Date.now());
+const idleRef = useRef(false);
+const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+const lastAt = useRef<number>(Date.now());
 
-  // Use functional updates so we only re-render when the value actually flips.
   const startIdleTimer = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(
-      () => setIdle((wasIdle) => (wasIdle ? wasIdle : true)),
+      () => {
+        if (idleRef.current) return;
+        idleRef.current = true;
+        setIdle(true);
+      },
       timeout,
     );
   }, [timeout]);
 
   const markActive = useCallback(() => {
     lastAt.current = Date.now();
-    setIdle((wasIdle) => (wasIdle ? false : wasIdle));
+    if (idleRef.current) {
+      idleRef.current = false;
+      setIdle(false);
+    }
     startIdleTimer();
   }, [startIdleTimer]);
 
   useEffect(() => {
     if (disabled) {
-      setIdle(false);
+      if (idleRef.current) {
+        idleRef.current = false;
+        setIdle(false);
+      }
       if (timer.current) clearTimeout(timer.current);
       return;
     }
