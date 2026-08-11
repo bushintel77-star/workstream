@@ -164,7 +164,7 @@ export default function CrewScreen() {
           {loading ? "…" : `${crew.length} crew · long-press to remove`}
         </Text>
         <Pressable
-          style={styles.addBtn}
+          style={({ pressed }) => [styles.addBtn, pressed && styles.addBtnPressed]}
           onPress={openNew}
           accessibilityRole="button"
           accessibilityLabel="Add crew member"
@@ -187,7 +187,7 @@ export default function CrewScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.row,
-                pressed && { backgroundColor: tokens.color.surface.sunken },
+                pressed && styles.rowPressed,
                 !item.active && { opacity: 0.5 },
               ]}
               onPress={() => openEdit(item)}
@@ -357,8 +357,17 @@ const styles = StyleSheet.create({
   addBtn: {
     paddingHorizontal: tokens.space[3],
     paddingVertical: tokens.space[2],
-    borderRadius: tokens.radius.md,
+    borderRadius: tokens.radius.pill,
     backgroundColor: tokens.color.accent.default,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
+  addBtnPressed: {
+    transform: [{ translateY: 1 }, { scale: 0.99 }],
+    opacity: 0.96,
   },
   addBtnText: {
     color: tokens.color.ink.inverted,
@@ -374,10 +383,19 @@ const styles = StyleSheet.create({
   },
   row: {
     backgroundColor: tokens.color.surface.elevated,
-    borderRadius: tokens.radius.md,
-    borderWidth: 1,
+    borderRadius: tokens.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.line.hairline,
     padding: tokens.space[4],
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  rowPressed: {
+    backgroundColor: tokens.color.surface.sunken,
+    transform: [{ translateY: 1 }],
   },
   name: {
     fontSize: tokens.type.title.fontSize,
@@ -424,6 +442,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: tokens.radius.lg,
     borderTopRightRadius: tokens.radius.lg,
     gap: tokens.space[3],
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
   kicker: {
     fontSize: tokens.type.micro.fontSize,
@@ -448,15 +471,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space[3],
     fontSize: tokens.type.body.fontSize,
     color: tokens.color.ink.primary,
-    borderBottomWidth: 2,
-    borderBottomColor: tokens.color.ink.primary,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: tokens.color.line.hairline,
   },
   rateRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: tokens.space[2],
-    borderBottomWidth: 2,
-    borderBottomColor: tokens.color.ink.primary,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: tokens.color.line.hairline,
     backgroundColor: tokens.color.surface.sunken,
     paddingHorizontal: tokens.space[3],
     height: 44,
@@ -480,7 +503,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space[3],
     paddingVertical: tokens.space[2],
     borderRadius: tokens.radius.pill,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.line.hairline,
     backgroundColor: tokens.color.surface.sunken,
   },
@@ -509,11 +532,12 @@ const styles = StyleSheet.create({
   secondary: {
     flex: 1,
     height: 48,
-    borderRadius: tokens.radius.md,
-    borderWidth: 1,
+    borderRadius: tokens.radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.line.strong,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: tokens.color.surface.elevated,
   },
   secondaryText: {
     fontSize: tokens.type.body.fontSize,
@@ -523,10 +547,15 @@ const styles = StyleSheet.create({
   primary: {
     flex: 1,
     height: 48,
-    borderRadius: tokens.radius.md,
+    borderRadius: tokens.radius.pill,
     backgroundColor: tokens.color.accent.default,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   primaryText: {
     fontSize: tokens.type.body.fontSize,

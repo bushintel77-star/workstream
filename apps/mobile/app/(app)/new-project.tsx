@@ -98,13 +98,15 @@ export default function NewProjectScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
       >
-        <Text style={styles.kicker}>NEW PROJECT</Text>
-        <Text style={styles.heading}>What's the address?</Text>
-        <Text style={styles.helper}>
-          {autocompleteAvailable
-            ? "AU addresses, Mapbox-powered. Pick a result for an exact lot match."
-            : "Autocomplete unavailable. Enter the full street address manually."}
-        </Text>
+        <View style={styles.hero}>
+          <Text style={styles.kicker}>NEW PROJECT</Text>
+          <Text style={styles.heading}>What's the address?</Text>
+          <Text style={styles.helper}>
+            {autocompleteAvailable
+              ? "AU addresses, Mapbox-powered. Pick a result for an exact lot match."
+              : "Autocomplete unavailable. Enter the full street address manually."}
+          </Text>
+        </View>
 
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>ADDRESS</Text>
@@ -132,10 +134,7 @@ export default function NewProjectScreen() {
             {suggestions.map((s) => (
               <Pressable
                 key={s.id}
-                style={({ pressed }) => [
-                  styles.suggestion,
-                  pressed && { backgroundColor: tokens.color.surface.sunken },
-                ]}
+                style={({ pressed }) => [styles.suggestion, pressed && styles.suggestionPressed]}
                 onPress={() => pickSuggestion(s)}
                 accessibilityRole="button"
                 accessibilityLabel={s.place_name}
@@ -164,7 +163,11 @@ export default function NewProjectScreen() {
 
       <View style={styles.footer}>
         <Pressable
-          style={[styles.button, !canContinue && styles.buttonDisabled]}
+          style={({ pressed }) => [
+            styles.button,
+            !canContinue && styles.buttonDisabled,
+            pressed && canContinue && styles.buttonPressed,
+          ]}
           onPress={handleContinue}
           disabled={!canContinue}
           accessibilityRole="button"
@@ -188,6 +191,19 @@ const styles = StyleSheet.create({
     paddingTop: tokens.space[5],
     paddingBottom: tokens.space[6],
     gap: tokens.space[3],
+  },
+  hero: {
+    padding: tokens.space[4],
+    borderRadius: tokens.radius.lg,
+    backgroundColor: tokens.color.surface.elevated,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: tokens.color.line.hairline,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+    gap: tokens.space[2],
   },
   kicker: {
     fontSize: tokens.type.micro.fontSize,
@@ -217,13 +233,19 @@ const styles = StyleSheet.create({
     color: tokens.color.ink.secondary,
   },
   fieldInput: {
-    height: 48,
-    backgroundColor: tokens.color.surface.sunken,
+    minHeight: 48,
+    backgroundColor: tokens.color.surface.elevated,
     paddingHorizontal: tokens.space[4],
     fontSize: tokens.type.body.fontSize,
     color: tokens.color.ink.primary,
-    borderBottomWidth: 2,
-    borderBottomColor: tokens.color.ink.primary,
+    borderRadius: tokens.radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: tokens.color.line.hairline,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   spinner: {
     position: "absolute",
@@ -232,10 +254,15 @@ const styles = StyleSheet.create({
   },
   suggestions: {
     backgroundColor: tokens.color.surface.elevated,
-    borderRadius: tokens.radius.md,
-    borderWidth: 1,
+    borderRadius: tokens.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.line.hairline,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   suggestion: {
     paddingHorizontal: tokens.space[4],
@@ -243,6 +270,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: tokens.color.line.hairline,
     gap: 2,
+  },
+  suggestionPressed: {
+    backgroundColor: tokens.color.surface.sunken,
+    transform: [{ translateY: 1 }],
   },
   suggestionPrimary: {
     fontSize: tokens.type.body.fontSize,
@@ -255,11 +286,16 @@ const styles = StyleSheet.create({
   },
   selectedCard: {
     backgroundColor: tokens.color.surface.elevated,
-    borderRadius: tokens.radius.md,
-    borderWidth: 1,
+    borderRadius: tokens.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.accent.default,
     padding: tokens.space[4],
     gap: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   cardLabel: {
     fontSize: tokens.type.micro.fontSize,
@@ -285,14 +321,23 @@ const styles = StyleSheet.create({
     paddingBottom: tokens.space[4],
   },
   button: {
-    height: 56,
-    borderRadius: tokens.radius.md,
+    minHeight: 56,
+    borderRadius: tokens.radius.lg,
     backgroundColor: tokens.color.accent.default,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
   buttonDisabled: {
     backgroundColor: tokens.color.line.strong,
+  },
+  buttonPressed: {
+    transform: [{ translateY: 1 }, { scale: 0.99 }],
+    opacity: 0.96,
   },
   buttonText: {
     fontSize: tokens.type.body.fontSize,

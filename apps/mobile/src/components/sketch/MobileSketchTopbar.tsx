@@ -25,7 +25,7 @@ export function MobileSketchTopbar({
   return (
     <View style={styles.wrap} accessibilityRole="header">
       <Pressable
-        style={styles.back}
+        style={({ pressed }) => [styles.back, pressed && styles.pressed]}
         onPress={onBack}
         accessibilityRole="button"
         accessibilityLabel="Back"
@@ -37,7 +37,7 @@ export function MobileSketchTopbar({
         {title}
       </Text>
       <Pressable
-        style={styles.studioBtn}
+        style={({ pressed }) => [styles.studioBtn, pressed && styles.pressed]}
         onPress={() => void Linking.openURL(studioUrl)}
         accessibilityRole="link"
         accessibilityLabel="Open in Studio"
@@ -46,7 +46,7 @@ export function MobileSketchTopbar({
         <Text style={styles.studioBtnText}>Open in Studio</Text>
       </Pressable>
       <Pressable
-        style={styles.iconBtn}
+        style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
         onPress={onTogglePresentation}
         accessibilityRole="button"
         accessibilityLabel={presentationMode ? "Exit presentation mode" : "Enter presentation mode"}
@@ -70,46 +70,74 @@ export function MobileSketchTopbar({
 
 const styles = StyleSheet.create({
   wrap: {
-    height: 44,
+    minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     backgroundColor: tokens.color.surface.elevated,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: tokens.color.line.hairline,
+    shadowColor: "#000",
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 6,
   },
   back: {
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: tokens.radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: tokens.color.line.hairline,
+    backgroundColor: tokens.color.surface.sunken,
   },
   backText: { fontSize: 20, color: tokens.color.ink.primary },
   title: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
     color: tokens.color.ink.primary,
   },
   studioBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 4,
+    minHeight: 36,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    borderRadius: tokens.radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.accent.default,
+    backgroundColor: tokens.color.accent.soft,
   },
   studioBtnText: {
     fontSize: 10,
     fontFamily: "monospace",
-    color: tokens.color.accent.default,
+    letterSpacing: 0.5,
+    color: tokens.color.accent.ink,
   },
   iconBtn: {
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: tokens.radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: tokens.color.line.hairline,
+    backgroundColor: tokens.color.surface.sunken,
   },
   iconText: { color: tokens.color.ink.tertiary, fontSize: 16 },
-  sync: { fontSize: 10, color: tokens.color.ink.tertiary },
+  sync: {
+    fontSize: 10,
+    color: tokens.color.ink.tertiary,
+    fontFamily: "monospace",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.color.surface.sunken,
+  },
+  pressed: {
+    transform: [{ translateY: 1 }, { scale: 0.98 }],
+    opacity: 0.96,
+  },
 });

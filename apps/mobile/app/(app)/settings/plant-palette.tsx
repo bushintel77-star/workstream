@@ -124,11 +124,16 @@ const styles = StyleSheet.create({
   },
   row: {
     backgroundColor: tokens.color.surface.elevated,
-    borderRadius: tokens.radius.md,
-    borderWidth: 1,
+    borderRadius: tokens.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.line.hairline,
     padding: tokens.space[4],
     gap: tokens.space[2],
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   rowHead: {
     flexDirection: "row",

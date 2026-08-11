@@ -112,7 +112,7 @@ export default function RateCardScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.row,
-                pressed && { backgroundColor: tokens.color.surface.sunken },
+                pressed && styles.rowPressed,
               ]}
               onPress={() => openEdit(item)}
             >
@@ -159,14 +159,14 @@ export default function RateCardScreen() {
                 <View style={styles.actions}>
                   <Pressable
                     onPress={closeEdit}
-                    style={styles.secondary}
+                    style={({ pressed }) => [styles.secondary, pressed && styles.secondaryPressed]}
                     disabled={saving}
                   >
                     <Text style={styles.secondaryText}>Cancel</Text>
                   </Pressable>
                   <Pressable
                     onPress={submit}
-                    style={styles.primary}
+                    style={({ pressed }) => [styles.primary, pressed && styles.primaryPressed]}
                     disabled={saving}
                   >
                     <Text style={styles.primaryText}>
@@ -207,11 +207,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     backgroundColor: tokens.color.surface.elevated,
-    borderRadius: tokens.radius.md,
-    borderWidth: 1,
+    borderRadius: tokens.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.line.hairline,
     padding: tokens.space[3],
     gap: tokens.space[2],
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  rowPressed: {
+    backgroundColor: tokens.color.surface.sunken,
+    transform: [{ translateY: 1 }],
   },
   rowMain: {
     flex: 1,
@@ -250,6 +259,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: tokens.radius.lg,
     borderTopRightRadius: tokens.radius.lg,
     gap: tokens.space[3],
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
   modalKicker: {
     fontSize: tokens.type.micro.fontSize,
@@ -272,8 +286,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: tokens.space[2],
     paddingVertical: tokens.space[3],
-    borderBottomWidth: 2,
-    borderBottomColor: tokens.color.ink.primary,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: tokens.color.line.hairline,
   },
   dollar: {
     fontSize: tokens.type.displayM.fontSize,
@@ -305,11 +319,16 @@ const styles = StyleSheet.create({
   secondary: {
     flex: 1,
     height: 48,
-    borderRadius: tokens.radius.md,
-    borderWidth: 1,
+    borderRadius: tokens.radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.line.strong,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: tokens.color.surface.elevated,
+  },
+  secondaryPressed: {
+    transform: [{ translateY: 1 }],
+    opacity: 0.96,
   },
   secondaryText: {
     fontSize: tokens.type.body.fontSize,
@@ -319,10 +338,19 @@ const styles = StyleSheet.create({
   primary: {
     flex: 1,
     height: 48,
-    borderRadius: tokens.radius.md,
+    borderRadius: tokens.radius.pill,
     backgroundColor: tokens.color.accent.default,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
+  primaryPressed: {
+    transform: [{ translateY: 1 }, { scale: 0.99 }],
+    opacity: 0.96,
   },
   primaryText: {
     fontSize: tokens.type.body.fontSize,

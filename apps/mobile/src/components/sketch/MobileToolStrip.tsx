@@ -33,10 +33,11 @@ export function MobileToolStrip({
         {TOOLS.map((t) => (
           <Pressable
             key={t.id}
-            style={[
+            style={({ pressed }) => [
               styles.pill,
               active === t.id && styles.pillActive,
               !t.enabled && styles.pillDisabled,
+              pressed && styles.pillPressed,
             ]}
             disabled={!t.enabled}
             onPress={() => t.enabled && onTool(t.id)}
@@ -86,35 +87,47 @@ export function MobileToolStrip({
 
 const styles = StyleSheet.create({
   wrap: {
-    height: 52,
+    height: 60,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: tokens.color.line.hairline,
     backgroundColor: tokens.color.surface.elevated,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: -6 },
+    elevation: 8,
   },
   row: {
     alignItems: "center",
-    paddingHorizontal: 8,
-    gap: 4,
+    paddingHorizontal: 12,
+    gap: 6,
     flexDirection: "row",
   },
   pill: {
-    minWidth: 52,
+    minWidth: 60,
     minHeight: 44,
-    borderRadius: tokens.radius.canvas,
+    borderRadius: tokens.radius.lg,
     paddingHorizontal: tokens.space[3],
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: tokens.color.surface.sunken,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: tokens.color.line.hairline,
   },
   pillActive: {
     borderWidth: 1,
     borderColor: tokens.color.accent.default,
+    backgroundColor: tokens.color.accent.soft,
   },
-  pillDisabled: { opacity: 0.4 },
+  pillDisabled: { opacity: 0.35 },
+  pillPressed: {
+    transform: [{ translateY: 1 }, { scale: 0.98 }],
+  },
   label: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: "monospace",
-    color: tokens.color.ink.tertiary,
+    letterSpacing: 0.6,
+    color: tokens.color.ink.secondary,
   },
   labelActive: { color: tokens.color.accent.default },
   labelDisabled: { color: tokens.color.ink.tertiary },
@@ -122,6 +135,6 @@ const styles = StyleSheet.create({
     width: 1,
     height: 28,
     backgroundColor: tokens.color.line.hairline,
-    marginHorizontal: 4,
+    marginHorizontal: 6,
   },
 });

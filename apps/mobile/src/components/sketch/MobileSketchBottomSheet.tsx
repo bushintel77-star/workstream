@@ -55,17 +55,23 @@ export const MobileSketchBottomSheet = forwardRef<BottomSheet, Props>(
           <View style={styles.aiRow}>
             <Pressable
               onPress={() => void onScan()}
+              style={({ pressed }) => [
+                styles.aiBtn,
+                styles.aiBtnPrimary,
+                pressed && styles.aiBtnPressed,
+              ]}
               accessibilityRole="button"
               accessibilityLabel={scanning ? "Scanning site for AI hints" : "Scan site for AI hints"}
               accessibilityHint="Analyse the site aerial and suggest symbol placements"
               accessibilityState={{ disabled: scanning }}
             >
-              <Text style={styles.aiBtn}>{scanning ? "Scanning…" : "Scan site"}</Text>
+              <Text style={styles.aiBtnText}>{scanning ? "Scanning…" : "Scan site"}</Text>
             </Pressable>
             {ghosts.length > 0 ? (
               <>
                 <Pressable
                   onPress={onApplyGhosts}
+                  style={({ pressed }) => [styles.aiLinkBtn, pressed && styles.aiBtnPressed]}
                   accessibilityRole="button"
                   accessibilityLabel={`Apply ${ghosts.length} AI hint${ghosts.length === 1 ? "" : "s"}`}
                   accessibilityHint="Accept all AI-suggested symbol placements onto the plan"
@@ -74,6 +80,7 @@ export const MobileSketchBottomSheet = forwardRef<BottomSheet, Props>(
                 </Pressable>
                 <Pressable
                   onPress={onClearGhosts}
+                  style={({ pressed }) => [styles.aiLinkBtn, pressed && styles.aiBtnPressed]}
                   accessibilityRole="button"
                   accessibilityLabel="Clear AI hints"
                   accessibilityHint="Dismiss all AI-suggested placements without applying them"
@@ -109,10 +116,15 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.color.surface.elevated,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: tokens.color.line.hairline,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 10,
   },
   handle: { backgroundColor: tokens.color.line.strong },
   backdrop: { backgroundColor: "transparent" },
-  content: { paddingHorizontal: 8, paddingBottom: 24 },
+  content: { paddingHorizontal: 12, paddingBottom: 28 },
   sectionTitle: {
     fontSize: 10,
     fontFamily: "monospace",
@@ -122,14 +134,27 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 6,
   },
-  aiRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 8 },
+  aiRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" },
   aiBtn: {
+    minHeight: 44,
+    paddingHorizontal: tokens.space[3],
+    borderRadius: tokens.radius.pill,
+    justifyContent: "center",
+  },
+  aiBtnPrimary: {
+    backgroundColor: tokens.color.accent.soft,
+    borderWidth: 1,
+    borderColor: tokens.color.accent.default,
+  },
+  aiBtnPressed: {
+    transform: [{ translateY: 1 }, { scale: 0.98 }],
+  },
+  aiBtnText: {
     fontSize: 12,
     fontWeight: "600",
-    color: tokens.color.accent.default,
-    paddingVertical: 8,
-    minHeight: 44,
+    color: tokens.color.accent.ink,
   },
+  aiLinkBtn: { minHeight: 44, justifyContent: "center" },
   aiLink: {
     fontSize: 11,
     fontFamily: "monospace",
@@ -141,5 +166,9 @@ const styles = StyleSheet.create({
     fontFamily: "monospace",
     color: tokens.color.ink.secondary,
     marginBottom: 8,
+    paddingHorizontal: tokens.space[3],
+    paddingVertical: tokens.space[2],
+    borderRadius: tokens.radius.md,
+    backgroundColor: tokens.color.surface.sunken,
   },
 });

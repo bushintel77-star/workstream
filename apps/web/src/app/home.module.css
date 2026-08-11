@@ -129,6 +129,10 @@
   gap: 1px;
   background: var(--line-hairline);
   border: 1px solid var(--line-hairline);
+  box-shadow:
+    0 1px 1px rgba(255, 255, 255, 0.04) inset,
+    0 10px 30px rgba(0, 0, 0, 0.08),
+    0 28px 64px rgba(0, 0, 0, 0.06);
 }
 
 /* --- Widget card --- */
@@ -141,6 +145,10 @@
   flex-direction: column;
   gap: 0.5rem;
   min-height: 140px;
+  box-shadow:
+   0 1px 0 rgba(255, 255, 255, 0.05) inset,
+   0 1px 1px rgba(0, 0, 0, 0.04),
+   0 12px 32px rgba(0, 0, 0, 0.05);
 }
 
 .widget[data-accent="blue"]::before,
@@ -151,7 +159,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 24px;
+  width: 32px;
   height: 2px;
 }
 

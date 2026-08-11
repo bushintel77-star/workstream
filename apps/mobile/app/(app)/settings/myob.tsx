@@ -136,7 +136,7 @@ export default function MyobScreen() {
                 <Pressable
                   style={({ pressed }) => [
                     styles.row,
-                    pressed && { backgroundColor: tokens.color.surface.sunken },
+                    pressed && styles.rowPressed,
                   ]}
                   onPress={() => setPicker(row)}
                   accessibilityRole="button"
@@ -189,7 +189,7 @@ export default function MyobScreen() {
                 <Pressable
                   style={({ pressed }) => [
                     styles.itemRow,
-                    pressed && { backgroundColor: tokens.color.surface.sunken },
+                    pressed && styles.itemRowPressed,
                   ]}
                   onPress={() => selectMatch(item)}
                   disabled={saving}
@@ -242,9 +242,14 @@ const styles = StyleSheet.create({
     padding: tokens.space[4],
     backgroundColor: tokens.color.surface.elevated,
     borderRadius: tokens.radius.lg,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.line.hairline,
     gap: tokens.space[3],
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   statusKicker: {
     fontSize: tokens.type.micro.fontSize,
@@ -294,11 +299,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: tokens.color.surface.elevated,
-    borderRadius: tokens.radius.md,
-    borderWidth: 1,
+    borderRadius: tokens.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.line.hairline,
     padding: tokens.space[3],
     gap: tokens.space[3],
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
+  rowPressed: {
+    backgroundColor: tokens.color.surface.sunken,
+    transform: [{ translateY: 1 }],
   },
   rowSku: {
     fontFamily: "monospace",
@@ -338,6 +352,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: tokens.radius.lg,
     gap: tokens.space[3],
     maxHeight: "80%",
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
   modalSku: {
     fontFamily: "monospace",
@@ -355,6 +374,10 @@ const styles = StyleSheet.create({
     paddingVertical: tokens.space[3],
     borderBottomWidth: 1,
     borderBottomColor: tokens.color.line.hairline,
+  },
+  itemRowPressed: {
+    backgroundColor: tokens.color.surface.sunken,
+    transform: [{ translateY: 1 }],
   },
   itemNumber: {
     fontFamily: "monospace",

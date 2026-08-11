@@ -19,20 +19,26 @@ export function PlannerDock({
   label?: string;
   accent?: "blue" | "red" | "green" | "yellow";
 }) {
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window === "undefined"
-      ? true
-      : window.matchMedia("(min-width: 769px)").matches,
-  );
+const [mounted, setMounted] = useState(false);
+const [isDesktop, setIsDesktop] = useState(true);
 
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 769px)");
+useEffect(() => {
+  setMounted(true);
+  setIsDesktop(window.matchMedia("(min-width: 769px)").matches);
+}, []);
+
+useEffect(() => {
+  const mq = window.matchMedia("(min-width: 769px)");
     function onChange(e: MediaQueryListEvent) {
       setIsDesktop(e.matches);
     }
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   if (isDesktop) {
     return (
