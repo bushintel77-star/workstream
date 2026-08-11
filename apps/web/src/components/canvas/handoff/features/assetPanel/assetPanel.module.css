@@ -9,7 +9,10 @@
  * translucent panel reaching over the plan.
  */
 .panel {
-  --leica-red: rgb(237 28 36);
+  --calm-border: rgb(255 255 255 / 8%);
+  --calm-surface: rgb(18 18 18);
+  --calm-hover: rgb(26 26 26);
+  --accent-muted: rgb(208 208 208);
   --ink: var(--ws-frame-ink);
   --ink-soft: var(--ws-frame-ink-dim);
   --ink-faint: var(--ws-frame-ink-faint);
@@ -34,19 +37,6 @@
   box-shadow: none;
   color: var(--ink);
   border-color: rgb(255 255 255 / 80%);
-}
-
-.sectionHead:active {
-  transition: all 40ms cubic-bezier(0, 0, 0, 1);
-  transform: translateY(1px) scale(0.98);
-  background: rgb(255 255 255);
-  color: rgb(0 0 0);
-  border-color: rgb(255 255 255);
-  box-shadow: inset 0 2px 4px rgb(0 0 0 / 50%);
-  font-family: var(--font-body);
-  pointer-events: auto;
-  max-height: min(72vh, 640px);
-  animation: panelIn var(--hc-motion, 180ms) var(--ease) both;
 }
 
 /* Night lens keeps one frame language — the frame is already dark. */
@@ -147,7 +137,7 @@
 .swatchOn,
 .swatchOn:hover {
   background: rgb(18 18 18 / 90%);
-  border-left: 2px solid var(--leica-red);
+  border-left: 1px solid rgb(255 255 255 / 40%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
   color: var(--ink);
 }
@@ -193,14 +183,16 @@
 .body {
   display: flex;
   flex-direction: column;
-  width: min(280px, 58vw);
-  min-width: 200px;
+  width: min(520px, 58vw);
+  min-width: 320px;
   margin-left: 0;
-  padding: var(--s-2);
-  border: 1px solid color-mix(in srgb, var(--ws-frame-ink) 10%, transparent);
+  padding: 20px;
+  border: 1px solid var(--calm-border);
   border-radius: var(--r-sm);
-  background: rgb(18 18 18 / 90%);
-  box-shadow: 0 12px 32px rgb(0 0 0 / 80%);
+  background: var(--calm-surface);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 5%),
+    0 24px 56px rgb(0 0 0 / 75%);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   min-height: 0;
@@ -384,10 +376,10 @@
 }
 
 .filterChip[data-active="true"] {
-  border-left: 2px solid var(--leica-red);
-  background: rgb(18 18 18 / 90%);
-  color: var(--ink);
-  border-color: color-mix(in srgb, var(--hc-accent) 45%, transparent);
+  border-color: rgb(255 255 255 / 40%);
+  background: var(--calm-hover);
+  color: rgb(255 255 255);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%);
 }
 
 .scroll {
@@ -482,7 +474,7 @@
 
 .tray {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
   padding: var(--s-1) 2px var(--s-2);
 }
@@ -491,10 +483,10 @@
   display: inline-flex;
   flex-direction: row;
   align-items: center;
-  gap: var(--s-1);
+  gap: 8px;
   width: 100%;
-  min-height: 44px;
-  padding: 5px 6px;
+  min-height: 50px;
+  padding: 6px 8px;
   border-radius: var(--r-sm);
   /*
    * Visible hairline — the old 12% border was invisible against the panel
@@ -507,7 +499,7 @@
    * ws-frame (#14171c), so the tile reads as a raised cell on the panel
    * without needing a shadow. Swiss principle: hairlines, never shadows.
    */
-  background: color-mix(in srgb, var(--ws-frame-raise) 52%, transparent);
+  background: rgb(10 10 10);
   color: var(--ink);
   font: inherit;
   cursor: pointer;
@@ -515,8 +507,8 @@
 }
 
 .tile:hover {
-  background: rgb(18 18 18 / 90%);
-  border-color: rgb(255 255 255 / 80%);
+  background: var(--calm-hover);
+  border-color: rgb(255 255 255 / 35%);
 }
 
 .tile:active {
@@ -535,15 +527,15 @@
 
 .tileOn,
 .tileOn:hover {
-  background: rgb(18 18 18 / 90%);
-  border-color: var(--leica-red);
-  border-left-width: 2px;
+  background: var(--calm-hover);
+  border-color: rgb(255 255 255 / 40%);
+  border-left-width: 1px;
   color: var(--ink);
 }
 
 .glyph {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   border-radius: var(--r-sm);
@@ -566,12 +558,64 @@
 }
 
 .glyph svg {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: block;
 }
 
+.tileKey {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: rgb(20 20 20);
+}
+
+.tileTopRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tileTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tileCode {
+  flex: 0 0 auto;
+  color: var(--ink-faint);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.tileDesc {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
 .tileLabel {
+  display: none;
   font-size: var(--text-micro);
   font-weight: 700;
   line-height: 1.2;
@@ -681,9 +725,9 @@
 }
 
 .craftChip[data-active="true"] {
-  border-left: 2px solid var(--leica-red);
-  background: rgb(18 18 18 / 90%);
-  color: var(--ws-frame);
+  border-left: 1px solid rgb(255 255 255 / 40%);
+  background: var(--calm-hover);
+  color: var(--ink);
   border-color: var(--ink);
 }
 

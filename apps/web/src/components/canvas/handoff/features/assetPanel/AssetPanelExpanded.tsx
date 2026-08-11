@@ -174,10 +174,19 @@ export function AssetPanelExpanded({
         <span className={css.glyph} aria-hidden>
           <DesignAssetGlyph symbol={sym} size="sm" />
         </span>
-        <span className={css.tileLabel}>{sym.label}</span>
-        {sym.botanical_name ? (
-          <span className={css.tileBotanical}>{sym.botanical_name}</span>
-        ) : null}
+        <span className={css.tileKey}>
+          <span className={css.tileTopRow}>
+            <span className={css.tileTitle}>{sym.label}</span>
+            <span className={css.tileCode}>[{sym.id.toUpperCase()}]</span>
+          </span>
+          {sym.botanical_name ? (
+            <span className={css.tileBotanical}>{sym.botanical_name}</span>
+          ) : null}
+        </span>
+        <span className={css.tileDesc}>
+          {sym.sun ? `${sym.sun} sun` : "Catalog asset"}
+          {sym.water ? ` · ${sym.water} water` : ""}
+        </span>
         {scalePct != null ? (
           <span
             className={css.tileScale}
@@ -302,7 +311,7 @@ export function AssetPanelExpanded({
           onScroll={(e) => onScrollTop(e.currentTarget.scrollTop)}
         >
           <section className={css.section} data-testid="asset-pinned">
-            <p className={css.pinnedLabel}>Pinned</p>
+            <p className={css.pinnedLabel}>Pinned assets</p>
             <div className={css.tray} role="listbox" aria-label="Pinned">
               {pinned.map((t) => {
                 const on = activeMaterial === t;
@@ -320,7 +329,13 @@ export function AssetPanelExpanded({
                     <span className={css.glyph} aria-hidden>
                       <StudioGlyph type={t} ink />
                     </span>
-                    <span className={css.tileLabel}>{BY_TYPE[t].tag}</span>
+                    <span className={css.tileKey}>
+                      <span className={css.tileTopRow}>
+                        <span className={css.tileTitle}>{BY_TYPE[t].tag}</span>
+                        <span className={css.tileCode}>[{t.toUpperCase()}]</span>
+                      </span>
+                      <span className={css.tileDesc}>Recent studio asset</span>
+                    </span>
                   </button>
                 );
               })}
