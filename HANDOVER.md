@@ -12,7 +12,7 @@ This file is the quick-start handover for a fresh context. The authoritative in-
 
 ## Current shipped state
 
-Latest main commit: `1903e69` — server-backed voice intent classification and Whisper-derived STT confidence.
+Latest main commit: `3383ae0` — server-backed voice intent classification, Whisper-derived STT confidence, polygon clipping, and studio view transitions.
 
 The latest follow-up documentation commit is `1903e69`.
 
@@ -120,6 +120,6 @@ Explicitly deferred:
 
 ## Next recommended slice
 
-1. Polygon clipping for title-minus-house geometry: subtract the building footprint from the title ring and return a valid garden ring (or ring with holes) instead of only a difference metric.
-2. Survey utility ingestion: extend the survey stage to accept BYDA / council utility data and store it as `utility_segments` linked to the title polygon.
-3. View transition wiring: call `document.startViewTransition` when `HandoffDesignStudio` switches modes; the CSS `view-transition-name: studio-board` is already declared.
+1. ~~Polygon clipping for title-minus-house geometry~~ Done.
+2. ~~View transition wiring~~ Done.
+3. Survey utility ingestion: extend the survey stage to accept BYDA / council utility data and store it as `utility_segments` linked to the title polygon.
