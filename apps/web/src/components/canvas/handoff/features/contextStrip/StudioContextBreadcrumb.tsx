@@ -23,6 +23,17 @@ type Props = {
 
 const LAYERS = Object.keys(LAYER_LABEL) as LayerKey[];
 
+const MODE_LABEL: Record<StudioMode, string> = {
+  survey: "Survey",
+  sketch: "Sketch",
+  cad: "Cad",
+  elevation: "Elevation",
+  quote: "Quote",
+  present: "Present",
+  share: "Share",
+  garden: "Garden",
+};
+
 export function StudioContextBreadcrumb({
   mode,
   isolatedLayer,
@@ -52,7 +63,7 @@ export function StudioContextBreadcrumb({
       data-testid="studio-context-breadcrumb"
       aria-label="Canvas state"
     >
-      <span className={css.mode}>{mode.toUpperCase()}</span>
+      <span className={css.mode}>{MODE_LABEL[mode]}</span>
       {dimmedLayers.map((layer) => (
         <button
           key={layer}

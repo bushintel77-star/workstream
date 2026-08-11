@@ -2127,6 +2127,25 @@ export function HandoffDesignStudio({
   const instrumentsVisible =
     instrumentsSummoned ||
     (ui.tool !== "select" && ui.tool !== "pan" && ui.tool !== "lock");
+  /**
+   * Bottom chrome must yield to transient panels and modal lanes. Keeping this
+   * in one guard prevents the rail and its context pill from surviving an
+   * exclusive surface such as the asset library.
+   */
+  const bottomChromeSuppressed =
+    assetPanelOn ||
+    canvasToolCardOn ||
+    rightLaneBusy ||
+    ui.cmdOpen ||
+    ui.addOpen ||
+    ui.coachOpen ||
+    ui.factorsOpen ||
+    sharePopupOpen ||
+    sheetComposeOpen ||
+    plannerAssistOpen ||
+    structuredToolsOpen ||
+    designBranchOpen ||
+    headerViewMenuOpen;
   const compactSafeBottom = sheetSafeBottomPx({
     sheetOpen: studioSheetVisible,
     fabOn: chrome.primaryFab,
@@ -3526,7 +3545,10 @@ export function HandoffDesignStudio({
               * pill is the entry point for the checklist, which is no longer
               * forced open by default (§6 item 7).
               */}
-            {ui.mode === "survey" && !ui.focusOn && !ui.clientView ? (
+            {ui.mode === "survey" &&
+            !ui.focusOn &&
+            !ui.clientView &&
+            !bottomChromeSuppressed ? (
               <button
                 type="button"
                 className={`${css.surveyProgress}${surveyProgress.complete ? ` ${css.surveyProgressDone}` : ""}${checklistOpen ? ` ${css.surveyProgressActive}` : ""}`}
@@ -3751,7 +3773,7 @@ export function HandoffDesignStudio({
           </div>
         }
       />
-      <CanvasContextCard active={headerContextActive}>
+      <CanvasContextCard active={headerContextActive && !bottomChromeSuppressed}>
         <StudioContextBreadcrumb
           mode={ui.mode}
           isolatedLayer={ui.isolatedLayer}
@@ -5014,7 +5036,9 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {contextualStripVisible && instrumentsVisible ? (
+        {contextualStripVisible &&
+        instrumentsVisible &&
+        !bottomChromeSuppressed ? (
           <ContextualToolStrip
             tool={ui.tool}
             mode={ui.mode}
