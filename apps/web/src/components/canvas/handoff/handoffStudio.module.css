@@ -399,6 +399,14 @@
   filter: brightness(0.86) saturate(0.92);
 }
 
+/* Garden focus: keep the dwelling as faint context, not a massing takeover. */
+.root[data-canvas-mode="garden"] [data-testid="tilt-building-extrusion"],
+.root[data-canvas-mode="garden"] [data-testid="tilt-building-walls"],
+.root[data-canvas-mode="garden"] [data-testid="dwelling-sun-shadow"] {
+  --garden-building-ghost: 0.25;
+  opacity: var(--garden-building-ghost);
+}
+
 .rootPrecision {
   --hc-glass: color-mix(in srgb, var(--gray-l-0) 98%, transparent);
   --hc-glass-soft: color-mix(in srgb, var(--gray-l-0) 94%, transparent);

@@ -14,7 +14,7 @@ export function lockReasonForMode(
   openModes: ReadonlySet<CanvasMode>,
 ): string | null {
   if (openModes.has(mode)) return null;
-  if (mode === "sketch" || mode === "cad" || mode === "elevation") {
+  if (mode === "sketch" || mode === "cad" || mode === "elevation" || mode === "garden") {
     return MODE_LOCK_COPY.surveyGate;
   }
   if (mode === "quote") return MODE_LOCK_COPY.quoteGate;

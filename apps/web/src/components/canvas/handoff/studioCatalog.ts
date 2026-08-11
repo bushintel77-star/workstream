@@ -343,6 +343,7 @@ export const MODE_TABS = [
   "quote",
   "present",
   "share",
+  "garden",
 ] as const;
 
 export type StudioMode = (typeof MODE_TABS)[number];

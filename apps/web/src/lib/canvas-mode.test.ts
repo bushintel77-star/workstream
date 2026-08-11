@@ -25,7 +25,7 @@ describe("canvas progressive disclosure", () => {
     ).toBe("survey");
   });
 
-  it("unlocks sketch, CAD, and elevation after aerial", () => {
+  it("unlocks sketch, CAD, elevation, and garden after aerial", () => {
     const open = unlockedModes({
       hasAerial: true,
       hasSketch: false,
@@ -35,6 +35,7 @@ describe("canvas progressive disclosure", () => {
     expect(open.has("sketch")).toBe(true);
     expect(open.has("cad")).toBe(true);
     expect(open.has("elevation")).toBe(true);
+    expect(open.has("garden")).toBe(true);
     expect(open.has("quote")).toBe(false);
     expect(
       suggestedMode({
@@ -76,7 +77,7 @@ describe("canvas progressive disclosure", () => {
     expect(withQuote.has("share")).toBe(true);
   });
 
-  it("honours CAD from title click without sketch", () => {
+  it("honours CAD and garden from title click without sketch", () => {
     expect(
       resolveCanvasMode("cad", {
         hasAerial: true,
@@ -85,6 +86,14 @@ describe("canvas progressive disclosure", () => {
         hasQuote: false,
       }),
     ).toBe("cad");
+    expect(
+      resolveCanvasMode("garden", {
+        hasAerial: true,
+        hasSketch: false,
+        hasCad: false,
+        hasQuote: false,
+      }),
+    ).toBe("garden");
   });
 
   it("clamps Quote until accepted CAD exists", () => {

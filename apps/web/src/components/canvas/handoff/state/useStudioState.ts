@@ -147,6 +147,7 @@ import {
 import {
   DEFAULT_LAYER_OPACITY,
   DESIGN_LAYER_PRESET,
+  GARDEN_LAYER_PRESET,
   SURVEY_LAYER_PRESET,
   type GrowthStage,
   type LayerKey,
@@ -865,6 +866,8 @@ function reducer(state: State, action: Action): State {
       // Stage 1 keeps CAD title overlay across tabs — AI layer stays available.
       const enteringSurvey = action.mode === "survey";
       const leavingSurvey = state.ui.mode === "survey" && action.mode !== "survey";
+      const enteringGarden = action.mode === "garden";
+      const leavingGarden = state.ui.mode === "garden" && action.mode !== "garden";
       const servicesLocked =
         state.ui.servicesLocked || lockServicesOnMode(action.mode);
       let layerOpacity = state.ui.layerOpacity;
@@ -874,9 +877,22 @@ function reducer(state: State, action: Action): State {
       if (leavingSurvey && !state.ui.foundationCleanse) {
         layerOpacity = { ...DESIGN_LAYER_PRESET };
       }
+      if (enteringGarden && !state.ui.foundationCleanse) {
+        layerOpacity = { ...GARDEN_LAYER_PRESET };
+      }
+      if (leavingGarden && !state.ui.foundationCleanse) {
+        layerOpacity = { ...DESIGN_LAYER_PRESET };
+      }
       // CAD / sketch are parchment drafting plates — no aerial underlay.
       // Survey may keep an optional user-uploaded screenshot only.
       const drafting = isDraftingPlate(action.mode);
+      const focus = enteringGarden
+        ? outdoorFocusView(
+          state.doc.boundary,
+          state.doc.building,
+          state.ui.boardWidthM ?? 110,
+        )
+        : null;
       return {
         ...state,
         ui: {
@@ -896,8 +912,8 @@ function reducer(state: State, action: Action): State {
             !enteringSurvey && state.ui.rightDataPanel === "checklist"
               ? null
               : state.ui.rightDataPanel,
-          // Asset panel only lives in CAD/sketch — collapse on mode leave.
-          ...(action.mode === "cad" || action.mode === "sketch"
+          // Asset panel only lives in CAD/sketch/garden — collapse on mode leave.
+          ...(action.mode === "cad" || action.mode === "sketch" || action.mode === "garden"
             ? {}
             : { leftAssetPanel: null, leftAssetRestore: null }),
           ...(drafting
@@ -905,6 +921,16 @@ function reducer(state: State, action: Action): State {
             : action.mode === "survey"
               ? { aerialSuppressed: true }
               : {}),
+          // Garden focus fits the camera to the clipped outdoor remnant.
+          ...(focus && !state.ui.frameOn
+            ? {
+              focusX: focus.focusX,
+              focusY: focus.focusY,
+              zoom: focus.zoom,
+              panX: 0,
+              panY: 0,
+            }
+            : {}),
           // Every mode enters on the Select ground state — the pen arms via
           // the pad's Pen chip, node handles live in Select (tool owns the click).
           tool: "select",

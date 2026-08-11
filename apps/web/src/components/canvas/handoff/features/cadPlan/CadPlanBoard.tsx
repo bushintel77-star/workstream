@@ -560,6 +560,8 @@ export function CadPlanBoard({
   }, [showEditBanner, onVectorEditHint]);
   const titleSolid = foundationCleanse || titleLocked;
   const sketchPassthrough = mode === "sketch";
+  const gardenFocus = mode === "garden";
+  const gardenBuildingGhost = gardenFocus ? 0.25 : 1;
   /** Survey annotation tools own the pointer (prototype Level / Servc / Calib). */
   const surveyAnnotatePassthrough =
     mode === "survey" &&
@@ -623,7 +625,7 @@ export function CadPlanBoard({
     !frameOn &&
     !sketchPassthrough &&
     !isTiltActive(tiltDeg) &&
-    (mode === "survey" || mode === "cad");
+    (mode === "survey" || mode === "cad" || mode === "garden");
   /**
    * Semantic zoom (§2): low = lot only; mid = principal dims + context
    * areas; high = full edges + species + RL. Pure over planZoom.
@@ -1732,7 +1734,8 @@ export function CadPlanBoard({
                 opacity={
                   boundaryVisual.opacity *
                   (foundationCleanse ? underlayOp : 1) *
-                  (sketchPassthrough ? 0.4 : 1)
+                  (sketchPassthrough ? 0.4 : 1) *
+                  gardenBuildingGhost
                 }
               >
                 <title>
@@ -1765,7 +1768,8 @@ export function CadPlanBoard({
                 opacity={
                   boundaryVisual.opacity *
                   (foundationCleanse ? underlayOp : 1) *
-                  (sketchPassthrough ? 0.4 : 1)
+                  (sketchPassthrough ? 0.4 : 1) *
+                  gardenBuildingGhost
                 }
               >
                 <title>

@@ -1,8 +1,8 @@
 import type { StudioMode } from "../studioCatalog";
 
-/** CAD + Sketch are parchment drafting plates — never satellite aerial by default. */
+/** CAD, Sketch and Garden are parchment drafting plates — never satellite aerial by default. */
 export function isDraftingPlate(mode: StudioMode): boolean {
-  return mode === "cad" || mode === "sketch";
+  return mode === "cad" || mode === "sketch" || mode === "garden";
 }
 
 /**

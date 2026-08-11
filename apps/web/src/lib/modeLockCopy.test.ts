@@ -13,6 +13,7 @@ describe("modeLockCopy", () => {
     expect(lockReasonForMode("sketch", open)).toBe(MODE_LOCK_COPY.surveyGate);
     expect(lockReasonForMode("cad", open)).toBe(MODE_LOCK_COPY.surveyGate);
     expect(lockReasonForMode("elevation", open)).toBe(MODE_LOCK_COPY.surveyGate);
+    expect(lockReasonForMode("garden", open)).toBe(MODE_LOCK_COPY.surveyGate);
     expect(lockReasonForMode("quote", open)).toBe(MODE_LOCK_COPY.quoteGate);
     expect(lockReasonForMode("present", open)).toBe(MODE_LOCK_COPY.presentGate);
     expect(lockReasonForMode("share", open)).toBe(MODE_LOCK_COPY.shareGate);

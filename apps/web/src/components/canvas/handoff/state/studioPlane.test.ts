@@ -6,9 +6,10 @@ import {
 } from "./studioPlane";
 
 describe("studioPlane", () => {
-  it("treats cad and sketch as drafting plates", () => {
+  it("treats cad, sketch and garden as drafting plates", () => {
     expect(isDraftingPlate("cad")).toBe(true);
     expect(isDraftingPlate("sketch")).toBe(true);
+    expect(isDraftingPlate("garden")).toBe(true);
     expect(isDraftingPlate("survey")).toBe(false);
   });
 

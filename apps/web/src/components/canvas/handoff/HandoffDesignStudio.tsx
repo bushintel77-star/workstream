@@ -414,6 +414,7 @@ export function HandoffDesignStudio({
     setUi,
     setSelection,
   } = studio;
+  const isCadLike = ui.mode === "cad" || ui.mode === "garden";
   /*
    * Cross-artefact findings over the *saved* board — refetched on each durable
    * save (saveRevision). Dismissals share the horizon `mitigated` map; finding
@@ -833,7 +834,7 @@ export function HandoffDesignStudio({
       }
       const r = el.getBoundingClientRect();
       const rotateDeg =
-        ui.mode === "cad" && !ui.clientView
+        isCadLike && !ui.clientView
           ? normalizeViewRotationDeg(ui.viewRotationDeg)
           : 0;
       const focus = clientToBoardPct(e.clientX, e.clientY, r, {
@@ -866,6 +867,7 @@ export function HandoffDesignStudio({
     ui.focusY,
     ui.viewRotationDeg,
     ui.clientView,
+    isCadLike,
   ]);
 
   /** Keeps the drag-start base fresh without re-subscribing gesture listeners. */
@@ -1169,7 +1171,7 @@ export function HandoffDesignStudio({
    */
   const runTiltView = useCallback(() => {
     const planMode =
-      ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
+      ui.mode === "survey" || ui.mode === "sketch" || isCadLike;
     if (!planMode) {
       studio.setUi({
         councilTip: "Tilt needs Survey / Sketch / CAD — not Quote or Share",
@@ -1198,7 +1200,7 @@ export function HandoffDesignStudio({
       });
       setTiltPauseHint(true);
     }
-  }, [animateTiltTo, studio, ui.frameOn, ui.mode, ui.tiltDeg]);
+  }, [animateTiltTo, studio, ui.frameOn, ui.mode, ui.tiltDeg, isCadLike]);
 
   /**
    * Named cardinal axon — yaw + tilt settle. View-only; same lock as tilt.
@@ -1207,7 +1209,7 @@ export function HandoffDesignStudio({
   const runGardenViewpoint = useCallback(
     (look: GardenViewpointLook) => {
       const planMode =
-        ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
+        ui.mode === "survey" || ui.mode === "sketch" || isCadLike;
       if (!planMode) {
         studio.setUi({
           councilTip: "Garden viewpoints need Survey / Sketch / CAD",
@@ -1236,7 +1238,7 @@ export function HandoffDesignStudio({
       animateTiltTo(cam.tiltDeg);
       setTiltPauseHint(true);
     },
-    [animateTiltTo, studio, ui.frameOn, ui.mode],
+    [animateTiltTo, studio, ui.frameOn, ui.mode, isCadLike],
   );
 
   const onGardenViewpointSelect = useCallback(
@@ -1253,13 +1255,13 @@ export function HandoffDesignStudio({
   /** Force flat when leaving plan / entering Fit / elevation / quote / share. */
   useEffect(() => {
     const planMode =
-      ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
+      ui.mode === "survey" || ui.mode === "sketch" || isCadLike;
     if (!planMode || ui.frameOn) {
       if (ui.tiltDeg !== 0) setUi({ tiltDeg: 0 });
       clearTiltAnimKind();
       setTiltPauseHint((v) => (v ? false : v));
     }
-  }, [ui.mode, ui.frameOn, ui.tiltDeg, clearTiltAnimKind, setUi]);
+  }, [ui.mode, ui.frameOn, ui.tiltDeg, clearTiltAnimKind, setUi, isCadLike]);
 
   /** Pause hint tracks the lens. */
   useEffect(() => {
@@ -1324,7 +1326,7 @@ export function HandoffDesignStudio({
     const el = boardRef.current;
     if (!el) return;
     const planMode =
-      ui.mode === "survey" || ui.mode === "sketch" || ui.mode === "cad";
+      ui.mode === "survey" || ui.mode === "sketch" || isCadLike;
     if (!planMode || ui.frameOn) return;
 
     const onPointerDownCapture = (e: PointerEvent) => {
@@ -1370,6 +1372,7 @@ export function HandoffDesignStudio({
     ui.frameOn,
     animateTiltTo,
     clearTiltAnimKind,
+    isCadLike,
   ]);
 
   /** Restore micro grid studio prefs for this project session. */
@@ -1502,8 +1505,8 @@ export function HandoffDesignStudio({
       }
       if (typing || ui.cmdOpen) return;
 
-      /* Mode-switch shortcuts — 1 through 6 map to MODE_TABS order. */
-      if (!e.metaKey && !e.ctrlKey && !e.altKey && /^[1-6]$/.test(e.key)) {
+      /* Mode-switch shortcuts — 1 through 8 map to MODE_TABS order. */
+      if (!e.metaKey && !e.ctrlKey && !e.altKey && /^[1-8]$/.test(e.key)) {
         const idx = Number(e.key) - 1;
         const mode = MODE_TABS[idx];
         if (mode && mode !== ui.mode) {
@@ -1737,7 +1740,7 @@ export function HandoffDesignStudio({
           return;
         }
         // No selection: CAD camera rotate by the active step (15/45/90).
-        if (ui.mode === "cad" && !ui.frameOn && !ui.drawPoly) {
+        if (isCadLike && !ui.frameOn && !ui.drawPoly) {
           const dir = e.key === "]" ? 1 : -1;
           studio.setUi({
             viewRotationDeg: stepViewRotationDeg(
@@ -1754,7 +1757,7 @@ export function HandoffDesignStudio({
         e.shiftKey &&
         !e.metaKey &&
         !e.ctrlKey &&
-        ui.mode === "cad" &&
+        isCadLike &&
         !ui.frameOn
       ) {
         e.preventDefault();
@@ -1862,6 +1865,7 @@ export function HandoffDesignStudio({
   }, [
     studio,
     ui,
+    isCadLike,
     ai,
     animateTiltTo,
     annotatePhase,
@@ -2089,7 +2093,7 @@ export function HandoffDesignStudio({
    * rail by default). Compact widths use AssetCommandSheet instead of the dock.
    */
   const assetChromeOn =
-    (ui.mode === "cad" || ui.mode === "sketch") &&
+    (isCadLike || ui.mode === "sketch") &&
     !ui.frameOn &&
     !ui.focusOn &&
     !ui.clientView &&
@@ -2161,7 +2165,7 @@ export function HandoffDesignStudio({
   /** Undo filmstrip — desktop CAD/survey only; compact uses ⌘K / strip. */
   const undoFilmOn =
     !compactAssetUi &&
-    (ui.mode === "cad" || ui.mode === "survey") &&
+    (isCadLike || ui.mode === "survey") &&
     !ui.frameOn &&
     !ui.focusOn &&
     !ui.clientView &&
@@ -2539,7 +2543,7 @@ export function HandoffDesignStudio({
    * Keep yaw while a garden axon is tilted (Looking E/S/W in Survey/Sketch).
    */
   useEffect(() => {
-    if (ui.mode === "cad" && !ui.frameOn && !ui.clientView) return;
+    if (isCadLike && !ui.frameOn && !ui.clientView) return;
     if (isTiltActive(ui.tiltDeg)) return;
     if (ui.viewRotationDeg === 0) return;
     studio.setUi({ viewRotationDeg: 0 });
@@ -2550,6 +2554,7 @@ export function HandoffDesignStudio({
     ui.tiltDeg,
     ui.viewRotationDeg,
     studio,
+    isCadLike,
   ]);
 
   const [formalizing, setFormalizing] = useState(false);
@@ -2676,7 +2681,7 @@ export function HandoffDesignStudio({
        * with no sheet chrome). Same clean path as toggling Fit off.
        */
       if (ui.frameOn) setFitSheetOn(false);
-      if (ui.mode === "sketch" && mode === "cad" && studio.strokes.length > 0) {
+      if (ui.mode === "sketch" && (mode === "cad" || mode === "garden") && studio.strokes.length > 0) {
         const alreadyHasSketchGhosts = studio.items.some(
           (i) => i.ghost && i.id.startsWith("ai-sketch-"),
         );
@@ -2787,7 +2792,7 @@ export function HandoffDesignStudio({
     selectedLive &&
     ui.groupIds.length <= 1 &&
     ui.tool !== "zone" &&
-    (ui.mode === "cad" || ui.mode === "survey"),
+    (isCadLike || ui.mode === "survey"),
   );
 
   /** One-time dial discoverability (session). */
@@ -4470,7 +4475,7 @@ export function HandoffDesignStudio({
                     }
                   />
                 ) : null}
-                {ui.mode === "cad" && studio.strokes.length > 0 ? (
+                {isCadLike && studio.strokes.length > 0 ? (
                   <FreehandLayer strokes={studio.strokes} />
                 ) : null}
                 {planOn && !ui.frameOn ? (
@@ -4570,7 +4575,7 @@ export function HandoffDesignStudio({
                     setInstrumentsSummoned(false);
                   }}
                 />
-                {(ui.mode === "cad" || ui.mode === "sketch") && !ui.frameOn ? (
+                {(isCadLike || ui.mode === "sketch") && !ui.frameOn ? (
                   <ZoneOverlay
                     active={ui.tool === "zone"}
                     kind={ui.zoneKind}
@@ -4587,7 +4592,7 @@ export function HandoffDesignStudio({
                     onCommit={studio.commitZone}
                   />
                 ) : null}
-                {(ui.mode === "cad" || ui.mode === "sketch") &&
+                {(isCadLike || ui.mode === "sketch") &&
                   !ui.frameOn &&
                   ui.irrigationUniformityOn ? (
                   <IrrigationUniformityWash
@@ -4595,12 +4600,12 @@ export function HandoffDesignStudio({
                     report={irrigUniformity}
                   />
                 ) : null}
-                {(ui.mode === "cad" || ui.mode === "sketch") &&
+                {(isCadLike || ui.mode === "sketch") &&
                   !ui.frameOn &&
                   ui.liveTelemetryOn ? (
                   <LiveTelemetryWash active points={telemetryPoints} />
                 ) : null}
-                {(ui.mode === "cad" || ui.mode === "sketch") &&
+                {(isCadLike || ui.mode === "sketch") &&
                   !ui.frameOn &&
                   ui.lightingWorkspaceOn ? (
                   <LightingBeams
@@ -4609,7 +4614,7 @@ export function HandoffDesignStudio({
                     active
                   />
                 ) : null}
-                {(ui.mode === "cad" ||
+                {(isCadLike ||
                   ui.mode === "sketch") &&
                   !ui.frameOn ? (
                   <TrenchOverlay
@@ -4734,7 +4739,7 @@ export function HandoffDesignStudio({
                   ui.tool !== "zone" &&
                   !selectionOrbitOn &&
                   (chrome.selectionRing ||
-                    ui.mode === "cad" ||
+                    isCadLike ||
                     ui.mode === "sketch" ||
                     ui.mode === "survey") ? (
                   <SelectionRing
@@ -4886,7 +4891,7 @@ export function HandoffDesignStudio({
           </CameraChrome>
         ) : null}
 
-        {ui.mode === "cad" &&
+        {isCadLike &&
           !ui.frameOn &&
           !ui.clientView &&
           !ui.focusOn &&
@@ -5098,9 +5103,9 @@ export function HandoffDesignStudio({
           <InstantPlannerChrome
             projectId={projectId}
             active
-            paper={ui.frameOn || ui.mode === "cad" || ui.mode === "quote"}
+            paper={ui.frameOn || isCadLike || ui.mode === "quote"}
             structuredTools={
-              ui.mode === "sketch" || ui.mode === "cad"
+              ui.mode === "sketch" || isCadLike
             }
             assistOpen={plannerAssistOpen}
             structuredToolsOpen={structuredToolsOpen}
@@ -6241,7 +6246,7 @@ export function HandoffDesignStudio({
           }
           onOpenStructuredTools={
             chrome.liveBom &&
-              (ui.mode === "sketch" || ui.mode === "cad")
+              (ui.mode === "sketch" || isCadLike)
               ? () => {
                 setStructuredToolsOpen(true);
                 studio.setUi({ cmdOpen: false, cmdQuery: "" });

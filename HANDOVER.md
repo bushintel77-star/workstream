@@ -12,7 +12,7 @@ This file is the quick-start handover for a fresh context. The authoritative in-
 
 ## Current shipped state
 
-Latest main commit: `3383ae0` — server-backed voice intent classification, Whisper-derived STT confidence, polygon clipping, and studio view transitions.
+Latest main commit: `3383ae0` — server-backed voice intent classification, Whisper-derived STT confidence, polygon clipping, studio view transitions, and a dedicated Garden focus mode.
 
 The latest follow-up documentation commit is `1903e69`.
 
@@ -70,7 +70,7 @@ Mobile processing consumes the stage statuses and displays failed stages. The cu
 
 - `pnpm run ci` passed.
 - 260 test files passed.
-- 1,548 tests passed.
+- 1,550 tests passed.
 - Typecheck passed across API, web, mobile, client, contracts, DB, domain, CAD, and UI.
 - Lint passed.
 - Web production build passed.
@@ -92,9 +92,10 @@ Technical follow-up:
 
 - ~~Replace heuristic STT confidence with provider/on-device confidence when available.~~ Done.
 - ~~Server-backed voice intent classification.~~ Done.
+- ~~Polygon clipping for title-minus-house geometry.~~ Done.
+- ~~Garden focus studio mode (title-minus-house clipping, view transition, and dwelling ghosting).~~ Done.
 - Streaming/on-device transcription spike (`whisper.rn` versus OS speech recognition).
 - Silero VAD benchmark against Melbourne site recordings.
-- Polygon clipping for title-minus-house geometry.
 - Survey utility ingestion.
 - EPD-backed plant carbon coefficients.
 - Richer asset/search and presentation polish.
@@ -122,4 +123,5 @@ Explicitly deferred:
 
 1. ~~Polygon clipping for title-minus-house geometry~~ Done.
 2. ~~View transition wiring~~ Done.
-3. Survey utility ingestion: extend the survey stage to accept BYDA / council utility data and store it as `utility_segments` linked to the title polygon.
+3. ~~Garden focus studio mode~~ Done.
+4. Survey utility ingestion: extend the survey stage to accept BYDA / council utility data and store it as `utility_segments` linked to the title polygon.

@@ -58,9 +58,9 @@ export function resolvePlanRotateDeg(args: {
 }): number {
   if (args.frameOn) return 0;
   const planMode =
-    args.mode === "survey" || args.mode === "sketch" || args.mode === "cad";
+    args.mode === "survey" || args.mode === "sketch" || args.mode === "cad" || args.mode === "garden";
   if (!planMode) return 0;
-  const cadFree = args.mode === "cad" && !args.clientView;
+  const cadFree = (args.mode === "cad" || args.mode === "garden") && !args.clientView;
   const gardenAxon =
     (Number.isFinite(args.tiltDeg) && args.tiltDeg > 0.5) ||
     Boolean(args.tiltAnimating);

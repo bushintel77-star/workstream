@@ -240,6 +240,16 @@ export const DESIGN_LAYER_PRESET: LayerOpacity = {
   notes: 1,
 };
 
+/** Garden focus de-emphasises the dwelling footprint and title context. */
+export const GARDEN_LAYER_PRESET: LayerOpacity = {
+  survey: 0.2,
+  boundary: 0.55,
+  council: 1,
+  vegetation: 1,
+  services: 1,
+  notes: 1,
+};
+
 export const ITEM_LAYER: Record<StudioItemType, LayerKey> = {
   canopy: "vegetation",
   feature: "vegetation",

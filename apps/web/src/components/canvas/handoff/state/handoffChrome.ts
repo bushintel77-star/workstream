@@ -143,7 +143,7 @@ const DRAWING_TOOLS: StudioTool[] = [
 ];
 
 function planModesAllowFlora(mode: StudioMode): boolean {
-  return mode === "cad" || mode === "sketch" || mode === "survey";
+  return mode === "cad" || mode === "sketch" || mode === "survey" || mode === "garden";
 }
 
 function quietChrome(partial: Partial<HandoffChrome> & Pick<
@@ -206,7 +206,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
 
   const horizonOn =
     horizonCardCount > 0 &&
-    (mode === "cad" || mode === "sketch") &&
+    (mode === "cad" || mode === "sketch" || mode === "garden") &&
     !focusOn &&
     !frameOn &&
     !clientView &&
@@ -285,7 +285,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     });
   }
 
-  const cadLike = mode === "cad" || mode === "elevation";
+  const cadLike = mode === "cad" || mode === "elevation" || mode === "garden";
   /** Sun scrubber only when shade mesh is on — otherwise stays off the plane. */
   const sunScrubber = shadeOn && plan && !draftCrowded;
   const lightingDock =
@@ -312,7 +312,7 @@ export function resolveHandoffChrome(input: Input): HandoffChrome {
     ambientRibbon: (plan || mode === "quote") && !compact,
     /** Orbit actions outside the glyph */
     selectionRing:
-      mode === "cad" || mode === "sketch" || mode === "survey",
+      mode === "cad" || mode === "sketch" || mode === "survey" || mode === "garden",
     drawTools: plan,
     collapseUtility: drawingHot || draftCrowded,
     floraRing: floraOn,

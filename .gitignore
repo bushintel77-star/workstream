@@ -16,7 +16,8 @@ Thumbs.db
 
 # Runtime artifacts (audio uploads, generated outputs)
 apps/api/data/
-data/*.m4a
+data/
+!data/.gitkeep
 
 # Next.js / Playwright
 apps/web/.next/

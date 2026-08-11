@@ -75,5 +75,14 @@ describe("canvasViewRotation", () => {
         viewRotationDeg: 90,
       }),
     ).toBe(0);
+    expect(
+      resolvePlanRotateDeg({
+        mode: "garden",
+        frameOn: false,
+        clientView: false,
+        tiltDeg: 0,
+        viewRotationDeg: 30,
+      }),
+    ).toBe(30);
   });
 });
