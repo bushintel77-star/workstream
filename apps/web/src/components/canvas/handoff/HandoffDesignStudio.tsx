@@ -4130,6 +4130,7 @@ export function HandoffDesignStudio({
                   items={studio.items}
                   setbackM={compliance.setbackM}
                   boardWidthM={scaleM}
+                  planZoom={planZoom}
                   cursorPct={boardCursorPct ?? ui.drawCursor}
                   showValidation={
                     highStakesBuildable || ui.buildableAreaOn
