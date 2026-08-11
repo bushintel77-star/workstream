@@ -128,19 +128,11 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       now the durable target. CLAUDE.md: "Postgres. Stay on the JSON snapshot
       path until SQLite migration lands" — that migration has landed.
 - [ ] Multi-region Railway deploy for HA.
-- [ ] **`moduleResolution: node` (node10) removal in TypeScript 7.** Source is
+- [x] **`moduleResolution: node` (node10) removal in TypeScript 7.** Source is
       [`tsconfig.node.json`](tsconfig.node.json) line 5, inherited by `apps/api`
-      and `packages/{contracts,db,cad,domain}`. Harmless today — TS 5.7.0 exits 0
-      (verified uncached, not turbo cache), so `pnpm typecheck` / `pnpm run ci`
-      are green; editors on a newer TS surface it as an error.
-      **Do not apply the editor's suggested fix:** `"ignoreDeprecations": "6.0"`
-      fails on the installed compiler with `error TS5103: Invalid value` — it
-      converts an editor warning into a build break in five packages. (`"5.0"`
-      is accepted but silences a different deprecation cycle, so it fixes
-      nothing.) Real fix is migrating those five to `node16` resolution, which
-      makes TS honour package `exports` maps — needs its own change plus a full
-      typecheck + test + build run. `tsconfig.base.json` (web, mobile, ui,
-      client) is already on `bundler` and unaffected.
+      and `packages/{contracts,db,cad,domain}`. `tsconfig.node.json` already
+      declares `moduleResolution: "node16"` and `pnpm typecheck` / `pnpm run ci`
+      are green.
 - [x] **Artboard strip eats elevation callout clicks.** Root cause was a double
       portal, not a placement choice: `ebf1872` moved `ArtboardStrip` inside the
       top-edge `FrameDrawer` ("lives in the frame, never on the canvas") but left
