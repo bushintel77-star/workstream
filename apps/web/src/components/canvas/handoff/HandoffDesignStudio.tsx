@@ -2706,6 +2706,14 @@ export function HandoffDesignStudio({
        * with no sheet chrome). Same clean path as toggling Fit off.
        */
       if (ui.frameOn) setFitSheetOn(false);
+      if (mode !== ui.mode) {
+        studio.setUi({
+          tool: "select",
+          rightDataPanel: null,
+          utilityPanel: null,
+          selectedId: null,
+        });
+      }
       if (ui.mode === "sketch" && (mode === "cad" || mode === "garden") && studio.strokes.length > 0) {
         const alreadyHasSketchGhosts = studio.items.some(
           (i) => i.ghost && i.id.startsWith("ai-sketch-"),
@@ -3677,7 +3685,8 @@ export function HandoffDesignStudio({
                 onClick={() =>
                   studio.setUi({ rightDataPanel: "quote", utilityPanel: null })
                 }
-                title="Open live cost rail"
+                aria-label="Open cost panel"
+                title="Open live cost panel"
               >
                 {hasCostedLines
                   ? audChip(estimate.totalInclGst)

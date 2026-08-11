@@ -1,4 +1,4 @@
-import { SURVEY_TOOLS, type StudioTool } from "../../studioCatalog";
+import { SURVEY_TOOLS, type StudioMode, type StudioTool } from "../../studioCatalog";
 
 export type ToolChipId = StudioTool | "measure" | "grid";
 
@@ -31,12 +31,35 @@ const PRIMARY: ToolChip[] = [
     icon: "〰",
     title: "Drip or lighting path",
   },
+  { id: "path", label: "Path", icon: "⌁", title: "Author a residential path" },
   { id: "measure", label: "Measure", icon: "⟋", title: "Measure" },
   { id: "lock", label: "Lock", icon: "⬡", title: "Lock selection" },
 ];
 
 /** Shared chip list for ToolDock (desktop) and ContextualToolStrip (compact). */
-export function buildToolChips(surveyServicesAuthoring: boolean): ToolChip[] {
+export function buildToolChips(
+  modeOrSurveyServices: StudioMode | boolean,
+  surveyServicesArg = false,
+): ToolChip[] {
+  // Keep the one-argument helper contract for compact callers and tests while
+  // allowing the rail components to request a mode-specific inventory.
+  const mode =
+    typeof modeOrSurveyServices === "boolean" ? "sketch" : modeOrSurveyServices;
+  const surveyServicesAuthoring =
+    typeof modeOrSurveyServices === "boolean"
+      ? modeOrSurveyServices
+      : surveyServicesArg;
+  const allowedByMode: Record<StudioMode, ToolChipId[]> = {
+    survey: ["trace", "select", "measure", "grid"],
+    sketch: ["select", "add", "paint", "path", "zone", "measure", "grid"],
+    cad: ["select", "add", "path", "zone", "measure", "lock", "grid"],
+    elevation: ["select", "measure", "grid"],
+    garden: ["select", "measure", "grid"],
+    quote: ["select", "measure", "grid"],
+    present: ["select", "grid"],
+    share: ["select", "grid"],
+  };
+  const allowed = new Set(allowedByMode[mode]);
   const surveyExtras = surveyServicesAuthoring
     ? SURVEY_TOOLS.map((t) => ({
         id: t.id as StudioTool,
@@ -45,11 +68,12 @@ export function buildToolChips(surveyServicesAuthoring: boolean): ToolChip[] {
         title: t.title,
       }))
     : [];
-  return [
-    ...PRIMARY,
-    ...surveyExtras,
-    { id: "grid", label: "Grid", icon: "▦", title: "Drafting grid", trail: true },
-  ];
+  return [...PRIMARY, ...surveyExtras].filter((chip) => {
+    if (mode === "survey" && surveyServicesAuthoring && ["calib", "level", "service"].includes(chip.id)) {
+      return true;
+    }
+    return allowed.has(chip.id);
+  }).map((chip) => chip.id === "grid" ? { ...chip, trail: true } : chip);
 }
 
 export function toolChipActive(

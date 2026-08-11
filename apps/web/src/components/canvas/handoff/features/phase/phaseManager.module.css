@@ -87,9 +87,9 @@
   letter-spacing: 0.01em;
   cursor: pointer;
   transition:
-    background 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease;
+    background 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    border-color 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    color 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .phaseChip:hover {
@@ -141,8 +141,8 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    color 140ms var(--ws-ease, ease),
-    background 140ms var(--ws-ease, ease);
+    color 140ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    background 140ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .headerTrigger:hover {

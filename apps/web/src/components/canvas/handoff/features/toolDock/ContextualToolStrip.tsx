@@ -30,7 +30,7 @@ type Props = {
  */
 export function ContextualToolStrip({
   tool,
-  mode: _mode,
+  mode,
   surveyServicesAuthoring = false,
   locked,
   night = false,
@@ -40,8 +40,8 @@ export function ContextualToolStrip({
   onToggleGrid,
 }: Props) {
   const chips = useMemo(
-    () => buildToolChips(surveyServicesAuthoring),
-    [surveyServicesAuthoring],
+    () => buildToolChips(mode, surveyServicesAuthoring),
+    [mode, surveyServicesAuthoring],
   );
 
   const pick = (chip: ToolChip) => {

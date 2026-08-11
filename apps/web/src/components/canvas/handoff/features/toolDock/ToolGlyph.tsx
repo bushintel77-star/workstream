@@ -52,6 +52,13 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M2.5 13h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="0.5 3" />
     </>
   ),
+  path: (
+    <>
+      <path d="M2.5 13c3-6 5-6 8-1s4 4 5-3" {...P} />
+      <circle cx="2.5" cy="13" r="1" {...P} />
+      <circle cx="15.5" cy="9" r="1" {...P} />
+    </>
+  ),
   // Ruler on the diagonal.
   measure: (
     <>
