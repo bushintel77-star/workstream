@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   designableCanvas,
   designableFocusRing,
+  gardenPolygonFromTitleAndHouse,
   inwardSetbackRing,
   outsideMask,
 } from "./spatial-turf";
@@ -56,6 +57,23 @@ describe("spatial-turf", () => {
 
   it("inwardSetbackRing returns null for oversized setback", () => {
     expect(inwardSetbackRing(PARCEL, 500)).toBeNull();
+  });
+
+  it("gardenPolygonFromTitleAndHouse returns a polygon with a hole", () => {
+    const result = gardenPolygonFromTitleAndHouse(PARCEL, HOUSE);
+    expect(result).not.toBeNull();
+    expect(result!.polygon.type).toBe("Polygon");
+    expect(result!.polygon.coordinates.length).toBeGreaterThanOrEqual(2);
+    expect(result!.areaM2).toBeGreaterThan(0);
+    expect(result!.areaM2).toBeLessThan(12000);
+  });
+
+  it("gardenPolygonFromTitleAndHouse returns the title when no house is provided", () => {
+    const result = gardenPolygonFromTitleAndHouse(PARCEL, []);
+    expect(result).not.toBeNull();
+    expect(result!.polygon.type).toBe("Polygon");
+    expect(result!.polygon.coordinates.length).toBe(1);
+    expect(result!.areaM2).toBeGreaterThan(0);
   });
 });
 

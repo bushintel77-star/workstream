@@ -1,6 +1,10 @@
 import type { Store } from "@workstream/db";
 import type { GeoJsonPolygon, Survey } from "@workstream/contracts";
-import { edgeLengths, polygonArea } from "@workstream/domain";
+import {
+  edgeLengths,
+  gardenPolygonFromTitleAndHouse,
+  polygonArea,
+} from "@workstream/domain";
 import { aerialImageUrl, geocodeAddress } from "./mapbox";
 import { fetchBuildingPolygon, fetchTitleParcel } from "./vicmap";
 
@@ -83,16 +87,18 @@ async function buildVicmapGeometry(center: {
   };
   const houseRing = housePoly?.coordinates[0];
 
+  const clipped = houseRing
+    ? gardenPolygonFromTitleAndHouse(titleRing, houseRing)
+    : null;
+
   return {
     title_polygon: titlePoly,
     house_polygon: house,
-    garden_polygon: {
-      type: "Polygon",
-      coordinates: houseRing ? [titleRing, houseRing] : [titleRing],
-    },
+    garden_polygon:
+      clipped?.polygon ?? { type: "Polygon", coordinates: [titleRing] },
     lot_area_m2: Math.max(1, lotArea),
     house_area_m2: Math.max(0, houseArea),
-    garden_area_m2: Math.max(1, lotArea - houseArea),
+    garden_area_m2: clipped ? Math.max(0, clipped.areaM2) : Math.max(1, lotArea),
     measurements: buildMeasurements(titleRing),
   };
 }

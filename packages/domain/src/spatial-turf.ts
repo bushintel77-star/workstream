@@ -1,4 +1,5 @@
 import {
+  area,
   buffer,
   difference,
   featureCollection,
@@ -6,6 +7,7 @@ import {
   polygon,
 } from "@turf/turf";
 import type { Feature, MultiPolygon, Polygon } from "geojson";
+import type { GeoJsonPolygon } from "@workstream/contracts";
 
 /** WGS84 ring: [lng, lat][], open or closed. */
 export type LngLatRing = [number, number][];
@@ -98,6 +100,64 @@ export function designableFocusRing(
   if (!rings.length) return openRing(parcelRing);
   // Prefer ring with most vertices (usually the main garden remnant)
   return rings.reduce((best, r) => (r.length > best.length ? r : best), rings[0]!);
+}
+
+function featureToGeoJsonPolygon(
+  feature: Feature<Polygon | MultiPolygon>,
+): GeoJsonPolygon {
+  const geom = feature.geometry;
+  if (geom.type === "Polygon") {
+    return { type: "Polygon", coordinates: geom.coordinates as LngLatRing[] };
+  }
+
+  // MultiPolygon: pick the part with the largest area and store as a single
+  // Polygon (contract schema currently expects one polygon per survey).
+  let bestPart: LngLatRing[] | null = null;
+  let bestArea = -Infinity;
+  for (const part of geom.coordinates) {
+    const rings = part as LngLatRing[];
+    const partArea = area(polygon(rings));
+    if (partArea > bestArea) {
+      bestArea = partArea;
+      bestPart = rings;
+    }
+  }
+
+  const coordinates = bestPart?.length ? (bestPart as LngLatRing[]) : [];
+  return { type: "Polygon", coordinates };
+}
+
+export type GardenPolygonResult = {
+  polygon: GeoJsonPolygon;
+  areaM2: number;
+};
+
+/**
+ * Title parcel minus building footprint. Returns a GeoJSON Polygon (with holes
+ * when the building is contained) and the clipped garden area in m².
+ */
+export function gardenPolygonFromTitleAndHouse(
+  titleRing: LngLatRing,
+  houseRing: LngLatRing,
+): GardenPolygonResult | null {
+  const title = ringToPolygon(titleRing);
+  if (!title) return null;
+
+  const house = ringToPolygon(houseRing);
+  if (!house) {
+    return {
+      polygon: { type: "Polygon", coordinates: [closeRing(titleRing)] },
+      areaM2: Math.round(area(title)),
+    };
+  }
+
+  const result = difference(featureCollection([title, house]));
+  if (!result) return null;
+
+  return {
+    polygon: featureToGeoJsonPolygon(result),
+    areaM2: Math.round(area(result)),
+  };
 }
 
 /**
