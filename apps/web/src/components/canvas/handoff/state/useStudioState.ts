@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { flushSync } from "react-dom";
+import { startViewTransition } from "../../../../lib/startViewTransition";
 import {
   assessPlantingPlacement,
   buildIndicativeShadeGrid,
@@ -1185,7 +1187,9 @@ export function useStudioState(opts: UseStudioStateOpts) {
     (mode: StudioMode) => {
       // Sketch → CAD AI translation is owned by runFormalizeToCad in the
       // studio shell (vision pipeline). Do not auto-run the local heuristic here.
-      dispatch({ type: "setMode", mode });
+      startViewTransition(() => {
+        flushSync(() => dispatch({ type: "setMode", mode }));
+      });
     },
     [],
   );
