@@ -11,6 +11,9 @@ export type VoiceIntentSource = z.infer<typeof VoiceIntentSourceSchema>;
 export const VoiceIntentKindSchema = z.enum(["design", "dictation"]);
 export type VoiceIntentKind = z.infer<typeof VoiceIntentKindSchema>;
 
+export const VoiceIntentClassifierSchema = z.enum(["anthropic", "lexical"]);
+export type VoiceIntentClassifier = z.infer<typeof VoiceIntentClassifierSchema>;
+
 export const VoiceIntentRequestSchema = z.object({
   transcript: z.string().trim().min(1).max(10_000),
   confidence: z.number().min(0).max(1),
@@ -19,10 +22,24 @@ export const VoiceIntentRequestSchema = z.object({
 });
 export type VoiceIntentRequest = z.infer<typeof VoiceIntentRequestSchema>;
 
+export const VoiceIntentClassificationResponseSchema = z.object({
+  kind: VoiceIntentKindSchema,
+  transcript: z.string(),
+  confidence: z.number().min(0).max(1).nullable(),
+  source: VoiceIntentSourceSchema,
+  classifier: VoiceIntentClassifierSchema,
+  dil_recorded: z.literal(false),
+});
+export type VoiceIntentClassificationResponse = z.infer<
+  typeof VoiceIntentClassificationResponseSchema
+>;
+
 export const VoiceIntentResponseSchema = z.object({
   kind: VoiceIntentKindSchema,
   transcript: z.string(),
   confidence: z.number().min(0).max(1).nullable(),
+  source: VoiceIntentSourceSchema,
+  classifier: VoiceIntentClassifierSchema,
   reply: z.string(),
   design: DesignAssistResponseSchema.nullable(),
   events: z.array(z.unknown()),

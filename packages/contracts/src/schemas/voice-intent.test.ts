@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { VoiceIntentRequestSchema } from "./voice-intent";
+import {
+  VoiceIntentClassificationResponseSchema,
+  VoiceIntentRequestSchema,
+} from "./voice-intent";
 
 describe("VoiceIntentRequestSchema", () => {
   it("requires confidence and DIL consent", () => {
@@ -48,5 +51,33 @@ describe("VoiceIntentRequestSchema", () => {
         dil_consent: true,
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("VoiceIntentClassificationResponseSchema", () => {
+  it("validates a server-backed classification response", () => {
+    const result = VoiceIntentClassificationResponseSchema.safeParse({
+      kind: "design",
+      transcript: "Create a bluestone path",
+      confidence: 0.91,
+      source: "mobile_recording",
+      classifier: "anthropic",
+      dil_recorded: false,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an unknown classifier", () => {
+    const result = VoiceIntentClassificationResponseSchema.safeParse({
+      kind: "design",
+      transcript: "Create a bluestone path",
+      confidence: 0.91,
+      source: "mobile_recording",
+      classifier: "heuristic",
+      dil_recorded: false,
+    });
+
+    expect(result.success).toBe(false);
   });
 });

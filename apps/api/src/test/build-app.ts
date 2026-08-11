@@ -16,6 +16,7 @@ import activityRoutes from "../routes/activity";
 import crewRoutes from "../routes/crew";
 import settingsRoutes from "../routes/settings";
 import recordingRoutes from "../routes/recordings";
+import voiceIntentRoutes from "../routes/voice-intent";
 import geocodeRoutes from "../routes/geocode";
 import dictationRoutes from "../routes/dictation";
 import myobRoutes from "../routes/myob";
@@ -82,6 +83,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(overrideRoutes, { prefix: "/projects" });
   await app.register(activityRoutes, { prefix: "/projects" });
   await app.register(recordingRoutes, { prefix: "/projects" });
+  await app.register(voiceIntentRoutes, { prefix: "/projects" });
   await app.register(dictationRoutes, { prefix: "/projects" });
   await app.register(weatherRoutes, { prefix: "/projects" });
   await app.register(siteContextRoutes, { prefix: "/projects" });

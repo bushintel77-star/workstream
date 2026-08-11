@@ -20,6 +20,7 @@ import storePlugin from './plugins/store';
 import healthRoutes from './routes/health';
 import projectRoutes from './routes/projects';
 import recordingRoutes from './routes/recordings';
+import voiceIntentRoutes from './routes/voice-intent';
 import settingsRoutes from './routes/settings';
 import surveyRoutes from './routes/surveys';
 import designRoutes from './routes/designs';
@@ -159,6 +160,7 @@ async function start() {
   await server.register(healthRoutes);
   await server.register(projectRoutes, { prefix: '/projects' });
   await server.register(recordingRoutes, { prefix: '/projects' });
+  await server.register(voiceIntentRoutes, { prefix: '/projects' });
   await server.register(surveyRoutes, { prefix: '/projects' });
   await server.register(designRoutes, { prefix: '/projects' });
   await server.register(costingRoutes, { prefix: '/projects' });

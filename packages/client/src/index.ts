@@ -199,28 +199,57 @@ export class WorkstreamClient {
     return res.overrides;
   }
 
+  async classifyVoiceIntent(
+    projectId: string,
+    transcript: string,
+    options: {
+      confidence?: number;
+      source?: VoiceIntentSource;
+      dil_consent?: boolean;
+    } = {},
+  ): Promise<{
+    kind: VoiceIntentKind;
+    transcript: string;
+    confidence: number | null;
+    source: VoiceIntentSource;
+    classifier: "anthropic" | "lexical";
+    dil_recorded: false;
+  }> {
+    const trimmed = transcript.trim();
+    return this.request("POST", `/projects/${projectId}/voice-intent/classify`, {
+      transcript: trimmed,
+      confidence: options.confidence ?? null,
+      source: options.source ?? "typed",
+      dil_consent: options.dil_consent ?? true,
+    });
+  }
+
   async submitVoiceIntent(
     projectId: string,
     transcript: string,
     options: {
       confidence?: number;
       source?: VoiceIntentSource;
+      dil_consent?: boolean;
     } = {},
   ): Promise<{
     kind: VoiceIntentKind;
     transcript: string;
     confidence: number | null;
+    source: VoiceIntentSource;
+    classifier: "anthropic" | "lexical";
     reply: string;
     design: DesignAssistResponse | null;
     events: unknown[];
     dil_recorded: false;
   }> {
     const trimmed = transcript.trim();
-    const kind: VoiceIntentKind = /\b(add|create|draw|place|move|align|path|bed|plant|planting|paving|deck|lawn|hedge|tree|garden|north|south|east|west|setback|wide|metre|meter|m)\b/i.test(
+    const classification = await this.classifyVoiceIntent(
+      projectId,
       trimmed,
-    )
-      ? "design"
-      : "dictation";
+      options,
+    );
+    const { kind, confidence, source, classifier } = classification;
     if (kind === "design") {
       const design = await this.request<DesignAssistResponse>(
         "POST",
@@ -230,7 +259,9 @@ export class WorkstreamClient {
       return {
         kind,
         transcript: trimmed,
-        confidence: options.confidence ?? null,
+        confidence,
+        source,
+        classifier,
         reply: design.reply,
         design,
         events: [],
@@ -241,7 +272,9 @@ export class WorkstreamClient {
     return {
       kind,
       transcript: trimmed,
-      confidence: options.confidence ?? null,
+      confidence,
+      source,
+      classifier,
       reply: dictation.reply,
       design: null,
       events: dictation.events,
