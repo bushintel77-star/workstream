@@ -42,3 +42,33 @@
   text-overflow: ellipsis;
   max-width: 28ch;
 }
+
+.projectStatus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 0 16px 10px;
+  color: var(--ink-tertiary);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.projectStatus a {
+  color: var(--accent-ink);
+}
+
+.projectStatus span,
+.projectStatus a {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.projectStatus a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
+}

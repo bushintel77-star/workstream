@@ -30,7 +30,7 @@
   max-width: min(720px, calc(100% - var(--ws-frame-left) - 180px));
   flex-wrap: nowrap;
   overflow: hidden;
-  animation: contextCardIn 200ms var(--ws-ease, ease) both;
+  animation: contextCardIn 200ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 /* Inherit the frame's flat control language for anything nested here.

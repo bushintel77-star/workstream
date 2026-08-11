@@ -144,6 +144,8 @@ import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { ToolDock } from "./features/toolDock/ToolDock";
 import { ContextualToolStrip } from "./features/toolDock/ContextualToolStrip";
 import { CanvasToolCard } from "./features/toolDock/CanvasToolCard";
+import { CanvasContextCard } from "./features/toolDock/CanvasContextCard";
+import { StudioContextBreadcrumb } from "./features/contextStrip/StudioContextBreadcrumb";
 import { LiveBomDock } from "./features/bom/LiveBomDock";
 import { InstantPlannerChrome } from "./features/instantPlanner/InstantPlannerChrome";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
@@ -2118,6 +2120,12 @@ export function HandoffDesignStudio({
   const contextualStripVisible =
     chrome.contextualStrip &&
     !(studioSheetVisible && studioSheetSnap === "full");
+  const contextBreadcrumbActive =
+    ui.isolatedLayer != null ||
+    ui.setbackOn ||
+    ui.shadeOn ||
+    ui.growth !== "mature" ||
+    Object.values(ui.layerOpacity).some((opacity) => opacity < 0.95);
   /**
    * Canvas-first mandate: idle parchment is tool-free.
    * Summon via header Instruments / margin / Q; stay up while a craft tool is armed.
@@ -5025,6 +5033,31 @@ export function HandoffDesignStudio({
             }}
             onClose={() => studio.setUi({ addOpen: false })}
           />
+        ) : null}
+
+        {planOn &&
+        !ui.frameOn &&
+        !ui.clientView &&
+        contextBreadcrumbActive &&
+        !bottomChromeSuppressed ? (
+          <CanvasContextCard active>
+            <StudioContextBreadcrumb
+              mode={ui.mode}
+              isolatedLayer={ui.isolatedLayer}
+              layerOpacity={ui.layerOpacity}
+              setbackOn={ui.setbackOn}
+              shadeOn={ui.shadeOn}
+              growth={ui.growth}
+              placement="canvas"
+              onClearIsolation={() => studio.setUi({ isolatedLayer: null })}
+              onClearSetback={() => studio.setUi({ setbackOn: false })}
+              onClearShade={() =>
+                studio.setUi({ shadeOn: false, sunPlay: false })
+              }
+              onResetGrowth={() => studio.setUi({ growth: "mature" })}
+              onResetLayer={(layer) => studio.setLayerOpacity(layer, 1)}
+            />
+          </CanvasContextCard>
         ) : null}
 
         {dialHint && planOn && !ui.frameOn ? (

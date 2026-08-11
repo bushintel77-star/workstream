@@ -416,6 +416,29 @@
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.utilityLink {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--line-hairline);
+  border-radius: var(--r-md);
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+
+.utilityLink:hover {
+  color: var(--ink-primary);
+  border-color: var(--line-strong);
+}
+
+.utilityLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .weatherRow {
@@ -476,6 +499,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.recordingCard audio {
+  width: 100%;
+  min-height: 44px;
 }
 
 .recordingMeta {
