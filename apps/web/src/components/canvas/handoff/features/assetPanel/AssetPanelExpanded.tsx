@@ -41,6 +41,8 @@ type CarouselStyle = CSSProperties & {
   "--carousel-angle": string;
   "--carousel-scale": string;
   "--carousel-opacity": string;
+  "--carousel-lift": string;
+  "--carousel-depth": string;
 };
 
 export type AssetPanelExpandedProps = {
@@ -114,10 +116,13 @@ function AssetCarousel({
     const angle = index * step + theta;
     const normalized = ((angle + 180) % 360) - 180;
     const focus = Math.max(0, Math.cos((normalized * Math.PI) / 180));
+    const taper = Math.pow(focus, 2.35);
     const style: CarouselStyle = {
       "--carousel-angle": `${angle}deg`,
-      "--carousel-scale": (0.85 + focus * 0.15).toFixed(3),
-      "--carousel-opacity": (0.3 + focus * 0.7).toFixed(3),
+      "--carousel-scale": (0.74 + taper * 0.26).toFixed(3),
+      "--carousel-opacity": (0.16 + taper * 0.84).toFixed(3),
+      "--carousel-lift": `${((1 - taper) * 18).toFixed(2)}px`,
+      "--carousel-depth": `${(246 + taper * 34).toFixed(2)}px`,
     };
     return (
       <div
@@ -134,6 +139,7 @@ function AssetCarousel({
   return (
     <div
       className={css.carouselViewport}
+      data-testid="asset-carousel"
       onPointerDown={(event) => {
         event.currentTarget.setPointerCapture(event.pointerId);
         dragRef.current = { x: event.clientX, theta: thetaRef.current };
