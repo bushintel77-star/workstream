@@ -34,7 +34,13 @@ const DATE_FORMAT = new Intl.DateTimeFormat("en-AU", {
 });
 
 type ProjectUtilityProps =
-  | { type: "audit"; projectId: string; audit: Audit | null; overrides: Override[] }
+  | {
+      type: "audit";
+      projectId: string;
+      designReady: boolean;
+      audit: Audit | null;
+      overrides: Override[];
+    }
   | { type: "carbon"; projectId: string; report: CarbonReport | null }
   | { type: "outputs"; projectId: string; outputs: Output[] }
   | { type: "recordings"; projectId: string; recordings: Recording[] };
@@ -45,6 +51,7 @@ export function ProjectUtilitySurface(props: ProjectUtilityProps) {
       {props.type === "audit" ? (
         <AuditSurface
           projectId={props.projectId}
+          designReady={props.designReady}
           audit={props.audit}
           overrides={props.overrides}
         />
@@ -74,10 +81,12 @@ function formatKg(value: number): string {
 
 export function AuditSurface({
   projectId,
+  designReady,
   audit,
   overrides,
 }: {
   projectId: string;
+  designReady: boolean;
   audit: Audit | null;
   overrides: Override[];
 }) {
@@ -90,14 +99,27 @@ export function AuditSurface({
           Check fidelity, completeness, coherence, cost, safety, and scope before
           issuing the design.
         </p>
-        <form action={runAuditAction}>
-          <input type="hidden" name="projectId" value={projectId} />
-          <SubmitButton pendingLabel="Running audit…">
-            {audit ? "Run audit again" : "Run design audit"}
-          </SubmitButton>
-        </form>
+        {designReady ? (
+          <form action={runAuditAction}>
+            <input type="hidden" name="projectId" value={projectId} />
+            <SubmitButton pendingLabel="Running audit…">
+              {audit ? "Run audit again" : "Run design audit"}
+            </SubmitButton>
+          </form>
+        ) : (
+          <div className={styles.empty} role="status">
+            <strong>Design required before audit</strong>
+            <p>
+              Generate or complete the design in the studio first. The audit checks
+              the current design, not the initial site survey.
+            </p>
+            <a className={styles.utilityLink} href={`/projects/${projectId}/design`}>
+              Open design studio
+            </a>
+          </div>
+        )}
       </header>
-      {audit ? (
+      {audit && designReady ? (
         <>
           <div className={styles.kpiRow}>
             <span className={`${styles.pill} ${audit.passed ? styles.pillOk : styles.pillBlock}`}>
@@ -163,9 +185,9 @@ export function AuditSurface({
             )}
           </section>
         </>
-      ) : (
+      ) : designReady ? (
         <div className={styles.empty}>Run the audit to surface design risks and issue readiness.</div>
-      )}
+      ) : null}
     </>
   );
 }
