@@ -12,9 +12,9 @@ This file is the quick-start handover for a fresh context. The authoritative in-
 
 ## Current shipped state
 
-Latest main commit: `b5e0b3f` — autonomous staged capture pipeline with self-audit and guard rails.
+Latest main commit: `1903e69` — server-backed voice intent classification and Whisper-derived STT confidence.
 
-The latest follow-up documentation commit is `d010acc`.
+The latest follow-up documentation commit is `1903e69`.
 
 Railway production:
 
@@ -27,11 +27,12 @@ Voice-first foundation currently shipped:
 ```text
 mobile recording
   → batch upload
-  → transcription
+  → transcription (Whisper verbose_json confidence)
   → explicit or staged processing
-  → lexical voice intent seam
+  → server-backed voice intent classification
       ├─ design language → existing /design/assist → ephemeral ghosts
       └─ operational language → existing /dictation → tasks/spatial ledger
+  → lexical fallback when provider is unavailable
 ```
 
 Mobile recording has microphone permissions, low-quality mono audio, metering, heuristic VAD, ambient/clipping detection, pause/resume, upload, and processing states.
@@ -40,7 +41,10 @@ Shared voice contracts and routing live in:
 
 - `packages/contracts/src/schemas/voice-intent.ts`
 - `packages/domain/src/voice-intent.ts`
-- `packages/client/src/index.ts` → `submitVoiceIntent()`
+- `packages/client/src/index.ts` → `classifyVoiceIntent()` and `submitVoiceIntent()`
+- `apps/api/src/routes/voice-intent.ts` → `POST /projects/:id/voice-intent/classify`
+- `apps/api/src/lib/voice-intent.ts` → Anthropic classifier with lexical fallback
+- `apps/api/src/lib/transcribe.ts` → Whisper `verbose_json` confidence
 
 Design geometry remains human-in-the-loop. Autonomous processing can advance survey/design proposal/costing/audit/output stages, but it must not silently commit geometry.
 
@@ -65,8 +69,8 @@ Mobile processing consumes the stage statuses and displays failed stages. The cu
 ## Verification already run
 
 - `pnpm run ci` passed.
-- 255 test files passed.
-- 1,533 tests passed.
+- 260 test files passed.
+- 1,548 tests passed.
 - Typecheck passed across API, web, mobile, client, contracts, DB, domain, CAD, and UI.
 - Lint passed.
 - Web production build passed.
@@ -86,8 +90,8 @@ Human/infrastructure gated:
 
 Technical follow-up:
 
-- Replace heuristic STT confidence with provider/on-device confidence when available.
-- Server-backed voice intent classification.
+- ~~Replace heuristic STT confidence with provider/on-device confidence when available.~~ Done.
+- ~~Server-backed voice intent classification.~~ Done.
 - Streaming/on-device transcription spike (`whisper.rn` versus OS speech recognition).
 - Silero VAD benchmark against Melbourne site recordings.
 - Polygon clipping for title-minus-house geometry.
@@ -116,10 +120,6 @@ Explicitly deferred:
 
 ## Next recommended slice
 
-Implement server-backed voice intent classification while preserving the existing lexical fallback:
-
-1. Add a contracts-backed classification response with confidence and source.
-2. Route mobile walkthrough transcripts through the API classifier.
-3. Keep design intent ephemeral until human review.
-4. Fall back to the current lexical classifier when the provider is unavailable.
-5. Add deterministic contract and API tests for design versus operational language.
+1. Polygon clipping for title-minus-house geometry: subtract the building footprint from the title ring and return a valid garden ring (or ring with holes) instead of only a difference metric.
+2. Survey utility ingestion: extend the survey stage to accept BYDA / council utility data and store it as `utility_segments` linked to the title polygon.
+3. View transition wiring: call `document.startViewTransition` when `HandoffDesignStudio` switches modes; the CSS `view-transition-name: studio-board` is already declared.
