@@ -93,7 +93,12 @@ function AssetCarousel({
     const tick = () => {
       velocityRef.current *= 0.9;
       thetaRef.current += velocityRef.current;
-      setTheta(thetaRef.current);
+      if (
+        Math.abs(velocityRef.current) > 0.0005 ||
+        dragRef.current !== null
+      ) {
+        setTheta(thetaRef.current);
+      }
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
