@@ -11,6 +11,7 @@ import {
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   BY_TYPE,
+  MODE_LABELS,
   MODE_TABS,
   PAINT_SWATCHES,
   STUDIO_ITEM_TYPE_LABEL,
@@ -3632,13 +3633,13 @@ export function HandoffDesignStudio({
                     aria-disabled={locked}
                     aria-current={ui.mode === m ? "page" : undefined}
                     aria-keyshortcuts={idx < 9 ? String(idx + 1) : undefined}
-                    title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
+                    title={lockReason ?? `${MODE_LABELS[m]} mode`}
                     onClick={() => {
                       if (!locked) requestMode(m);
                     }}
                   >
                     {locked ? <span className={css.modeLockIcon} aria-hidden /> : null}
-                    {m[0]!.toUpperCase() + m.slice(1)}
+                    {MODE_LABELS[m]}
                   </button>
                 );
               })
@@ -3690,7 +3691,7 @@ export function HandoffDesignStudio({
               >
                 {hasCostedLines
                   ? audChip(estimate.totalInclGst)
-                  : "Quote"}
+                  : "Live cost"}
               </button>
             ) : null}
             {!ui.clientView ? (

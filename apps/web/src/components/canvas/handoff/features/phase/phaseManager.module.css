@@ -73,7 +73,7 @@
 
 /* Flat frame control: dim ink at rest, wash on hover, hairline ring when on. */
 .phaseChip {
-  min-height: 36px;
+  min-height: var(--tap-min, 44px);
   min-width: 44px;
   padding: var(--s-1) var(--s-2);
   border-radius: var(--r-md);
@@ -89,13 +89,19 @@
   transition:
     background 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
     border-color 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
-    color 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+    color 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .phaseChip:hover {
+  transform: translateY(-0.5px);
   background: var(--ws-frame-wash);
   border-color: var(--ws-frame-hair);
   color: var(--ws-frame-ink);
+}
+
+.phaseChip:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 .phaseChip:focus-visible {
@@ -129,7 +135,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: var(--ws-frame-tap, 38px);
+  min-height: var(--tap-min, 44px);
   padding: 0 8px;
   border: none;
   border-radius: var(--r-md);
@@ -142,15 +148,19 @@
   cursor: pointer;
   transition:
     color 140ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
-    background 140ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+    background 140ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform 140ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .headerTrigger:hover {
+  transform: translateY(-0.5px);
   background: var(--ws-frame-wash);
   color: var(--tier1-bar-ink, var(--ws-frame-ink));
 }
 
+.headerTrigger:active,
 .headerTriggerActive {
+  transform: translateY(1px) scale(0.98);
   background: var(--ws-frame-wash);
   box-shadow: inset 0 0 0 1px var(--tier1-bar-line, var(--ws-frame-hair));
   color: var(--tier1-bar-ink, var(--ws-frame-ink));
@@ -190,7 +200,7 @@
   gap: 2px;
   max-height: calc(100dvh - var(--ws-frame-top, 46px) - 24px);
   overflow-y: auto;
-  animation: menuIn var(--hc-motion, 180ms) var(--ws-ease) both;
+  animation: menuIn var(--hc-motion, 180ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 @keyframes menuIn {
@@ -206,7 +216,7 @@
 }
 
 .phaseItem {
-  min-height: 40px;
+  min-height: var(--tap-min, 44px);
   padding: 0 12px;
   border: none;
   border-radius: var(--r-md);
@@ -217,10 +227,19 @@
   font-weight: 600;
   text-align: left;
   cursor: pointer;
+  transition:
+    background 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    color 120ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .phaseItem:hover:not([data-on="1"]) {
+  transform: translateY(-0.5px);
   background: var(--ws-frame-wash);
+}
+
+.phaseItem:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 .phaseItemActive {
@@ -244,5 +263,12 @@
 @media (prefers-reduced-motion: reduce) {
   .menu {
     animation: none;
+  }
+
+  .phaseChip,
+  .headerTrigger,
+  .phaseItem {
+    transition: none;
+    transform: none;
   }
 }

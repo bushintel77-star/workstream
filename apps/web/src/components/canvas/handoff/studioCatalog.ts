@@ -348,6 +348,17 @@ export const MODE_TABS = [
 
 export type StudioMode = (typeof MODE_TABS)[number];
 
+export const MODE_LABELS: Record<StudioMode, string> = {
+  survey: "Survey",
+  sketch: "Sketch",
+  cad: "CAD",
+  garden: "Garden",
+  elevation: "Elevation",
+  quote: "Quote",
+  present: "Present",
+  share: "Share",
+};
+
 export const TOOLS = [
   { id: "trace", label: "Trace", icon: "✎" },
   /*

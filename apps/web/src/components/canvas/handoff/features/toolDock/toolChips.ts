@@ -33,7 +33,6 @@ const PRIMARY: ToolChip[] = [
   },
   { id: "path", label: "Path", icon: "⌁", title: "Author a residential path" },
   { id: "measure", label: "Measure", icon: "⟋", title: "Measure" },
-  { id: "lock", label: "Lock", icon: "⬡", title: "Lock selection" },
 ];
 
 /** Shared chip list for ToolDock (desktop) and ContextualToolStrip (compact). */
@@ -52,7 +51,7 @@ export function buildToolChips(
   const allowedByMode: Record<StudioMode, ToolChipId[]> = {
     survey: ["trace", "select", "measure", "grid"],
     sketch: ["select", "add", "paint", "path", "zone", "measure", "grid"],
-    cad: ["select", "add", "path", "zone", "measure", "lock", "grid"],
+    cad: ["select", "add", "path", "zone", "measure", "grid"],
     elevation: ["select", "measure", "grid"],
     garden: ["select", "measure", "grid"],
     quote: ["select", "measure", "grid"],
@@ -68,12 +67,18 @@ export function buildToolChips(
         title: t.title,
       }))
     : [];
-  return [...PRIMARY, ...surveyExtras].filter((chip) => {
-    if (mode === "survey" && surveyServicesAuthoring && ["calib", "level", "service"].includes(chip.id)) {
-      return true;
-    }
-    return allowed.has(chip.id);
-  }).map((chip) => chip.id === "grid" ? { ...chip, trail: true } : chip);
+  return [...PRIMARY, ...surveyExtras]
+    .filter((chip) => {
+      if (
+        mode === "survey" &&
+        surveyServicesAuthoring &&
+        ["calib", "level", "service"].includes(chip.id)
+      ) {
+        return true;
+      }
+      return allowed.has(chip.id);
+    })
+    .map((chip) => (chip.id === "grid" ? { ...chip, trail: true } : chip));
 }
 
 export function toolChipActive(
@@ -81,7 +86,6 @@ export function toolChipActive(
   args: { tool: StudioTool; locked: boolean; gridOn: boolean },
 ): boolean {
   if (chip.id === "grid") return args.gridOn;
-  if (chip.id === "lock") return args.locked && args.tool === "lock";
   return args.tool === chip.id;
 }
 

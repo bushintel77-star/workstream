@@ -146,7 +146,7 @@ export function HeaderPhaseSelect({ phase, onPhase }: Props) {
         title={`Design lifecycle phase — ${DESIGN_LIFECYCLE_LABEL[phase]}`}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className={css.headerLabel}>Phase</span>
+        <span className={css.headerLabel}>Lifecycle</span>
         <span className={css.headerValue}>{PHASE_SHORT[phase]}</span>
       </button>
       {menu ? (
