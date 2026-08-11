@@ -1,7 +1,12 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../plugins/auth";
-import { aerialImageUrl, geocodeSearch } from "../lib/mapbox";
+import {
+  aerialImageUrl,
+  aerialImageUrlForRing,
+  geocodeSearch,
+} from "../lib/mapbox";
+import { fetchTitlePolygon } from "../lib/vicmap";
 
 const PreviewQuerySchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
@@ -24,10 +29,20 @@ export default async function geocodeRoutes(fastify: FastifyInstance) {
           .send({ error: "Invalid coordinates", issues: parsed.error.issues });
       }
       const { lat, lng } = parsed.data;
-      // Loader zooms neighbourhood → lot (canvas design altitude).
+      let titleRing: [number, number][] | null = null;
+      try {
+        const title = await fetchTitlePolygon(lat, lng);
+        titleRing = (title?.coordinates[0] as [number, number][] | undefined) ?? null;
+      } catch (err) {
+        request.log.warn({ err, lat, lng }, "title lookup unavailable for aerial preview");
+      }
+      // Loader zooms neighbourhood → title-fitted lot, not pin-fitted imagery.
       return reply.send({
         neighbourhood_uri: aerialImageUrl(lat, lng, 800, 480, 17),
-        aerial_uri: aerialImageUrl(lat, lng, 800, 480, 20),
+        aerial_uri:
+          (titleRing && aerialImageUrlForRing(titleRing, 800, 480)) ??
+          aerialImageUrl(lat, lng, 800, 480, 20),
+        title_ring: titleRing,
         lat,
         lng,
       });

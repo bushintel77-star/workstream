@@ -5,7 +5,7 @@ import {
   gardenPolygonFromTitleAndHouse,
   polygonArea,
 } from "@workstream/domain";
-import { aerialImageUrl, geocodeAddress } from "./mapbox";
+import { aerialImageUrl, aerialImageUrlForRing, geocodeAddress } from "./mapbox";
 import { fetchBuildingPolygon, fetchTitleParcel } from "./vicmap";
 
 type SurveyGeometry = {
@@ -132,7 +132,14 @@ export async function runSurvey(
   }
 
   // Match locate-loader lot altitude — canvas design perspective.
-  const aerial_uri = aerialImageUrl(center.lat, center.lng, 800, 480, 20);
+  const aerial_uri =
+    (geometry.title_polygon.coordinates[0]?.length
+      ? aerialImageUrlForRing(
+          geometry.title_polygon.coordinates[0] as [number, number][],
+          800,
+          480,
+        )
+      : null) ?? aerialImageUrl(center.lat, center.lng, 800, 480, 20);
 
   const survey = await store.upsertSurvey(ownerId, projectId, {
     aerial_uri,
