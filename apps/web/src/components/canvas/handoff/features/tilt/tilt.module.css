@@ -64,9 +64,9 @@
   position: absolute;
   inset: 0;
   /* Translucent roof wash — not cream card over the plan grid. */
-  background: color-mix(in srgb, var(--existing-stroke) 14%, transparent);
+  background: color-mix(in srgb, var(--existing-stroke) 17%, transparent);
   border: 1px solid
-    color-mix(in srgb, var(--existing-stroke) 55%, transparent);
+    color-mix(in srgb, var(--existing-stroke) 68%, transparent);
   box-shadow: none;
 }
 
@@ -93,7 +93,7 @@
    * azimuth (TiltBuildingExtrusion.wallWashGradient). Crisp edge so the
    * volume reads as drafted massing, not a faint wash. */
   border: 1.25px solid
-    color-mix(in srgb, var(--existing-stroke) 55%, transparent);
+    color-mix(in srgb, var(--existing-stroke) 68%, transparent);
   box-shadow: none;
 }
 
@@ -107,7 +107,7 @@
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--hc-ink) 22%, transparent);
   box-shadow: none;
-  opacity: 0.55;
+  opacity: 0.66;
 }
 
 .groundDeck {

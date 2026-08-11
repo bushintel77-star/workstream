@@ -3,6 +3,7 @@
 import type { DesignCanvas, ProjectOrchestrationWorld } from "@workstream/contracts";
 import type { HeroFeatureTarget } from "./HeroDetailOverlay";
 import css from "./heroFeatureMarkers.module.css";
+import { formatFeatureTitle } from "./formatFeatureTitle";
 
 type Marker = HeroFeatureTarget & { x_pct: number; y_pct: number };
 
@@ -34,7 +35,7 @@ export function HeroFeatureMarkers({ canvas, world, onOpen }: Props) {
     const mid = pts[Math.floor(pts.length / 2)]!.pct;
     markers.push({
       id: f.id,
-      title: f.metadata.friendly_name ?? "Feature",
+      title: formatFeatureTitle(f.metadata.friendly_name ?? "Feature"),
       kind: kindFromLabel(f.metadata.friendly_name ?? ""),
       depth_m: f.material_fill?.depth_m,
       material: f.material_fill?.sku,
@@ -59,7 +60,7 @@ export function HeroFeatureMarkers({ canvas, world, onOpen }: Props) {
       if (s.area_m2 < 2 && s.length_m < 3 && s.layer !== "structure") continue;
       markers.push({
         id: s.id,
-        title: s.label,
+        title: formatFeatureTitle(s.label),
         kind: kindFromLabel(s.label),
         depth_m: s.depth_m,
         height_m: s.height_m,
