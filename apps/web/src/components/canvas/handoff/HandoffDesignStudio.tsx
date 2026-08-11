@@ -144,7 +144,6 @@ import { SiteSwitcher } from "./features/sites/SiteSwitcher";
 import { ToolDock } from "./features/toolDock/ToolDock";
 import { ContextualToolStrip } from "./features/toolDock/ContextualToolStrip";
 import { CanvasToolCard } from "./features/toolDock/CanvasToolCard";
-import { CanvasContextCard } from "./features/toolDock/CanvasContextCard";
 import { LiveBomDock } from "./features/bom/LiveBomDock";
 import { InstantPlannerChrome } from "./features/instantPlanner/InstantPlannerChrome";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
@@ -160,7 +159,6 @@ import {
   toggleTool,
   type ToolStack,
 } from "./features/toolStack/toolStack";
-import { StudioContextBreadcrumb } from "./features/contextStrip/StudioContextBreadcrumb";
 import {
   loadPointerMarkId,
   savePointerMarkId,
@@ -3360,27 +3358,6 @@ export function HandoffDesignStudio({
     ui.tool,
   ]);
 
-  const councilTipVisible =
-    planOn &&
-    !ui.focusOn &&
-    !ui.clientView &&
-    !ui.frameOn &&
-    Boolean(ui.councilTip);
-  const headerContextActive =
-    planOn &&
-    !ui.clientView &&
-    !ui.frameOn &&
-    (councilTipVisible ||
-      ui.setbackOn ||
-      ui.shadeOn ||
-      ui.growth !== "mature" ||
-      ui.isolatedLayer != null ||
-      ui.layerOpacity.survey < 0.95 ||
-      ui.layerOpacity.boundary < 0.95 ||
-      ui.layerOpacity.council < 0.95 ||
-      ui.layerOpacity.vegetation < 0.95 ||
-      ui.layerOpacity.services < 0.95 ||
-      ui.layerOpacity.notes < 0.95);
   const showHeaderAiPill =
     !ui.focusOn &&
     !ui.clientView &&
@@ -3773,30 +3750,6 @@ export function HandoffDesignStudio({
           </div>
         }
       />
-      <CanvasContextCard active={headerContextActive && !bottomChromeSuppressed}>
-        <StudioContextBreadcrumb
-          mode={ui.mode}
-          isolatedLayer={ui.isolatedLayer}
-          layerOpacity={ui.layerOpacity}
-          setbackOn={ui.setbackOn}
-          shadeOn={ui.shadeOn}
-          growth={ui.growth}
-          onClearIsolation={() => studio.clearServiceFocus()}
-          onClearSetback={() => studio.setUi({ setbackOn: false })}
-          onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
-          onResetGrowth={() => studio.setUi({ growth: "mature" })}
-          onResetLayer={(layer) => {
-            if (layer === "services" && ui.servicesLocked) return;
-            studio.setLayerOpacity(layer, 1);
-          }}
-        />
-        {councilTipVisible ? (
-          <p className={css.headerCouncilTip} data-testid="council-setback-tip">
-            {ui.councilTip}
-          </p>
-        ) : null}
-      </CanvasContextCard>
-
       <div
         className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}${isTiltActive(ui.tiltDeg) || tiltAnimKind ? ` ${css.boardTiltPerspective}` : ""}`}
         data-testid="studio-board"
