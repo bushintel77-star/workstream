@@ -2,14 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import Svg, { Line, Path } from "react-native-svg";
+import Svg, { Circle, Defs, Line, Path, Pattern, Rect } from "react-native-svg";
 import BottomSheet from "@gorhom/bottom-sheet";
-import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type {
@@ -37,7 +37,15 @@ import {
 } from "../../../src/components/sketch/MobileToolStrip";
 import { MobileSketchStatusBar } from "../../../src/components/sketch/MobileSketchStatusBar";
 import { MobileSketchBottomSheet } from "../../../src/components/sketch/MobileSketchBottomSheet";
+import { MobileSketchIntentRail } from "../../../src/components/sketch/MobileSketchIntentRail";
 import { useOfflineQueue } from "../../../src/hooks/useOfflineQueue";
+
+const gestureHandler = Platform.OS === "web" ? null : require("react-native-gesture-handler");
+const Gesture = gestureHandler?.Gesture;
+const GestureDetector = gestureHandler?.GestureDetector;
+// React Native Gesture Handler depends on native view-manager plumbing that
+// isn't present on web; use a plain View there and render the web tap path.
+const GestureHandlerRootView = gestureHandler?.GestureHandlerRootView ?? View;
 
 type StudioMode = "place" | "draw" | "select" | "measure";
 
@@ -237,31 +245,35 @@ export default function DesignStudioScreen() {
     setGhosts([]);
   }
 
-  const drawGesture = Gesture.Pan()
-    .enabled(mode === "draw")
-    .runOnJS(true)
-    .onStart((e) => {
-      setDraftPoints([
-        {
-          x_pct: (e.x / canvasSize.width) * 100,
-          y_pct: (e.y / canvasSize.height) * 100,
-        },
-      ]);
-    })
-    .onUpdate((e) => {
-      const pt = {
-        x_pct: Math.min(100, Math.max(0, (e.x / canvasSize.width) * 100)),
-        y_pct: Math.min(100, Math.max(0, (e.y / canvasSize.height) * 100)),
-      };
-      setDraftPoints((prev) => {
-        const last = prev[prev.length - 1];
-        if (last && Math.hypot(last.x_pct - pt.x_pct, last.y_pct - pt.y_pct) < 0.5) {
-          return prev;
-        }
-        return [...prev, pt];
-      });
-    })
-    .onEnd(() => commitDraft());
+  const drawGesture = Gesture
+    ? Gesture.Pan()
+        .enabled(mode === "draw")
+        .runOnJS(true)
+        .onStart((e: { x: number; y: number }) => {
+          setDraftPoints([
+            {
+              x_pct: (e.x / canvasSize.width) * 100,
+              y_pct: (e.y / canvasSize.height) * 100,
+            },
+          ]);
+        })
+        .onUpdate((e: { x: number; y: number }) => {
+          const pt = {
+            x_pct: Math.min(100, Math.max(0, (e.x / canvasSize.width) * 100)),
+            y_pct: Math.min(100, Math.max(0, (e.y / canvasSize.height) * 100)),
+          };
+          setDraftPoints((prev) => {
+            const last = prev[prev.length - 1];
+            if (last && Math.hypot(last.x_pct - pt.x_pct, last.y_pct - pt.y_pct) < 0.5) {
+              return prev;
+            }
+            return [...prev, pt];
+          });
+        })
+        .onEnd(() => commitDraft())
+    : null;
+
+  const canvasTone = aiScanning || ghosts.length > 0 ? "info" : offline.offline ? "warn" : "ok";
 
   const draftPath =
     draftPoints.length >= 2
@@ -329,12 +341,25 @@ export default function DesignStudioScreen() {
           </Pressable>
         )}
         {!presentation ? (
-          <MobileSketchStatusBar
-            symbolCount={placements.length}
-            strokeCount={strokes.length}
-            syncLabel={syncLabel ?? (offline.offline ? "offline" : undefined)}
-            tier1={tier1}
-          />
+          <>
+            <MobileSketchIntentRail
+              onVoiceBrief={() =>
+                router.push({
+                  pathname: "/(app)/recording",
+                  params: { projectId: id! },
+                })
+              }
+              onAiSweep={() => void handleAiScan()}
+              statusLabel={syncLabel ?? (offline.offline ? "offline queue" : "AI ready")}
+              statusTone={canvasTone}
+            />
+            <MobileSketchStatusBar
+              symbolCount={placements.length}
+              strokeCount={strokes.length}
+              syncLabel={syncLabel ?? (offline.offline ? "offline" : undefined)}
+              tier1={tier1}
+            />
+          </>
         ) : (
           <View style={styles.presentationHud}>
             <Text style={styles.presentationHudText}>
@@ -342,9 +367,6 @@ export default function DesignStudioScreen() {
             </Text>
           </View>
         )}
-        {!presentation ? (
-          <Text style={styles.honesty}>Concept sketch — indicative geometry, not survey CAD</Text>
-        ) : null}
         {measureLabel ? (
           <Text
             style={styles.measureLabel}
@@ -354,7 +376,7 @@ export default function DesignStudioScreen() {
             {measureLabel}
           </Text>
         ) : null}
-        <GestureDetector gesture={drawGesture}>
+        {Platform.OS === "web" ? (
           <Pressable
             style={styles.canvasFlex}
             onLayout={(e) => {
@@ -398,6 +420,35 @@ export default function DesignStudioScreen() {
               viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
               pointerEvents="none"
             >
+              <Defs>
+                <Pattern
+                  id="sketchDots"
+                  x="0"
+                  y="0"
+                  width="14"
+                  height="14"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <Circle cx="1.2" cy="1.2" r="0.7" fill="rgba(255,255,255,0.12)" />
+                </Pattern>
+                <Pattern
+                  id="sketchGlow"
+                  x="0"
+                  y="0"
+                  width="100"
+                  height="100"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <Rect width="100" height="100" fill="rgba(8, 10, 14, 0.36)" />
+                </Pattern>
+              </Defs>
+              <Rect width={canvasSize.width} height={canvasSize.height} fill="url(#sketchGlow)" />
+              <Rect
+                width={canvasSize.width}
+                height={canvasSize.height}
+                fill="url(#sketchDots)"
+                opacity={0.55}
+              />
               {strokes.map((stroke) => (
                 <Path
                   key={stroke.id}
@@ -405,19 +456,22 @@ export default function DesignStudioScreen() {
                   fill={stroke.color}
                 />
               ))}
-              {draftPath ? <Path d={draftPath} fill="#ff2ef6" opacity={0.85} /> : null}
+              {draftPath ? (
+                <Path d={draftPath} fill={tokens.color.semantic.info} opacity={0.88} />
+              ) : null}
               {measureDraft ? (
                 <Line
                   x1={(measureDraft.x_pct / 100) * canvasSize.width}
                   y1={(measureDraft.y_pct / 100) * canvasSize.height}
                   x2={(measureDraft.x_pct / 100) * canvasSize.width}
                   y2={(measureDraft.y_pct / 100) * canvasSize.height}
-                  stroke={tokens.color.accent.default}
+                  stroke={tokens.color.semantic.warn}
                   strokeWidth={2}
                   strokeDasharray="4 3"
                 />
               ) : null}
             </Svg>
+            <View style={styles.canvasVeil} pointerEvents="none" />
             {placements.map((p) => {
               const sym = symbolById.get(p.symbol_id);
               if (!sym) return null;
@@ -444,7 +498,131 @@ export default function DesignStudioScreen() {
               );
             })}
           </Pressable>
-        </GestureDetector>
+        ) : (
+          <GestureDetector gesture={drawGesture}>
+            <Pressable
+              style={styles.canvasFlex}
+              onLayout={(e) => {
+                const { width, height } = e.nativeEvent.layout;
+                if (width > 0 && height > 0) setCanvasSize({ width, height });
+              }}
+              onPress={(e) => {
+                const pt = canvasPoint(e.nativeEvent);
+                if (mode === "place") {
+                  placeAt(pt.x_pct, pt.y_pct);
+                  return;
+                }
+                if (mode === "select") {
+                  setSelectedPlacementId(null);
+                  return;
+                }
+                if (mode === "measure") {
+                  if (!measureDraft) {
+                    setMeasureDraft(pt);
+                    setMeasureLabel("Tap end point");
+                    return;
+                  }
+                  const metres = polylineLengthFromCanvasPercent([measureDraft, pt], groundScale);
+                  setMeasureLabel(`${metres.toFixed(1)} m indicative`);
+                  setMeasureDraft(null);
+                }
+              }}
+              accessibilityRole="image"
+              accessibilityLabel={canvasA11yLabel}
+              accessibilityHint="Tap to place the selected symbol in Place mode, select a symbol in Select mode, or measure a distance in Measure mode."
+            >
+              <Image
+                source={{ uri: survey.aerial_uri }}
+                style={styles.aerial}
+                resizeMode="cover"
+              />
+              <Svg
+                style={StyleSheet.absoluteFill}
+                width={canvasSize.width}
+                height={canvasSize.height}
+                viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
+                pointerEvents="none"
+              >
+                <Defs>
+                  <Pattern
+                    id="sketchDots"
+                    x="0"
+                    y="0"
+                    width="14"
+                    height="14"
+                    patternUnits="userSpaceOnUse"
+                  >
+                    <Circle cx="1.2" cy="1.2" r="0.7" fill="rgba(255,255,255,0.12)" />
+                  </Pattern>
+                  <Pattern
+                    id="sketchGlow"
+                    x="0"
+                    y="0"
+                    width="100"
+                    height="100"
+                    patternUnits="userSpaceOnUse"
+                  >
+                    <Rect width="100" height="100" fill="rgba(8, 10, 14, 0.36)" />
+                  </Pattern>
+                </Defs>
+                <Rect width={canvasSize.width} height={canvasSize.height} fill="url(#sketchGlow)" />
+                <Rect
+                  width={canvasSize.width}
+                  height={canvasSize.height}
+                  fill="url(#sketchDots)"
+                  opacity={0.55}
+                />
+                {strokes.map((stroke) => (
+                  <Path
+                    key={stroke.id}
+                    d={canvasStrokeToPathD(stroke, canvasSize.width, canvasSize.height)}
+                    fill={stroke.color}
+                  />
+                ))}
+                {draftPath ? (
+                  <Path d={draftPath} fill={tokens.color.semantic.info} opacity={0.88} />
+                ) : null}
+                {measureDraft ? (
+                  <Line
+                    x1={(measureDraft.x_pct / 100) * canvasSize.width}
+                    y1={(measureDraft.y_pct / 100) * canvasSize.height}
+                    x2={(measureDraft.x_pct / 100) * canvasSize.width}
+                    y2={(measureDraft.y_pct / 100) * canvasSize.height}
+                    stroke={tokens.color.semantic.warn}
+                    strokeWidth={2}
+                    strokeDasharray="4 3"
+                  />
+                ) : null}
+              </Svg>
+              <View style={styles.canvasVeil} pointerEvents="none" />
+              {placements.map((p) => {
+                const sym = symbolById.get(p.symbol_id);
+                if (!sym) return null;
+                const selected = selectedPlacementId === p.id;
+                return (
+                  <Pressable
+                    key={p.id}
+                    style={[
+                      styles.placed,
+                      { left: `${p.x_pct}%`, top: `${p.y_pct}%` },
+                      selected && styles.placedSelected,
+                    ]}
+                    onPress={() => {
+                      if (mode === "select") setSelectedPlacementId(p.id);
+                    }}
+                    disabled={mode !== "select"}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${sym.label}${selected ? ", selected" : ""}`}
+                    accessibilityHint="Double tap in Select mode to select this symbol on the plan."
+                    accessibilityState={{ selected, disabled: mode !== "select" }}
+                  >
+                    <DesignAssetGlyph symbol={sym} size="pin" />
+                  </Pressable>
+                );
+              })}
+            </Pressable>
+          </GestureDetector>
+        )}
 
         {!presentation ? (
           <>
@@ -552,33 +730,34 @@ const PIN = 18;
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: tokens.color.surface.base },
+  container: { flex: 1, backgroundColor: "#0b0d11" },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
   },
-  honesty: {
-    fontFamily: "monospace",
-    fontSize: 8,
-    color: tokens.color.ink.tertiary,
-    opacity: 0.5,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
   measureLabel: {
     fontFamily: "monospace",
     fontSize: 10,
-    color: tokens.color.accent.default,
+    color: tokens.color.semantic.warn,
     paddingHorizontal: 12,
   },
   canvasFlex: {
     flex: 1,
     overflow: "hidden",
-    backgroundColor: tokens.color.surface.sunken,
+    backgroundColor: "#11151b",
   },
-  aerial: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
+  aerial: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
+    opacity: 0.52,
+  },
+  canvasVeil: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(6, 8, 12, 0.34)",
+  },
   placed: {
     position: "absolute",
     marginLeft: -PIN,
@@ -590,8 +769,12 @@ const styles = StyleSheet.create({
   },
   placedSelected: {
     borderWidth: 2,
-    borderColor: tokens.color.accent.default,
+    borderColor: tokens.color.semantic.info,
     borderRadius: 22,
+    shadowColor: tokens.color.semantic.info,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
   },
   presentationExit: {
     position: "absolute",
@@ -601,7 +784,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: tokens.color.surface.elevated,
+    backgroundColor: "rgba(17, 19, 25, 0.94)",
   },
   presentationExitText: {
     fontSize: 11,
@@ -616,7 +799,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(17, 19, 25, 0.86)",
   },
   presentationHudText: {
     fontSize: 10,
@@ -628,13 +811,14 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: tokens.color.line.hairline,
+    borderTopColor: "rgba(120, 132, 168, 0.2)",
+    backgroundColor: "rgba(17, 19, 25, 0.94)",
   },
   button: {
     flex: 1,
     minHeight: 48,
     borderRadius: 10,
-    backgroundColor: tokens.color.accent.default,
+    backgroundColor: tokens.color.semantic.info,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -644,7 +828,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: tokens.color.line.hairline,
+    borderColor: "rgba(120, 132, 168, 0.24)",
   },
   buttonText: {
     color: tokens.color.ink.inverted,

@@ -17,10 +17,12 @@
   top: var(--s-4, 16px);
   right: var(--s-4, 16px);
   width: 280px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   /* Frost dialect via CameraChrome portal — not blush chrome. */
   background:
+    radial-gradient(circle at 18% 0%, rgb(255 255 255 / 10%) 0%, transparent 42%),
     linear-gradient(180deg, color-mix(in srgb, var(--hc-glass, var(--tier1-bar-bg)) 94%, white 6%) 0%, var(--hc-glass, var(--tier1-bar-bg)) 100%);
   backdrop-filter: blur(18px);
   border-radius: 18px;
@@ -32,6 +34,28 @@
   z-index: var(--ws-z-dock, 40);
   pointer-events: auto;
   animation: dockSlideIn 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.dock::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 16%) 0%, transparent 15% 70%, rgb(0 0 0 / 18%) 100%);
+  opacity: 0.55;
+}
+
+.dock::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 0%, rgb(255 255 255 / 4%) 10%, transparent 42%),
+    radial-gradient(circle at 50% 110%, rgb(0 0 0 / 28%) 0%, transparent 58%);
+  opacity: 0.85;
 }
 
 @keyframes dockSlideIn {
@@ -57,6 +81,8 @@
   justify-content: space-between;
   padding: var(--s-3, 12px) var(--s-4, 16px);
   border-bottom: 1px solid var(--tier1-bar-line);
+  position: relative;
+  z-index: 1;
 }
 
 .dockTitle {
@@ -74,6 +100,8 @@
   font-size: 12px;
   line-height: 1.45;
   color: var(--tier1-bar-ink-muted);
+  position: relative;
+  z-index: 1;
 }
 
 .dockClose {
@@ -109,6 +137,8 @@
   flex-direction: column;
   gap: var(--s-3, 12px);
   padding: var(--s-4, 16px);
+  position: relative;
+  z-index: 1;
 }
 
 .field {
@@ -135,7 +165,9 @@
   padding: 8px 12px;
   font-size: 13px;
   font-family: inherit;
-  background: linear-gradient(180deg, var(--tier1-bar-active-bg), color-mix(in srgb, var(--tier1-bar-active-bg) 90%, black 10%));
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 5%) 0%, transparent 15%),
+    linear-gradient(180deg, var(--tier1-bar-active-bg), color-mix(in srgb, var(--tier1-bar-active-bg) 90%, black 10%));
   border: 0;
   border-radius: 12px;
   color: var(--tier1-bar-ink);
@@ -177,7 +209,9 @@
   padding: 8px 12px;
   font-size: 13px;
   font-family: inherit;
-  background: linear-gradient(180deg, var(--tier1-bar-active-bg), color-mix(in srgb, var(--tier1-bar-active-bg) 90%, black 10%));
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 5%) 0%, transparent 15%),
+    linear-gradient(180deg, var(--tier1-bar-active-bg), color-mix(in srgb, var(--tier1-bar-active-bg) 90%, black 10%));
   border: 0;
   border-radius: 12px;
   color: var(--tier1-bar-ink);

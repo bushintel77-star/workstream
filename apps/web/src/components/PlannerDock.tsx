@@ -1,8 +1,20 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { RailDrawer } from "./RailDrawer";
 import { BottomDock } from "./BottomDock";
+
+const DESKTOP_MEDIA_QUERY = "(min-width: 769px)";
+
+function subscribeToViewport(callback: () => void) {
+  const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY);
+  mediaQuery.addEventListener("change", callback);
+  return () => mediaQuery.removeEventListener("change", callback);
+}
+
+function getDesktopSnapshot() {
+  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
+}
 
 /**
  * PlannerDock — renders the planner content in the correct drawer for the
@@ -19,26 +31,11 @@ export function PlannerDock({
   label?: string;
   accent?: "blue" | "red" | "green" | "yellow";
 }) {
-const [mounted, setMounted] = useState(false);
-const [isDesktop, setIsDesktop] = useState(true);
-
-useEffect(() => {
-  setMounted(true);
-  setIsDesktop(window.matchMedia("(min-width: 769px)").matches);
-}, []);
-
-useEffect(() => {
-  const mq = window.matchMedia("(min-width: 769px)");
-    function onChange(e: MediaQueryListEvent) {
-      setIsDesktop(e.matches);
-    }
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
+  const isDesktop = useSyncExternalStore(
+    subscribeToViewport,
+    getDesktopSnapshot,
+    () => true,
+  );
 
   if (isDesktop) {
     return (

@@ -1,4 +1,5 @@
 import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
+import { useCallback, useMemo } from "react";
 
 /**
  * Production builds and EXPO_PUBLIC_AUTH_REQUIRED require Clerk. Local dev
@@ -19,26 +20,37 @@ type AuthShape = {
 };
 
 function useDevAuth(): AuthShape {
-  return {
-    isLoaded: true,
-    isSignedIn: true,
-    signOut: async () => {
-      /* no-op in dev mode */
-    },
-    getToken: async () => null,
-  };
+  return useMemo(
+    () => ({
+      isLoaded: true,
+      isSignedIn: true,
+      signOut: async () => {
+        /* no-op in dev mode */
+      },
+      getToken: async () => null,
+    }),
+    [],
+  );
 }
 
 function useClerkAuthCompat(): AuthShape {
   const auth = useClerkAuth();
-  return {
-    isLoaded: auth.isLoaded,
-    isSignedIn: !!auth.isSignedIn,
-    signOut: async () => {
-      await auth.signOut();
-    },
-    getToken: () => auth.getToken(),
-  };
+
+  const signOut = useCallback(async () => {
+    await auth.signOut();
+  }, [auth]);
+
+  const getToken = useCallback(() => auth.getToken(), [auth]);
+
+  return useMemo(
+    () => ({
+      isLoaded: auth.isLoaded,
+      isSignedIn: !!auth.isSignedIn,
+      signOut,
+      getToken,
+    }),
+    [auth.isLoaded, auth.isSignedIn, getToken, signOut],
+  );
 }
 
 export const useAppAuth: () => AuthShape = isAuthEnabled

@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { tokens } from "@workstream/ui";
 import type { CatalogSymbol } from "@workstream/contracts";
@@ -40,6 +40,67 @@ export const MobileSketchBottomSheet = forwardRef<BottomSheet, Props>(
       [],
     );
 
+    if (Platform.OS === "web") {
+      return (
+        <View style={styles.webSheet}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>AI hints</Text>
+            <Text style={styles.sectionMeta}>Subsurface automation for the sketch canvas</Text>
+          </View>
+          <View style={styles.aiRow}>
+            <Pressable
+              onPress={() => void onScan()}
+              style={({ pressed }) => [
+                styles.aiBtn,
+                styles.aiBtnPrimary,
+                pressed && styles.aiBtnPressed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={scanning ? "Scanning site for AI hints" : "Scan site for AI hints"}
+              accessibilityHint="Analyse the site aerial and suggest symbol placements"
+              accessibilityState={{ disabled: scanning }}
+            >
+              <Text style={styles.aiBtnText}>{scanning ? "Scanning…" : "Scan site"}</Text>
+            </Pressable>
+            {ghosts.length > 0 ? (
+              <>
+                <Pressable
+                  onPress={onApplyGhosts}
+                  style={({ pressed }) => [styles.aiLinkBtn, pressed && styles.aiBtnPressed]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Apply ${ghosts.length} AI hint${ghosts.length === 1 ? "" : "s"}`}
+                  accessibilityHint="Accept all AI-suggested symbol placements onto the plan"
+                >
+                  <Text style={styles.aiLink}>Apply {ghosts.length}</Text>
+                </Pressable>
+                <Pressable
+                  onPress={onClearGhosts}
+                  style={({ pressed }) => [styles.aiLinkBtn, pressed && styles.aiBtnPressed]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear AI hints"
+                  accessibilityHint="Dismiss all AI-suggested placements without applying them"
+                >
+                  <Text style={styles.aiLink}>Clear</Text>
+                </Pressable>
+              </>
+            ) : null}
+          </View>
+          {ghosts.length > 0 ? (
+            <Text style={styles.ghostHint} accessibilityLiveRegion="polite">
+              {ghosts.length} ghost hint(s) — confirm before save.
+            </Text>
+          ) : null}
+          <Text style={styles.sectionTitle}>Symbol library</Text>
+          <DesignAssetPalette
+            symbols={symbols}
+            selectedId={selectedId}
+            disabled={paletteDisabled}
+            onSelect={onSelectSymbol}
+          />
+        </View>
+      );
+    }
+
     return (
       <BottomSheet
         ref={ref}
@@ -51,7 +112,10 @@ export const MobileSketchBottomSheet = forwardRef<BottomSheet, Props>(
         handleIndicatorStyle={styles.handle}
       >
         <BottomSheetScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.sectionTitle}>AI hints</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>AI hints</Text>
+            <Text style={styles.sectionMeta}>Subsurface automation for the sketch canvas</Text>
+          </View>
           <View style={styles.aiRow}>
             <Pressable
               onPress={() => void onScan()}
@@ -113,38 +177,67 @@ export const MobileSketchBottomSheet = forwardRef<BottomSheet, Props>(
 
 const styles = StyleSheet.create({
   sheetBg: {
-    backgroundColor: tokens.color.surface.elevated,
+    backgroundColor: "rgba(245, 244, 239, 0.96)",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: tokens.color.line.hairline,
-    shadowColor: "#000",
+    borderTopColor: "rgba(90, 102, 122, 0.12)",
+    shadowColor: "#26303d",
     shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 10,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: -6 },
+    elevation: 8,
   },
-  handle: { backgroundColor: tokens.color.line.strong },
+  handle: { backgroundColor: "#6f7e96" },
   backdrop: { backgroundColor: "transparent" },
+  webSheet: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: "rgba(245, 244, 239, 0.94)",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(90, 102, 122, 0.12)",
+    shadowColor: "#26303d",
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: -6 },
+    elevation: 8,
+  },
   content: { paddingHorizontal: 12, paddingBottom: 28 },
+  sectionHeader: {
+    marginTop: 8,
+    marginBottom: 6,
+    gap: 2,
+  },
   sectionTitle: {
     fontSize: 10,
     fontFamily: "monospace",
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
-    color: tokens.color.ink.tertiary,
-    marginTop: 8,
-    marginBottom: 6,
+    color: "#6f7e96",
+  },
+  sectionMeta: {
+    fontSize: 10,
+    fontFamily: "monospace",
+    color: "#7a8598",
   },
   aiRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" },
   aiBtn: {
-    minHeight: 44,
-    paddingHorizontal: tokens.space[3],
-    borderRadius: tokens.radius.pill,
+    minHeight: 40,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     justifyContent: "center",
   },
   aiBtnPrimary: {
-    backgroundColor: tokens.color.accent.soft,
+    backgroundColor: "rgba(70, 104, 216, 0.08)",
     borderWidth: 1,
-    borderColor: tokens.color.accent.default,
+    borderColor: "rgba(70, 104, 216, 0.28)",
   },
   aiBtnPressed: {
     transform: [{ translateY: 1 }, { scale: 0.98 }],
@@ -152,23 +245,23 @@ const styles = StyleSheet.create({
   aiBtnText: {
     fontSize: 12,
     fontWeight: "600",
-    color: tokens.color.accent.ink,
+    color: "#4668d8",
   },
-  aiLinkBtn: { minHeight: 44, justifyContent: "center" },
+  aiLinkBtn: { minHeight: 40, justifyContent: "center" },
   aiLink: {
     fontSize: 11,
     fontFamily: "monospace",
-    color: tokens.color.ink.secondary,
+    color: "#198a68",
     paddingVertical: 8,
   },
   ghostHint: {
     fontSize: 10,
     fontFamily: "monospace",
-    color: tokens.color.ink.secondary,
+    color: "#b57a18",
     marginBottom: 8,
-    paddingHorizontal: tokens.space[3],
-    paddingVertical: tokens.space[2],
-    borderRadius: tokens.radius.md,
-    backgroundColor: tokens.color.surface.sunken,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
   },
 });

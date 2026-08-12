@@ -132,14 +132,6 @@ export default function HomeScreen() {
         <Text style={styles.indexLabel}>
           {loading ? "Loading" : `${projects.length} ${projects.length === 1 ? "project" : "projects"}`}
         </Text>
-        <Pressable
-          onPress={() => router.push("/(app)/settings")}
-          hitSlop={16}
-          accessibilityRole="link"
-          accessibilityLabel="Open settings"
-        >
-          <Text style={styles.indexAction}>Settings</Text>
-        </Pressable>
       </View>
 
       {loading ? (
@@ -287,15 +279,6 @@ const styles = StyleSheet.create({
     color: tokens.color.ink.tertiary,
     textTransform: "uppercase",
   },
-  indexAction: {
-    fontFamily: tokens.font.mono,
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.8,
-    color: tokens.color.ink.secondary,
-    textTransform: "uppercase",
-  },
-
   // --- List ---
   list: {
     paddingHorizontal: tokens.space[5],

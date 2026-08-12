@@ -11,7 +11,6 @@ export default function AppLayout() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="settings" options={{ headerShown: false }} />
       <Stack.Screen
         name="project/[id]"
         options={{
