@@ -5404,6 +5404,7 @@ export function HandoffDesignStudio({
               openBoardFindings.filter((f) => f.kind === "canopy_conflict")
                 .length
             }
+            projectId={projectId}
             onSunMin={(sunMin) => studio.setUi({ sunMin })}
             onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
             onGrowth={(growth) => studio.setUi({ growth })}
@@ -5444,6 +5445,7 @@ export function HandoffDesignStudio({
               );
             }}
             onClose={() => studio.setUi({ lightingWorkspaceOn: false })}
+            projectId={projectId}
           />
         ) : null}
 

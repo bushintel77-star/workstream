@@ -19,17 +19,16 @@ export function PlannerDock({
   label?: string;
   accent?: "blue" | "red" | "green" | "yellow";
 }) {
-  const [isDesktop, setIsDesktop] = useState(() =>
-    typeof window === "undefined"
-      ? true
-      : window.matchMedia("(min-width: 769px)").matches,
-  );
+  // Hydrate with the desktop drawer first so the server and client render the
+  // same tree; then swap to the mobile dock after mount if needed.
+  const [isDesktop, setIsDesktop] = useState(true);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 769px)");
     function onChange(e: MediaQueryListEvent) {
       setIsDesktop(e.matches);
     }
+    setIsDesktop(mq.matches);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);

@@ -16,6 +16,8 @@ type Props = {
   onUpgradeTransformer: () => void;
   onSplitHint: () => void;
   onClose: () => void;
+  /** When set, links out to the standalone 3D subsurface studio. */
+  projectId?: string;
 };
 
 /**
@@ -33,6 +35,7 @@ export function LightingDock({
   onUpgradeTransformer,
   onSplitHint,
   onClose,
+  projectId,
 }: Props) {
   const pct = Math.min(1.35, Math.max(0, assessment.loadFraction));
   const ringDeg = Math.round(pct * 360);
@@ -175,6 +178,15 @@ export function LightingDock({
           Drop {assessment.voltageDropPct.toFixed(1)}% over{" "}
           {assessment.runLengthM.toFixed(1)} m · confirm with electrician
         </p>
+        {projectId ? (
+          <a
+            className={css.studioLink}
+            href={`/subsurface-studio/${projectId}`}
+            data-testid="open-subsurface-studio"
+          >
+            Open 3D subsurface studio ↗
+          </a>
+        ) : null}
       </aside>
     </CameraChrome>
   );

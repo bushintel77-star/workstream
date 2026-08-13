@@ -28,6 +28,14 @@ export const SpatialObjectSchema = z.object({
   y_pct: z.number().min(0).max(100).optional(),
   mature_canopy_m: z.number().nonnegative().optional(),
   root_radius_m: z.number().nonnegative().optional(),
+  gpm: z.number().nonnegative().optional(),
+  pressure_drop_kpa: z.number().nonnegative().optional(),
+  site_origin_locked: z.boolean().default(true).optional(),
+  origin_x: z.number().optional(),
+  origin_y: z.number().optional(),
+  origin_z: z.number().optional(),
+  maturity_index: z.number().min(0).max(1).optional(),
+  strike_alert: z.boolean().default(false).optional(),
 });
 export type SpatialObject = z.infer<typeof SpatialObjectSchema>;
 

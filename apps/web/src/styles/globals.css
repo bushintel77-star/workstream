@@ -6,14 +6,29 @@
 @import "./color-tokens.css";
 
 :root {
+  /* Gold Standard Studio Dark — root-scope mirrors of the `--gs-*` tokens in
+     goldStandardStudio.module.css, for chrome outside `.goldStandardRoot`
+     (landing hero preview, meta chips) that still needs the exact same
+     charcoal/gold/signal-blue identity. */
+  --canvas-base: #101418;
+  --canvas-base-high: #171b1f;
+  --canvas-base-low: #0b0f12;
+  --gold-standard: #fbbf24;
+  --gold-standard-bright: #ffe1a7;
+  --gold-standard-ink: #e0e3e8;
+  --gold-standard-ink-bright: #f5f7fb;
+  --signal-blue: #0030cf;
+  --signal-blue-ink: #a8b4ff;
+  --signal-blue-chip-ink: #a9bcff;
+  --conflict-ink: #ffb4ab;
   /* surfaces — dark grey gallery mount; chrome recedes so colour belongs to the plan */
-  --surface-base: #14171C;
-  --surface-elevated: #1B1E24;
-  --surface-sunken: #0F1115;
+  --surface-base: #12161B;
+  --surface-elevated: #191E25;
+  --surface-sunken: #0D1014;
   --surface-inverted: #E8E9EC;
-  --surface-overlay: #20242B;
-  --surface-inset: #0F1115;
-  --surface-panel: #1B1E24;
+  --surface-overlay: #202731;
+  --surface-inset: #0D1014;
+  --surface-panel: #1C222B;
   /* deep — same as base now; kept for portal/hero gradient compat */
   --surface-deep: #14171C;
 
@@ -46,9 +61,9 @@
   --ink-inverted: #1B1E23;
 
   /* lines — dark grey hairlines on dark surfaces */
-  --line-hairline: rgba(232, 233, 236, 0.10);
-  --line-subtle: rgba(232, 233, 236, 0.05);
-  --line-strong: rgba(232, 233, 236, 0.18);
+  --line-hairline: rgba(232, 233, 236, 0.08);
+  --line-subtle: rgba(232, 233, 236, 0.045);
+  --line-strong: rgba(232, 233, 236, 0.16);
   --line-ink: #E8E9EC;
 
   /* accent — muted blueprint slate.
@@ -232,20 +247,23 @@ html {
 }
 
 html,
-body {
+body,
+#root,
+main {
   margin: 0;
   padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden !important;
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: 1.5;
   color: var(--ink-primary);
-  background: var(--surface-base);
+  background: var(--canvas-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -254,7 +272,7 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
-  background-color: var(--surface-base);
+  background-color: var(--canvas-base);
   background-image: none;
 }
 

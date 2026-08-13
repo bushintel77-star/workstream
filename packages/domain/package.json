@@ -19,7 +19,7 @@
   "dependencies": {
     "@turf/turf": "^7.3.5",
     "@workstream/contracts": "workspace:*",
-    "perfect-freehand": "^1.2.2"
+    "perfect-freehand": "^1.2.3"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",

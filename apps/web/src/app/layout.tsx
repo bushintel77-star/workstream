@@ -6,6 +6,8 @@ import {
   IBM_Plex_Sans,
   IBM_Plex_Serif,
   Inter,
+  JetBrains_Mono,
+  Space_Grotesk,
   Sora,
 } from "next/font/google";
 import "../styles/globals.css";
@@ -55,6 +57,18 @@ const fontInter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
+const fontTech = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-tech",
+  display: "swap",
+});
+const fontTechnicalMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-technical-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Workstream",
@@ -102,7 +116,7 @@ export default function RootLayout({
   return (
     <html lang="en-AU">
       <body
-        className={`${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable} ${fontSerif.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable}`}
+        className={`${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable} ${fontSerif.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable} ${fontTech.variable} ${fontTechnicalMono.variable}`}
         data-build={
           process.env.NEXT_PUBLIC_BUILD_SHA ??
           process.env.RAILWAY_GIT_COMMIT_SHA ??

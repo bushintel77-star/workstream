@@ -228,3 +228,18 @@
   font-family: "IBM Plex Mono", monospace;
   line-height: 1.35;
 }
+
+.studioLink {
+  display: block;
+  margin-top: var(--s-2, 8px);
+  padding-top: var(--s-2, 8px);
+  border-top: 1px solid var(--hc-line-soft);
+  font-size: var(--text-micro);
+  font-weight: 650;
+  color: var(--hc-ink);
+  text-decoration: none;
+}
+
+.studioLink:hover {
+  text-decoration: underline;
+}
