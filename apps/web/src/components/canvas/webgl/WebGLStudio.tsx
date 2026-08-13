@@ -21,6 +21,7 @@ import { StudioScene } from "./StudioScene";
 import type { StudioCameraRig } from "./cameraRig";
 import type { PctPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
+import type { SubsurfaceUtility, StrikeAlertData } from "./features/SubsurfaceEngine";
 
 export interface WebGLStudioProps {
   scaleM: number;
@@ -35,6 +36,8 @@ export interface WebGLStudioProps {
   onRigChange?: (rig: StudioCameraRig) => void;
   onGroundClick?: (pct: PctPoint) => void;
   onCursorMove?: (pct: PctPoint | null) => void;
+  subsurfaceUtilities?: SubsurfaceUtility[];
+  strikeAlerts?: StrikeAlertData[];
   children?: ReactNode;
   style?: CSSProperties;
 }
@@ -52,6 +55,8 @@ export function WebGLStudio({
   onRigChange,
   onGroundClick,
   onCursorMove,
+  subsurfaceUtilities,
+  strikeAlerts,
   children,
   style,
 }: WebGLStudioProps) {
@@ -85,6 +90,8 @@ export function WebGLStudio({
           onRigChange={onRigChange}
           onGroundClick={onGroundClick}
           onCursorMove={onCursorMove}
+          subsurfaceUtilities={subsurfaceUtilities}
+          strikeAlerts={strikeAlerts}
         />
       </Canvas>
 

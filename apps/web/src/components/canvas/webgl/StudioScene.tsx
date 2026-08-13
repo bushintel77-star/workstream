@@ -25,6 +25,7 @@ import type { StudioCameraRig } from "./cameraRig";
 import { pctToWorld, type PctPoint } from "./coordTransform";
 import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
+import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
 
 export interface StudioSceneProps {
   scaleM: number;
@@ -39,6 +40,10 @@ export interface StudioSceneProps {
   onRigChange?: (rig: StudioCameraRig) => void;
   onGroundClick?: (pct: PctPoint) => void;
   onCursorMove?: (pct: PctPoint | null) => void;
+  /** Subsurface utilities to render (Phase 2 Subsurface Engine). */
+  subsurfaceUtilities?: SubsurfaceUtility[];
+  /** Strike alerts to render (Phase 2 Strike Alert Engine). */
+  strikeAlerts?: StrikeAlertData[];
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
@@ -240,6 +245,8 @@ export function StudioScene({
   onRigChange,
   onGroundClick,
   onCursorMove,
+  subsurfaceUtilities,
+  strikeAlerts,
 }: StudioSceneProps) {
   return (
     <>
@@ -275,6 +282,9 @@ export function StudioScene({
       <Easements rings={easementsPct} scaleM={scaleM} boardAspect={boardAspect} />
       <Services lines={servicesPct} scaleM={scaleM} boardAspect={boardAspect} />
       <SceneItems items={items} scaleM={scaleM} boardAspect={boardAspect} />
+      {subsurfaceUtilities && (
+        <SubsurfaceEngine utilities={subsurfaceUtilities} alerts={strikeAlerts} />
+      )}
     </>
   );
 }

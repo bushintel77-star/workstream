@@ -4,19 +4,17 @@
  * Dev-only preview wrapper for the WebGL studio.
  *
  * Mounts the WebGLStudio with boundary/building/items extracted from the same
- * site_frame data the page already loads. This is NOT the production mount —
- * it's a verification surface accessible via ?webgl=1 on any project page.
- *
- * It shows the WebGL board rendering real geometry so we can visually verify
- * the R3F scene before the full state bridge lands in Phase 1.5.
+ * site_frame data the page already loads, plus sample subsurface utilities and
+ * a tilt toggle so the Phase 2 engines can be visually verified.
  */
 
 import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { GlassCard } from "./GlassCard";
-import { DEFAULT_CAMERA_RIG } from "./cameraRig";
+import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
 import type { PctPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
+import type { SubsurfaceUtility } from "./features/SubsurfaceEngine";
 
 // R3F Canvas requires the browser — dynamic import with ssr:false
 const WebGLStudio = dynamic(() => import("./WebGLStudio").then((m) => m.WebGLStudio), {
@@ -43,7 +41,38 @@ export function WebGLStudioPreview({
   easementsPct,
   items,
 }: WebGLStudioPreviewProps) {
-  const [rig] = useState(DEFAULT_CAMERA_RIG);
+  const [rig, setRig] = useState<StudioCameraRig>(DEFAULT_CAMERA_RIG);
+
+  // Sample subsurface utilities for Phase 2 visual verification
+  const sampleUtilities: SubsurfaceUtility[] = useMemo(
+    () => [
+      {
+        id: "util-gas-1",
+        type: "gas",
+        start: [-scaleM * 0.3, -scaleM * 0.2],
+        end: [scaleM * 0.3, scaleM * 0.2],
+        depthM: 0.6,
+        toleranceM: 0.3,
+      },
+      {
+        id: "util-water-1",
+        type: "water",
+        start: [-scaleM * 0.35, scaleM * 0.1],
+        end: [scaleM * 0.35, -scaleM * 0.1],
+        depthM: 0.5,
+        toleranceM: 0.25,
+      },
+      {
+        id: "util-elec-1",
+        type: "electric",
+        start: [0, -scaleM * 0.35],
+        end: [0, scaleM * 0.35],
+        depthM: 0.7,
+        toleranceM: 0.2,
+      },
+    ],
+    [scaleM],
+  );
 
   const stats = useMemo(
     () => ({
@@ -52,8 +81,10 @@ export function WebGLStudioPreview({
       easements: easementsPct?.length ?? 0,
       items: items?.length ?? 0,
       scaleM,
+      tilt: rig.tiltDeg,
+      utilities: sampleUtilities.length,
     }),
-    [boundaryPct, buildingPct, easementsPct, items, scaleM],
+    [boundaryPct, buildingPct, easementsPct, items, scaleM, rig.tiltDeg, sampleUtilities.length],
   );
 
   return (
@@ -65,18 +96,39 @@ export function WebGLStudioPreview({
       easementsPct={easementsPct}
       items={items}
       cameraRig={rig}
+      onRigChange={setRig}
+      subsurfaceUtilities={sampleUtilities}
     >
-      {/* Dev overlay — shows scene stats. Removed when the feature flag is dropped. */}
+      {/* Dev overlay — scene stats + tilt toggle */}
       <GlassCard position="top-left" style={{ padding: "12px 16px" }}>
         <div style={{ fontFamily: "var(--font-tech)", fontSize: 13, color: "var(--gs-ink)" }}>
           <div style={{ fontWeight: 600, marginBottom: 4 }}>WebGL Preview</div>
           <div style={{ color: "var(--gs-ink-secondary)", lineHeight: 1.5 }}>
-            Boundary pts: {stats.boundaryPoints}<br />
-            Building pts: {stats.buildingPoints}<br />
-            Easements: {stats.easements}<br />
-            Items: {stats.items}<br />
-            Scale: {stats.scaleM.toFixed(0)}m
+            Boundary: {stats.boundaryPoints} pts<br />
+            Building: {stats.buildingPoints} pts<br />
+            Items: {stats.items} | Utilities: {stats.utilities}<br />
+            Scale: {stats.scaleM.toFixed(0)}m | Tilt: {stats.tilt}°<br />
+            Zoom: {rig.zoom.toFixed(1)}× | Pan: {rig.panX.toFixed(0)}, {rig.panY.toFixed(0)}
           </div>
+          <button
+            onClick={() =>
+              setRig((r) => ({ ...r, tiltDeg: r.tiltDeg > 1 ? 0 : 55 }))
+            }
+            style={{
+              marginTop: 8,
+              padding: "4px 12px",
+              borderRadius: 8,
+              border: "1px solid var(--gs-line)",
+              background: rig.tiltDeg > 1 ? "var(--gs-primary)" : "transparent",
+              color: rig.tiltDeg > 1 ? "var(--gs-canvas)" : "var(--gs-ink)",
+              fontFamily: "var(--font-ui)",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            {rig.tiltDeg > 1 ? "▾ Top-down" : "▸ Tilt 55°"}
+          </button>
         </div>
       </GlassCard>
     </WebGLStudio>
