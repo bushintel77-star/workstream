@@ -45,7 +45,7 @@ dark. The old cream-on-dark-gallery-frame system is retired.
 |-------|-------|------|
 | `--gs-ink` | `#E8E9EC` | Primary text on glass/canvas |
 | `--gs-ink-secondary` | `#9AA0AC` | Secondary text, labels |
-| `--gs-ink-muted` | `#6B7078` | Muted meta, captions |
+| `--gs-ink-muted` | `#8B8F96` | Muted meta, captions (AA: ~5.1:1 on glass) |
 | `--gs-ink-primary` | `#fbbf24` | Gold ink (numeric highlights) |
 | `--gs-ink-truth` | `#6B8EEA` | Signal Blue ink for boundary labels (AA on dark) |
 | `--gs-ink-conflict` | `#F87171` | Strike ink for alert labels (AA on dark) |
@@ -145,7 +145,7 @@ The dark canvas changes every contrast pair — the gate
 Known-good pairs (verified):
 - `--gs-ink` (`#E8E9EC`) on `--gs-glass`@70% over `--gs-canvas`: ~14.8:1 ✅
 - `--gs-ink-secondary` (`#9AA0AC`) on same: ~6.4:1 ✅
-- `--gs-ink-muted` (`#6B7078`) on same: ~3.9:1 — **large text / non-essential only**
+- `--gs-ink-muted` (`#8B8F96`) on same: ~5.1:1 ✅
 - `--gs-primary` (`#fbbf24`) on `--gs-glass`: ~10.2:1 ✅
 - `--gs-ink-truth` (`#6B8EEA`) on `--gs-glass`: ~5.1:1 ✅ (not raw `#0030CF`, which is ~2.1:1 on dark)
 - `--gs-ink-conflict` (`#F87171`) on `--gs-glass`: ~5.8:1 ✅ (not raw `#ef4444`, which is ~3.4:1)

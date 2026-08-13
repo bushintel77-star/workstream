@@ -207,8 +207,8 @@
    * Alpha sets contrast on the dark frame, so these are WCAG floors, not taste:
    * against --gs-frame, 66% / 62% clear 4.5:1 for mode tabs, chip labels, meta.
    */
-  --ws-frame-ink-dim: color-mix(in srgb, var(--gs-ink) 66%, transparent);
-  --ws-frame-ink-faint: color-mix(in srgb, var(--gs-ink) 62%, transparent);
+  --ws-frame-ink-dim: color-mix(in srgb, var(--gs-ink) 78%, transparent);
+  --ws-frame-ink-faint: color-mix(in srgb, var(--gs-ink) 72%, transparent);
   --ws-frame-hair: color-mix(in srgb, var(--gs-ink) 12%, transparent);
   --ws-frame-wash: color-mix(in srgb, var(--gs-ink) 10%, transparent);
   /*

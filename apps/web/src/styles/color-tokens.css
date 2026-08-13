@@ -39,7 +39,7 @@
   /* Ink tokens (text on glass/canvas) */
   --gs-ink: #e8e9ec;             /* Primary text */
   --gs-ink-secondary: #9aa0ac;   /* Secondary text, labels */
-  --gs-ink-muted: #6b7078;       /* Muted meta — large text / non-essential only */
+  --gs-ink-muted: #919196;       /* Muted meta — AA: ~4.5:1 on glass-strong, ~5.5:1 on glass-over-canvas */
 
   /* ================================================================
    * Raw neutral ramps (retained for material/planting palettes below)

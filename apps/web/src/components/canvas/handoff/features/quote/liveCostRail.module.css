@@ -376,7 +376,8 @@
 .shareBtn {
   background: color-mix(in srgb, var(--accent) 84%, var(--gray-l-900));
   border-color: transparent;
-  color: var(--ws-frame-ink);
+  /* Dark ink on gold — light text fails WCAG AA on #fbbf24 at 1.86:1 */
+  color: var(--gs-canvas);
 }
 
 .shareBtn:hover {
