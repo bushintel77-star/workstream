@@ -251,7 +251,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s-1);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 7.5px;
   font-weight: 650;
   letter-spacing: 0.14em;
@@ -260,7 +260,7 @@
 }
 
 .face {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-3);
   font-weight: 600;
   line-height: 1.1;

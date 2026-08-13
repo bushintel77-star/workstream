@@ -52,7 +52,7 @@
 
 .label {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -162,7 +162,7 @@
 }
 
 .headerLabel {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   letter-spacing: 0.1em;
   text-transform: uppercase;

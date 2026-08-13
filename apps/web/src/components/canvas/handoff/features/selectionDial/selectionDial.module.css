@@ -101,7 +101,7 @@
 }
 
 .slotCap {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 6.5px;
   font-weight: 650;
   letter-spacing: 0.04em;
@@ -185,7 +185,7 @@
 }
 
 .swatchName {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.02em;
   max-width: 52px;

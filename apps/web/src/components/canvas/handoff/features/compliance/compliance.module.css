@@ -33,13 +33,13 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .passPill {
   font-size: var(--text-micro);
   font-weight: 700;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   padding: 2px 8px;
   border-radius: 0;
   background: var(--hc-line-soft);
@@ -57,7 +57,7 @@
   font-size: var(--text-base);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .ok {

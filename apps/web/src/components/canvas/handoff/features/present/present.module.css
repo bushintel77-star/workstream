@@ -69,7 +69,7 @@
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
   background: color-mix(in srgb, var(--gray-l-100) 80%, transparent);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   color: var(--text-secondary);
   line-height: 1.35;
@@ -363,7 +363,7 @@
 
 .pagePaper {
   /* Content theme vars — palette/font apply to page paper only, never chrome. */
-  --pv-content-font: "Fraunces", "IBM Plex Serif", Georgia, serif;
+  --pv-content-font: var(--font-serif), Georgia, serif;
   --pv-accent: var(--text-primary);
 
   position: relative;
@@ -426,23 +426,23 @@
 }
 
 .pagePaper[data-font="fraunces"] {
-  --pv-content-font: "Fraunces", "IBM Plex Serif", Georgia, serif;
+  --pv-content-font: var(--font-serif), Georgia, serif;
 }
 
 .pagePaper[data-font="sora"] {
-  --pv-content-font: "Sora", "IBM Plex Sans", system-ui, sans-serif;
+  --pv-content-font: var(--font-tech), system-ui, sans-serif;
 }
 
 .pagePaper[data-font="inter"] {
-  --pv-content-font: "Inter", "IBM Plex Sans", system-ui, sans-serif;
+  --pv-content-font: var(--font-ui), system-ui, sans-serif;
 }
 
 .pagePaper[data-font="handwritten"] {
-  --pv-content-font: var(--font-hand), "Architects Daughter", cursive;
+  --pv-content-font: var(--font-hand), cursive;
 }
 
 .issuedBadge {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.04em;
   text-transform: uppercase;

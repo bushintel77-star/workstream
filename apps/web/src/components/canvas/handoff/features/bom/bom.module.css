@@ -31,7 +31,7 @@
 
 .meta {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
   line-height: 1.35;
@@ -39,7 +39,7 @@
 
 .shadowHead {
   margin-top: 4px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-femto, 9px);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -64,7 +64,7 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ws-frame-ink-faint, var(--hc-ink-faint));
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-weight: 650;
 }
 
@@ -72,7 +72,7 @@
   margin: 0;
   border-radius: var(--hc-r-pill, 999px);
   padding: 0.2rem 0.55rem;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano, 10px);
   font-weight: 650;
   color: var(--ws-frame-ink, var(--hc-ink));
@@ -85,7 +85,7 @@
   background: transparent;
   padding: 0;
   text-align: left;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: clamp(1.35rem, 2.2vw, 1.65rem);
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -129,7 +129,7 @@
 }
 
 .amt {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
 }

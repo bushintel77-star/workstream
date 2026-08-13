@@ -61,7 +61,7 @@
 .group {
   margin: 8px 8px 2px;
   padding: 4px 8px 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.12em;
   text-transform: uppercase;

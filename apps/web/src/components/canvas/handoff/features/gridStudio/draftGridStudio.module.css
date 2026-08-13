@@ -103,7 +103,7 @@
   background: transparent;
   color: var(--ink-soft);
   cursor: pointer;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: 1;
   display: grid;

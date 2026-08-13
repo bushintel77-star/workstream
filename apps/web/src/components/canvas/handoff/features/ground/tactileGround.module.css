@@ -117,7 +117,7 @@
 .edgeScale {
   position: absolute;
   z-index: var(--ws-z-geometry);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   font-weight: 550;
   /* Legible against the light plate — the ruler is a working reference, not
@@ -165,7 +165,7 @@
   z-index: var(--ws-z-interact);
   pointer-events: none;
   overflow: hidden;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   font-weight: 550;
   /* Full-strength muted ink: the 88% wash measured 3.77:1 on cream. */
@@ -222,7 +222,7 @@
 .compassN {
   position: absolute;
   top: 4px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   font-weight: 700;
   color: color-mix(in srgb, var(--hc-warning) 55%, transparent);
@@ -250,7 +250,7 @@
   padding: var(--s-1) var(--s-2);
   border-radius: var(--hc-r-panel);
   background: color-mix(in srgb, var(--hc-glass-soft, var(--panel)) 70%, transparent);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-kicker, 8px);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -288,7 +288,7 @@
   padding: var(--s-1) var(--s-2);
   border-radius: var(--r-md);
   background: color-mix(in srgb, var(--hc-glass-soft, var(--panel)) 70%, transparent);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-kicker, 8px);
   font-weight: 600;
   letter-spacing: 0.04em;

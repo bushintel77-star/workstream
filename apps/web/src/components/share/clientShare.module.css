@@ -34,7 +34,7 @@
 
 .rev {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -64,7 +64,7 @@
 
 .kicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -79,7 +79,7 @@
   line-height: 1.1;
   color: var(--ink-primary);
   font-variant-numeric: tabular-nums;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .gst {

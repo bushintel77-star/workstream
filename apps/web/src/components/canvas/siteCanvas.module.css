@@ -236,7 +236,7 @@
   background: color-mix(in srgb, var(--pink-soft) 90%, transparent);
   border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
   box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 10%, transparent);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   pointer-events: none;
 }
 
@@ -302,7 +302,7 @@
   border: 1px solid color-mix(in srgb, var(--text-primary) 35%, transparent);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.65rem;
   font-weight: 500;
   color: var(--ink);
@@ -494,7 +494,7 @@
 
 .dockKicker {
   margin: 0;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.65rem;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -590,7 +590,7 @@
   border-radius: 10px;
   background: color-mix(in srgb, var(--ink) 5%, transparent);
   border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   line-height: 1.4;
   color: var(--ink-soft);
@@ -952,7 +952,7 @@
 }
 
 .keysHelp kbd {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   padding: 0.15rem 0.4rem;
   border-radius: 6px;

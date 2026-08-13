@@ -55,7 +55,7 @@
 }
 
 .rev {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
   color: var(--tier1-bar-ink-muted);

@@ -80,7 +80,7 @@
 
 .kicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-femto);
   font-weight: 650;
   letter-spacing: 0.14em;
@@ -248,7 +248,7 @@
 
 .placingKicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -292,7 +292,7 @@
 }
 
 .filterMeta {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -312,7 +312,7 @@
   border: 1px solid var(--line);
   background: transparent;
   color: var(--ink-soft);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-femto, 9px);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -350,7 +350,7 @@
 
 .pinnedLabel {
   margin: 0 0 4px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -411,7 +411,7 @@
   color: var(--ink-faint);
   font-size: var(--hc-fs-1);
   font-weight: 600;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   text-align: center;
 }
 
@@ -513,7 +513,7 @@
 }
 
 .tileBotanical {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 7.5px;
   font-weight: 500;
   line-height: 1.2;
@@ -590,7 +590,7 @@
   border: 1px solid var(--hc-line-soft);
   background: transparent;
   color: var(--ink-soft);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   cursor: pointer;
 }

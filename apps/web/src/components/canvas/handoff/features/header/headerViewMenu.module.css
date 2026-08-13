@@ -47,7 +47,7 @@
 }
 
 .triggerMore {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   letter-spacing: 0.08em;
   opacity: 0.72;

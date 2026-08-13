@@ -55,7 +55,7 @@
  */
 .kicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-kicker, 8px);
   letter-spacing: 0.08em;
   text-transform: uppercase;

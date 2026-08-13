@@ -50,7 +50,7 @@
   box-shadow: 0 6px 18px var(--hc-neu-shadow);
   backdrop-filter: none;
   transform: translate(14px, calc(-100% - 10px));
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   font-variant-numeric: tabular-nums;
 }
@@ -97,7 +97,7 @@
   color: var(--hc-ink);
   font-size: var(--text-micro);
   font-weight: 600;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -164,7 +164,7 @@
   font-size: var(--text-micro);
   font-weight: 650;
   color: var(--hc-ink-muted);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   white-space: nowrap;
 }
 
