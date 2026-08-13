@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Archi-Core 2026 - Hydrology Lens</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&amp;family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "primary-fixed-dim": "#c6c7c1",
+                "error": "#ba1a1a",
+                "tertiary": "#2a1209",
+                "background": "#faf9f5",
+                "inverse-primary": "#c6c7c1",
+                "surface-container-lowest": "#ffffff",
+                "secondary-fixed": "#dde6cf",
+                "on-error": "#ffffff",
+                "on-tertiary-fixed-variant": "#5f3f34",
+                "surface": "#faf9f5",
+                "on-primary-container": "#949590",
+                "surface-container-high": "#e9e8e4",
+                "inverse-surface": "#2f312e",
+                "on-surface": "#1b1c1a",
+                "on-tertiary-container": "#b48b7d",
+                "primary-container": "#2c2e2a",
+                "surface-tint": "#5d5f5a",
+                "secondary-container": "#dde6cf",
+                "primary": "#171916",
+                "tertiary-fixed": "#ffdbcf",
+                "on-primary": "#ffffff",
+                "on-primary-fixed-variant": "#454743",
+                "secondary": "#59614f",
+                "surface-bright": "#faf9f5",
+                "on-secondary-container": "#5f6755",
+                "outline-variant": "#c6c7c0",
+                "error-container": "#ffdad6",
+                "on-tertiary-fixed": "#2d150c",
+                "secondary-fixed-dim": "#c1c9b4",
+                "on-secondary-fixed": "#171e10",
+                "on-secondary-fixed-variant": "#424939",
+                "surface-container-low": "#f4f4f0",
+                "on-primary-fixed": "#1a1c19",
+                "tertiary-container": "#42261c",
+                "on-secondary": "#ffffff",
+                "inverse-on-surface": "#f2f1ed",
+                "outline": "#767872",
+                "surface-dim": "#dbdad6",
+                "on-background": "#1b1c1a",
+                "surface-container": "#efeeea",
+                "tertiary-fixed-dim": "#eabcad",
+                "surface-variant": "#e3e2df",
+                "on-surface-variant": "#454842",
+                "surface-container-highest": "#e3e2df",
+                "on-tertiary": "#ffffff",
+                "on-error-container": "#93000a",
+                "primary-fixed": "#e3e3dd"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "stack-xs": "8px",
+                "stack-xl": "64px",
+                "stack-md": "24px",
+                "gutter": "24px",
+                "unit": "4px",
+                "margin-edge": "40px",
+                "sidebar-width": "280px",
+                "toolbar-width": "56px",
+                "margin-safe": "32px",
+        },
+        "fontFamily": {
+                "headline-lg-mobile": [
+                        "Libre Caslon Text"
+                ],
+                "label-caps": [
+                        "Hanken Grotesk"
+                ],
+                "body-md": [
+                        "Hanken Grotesk"
+                ],
+                "technical-sm": [
+                        "JetBrains Mono"
+                ],
+                "headline-lg": [
+                        "Libre Caslon Text"
+                ],
+                "display-lg": [
+                        "Libre Caslon Text"
+                ]
+        },
+        "fontSize": {
+                "headline-lg-mobile": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-caps": [
+                        "11px",
+                        {
+                                "lineHeight": "12px",
+                                "letterSpacing": "0.1em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "technical-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "56px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .fractal-grid {
+            background-image: 
+                radial-gradient(rgba(118, 120, 114, 0.1) 1px, transparent 1px),
+                radial-gradient(rgba(118, 120, 114, 0.05) 1px, transparent 1px);
+            background-size: 32px 32px, 8px 8px;
+            background-position: 0 0, 0 0;
+        }
+        .glass-panel {
+            @apply bg-surface-container-lowest/80 backdrop-blur-md rounded-xl border border-outline-variant/30 shadow-sm;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen overflow-hidden font-body-md text-body-md select-none">
+<!-- Infinite Canvas Background -->
+<div class="fixed inset-0 fractal-grid -z-10 pointer-events-none"></div>
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-safe h-toolbar-width bg-transparent">
+<div class="flex items-center gap-gutter text-on-surface hover:bg-surface-variant p-2 rounded transition-colors cursor-pointer glass-panel mt-4 px-4 py-2">
+<span class="material-symbols-outlined font-light" style="font-variation-settings: 'FILL' 0;">architecture</span>
+<span class="font-headline-lg text-headline-lg tracking-tight hidden md:block">ARCHI-CORE</span>
+</div>
+<div class="flex items-center gap-gutter text-on-surface-variant glass-panel mt-4 px-2 py-1">
+<button class="hover:bg-surface-variant p-2 rounded transition-colors flex items-center justify-center group"><span class="material-symbols-outlined font-light group-hover:text-on-surface transition-colors">layers</span></button>
+<button class="hover:bg-surface-variant p-2 rounded transition-colors flex items-center justify-center group"><span class="material-symbols-outlined font-light group-hover:text-on-surface transition-colors">settings</span></button>
+<button class="hover:bg-surface-variant p-2 rounded transition-colors flex items-center justify-center group"><span class="material-symbols-outlined font-light group-hover:text-on-surface transition-colors">account_circle</span></button>
+</div>
+</header>
+<!-- SideNavBar (Left) -->
+<nav class="fixed left-0 top-1/2 -translate-y-1/2 w-sidebar-width z-40 p-unit md:flex flex-col hidden ml-4 mt-toolbar-width">
+<div class="glass-panel p-6 flex flex-col h-full gap-4">
+<div class="border-b border-outline-variant/30 pb-4 mb-unit flex flex-col gap-1">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Project LA-04</span>
+<span class="font-technical-sm text-technical-sm text-on-surface-variant">V04.2-STABLE</span>
+</div>
+<ul class="flex flex-col gap-unit flex-1">
+<li class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all cursor-pointer font-label-caps text-label-caps tracking-widest">
+<span class="material-symbols-outlined font-light text-[18px]">draw</span> Draft
+            </li>
+<li class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all cursor-pointer font-label-caps text-label-caps tracking-widest">
+<span class="material-symbols-outlined font-light text-[18px]">landscape</span> Topo
+            </li>
+<li class="flex items-center gap-3 p-3 rounded-lg bg-surface-container text-on-surface font-bold scale-95 transition-transform cursor-pointer font-label-caps text-label-caps tracking-widest border border-outline-variant/50">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">water_drop</span> Hydrology
+            </li>
+<li class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all cursor-pointer font-label-caps text-label-caps tracking-widest">
+<span class="material-symbols-outlined font-light text-[18px]">forest</span> Planting
+            </li>
+<li class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all cursor-pointer font-label-caps text-label-caps tracking-widest">
+<span class="material-symbols-outlined font-light text-[18px]">bolt</span> Utility
+            </li>
+<li class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-all cursor-pointer font-label-caps text-label-caps tracking-widest">
+<span class="material-symbols-outlined font-light text-[18px]">ios_share</span> Export
+            </li>
+</ul>
+<div class="mt-auto pt-4 border-t border-outline-variant/30">
+<button class="w-full bg-primary text-on-primary hover:bg-primary/90 transition-colors py-3 rounded font-label-caps text-label-caps border border-primary/10">INITIATE RENDER</button>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Right - Metadata HUD) -->
+<aside class="fixed right-0 top-1/2 -translate-y-1/2 w-sidebar-width z-40 p-unit md:flex flex-col hidden mr-4 mt-toolbar-width transition-all duration-300">
+<div class="glass-panel p-6 flex flex-col h-full gap-4 hover:backdrop-blur-xl">
+<div class="border-b border-outline-variant/30 pb-4 mb-unit flex flex-col gap-1">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">Metadata</span>
+<span class="font-technical-sm text-technical-sm text-on-surface-variant">LIVE_TELEMETRY</span>
+</div>
+<ul class="flex flex-col gap-unit flex-1">
+<li class="flex items-center justify-between p-3 rounded-lg text-on-surface cursor-pointer font-technical-sm text-technical-sm hover:opacity-100 transition-opacity bg-surface-variant/50">
+<span class="flex items-center gap-3 text-on-surface font-headline-lg-mobile text-sm"><span class="material-symbols-outlined text-on-surface text-base font-light">my_location</span> Coordinates</span>
+</li>
+<li class="flex items-center justify-between p-3 rounded-lg text-on-surface-variant opacity-70 hover:opacity-100 transition-opacity cursor-pointer font-technical-sm text-technical-sm">
+<span class="flex items-center gap-3"><span class="material-symbols-outlined text-base font-light">square_foot</span> Area/Vol</span>
+</li>
+<li class="flex items-center justify-between p-3 rounded-lg text-on-surface cursor-pointer font-technical-sm text-technical-sm hover:opacity-100 transition-opacity bg-surface-variant/50">
+<span class="flex items-center gap-3"><span class="material-symbols-outlined text-base font-light">thermostat</span> Site Conditions</span>
+</li>
+<li class="flex items-center justify-between p-3 rounded-lg text-on-surface-variant opacity-70 hover:opacity-100 transition-opacity cursor-pointer font-technical-sm text-technical-sm">
+<span class="flex items-center gap-3"><span class="material-symbols-outlined text-base font-light">warning</span> Alert Log</span>
+</li>
+</ul>
+<div class="mt-auto pt-4 border-t border-outline-variant/30 flex gap-unit">
+<button class="flex-1 flex flex-col items-center justify-center p-2 text-on-surface-variant hover:text-on-surface transition-colors font-label-caps text-label-caps gap-1"><span class="material-symbols-outlined font-light text-[18px]">cloud_sync</span> SYNC</button>
+<button class="flex-1 flex flex-col items-center justify-center p-2 text-on-surface-variant hover:text-on-surface transition-colors font-label-caps text-label-caps gap-1"><span class="material-symbols-outlined font-light text-[18px]">history</span> REVERT</button>
+</div>
+</div>
+</aside>
+<!-- Main Canvas Area -->
+<main class="pt-[calc(var(--spacing-toolbar-width)+var(--spacing-margin-safe))] pb-margin-safe px-margin-safe md:pl-[calc(var(--spacing-sidebar-width)+var(--spacing-margin-safe))] md:pr-[calc(var(--spacing-sidebar-width)+var(--spacing-margin-safe))] relative w-full h-full min-h-screen flex items-center justify-center">
+<!-- Center Mock Graphic -->
+<div class="relative w-full max-w-4xl h-[614px] flex items-center justify-center overflow-hidden rounded-2xl bg-surface shadow-sm border border-outline-variant/20">
+<!-- Simulated Architectural Plan representation -->
+<div class="absolute inset-0 opacity-80 mix-blend-multiply" data-alt="A delicate, high-fidelity landscape architecture site plan drawing on vellum. Top-down perspective. Fine linework in charcoal grey against a soft bone-white background. Elegant organic forms representing topography and planting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB1gIpqIz3-mJguOmz32fm0tfckHr4zz8Pe5IknSIyvaSaxO6z2eF_GdtE5Kkn4CUKDeDeFczS_RtlPSssExNngUvQtSFkLxoxZQ1hHjeTJdP2d_WvpXj_kmSKzpQLpAS_svYS68Vs-SnyzHVY4LueYUHvkaPsfkeu2DoGWeljxaOBo_TS-4Yxz0xjjI4sIyOmghZ01kHtIYW0Bp7jwYztgMY4WoS1D-dWC-MsPv7lAtSER8OT0Zdcvuw'); background-size: cover; filter: grayscale(1) contrast(1.2) opacity(0.5);"></div>
+<!-- Contextual Meta Chips -->
+<div class="absolute top-1/3 left-1/4 transform -translate-x-1/2 -translate-y-1/2 flex flex-col gap-1 z-10 pointer-events-none">
+<div class="glass-panel font-technical-sm text-technical-sm px-3 py-1.5 rounded text-on-surface">Ø 4" PVC-U</div>
+<div class="w-px h-12 bg-on-surface/40 ml-6"></div>
+</div>
+<!-- Strike Alert -->
+<div class="absolute bottom-1/3 right-1/3 transform translate-x-1/2 translate-y-1/2 z-20 flex flex-col items-center">
+<div class="w-32 h-px bg-error/40 transform rotate-45 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-dashed"></div>
+<div class="w-32 h-px bg-error/40 transform -rotate-45 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-dashed"></div>
+<div class="glass-panel border-error/30 bg-error-container/40 p-4 flex items-center gap-4 animate-pulse">
+<span class="material-symbols-outlined text-error text-3xl font-light" style="font-variation-settings: 'FILL' 0;">warning</span>
+<div class="flex flex-col">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-error leading-tight">Utility Strike</span>
+<span class="font-technical-sm text-technical-sm text-error/80 tracking-widest mt-1">ALERT</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating HUD Data (Left) -->
+<div class="absolute left-1/4 top-1/4 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-4 z-30 pointer-events-none hidden lg:flex">
+<div class="glass-panel p-5 pr-12 min-w-[200px] flex flex-col gap-2">
+<span class="font-technical-sm text-technical-sm text-on-surface-variant uppercase tracking-wider text-[10px]">GPM</span>
+<span class="font-headline-lg text-headline-lg text-on-surface">15.5</span>
+</div>
+<div class="glass-panel p-5 pr-12 min-w-[200px] flex flex-col gap-2">
+<span class="font-technical-sm text-technical-sm text-on-surface-variant uppercase tracking-wider text-[10px]">PRESSURE DROP</span>
+<span class="font-headline-lg text-headline-lg text-on-surface">2.1 PSI</span>
+</div>
+</div>
+<!-- Floating HUD Data (Right) -->
+<div class="absolute right-1/4 top-1/4 translate-x-1/2 -translate-y-1/2 flex flex-col gap-4 z-30 pointer-events-none hidden lg:flex">
+<div class="glass-panel p-5 min-w-[220px] flex flex-col gap-3">
+<div class="font-technical-sm text-technical-sm text-on-surface flex justify-between items-center"><span class="text-on-surface-variant text-[10px] uppercase tracking-wider">X:</span> <span class="text-sm">1245.32</span></div>
+<div class="font-technical-sm text-technical-sm text-on-surface flex justify-between items-center"><span class="text-on-surface-variant text-[10px] uppercase tracking-wider">Y:</span> <span class="text-sm">876.15</span></div>
+<div class="font-technical-sm text-technical-sm text-on-surface flex justify-between items-center"><span class="text-on-surface-variant text-[10px] uppercase tracking-wider">Z:</span> <span class="text-sm">45.00</span></div>
+</div>
+<div class="glass-panel p-5 min-w-[220px] flex flex-col gap-5">
+<div class="flex flex-col gap-1">
+<span class="font-technical-sm text-technical-sm text-on-surface-variant uppercase tracking-wider text-[10px]">AREA</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface text-xl">1200 SQ FT</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-technical-sm text-technical-sm text-on-surface-variant uppercase tracking-wider text-[10px]">VOLUME</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface text-xl">450 CU YD</span>
+</div>
+</div>
+</div>
+</main>
+</body></html>

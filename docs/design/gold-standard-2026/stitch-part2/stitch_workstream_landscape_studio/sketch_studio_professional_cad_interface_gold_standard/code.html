@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CAD Operator Studio - Armadale Site Plan</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#001f90",
+                        "surface-container-high": "#262a2f",
+                        "on-primary-container": "#6c4f00",
+                        "on-background": "#e0e3e8",
+                        "on-secondary-fixed": "#00105b",
+                        "surface-container": "#1c2024",
+                        "on-secondary-fixed-variant": "#002eca",
+                        "surface-bright": "#363a3e",
+                        "surface-variant": "#31353a",
+                        "surface": "#101418",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#f9bd22",
+                        "on-tertiary-container": "#005c6e",
+                        "inverse-primary": "#795900",
+                        "tertiary-container": "#34daff",
+                        "background": "#101418",
+                        "error": "#ffb4ab",
+                        "surface-dim": "#101418",
+                        "tertiary-fixed-dim": "#30d8fd",
+                        "signal-blue": "#0030CF",
+                        "surface-tint": "#f9bd22",
+                        "surface-container-low": "#181c20",
+                        "surface-container-lowest": "#0b0f12",
+                        "on-tertiary-fixed": "#001f27",
+                        "on-surface": "#e0e3e8",
+                        "on-surface-variant": "#d3c5ac",
+                        "secondary-fixed-dim": "#bac3ff",
+                        "secondary": "#bac3ff",
+                        "primary-container": "#fbbf24",
+                        "inverse-surface": "#e0e3e8",
+                        "secondary-fixed": "#dee0ff",
+                        "inverse-on-surface": "#2d3135",
+                        "gold-highlight": "#FBBF24",
+                        "primary-fixed": "#ffdf9f",
+                        "secondary-container": "#0130cf",
+                        "tertiary": "#b6edff",
+                        "on-primary-fixed-variant": "#5c4300",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#afecff",
+                        "surface-container-highest": "#31353a",
+                        "on-primary-fixed": "#261a00",
+                        "on-tertiary-fixed-variant": "#004e5d",
+                        "outline": "#9c8f79",
+                        "cloud-mist": "#D7E1EC",
+                        "primary": "#ffe1a7",
+                        "error-container": "#93000a",
+                        "outline-variant": "#4f4633",
+                        "on-tertiary": "#003641",
+                        "on-primary": "#402d00",
+                        "on-secondary-container": "#a8b4ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "sidebar-width": "280px",
+                        "gutter": "16px",
+                        "toolbar-width": "56px",
+                        "margin-safe": "32px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "display-lg": ["Space Grotesk"],
+                        "label-caps": ["JetBrains Mono"],
+                        "technical-data": ["JetBrains Mono"],
+                        "headline-lg": ["Space Grotesk"],
+                        "headline-lg-mobile": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                        "technical-data": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #101418;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+            background-size: 32px 32px;
+            background-position: 0 0;
+            margin: 0;
+            overflow: hidden; /* Infinite canvas feel */
+        }
+        
+        .fractal-grid {
+             background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+            background-size: 8px 8px, 32px 32px;
+            background-position: 0 0, 0 0;
+        }
+
+        .glass-hud {
+            background-color: rgba(30, 35, 41, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .canvas-drawing {
+            /* Placeholder for complex SVG/Canvas architectural drawing */
+            width: 200%;
+            height: 200%;
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.8;
+            background: url('placeholder') center/cover no-repeat;
+        }
+    </style>
+</head>
+<body class="text-on-surface font-body-md h-screen w-screen relative">
+<!-- The Canvas Area -->
+<div class="absolute inset-0 z-0 fractal-grid" id="main-canvas">
+<!-- Site Origin Crosshair -->
+<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none z-10 flex items-center justify-center">
+<div class="absolute w-full h-[1px] bg-signal-blue"></div>
+<div class="absolute h-full w-[1px] bg-signal-blue"></div>
+<span class="absolute top-full left-full ml-1 mt-1 font-technical-data text-technical-data text-signal-blue">0,0,0</span>
+</div>
+<!-- Architectural Drawing Background (simulated) -->
+<div class="canvas-drawing" data-alt="A highly detailed, top-down architectural site plan of a modern residential property. The drawing features crisp, varied line weights representing bluestone terraces, timber decking, and organic plant textures in a dark mode aesthetic. The lines are primarily white and subtle greys against a deep charcoal background, exuding professional precision. High-contrast geometric shapes intermingle with softer, organic lines representing foliage. The mood is clinical, authoritative, and hyper-functional, designed for professional landscape architects." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCQ21ot3pWntKrAo6CCU1IvGCKqyO9eHKbtL7-L-NM6421rpa1YX5T1pXXHVyUL-qQnikKw_X9_DWLpqAFWZJ_tmhzPaSoirgI6n3uvYvpIsLremLALJK8HQE7iwwp_aUEihLwvy1Xvs605FEP6uYknx0CEdBI55ztF0rrKZrMsEd8hZ01mpucZ8JGk_aJX3nVuoxu5jAI5Oc4Bes21FQHgob6pQS3kNzedAnFulT70HYpx90Hlow7zJA')"></div>
+<!-- Meta Chips (Billboarded to specific canvas locations) -->
+<div class="absolute top-[30%] left-[40%] transform -translate-x-1/2 -translate-y-1/2 z-20">
+<div class="glass-hud rounded-lg px-3 py-1.5 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-gold-highlight block"></span>
+<span class="font-display-lg text-[14px] leading-tight text-on-surface">Depth: -600mm</span>
+</div>
+</div>
+<div class="absolute top-[60%] left-[65%] transform -translate-x-1/2 -translate-y-1/2 z-20">
+<div class="glass-hud rounded-lg px-3 py-1.5 flex flex-col gap-0.5 border-l-2 border-l-signal-blue">
+<span class="font-technical-data text-[10px] text-on-surface-variant uppercase tracking-wider">Material Info</span>
+<span class="font-display-lg text-[14px] leading-tight text-on-surface">HDPE Line</span>
+</div>
+</div>
+<div class="absolute top-[20%] left-[70%] transform -translate-x-1/2 -translate-y-1/2 z-20">
+<div class="glass-hud rounded-lg px-3 py-1.5 border border-outline/30 bg-surface-container/80 backdrop-blur-md">
+<span class="font-display-lg text-[12px] text-cloud-mist">Compliance: Secured</span>
+</div>
+</div>
+</div>
+<!-- SideNavBar (HUD Profile) -->
+<nav aria-label="Tool Ribbon" class="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-4 bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 rounded-full w-14 py-4">
+<!-- Tab 1: Select (Inactive) -->
+<button aria-label="Select" class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all flex flex-col items-center group relative">
+<span class="material-symbols-outlined text-[24px]">near_me</span>
+<!-- Tooltip -->
+<span class="absolute left-full ml-4 px-2 py-1 bg-surface-container border border-outline/20 text-on-surface font-technical-data text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Select</span>
+</button>
+<!-- Tab 2: Draw (Active) -->
+<button aria-label="Draw" class="bg-gold-highlight text-on-primary-fixed rounded-full p-2 scale-110 flex flex-col items-center group relative" style="font-variation-settings: 'FILL' 1;">
+<span class="material-symbols-outlined text-[24px]">edit</span>
+<span class="absolute left-full ml-4 px-2 py-1 bg-surface-container border border-outline/20 text-on-surface font-technical-data text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Draw</span>
+</button>
+<!-- Tab 3: Geometry (Inactive) -->
+<button aria-label="Geometry" class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all flex flex-col items-center group relative">
+<span class="material-symbols-outlined text-[24px]">category</span>
+<span class="absolute left-full ml-4 px-2 py-1 bg-surface-container border border-outline/20 text-on-surface font-technical-data text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Geometry</span>
+</button>
+<!-- Tab 4: Analyze (Inactive) -->
+<button aria-label="Analyze" class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all flex flex-col items-center group relative">
+<span class="material-symbols-outlined text-[24px]">troubleshoot</span>
+<span class="absolute left-full ml-4 px-2 py-1 bg-surface-container border border-outline/20 text-on-surface font-technical-data text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Analyze</span>
+</button>
+<!-- Tab 5: System (Inactive) -->
+<button aria-label="System" class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all flex flex-col items-center group relative">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+<span class="absolute left-full ml-4 px-2 py-1 bg-surface-container border border-outline/20 text-on-surface font-technical-data text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">System</span>
+</button>
+</nav>
+<!-- Lens Dial (Bottom Right HUD) -->
+<div class="fixed bottom-margin-safe right-margin-safe z-50 glass-hud p-2 rounded-full flex gap-1">
+<button class="px-4 py-2 rounded-full font-label-caps text-label-caps text-on-surface hover:bg-on-surface/5 transition-colors">Subsurface</button>
+<button class="px-4 py-2 rounded-full font-label-caps text-label-caps bg-surface-variant text-on-surface border border-outline/20">Hydraulics</button>
+<button class="px-4 py-2 rounded-full font-label-caps text-label-caps text-on-surface hover:bg-on-surface/5 transition-colors">Solar</button>
+</div>
+<!-- Status Rail (Persistent Bottom Edge) -->
+<div class="fixed bottom-0 left-0 w-full h-8 bg-surface-dim/90 border-t border-on-surface/10 z-40 flex justify-between items-center px-gutter font-technical-data text-technical-data text-on-surface-variant">
+<div class="flex gap-6">
+<span>OBJ: 1,402</span>
+<span>SEL: 0</span>
+</div>
+<div class="flex gap-6">
+<span>GRID: 4MM</span>
+<span>SNAP: ON</span>
+<span>L: ARMADALE_MAIN</span>
+</div>
+</div>
+<!-- Minimal Script for Pan/Zoom Simulation (UI feel) -->
+<script>
+        const canvas = document.getElementById('main-canvas');
+        let isDragging = false;
+        let startX, startY;
+        let translateX = 0;
+        let translateY = 0;
+
+        canvas.addEventListener('mousedown', (e) => {
+            if(e.button === 1 || e.button === 2 || (e.button === 0 && e.altKey)) { // Middle click, Right click, or Alt+Left
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                canvas.style.cursor = 'grabbing';
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            canvas.style.transform = `translate(${translateX}px, ${translateY}px)`;
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            canvas.style.cursor = 'default';
+        });
+        
+        // Prevent context menu on right click for dragging
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+    </script>
+</body></html>

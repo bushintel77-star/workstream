@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Workstream - Hydrological Survey &amp; Site Origin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "inverse-on-surface": "#2d3135",
+                "secondary": "#bac3ff",
+                "primary-fixed": "#ffdf9f",
+                "signal-blue": "#0030CF",
+                "surface-dim": "#101418",
+                "secondary-container": "#0130cf",
+                "tertiary-fixed": "#afecff",
+                "on-surface-variant": "#d3c5ac",
+                "surface-bright": "#2A3037",
+                "primary-fixed-dim": "#f9bd22",
+                "on-tertiary-fixed-variant": "#004e5d",
+                "tertiary-fixed-dim": "#30d8fd",
+                "on-secondary": "#001f90",
+                "error-container": "#93000a",
+                "outline-variant": "#4f4633",
+                "tertiary-container": "#34daff",
+                "surface-container": "#1c2024",
+                "surface": "#101418",
+                "on-error-container": "#ffdad6",
+                "surface-container-high": "#262a2f",
+                "on-primary-fixed-variant": "#5c4300",
+                "on-secondary-fixed-variant": "#002eca",
+                "on-secondary-fixed": "#00105b",
+                "on-primary": "#402d00",
+                "surface-container-highest": "#31353a",
+                "cloud-mist": "#D7E1EC",
+                "primary-container": "#fbbf24",
+                "surface-tint": "#f9bd22",
+                "on-tertiary-fixed": "#001f27",
+                "on-background": "#e0e3e8",
+                "on-error": "#690005",
+                "primary": "#ffe1a7",
+                "inverse-primary": "#795900",
+                "tertiary": "#b6edff",
+                "error": "#ffb4ab",
+                "surface-container-lowest": "#0b0f12",
+                "inverse-surface": "#e0e3e8",
+                "secondary-fixed": "#dee0ff",
+                "outline": "#9c8f79",
+                "on-tertiary": "#003641",
+                "on-tertiary-container": "#005c6e",
+                "on-secondary-container": "#a8b4ff",
+                "on-primary-fixed": "#261a00",
+                "on-primary-container": "#6c4f00",
+                "on-surface": "#e0e3e8",
+                "gold-highlight": "#FBBF24",
+                "secondary-fixed-dim": "#bac3ff",
+                "surface-variant": "#31353a",
+                "surface-container-low": "#181c20",
+                "background": "#101418"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "sidebar-width": "280px",
+                "gutter": "16px",
+                "margin-safe": "32px",
+                "toolbar-width": "56px",
+                "unit": "4px"
+        },
+        "fontFamily": {
+                "display-lg": [
+                        "Space Grotesk"
+                ],
+                "headline-lg-mobile": [
+                        "Space Grotesk"
+                ],
+                "headline-lg": [
+                        "Space Grotesk"
+                ],
+                "label-caps": [
+                        "JetBrains Mono"
+                ],
+                "technical-data": [
+                        "JetBrains Mono"
+                ],
+                "body-md": [
+                        "Inter"
+                ]
+        },
+        "fontSize": {
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "52px",
+                                "letterSpacing": "-0.03em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "24px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "36px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "label-caps": [
+                        "11px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.08em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "technical-data": [
+                        "13px",
+                        {
+                                "lineHeight": "18px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-md": [
+                        "15px",
+                        {
+                                "lineHeight": "24px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        body {
+            background-color: #101418;
+            color: #e0e3e8;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Grid Canvas Background */
+        .grid-canvas {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(0, 48, 207, 0.15) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 48, 207, 0.15) 1px, transparent 1px);
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        /* Subtle Blueprint Line */
+        .blueprint-line {
+            position: absolute;
+            height: 2px;
+            background-color: rgba(52, 218, 255, 0.4);
+            box-shadow: 0 0 8px rgba(52, 218, 255, 0.4);
+            transform-origin: left center;
+        }
+        
+        .blueprint-line-main {
+            background-color: #34daff;
+            box-shadow: 0 0 12px rgba(52, 218, 255, 0.6);
+            height: 4px;
+        }
+        
+        .blueprint-line-alert {
+            background-color: #ef4444;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+            height: 4px;
+        }
+
+        /* 1px Leader Line */
+        .leader-line {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.4);
+            height: 1px;
+            transform-origin: left center;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        /* Pulse Animation for active nodes */
+        @keyframes pulse-node {
+            0% { transform: scale(1) translate(-50%, -50%); box-shadow: 0 0 0 0 rgba(52, 218, 255, 0.7); }
+            70% { transform: scale(1.1) translate(-45%, -45%); box-shadow: 0 0 0 10px rgba(52, 218, 255, 0); }
+            100% { transform: scale(1) translate(-50%, -50%); box-shadow: 0 0 0 0 rgba(52, 218, 255, 0); }
+        }
+        
+        .node-active {
+            animation: pulse-node 2s infinite;
+        }
+        
+        @keyframes pulse-alert {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .node-alert {
+            animation: pulse-alert 1.5s infinite;
+        }
+
+        /* Hydraulic HUD Panel */
+        .glass-hud {
+            background-color: rgba(28, 32, 36, 0.75); /* surface-container with opacity */
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(156, 143, 121, 0.2); /* outline with opacity */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+        
+        .text-flow-highlight { color: #34daff; } /* tertiary-container */
+        
+        /* Coordinate Marker (Crosshair) */
+        .crosshair {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            bottom: 60px;
+            left: 60px;
+            z-index: 5;
+        }
+        
+        .crosshair::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: #0030CF;
+        }
+        
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 1px;
+            background-color: #0030CF;
+        }
+        
+        .crosshair-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background-color: #0030CF;
+            border-radius: 50%;
+            z-index: 6;
+        }
+    </style>
+</head>
+<body class="antialiased font-body-md relative h-screen w-screen selection:bg-primary-container selection:text-on-primary-container">
+<!-- Main Canvas -->
+<main class="relative w-full h-full">
+<!-- Background Grid -->
+<div class="grid-canvas"></div>
+<!-- Base Map Imagery -->
+<div class="absolute inset-0 opacity-40 pointer-events-none mix-blend-luminosity grayscale bg-cover bg-center" data-alt="High-resolution, top-down satellite view of a complex commercial landscape site, rendered in ultra-dark grayscale suitable for a technical UI background." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDwKGh5a2E4tukoioZUiW8t7mQjy6JDXMHBddJlCX1EWDKB2tw39ahUhUvEvhICEWf91Gqq7RJT5CCk04QgllCrf7auYL0C-ruDHxkrpG9M-CgIu5XxBv7I1lYUmnGtAONroPQYJQtOgAvthBYV_gJKaIxDUNE9Xkdeaf7K1mMx9qL2Hhnd_9P62AbbkFkKQwii5dG7hs8GkO2nhYJo1fedyTNccBA3_2S9W25m3Pqih0s0ZDJxg2awhA");'></div>
+<!-- Acquisition Pipeline (Meta Chips) -->
+<div class="absolute left-8 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30">
+<div class="glass-hud rounded-full py-2 px-3 flex items-center gap-2 border border-outline/20">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container">check_circle</span>
+<span class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider">Parcel</span>
+</div>
+<div class="glass-hud rounded-full py-2 px-3 flex items-center gap-2 border border-outline/20">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container">check_circle</span>
+<span class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider">VicMap</span>
+</div>
+<div class="glass-hud rounded-full py-2 px-3 flex items-center gap-2 border border-outline/20">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container">check_circle</span>
+<span class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider">Easements</span>
+</div>
+</div>
+<!-- Geometry Layer (Irrigation Lines) -->
+<div class="absolute inset-0 z-10">
+<!-- Main Line -->
+<div class="blueprint-line-main absolute" style="top: 60%; left: 15%; width: 50%; transform: rotate(-15deg);"></div>
+<!-- Alert Line -->
+<div class="blueprint-line-alert absolute" style="top: 47%; left: 63.5%; width: 30%; transform: rotate(10deg);"></div>
+<!-- Lateral Lines -->
+<div class="blueprint-line absolute" style="top: 55%; left: 30%; width: 15%; transform: rotate(75deg);"></div>
+<div class="blueprint-line absolute" style="top: 48%; left: 45%; width: 20%; transform: rotate(80deg);"></div>
+<div class="blueprint-line absolute" style="top: 45%; left: 55%; width: 10%; transform: rotate(70deg);"></div>
+<div class="blueprint-line absolute" style="top: 50%; left: 75%; width: 18%; transform: rotate(100deg);"></div>
+<!-- Nodes (Sprinkler Heads / Valves) -->
+<div class="absolute w-3 h-3 rounded-full bg-outline-variant border border-surface-container" style="top: 72%; left: 32%; transform: translate(-50%, -50%);"></div>
+<div class="absolute w-3 h-3 rounded-full bg-outline-variant border border-surface-container" style="top: 67%; left: 47%; transform: translate(-50%, -50%);"></div>
+<!-- Active Selected Node (Valve Box) -->
+<div class="absolute w-4 h-4 rounded-sm bg-error border-2 border-surface node-alert z-20 cursor-pointer" id="active-valve" style="top: 47%; left: 63.5%; transform: translate(-50%, -50%);"></div>
+</div>
+<!-- Connecting Leader Line to HUD -->
+<!-- Positioned via JS or rough CSS approximation -->
+<div class="leader-line" style="top: 47%; left: 63.5%; width: 12%; transform: rotate(-25deg); background-color: rgba(224, 227, 232, 0.9);"></div>
+<!-- Hydrological Pulse HUD -->
+<div class="absolute p-5 w-[360px] flex flex-col gap-4 z-20 glass-hud rounded-xl" style="top: 30%; left: 74%;">
+<div class="flex justify-between items-start border-b border-outline/20 pb-4">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-outline tracking-wider uppercase mb-1">Subsurface Line</span>
+<h2 class="font-display-lg text-headline-lg-mobile text-on-surface m-0 leading-tight">L-East-09</h2>
+</div>
+<div class="bg-error/20 px-2 py-1 rounded-full flex items-center gap-1 border border-error/30">
+<div class="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse"></div>
+<span class="font-label-caps text-label-caps text-[#ef4444] font-bold">STRIKE ALERT</span>
+</div>
+</div>
+<div class="flex items-end justify-between bg-surface-variant/30 rounded-lg p-4 border border-outline/10">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest mb-1">Live Flow Rate</span>
+<div class="flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg text-flow-highlight">124.5</span>
+<span class="font-label-caps text-label-caps text-outline">GPM</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-flow-highlight mb-2" style="font-size: 32px; font-variation-settings: 'FILL' 1;">water_drop</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-variant/30 rounded-lg p-3 border border-outline/10 flex flex-col gap-1">
+<div class="flex items-center gap-1 text-outline">
+<span class="material-symbols-outlined text-[16px]">speed</span>
+<span class="font-label-caps text-label-caps uppercase">Pressure Drop</span>
+</div>
+<div class="flex items-baseline gap-1 mt-2">
+<span class="font-display-lg text-headline-lg text-[#ef4444]">-28.9</span>
+<span class="font-label-caps text-label-caps text-outline">kPa</span>
+</div>
+</div>
+<div class="bg-surface-variant/30 rounded-lg p-3 border border-outline/10 flex flex-col gap-1">
+<div class="flex items-center gap-1 text-outline">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+<span class="font-label-caps text-label-caps uppercase">Integrity</span>
+</div>
+<div class="flex items-baseline gap-1 mt-2">
+<span class="font-display-lg text-headline-lg text-[#ef4444]">CRIT</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Site Origin HUD (Crosshair) -->
+<div class="crosshair">
+<div class="crosshair-center"></div>
+<div class="absolute -right-32 -bottom-16 w-max glass-hud rounded-lg p-4">
+<div class="flex flex-col font-display-lg text-technical-data text-on-surface gap-1">
+<div class="flex gap-4">
+<span class="text-outline uppercase text-[10px] tracking-widest">LAT</span>
+<span class="tracking-widest">34° 03' 08.12" N</span>
+</div>
+<div class="flex gap-4">
+<span class="text-outline uppercase text-[10px] tracking-widest">LNG</span>
+<span class="tracking-widest">118° 14' 37.45" W</span>
+</div>
+<div class="h-[1px] bg-outline/20 my-1 w-full"></div>
+<div class="flex justify-between">
+<span class="text-signal-blue uppercase text-[10px] tracking-widest font-bold">ORIGIN (0,0,0)</span>
+<span class="text-signal-blue tracking-widest font-bold">PEG-01</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

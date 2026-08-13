@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Mobile Field Bridge AR</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#001f90",
+                        "surface-container-high": "#262a2f",
+                        "on-primary-container": "#6c4f00",
+                        "on-background": "#e0e3e8",
+                        "on-secondary-fixed": "#00105b",
+                        "surface-container": "#1c2024",
+                        "on-secondary-fixed-variant": "#002eca",
+                        "surface-bright": "#363a3e",
+                        "surface-variant": "#31353a",
+                        "surface": "#101418",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed-dim": "#f9bd22",
+                        "on-tertiary-container": "#005c6e",
+                        "inverse-primary": "#795900",
+                        "tertiary-container": "#34daff",
+                        "background": "#101418",
+                        "error": "#ffb4ab",
+                        "surface-dim": "#101418",
+                        "tertiary-fixed-dim": "#30d8fd",
+                        "signal-blue": "#0030CF",
+                        "surface-tint": "#f9bd22",
+                        "surface-container-low": "#181c20",
+                        "surface-container-lowest": "#0b0f12",
+                        "on-tertiary-fixed": "#001f27",
+                        "on-surface": "#e0e3e8",
+                        "on-surface-variant": "#d3c5ac",
+                        "secondary-fixed-dim": "#bac3ff",
+                        "secondary": "#bac3ff",
+                        "primary-container": "#fbbf24",
+                        "inverse-surface": "#e0e3e8",
+                        "secondary-fixed": "#dee0ff",
+                        "inverse-on-surface": "#2d3135",
+                        "gold-highlight": "#FBBF24",
+                        "primary-fixed": "#ffdf9f",
+                        "secondary-container": "#0130cf",
+                        "tertiary": "#b6edff",
+                        "on-primary-fixed-variant": "#5c4300",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#afecff",
+                        "surface-container-highest": "#31353a",
+                        "on-primary-fixed": "#261a00",
+                        "on-tertiary-fixed-variant": "#004e5d",
+                        "outline": "#9c8f79",
+                        "cloud-mist": "#D7E1EC",
+                        "primary": "#ffe1a7",
+                        "error-container": "#93000a",
+                        "outline-variant": "#4f4633",
+                        "on-tertiary": "#003641",
+                        "on-primary": "#402d00",
+                        "on-secondary-container": "#a8b4ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "sidebar-width": "280px",
+                        "gutter": "16px",
+                        "toolbar-width": "56px",
+                        "margin-safe": "32px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "display-lg": ["Space Grotesk"],
+                        "label-caps": ["JetBrains Mono"],
+                        "technical-data": ["JetBrains Mono"],
+                        "headline-lg": ["Space Grotesk"],
+                        "headline-lg-mobile": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                        "technical-data": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Utility for 3D CSS rendering mimicking AR */
+        .ar-volume {
+            transform-style: preserve-3d;
+            transform: perspective(800px) rotateX(60deg) rotateZ(-15deg);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md h-screen w-screen overflow-hidden relative touch-none select-none">
+<!-- CAMERA FEED VIEWPORT (Background) -->
+<div class="absolute inset-0 z-0 bg-cover bg-center" data-alt="A first-person view through a mobile device camera showing a residential backyard under construction. The scene is illuminated by bright, clear natural daylight creating a high-contrast environment. The ground consists of raw, graded dirt and subtle excavation trenches, providing a textured, realistic architectural foundation for digital overlays. The mood is highly professional and technical, devoid of clutter, focusing precisely on the bare earth where survey stakes and foundation work would occur. Deep shadows and sharp highlights emphasize the physical depth of the construction site." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBVpAnzxSBJE9MjQdcB_50hAP0dzdCthipxlYV5VXRTzyxqbXvMb0iAhwfYcg3ZfHGFm2iT0ZBfbnTDJyvqIda6uC0oJoZqW1oM1OM3vRSroLmQWR0dgWombBeTdqxme-GrnNXjqT82fNkgJHBS6aWs2kN_gOvY35Lz451AQcdf1eXAMpaIvDUSehaln_JVPIDWp8ecoYJ0VsQIzGFf2WwpwAhhykBx7NGDjaW2el_15jnbUtlL32aXqw')">
+<!-- Subtle Vignette / HUD Darkening for Readability -->
+<div class="absolute inset-0 bg-gradient-to-b from-surface-lowest/60 via-transparent to-surface-lowest/80"></div>
+</div>
+<!-- SHARED COMPONENT: TopAppBar (Strict JSON Execution) -->
+<div class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-[32px] h-[24px] bg-transparent bg-surface-dim/70 backdrop-blur-md border-b border-outline/20">
+<span class="font-technical-data text-technical-data uppercase tracking-widest text-on-surface-variant">GOLD STANDARD 2026</span>
+<div class="flex gap-2 items-center">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant" data-icon="gps_fixed">gps_fixed</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant" data-icon="wifi_tethering">wifi_tethering</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant" data-icon="battery_full">battery_full</span>
+</div>
+</div>
+<!-- META CHIPS (Floating Technical Metadata) -->
+<div class="absolute top-[48px] left-[16px] right-[16px] z-40 flex justify-between gap-unit pointer-events-none">
+<!-- Coordinates -->
+<div class="bg-surface-dim/80 backdrop-blur-md border border-outline/30 rounded-lg px-3 py-1 flex flex-col shadow-lg shadow-surface-lowest/50">
+<span class="font-label-caps text-label-caps text-on-surface-variant">N / E (LOCAL)</span>
+<span class="font-technical-data text-technical-data text-primary">34.0522° / -118.2437°</span>
+</div>
+<!-- Accuracy Badge (Signal Priority) -->
+<div class="bg-gold-highlight/10 backdrop-blur-md border border-gold-highlight rounded-lg px-4 py-1 flex flex-col items-center justify-center shadow-[0_0_15px_rgba(251,191,36,0.15)]">
+<span class="font-label-caps text-label-caps text-gold-highlight">RTK STATUS</span>
+<span class="font-technical-data text-technical-data text-gold-highlight font-bold tracking-wider">&lt; 12mm FIX</span>
+</div>
+</div>
+<!-- AR OVERLAY CANVAS (Middle Field) -->
+<div class="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden">
+<!-- Center Reticle -->
+<div class="w-10 h-10 relative flex items-center justify-center">
+<div class="absolute w-full h-[1px] bg-on-surface/40"></div>
+<div class="absolute h-full w-[1px] bg-on-surface/40"></div>
+<div class="w-1.5 h-1.5 bg-gold-highlight rounded-full z-10 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full border border-on-surface/20"></div>
+</div>
+<!-- DIGITAL PEG 1 (Staking Chip anchored in space) -->
+<div class="absolute top-[60%] left-[35%] -translate-x-1/2 -translate-y-[100%] flex flex-col items-center pointer-events-auto">
+<!-- Floating Data Panel -->
+<div class="bg-surface-container-high/90 backdrop-blur-md border border-gold-highlight rounded-md px-3 py-1.5 shadow-xl mb-1 flex flex-col items-center relative z-20 hover:bg-surface-bright transition-colors cursor-pointer">
+<div class="flex items-center gap-1 mb-0.5">
+<span class="material-symbols-outlined text-[12px] text-gold-highlight" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<span class="font-label-caps text-label-caps text-gold-highlight">STK-042</span>
+</div>
+<span class="font-technical-data text-technical-data text-on-surface">ELEV: 142.50m</span>
+<!-- Pointer Triangle -->
+<div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gold-highlight"></div>
+</div>
+<!-- Virtual Stake / Plumb Line -->
+<div class="w-[2px] h-[120px] bg-gradient-to-b from-gold-highlight to-gold-highlight/0 relative z-10"></div>
+<!-- Ground Anchor Target (Isometric projection) -->
+<div class="absolute bottom-[-16px] w-[48px] h-[16px] border-2 border-gold-highlight/60 rounded-[50%] opacity-80 animate-pulse [transform:rotateX(70deg)]">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-gold-highlight rounded-full blur-[2px]"></div>
+</div>
+</div>
+<!-- DIGITAL PEG 2 (Faded/Distant) -->
+<div class="absolute top-[45%] left-[75%] -translate-x-1/2 -translate-y-[100%] flex flex-col items-center opacity-60 scale-75 pointer-events-none">
+<div class="bg-surface-container/80 backdrop-blur-sm border border-on-surface-variant/50 rounded-md px-2 py-1 mb-1 flex flex-col items-center relative">
+<span class="font-label-caps text-label-caps text-on-surface-variant">STK-043</span>
+</div>
+<div class="w-[1px] h-[80px] bg-gradient-to-b from-on-surface-variant to-transparent"></div>
+</div>
+<!-- SUBSURFACE GHOST VOLUME (Water Main) -->
+<div class="absolute bottom-[30%] left-[10%] w-[300px] h-[60px] ar-volume border-2 border-dashed border-signal-blue bg-signal-blue/10 backdrop-blur-[2px] flex items-center justify-center overflow-hidden">
+<!-- Animated Flow Effect -->
+<div class="absolute inset-0 w-[200%] h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(0,48,207,0.15)_10px,rgba(0,48,207,0.15)_20px)] animate-[linear-move_3s_linear_infinite]"></div>
+<span class="font-technical-data text-technical-data text-signal-blue font-bold tracking-widest relative z-10 bg-surface/50 px-2 py-0.5 rounded">8" WATER MAIN (EX)</span>
+</div>
+</div>
+<!-- BOTTOM NAVIGATION (Minimalist Floating Glass) -->
+<div class="absolute bottom-[40px] left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-[400px]">
+<div class="bg-surface-dim/70 backdrop-blur-xl border border-outline/30 rounded-full p-1.5 flex justify-between items-center shadow-2xl">
+<!-- Nav Item: Active (Staking) -->
+<button class="flex-1 flex flex-col items-center justify-center py-2 px-1 bg-gold-highlight/20 border border-gold-highlight/30 rounded-full text-gold-highlight transition-all">
+<span class="material-symbols-outlined text-[20px] mb-0.5" style="font-variation-settings: 'FILL' 1;">add_location</span>
+<span class="font-label-caps text-label-caps text-[9px] font-bold">STAKING</span>
+</button>
+<!-- Nav Item: Inactive (Subsurface) -->
+<button class="flex-1 flex flex-col items-center justify-center py-2 px-1 text-on-surface-variant hover:text-primary hover:bg-white/5 rounded-full transition-all">
+<span class="material-symbols-outlined text-[20px] mb-0.5">layers</span>
+<span class="font-label-caps text-label-caps text-[9px]">SUBSURFACE</span>
+</button>
+<!-- Nav Item: Inactive (Planting) -->
+<button class="flex-1 flex flex-col items-center justify-center py-2 px-1 text-on-surface-variant hover:text-primary hover:bg-white/5 rounded-full transition-all">
+<span class="material-symbols-outlined text-[20px] mb-0.5">nature</span>
+<span class="font-label-caps text-label-caps text-[9px]">PLANTING</span>
+</button>
+</div>
+</div>
+<!-- GLOBAL ACTION FAB (Secondary context, placed above nav to right) -->
+<button class="absolute bottom-[110px] right-[24px] z-50 w-12 h-12 bg-gold-highlight text-on-primary rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(251,191,36,0.3)] hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">save</span>
+</button>
+<style>
+        @keyframes linear-move {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+    </style>
+</body></html>

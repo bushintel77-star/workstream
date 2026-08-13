@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Step 0: Site Truth</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Inter:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#e0e3e8",
+                      "primary-container": "#fbbf24",
+                      "on-tertiary-container": "#005c6e",
+                      "on-primary-fixed": "#261a00",
+                      "surface-dim": "#101418",
+                      "primary": "#ffe1a7",
+                      "outline": "#9c8f79",
+                      "inverse-on-surface": "#2d3135",
+                      "background": "#101418",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#bac3ff",
+                      "secondary-container": "#0130cf",
+                      "tertiary": "#b6edff",
+                      "on-surface": "#e0e3e8",
+                      "surface-bright": "#2A3037",
+                      "tertiary-fixed": "#afecff",
+                      "surface-tint": "#f9bd22",
+                      "on-primary-container": "#6c4f00",
+                      "on-primary-fixed-variant": "#5c4300",
+                      "tertiary-container": "#34daff",
+                      "on-tertiary": "#003641",
+                      "inverse-surface": "#e0e3e8",
+                      "on-tertiary-fixed": "#001f27",
+                      "surface-container-highest": "#31353a",
+                      "surface-variant": "#31353a",
+                      "tertiary-fixed-dim": "#30d8fd",
+                      "outline-variant": "#4f4633",
+                      "on-surface-variant": "#d3c5ac",
+                      "on-error": "#690005",
+                      "primary-fixed-dim": "#f9bd22",
+                      "on-secondary-fixed-variant": "#002eca",
+                      "secondary": "#bac3ff",
+                      "surface-container": "#1c2024",
+                      "on-primary": "#402d00",
+                      "error-container": "#93000a",
+                      "secondary-fixed": "#dee0ff",
+                      "error": "#ffb4ab",
+                      "surface": "#101418",
+                      "inverse-primary": "#795900",
+                      "surface-container-lowest": "#0b0f12",
+                      "on-secondary-fixed": "#00105b",
+                      "gold-highlight": "#FBBF24",
+                      "on-secondary-container": "#a8b4ff",
+                      "signal-blue": "#0030CF",
+                      "surface-container-low": "#181c20",
+                      "cloud-mist": "#D7E1EC",
+                      "surface-container-high": "#262a2f",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "on-secondary": "#001f90",
+                      "primary-fixed": "#ffdf9f"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-safe": "32px",
+                      "gutter": "16px",
+                      "unit": "4px",
+                      "sidebar-width": "280px",
+                      "toolbar-width": "56px"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": [
+                              "Space Grotesk"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "display-lg": [
+                              "Space Grotesk"
+                      ],
+                      "technical-data": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Space Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "52px",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "technical-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .signal-crosshair {
+            box-shadow: 0 0 30px rgba(0, 48, 207, 0.5);
+        }
+        .data-chip-active {
+            border-left: 2px solid #FBBF24;
+        }
+    </style>
+</head>
+<body class="overflow-hidden w-screen h-screen bg-[#101418] m-0 p-0 select-none text-on-background font-body-md antialiased relative">
+<!-- 100% Full Bleed Background Image -->
+<div class="absolute inset-0 z-0 canvas-surface">
+<div class="bg-cover bg-center w-full h-full object-cover" data-alt="A highly detailed, ultra-high resolution aerial satellite image of a luxury modern property in Armadale, Los Angeles. The architecture features clean lines, expansive glass, and a large swimming pool. The surrounding landscape is meticulously manicured with lush green lawns and mature trees. The lighting is bright and clear, simulating a perfect daytime capture. The aesthetic is hyper-realistic, technical, and precise, aligning with a high-end architectural CAD interface. Global color palette is rich natural greens and greys, contrasting with the crisp blue of the pool." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBIFZ4u92KNsXc0kJ9429BfsnFxGO0WsxaU_3PDIk0EnZjSKC3E0IukEBgy0JVK_7P827sPDuCxK6HPhWyBYZJ34r9nUfFRhW-J4GdOHWITrq4a0WdJOKJygS7Booh8RRP2Ne3rKYlaXN1afKY08GKYcShRgiAKAiqWNAa303MKoJQih3G7TyRNkYY6pZC9XxWK6Z71ABg7Ordbk3yFf6sWxwHiPu4kyDXgMe-d4xjXaIvugiS7NULfdQ')"></div>
+<!-- Subtle Grid Overlay -->
+<div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgzMnYzMkgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0wIDAuNWgzMnYxaC0zMnoiIGZpbGw9InJnYmEoMjI0LDIyNywyMzIsMC4wNSkiLz48cGF0aCBkPSJNMCAwLjV2MzJoMXYtMzJ6IiBmaWxsPSJyZ2JhKDIyNCwyMjcsMjMyLDAuMDUpIi8+PC9zdmc+')] pointer-events-none"></div>
+</div>
+<!-- Navigation Shells -->
+<!-- Top Nav / Global Search HUD -->
+<header class="fixed top-margin-safe left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4 pointer-events-none">
+<div class="backdrop-blur-md bg-[#1E2329]/70 rounded-2xl border border-white/5 shadow-2xl p-4 px-6 flex items-center gap-4 pointer-events-auto transition-transform hover:scale-[1.02] duration-200">
+<span class="material-symbols-outlined text-gold-highlight text-2xl">search</span>
+<input class="bg-transparent border-none outline-none text-on-surface font-headline-lg-mobile md:font-headline-lg w-full placeholder:text-on-surface-variant/50 focus:ring-0" placeholder="Search location, parcel ID, or coordinates" type="text"/>
+</div>
+</header>
+<!-- Left Vertical Meta Chips (Acquisition Pipeline) -->
+<aside class="fixed left-margin-safe top-1/2 -translate-y-1/2 z-40 flex flex-col gap-4 pointer-events-none">
+<!-- Extracted -->
+<div class="backdrop-blur-md bg-[#1E2329]/70 rounded-2xl border border-white/5 shadow-2xl p-4 w-48 flex flex-col gap-1 pointer-events-auto data-chip-active relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-transparent to-surface-dim/40 pointer-events-none"></div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">PARCEL:</span>
+<div class="flex items-center justify-between">
+<span class="font-technical-data text-xs text-signal-blue font-bold tracking-tight">EXTRACTED</span>
+<span class="material-symbols-outlined text-signal-blue animate-spin" style="animation-duration: 3s;">data_usage</span>
+</div>
+</div>
+<!-- Processing -->
+<div class="backdrop-blur-md bg-[#1E2329]/70 rounded-2xl border border-white/5 shadow-2xl p-4 w-48 flex flex-col gap-1 pointer-events-auto relative overflow-hidden group hover:border-l-2 hover:border-signal-blue transition-colors">
+<div class="absolute inset-0 bg-gradient-to-br from-transparent to-surface-dim/40 pointer-events-none"></div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">VICMAP:</span>
+<div class="flex items-center justify-between">
+<span class="font-technical-data text-xs text-signal-blue font-bold tracking-tight">PROCESSING</span>
+<span class="material-symbols-outlined text-signal-blue animate-spin" style="animation-duration: 2s; animation-direction: reverse;">donut_large</span>
+</div>
+</div>
+<!-- Pending -->
+<div class="backdrop-blur-md bg-[#1E2329]/70 rounded-2xl border border-white/5 shadow-2xl p-4 w-48 flex flex-col gap-1 pointer-events-auto relative overflow-hidden group hover:border-l-2 hover:border-on-surface transition-colors opacity-70">
+<div class="absolute inset-0 bg-gradient-to-br from-transparent to-surface-dim/40 pointer-events-none"></div>
+<span class="font-label-caps text-[10px] text-on-surface-variant">TITLE:</span>
+<div class="flex items-center justify-between">
+<span class="font-technical-data text-xs text-on-surface-variant font-bold tracking-tight">PENDING</span>
+<span class="material-symbols-outlined text-on-surface-variant">hourglass_empty</span>
+</div>
+</div>
+</aside>
+<!-- Right Site Truth Telemetry HUD -->
+<aside class="fixed right-margin-safe top-1/2 -translate-y-1/2 z-50 pointer-events-none">
+<div class="backdrop-blur-md bg-[#1E2329]/70 rounded-2xl border border-white/5 shadow-2xl p-6 w-64 flex flex-col gap-6 pointer-events-auto relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-bl from-transparent to-surface-dim/40 pointer-events-none"></div>
+<div class="flex flex-col gap-2 border-b border-on-surface/10 pb-4">
+<div class="flex items-center justify-between gap-2 px-3 py-1 bg-surface-bright/20 border border-white/10 rounded-full">
+<span class="font-label-caps text-[10px] text-on-surface-variant">LAT:</span>
+<span class="font-technical-data text-xs text-primary">-37.85462°</span>
+</div>
+<div class="flex items-center justify-between gap-2 px-3 py-1 bg-surface-bright/20 border border-white/10 rounded-full mt-2">
+<span class="font-label-caps text-[10px] text-on-surface-variant">LONG:</span>
+<span class="font-technical-data text-xs text-primary">145.02891°</span>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-bright/20 border border-white/10 rounded-full">
+<span class="material-symbols-outlined text-gold-highlight text-[10px]">explore</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant w-16">ASPECT:</span>
+<span class="font-technical-data text-xs text-primary">NE</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-bright/20 border border-white/10 rounded-full">
+<span class="material-symbols-outlined text-gold-highlight text-[10px]">landscape</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant w-16">ELEVATION:</span>
+<span class="font-technical-data text-xs text-primary">54m</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-bright/20 border border-white/10 rounded-full">
+<span class="material-symbols-outlined text-gold-highlight text-[10px]">category</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant w-16">ZONE:</span>
+<span class="font-technical-data text-xs text-primary">NRZ3</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-bright/20 border border-white/10 rounded-full">
+<span class="material-symbols-outlined text-gold-highlight text-[10px]">square_foot</span>
+<span class="font-label-caps text-[10px] text-on-surface-variant w-16">AREA:</span>
+<span class="font-technical-data text-xs text-primary">1,450m²</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Center Crosshair & Origin Coordinate -->
+<div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center justify-center pointer-events-none gap-2">
+<!-- Signal Blue Crosshair -->
+<div class="w-32 h-32 rounded-full border border-signal-blue/30 flex items-center justify-center signal-crosshair relative">
+<div class="absolute inset-0 rounded-full bg-signal-blue/10 backdrop-blur-sm"></div>
+<!-- Inner cross -->
+<div class="relative w-16 h-16">
+<div class="absolute top-1/2 left-0 w-full h-1 bg-signal-blue shadow-[0_0_10px_rgba(0,48,207,1)] rounded-full -translate-y-1/2"></div>
+<div class="absolute left-1/2 top-0 h-full w-1 bg-signal-blue shadow-[0_0_10px_rgba(0,48,207,1)] rounded-full -translate-x-1/2"></div>
+</div>
+<!-- Concentric rings for tech feel -->
+<div class="absolute inset-2 border border-signal-blue/20 rounded-full"></div>
+<div class="absolute inset-6 border border-signal-blue/40 rounded-full border-dashed animate-[spin_10s_linear_infinite]"></div>
+</div>
+<!-- Origin Text -->
+<div class="backdrop-blur-md bg-[#1E2329]/70 px-4 py-1 rounded-full border border-white/5 shadow-2xl text-signal-blue font-technical-data text-xs font-bold tracking-widest mt-2">
+            (0,0,0)
+        </div>
+</div>
+<!-- Persistent Bottom Status Rail (Footer variant) -->
+<footer class="fixed bottom-0 w-full z-50 bg-[#1E2329]/70 backdrop-blur-md border-t border-white/5 flex justify-between items-center px-margin-safe py-3 pointer-events-none shadow-2xl">
+<span class="font-label-caps text-[10px] text-on-surface-variant">SPATIAL TRUTH // PROJECT COORDS: 34.0522° N, 118.2437° W</span>
+<div class="flex gap-6 pointer-events-auto">
+<a class="font-technical-data text-xs text-on-surface-variant hover:text-white transition-colors" href="#">Telemetry</a>
+<a class="font-technical-data text-xs text-on-surface-variant hover:text-white transition-colors" href="#">Financials</a>
+<a class="font-technical-data text-xs text-on-surface-variant hover:text-white transition-colors" href="#">Grid Settings</a>
+</div>
+</footer>
+</body></html>

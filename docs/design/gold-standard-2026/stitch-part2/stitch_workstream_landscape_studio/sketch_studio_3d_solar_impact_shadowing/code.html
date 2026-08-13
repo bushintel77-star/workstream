@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>3D Solar Impact &amp; Shadowing Lens</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#795900",
+                        "surface-bright": "#363a3e",
+                        "error-container": "#93000a",
+                        "on-tertiary-container": "#005c6e",
+                        "primary-fixed": "#ffdf9f",
+                        "background": "#101418",
+                        "tertiary-fixed-dim": "#30d8fd",
+                        "surface-container-high": "#262a2f",
+                        "surface-tint": "#f9bd22",
+                        "surface-dim": "#101418",
+                        "outline-variant": "#4f4633",
+                        "on-secondary-fixed": "#00105b",
+                        "primary": "#ffe1a7",
+                        "secondary": "#bac3ff",
+                        "on-secondary": "#001f90",
+                        "tertiary-container": "#34daff",
+                        "on-error-container": "#ffdad6",
+                        "primary-container": "#fbbf24",
+                        "inverse-surface": "#e0e3e8",
+                        "signal-blue": "#0030CF",
+                        "surface-container-low": "#181c20",
+                        "tertiary-fixed": "#afecff",
+                        "secondary-container": "#0130cf",
+                        "surface-container-highest": "#31353a",
+                        "on-tertiary": "#003641",
+                        "on-surface": "#e0e3e8",
+                        "on-secondary-container": "#a8b4ff",
+                        "secondary-fixed": "#dee0ff",
+                        "secondary-fixed-dim": "#bac3ff",
+                        "error": "#ffb4ab",
+                        "surface-container": "#1c2024",
+                        "on-secondary-fixed-variant": "#002eca",
+                        "on-primary-fixed": "#261a00",
+                        "cloud-mist": "#D7E1EC",
+                        "on-primary": "#402d00",
+                        "outline": "#9c8f79",
+                        "on-tertiary-fixed-variant": "#004e5d",
+                        "primary-fixed-dim": "#f9bd22",
+                        "on-primary-fixed-variant": "#5c4300",
+                        "surface-variant": "#31353a",
+                        "on-tertiary-fixed": "#001f27",
+                        "inverse-on-surface": "#2d3135",
+                        "surface": "#101418",
+                        "gold-highlight": "#FBBF24",
+                        "on-primary-container": "#6c4f00",
+                        "on-surface-variant": "#d3c5ac",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#0b0f12",
+                        "tertiary": "#b6edff",
+                        "on-background": "#e0e3e8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-width": "280px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "margin-safe": "32px",
+                        "toolbar-width": "56px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["JetBrains Mono"],
+                        "display-lg": ["Space Grotesk"],
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "headline-lg": ["Space Grotesk"],
+                        "body-md": ["Inter"],
+                        "technical-data": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "technical-data": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background-color: rgba(16, 20, 24, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 227, 232, 0.1);
+        }
+        
+        .grid-bg {
+            background-image: 
+                linear-gradient(to right, rgba(224, 227, 232, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(224, 227, 232, 0.05) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        .canvas-3d {
+            transform: perspective(1000px) rotateX(60deg) rotateZ(-45deg) scale(1.2);
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease-out;
+        }
+
+        .shadow-layer {
+            filter: drop-shadow(0px 20px 10px rgba(0,0,0,0.8));
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen overflow-hidden selection:bg-gold-highlight selection:text-black flex flex-col">
+<!-- TopNavBar (Simulate Active) -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-safe h-toolbar-width backdrop-blur-md border-b border-on-surface/10 bg-surface-dim/70">
+<div class="flex items-center gap-8">
+<span class="font-display-lg text-display-lg text-gold-highlight tracking-tighter">STUDIO_CANVAS_v2.0</span>
+<div class="hidden md:flex gap-6">
+<a class="font-technical-data text-technical-data text-on-surface-variant hover:text-primary transition-colors" href="#">Draft</a>
+<a class="font-technical-data text-technical-data text-on-surface-variant hover:text-primary transition-colors" href="#">Analyze</a>
+<a class="font-technical-data text-technical-data text-gold-highlight border-b-2 border-gold-highlight pb-1 transition-colors" href="#">Simulate</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="history">history</span></button>
+<button class="bg-gold-highlight text-black font-technical-data text-technical-data px-4 py-1.5 rounded hover:bg-primary transition-colors">Export</button>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-gutter top-1/2 -translate-y-1/2 flex flex-col items-center py-6 gap-4 z-50 backdrop-blur-md border border-on-surface/10 bg-surface-dim/70 rounded-full w-sidebar-width hidden md:flex">
+<div class="flex flex-col items-center mb-4">
+<span class="font-technical-data text-technical-data text-on-surface">TOOLS</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Precision</span>
+</div>
+<button class="p-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all rounded-full flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined" data-icon="timeline">timeline</span>
+<span class="font-label-caps text-label-caps opacity-0 group-hover:opacity-100 absolute left-full ml-2 glass-panel px-2 py-1 pointer-events-none">Line</span>
+</button>
+<button class="p-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all rounded-full flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined" data-icon="gesture">gesture</span>
+<span class="font-label-caps text-label-caps opacity-0 group-hover:opacity-100 absolute left-full ml-2 glass-panel px-2 py-1 pointer-events-none">Curve</span>
+</button>
+<button class="p-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all rounded-full flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+<span class="font-label-caps text-label-caps opacity-0 group-hover:opacity-100 absolute left-full ml-2 glass-panel px-2 py-1 pointer-events-none">Area</span>
+</button>
+<button class="p-3 bg-gold-highlight text-surface shadow-[0_0_15px_rgba(251,191,36,0.4)] transition-all rounded-full flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined" data-icon="eco">eco</span>
+<span class="font-label-caps text-label-caps opacity-0 group-hover:opacity-100 absolute left-full ml-2 glass-panel px-2 py-1 text-on-surface pointer-events-none">Planting</span>
+</button>
+<div class="mt-4 border-t border-on-surface/10 w-1/2"></div>
+<button class="mt-4 font-label-caps text-label-caps text-gold-highlight hover:text-primary transition-colors">Layer +</button>
+</aside>
+<!-- Main Canvas Area -->
+<main class="flex-1 relative w-full h-full pt-toolbar-width pb-12 overflow-hidden grid-bg flex items-center justify-center">
+<!-- 3D Environment Wrapper -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-[800px] h-[800px] canvas-3d relative">
+<!-- Base Lawn/Context -->
+<div class="absolute inset-0 bg-[#1a2128] border border-on-surface/20 rounded shadow-layer" style="transform: translateZ(0);">
+<!-- Context Map Texture Placeholder -->
+<div class="w-full h-full opacity-30" data-alt="A detailed satellite view map texture for architectural rendering in dark mode, showing abstract parcel boundaries and lush dark green vegetation elements, stylized for a professional CAD software interface, minimal colors." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB6Rg_ay0Q1H6zqYfZ2cZX-P4SWn72dytdZPvAdG_2gVlE6CYvJLtcd12-ZSk8YiU2KjYlS3k2sTADTZCAMHJDvzFwd5utV3KMEOJM0loBGOBdDDvBrRfgEjcl-aqPbtDL__IjNnowDbPNPLiCNmWz1Ercisievqf9lbzl6uOeFgHuYrVQCeaz0LhBHSc7cCtuqdSqB_fFlmkeI8yShE8nnh-fpmNAhmoS0kxHDCU8-SoMiFkx6UN6QsQ')"></div>
+</div>
+<!-- Proposed Structure: Terrace -->
+<div class="absolute top-[30%] left-[40%] w-64 h-48 bg-surface-variant border border-on-surface/30 shadow-layer" style="transform: translateZ(20px);">
+<div class="w-full h-full border border-gold-highlight/30 flex items-center justify-center text-on-surface-variant font-technical-data text-technical-data">TERRACE_01</div>
+</div>
+<!-- Proposed Structure: Pergola -->
+<div class="absolute top-[35%] left-[60%] w-32 h-64 bg-surface-bright/80 border-t border-r border-gold-highlight shadow-layer backdrop-blur-sm" style="transform: translateZ(60px);">
+<div class="w-full h-full bg-[linear-gradient(90deg,transparent_2px,rgba(251,191,36,0.2)_2px)]" style="background-size: 16px 16px;"></div>
+</div>
+<!-- Existing Trees (Cylinders/Spheres) -->
+<div class="absolute top-[20%] left-[20%] w-16 h-16 rounded-full bg-surface-container-highest border border-outline shadow-layer" style="transform: translateZ(40px);"></div>
+<div class="absolute top-[70%] left-[30%] w-20 h-20 rounded-full bg-surface-container-highest border border-outline shadow-layer" style="transform: translateZ(50px);"></div>
+<!-- Sun Path & Position -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none overflow-visible" style="transform: translateZ(150px) rotateX(-90deg) translateY(-200px);">
+<!-- Golden Arc -->
+<path d="M 100,400 Q 400,0 700,400" fill="none" opacity="0.6" stroke="#FBBF24" stroke-dasharray="4 4" stroke-width="2"></path>
+<!-- Sun Sphere -->
+<circle cx="550" cy="150" fill="#FBBF24" filter="drop-shadow(0 0 20px #FBBF24)" r="12"></circle>
+<line opacity="0.3" stroke="#FBBF24" stroke-dasharray="2 2" stroke-width="1" x1="550" x2="550" y1="150" y2="400"></line>
+</svg>
+<!-- Shadow Projections (Simulated with CSS polygons on Z=1 layer) -->
+<div class="absolute inset-0 pointer-events-none" style="transform: translateZ(1px);">
+<!-- Terrace Shadow -->
+<div class="absolute top-[30%] left-[40%] w-64 h-48 bg-black/60 blur-sm" style="transform: skewX(-30deg) translateX(40px) translateY(20px);"></div>
+<!-- Pergola Shadow -->
+<div class="absolute top-[35%] left-[60%] w-32 h-64 bg-black/50 blur-sm" style="transform: skewX(-30deg) translateX(40px) translateY(20px);">
+<div class="w-full h-full bg-[linear-gradient(90deg,transparent_4px,black_4px)]" style="background-size: 16px 16px;"></div>
+</div>
+<!-- Tree Shadows -->
+<div class="absolute top-[20%] left-[20%] w-16 h-16 rounded-full bg-black/70 blur-md" style="transform: skewX(-45deg) scaleY(1.5) translateX(30px) translateY(10px);"></div>
+<div class="absolute top-[70%] left-[30%] w-20 h-20 rounded-full bg-black/70 blur-md" style="transform: skewX(-45deg) scaleY(1.5) translateX(30px) translateY(10px);"></div>
+</div>
+</div>
+</div>
+<!-- HUD Layer: Time Controls -->
+<div class="absolute bottom-24 left-1/2 -translate-x-1/2 glass-panel p-4 rounded-lg flex flex-col gap-4 w-[400px] z-20">
+<div class="flex justify-between items-center font-technical-data text-technical-data">
+<span class="text-on-surface-variant">SOLAR_TIME</span>
+<span class="text-gold-highlight">14:30 EST</span>
+</div>
+<input class="w-full h-1 bg-surface-variant rounded-lg appearance-none cursor-pointer accent-gold-highlight" max="24" min="0" type="range" value="14.5"/>
+<div class="flex justify-between text-[10px] font-label-caps text-on-surface-variant">
+<span>06:00 (SR)</span>
+<span>12:00</span>
+<span>18:00 (SS)</span>
+</div>
+</div>
+<!-- HUD Layer: Meta Chips (Floating Data) -->
+<div class="absolute top-32 right-gutter flex flex-col gap-3 z-20">
+<div class="glass-panel px-3 py-2 rounded flex items-center gap-2 border-l-2 border-l-signal-blue">
+<span class="material-symbols-outlined text-[16px] text-signal-blue" data-icon="wb_sunny">wb_sunny</span>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant">SOLAR EXPOSURE</span>
+<span class="font-technical-data text-technical-data">Partial Shade (45%)</span>
+</div>
+</div>
+<div class="glass-panel px-3 py-2 rounded flex items-center gap-2 border-l-2 border-l-error">
+<span class="material-symbols-outlined text-[16px] text-error" data-icon="contrast">contrast</span>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant">SHADOW DEPTH</span>
+<span class="font-technical-data text-technical-data text-error">High (Zone B)</span>
+</div>
+</div>
+<div class="glass-panel px-3 py-2 rounded flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="calendar_month">calendar_month</span>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant">ANALYSIS DATE</span>
+<span class="font-technical-data text-technical-data">June 21 (Solstice)</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 w-full z-40 flex justify-between items-center px-margin-safe py-2 border-t border-on-surface/10 backdrop-blur-sm bg-surface-container-lowest/80">
+<span class="font-label-caps text-label-caps text-on-surface-variant">SPATIAL TRUTH // PROJECT COORDS: 34.0522° N, 118.2437° W</span>
+<div class="flex gap-6">
+<a class="font-technical-data text-technical-data text-on-surface-variant hover:text-white transition-colors" href="#">Telemetry</a>
+<a class="font-technical-data text-technical-data text-on-surface-variant hover:text-white transition-colors" href="#">Financials</a>
+<a class="font-technical-data text-technical-data text-on-surface-variant hover:text-white transition-colors" href="#">Grid Settings</a>
+</div>
+</footer>
+</body></html>

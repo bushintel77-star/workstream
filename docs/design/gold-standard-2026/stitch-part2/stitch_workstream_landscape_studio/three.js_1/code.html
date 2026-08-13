@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+<!-- STITCH_THREEJS_START:ANIMATION_120 class="fixed inset-0 w-full h-full bg-transparent" -->
+<div class="fixed inset-0 w-full h-full bg-transparent" style="display:block;">
+<script src="https://ajax.googleapis.com/ajax/libs/threejs/r125/three.min.js"></script>
+<div id="threejs-container-ANIMATION_120" style="width:100%;height:100%"></div>
+<script>
+(function() {
+  const container = document.getElementById('threejs-container-ANIMATION_120');
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  const scene = new THREE.Scene();
+const width = container.clientWidth || window.innerWidth;
+const height = container.clientHeight || window.innerHeight;
+const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+
+renderer.setSize(width, height);
+renderer.setPixelRatio(window.devicePixelRatio);
+container.appendChild(renderer.domElement);
+
+// Materials
+const trunkMat = new THREE.MeshPhongMaterial({ color: 0x2A3037 });
+const canopyMat = new THREE.MeshPhongMaterial({ 
+    color: 0xfbbf24, 
+    transparent: true, 
+    opacity: 0.6,
+    shininess: 100
+});
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+const pointLight = new THREE.PointLight(0xffffff, 1);
+pointLight.position.set(10, 10, 10);
+scene.add(pointLight);
+
+// Create a cluster of "Growth Proxies"
+const trees = [];
+for (let i = 0; i < 5; i++) {
+    const group = new THREE.Group();
+    
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 2), trunkMat);
+    trunk.position.y = 1;
+    group.add(trunk);
+    
+    const canopy = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), canopyMat);
+    canopy.position.y = 2.5;
+    group.add(canopy);
+    
+    group.position.set((Math.random() - 0.5) * 10, 0, (Math.random() - 0.5) * 10);
+    scene.add(group);
+    trees.push({ group, canopy, initialScale: 0.2 + Math.random() * 0.3 });
+}
+
+camera.position.set(10, 10, 10);
+camera.lookAt(0, 2, 0);
+
+function animate() {
+    requestAnimationFrame(animate);
+    const time = Date.now() * 0.001;
+    
+    // Growth simulation logic
+    const growthCycle = (Math.sin(time * 0.5) * 0.5 + 0.5); // 0 to 1
+    
+    trees.forEach((tree, i) => {
+        const scale = tree.initialScale + growthCycle * 2.0;
+        tree.canopy.scale.set(scale, scale * 1.2, scale);
+        tree.group.rotation.y += 0.005;
+    });
+    
+    renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+    const w = container.clientWidth || window.innerWidth;
+    const h = container.clientHeight || window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+});
+
+animate();
+})();
+</script>
+</div>
+<!-- STITCH_THREEJS_END:ANIMATION_120 -->
+</body>
+</html>

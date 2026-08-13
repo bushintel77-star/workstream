@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Developer Connectivity &amp; Onboarding HUD</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#261a00",
+                        "primary-fixed": "#ffdf9f",
+                        "on-primary": "#402d00",
+                        "on-secondary": "#001f90",
+                        "on-surface": "#e0e3e8",
+                        "error-container": "#93000a",
+                        "tertiary": "#b6edff",
+                        "inverse-surface": "#e0e3e8",
+                        "tertiary-container": "#34daff",
+                        "on-secondary-fixed": "#00105b",
+                        "on-background": "#e0e3e8",
+                        "primary-container": "#fbbf24",
+                        "primary-fixed-dim": "#f9bd22",
+                        "tertiary-fixed-dim": "#30d8fd",
+                        "gold-highlight": "#FBBF24",
+                        "background": "#101418",
+                        "surface-variant": "#31353a",
+                        "on-error": "#690005",
+                        "surface-bright": "#363a3e",
+                        "on-tertiary-container": "#005c6e",
+                        "surface-dim": "#1E2329",
+                        "on-primary-fixed-variant": "#5c4300",
+                        "error": "#ffb4ab",
+                        "surface-container": "#1c2024",
+                        "on-surface-variant": "#d3c5ac",
+                        "on-tertiary-fixed-variant": "#004e5d",
+                        "surface-container-low": "#181c20",
+                        "cloud-mist": "#D7E1EC",
+                        "surface-tint": "#f9bd22",
+                        "secondary": "#bac3ff",
+                        "on-tertiary": "#003641",
+                        "surface-container-lowest": "#0b0f12",
+                        "outline-variant": "#4f4633",
+                        "on-tertiary-fixed": "#001f27",
+                        "on-primary-container": "#6c4f00",
+                        "surface-container-highest": "#31353a",
+                        "secondary-fixed": "#dee0ff",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#afecff",
+                        "signal-blue": "#0030CF",
+                        "on-secondary-container": "#a8b4ff",
+                        "inverse-primary": "#795900",
+                        "inverse-on-surface": "#2d3135",
+                        "surface": "#101418",
+                        "on-secondary-fixed-variant": "#002eca",
+                        "secondary-container": "#0130cf",
+                        "primary": "#ffe1a7",
+                        "secondary-fixed-dim": "#bac3ff",
+                        "surface-container-high": "#262a2f",
+                        "outline": "#9c8f79"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "toolbar-width": "56px",
+                        "gutter": "16px",
+                        "margin-safe": "32px",
+                        "sidebar-width": "280px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Space Grotesk"],
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "headline-lg": ["Space Grotesk"],
+                        "body-md": ["Inter"],
+                        "technical-data": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "technical-data": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;family=Inter:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { margin: 0; overflow: hidden; background-color: #13171B; }
+        .canvas-grid {
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to right, rgba(255,255,255,0.01) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.01) 1px, transparent 1px);
+            background-size: 32px 32px, 32px 32px, 4px 4px, 4px 4px;
+        }
+        .leader-line {
+            position: absolute;
+            width: 1px;
+            background-color: rgba(255,255,255,0.8);
+            transform-origin: top left;
+            z-index: 10;
+        }
+        .origin-point {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 11;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-screen relative canvas-grid">
+<!-- Infinite Canvas Background Image -->
+<div class="absolute inset-0 z-0 opacity-20 pointer-events-none mix-blend-screen" data-alt="A highly detailed, top-down desaturated architectural satellite view of an urban landscape or park. The image should look like a professional CAD drawing or blueprint with precise geometric lines, minimal organic textures, and a very dark, moody atmosphere. High contrast between the dark background and faint white/grey structural outlines. The aesthetic is extremely technical, precise, and authoritative, fitting a 'Gold Standard 2026' UI design system. Minimalist and functional." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAx-kpRgaV4VCAY0AbbAfzvIazXrx9if2ox4rbpbUjAPqSyf8Usrvc0X3dDZmp7NlmHbAMxNQ528wqxlWUnEBihD7XrCILuXZ-vu_6qO-8E2jZCItocMZdJKIt8UG6M-k44fuCou7eSGFYn__Zoxs_gwGp0cvahQGdAP6yWdENTrNKCmjeToJmANJYH5ci0AYEyeneU6xIzP3bRkdj7WoYfNDAOql0hSUllkKZBHeNZ4J6sJ3A57FB2jw')">
+</div>
+<!-- HUD Container -->
+<div class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+<!-- Connectivity Status Card -->
+<div class="bg-surface-dim/70 backdrop-blur-md rounded-xl border border-on-surface/10 p-margin-safe w-[500px] pointer-events-auto relative shadow-[0_0_40px_rgba(0,0,0,0.5)]" id="hud-card">
+<!-- Header -->
+<div class="flex items-center justify-between mb-gutter border-b border-outline-variant/30 pb-unit">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gold-highlight text-[20px]" style="font-variation-settings: 'FILL' 1;">cable</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Connectivity Status</h2>
+</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-signal-blue animate-pulse"></span>
+                    SYS_INIT
+                </div>
+</div>
+<!-- Steps List -->
+<div class="space-y-gutter flex flex-col">
+<!-- Step 1 -->
+<div class="flex items-start gap-gutter bg-surface-container/50 p-gutter rounded-lg border border-transparent hover:border-outline-variant/50 transition-colors group">
+<div class="flex-shrink-0 mt-1">
+<span class="material-symbols-outlined text-signal-blue text-[18px]">pending</span>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-display-lg text-[16px] font-bold text-on-surface tracking-tight">STITCH_API_KEY Acquisition</span>
+<span class="font-label-caps text-label-caps text-signal-blue bg-signal-blue/10 px-2 py-0.5 rounded border border-signal-blue/30">PENDING</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-2">Copy key from Stitch Dashboard.</p>
+<div class="flex items-center justify-between bg-surface-container-lowest p-2 rounded border border-outline-variant/30">
+<code class="font-technical-data text-technical-data text-on-surface-variant opacity-50">sk_test_...</code>
+<button class="font-technical-data text-[11px] text-gold-highlight hover:text-primary transition-colors flex items-center gap-1 uppercase">
+<span class="material-symbols-outlined text-[14px]">content_copy</span> Copy
+                            </button>
+</div>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex items-start gap-gutter bg-surface-container/50 p-gutter rounded-lg border border-transparent hover:border-outline-variant/50 transition-colors group">
+<div class="flex-shrink-0 mt-1">
+<span class="material-symbols-outlined text-error text-[18px]">error</span>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-display-lg text-[16px] font-bold text-on-surface tracking-tight">Environment Configuration</span>
+<span class="font-label-caps text-label-caps text-error bg-error/10 px-2 py-0.5 rounded border border-error/30">MISSING</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-2">Populate .env files in \api, \web, and \mobile.</p>
+<div class="bg-surface-container-lowest p-2 rounded border border-outline-variant/30 font-technical-data text-technical-data text-on-surface-variant text-[11px] leading-tight">
+<div><span class="text-on-surface">\api\.env</span> → STITCH_KEY=</div>
+<div><span class="text-on-surface">\web\.env</span> → VITE_STITCH_KEY=</div>
+</div>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="flex items-start gap-gutter bg-surface-container/50 p-gutter rounded-lg border border-transparent hover:border-outline-variant/50 transition-colors group">
+<div class="flex-shrink-0 mt-1">
+<span class="material-symbols-outlined text-outline text-[18px]">block</span>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-display-lg text-[16px] font-bold text-on-surface tracking-tight">MCP Activation (Figma / Stitch)</span>
+<span class="font-label-caps text-label-caps text-outline bg-outline/10 px-2 py-0.5 rounded border border-outline/30">DISABLED</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-2">Set "disabled": false in config.</p>
+<div class="bg-surface-container-lowest p-2 rounded border border-outline-variant/30 font-technical-data text-technical-data text-[11px] overflow-x-auto whitespace-nowrap">
+<span class="text-on-surface-variant">C:\Users\User\.devin\mcp_config.json:</span> <span class="text-gold-highlight">"disabled": false</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Decorative gradient to anchor -->
+<div class="absolute -bottom-px left-0 w-full h-px bg-gradient-to-r from-transparent via-on-surface/20 to-transparent"></div>
+</div>
+</div>
+<!-- Leader Line Elements -->
+<div class="origin-point" id="origin-point" style="left: 20%; top: 70%;"></div>
+<div class="leader-line" id="leader-line"></div>
+<!-- Status Rail -->
+<div class="fixed bottom-0 left-0 w-full h-8 bg-surface-container-lowest/90 border-t border-outline-variant/20 flex justify-between items-center px-gutter z-50 font-technical-data text-technical-data text-on-surface-variant/60">
+<div class="flex gap-4">
+<span>X: 144.9631 Y: -37.8136</span>
+<span>ZOOM: 1.0x</span>
+</div>
+<div class="flex gap-4 items-center">
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-signal-blue"></span> OFFLINE</span>
+<span>DEV_MODE</span>
+</div>
+</div>
+<script>
+        // Draw leader line from HUD corner to local origin
+        function updateLeaderLine() {
+            const hud = document.getElementById('hud-card');
+            const origin = document.getElementById('origin-point');
+            const line = document.getElementById('leader-line');
+            
+            if (!hud || !origin || !line) return;
+
+            const hudRect = hud.getBoundingClientRect();
+            const originRect = origin.getBoundingClientRect();
+
+            // Connect from bottom-left of HUD to origin
+            const startX = hudRect.left;
+            const startY = hudRect.bottom;
+            const endX = originRect.left + (originRect.width/2);
+            const endY = originRect.top + (originRect.height/2);
+
+            const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+            const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+
+            line.style.left = `${startX}px`;
+            line.style.top = `${startY}px`;
+            line.style.width = `${length}px`;
+            line.style.transform = `rotate(${angle}deg)`;
+        }
+
+        window.addEventListener('resize', updateLeaderLine);
+        // Initial draw after a brief delay to ensure layout is done
+        setTimeout(updateLeaderLine, 100);
+    </script>
+</body></html>

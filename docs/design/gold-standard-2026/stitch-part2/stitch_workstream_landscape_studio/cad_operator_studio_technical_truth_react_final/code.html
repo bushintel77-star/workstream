@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>STUDIO_CANVAS_v2.0 - CAD Operator Studio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Inter:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container": "#1c2024",
+                      "secondary-fixed-dim": "#bac3ff",
+                      "primary-fixed": "#ffdf9f",
+                      "background": "#101418",
+                      "on-secondary-fixed": "#00105b",
+                      "surface-container-low": "#181c20",
+                      "surface": "#101418",
+                      "on-tertiary-fixed": "#001f27",
+                      "surface-variant": "#31353a",
+                      "on-primary-container": "#6c4f00",
+                      "on-secondary": "#001f90",
+                      "secondary-fixed": "#dee0ff",
+                      "error-container": "#93000a",
+                      "surface-container-highest": "#31353a",
+                      "outline": "#9c8f79",
+                      "on-surface": "#e0e3e8",
+                      "on-error": "#690005",
+                      "on-secondary-fixed-variant": "#002eca",
+                      "on-primary-fixed-variant": "#5c4300",
+                      "on-tertiary": "#003641",
+                      "inverse-primary": "#795900",
+                      "primary-container": "#fbbf24",
+                      "tertiary-container": "#34daff",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "primary-fixed-dim": "#f9bd22",
+                      "tertiary": "#b6edff",
+                      "signal-blue": "#0030CF",
+                      "cloud-mist": "#D7E1EC",
+                      "on-secondary-container": "#a8b4ff",
+                      "surface-container-lowest": "#0b0f12",
+                      "gold-highlight": "#FBBF24",
+                      "on-surface-variant": "#d3c5ac",
+                      "error": "#ffb4ab",
+                      "inverse-surface": "#e0e3e8",
+                      "tertiary-fixed": "#afecff",
+                      "secondary-container": "#0130cf",
+                      "surface-container-high": "#262a2f",
+                      "on-primary-fixed": "#261a00",
+                      "outline-variant": "#4f4633",
+                      "surface-bright": "#363a3e",
+                      "on-tertiary-container": "#005c6e",
+                      "secondary": "#bac3ff",
+                      "on-error-container": "#ffdad6",
+                      "inverse-on-surface": "#2d3135",
+                      "primary": "#ffe1a7",
+                      "on-primary": "#402d00",
+                      "surface-dim": "#101418",
+                      "surface-tint": "#f9bd22",
+                      "on-background": "#e0e3e8",
+                      "tertiary-fixed-dim": "#30d8fd"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "toolbar-width": "56px",
+                      "gutter": "16px",
+                      "margin-safe": "32px",
+                      "sidebar-width": "280px"
+              },
+              "fontFamily": {
+                      "technical-data": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg": [
+                              "Space Grotesk"
+                      ],
+                      "display-lg": [
+                              "Space Grotesk"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg-mobile": [
+                              "Space Grotesk"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "technical-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "52px",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        /* Custom styles for specific elements not easily handled by standard Tailwind utilities alone */
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(49, 53, 58, 0.4) 0%, rgba(16, 20, 24, 0.7) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 227, 232, 0.1);
+        }
+        
+        .bg-grid-pattern {
+            background-size: 32px 32px;
+            background-image: 
+                linear-gradient(to right, rgba(224, 227, 232, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(224, 227, 232, 0.03) 1px, transparent 1px);
+        }
+
+        .nested-grid {
+            background-size: 4px 4px;
+            background-image: 
+                linear-gradient(to right, rgba(224, 227, 232, 0.01) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(224, 227, 232, 0.01) 1px, transparent 1px);
+        }
+
+        .strike-glow {
+            box-shadow: 0 0 40px 10px rgba(255, 69, 58, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-hidden antialiased">
+<!-- Infinite Canvas Workspace -->
+<div class="fixed inset-0 bg-grid-pattern z-0 flex items-center justify-center" style="background-color: #0b0f12;">
+<div class="absolute inset-0 nested-grid z-0"></div>
+<!-- Synthetic Background to represent CAD data -->
+<div class="absolute inset-0 bg-cover bg-center opacity-60 z-0" data-alt="A highly complex, technical CAD visualization of a subsurface utility network. Translucent pipes and conduits intersect against a dark, precise grid background. The scene is lit with clinical, cool lighting, highlighting geometric volumes. A stark red glowing area indicates a conflict point between a gas main and electric line. A modern, dark-mode architectural software interface style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD0z6WHytJEvjnHfvI5geRDvwTbCxZmTGiLNc7Q3U3cMvilg5zR_elsl3npZ30D-WDFHv-e-oCD1CkVO930B7uLHGWwCplzk3L80cpSsDRMfHsq3m1-Ssg5sTxFCzahd8BRegLD347htPFz_r6JKEGOYSufOfSVquRTO_qBOhge4PWei0cTs_EgniufmIkLSBu16HsQvuN5MI75Gcv4E3DQdOD04zYeQQ33Gw7GyvlP85H91nHauQCJQA')"></div>
+<!-- Simulated Conflict Point (Strike Alert Anchor) -->
+<div class="absolute left-1/3 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+<!-- Strike Highlight -->
+<div class="absolute inset-0 m-auto w-32 h-32 bg-red-500/20 rounded-full blur-xl animate-pulse"></div>
+<!-- Strike Alert HUD -->
+<div class="relative glass-panel rounded-xl w-80 p-5 mt-[-150px] ml-[-50px] border-red-500/30">
+<div class="absolute -bottom-3 left-1/2 w-4 h-4 glass-panel border-t-0 border-l-0 rotate-45 transform -translate-x-1/2 border-red-500/30"></div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-technical-data text-technical-data text-red-400 tracking-wider">STRIKE ALERT</span>
+<span class="material-symbols-outlined text-red-500 text-[18px]">warning</span>
+</div>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-white mb-4">Conflict Detected.</h3>
+<div class="space-y-2 mb-5">
+<p class="font-technical-data text-technical-data text-on-surface-variant">Gas Main (G-004) × Electric Conduit (E-112)</p>
+<div class="flex justify-between items-center border-t border-on-surface/10 pt-2">
+<span class="font-technical-data text-technical-data text-on-surface-variant">Depth:</span>
+<span class="font-technical-data text-technical-data text-white">1.8m</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-technical-data text-technical-data text-on-surface-variant">Severity:</span>
+<span class="font-technical-data text-technical-data text-red-400">CRITICAL</span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 py-2 px-4 rounded bg-surface-variant/50 hover:bg-surface-variant border border-on-surface/10 text-white font-technical-data text-technical-data transition-colors">
+                        Inspect
+                    </button>
+<button class="flex-1 py-2 px-4 rounded bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-red-100 font-technical-data text-technical-data transition-colors">
+                        Resolve
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-safe h-toolbar-width bg-surface-dim/70 font-technical-data text-technical-data backdrop-blur-md border-b border-on-surface/10 flat no shadows">
+<!-- Brand Area -->
+<div class="flex items-center gap-6">
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-variant/50 text-on-surface-variant transition-colors border border-on-surface/10">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="font-display-lg text-display-lg text-gold-highlight tracking-tighter text-[20px]">STUDIO_CANVAS_v2.0</div>
+</div>
+<!-- Project Info -->
+<div class="hidden md:flex items-center gap-8 px-6 border-l border-r border-on-surface/10 h-full">
+<div class="flex flex-col justify-center">
+<span class="text-[10px] text-on-surface-variant opacity-70">Project: Willow Creek</span>
+<span class="text-white">Site Plan - Subsurface Analysis</span>
+</div>
+<div class="flex flex-col justify-center border-l border-on-surface/10 pl-4">
+<span class="text-[10px] text-on-surface-variant opacity-70">Status:</span>
+<span class="text-green-400">Active</span>
+</div>
+<div class="flex flex-col justify-center border-l border-on-surface/10 pl-4">
+<span class="text-[10px] text-on-surface-variant opacity-70">Project:</span>
+<span class="text-on-surface-variant">Last Save: 14:02</span>
+</div>
+</div>
+<!-- Navigation Links (Simulated active state for 'Analyze') -->
+<div class="hidden md:flex gap-6 h-full">
+<a class="h-full flex items-center text-on-surface-variant hover:text-primary transition-colors" href="#">Draft</a>
+<a class="h-full flex items-center text-gold-highlight border-b-2 border-gold-highlight pb-1 hover:text-primary transition-colors Active: scale-95 duration-100" href="#">Analyze</a>
+<a class="h-full flex items-center text-on-surface-variant hover:text-primary transition-colors" href="#">Simulate</a>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-4">
+<button class="px-4 py-1.5 rounded bg-surface-variant/50 border border-on-surface/10 text-white hover:bg-surface-variant transition-colors">Export</button>
+<div class="flex gap-2 border-l border-on-surface/10 pl-4">
+<button class="text-on-surface-variant hover:text-white transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="text-on-surface-variant hover:text-white transition-colors">
+<span class="material-symbols-outlined">history</span>
+</button>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-variant border border-on-surface/20 ml-2 overflow-hidden">
+<img alt="Architect Profile" class="w-full h-full object-cover" data-alt="A small, professional headshot avatar of a lead architect, dramatic lighting, dark background, desaturated tones matching the UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHyoUA8EroUYvch4yQJn-v8Uxl7tTLJtzz_uHvwB83Bjhhhkld532gF5SzJAziiRNO-zOH42n7iimwrm0qR3tsiGsZ79I8BGT0GdaKOLaGaJzVBoCjtmiOzh2Qaguouwe18BVu_uqz_FFPudURcI2KxzCpjod5BNYRY6yJR63SjWRq755fVsMt0bDRIcy1vCrP9nRHdjL_Po2DxLfObEAQhSoZp96rk1Yj-t3MyjsrO0-k5YSNibfsaQ"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (Tools Ribbon) -->
+<aside class="fixed left-gutter top-1/2 -translate-y-1/2 flex flex-col items-center py-6 gap-4 z-50 bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 flat no shadows fixed left-unit top-1/2 -translate-y-1/2 rounded-full w-[64px]">
+<div class="mb-4 pb-4 border-b border-on-surface/10 w-full flex flex-col items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">TOOLS</span>
+<span class="text-[8px] text-on-surface-variant opacity-50 uppercase tracking-widest">Precision</span>
+</div>
+<nav class="flex flex-col gap-2 w-full px-2">
+<button class="w-10 h-10 rounded-full flex justify-center items-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 relative group">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">timeline</span>
+<!-- Tooltip -->
+<div class="absolute left-full ml-4 px-2 py-1 bg-surface-container rounded border border-on-surface/10 font-label-caps text-label-caps text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Line</div>
+</button>
+<button class="w-10 h-10 rounded-full flex justify-center items-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 relative group">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">gesture</span>
+<!-- Tooltip -->
+<div class="absolute left-full ml-4 px-2 py-1 bg-surface-container rounded border border-on-surface/10 font-label-caps text-label-caps text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Curve</div>
+</button>
+<button class="w-10 h-10 rounded-full flex justify-center items-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 relative group">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">layers</span>
+<!-- Tooltip -->
+<div class="absolute left-full ml-4 px-2 py-1 bg-surface-container rounded border border-on-surface/10 font-label-caps text-label-caps text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Area</div>
+</button>
+<button class="w-10 h-10 rounded-full flex justify-center items-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 relative group">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">eco</span>
+<!-- Tooltip -->
+<div class="absolute left-full ml-4 px-2 py-1 bg-surface-container rounded border border-on-surface/10 font-label-caps text-label-caps text-white whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Planting</div>
+</button>
+</nav>
+<div class="mt-auto pt-4 border-t border-on-surface/10 w-full flex justify-center">
+<button class="w-10 h-10 rounded-full bg-surface-variant/50 hover:bg-surface-variant flex justify-center items-center text-white border border-on-surface/20 transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</aside>
+<!-- Floating HUD - Right Side Data Lens -->
+<div class="fixed right-margin-safe top-1/2 -translate-y-1/2 w-80 glass-panel rounded-2xl p-6 z-40 flex flex-col gap-6">
+<!-- Header -->
+<div class="flex justify-between items-center mb-2">
+<button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-low border border-on-surface/10 text-on-surface-variant hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-low border border-on-surface/10 text-on-surface-variant hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[16px]">settings</span>
+</button>
+</div>
+<!-- Radial Dial Simulator -->
+<div class="relative w-full aspect-square flex items-center justify-center my-4">
+<!-- Dial Rings -->
+<div class="absolute inset-4 rounded-full border border-on-surface/10 border-dashed animate-[spin_60s_linear_infinite]"></div>
+<div class="absolute inset-8 rounded-full border border-on-surface/5"></div>
+<!-- Active Indicator Ring (Subsurface) -->
+<svg class="absolute inset-0 w-full h-full -rotate-90" viewbox="0 0 100 100">
+<circle cx="50" cy="50" fill="none" r="45" stroke="rgba(224, 227, 232, 0.05)" stroke-width="8"></circle>
+<circle class="drop-shadow-[0_0_10px_rgba(52,218,255,0.5)]" cx="50" cy="50" fill="none" r="45" stroke="#34daff" stroke-dasharray="283" stroke-dashoffset="180" stroke-width="8"></circle>
+</svg>
+<!-- Center Content -->
+<div class="absolute inset-12 bg-surface-container-low rounded-full shadow-inner flex flex-col items-center justify-center z-10 border border-on-surface/5">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-white tracking-widest text-center leading-tight">SUBSURFACE</span>
+</div>
+<!-- Labels Around Dial -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 font-technical-data text-technical-data text-on-surface-variant">SOLAR</div>
+<div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 font-technical-data text-technical-data text-on-surface-variant">HYDRAULICS</div>
+<div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 flex flex-col items-end">
+<span class="font-technical-data text-technical-data text-on-surface-variant text-[10px]">Depth</span>
+<span class="font-technical-data text-technical-data text-white">1.8m</span>
+</div>
+<!-- Dial Icons (Static representation) -->
+<div class="absolute inset-0 pointer-events-none">
+<span class="material-symbols-outlined absolute top-[20%] left-[15%] text-on-surface-variant text-[16px] -rotate-45">ac_unit</span>
+<span class="material-symbols-outlined absolute top-[40%] left-[5%] text-tertiary-container text-[16px]">layers</span>
+<span class="material-symbols-outlined absolute top-[65%] left-[15%] text-on-surface-variant text-[16px] rotate-45">architecture</span>
+<span class="material-symbols-outlined absolute top-[20%] right-[15%] text-on-surface-variant text-[16px] rotate-45">solar_power</span>
+<span class="material-symbols-outlined absolute top-[40%] right-[5%] text-on-surface-variant text-[16px]">grid_4x4</span>
+<span class="material-symbols-outlined absolute top-[65%] right-[15%] text-on-surface-variant text-[16px] -rotate-45">water_drop</span>
+</div>
+</div>
+<!-- Layer Toggles -->
+<div class="flex flex-col gap-3 mt-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">straighten</span>
+<span class="font-technical-data text-technical-data text-white">Depth</span>
+</div>
+<!-- Simple Toggle Switch HTML -->
+<div class="w-8 h-4 bg-tertiary-container rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">plumbing</span>
+<span class="font-technical-data text-technical-data text-on-surface-variant">Sewers</span>
+</div>
+<div class="w-8 h-4 bg-surface-variant rounded-full relative cursor-pointer border border-on-surface/20">
+<div class="absolute left-1 top-0.5 w-3 h-3 bg-on-surface-variant rounded-full"></div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">water_drop</span>
+<span class="font-technical-data text-technical-data text-on-surface-variant">Hydraulics</span>
+</div>
+<div class="w-8 h-4 bg-surface-variant rounded-full relative cursor-pointer border border-on-surface/20">
+<div class="absolute left-1 top-0.5 w-3 h-3 bg-on-surface-variant rounded-full"></div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">local_fire_department</span>
+<span class="font-technical-data text-technical-data text-white">Gas Lines</span>
+</div>
+<div class="w-8 h-4 bg-tertiary-container rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">layers</span>
+<span class="font-technical-data text-technical-data text-on-surface-variant">Electric Layers</span>
+</div>
+<div class="w-8 h-4 bg-surface-variant rounded-full relative cursor-pointer border border-on-surface/20">
+<div class="absolute left-1 top-0.5 w-3 h-3 bg-on-surface-variant rounded-full"></div>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">bolt</span>
+<span class="font-technical-data text-technical-data text-white">Electric Cables</span>
+</div>
+<div class="w-8 h-4 bg-tertiary-container rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Status Rail -->
+<footer class="fixed bottom-0 w-full z-40 flex justify-between items-center px-margin-safe py-2 bg-surface-container-lowest/80 text-signal-blue font-technical-data text-technical-data font-label-caps text-label-caps text-on-surface-variant docked full-width bottom-0 border-t border-on-surface/10 backdrop-blur-sm flat no shadows">
+<div class="text-on-surface-variant opacity-80 tracking-widest text-[10px]">
+            SPATIAL TRUTH // PROJECT COORDS: 34.0522° N, 118.2437° W
+        </div>
+<div class="flex gap-6">
+<a class="text-on-surface-variant hover:text-white transition-colors" href="#">Telemetry</a>
+<a class="text-on-surface-variant hover:text-white transition-colors" href="#">Financials</a>
+<a class="text-on-surface-variant hover:text-white transition-colors" href="#">Grid Settings</a>
+</div>
+</footer>
+</body></html>

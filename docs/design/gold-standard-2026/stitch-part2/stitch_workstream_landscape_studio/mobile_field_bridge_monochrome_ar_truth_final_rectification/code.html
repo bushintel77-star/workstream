@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mobile Field Bridge - Gold Standard 2026</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              background: '#ffffff',
+              surface: '#f8fafc',
+              'surface-dim': '#f1f5f9',
+              primary: '#0f172a',
+              secondary: '#334155',
+              'primary-container': '#e2e8f0',
+              'on-primary-container': '#0f172a',
+              'secondary-container': '#cbd5e1',
+              'on-secondary-container': '#0f172a',
+              'on-surface': '#0f172a',
+              'on-surface-variant': '#475569',
+              error: '#ef4444',
+              'error-container': '#fef2f2',
+              'on-error-container': '#991b1b',
+              'glass-border': 'rgba(255, 255, 255, 0.2)',
+              'bone-white': '#f8f9ff',
+              'ux-grey': '#9ca3af'
+            },
+            fontFamily: {
+              headline: ["Public Sans", "sans-serif"],
+              display: ["Public Sans", "sans-serif"],
+              body: ["Public Sans", "sans-serif"],
+              label: ["Public Sans", "sans-serif"],
+              'technical-metadata': ["Space Grotesk", "sans-serif"],
+              'ui-label-sm': ["Public Sans", "sans-serif"]
+            },
+            spacing: {
+              'viewport-margin': '1.5rem',
+              'chip-gap': '0.5rem'
+            },
+            fontSize: {
+              'technical-metadata': '0.75rem',
+              'ui-label-sm': '0.875rem'
+            }
+          }
+        }
+      }
+    </script>
+<style>
+      @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+      
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #0f172a; /* Dark background to simulate camera feed if image fails */
+      }
+      
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .glass-panel-error {
+        background: rgba(239, 68, 68, 0.15);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+      }
+      
+      .ar-line {
+        position: absolute;
+        height: 2px;
+        background: repeating-linear-gradient(
+          90deg,
+          #ef4444,
+          #ef4444 10px,
+          transparent 10px,
+          transparent 20px
+        );
+        transform-origin: 0 50%;
+      }
+      
+      .pulse-ring {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      
+      @keyframes pulse {
+        0% { transform: scale(0.8); opacity: 0.8; }
+        100% { transform: scale(2.5); opacity: 0; }
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-body text-bone-white antialiased h-screen w-screen relative selection:bg-primary/30">
+<!-- Simulated Camera Feed Background -->
+<div class="absolute inset-0 bg-cover bg-center w-full h-full object-cover z-0 filter brightness-75" data-alt="A high-resolution, full-bleed vertical camera feed of a modern suburban Armadale backyard construction site. The scene is brightly lit with natural daylight, showing excavated dirt, concrete formwork, and landscaping markers. The aesthetic is clean, light-mode, and highly technical, suitable for an augmented reality interface background. The image should be photorealistic and detailed." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBwA-KVIhcuObEALF7wWMHSrb-ymJnFTxHjiigXBvu-e6ToppdM9nf9J7KcS7mFg0Vwl4ski_QGEbw3cVfbst6ZyIXeoD-4ClnOPyRiEO4u-hIeKv95OOt31HMirWd8XFNFG4GovVkpH82UaLvQZgDbImCwSSHtD6w7z0XYcrmeWpGIsi2P_4kf62VtDbIjZc5d5UbgfhbWIgXtGd-CUdBx2pF1119SRc34CvphceC9chgZG24lOvaNyQ')">
+</div>
+<!-- Top App Bar (From Shared Components) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-viewport-margin h-[24px] bg-transparent text-bone-white pt-4 mix-blend-difference">
+<div class="font-technical-metadata text-technical-metadata uppercase tracking-widest text-bone-white/70">
+            GOLD STANDARD 2026
+        </div>
+<div class="flex gap-4 items-center">
+<span class="material-symbols-outlined text-[16px] text-bone-white/70" style="font-variation-settings: 'FILL' 1;">gps_fixed</span>
+<span class="material-symbols-outlined text-[16px] text-bone-white/70" style="font-variation-settings: 'FILL' 1;">wifi_tethering</span>
+<span class="material-symbols-outlined text-[16px] text-bone-white/70" style="font-variation-settings: 'FILL' 1;">battery_full</span>
+</div>
+</header>
+<!-- AR Scene Container -->
+<main class="absolute inset-0 z-10 pointer-events-none text-bone-white">
+<!-- Center Reticle -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 opacity-50 flex items-center justify-center">
+<div class="w-full h-[1px] bg-bone-white absolute"></div>
+<div class="h-full w-[1px] bg-bone-white absolute"></div>
+<div class="w-2 h-2 rounded-full border border-bone-white"></div>
+</div>
+<!-- Telemetry Data (Top Right) -->
+<div class="absolute top-16 right-viewport-margin glass-panel rounded-xl p-4 flex flex-col gap-1 text-right">
+<div class="font-technical-metadata text-technical-metadata text-ux-grey mb-1">COORDINATES (M)</div>
+<div class="font-technical-metadata text-sm tracking-wider">X: 1245.320</div>
+<div class="font-technical-metadata text-sm tracking-wider">Y: 876.155</div>
+<div class="font-technical-metadata text-sm tracking-wider">Z: 45.002</div>
+<div class="font-technical-metadata text-[10px] text-bone-white mt-2 flex items-center justify-end gap-1 opacity-80">
+<span class="w-1.5 h-1.5 rounded-full bg-bone-white"></span>
+                ACCURACY: 8MM
+            </div>
+</div>
+<!-- Live Metrics (Top Left) -->
+<div class="absolute top-16 left-viewport-margin flex flex-col gap-3">
+<div class="glass-panel rounded-xl p-4 w-36">
+<div class="font-technical-metadata text-technical-metadata text-ux-grey mb-1 uppercase">Flow Rate</div>
+<div class="font-display text-2xl font-light">15.5 <span class="text-sm text-ux-grey">GPM</span></div>
+</div>
+<div class="glass-panel rounded-xl p-4 w-36">
+<div class="font-technical-metadata text-technical-metadata text-ux-grey mb-1 uppercase">Pressure Drop</div>
+<div class="font-display text-2xl font-light">2.1 <span class="text-sm text-ux-grey">PSI</span></div>
+</div>
+</div>
+<!-- Volume Metrics (Right Middle) -->
+<div class="absolute top-1/2 right-viewport-margin -translate-y-1/2 glass-panel rounded-xl p-4 w-40 flex flex-col gap-4">
+<div>
+<div class="font-technical-metadata text-technical-metadata text-ux-grey mb-1 uppercase">Area</div>
+<div class="font-display text-xl font-light">1200 <span class="text-sm text-ux-grey">SQ FT</span></div>
+</div>
+<div>
+<div class="font-technical-metadata text-technical-metadata text-ux-grey mb-1 uppercase">Volume</div>
+<div class="font-display text-xl font-light">450 <span class="text-sm text-ux-grey">CU YD</span></div>
+</div>
+</div>
+<!-- Simulated AR Overlays & Markers -->
+<!-- RTK Staking Chip 1 -->
+<div class="absolute top-[60%] left-[30%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-auto">
+<div class="glass-panel rounded-full px-3 py-1 mb-2 font-technical-metadata text-[10px] flex items-center gap-2 shadow-lg backdrop-blur-xl border-bone-white/30 text-bone-white">
+<span class="w-2 h-2 rounded-full bg-bone-white"></span>
+                PT-A102
+            </div>
+<div class="w-3 h-3 rounded-full border-2 border-bone-white bg-bone-white/50 relative">
+<div class="absolute inset-0 rounded-full border border-bone-white pulse-ring"></div>
+</div>
+</div>
+<!-- Strike Alert (Intersecting Gas Line) -->
+<div class="absolute top-[45%] left-[55%] -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-auto">
+<div class="glass-panel-error rounded-xl p-4 flex items-center gap-4 shadow-2xl">
+<span class="material-symbols-outlined text-error text-3xl" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div class="flex flex-col">
+<span class="font-headline font-bold text-error tracking-wide">UTILITY STRIKE ALERT</span>
+<span class="font-technical-metadata text-xs text-error/80">INTERSECTION: HIGH PRESSURE GAS</span>
+</div>
+<span class="material-symbols-outlined text-error text-2xl animate-pulse">priority_high</span>
+</div>
+<!-- Alert Marker on ground -->
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-8">
+<div class="w-6 h-6 rounded-full border-2 border-error flex items-center justify-center bg-error/20 relative">
+<div class="w-full h-[2px] bg-error absolute rotate-45"></div>
+<div class="w-full h-[2px] bg-error absolute -rotate-45"></div>
+<div class="absolute inset-[-20px] rounded-full border border-error/50 pulse-ring"></div>
+</div>
+</div>
+</div>
+<!-- AR Intersection Lines (Simulated SVG) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-20" preserveaspectratio="none" viewbox="0 0 1000 1000">
+<path d="M300,600 L550,450" fill="none" opacity="0.8" stroke="#ef4444" stroke-dasharray="10,10" stroke-width="2"></path>
+<path d="M550,450 L800,650" fill="none" opacity="0.4" stroke="#ef4444" stroke-dasharray="10,10" stroke-width="2"></path>
+</svg>
+</main>
+<!-- Side Nav (Left - Tools) -->
+<nav class="fixed left-viewport-margin top-1/2 -translate-y-1/2 flex flex-col gap-chip-gap p-2 z-40 bg-surface-dim/10 backdrop-blur-md border border-glass-border rounded-2xl w-16 shadow-sm">
+<div class="flex flex-col items-center mb-4 mt-2">
+<span class="font-technical-metadata text-[8px] text-ux-grey uppercase tracking-widest">Tools</span>
+<span class="font-technical-metadata text-[8px] text-ux-grey">V-01</span>
+</div>
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-bone-white bg-bone-white/20 transition-all duration-300 ease-in-out group">
+<span class="material-symbols-outlined text-[20px] mb-1 group-hover:scale-110 transition-transform">edit_note</span>
+<span class="font-technical-metadata text-[9px] opacity-100">Sketch</span>
+</button>
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-ux-grey hover:bg-bone-white/10 hover:text-bone-white transition-all duration-300 ease-in-out group">
+<span class="material-symbols-outlined text-[20px] mb-1 group-hover:scale-110 transition-transform">architecture</span>
+<span class="font-technical-metadata text-[9px] opacity-0 group-hover:opacity-100 absolute mt-12 transition-opacity">CAD</span>
+</button>
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-ux-grey hover:bg-bone-white/10 hover:text-bone-white transition-all duration-300 ease-in-out group">
+<span class="material-symbols-outlined text-[20px] mb-1 group-hover:scale-110 transition-transform">layers</span>
+<span class="font-technical-metadata text-[9px] opacity-0 group-hover:opacity-100 absolute mt-12 transition-opacity">Elev</span>
+</button>
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-ux-grey hover:bg-bone-white/10 hover:text-bone-white transition-all duration-300 ease-in-out group">
+<span class="material-symbols-outlined text-[20px] mb-1 group-hover:scale-110 transition-transform">view_in_ar</span>
+<span class="font-technical-metadata text-[9px] opacity-0 group-hover:opacity-100 absolute mt-12 transition-opacity">AR</span>
+</button>
+</nav>
+<!-- Side Nav (Right - Lens) -->
+<nav class="fixed right-viewport-margin top-1/2 -translate-y-1/2 flex flex-col gap-chip-gap p-2 z-40 bg-surface-dim/10 backdrop-blur-md border border-glass-border rounded-2xl w-16 shadow-sm hidden md:flex">
+<div class="flex flex-col items-center mb-4 mt-2">
+<span class="font-technical-metadata text-[8px] text-ux-grey uppercase tracking-widest">Lens</span>
+<span class="font-technical-metadata text-[8px] text-ux-grey">TRUTH</span>
+</div>
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-bone-white bg-bone-white/20 transition-all duration-300 ease-in-out group">
+<span class="material-symbols-outlined text-[20px] mb-1 group-hover:scale-110 transition-transform">layers</span>
+<span class="font-technical-metadata text-[9px] opacity-100">Subsurf</span>
+</button>
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-ux-grey hover:bg-bone-white/10 hover:text-bone-white transition-all duration-300 ease-in-out group">
+<span class="material-symbols-outlined text-[20px] mb-1 group-hover:scale-110 transition-transform">wb_sunny</span>
+<span class="font-technical-metadata text-[9px] opacity-0 group-hover:opacity-100 absolute mt-12 transition-opacity">Solar</span>
+</button>
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-ux-grey hover:bg-bone-white/10 hover:text-bone-white transition-all duration-300 ease-in-out group">
+<span class="material-symbols-outlined text-[20px] mb-1 group-hover:scale-110 transition-transform">water_drop</span>
+<span class="font-technical-metadata text-[9px] opacity-0 group-hover:opacity-100 absolute mt-12 transition-opacity">Hydro</span>
+</button>
+<button class="flex flex-col items-center justify-center p-2 rounded-xl text-ux-grey hover:bg-bone-white/10 hover:text-bone-white transition-all duration-300 ease-in-out group">
+<span class="material-symbols-outlined text-[20px] mb-1 group-hover:scale-110 transition-transform">eco</span>
+<span class="font-technical-metadata text-[9px] opacity-0 group-hover:opacity-100 absolute mt-12 transition-opacity">Growth</span>
+</button>
+</nav>
+<!-- Bottom Controls (Floating Capture & Telemetry) -->
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-4">
+<div class="font-technical-metadata text-xs text-ux-grey tracking-[0.2em] bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm border border-bone-white/10">
+            SCALE 1:50
+        </div>
+<button class="w-16 h-16 rounded-full border-[3px] border-bone-white/80 bg-bone-white/20 backdrop-blur-md flex items-center justify-center hover:bg-bone-white/40 active:scale-95 transition-all duration-200 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+<div class="w-12 h-12 rounded-full border border-bone-white/50 flex items-center justify-center">
+<span class="w-8 h-8 rounded-full bg-bone-white shadow-inner"></span>
+</div>
+</button>
+</div>
+</body></html>
