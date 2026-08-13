@@ -10,15 +10,32 @@ type SentryModule = {
 
 let sentryReady = false;
 
+/**
+ * Load @sentry/nextjs without the bundler resolving it at compile time.
+ * `import("@sentry/nextjs" as string)` still lets Turbopack/webpack see the
+ * specifier and fail the build when the package is absent. Building the path
+ * from a variable defeats static resolution, so production builds succeed
+ * without @sentry/nextjs installed; the .catch handles the runtime absence.
+ */
+async function loadSentry(): Promise<SentryModule | null> {
+  const moduleName = "@sentry/nextjs";
+  try {
+    const mod = (await import(moduleName as string).catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
+    if (!mod || typeof mod.init !== "function") return null;
+    return mod as unknown as SentryModule;
+  } catch {
+    return null;
+  }
+}
+
 export async function initSentry(): Promise<void> {
   const dsn = process.env.SENTRY_DSN;
   if (!dsn || typeof window !== "undefined") return;
   try {
-    // "as string" keeps the dynamic import typed as Promise<any> so the
-    // optional dependency does not need to be installed for typecheck.
-    const Sentry = (await import("@sentry/nextjs" as string).catch(
-      () => null,
-    )) as SentryModule | null;
+    const Sentry = await loadSentry();
     if (!Sentry?.init) {
       console.warn("[sentry] @sentry/nextjs not installed; skipping");
       return;
@@ -43,9 +60,7 @@ export function captureWebError(
     try {
       if (!sentryReady) await initSentry();
       if (!sentryReady) return;
-      const Sentry = (await import("@sentry/nextjs" as string).catch(
-        () => null,
-      )) as SentryModule | null;
+      const Sentry = await loadSentry();
       Sentry?.captureException(err, { extra: context });
     } catch {
       /* swallow */
