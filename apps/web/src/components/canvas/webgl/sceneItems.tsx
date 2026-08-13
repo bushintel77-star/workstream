@@ -75,22 +75,23 @@ function TpzRing({
   );
 }
 
-/** A tree: trunk + canopy + optional TPZ ring. */
+/** A tree: trunk + canopy + optional TPZ ring. Growth-aware (0–1 factor). */
 function TreeMesh({
   item,
   scaleM,
   boardAspect,
   hideTpz = false,
+  growthFactor = 1,
 }: {
   item: RenderItem;
   scaleM: number;
   boardAspect: number;
   hideTpz?: boolean;
+  growthFactor?: number;
 }) {
   const [wx, wz] = pctToWorld(item, scaleM, boardAspect);
   const isExist = item.t === "exist";
-  const heightM = item.heightM ?? (item.t === "canopy" ? 6 : item.t === "exist" ? 8 : 4);
-  const canopyM = item.t === "canopy" ? 6 : item.t === "exist" ? 7 : 4;
+  const { heightM, canopyM } = grownDimensions(item, growthFactor);
   const canopyRadius = (canopyM * item.scale) / 2;
   const trunkHeight = heightM * 0.4;
   const canopyY = trunkHeight + canopyRadius * 0.6;
@@ -168,6 +169,28 @@ function RegionMesh({
 }
 
 /**
+ * Resolve the effective height/canopy for a tree given a growth factor.
+ * 0 = just planted (20% of mature size), 1 = 10-year maturity (100%).
+ * Existing trees are always at maturity (they're already grown).
+ *
+ * This mirrors the domain package's resolveItemHeightGrownM logic but
+ * applied in the renderer for smooth 3D animation.
+ */
+function grownDimensions(
+  item: RenderItem,
+  growthFactor: number,
+): { heightM: number; canopyM: number } {
+  const isExist = item.t === "exist";
+  const baseHeight = item.heightM ?? (item.t === "canopy" ? 6 : isExist ? 8 : 4);
+  const baseCanopy = item.t === "canopy" ? 6 : isExist ? 7 : 4;
+  // Existing trees are already mature — growth factor doesn't apply
+  if (isExist) return { heightM: baseHeight, canopyM: baseCanopy };
+  // New plantings: interpolate from 20% at planting to 100% at maturity
+  const factor = 0.2 + growthFactor * 0.8;
+  return { heightM: baseHeight * factor, canopyM: baseCanopy * factor };
+}
+
+/**
  * Render a placed item. Dispatches by type.
  */
 export function SceneItem({
@@ -175,14 +198,24 @@ export function SceneItem({
   scaleM,
   boardAspect,
   hideTpz = false,
+  growthFactor = 1,
 }: {
   item: RenderItem;
   scaleM: number;
   boardAspect: number;
   hideTpz?: boolean;
+  growthFactor?: number;
 }) {
   if (SPECIES_TYPES.has(item.t)) {
-    return <TreeMesh item={item} scaleM={scaleM} boardAspect={boardAspect} hideTpz={hideTpz} />;
+    return (
+      <TreeMesh
+        item={item}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        hideTpz={hideTpz}
+        growthFactor={growthFactor}
+      />
+    );
   }
   if (REGION_TYPES.has(item.t) && item.outlinePct) {
     return <RegionMesh item={item} scaleM={scaleM} boardAspect={boardAspect} />;
@@ -207,16 +240,25 @@ export function SceneItems({
   scaleM,
   boardAspect,
   hideTpz = false,
+  growthFactor = 1,
 }: {
   items: RenderItem[];
   scaleM: number;
   boardAspect: number;
   hideTpz?: boolean;
+  growthFactor?: number;
 }) {
   return (
     <>
       {items.map((item) => (
-        <SceneItem key={item.id} item={item} scaleM={scaleM} boardAspect={boardAspect} hideTpz={hideTpz} />
+        <SceneItem
+          key={item.id}
+          item={item}
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+          hideTpz={hideTpz}
+          growthFactor={growthFactor}
+        />
       ))}
     </>
   );

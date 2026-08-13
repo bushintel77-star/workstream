@@ -47,6 +47,8 @@ export interface StudioSceneProps {
   strikeAlerts?: StrikeAlertData[];
   /** Presentation Lens filter — hides technical layers when active. */
   lens?: PresentationLensFilter;
+  /** Growth factor 0–1 (0 = just planted, 1 = 10-year maturity). */
+  growthFactor?: number;
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
@@ -251,6 +253,7 @@ export function StudioScene({
   subsurfaceUtilities,
   strikeAlerts,
   lens,
+  growthFactor,
 }: StudioSceneProps) {
   return (
     <>
