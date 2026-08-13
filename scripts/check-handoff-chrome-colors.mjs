@@ -38,6 +38,11 @@ const ALLOW_PATH_SUBSTR = [
   // Literal colour-choice swatches / 3D render material colours (data, not chrome)
   "components/share/clientShareTwin.module.css",
   "components/share/ClientShareTwin.tsx",
+  // Gold Standard 2026 WebGL scene — Three.js material colours are numeric
+  // render values (like ClientShareTwin), not chrome paint. Chrome DOM lives
+  // in GlassCard.tsx which uses var(--gs-*) tokens, not hex.
+  "components/canvas/webgl/StudioScene.tsx",
+  "components/canvas/webgl/WebGLStudio.tsx",
 
 ];
 

@@ -28,6 +28,13 @@ export const SpatialObjectSchema = z.object({
   y_pct: z.number().min(0).max(100).optional(),
   mature_canopy_m: z.number().nonnegative().optional(),
   root_radius_m: z.number().nonnegative().optional(),
+  // Gold Standard 2026 extensions (docs/GOLD-STANDARD-2026-ARCHITECTURE.md §2.1)
+  x_m: z.number().optional(),           // metre-space position (origin = survey peg)
+  y_m: z.number().optional(),           // metre-space position
+  elevation_m: z.number().optional(),   // relative level (RL)
+  utility_type: z.enum(["gas", "water", "sewer", "electric", "comms", "reclaimed"]).optional(),
+  pressure_drop: z.number().optional(), // Hydrological Pulse (kPa loss)
+  gpm: z.number().optional(),           // Hydrological Pulse (gallons per minute)
 });
 export type SpatialObject = z.infer<typeof SpatialObjectSchema>;
 
