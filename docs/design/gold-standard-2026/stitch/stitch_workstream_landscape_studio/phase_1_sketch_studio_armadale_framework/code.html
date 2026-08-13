@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Asset Discovery HUD</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glass-panel {
+                @apply bg-surface/70 backdrop-blur-md border border-glass-border;
+            }
+            .fractal-grid {
+                background-image: radial-gradient(circle at center, rgba(255,255,255,0.1) 1px, transparent 1px);
+                background-size: 24px 24px;
+            }
+            .gold-active {
+                @apply border-[#fbbf24] text-[#fbbf24] bg-[#fbbf24]/10;
+            }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#323128",
+                        "primary-fixed-dim": "#c5c6cc",
+                        "primary-fixed": "#e1e2e8",
+                        "strike-red": "#ef4444",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "surface-container-low": "#1c1b1c",
+                        "on-primary-fixed-variant": "#44474c",
+                        "on-secondary-container": "#a9bad3",
+                        "secondary": "#b7c8e1",
+                        "on-primary-container": "#626469",
+                        "error": "#ffb4ab",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-fixed": "#191c20",
+                        "surface-container-highest": "#353435",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#e7e2d6",
+                        "primary-container": "#e1e2e8",
+                        "selection-white": "#ffffff",
+                        "outline": "#8f9095",
+                        "inverse-surface": "#e5e2e2",
+                        "glass-border": "rgba(255, 255, 255, 0.05)",
+                        "tertiary-fixed": "#e7e2d6",
+                        "on-primary": "#2e3135",
+                        "surface": "#101418",
+                        "on-secondary": "#213145",
+                        "inverse-primary": "#5c5e63",
+                        "surface-bright": "#3a3939",
+                        "tertiary-fixed-dim": "#cac6ba",
+                        "outline-variant": "#45474a",
+                        "on-surface-variant": "#c6c6cb",
+                        "on-tertiary-fixed": "#1d1c14",
+                        "on-background": "#e5e2e2",
+                        "on-tertiary-fixed-variant": "#49473e",
+                        "background": "#131314",
+                        "on-surface": "#e5e2e2",
+                        "primary": "#ffffff",
+                        "surface-container": "#201f20",
+                        "secondary-container": "#3a4a5f",
+                        "on-tertiary-container": "#67645a",
+                        "tertiary": "#ffffff",
+                        "surface-variant": "#353435",
+                        "surface-tint": "#c5c6cc",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#313030",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "surface-dim": "#131314",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-secondary-fixed": "#0b1c30",
+                        "surface-container-high": "#2a2a2a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "chip-gap": "0.5rem",
+                        "stack-gap": "1rem",
+                        "viewport-margin": "2rem",
+                        "hud-padding": "1.25rem"
+                    },
+                    "fontFamily": {
+                        "data-display-mobile": ["Space Grotesk"],
+                        "technical-metadata": ["Space Grotesk"],
+                        "data-display-lg": ["Space Grotesk"],
+                        "ui-label-sm": ["Inter"],
+                        "data-display-md": ["Space Grotesk"],
+                        "ui-label-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-display-mobile": ["20px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "technical-metadata": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+                        "data-display-lg": ["40px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "ui-label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "500" }],
+                        "data-display-md": ["24px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "ui-label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background h-screen w-screen overflow-hidden cursor-crosshair selection:bg-selection-white selection:text-background font-technical-metadata text-technical-metadata">
+<!-- Infinite Canvas Background -->
+<div class="absolute inset-0 w-full h-full fractal-grid opacity-20 pointer-events-none"></div>
+<!-- Top Navigation HUD -->
+<nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-viewport-margin h-16 backdrop-blur-md border-b border-glass-border bg-transparent">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">eco</span>
+<span class="font-data-display-md text-data-display-md tracking-tighter text-primary">Workstream</span>
+</div>
+<div class="hidden md:flex items-center gap-6">
+<a class="font-ui-label-lg text-ui-label-lg text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" href="#">Truth</a>
+<a class="font-ui-label-lg text-ui-label-lg text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" href="#">Sketch</a>
+<a class="font-ui-label-lg text-ui-label-lg text-primary border-b-2 border-primary pb-1 cursor-crosshair" href="#">CAD</a>
+<a class="font-ui-label-lg text-ui-label-lg text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" href="#">Client</a>
+<a class="font-ui-label-lg text-ui-label-lg text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" href="#">Build</a>
+<a class="font-ui-label-lg text-ui-label-lg text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" href="#">Field</a>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="glass-panel bg-transparent border-glass-border rounded-full pl-8 pr-4 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:bg-white/5 transition-all w-48 font-ui-label-sm" placeholder="Search..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">account_tree</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-glass-border cursor-crosshair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU_EtVUov-rEXq86P2R_5UORnOgHVcPIEK7y9ElR6hP1tJZ5jZJMT1gseDvI5BOMJ0w6ityd5cl0EZDm_FeSGL9bACV902WnouUVHyX8vu1VHIFPsS_OFHBW2YVO5vqFWxmsc7WNY2xupy4zru6VhVpoxBzCnpekWvPC2bha4XX1nKKodz6EIzeWi9d4i8bDUPkPek126LHb_rJiefJzGSDOnSTs67O0N8DwhqK_4AN0hu0wCEHCm0kQ"/>
+</div>
+</nav>
+<!-- Floating Side Tool Ribbon -->
+<aside class="fixed left-0 top-24 bottom-24 z-40 flex flex-col justify-between glass-panel floating rounded-xl m-viewport-margin w-16 items-center py-4">
+<div class="flex flex-col gap-6 w-full items-center">
+<button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-white/5 transition-all scale-98 active:scale-95 group relative" title="Layers">
+<span class="material-symbols-outlined">layers</span>
+<span class="absolute left-14 glass-panel px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-ui-label-sm whitespace-nowrap">Layers</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center gold-active scale-98 active:scale-95 group relative" title="Assets">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">database</span>
+<span class="absolute left-14 glass-panel px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-ui-label-sm whitespace-nowrap">Assets</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-white/5 transition-all scale-98 active:scale-95 group relative" title="Solar AI">
+<span class="material-symbols-outlined">wb_sunny</span>
+<span class="absolute left-14 glass-panel px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-ui-label-sm whitespace-nowrap">Solar AI</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-white/5 transition-all scale-98 active:scale-95 group relative" title="Simulation">
+<span class="material-symbols-outlined">history_toggle_off</span>
+<span class="absolute left-14 glass-panel px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-ui-label-sm whitespace-nowrap">Simulation</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-white/5 transition-all scale-98 active:scale-95 group relative" title="Hydrology">
+<span class="material-symbols-outlined">opacity</span>
+<span class="absolute left-14 glass-panel px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-ui-label-sm whitespace-nowrap">Hydrology</span>
+</button>
+</div>
+<div class="flex flex-col gap-4 w-full items-center">
+<button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-white/5 transition-all scale-98 active:scale-95">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-white/5 transition-all scale-98 active:scale-95">
+<span class="material-symbols-outlined">terminal</span>
+</button>
+</div>
+</aside>
+<!-- Main Canvas Area -->
+<main class="absolute inset-0 flex items-center justify-center z-10 pt-16 pointer-events-none"><!-- Floating Lens Dial (Right side) -->
+<div class="absolute right-8 top-1/2 -translate-y-1/2 glass-panel rounded-2xl p-4 flex flex-col items-center gap-6 w-[80px] pointer-events-auto">
+<div class="text-center w-full border-b border-on-surface/10 pb-2">
+<span class="font-ui-label-sm text-ui-label-sm text-on-surface-variant block uppercase">LENS</span>
+</div>
+<div class="relative w-12 h-48 bg-surface-container-highest/30 rounded-full flex flex-col items-center py-2 justify-between border border-on-surface/5">
+<div class="absolute w-full h-[2px] bg-[#0030CF] top-[40%] z-20"></div>
+<div class="w-4 h-[1px] bg-on-surface-variant/30"></div>
+<div class="w-6 h-[1px] bg-on-surface-variant/50"></div>
+<div class="w-8 h-[2px] bg-on-surface"></div>
+<div class="w-6 h-[1px] bg-on-surface-variant/50"></div>
+<div class="w-4 h-[1px] bg-on-surface-variant/30"></div>
+<div class="w-4 h-[1px] bg-on-surface-variant/30"></div>
+<div class="w-4 h-[1px] bg-on-surface-variant/30"></div>
+</div>
+<div class="text-center w-full mt-2">
+<span class="font-technical-metadata text-technical-metadata text-[#0030CF]">24mm</span>
+</div>
+</div>
+<!-- Temporal Scrubber (Bottom) -->
+<div class="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl glass-panel rounded-2xl p-4 px-6 pointer-events-auto">
+<div class="flex justify-between items-center mb-3">
+<span class="font-ui-label-sm text-ui-label-sm text-[#fbbf24] uppercase">MATURITY MODEL</span>
+<span class="font-technical-metadata text-technical-metadata text-on-surface">YEAR 3</span>
+</div>
+<div class="relative w-full h-2 bg-surface-container-highest/50 rounded-full overflow-hidden">
+<div class="absolute left-0 top-0 h-full bg-[#fbbf24] w-[30%]"></div>
+</div>
+<div class="flex justify-between mt-2 font-technical-metadata text-[10px] text-on-surface-variant">
+<span>YR 0</span>
+<span>YR 2</span>
+<span class="text-on-surface font-bold">YR 4</span>
+<span>YR 6</span>
+<span>YR 8</span>
+<span>YR 10</span>
+</div>
+</div></main>
+<!-- Fan-Out Asset Carousel (Bottom Docked) -->
+<!-- Mobile Bottom Nav (Hidden on Desktop) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden bg-surface/70 backdrop-blur-md border-t border-glass-border rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">gesture</span>
+<span class="font-ui-label-sm text-ui-label-sm mt-1">Draw</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#fbbf24]/10 text-[#fbbf24] rounded-lg p-2 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-ui-label-sm text-ui-label-sm mt-1">Pulse</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">straighten</span>
+<span class="font-ui-label-sm text-ui-label-sm mt-1">Slice</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">view_in_ar</span>
+<span class="font-ui-label-sm text-ui-label-sm mt-1">AR Bridge</span>
+</a>
+</nav>
+</body></html>

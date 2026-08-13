@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Phase 2.3: Elevation Slice / Section Analysis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#323128",
+                        "primary-fixed-dim": "#c5c6cc",
+                        "primary-fixed": "#e1e2e8",
+                        "strike-red": "#ef4444",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "surface-container-low": "#1c1b1c",
+                        "on-primary-fixed-variant": "#44474c",
+                        "on-secondary-container": "#a9bad3",
+                        "secondary": "#b7c8e1",
+                        "on-primary-container": "#626469",
+                        "error": "#ffb4ab",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-fixed": "#191c20",
+                        "surface-container-highest": "#353435",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#e7e2d6",
+                        "primary-container": "#e1e2e8",
+                        "selection-white": "#ffffff",
+                        "outline": "#8f9095",
+                        "inverse-surface": "#e5e2e2",
+                        "glass-border": "rgba(255, 255, 255, 0.05)",
+                        "tertiary-fixed": "#e7e2d6",
+                        "on-primary": "#2e3135",
+                        "surface": "#101418",
+                        "on-secondary": "#213145",
+                        "inverse-primary": "#5c5e63",
+                        "surface-bright": "#3a3939",
+                        "tertiary-fixed-dim": "#cac6ba",
+                        "outline-variant": "#45474a",
+                        "on-surface-variant": "#c6c6cb",
+                        "on-tertiary-fixed": "#1d1c14",
+                        "on-background": "#e5e2e2",
+                        "on-tertiary-fixed-variant": "#49473e",
+                        "background": "#131314",
+                        "on-surface": "#e5e2e2",
+                        "primary": "#ffffff",
+                        "surface-container": "#201f20",
+                        "secondary-container": "#3a4a5f",
+                        "on-tertiary-container": "#67645a",
+                        "tertiary": "#ffffff",
+                        "surface-variant": "#353435",
+                        "surface-tint": "#c5c6cc",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#313030",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "surface-dim": "#131314",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-secondary-fixed": "#0b1c30",
+                        "surface-container-high": "#2a2a2a",
+                        "gold": "#fbbf24"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "chip-gap": "0.5rem",
+                        "stack-gap": "1rem",
+                        "viewport-margin": "2rem",
+                        "hud-padding": "1.25rem"
+                    },
+                    "fontFamily": {
+                        "data-display-mobile": ["Space Grotesk"],
+                        "technical-metadata": ["Space Grotesk"],
+                        "data-display-lg": ["Space Grotesk"],
+                        "ui-label-sm": ["Inter"],
+                        "data-display-md": ["Space Grotesk"],
+                        "ui-label-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-display-mobile": ["20px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "technical-metadata": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+                        "data-display-lg": ["40px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "ui-label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "500" }],
+                        "data-display-md": ["24px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "ui-label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .glass-panel {
+            background-color: rgba(28, 27, 28, 0.7); /* surface-container-low with opacity */
+            backdrop-filter: blur(12px);
+            border: 1px solid theme('colors.glass-border');
+        }
+
+        .meta-chip {
+            background-color: rgba(32, 31, 32, 0.85); /* surface-container with high opacity */
+            backdrop-filter: blur(8px);
+            border: 1px solid theme('colors.glass-border');
+        }
+
+        /* Technical Crosshair Pattern Background */
+        .bg-grid-pattern {
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Custom Scrollbar for HUDs if needed */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.surface-variant');
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-grid-pattern h-screen w-screen relative">
+<!-- TOP NAV BAR (Hidden on Mobile) -->
+<nav class="hidden md:flex fixed top-0 left-0 w-full z-50 justify-between items-center px-viewport-margin h-16 backdrop-blur-md border-b border-glass-border bg-transparent text-primary">
+<div class="flex items-center gap-8">
+<div class="font-data-display-md text-data-display-md tracking-tighter text-primary">Workstream</div>
+<div class="flex gap-6 font-ui-label-lg text-ui-label-lg">
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" href="#">Truth</a>
+<a class="text-primary border-b-2 border-primary pb-1 cursor-crosshair" href="#">Sketch</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" href="#">CAD</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" href="#">Client</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" href="#">Build</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" href="#">Field</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<!-- Search Placeholder -->
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="bg-surface-container-high border border-glass-border rounded-full pl-8 pr-4 py-1.5 text-xs text-on-surface focus:outline-none focus:border-outline-variant focus:bg-surface w-64 transition-all" placeholder="Search components..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-crosshair">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_tree</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-crosshair">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-glass-border ml-2" data-alt="A small circular user profile avatar with a dark blue background and white text." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtVQ3Ed0hzhMQkqnTTehMe2CvoXpZSK81n6CvIi60ggWG5xHHEbUOMIe1RzuqzPIsyvfl56EETecQ8EbEi2JJqhe8xMsMGrPBtk4cGyQz0M10gWmWFPx2Sqw7PpCpzfYCDOExR09hYQ6TsWGtJJoMJv5cccPCrbHqv19CRrcY6276Txs6hZbX4nxPnBwsJYn-Z7a_6n4rifeWMygtBYsErvFAEycdVsECyI59mw1DhgGzM6D4gXs4IgQ"/>
+</div>
+</nav>
+<!-- SIDE NAV BAR (Floating HUD, Hidden on Mobile) -->
+<aside class="hidden md:flex fixed left-0 top-20 bottom-20 z-40 flex-col glass-panel rounded-xl m-viewport-margin w-64 p-4 shadow-none">
+<div class="mb-8 flex items-center gap-3">
+<img alt="Project Orbit" class="w-10 h-10 rounded-lg" data-alt="A small circular project avatar with a light grey background and dark text." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFfgCh1LfBZ4yEr5lRHpjgiqe5JuatdsG0LlvELeWMEawRUDRZEYqTY00lgRKNqb68cXsWVjH2IDOWiqkO7U3UM59-JX56ADYs6cfuRomaarEyaFl1uzFYg0e2iECfg5UVZiMPG2LlxE76bOZFlHnUmhSEjfFNGpJZyJFmBc3uRXSTf-ErXx-kHSb6YraypYEoOe6ptfbDbplVYe2sb9iRfKetFOBtimtZwGaMaPb8JtuCJhKw3KpwMQ"/>
+<div>
+<h2 class="font-ui-label-lg text-ui-label-lg text-primary">Project Alpha</h2>
+<p class="font-ui-label-sm text-ui-label-sm text-on-surface-variant">Site Truth Active</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-2 font-technical-metadata text-technical-metadata">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-white/5 transition-all cursor-crosshair scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 0;">layers</span>
+                Layers
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-white/5 transition-all cursor-crosshair scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 0;">database</span>
+                Assets
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-white/5 transition-all cursor-crosshair scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 0;">wb_sunny</span>
+                Solar AI
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-white/5 transition-all cursor-crosshair scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 0;">history_toggle_off</span>
+                Simulation
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-white/5 transition-all cursor-crosshair scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 0;">opacity</span>
+                Hydrology
+            </a>
+</nav>
+<div class="mt-auto pt-4 border-t border-glass-border flex flex-col gap-2 font-technical-metadata text-technical-metadata">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-white/5 transition-all cursor-crosshair scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 0;">help_outline</span>
+                Support
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-white/5 transition-all cursor-crosshair scale-98 active:scale-95" href="#">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 0;">terminal</span>
+                Logs
+            </a>
+<button class="mt-2 w-full bg-primary/10 text-primary border border-primary/20 rounded-lg py-2 hover:bg-primary/20 transition-colors font-ui-label-sm text-ui-label-sm cursor-crosshair uppercase tracking-wider">
+                Export Pack
+            </button>
+</div>
+</aside>
+<!-- MAIN CANVAS AREA -->
+<main class="absolute inset-0 z-0 flex items-center justify-center pointer-events-none md:pl-72 md:pt-16">
+<!-- Large Architectural Image Placeholder -->
+<div class="relative w-[90%] h-[80%] border border-glass-border rounded-xl overflow-hidden pointer-events-auto shadow-2xl bg-surface">
+<!-- Simulated Section Image -->
+<div class="w-full h-full bg-cover bg-center opacity-80 mix-blend-screen" data-alt="A highly detailed architectural cross-section technical drawing showing a residential landscape with a pool, structural retaining walls, soil layers, and mature tree root zones. Rendered in a clean, minimalist watercolor style on a dark grey background with precise white linework and annotations." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC4yqcxsaSUzqh66S_DEK-B-UAqbiO-E-nyMxKznnmz0LXljFX29GYLxpNe1dmxYas3agijsnQVwNqY1W8YhepBfKfXxn42P6OWS-T7m4K-IL39LUwh0Jz5F_4S_9CWVFIBKzErn-s_EObtpKTwHbtCJokDYVr4SXWKnNPWlmksOTi2_QEcZAcTKpI_r0_UlyJJ2MV5bpckJ_Id0PBxdfQr4nCg4kZ360nugKUZESDirQMs2XNiOGHEwQ')"></div>
+<!-- Contextual Meta Chips (Floating on Canvas) -->
+<!-- Finished Floor Level (FFE) -->
+<div class="absolute top-[30%] left-[20%] meta-chip px-3 py-1.5 rounded flex items-center gap-2 cursor-crosshair hover:bg-surface-container-high transition-colors">
+<div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+<div class="flex flex-col">
+<span class="font-ui-label-sm text-ui-label-sm text-on-surface-variant">FFE</span>
+<span class="font-technical-metadata text-technical-metadata text-primary">+12.5ft</span>
+</div>
+</div>
+<!-- Retaining Wall Footings -->
+<div class="absolute bottom-[40%] left-[45%] meta-chip px-3 py-1.5 rounded flex items-center gap-2 cursor-crosshair hover:bg-surface-container-high transition-colors">
+<div class="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+<div class="flex flex-col">
+<span class="font-ui-label-sm text-ui-label-sm text-on-surface-variant">Wall Footing</span>
+<span class="font-technical-metadata text-technical-metadata text-primary">-3.0ft Depth</span>
+</div>
+</div>
+<!-- Soil Depth -->
+<div class="absolute bottom-[20%] right-[30%] meta-chip px-3 py-1.5 rounded flex items-center gap-2 cursor-crosshair hover:bg-surface-container-high transition-colors">
+<div class="w-1.5 h-1.5 rounded-full bg-amber-700"></div>
+<div class="flex flex-col">
+<span class="font-ui-label-sm text-ui-label-sm text-on-surface-variant">Structural Soil</span>
+<span class="font-technical-metadata text-technical-metadata text-primary">1.8m Stratum</span>
+</div>
+</div>
+<!-- Section Cut Line Indicator -->
+<div class="absolute top-0 bottom-0 left-[60%] w-px border-l border-dashed border-gold/50 pointer-events-none"></div>
+<div class="absolute top-[10%] left-[60%] -translate-x-1/2 bg-surface px-2 py-1 border border-gold/30 text-gold font-technical-metadata text-[10px] uppercase tracking-widest rounded shadow-sm">
+                Slice Plane A-A
+            </div>
+</div>
+</main>
+<!-- RIGHT HUD: Lens Dial (Floating) -->
+<div class="fixed right-viewport-margin top-1/2 -translate-y-1/2 z-40 glass-panel rounded-full p-2 flex flex-col gap-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-white/5 transition-all cursor-crosshair group relative">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">visibility</span>
+<!-- Tooltip -->
+<div class="absolute right-full mr-4 bg-surface-container border border-glass-border px-2 py-1 rounded text-[10px] font-technical-metadata opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Perspective</div>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-gold bg-gold/10 border border-gold/30 transition-all cursor-crosshair group relative shadow-[0_0_15px_rgba(251,191,36,0.15)]">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">straighten</span>
+<!-- Tooltip -->
+<div class="absolute right-full mr-4 bg-surface-container border border-glass-border px-2 py-1 rounded text-[10px] font-technical-metadata opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Elevation (Active)</div>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-white/5 transition-all cursor-crosshair group relative">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">map</span>
+<!-- Tooltip -->
+<div class="absolute right-full mr-4 bg-surface-container border border-glass-border px-2 py-1 rounded text-[10px] font-technical-metadata opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Plan View</div>
+</button>
+<div class="w-6 h-px bg-glass-border mx-auto my-1"></div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-white/5 transition-all cursor-crosshair group relative">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">3d_rotation</span>
+<!-- Tooltip -->
+<div class="absolute right-full mr-4 bg-surface-container border border-glass-border px-2 py-1 rounded text-[10px] font-technical-metadata opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Orbit</div>
+</button>
+</div>
+<!-- BOTTOM NAV BAR (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden backdrop-blur-md border-t border-glass-border bg-surface/70 rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">gesture</span>
+<span class="font-ui-label-sm text-ui-label-sm">Draw</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">analytics</span>
+<span class="font-ui-label-sm text-ui-label-sm">Pulse</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-lg p-2 transition-transform duration-200 shadow-inner border border-white/5" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">straighten</span>
+<span class="font-ui-label-sm text-ui-label-sm">Slice</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 0;">view_in_ar</span>
+<span class="font-ui-label-sm text-ui-label-sm">AR Bridge</span>
+</a>
+</nav>
+<!-- Custom Cursor Overlay (Draw Mode feeling) -->
+<div class="fixed top-1/2 left-0 w-full h-px bg-white/5 pointer-events-none z-30 hidden md:block mix-blend-difference" id="crosshair-x"></div>
+<div class="fixed top-0 left-1/2 w-px h-full bg-white/5 pointer-events-none z-30 hidden md:block mix-blend-difference" id="crosshair-y"></div>
+<script>
+        // Simple subtle crosshair follow effect for desktop
+        document.addEventListener('mousemove', (e) => {
+            const hLine = document.getElementById('crosshair-x');
+            const vLine = document.getElementById('crosshair-y');
+            
+            if(hLine && vLine) {
+                // Throttle slightly for performance
+                requestAnimationFrame(() => {
+                    hLine.style.top = `${e.clientY}px`;
+                    vLine.style.left = `${e.clientX}px`;
+                });
+            }
+        });
+    </script>
+</body></html>

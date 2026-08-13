@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Itemized Fit-Sheet &amp; Live Quote</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#323128",
+                        "primary-fixed-dim": "#c5c6cc",
+                        "primary-fixed": "#e1e2e8",
+                        "strike-red": "#ef4444",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "surface-container-low": "#1c1b1c",
+                        "on-primary-fixed-variant": "#44474c",
+                        "on-secondary-container": "#a9bad3",
+                        "secondary": "#b7c8e1",
+                        "on-primary-container": "#626469",
+                        "error": "#ffb4ab",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-fixed": "#191c20",
+                        "surface-container-highest": "#353435",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#e7e2d6",
+                        "primary-container": "#e1e2e8",
+                        "selection-white": "#ffffff",
+                        "outline": "#8f9095",
+                        "inverse-surface": "#e5e2e2",
+                        "glass-border": "rgba(255, 255, 255, 0.05)",
+                        "tertiary-fixed": "#e7e2d6",
+                        "on-primary": "#2e3135",
+                        "surface": "#101418",
+                        "on-secondary": "#213145",
+                        "inverse-primary": "#5c5e63",
+                        "surface-bright": "#3a3939",
+                        "tertiary-fixed-dim": "#cac6ba",
+                        "outline-variant": "#45474a",
+                        "on-surface-variant": "#c6c6cb",
+                        "on-tertiary-fixed": "#1d1c14",
+                        "on-background": "#e5e2e2",
+                        "on-tertiary-fixed-variant": "#49473e",
+                        "background": "#131314",
+                        "on-surface": "#e5e2e2",
+                        "primary": "#ffffff",
+                        "surface-container": "#201f20",
+                        "secondary-container": "#3a4a5f",
+                        "on-tertiary-container": "#67645a",
+                        "tertiary": "#ffffff",
+                        "surface-variant": "#353435",
+                        "surface-tint": "#c5c6cc",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#313030",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "surface-dim": "#131314",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-secondary-fixed": "#0b1c30",
+                        "surface-container-high": "#2a2a2a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "chip-gap": "0.5rem",
+                        "stack-gap": "1rem",
+                        "viewport-margin": "2rem",
+                        "hud-padding": "1.25rem"
+                    },
+                    "fontFamily": {
+                        "data-display-mobile": ["Space Grotesk"],
+                        "technical-metadata": ["Space Grotesk"],
+                        "data-display-lg": ["Space Grotesk"],
+                        "ui-label-sm": ["Inter"],
+                        "data-display-md": ["Space Grotesk"],
+                        "ui-label-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-display-mobile": ["20px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "technical-metadata": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+                        "data-display-lg": ["40px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "ui-label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "500" }],
+                        "data-display-md": ["24px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+                        "ui-label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0e0e0e; /* Fallback */
+        }
+        .hud-panel {
+            background: rgba(16, 20, 24, 0.7); /* surface with opacity */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05); /* glass-border */
+        }
+        .gold-accent {
+            color: #d4af37; /* Approximate gold from image */
+        }
+    </style>
+</head>
+<body class="text-on-surface bg-background font-technical-metadata h-screen w-screen flex flex-col relative">
+<!-- Background Canvas Image -->
+<div class="absolute inset-0 z-0 pointer-events-none">
+<div class="bg-cover bg-center w-full h-full opacity-80" data-alt="A highly detailed architectural visualization of a modern backyard design in 2026. The scene features a sleek rectangular swimming pool, meticulously manicured lawns, and sophisticated hardscaping with natural stone fire pits and pathways. Lush greenery and modern pergolas frame the composition. The lighting is cinematic, simulating a bright, clear day, emphasizing the clean geometric lines and premium materials. High contrast, photorealistic quality, serving as a backdrop for a digital CAD interface." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAD75s5srNUOufeukkdKXi5A1nKdhNPqQZ5WGyNNrDmNeilH_MJAJDIAuLrNwj7JAzzaYt1cJTYZ_jhgapxh4AxJCID7JBUxADTuig0BWlBlJsoACb_mN8cYAw9wS6-5y2sVqx0gPtCJGoW9AIHd3TC9VhzBPIybA7ZygWKJjz8ZcxwxcCzKZZwRGeiBPNfV2VJfLr21DAAyR19IHPg6H5I2xOMZ3dePl31a9-PtYXIPeR2MwfcMyVi5Q')"></div>
+</div>
+<!-- Top Navigation Bar (Shared Component) -->
+<!-- Suppressed TopNavBar and BottomNavBar as per context logic - focus is on presentation lens/details, nav is secondary in this view -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-viewport-margin h-16 bg-transparent backdrop-blur-md border-b border-glass-border">
+<div class="flex items-center gap-4">
+<span class="font-data-display-md text-data-display-md tracking-tighter text-primary">Workstream</span>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-ui-label-lg text-ui-label-lg text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" data-icon="Truth" href="#">Truth</a>
+<a class="font-ui-label-lg text-ui-label-lg text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" data-icon="Sketch" href="#">Sketch</a>
+<a class="font-ui-label-lg text-ui-label-lg text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" data-icon="CAD" href="#">CAD</a>
+<a class="font-ui-label-lg text-ui-label-lg text-primary border-b-2 border-primary pb-1 hover:text-primary transition-colors cursor-crosshair" data-icon="Client" href="#">Client</a>
+<a class="font-ui-label-lg text-ui-label-lg text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" data-icon="Build" href="#">Build</a>
+<a class="font-ui-label-lg text-ui-label-lg text-on-surface-variant hover:text-primary transition-colors cursor-crosshair" data-icon="Field" href="#">Field</a>
+</nav>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-crosshair">account_tree</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary cursor-crosshair">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-glass-border">
+<img class="w-full h-full object-cover" data-alt="A stylized, minimalist avatar placeholder for a user profile in a technical application. Dark theme compatible, simple geometric representation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2gcrhbdVe_kAQOr3-EIQPnK9AqCTsrBsZh4LwAvkBdr0LishYFyHcEtqwmkyb6-Y5URikkMPJxt-Agjwh1v8w81PQGFcGvnk7QzLqC_NAM4HMg2iXYJ2tg1zwFeuXCAHZ7LOaYfJUM8tQWlsWEyPpyPht9kxbS1P3Wo2TMGnqsmvGoTrpOLCjiqQZLH751fUMw6_dujOK74rB-8ItziTXleMyRC26_nwFEa37XIpYacZVTvb_8wRhpg"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 relative z-10 w-full h-full flex items-center justify-end px-viewport-margin pt-16">
+<!-- Floating HUD on the right -->
+<div class="hud-panel rounded-xl p-hud-padding w-full max-w-md flex flex-col gap-stack-gap">
+<!-- Header -->
+<div class="flex flex-col gap-2">
+<h2 class="font-data-display-md text-data-display-md gold-accent uppercase tracking-widest">CLIENT ESTIMATE &amp;</h2>
+<h1 class="font-data-display-md text-data-display-md text-primary uppercase tracking-widest">PROPOSAL SUMMARY</h1>
+</div>
+<!-- Phase-Based Investment -->
+<div class="mt-4 border-t border-glass-border pt-4">
+<h3 class="font-ui-label-sm text-ui-label-sm gold-accent uppercase tracking-widest mb-4">PHASE-BASED INVESTMENT</h3>
+<div class="flex flex-col gap-3 font-technical-metadata text-technical-metadata text-on-surface">
+<div class="flex justify-between items-center hover:bg-white/5 p-1 -mx-1 rounded transition-colors cursor-crosshair group">
+<span class="text-on-surface-variant group-hover:text-primary transition-colors">Demolition &amp; Site Prep:</span>
+<span class="font-mono text-primary">$18,500</span>
+</div>
+<div class="flex justify-between items-start hover:bg-white/5 p-1 -mx-1 rounded transition-colors cursor-crosshair group">
+<div class="flex flex-col">
+<span class="text-on-surface-variant group-hover:text-primary transition-colors">Hardscape &amp; Construction</span>
+<span class="text-on-surface-variant/70 text-xs">(Pool, Patio, Pergola):</span>
+</div>
+<span class="font-mono text-primary mt-1">$92,000</span>
+</div>
+<div class="flex justify-between items-center hover:bg-white/5 p-1 -mx-1 rounded transition-colors cursor-crosshair group">
+<span class="text-on-surface-variant group-hover:text-primary transition-colors">Planting &amp; Softscape:</span>
+<span class="font-mono text-primary">$24,500</span>
+</div>
+<div class="flex justify-between items-center hover:bg-white/5 p-1 -mx-1 rounded transition-colors cursor-crosshair group">
+<span class="text-on-surface-variant group-hover:text-primary transition-colors">Site Furnishings &amp; Lighting:</span>
+<span class="font-mono text-primary">$10,000</span>
+</div>
+</div>
+</div>
+<!-- Total Investment -->
+<div class="mt-2 border-t border-glass-border pt-6 pb-2">
+<h3 class="font-ui-label-sm text-ui-label-sm text-on-surface-variant uppercase tracking-widest mb-1">TOTAL PROJECT INVESTMENT:</h3>
+<div class="font-data-display-lg text-data-display-lg text-primary">
+                    $145,000
+                </div>
+</div>
+<!-- Estimated Completion -->
+<div class="mt-2 border-t border-glass-border pt-4">
+<h3 class="font-ui-label-sm text-ui-label-sm gold-accent uppercase tracking-widest mb-3">ESTIMATED COMPLETION</h3>
+<div class="flex items-center gap-3 text-on-surface-variant bg-white/5 p-3 rounded-lg border border-glass-border">
+<span class="material-symbols-outlined text-primary/80" style="font-variation-settings: 'FILL' 0;">calendar_month</span>
+<span class="font-technical-metadata text-technical-metadata">Project Timeline: 10-12 Weeks</span>
+</div>
+</div>
+</div>
+<!-- Bottom Centered Action Bar (Contextual to this view) -->
+<div class="absolute bottom-viewport-margin left-1/2 transform -translate-x-1/2 flex gap-4">
+<!-- Play Walkthrough -->
+<button class="hud-panel hover:bg-white/10 transition-colors border border-glass-border rounded-lg px-6 py-3 flex flex-col items-center justify-center gap-2 cursor-crosshair active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">play_arrow</span>
+<span class="font-ui-label-sm text-ui-label-sm text-primary">Play Walkthrough</span>
+</button>
+<!-- Compare Options -->
+<button class="hud-panel hover:bg-white/10 transition-colors border border-glass-border rounded-lg px-6 py-3 flex flex-col items-center justify-center gap-2 cursor-crosshair active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">difference</span>
+<span class="font-ui-label-sm text-ui-label-sm text-primary">Compare Options</span>
+</button>
+<!-- Toggle Lighting -->
+<button class="hud-panel hover:bg-white/10 transition-colors border border-glass-border rounded-lg px-6 py-3 flex flex-col items-center justify-center gap-2 cursor-crosshair active:scale-95 duration-200">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0;">lightbulb</span>
+<span class="font-ui-label-sm text-ui-label-sm text-primary">Toggle Lighting</span>
+</button>
+</div>
+</main>
+<!-- Side Navigation Bar (Shared Component) - Rendered for structural completeness if needed, but visually minimized -->
+<aside class="fixed left-0 top-20 bottom-20 z-40 flex flex-col bg-surface/70 dark:bg-surface/70 backdrop-blur-md border border-glass-border rounded-xl m-viewport-margin w-16 md:w-64 overflow-hidden transition-all duration-300 group">
+<!-- Header -->
+<div class="p-4 border-b border-glass-border flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-high flex-shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small project thumbnail or avatar representing Project Alpha, showing a stylized abstract geometric shape in neutral tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbOPxavO9_wCQwmmITcn4eNqoi1tbTRfPc1gltLadA7aQ7SGzXBrMhvndmsMuWcXoWcIGHFQ7IOpSNJkIIwHtFxrKv2YiJhgOA3X26YPhwS1JWkEArmmXkxlhkXxSDwHhi3E5QXgRo-iEcxw7u5Bjc-0b15XTl8T4iMIjUc_GaJ4cn4WCYjnof47wM-xBmPOK-cW-CEIMh9Mn_3ftUMAhpfEpJgrnG8xo4t_KqPPj1E92rblq1x-HsxA"/>
+</div>
+<div class="flex-col hidden md:flex group-hover:flex">
+<span class="font-ui-label-sm text-ui-label-sm text-primary truncate">Project Alpha</span>
+<span class="font-technical-metadata text-technical-metadata text-on-surface-variant text-xs truncate">Site Truth Active</span>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex-1 overflow-y-auto py-2 flex flex-col gap-1 px-2">
+<button class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all cursor-crosshair text-on-surface-variant w-full text-left">
+<span class="material-symbols-outlined w-6 text-center">layers</span>
+<span class="font-technical-metadata text-technical-metadata hidden md:block group-hover:block">Layers</span>
+</button>
+<button class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all cursor-crosshair text-on-surface-variant w-full text-left">
+<span class="material-symbols-outlined w-6 text-center">database</span>
+<span class="font-technical-metadata text-technical-metadata hidden md:block group-hover:block">Assets</span>
+</button>
+<button class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all cursor-crosshair text-on-surface-variant w-full text-left">
+<span class="material-symbols-outlined w-6 text-center">wb_sunny</span>
+<span class="font-technical-metadata text-technical-metadata hidden md:block group-hover:block">Solar AI</span>
+</button>
+<button class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all cursor-crosshair text-on-surface-variant w-full text-left">
+<span class="material-symbols-outlined w-6 text-center">history_toggle_off</span>
+<span class="font-technical-metadata text-technical-metadata hidden md:block group-hover:block">Simulation</span>
+</button>
+<button class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all cursor-crosshair text-on-surface-variant w-full text-left">
+<span class="material-symbols-outlined w-6 text-center">opacity</span>
+<span class="font-technical-metadata text-technical-metadata hidden md:block group-hover:block">Hydrology</span>
+</button>
+</div>
+<!-- Footer -->
+<div class="p-2 border-t border-glass-border flex flex-col gap-1">
+<button class="flex items-center justify-center gap-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 text-primary transition-all cursor-crosshair w-full mb-2">
+<span class="font-ui-label-sm text-ui-label-sm hidden md:block group-hover:block">Export Pack</span>
+<span class="material-symbols-outlined md:hidden group-hover:hidden w-6 text-center">ios_share</span>
+</button>
+<button class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all cursor-crosshair text-on-surface-variant w-full text-left">
+<span class="material-symbols-outlined w-6 text-center">help_outline</span>
+<span class="font-technical-metadata text-technical-metadata hidden md:block group-hover:block">Support</span>
+</button>
+<button class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-all cursor-crosshair text-on-surface-variant w-full text-left">
+<span class="material-symbols-outlined w-6 text-center">terminal</span>
+<span class="font-technical-metadata text-technical-metadata hidden md:block group-hover:block">Logs</span>
+</button>
+</div>
+</aside>
+</body></html>
