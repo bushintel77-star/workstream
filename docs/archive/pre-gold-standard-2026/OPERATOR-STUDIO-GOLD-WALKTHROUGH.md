@@ -1,3 +1,11 @@
+> ⚠️ **SUPERSEDED — do not follow.**
+> This document is archived under `docs/archive/pre-gold-standard-2026/`.
+> It was superseded by [`docs/GOLD-STANDARD-2026.md`](../../GOLD-STANDARD-2026.md)
+> (the supreme binding brief) and its companion specs
+> [`GOLD-STANDARD-2026-TOKENS.md`](../../GOLD-STANDARD-2026-TOKENS.md) and
+> [`GOLD-STANDARD-2026-ARCHITECTURE.md`](../../GOLD-STANDARD-2026-ARCHITECTURE.md).
+> Retained for historical reference only.
+
 # Operator studio — gold-standard walkthrough & assist UX
 
 **Status:** Training reference for Curtis & Co operators and AI assist prompts.  
