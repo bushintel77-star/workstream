@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import type { StudioMode } from "../../studioCatalog";
+import { MODE_LABELS, type StudioMode } from "../../studioCatalog";
 import css from "./compactModeNav.module.css";
 
 type ModeTab = StudioMode;
@@ -46,10 +46,10 @@ export function CompactModeNav({
         data-testid={`canvas-mode-${current}`}
         aria-current="page"
         aria-keyshortcuts={String(modes.indexOf(current) + 1)}
-        title={`${current[0]!.toUpperCase() + current.slice(1)} mode`}
+        title={`${MODE_LABELS[current]} mode`}
         onClick={() => setOpen(false)}
       >
-        {current[0]!.toUpperCase() + current.slice(1)}
+        {MODE_LABELS[current]}
       </button>
       <button
         type="button"
@@ -81,14 +81,14 @@ export function CompactModeNav({
                 data-testid={`canvas-mode-${m}`}
                 disabled={locked}
                 aria-disabled={locked}
-                title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
+                title={lockReason ?? `${MODE_LABELS[m]} mode`}
                 onClick={() => {
                   if (locked) return;
                   onRequestMode(m);
                   setOpen(false);
                 }}
               >
-                {m[0]!.toUpperCase() + m.slice(1)}
+                {MODE_LABELS[m]}
               </button>
             );
           })}

@@ -3,7 +3,9 @@ import {
   Architects_Daughter,
   Fraunces,
   Inter,
+  JetBrains_Mono,
   Space_Grotesk,
+  Sora,
 } from "next/font/google";
 import "../styles/globals.css";
 import { ToastHost } from "../components/ToastHost";
@@ -13,12 +15,12 @@ import { ClerkProvider } from "@clerk/nextjs";
 /**
  * Gold Standard 2026 typography (docs/GOLD-STANDARD-2026-TOKENS.md §2).
  *
- * - Inter: UI labels, buttons, inputs, chrome text (--font-ui + --font-body)
+ * - Inter: UI labels, buttons, inputs, chrome text (--font-body + --font-ui)
  * - Space Grotesk: technical, numeric, coordinate data (--font-tech + --font-mono)
  * - Fraunces: display / presentation deck composition (--font-display + --font-serif)
  * - Architects Daughter: hand-lettered plan annotations (--font-hand)
- *
- * Retired: Sora, IBM Plex Sans/Mono/Serif.
+ * - JetBrains Mono: technical mono (--font-technical-mono, main branch addition)
+ * - Sora: legacy UI font variable (--font-inter, kept for compat with main's surfaces)
  */
 const fontBody = Inter({
   subsets: ["latin"],
@@ -60,6 +62,18 @@ const fontHand = Architects_Daughter({
   subsets: ["latin"],
   weight: "400",
   variable: "--font-hand",
+  display: "swap",
+});
+const fontInter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+});
+const fontTechnicalMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-technical-mono",
   display: "swap",
 });
 
@@ -109,7 +123,7 @@ export default function RootLayout({
   return (
     <html lang="en-AU">
       <body
-        className={`${fontBody.variable} ${fontUi.variable} ${fontTech.variable} ${fontMono.variable} ${fontDisplay.variable} ${fontSerif.variable} ${fontHand.variable}`}
+        className={`${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable} ${fontSerif.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable} ${fontTech.variable} ${fontTechnicalMono.variable}`}
         data-build={
           process.env.NEXT_PUBLIC_BUILD_SHA ??
           process.env.RAILWAY_GIT_COMMIT_SHA ??

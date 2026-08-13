@@ -14,9 +14,12 @@ import type { PctPoint } from "../../../components/canvas/webgl/coordTransform";
 import { placementsToItems } from "../../../components/canvas/handoff/state/canvasBridge";
 import {
   getCadastralTitle,
+  getAudit,
   getDesignCanvas,
+  getDesign,
   getProject,
   getSurvey,
+  listCostings,
   listOutputs,
 } from "../../../lib/api";
 import { requireSignedIn } from "../../../lib/auth";
@@ -24,7 +27,18 @@ import {
   resolveCanvasMode,
   type CanvasProgress,
 } from "../../../lib/canvas-mode";
+import { resolveProjectNextAction } from "../../../lib/project-next-action";
 import type { StudioMode } from "../../../components/canvas/handoff/studioCatalog";
+import {
+  runAuditAction,
+  runCostingAction,
+  runDesignAction,
+  runOutputAction,
+  runSurveyAction,
+} from "../../../app/actions";
+import { SubmitButton } from "../../../components/SubmitButton";
+import { KitButton } from "../../../components/ui/kit";
+import styles from "./project.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +90,11 @@ export default async function ProjectCanvasPage({
     listOutputs(id).catch(() => []),
     getCadastralTitle(id).catch(() => null),
   ]);
+  const [design, costings, audit] = await Promise.all([
+    getDesign(id).catch(() => null),
+    listCostings(id).catch(() => []),
+    getAudit(id).catch(() => null),
+  ]);
 
   const quoteOut = outputs.find((o) => o.kind === "quote") ?? null;
   const progress: CanvasProgress = {
@@ -88,6 +107,18 @@ export default async function ProjectCanvasPage({
   };
   /** Clamp locked deep-links before first paint — avoids cad→survey flash. */
   const initialMode = resolveCanvasMode(sp.mode, progress) as StudioMode;
+  const nextAction = resolveProjectNextAction({
+    survey,
+    design,
+    costings,
+    audit,
+    outputs,
+    runSurveyAction,
+    runDesignAction,
+    runCostingAction,
+    runAuditAction,
+    runOutputAction,
+  });
 
   /** Dev preview: ?webgl=1 mounts the R3F WebGL board instead of the SVG studio. */
   const webglPreview = sp.webgl === "1";
@@ -134,6 +165,43 @@ export default async function ProjectCanvasPage({
 
   return (
     <main aria-label="Design canvas">
+      <section className={styles.pipelineBanner} aria-label="Pipeline status">
+        <div className={styles.pipelineBannerCopy}>
+          <p className={styles.pipelineKicker}>Backend pipeline</p>
+          <h1 className={styles.pipelineTitle}>
+            {nextAction ? nextAction.label : "Pipeline complete"}
+          </h1>
+          <p className={styles.pipelineBody}>
+            {nextAction
+              ? "This step is driven by the current survey, design, costing, audit, and output state."
+              : "The current project has moved through the visible backend stages. Open outputs to review the generated deliverables."}
+          </p>
+        </div>
+        {nextAction ? (
+          <form action={nextAction.action} className={styles.pipelineActions}>
+            <input type="hidden" name="projectId" value={id} />
+            {nextAction.kind ? (
+              <input type="hidden" name="kind" value={nextAction.kind} />
+            ) : null}
+            <SubmitButton
+              pendingLabel={nextAction.pending}
+              className={styles.pipelineButton}
+            >
+              {nextAction.label}
+            </SubmitButton>
+          </form>
+        ) : (
+          <KitButton
+            as="a"
+            href={`/projects/${id}/outputs`}
+            variant="secondary"
+            size="md"
+            className={styles.pipelineButton}
+          >
+            Open outputs
+          </KitButton>
+        )}
+      </section>
       <Suspense fallback={<StudioSkeleton />}>
         <HandoffDesignStudio
           projectId={id}

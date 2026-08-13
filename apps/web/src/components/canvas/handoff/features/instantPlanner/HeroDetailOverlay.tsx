@@ -27,6 +27,7 @@ const OPEN_MS = 250;
 
 export function HeroDetailOverlay({ feature, onClose, onFreeze }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
   const [sunDeg, setSunDeg] = useState(42);
   const [specsOpen, setSpecsOpen] = useState(false);
   const sunRef = useRef(sunDeg);
@@ -193,6 +194,13 @@ export function HeroDetailOverlay({ feature, onClose, onFreeze }: Props) {
     scene.add(mesh);
 
     let raf = 0;
+    const raycaster = new THREE.Raycaster();
+    const anchor = new THREE.Vector3(
+      0,
+      feature.kind === "planting" ? 0.42 : 0.3,
+      0.16,
+    );
+    const projected = new THREE.Vector3();
     let mouseX = 0;
     let mouseY = 0;
     let targetRotationX = 0;
@@ -220,6 +228,33 @@ export function HeroDetailOverlay({ feature, onClose, onFreeze }: Props) {
 
       // Gentle rotation
       mesh.rotation.y += 0.002;
+
+      const label = labelRef.current;
+      if (label) {
+        projected.copy(anchor).applyMatrix4(mesh.matrixWorld).project(camera);
+        const visible = projected.z >= -1 && projected.z <= 1;
+        if (visible) {
+          const target = anchor.clone().applyMatrix4(mesh.matrixWorld);
+          const direction = target.clone().sub(camera.position).normalize();
+          const targetDistance = camera.position.distanceTo(target);
+          raycaster.set(camera.position, direction);
+          const occluded = raycaster
+            .intersectObject(mesh, true)
+            .some((hit) => hit.distance < targetDistance - 0.08);
+          const scale = Math.max(
+            0.78,
+            Math.min(1.28, 2.8 / camera.position.distanceTo(target)),
+          );
+          label.style.left = `${((projected.x + 1) / 2) * 100}%`;
+          label.style.top = `${((1 - projected.y) / 2) * 100}%`;
+          label.style.opacity = occluded ? "0.3" : "1";
+          label.style.visibility = "visible";
+          label.style.transform = `translate(-50%, -50%) scale(${scale})`;
+          label.dataset.occluded = occluded ? "true" : "false";
+        } else {
+          label.style.visibility = "hidden";
+        }
+      }
 
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
@@ -281,7 +316,11 @@ export function HeroDetailOverlay({ feature, onClose, onFreeze }: Props) {
           </div>
         </div>
         <div className={css.body}>
-          <div className={css.canvas} ref={hostRef} />
+          <div className={css.canvas} ref={hostRef}>
+            <span ref={labelRef} className={css.canvasLabel} data-occluded="false">
+              {feature.title}
+            </span>
+          </div>
           <aside className={css.side}>
             <label className={css.sliderLabel}>
               <span className={css.sliderHeader}>

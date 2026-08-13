@@ -42,8 +42,13 @@ export function HeaderPhaseSelect({ phase, onPhase }: Props) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const activeItemRef = useRef<HTMLButtonElement>(null);
   const [menuStyle, setMenuStyle] = useState<MenuStyle | null>(null);
   const caps = resolvePhaseCapabilities(phase);
+
+  useLayoutEffect(() => {
+    if (open) activeItemRef.current?.focus();
+  }, [open]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -71,7 +76,10 @@ export function HeaderPhaseSelect({ phase, onPhase }: Props) {
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
     };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
@@ -86,6 +94,8 @@ export function HeaderPhaseSelect({ phase, onPhase }: Props) {
       ref={menuRef}
       className={css.menu}
       role="menu"
+      id="phase-manager-menu"
+      aria-label="Design lifecycle phase"
       data-testid="phase-manager-select"
       style={
         menuStyle
@@ -101,6 +111,7 @@ export function HeaderPhaseSelect({ phase, onPhase }: Props) {
         return (
           <button
             key={p}
+            ref={on ? activeItemRef : undefined}
             type="button"
             role="menuitemradio"
             aria-checked={on}
@@ -111,6 +122,7 @@ export function HeaderPhaseSelect({ phase, onPhase }: Props) {
             onClick={() => {
               onPhase(p);
               setOpen(false);
+              triggerRef.current?.focus();
             }}
           >
             {PHASE_SHORT[p]}
@@ -130,10 +142,11 @@ export function HeaderPhaseSelect({ phase, onPhase }: Props) {
         data-testid="phase-manager-toggle"
         aria-expanded={open}
         aria-haspopup="menu"
+        aria-controls="phase-manager-menu"
         title={`Design lifecycle phase — ${DESIGN_LIFECYCLE_LABEL[phase]}`}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className={css.headerLabel}>Phase</span>
+        <span className={css.headerLabel}>Lifecycle</span>
         <span className={css.headerValue}>{PHASE_SHORT[phase]}</span>
       </button>
       {menu ? (

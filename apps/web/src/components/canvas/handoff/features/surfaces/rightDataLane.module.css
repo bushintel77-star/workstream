@@ -9,9 +9,10 @@
   overflow: auto;
   pointer-events: auto;
   border-radius: 12px 0 0 12px;
-  border-left: 1px solid var(--hc-line-soft);
-  box-shadow: -8px 0 28px var(--hc-neu-shadow);
-  background: var(--hc-invert);
+  border: 1px solid var(--ws-milled-border);
+  border-left: 1px solid var(--ws-milled-border);
+  box-shadow: var(--ws-milled-shadow);
+  background: var(--ws-milled-surface);
 }
 
 /* Programmatic focus on open (Esc/Tab trap owner) — visible, not a stray

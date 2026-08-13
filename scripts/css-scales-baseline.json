@@ -10,9 +10,6 @@
     "zIndex": 3,
     "radius": 3
   },
-  "apps/web/src/app/landing.module.css": {
-    "zIndex": 3
-  },
   "apps/web/src/app/portal/quote/[token]/quote.module.css": {
     "opacity": 1
   },

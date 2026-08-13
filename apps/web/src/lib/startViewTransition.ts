@@ -14,12 +14,19 @@ export function startViewTransition(
   }
 
   const doc = document as Document & {
-    startViewTransition?: (callback: () => void) => unknown;
+    startViewTransition?: (callback: () => void) => {
+      finished?: Promise<unknown>;
+      ready?: Promise<unknown>;
+      updateCallbackDone?: Promise<unknown>;
+    };
   };
 
   if (typeof doc.startViewTransition === "function") {
     try {
-      doc.startViewTransition(update);
+      const transition = doc.startViewTransition(update);
+      // Chromium rejects `finished` when a newer transition supersedes this
+      // one. It is a normal navigation race, not an application error.
+      void transition.finished?.catch(() => undefined);
       return;
     } catch {
       /* API present but rejected (e.g. nested call) — fall through */

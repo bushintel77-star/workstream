@@ -1,0 +1,16 @@
+# Intelligent Canvas concept mockups
+
+These are the Stitch-style **concept mockups** supplied with the Intelligent
+Canvas product specification (see the "Intelligent Canvas — product
+specification" section in [OUTSTANDING.md](../../../OUTSTANDING.md)).
+
+**They are DNA references for visual tone, not literal specs to pixel-match**
+— same status as the Stitch export bundle referenced in
+[GOLD-STANDARD-STUDIO-HANDOVER.md](../../GOLD-STANDARD-STUDIO-HANDOVER.md).
+The written spec is the source of truth; these mockups illustrate it.
+
+| File | Depicts | Maps to spec section |
+| --- | --- | --- |
+| [concept-01-cad-operator-studio.png](concept-01-cad-operator-studio.png) | Dark canvas, gold dashed lot boundary, Signal Blue `(0,0,0)` origin crosshair, left `TOOLSET` vertical icon rail, right `STRUCT`/`PLANT`/`IRRIG` category rail, floating meta chips (`Acer Palmatum · Status: Secured`, `Lavandula · GPM: 2.4 \| RP: 1.2m`), bottom asset carousel with `SECURED`/`ACTIVE` badges and per-card `CODE`/`HEIGHT`/`ROOT ZONE` data | §2 Tokens (Signal Blue origin); §3 Phase 1 Sketch Studio → Floating Tool Ribbon, Asset Discovery HUD; §3 Phase 2 CAD Operator → Hydrological Pulse (GPM); §5 Billboarding (meta chips) |
+| [concept-02-solar-subsurface-analysis.png](concept-02-solar-subsurface-analysis.png) | "Willow Creek" site analysis layer — coordinates + elevation panel, `Soil: Clay Loam` / `Strike Alert: None` / `Root Zone: Secured` chips, a `SUBSURFACE LEGEND` (Hydraulics=blue, High-Voltage Elec=red, Root Protection Zone=green), and a `SOLAR TRAJECTORY` time-of-day scrubber (06:00–18:00) | §3 Step 0 Site Truth (coordinates/elevation, high-precision digital twin); §3 Phase 2 CAD Operator → Subsurface Engine (gas/water/electrical volumetric rendering — this is what Subsurface Studio's BYDA/trench conflict detection implements), Strike Alert Engine. **Not yet built**: the time-of-day Solar Trajectory scrubber shown here is a different instrument from Growth Studio's Year 1/5/10 growth-stage scrubber — real sun-position math (`sunPositionAt`) already backs Growth Studio's lighting direction, but nothing exposes it as a user-facing time-of-day scrubber yet |
+| [concept-03-auto-placement-logic.png](concept-03-auto-placement-logic.png) | Dashed ghost placement box (`2.4m x 2.4m`) with a Signal Blue center crosshair, an `AUTO-PLACEMENT LOGIC` panel (`Spacing rule: Verified`, `Solar exposure: 85% / S-SW`, `Soil compat: Type C (Clay)`), an `ASSET DATA` panel (`Quercus agrifolia` / Coast Live Oak, `Drought Tol.` / `Native` tags) with `CONFIRM`/`CANCEL` buttons, a bottom asset carousel with a `SELECTED` card, and a technical footer (`Ctrl+K for Command Bar`, `X/Y/Z` coordinate readout, `Grid: 4px`, `Sys: Nominal`) | §3 Phase 1 Sketch Studio → AI Auto-Placement ("ghosts" assets into positions, Confirm/Cancel), Asset Discovery HUD (fan-out carousel + metadata reveal). **This is the direct source for the mobile Ghost & Snap placement flow** shipped in `apps/mobile/app/(app)/design-studio/[id].tsx` this session — dashed ghost volume, Signal Blue anchor crosshair, snap-to-grid, and a Confirm/Cancel bar (adapted for a phone-sized viewport rather than this desktop side-panel layout) |

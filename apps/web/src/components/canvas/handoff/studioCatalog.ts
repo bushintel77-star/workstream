@@ -339,14 +339,25 @@ export const MODE_TABS = [
   "survey",
   "sketch",
   "cad",
+  "garden",
   "elevation",
   "quote",
   "present",
   "share",
-  "garden",
 ] as const;
 
 export type StudioMode = (typeof MODE_TABS)[number];
+
+export const MODE_LABELS: Record<StudioMode, string> = {
+  survey: "Survey",
+  sketch: "Sketch",
+  cad: "CAD",
+  garden: "Garden",
+  elevation: "Elevation",
+  quote: "Quote",
+  present: "Present",
+  share: "Share",
+};
 
 export const TOOLS = [
   { id: "trace", label: "Trace", icon: "✎" },
@@ -428,11 +439,11 @@ export function kitBagFor(type: StudioItemType): KitBagId {
 
 /** Survey-mode annotation tools (ported from curtis-co prototype). */
 export const SURVEY_TOOLS = [
-  { id: "calib", label: "Calib", icon: "⌖", title: "Calibrate scale — two points with a known distance" },
+  { id: "calib", label: "Calibrate", icon: "⌖", title: "Calibrate scale — two points with a known distance" },
   { id: "level", label: "Level", icon: "△", title: "Spot level — click a point, enter RL" },
   {
     id: "service",
-    label: "Servc",
+    label: "Services",
     icon: "〜",
     title:
       "Trace a service line (2 pts) or easement hatch (≥3 pts + Enter) — Esc cancel",

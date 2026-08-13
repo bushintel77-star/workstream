@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireSignedIn } from "../../../lib/auth";
-import { getProject } from "../../../lib/api";
+import { getIntegrationSummary, getProject, listOutputs } from "../../../lib/api";
 import { ProjectChrome } from "../../../components/ProjectChrome";
 
 export const dynamic = "force-dynamic";
@@ -17,14 +17,19 @@ export default async function ProjectLayout({
   const { id } = await params;
   const project = await getProject(id);
   if (!project) notFound();
+  const [outputs, summary] = await Promise.all([
+    listOutputs(id).catch(() => []),
+    getIntegrationSummary().catch(() => null),
+  ]);
+  const quote = outputs.find((output) => output.kind === "quote") ?? null;
 
   return (
     <ProjectChrome
       projectId={id}
       address={project.address}
-      quoteUrl={null}
-      hasQuote={false}
-      summary={null}
+      quoteUrl={quote?.uri ?? null}
+      hasQuote={quote != null}
+      summary={summary}
     >
       {children}
     </ProjectChrome>

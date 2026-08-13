@@ -25,6 +25,8 @@ type Props = {
   shadowLengthM?: number | null;
   /** Open canopy_conflict findings — shown when scrubbed to Year 10. */
   year10CanopyConflicts?: number;
+  /** When set, links out to the standalone 3D growth studio. */
+  projectId?: string;
   onSunMin: (min: number) => void;
   onDatePreset: (preset: SunDatePreset) => void;
   onGrowth: (g: GrowthStage) => void;
@@ -49,6 +51,7 @@ export function SunGrowthDock({
   playing,
   shadowLengthM = null,
   year10CanopyConflicts = 0,
+  projectId,
   onSunMin,
   onDatePreset,
   onGrowth,
@@ -207,6 +210,15 @@ export function SunGrowthDock({
             indicative until surveyed heights are available
           </p>
         )}
+        {projectId ? (
+          <a
+            className={css.studioLink}
+            href={`/growth-studio/${projectId}`}
+            data-testid="open-growth-studio"
+          >
+            Open 3D growth simulation ↗
+          </a>
+        ) : null}
       </aside>
     </CameraChrome>
   );

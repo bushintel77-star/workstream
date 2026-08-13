@@ -4,6 +4,9 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
   type RefObject,
 } from "react";
 import {
@@ -33,6 +36,12 @@ const SOIL_OPTS: SoilTag[] = ["any", "clay", "loam", "sand"];
 const ASPECT_OPTS: AspectTag[] = ["any", "N", "E", "S", "W"];
 /** Pinned row — favorites/recents cap (replaces Draft kit grid). */
 const PINNED_MAX = 9;
+
+type CarouselStyle = CSSProperties & {
+  "--carousel-angle": string;
+  "--carousel-scale": string;
+  "--carousel-opacity": string;
+};
 
 export type AssetPanelExpandedProps = {
   mode: StudioMode;
@@ -65,6 +74,111 @@ function pinnedTypes(mode: StudioMode): StudioItemType[] {
   const filtered =
     mode === "survey" ? all.filter((t) => t === "exist") : all;
   return filtered.slice(0, PINNED_MAX);
+}
+
+function AssetCarousel({
+  children,
+  count,
+}: {
+  children: ReactNode[];
+  count: number;
+}) {
+  const [theta, setTheta] = useState(0);
+  const thetaRef = useRef(0);
+  const velocityRef = useRef(0);
+  const dragRef = useRef<{ x: number; theta: number } | null>(null);
+
+  useEffect(() => {
+    let frame = 0;
+    const tick = () => {
+      velocityRef.current *= 0.9;
+      thetaRef.current += velocityRef.current;
+      if (
+        Math.abs(velocityRef.current) > 0.0005 ||
+        dragRef.current !== null
+      ) {
+        setTheta(thetaRef.current);
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const step = count > 0 ? 360 / count : 360;
+  const activeIndex =
+    count > 0
+      ? Math.round((((-theta / step) % count) + count) % count) % count
+      : 0;
+  const cards = children.map((child, index) => {
+    const angle = index * step + theta;
+    const normalized = ((angle + 180) % 360) - 180;
+    const focus = Math.max(0, Math.cos((normalized * Math.PI) / 180));
+    const style: CarouselStyle = {
+      "--carousel-angle": `${angle}deg`,
+      "--carousel-scale": (0.85 + focus * 0.15).toFixed(3),
+      "--carousel-opacity": (0.3 + focus * 0.7).toFixed(3),
+    };
+    return (
+      <div
+        className={css.carouselSlot}
+        key={index}
+        data-active={index === activeIndex ? "true" : "false"}
+        style={style}
+      >
+        {child}
+      </div>
+    );
+  });
+
+  return (
+    <div
+      className={css.carouselViewport}
+      onPointerDown={(event) => {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        dragRef.current = { x: event.clientX, theta: thetaRef.current };
+      }}
+      onPointerMove={(event) => {
+        if (!dragRef.current) return;
+        const delta = event.clientX - dragRef.current.x;
+        thetaRef.current = dragRef.current.theta + delta * 0.35;
+        velocityRef.current = delta * 0.012;
+        setTheta(thetaRef.current);
+      }}
+      onPointerUp={() => {
+        dragRef.current = null;
+      }}
+      onPointerCancel={() => {
+        dragRef.current = null;
+      }}
+      onWheel={(event) => {
+        event.preventDefault();
+        velocityRef.current += event.deltaY * 0.002;
+      }}
+    >
+      <div className={css.carouselTelemetry} aria-hidden>
+        <span>CATALOG // ORBITAL</span>
+        <span>
+          {String(activeIndex + 1).padStart(2, "0")} /{" "}
+          {String(count).padStart(2, "0")}
+        </span>
+      </div>
+      <div className={css.carouselReticle} aria-hidden />
+      <div className={css.carouselTicks} aria-hidden>
+        {Array.from({ length: 13 }, (_, index) => (
+          <span
+            key={index}
+            className={css.carouselTick}
+            data-major={index % 3 === 0 ? "true" : "false"}
+          />
+        ))}
+      </div>
+      <div className={css.carouselTrack}>{cards}</div>
+      <div className={css.carouselHint} aria-hidden>
+        DRAG / SCROLL TO ROTATE
+      </div>
+    </div>
+  );
 }
 
 export function AssetPanelExpanded({
@@ -147,7 +261,7 @@ export function AssetPanelExpanded({
     onOpenSection(openSection === id ? null : id);
   };
 
-  const symbolChip = (sym: CatalogSymbol) => {
+  const symbolChip = (sym: CatalogSymbol, carouselIndex?: number) => {
     const mapped = mapSymbolToStudioType(sym.id);
     const on = activeMaterial === mapped;
     const spreadM = sym.default_width_m ?? sym.mature_height_m;
@@ -162,7 +276,7 @@ export function AssetPanelExpanded({
         type="button"
         role="option"
         aria-selected={on}
-        className={`${css.tile}${on ? ` ${css.tileOn}` : ""}`}
+        className={`${css.tile}${on ? ` ${css.tileOn}` : ""}${carouselIndex != null ? ` ${css.carouselCard}` : ""}`}
         data-testid={`kit-library-${sym.id}`}
         title={
           sym.botanical_name
@@ -171,13 +285,27 @@ export function AssetPanelExpanded({
         }
         onClick={() => pickSymbol(sym)}
       >
+        {carouselIndex != null ? (
+          <span className={css.carouselSerial} aria-hidden>
+            {String(carouselIndex + 1).padStart(2, "0")}
+          </span>
+        ) : null}
         <span className={css.glyph} aria-hidden>
           <DesignAssetGlyph symbol={sym} size="sm" />
         </span>
-        <span className={css.tileLabel}>{sym.label}</span>
-        {sym.botanical_name ? (
-          <span className={css.tileBotanical}>{sym.botanical_name}</span>
-        ) : null}
+        <span className={css.tileKey}>
+          <span className={css.tileTopRow}>
+            <span className={css.tileTitle}>{sym.label}</span>
+            <span className={css.tileCode}>[{sym.id.toUpperCase()}]</span>
+          </span>
+          {sym.botanical_name ? (
+            <span className={css.tileBotanical}>{sym.botanical_name}</span>
+          ) : null}
+        </span>
+        <span className={css.tileDesc}>
+          {sym.sun ? `${sym.sun} sun` : "Catalog asset"}
+          {sym.water ? ` · ${sym.water} water` : ""}
+        </span>
         {scalePct != null ? (
           <span
             className={css.tileScale}
@@ -289,7 +417,11 @@ export function AssetPanelExpanded({
           onScroll={(e) => onScrollTop(e.currentTarget.scrollTop)}
         >
           <div className={css.tray} role="listbox" aria-label="Search results">
-            {results.map(symbolChip)}
+           {results.length > 0 ? (
+             <AssetCarousel count={results.length}>
+               {results.map((symbol, index) => symbolChip(symbol, index))}
+             </AssetCarousel>
+           ) : null}
             {results.length === 0 ? (
               <p className={css.empty}>Nothing in the library matches.</p>
             ) : null}
@@ -302,28 +434,41 @@ export function AssetPanelExpanded({
           onScroll={(e) => onScrollTop(e.currentTarget.scrollTop)}
         >
           <section className={css.section} data-testid="asset-pinned">
-            <p className={css.pinnedLabel}>Pinned</p>
-            <div className={css.tray} role="listbox" aria-label="Pinned">
-              {pinned.map((t) => {
-                const on = activeMaterial === t;
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    role="option"
-                    aria-selected={on}
-                    className={`${css.tile}${on ? ` ${css.tileOn}` : ""}`}
-                    data-testid={`paint-swatch-${t}`}
-                    title={BY_TYPE[t].tag}
-                    onClick={() => pickMaterial(t)}
-                  >
-                    <span className={css.glyph} aria-hidden>
-                      <StudioGlyph type={t} ink />
-                    </span>
-                    <span className={css.tileLabel}>{BY_TYPE[t].tag}</span>
-                  </button>
-                );
-              })}
+            <p className={css.pinnedLabel}>Pinned assets</p>
+            <div
+              className={css.tray}
+              role="listbox"
+              aria-label="Pinned"
+              data-testid="asset-carousel-pinned"
+            >
+              <AssetCarousel count={pinned.length}>
+                {pinned.map((t) => {
+                  const on = activeMaterial === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      role="option"
+                      aria-selected={on}
+                      className={`${css.tile}${on ? ` ${css.tileOn}` : ""} ${css.carouselCard}`}
+                      data-testid={`paint-swatch-${t}`}
+                      title={BY_TYPE[t].tag}
+                      onClick={() => pickMaterial(t)}
+                    >
+                      <span className={css.glyph} aria-hidden>
+                        <StudioGlyph type={t} ink />
+                      </span>
+                      <span className={css.tileKey}>
+                        <span className={css.tileTopRow}>
+                          <span className={css.tileTitle}>{BY_TYPE[t].tag}</span>
+                          <span className={css.tileCode}>[{t.toUpperCase()}]</span>
+                        </span>
+                        <span className={css.tileDesc}>Recent studio asset</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </AssetCarousel>
             </div>
           </section>
 
@@ -350,7 +495,13 @@ export function AssetPanelExpanded({
                   role="listbox"
                   aria-label={group.label}
                 >
-                  {group.symbols.map(symbolChip)}
+                  {group.symbols.length > 0 ? (
+                    <AssetCarousel count={group.symbols.length}>
+                      {group.symbols.map((symbol, index) =>
+                        symbolChip(symbol, index),
+                      )}
+                    </AssetCarousel>
+                  ) : null}
                 </div>
               ) : null}
             </section>

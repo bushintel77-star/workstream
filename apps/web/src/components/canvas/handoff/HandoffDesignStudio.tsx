@@ -11,6 +11,7 @@ import {
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   BY_TYPE,
+  MODE_LABELS,
   MODE_TABS,
   PAINT_SWATCHES,
   STUDIO_ITEM_TYPE_LABEL,
@@ -145,6 +146,7 @@ import { ToolDock } from "./features/toolDock/ToolDock";
 import { ContextualToolStrip } from "./features/toolDock/ContextualToolStrip";
 import { CanvasToolCard } from "./features/toolDock/CanvasToolCard";
 import { CanvasContextCard } from "./features/toolDock/CanvasContextCard";
+import { StudioContextBreadcrumb } from "./features/contextStrip/StudioContextBreadcrumb";
 import { LiveBomDock } from "./features/bom/LiveBomDock";
 import { InstantPlannerChrome } from "./features/instantPlanner/InstantPlannerChrome";
 import { NicheToolCarousel } from "./features/kitInventory/NicheToolCarousel";
@@ -160,7 +162,6 @@ import {
   toggleTool,
   type ToolStack,
 } from "./features/toolStack/toolStack";
-import { StudioContextBreadcrumb } from "./features/contextStrip/StudioContextBreadcrumb";
 import {
   loadPointerMarkId,
   savePointerMarkId,
@@ -2120,6 +2121,12 @@ export function HandoffDesignStudio({
   const contextualStripVisible =
     chrome.contextualStrip &&
     !(studioSheetVisible && studioSheetSnap === "full");
+  const contextBreadcrumbActive =
+    ui.isolatedLayer != null ||
+    ui.setbackOn ||
+    ui.shadeOn ||
+    ui.growth !== "mature" ||
+    Object.values(ui.layerOpacity).some((opacity) => opacity < 0.95);
   /**
    * Canvas-first mandate: idle parchment is tool-free.
    * Summon via header Instruments / margin / Q; stay up while a craft tool is armed.
@@ -2127,6 +2134,25 @@ export function HandoffDesignStudio({
   const instrumentsVisible =
     instrumentsSummoned ||
     (ui.tool !== "select" && ui.tool !== "pan" && ui.tool !== "lock");
+  /**
+   * Bottom chrome must yield to transient panels and modal lanes. Keeping this
+   * in one guard prevents the rail and its context pill from surviving an
+   * exclusive surface such as the asset library.
+   */
+  const bottomChromeSuppressed =
+    assetPanelOn ||
+    canvasToolCardOn ||
+    rightLaneBusy ||
+    ui.cmdOpen ||
+    ui.addOpen ||
+    ui.coachOpen ||
+    ui.factorsOpen ||
+    sharePopupOpen ||
+    sheetComposeOpen ||
+    plannerAssistOpen ||
+    structuredToolsOpen ||
+    designBranchOpen ||
+    headerViewMenuOpen;
   const compactSafeBottom = sheetSafeBottomPx({
     sheetOpen: studioSheetVisible,
     fabOn: chrome.primaryFab,
@@ -2681,6 +2707,14 @@ export function HandoffDesignStudio({
        * with no sheet chrome). Same clean path as toggling Fit off.
        */
       if (ui.frameOn) setFitSheetOn(false);
+      if (mode !== ui.mode) {
+        studio.setUi({
+          tool: "select",
+          rightDataPanel: null,
+          utilityPanel: null,
+          selectedId: null,
+        });
+      }
       if (ui.mode === "sketch" && (mode === "cad" || mode === "garden") && studio.strokes.length > 0) {
         const alreadyHasSketchGhosts = studio.items.some(
           (i) => i.ghost && i.id.startsWith("ai-sketch-"),
@@ -3341,27 +3375,6 @@ export function HandoffDesignStudio({
     ui.tool,
   ]);
 
-  const councilTipVisible =
-    planOn &&
-    !ui.focusOn &&
-    !ui.clientView &&
-    !ui.frameOn &&
-    Boolean(ui.councilTip);
-  const headerContextActive =
-    planOn &&
-    !ui.clientView &&
-    !ui.frameOn &&
-    (councilTipVisible ||
-      ui.setbackOn ||
-      ui.shadeOn ||
-      ui.growth !== "mature" ||
-      ui.isolatedLayer != null ||
-      ui.layerOpacity.survey < 0.95 ||
-      ui.layerOpacity.boundary < 0.95 ||
-      ui.layerOpacity.council < 0.95 ||
-      ui.layerOpacity.vegetation < 0.95 ||
-      ui.layerOpacity.services < 0.95 ||
-      ui.layerOpacity.notes < 0.95);
   const showHeaderAiPill =
     !ui.focusOn &&
     !ui.clientView &&
@@ -3526,7 +3539,10 @@ export function HandoffDesignStudio({
               * pill is the entry point for the checklist, which is no longer
               * forced open by default (§6 item 7).
               */}
-            {ui.mode === "survey" && !ui.focusOn && !ui.clientView ? (
+            {ui.mode === "survey" &&
+            !ui.focusOn &&
+            !ui.clientView &&
+            !bottomChromeSuppressed ? (
               <button
                 type="button"
                 className={`${css.surveyProgress}${surveyProgress.complete ? ` ${css.surveyProgressDone}` : ""}${checklistOpen ? ` ${css.surveyProgressActive}` : ""}`}
@@ -3617,13 +3633,13 @@ export function HandoffDesignStudio({
                     aria-disabled={locked}
                     aria-current={ui.mode === m ? "page" : undefined}
                     aria-keyshortcuts={idx < 9 ? String(idx + 1) : undefined}
-                    title={lockReason ?? `${m[0]!.toUpperCase() + m.slice(1)} mode`}
+                    title={lockReason ?? `${MODE_LABELS[m]} mode`}
                     onClick={() => {
                       if (!locked) requestMode(m);
                     }}
                   >
                     {locked ? <span className={css.modeLockIcon} aria-hidden /> : null}
-                    {m[0]!.toUpperCase() + m.slice(1)}
+                    {MODE_LABELS[m]}
                   </button>
                 );
               })
@@ -3670,11 +3686,12 @@ export function HandoffDesignStudio({
                 onClick={() =>
                   studio.setUi({ rightDataPanel: "quote", utilityPanel: null })
                 }
-                title="Open live cost rail"
+                aria-label="Open cost panel"
+                title="Open live cost panel"
               >
                 {hasCostedLines
                   ? audChip(estimate.totalInclGst)
-                  : "Quote"}
+                  : "Live cost"}
               </button>
             ) : null}
             {!ui.clientView ? (
@@ -3751,30 +3768,6 @@ export function HandoffDesignStudio({
           </div>
         }
       />
-      <CanvasContextCard active={headerContextActive}>
-        <StudioContextBreadcrumb
-          mode={ui.mode}
-          isolatedLayer={ui.isolatedLayer}
-          layerOpacity={ui.layerOpacity}
-          setbackOn={ui.setbackOn}
-          shadeOn={ui.shadeOn}
-          growth={ui.growth}
-          onClearIsolation={() => studio.clearServiceFocus()}
-          onClearSetback={() => studio.setUi({ setbackOn: false })}
-          onClearShade={() => studio.setUi({ shadeOn: false, sunPlay: false })}
-          onResetGrowth={() => studio.setUi({ growth: "mature" })}
-          onResetLayer={(layer) => {
-            if (layer === "services" && ui.servicesLocked) return;
-            studio.setLayerOpacity(layer, 1);
-          }}
-        />
-        {councilTipVisible ? (
-          <p className={css.headerCouncilTip} data-testid="council-setback-tip">
-            {ui.councilTip}
-          </p>
-        ) : null}
-      </CanvasContextCard>
-
       <div
         className={`${css.board}${compliance.canvasSignal === "critical" ? ` ${css.boardCritical}` : ""}${compliance.canvasSignal === "watch" ? ` ${css.boardWatch}` : ""}${isTiltActive(ui.tiltDeg) || tiltAnimKind ? ` ${css.boardTiltPerspective}` : ""}`}
         data-testid="studio-board"
@@ -4130,6 +4123,7 @@ export function HandoffDesignStudio({
                   items={studio.items}
                   setbackM={compliance.setbackM}
                   boardWidthM={scaleM}
+                  planZoom={planZoom}
                   cursorPct={boardCursorPct ?? ui.drawCursor}
                   showValidation={
                     highStakesBuildable || ui.buildableAreaOn
@@ -5013,7 +5007,9 @@ export function HandoffDesignStudio({
           />
         ) : null}
 
-        {contextualStripVisible && instrumentsVisible ? (
+        {contextualStripVisible &&
+        instrumentsVisible &&
+        !bottomChromeSuppressed ? (
           <ContextualToolStrip
             tool={ui.tool}
             mode={ui.mode}
@@ -5047,6 +5043,31 @@ export function HandoffDesignStudio({
             }}
             onClose={() => studio.setUi({ addOpen: false })}
           />
+        ) : null}
+
+        {planOn &&
+        !ui.frameOn &&
+        !ui.clientView &&
+        contextBreadcrumbActive &&
+        !bottomChromeSuppressed ? (
+          <CanvasContextCard active>
+            <StudioContextBreadcrumb
+              mode={ui.mode}
+              isolatedLayer={ui.isolatedLayer}
+              layerOpacity={ui.layerOpacity}
+              setbackOn={ui.setbackOn}
+              shadeOn={ui.shadeOn}
+              growth={ui.growth}
+              placement="canvas"
+              onClearIsolation={() => studio.setUi({ isolatedLayer: null })}
+              onClearSetback={() => studio.setUi({ setbackOn: false })}
+              onClearShade={() =>
+                studio.setUi({ shadeOn: false, sunPlay: false })
+              }
+              onResetGrowth={() => studio.setUi({ growth: "mature" })}
+              onResetLayer={(layer) => studio.setLayerOpacity(layer, 1)}
+            />
+          </CanvasContextCard>
         ) : null}
 
         {dialHint && planOn && !ui.frameOn ? (
@@ -5383,6 +5404,7 @@ export function HandoffDesignStudio({
               openBoardFindings.filter((f) => f.kind === "canopy_conflict")
                 .length
             }
+            projectId={projectId}
             onSunMin={(sunMin) => studio.setUi({ sunMin })}
             onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
             onGrowth={(growth) => studio.setUi({ growth })}
@@ -5423,6 +5445,7 @@ export function HandoffDesignStudio({
               );
             }}
             onClose={() => studio.setUi({ lightingWorkspaceOn: false })}
+            projectId={projectId}
           />
         ) : null}
 

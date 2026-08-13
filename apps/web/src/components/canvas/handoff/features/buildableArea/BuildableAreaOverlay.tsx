@@ -30,6 +30,8 @@ type Props = {
   items: StudioItem[];
   setbackM: number;
   boardWidthM: number;
+  /** Live plan zoom so the projected laser stroke tracks world scale. */
+  planZoom: number;
   /** Board cursor in % — drives live setback chip. */
   cursorPct: PctPoint | null;
   /** Show live within/violation chip (high-stakes or pin). */
@@ -65,6 +67,7 @@ export function BuildableAreaOverlay({
   items,
   setbackM,
   boardWidthM,
+  planZoom,
   cursorPct,
   showValidation,
   onPinChange,
@@ -155,6 +158,7 @@ export function BuildableAreaOverlay({
 
   const strokeOpacity = pinned ? 1 : 0.4;
   const washOpacity = pinned ? 0.06 : 0.04;
+  const worldScale = Math.max(planZoom, 0.35);
   const violated = validation != null && !validation.ok;
 
   return (
@@ -206,9 +210,9 @@ export function BuildableAreaOverlay({
                     points={domainPtsAttr(ring)}
                     fill="url(#ws-buildable-fill)"
                     stroke="var(--hc-buildable, var(--ok))"
-                    strokeWidth="0.28"
+                    strokeWidth={0.28 * worldScale}
                     strokeOpacity={strokeOpacity}
-                    strokeDasharray="0.8 0.6"
+                    strokeDasharray={`${0.8 * worldScale} ${0.6 * worldScale}`}
                     data-testid="buildable-polygon"
                     data-laser="1"
                   />
@@ -226,7 +230,7 @@ export function BuildableAreaOverlay({
                             x2={b[0]}
                             y2={b[1]}
                             stroke="var(--hc-danger)"
-                            strokeWidth="0.45"
+                            strokeWidth={0.45 * worldScale}
                             strokeOpacity="0.95"
                             data-testid="buildable-violation-segment"
                           />

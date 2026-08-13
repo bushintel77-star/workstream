@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { pollProjectProgressAction } from "../../../../app/actions";
 import { getProject } from "../../../../lib/api";
 import { ProcessingScreen } from "./ProcessingScreen";
 
@@ -12,12 +13,14 @@ export default async function ProcessingPage({
   const { id } = await params;
   const project = await getProject(id);
   if (!project) notFound();
+  const progress = await pollProjectProgressAction(id).catch(() => null);
 
   return (
     <ProcessingScreen
       projectId={project.id}
       address={project.address}
       status={project.status}
+      progress={progress}
     />
   );
 }

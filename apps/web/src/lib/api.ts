@@ -207,12 +207,14 @@ export async function geocodePreviewApi(
 ): Promise<{
   neighbourhood_uri: string;
   aerial_uri: string;
+  title_ring?: [number, number][];
   lat: number;
   lng: number;
 }> {
   return apiGet<{
     neighbourhood_uri: string;
     aerial_uri: string;
+    title_ring?: [number, number][];
     lat: number;
     lng: number;
   }>(`/geocode/preview?lat=${lat}&lng=${lng}`);
@@ -1910,4 +1912,3 @@ export async function deletePresentationDocumentApi(
     `/projects/${projectId}/presentation-documents/${docId}`,
   );
 }
-

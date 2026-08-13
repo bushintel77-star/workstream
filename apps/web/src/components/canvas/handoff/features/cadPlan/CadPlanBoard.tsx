@@ -512,6 +512,19 @@ export function CadPlanBoard({
     index: number;
   } | null>(null);
   const [cursorPct, setCursorPct] = useState<PctPoint | null>(null);
+  const cursorPctRef = useRef<PctPoint | null>(null);
+  const updateCursorPct = useCallback((next: PctPoint) => {
+    const previous = cursorPctRef.current;
+    if (
+      previous &&
+      Math.abs(previous.x - next.x) < 0.05 &&
+      Math.abs(previous.y - next.y) < 0.05
+    ) {
+      return;
+    }
+    cursorPctRef.current = next;
+    setCursorPct(next);
+  }, []);
   /** Why the pointer snapped — surfaced as a glyph legend, not just a flash. */
   const [snapKind, setSnapKind] = useState<
     "grid" | "align" | "vertex" | "ortho" | null
@@ -1027,11 +1040,11 @@ export function CadPlanBoard({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    setCursorPct(toPct(e.clientX, e.clientY));
+    const p = toPct(e.clientX, e.clientY);
+    updateCursorPct(p);
     const d = dragRef.current;
     if (!d) return;
     onInteract?.();
-    const p = toPct(e.clientX, e.clientY);
     if (d.kind === "marquee" && d.startX != null && d.startY != null) {
       setMarquee({ x1: d.startX, y1: d.startY, x2: p.x, y2: p.y });
       return;
@@ -1313,7 +1326,10 @@ export function CadPlanBoard({
         }}
         onPointerMove={boardPassthrough ? undefined : onPointerMove}
         onPointerUp={boardPassthrough ? undefined : onPointerUp}
-        onPointerLeave={() => setCursorPct(null)}
+        onPointerLeave={() => {
+          cursorPctRef.current = null;
+          setCursorPct(null);
+        }}
       >
         <svg
           className={`${css.planSvg}${greyWash ? ` ${css.planGreyWash}` : ""}${watercolour ? ` ${css.planWatercolour}` : ""}${deepChalk ? ` ${css.planDeepChalk}` : ""}${handDrawn ? ` ${css.planHandDrawn}` : ""}`}

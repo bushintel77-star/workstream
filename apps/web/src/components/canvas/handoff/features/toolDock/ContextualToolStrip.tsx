@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type PointerEvent } from "react";
 import { CameraChrome } from "../../CameraChrome";
 import type { StudioMode, StudioTool } from "../../studioCatalog";
 import {
@@ -30,7 +30,7 @@ type Props = {
  */
 export function ContextualToolStrip({
   tool,
-  mode: _mode,
+  mode,
   surveyServicesAuthoring = false,
   locked,
   night = false,
@@ -40,8 +40,8 @@ export function ContextualToolStrip({
   onToggleGrid,
 }: Props) {
   const chips = useMemo(
-    () => buildToolChips(surveyServicesAuthoring),
-    [surveyServicesAuthoring],
+    () => buildToolChips(mode, surveyServicesAuthoring),
+    [mode, surveyServicesAuthoring],
   );
 
   const pick = (chip: ToolChip) => {
@@ -60,6 +60,27 @@ export function ContextualToolStrip({
     onTool(chip.id as StudioTool);
   };
 
+  const magnetise = (e: PointerEvent<HTMLElement>) => {
+    const target = e.currentTarget;
+    const buttons = target.querySelectorAll<HTMLElement>("[data-magnetic]");
+    buttons.forEach((button) => {
+      const rect = button.getBoundingClientRect();
+      const dx = e.clientX - (rect.left + rect.width / 2);
+      const dy = e.clientY - (rect.top + rect.height / 2);
+      const distance = Math.hypot(dx, dy);
+      const influence = Math.max(0, Math.min(1, (15 - distance) / 15));
+      button.style.setProperty("--mag-x", `${dx * influence * 0.22}px`);
+      button.style.setProperty("--mag-y", `${dy * influence * 0.22}px`);
+    });
+  };
+
+  const releaseMagnet = (e: PointerEvent<HTMLElement>) => {
+    e.currentTarget.querySelectorAll<HTMLElement>("[data-magnetic]").forEach((button) => {
+      button.style.removeProperty("--mag-x");
+      button.style.removeProperty("--mag-y");
+    });
+  };
+
   return (
     <CameraChrome
       place={{ kind: "frame" }}
@@ -70,6 +91,8 @@ export function ContextualToolStrip({
         data-frame-rail="bottom"
         data-testid="contextual-tool-strip"
         aria-label="Drawing tools"
+        onPointerMove={magnetise}
+        onPointerLeave={releaseMagnet}
       >
         <ul className={css.list}>
           {chips.map((chip) => {
@@ -82,6 +105,7 @@ export function ContextualToolStrip({
                 <button
                   type="button"
                   className={`${css.btn}${active ? ` ${css.btnActive}` : ""}`}
+                  data-magnetic="true"
                   data-testid={toolChipTestId(chip)}
                   title={chip.title ?? chip.label}
                   aria-pressed={active}

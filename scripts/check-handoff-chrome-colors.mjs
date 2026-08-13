@@ -14,6 +14,9 @@
  *   windows, sun-elevation gradient) — physical render values, not chrome
  * - comments containing hex
  * - APWA palette only inside colorTokens.ts (already source of truth)
+ * - goldStandardStudio.module.css: token source of truth for the Gold
+ *   Standard Studio Dark system (Growth Studio, Subsurface Studio) — same
+ *   role as color-tokens.css/globals.css, just a second palette family
  *
  * All chrome (portal, quote, confirm-pin, share, siteCanvas, studio widgets)
  * is unified on one dark identity (--surface-deep) and one hero accent
@@ -38,14 +41,8 @@ const ALLOW_PATH_SUBSTR = [
   // Literal colour-choice swatches / 3D render material colours (data, not chrome)
   "components/share/clientShareTwin.module.css",
   "components/share/ClientShareTwin.tsx",
-  // Gold Standard 2026 WebGL scene — Three.js material colours are numeric
-  // render values (like ClientShareTwin), not chrome paint. Chrome DOM lives
-  // in GlassCard.tsx which uses var(--gs-*) tokens, not hex.
-  "components/canvas/webgl/StudioScene.tsx",
-  "components/canvas/webgl/WebGLStudio.tsx",
-  "components/canvas/webgl/sceneItems.tsx",
-  "components/canvas/webgl/features/SubsurfaceEngine.tsx",
-
+  // Gold Standard Studio Dark token source of truth (Growth/Subsurface studios)
+  "components/canvas/goldStandardStudio.module.css",
 ];
 
 /** Hex values permitted when they appear (mask / none). */

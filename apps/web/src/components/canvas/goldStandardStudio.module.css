@@ -1,0 +1,69 @@
+/*
+ * Gold Standard Studio Dark — shared design DNA.
+ *
+ * The base token set for every "Gold Standard" full-bleed 3D surface
+ * (Growth Studio, Subsurface Studio, and future additions). Distilled from
+ * the Stitch Studio Dark concept exports: deep charcoal canvas, glass HUD
+ * panels, gold as the sole active/positive accent, signal blue for
+ * immutable "site truth" data, strike red for conflicts.
+ *
+ * Each surface composes `.goldStandardRoot` via CSS Modules `composes:` and
+ * layers its own surface-specific classes on top — same DNA, deliberate
+ * per-surface variation, never a copy-paste of the whole sheet.
+ */
+
+.goldStandardRoot {
+  --gs-surface: #101418;
+  --gs-surface-dim: #1e2329;
+  --gs-surface-bright: #2a3037;
+  --gs-surface-container-high: #262a2f;
+  --gs-surface-container-lowest: #0b0f12;
+  --gs-glass: rgba(30, 35, 41, 0.7);
+  --gs-glass-strong: rgba(30, 35, 41, 0.88);
+  --gs-line: rgba(224, 227, 232, 0.1);
+  --gs-line-strong: rgba(224, 227, 232, 0.18);
+  --gs-ink: #e0e3e8;
+  --gs-ink-muted: #d3c5ac;
+  --gs-ink-faint: color-mix(in srgb, #d3c5ac 55%, transparent);
+  --gs-gold: #fbbf24;
+  --gs-gold-ink: #402d00;
+  --gs-signal-blue: #0030cf;
+  --gs-signal-blue-ink: #bac3ff;
+  --gs-conflict: #ef4444;
+  --gs-conflict-soft: rgba(239, 68, 68, 0.16);
+  --gs-conflict-ink: #fee2e2;
+  --gs-radius-panel: 12px;
+  --gs-radius-chip: 8px;
+  --gs-radius-control: 4px;
+  --gs-radius-pill: 999px;
+  /*
+   * Stacking scale — every floating layer in a Gold Standard surface
+   * references one of these, never a raw number. Both Growth Studio and
+   * Subsurface Studio use the exact same five layers, so it lives here
+   * once rather than being re-derived per surface.
+   *
+   *   vignette      2   canvas backdrop gradient (above the 3D canvas, below chrome)
+   *   overlay       3   full-cover state overlays (empty state, loading)
+   *   scene-labels  4   in-scene floating labels anchored to 3D world positions
+   *   hud           5   floating glass HUD panels (top bar, side panels)
+   *   controls      6   bottom-fixed control bars (scrubber, camera controls)
+   */
+  --gs-z-vignette: 2;
+  --gs-z-overlay: 3;
+  --gs-z-scene-labels: 4;
+  --gs-z-hud: 5;
+  --gs-z-controls: 6;
+  --gs-font-display: var(--font-tech), "Space Grotesk", sans-serif;
+  --gs-font-tech: var(--font-technical-mono), "JetBrains Mono", monospace;
+  --gs-font-ui: var(--font-inter), "Inter", sans-serif;
+
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 560px;
+  background: var(--gs-surface);
+  color: var(--gs-ink);
+  font-family: var(--gs-font-ui);
+  overflow: hidden;
+  isolation: isolate;
+}

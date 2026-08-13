@@ -301,16 +301,117 @@ export function spatialFactsFromCad(
   return out;
 }
 
+export type SpatialTruthSnapshot = {
+  siteOrigin: [number, number, number];
+  originLocked: boolean;
+  serviceLineCount: number;
+  totalGpm: number;
+  maxPressureDropKpa: number;
+  maturityIndex: number;
+  strikeAlertCount: number;
+};
+
+export function buildSpatialTruthSnapshot(
+  facts: readonly SpatialObject[],
+): SpatialTruthSnapshot {
+  const serviceLines = facts.filter(
+    (fact) =>
+      (fact.layer === "irrigation" ||
+        fact.layer === "lighting" ||
+        fact.layer === "topography") &&
+      (fact.length_m > 0 || (fact.gpm ?? 0) > 0 || (fact.pressure_drop_kpa ?? 0) > 0),
+  );
+  const totalGpm = serviceLines.reduce((sum, fact) => {
+    const flow = fact.gpm ?? (fact.length_m > 0 ? fact.length_m * 0.9 : 0);
+    return sum + flow;
+  }, 0);
+  const maxPressureDropKpa = serviceLines.reduce((max, fact) => {
+    const pressure = fact.pressure_drop_kpa ?? (fact.length_m > 0 ? fact.length_m * 0.4 : 0);
+    return Math.max(max, pressure);
+  }, 0);
+  const growth = facts.length
+    ? facts.reduce((sum, fact) => {
+        const maturity =
+          fact.maturity_index ??
+          (fact.mature_canopy_m != null && fact.mature_canopy_m > 0
+            ? Math.min(1, fact.mature_canopy_m / 8)
+            : fact.layer === "softscape"
+              ? 0.55
+              : 0.35);
+        return sum + maturity;
+      }, 0) / facts.length
+    : 0;
+  const strikeAlertCount = facts.filter(
+    (fact) =>
+      fact.strike_alert ||
+      (fact.depth_m != null && fact.depth_m < 0.9 && fact.layer !== "softscape"),
+  ).length;
+
+  return {
+    siteOrigin: [0, 0, 0],
+    originLocked: true,
+    serviceLineCount: serviceLines.length,
+    totalGpm: Number(totalGpm.toFixed(1)),
+    maxPressureDropKpa: Number(maxPressureDropKpa.toFixed(1)),
+    maturityIndex: Number((Math.min(1, growth)).toFixed(3)),
+    strikeAlertCount,
+  };
+}
+
+export function withSpatialTruthDefaults(
+  facts: readonly SpatialObject[],
+): SpatialObject[] {
+  return facts.map((fact) => {
+    const strikeAlert =
+      fact.strike_alert ||
+      (fact.depth_m != null && fact.depth_m < 0.9 && fact.layer !== "softscape");
+    const maturityIndex =
+      fact.maturity_index ??
+      (fact.mature_canopy_m != null && fact.mature_canopy_m > 0
+        ? Math.min(1, fact.mature_canopy_m / 8)
+        : fact.layer === "softscape"
+          ? 0.55
+          : 0.35);
+    const gpm =
+      fact.gpm ??
+      (fact.length_m > 0
+        ? fact.layer === "irrigation"
+          ? fact.length_m * 0.9
+          : fact.layer === "topography"
+            ? fact.length_m * 0.35
+            : fact.length_m * 0.15
+        : 0);
+    const pressureDropKpa =
+      fact.pressure_drop_kpa ??
+      (fact.length_m > 0
+        ? fact.layer === "irrigation"
+          ? fact.length_m * 0.4
+          : fact.layer === "topography"
+            ? fact.length_m * 0.2
+            : fact.length_m * 0.08
+        : 0);
+
+    return {
+      ...fact,
+      gpm: Number(gpm.toFixed(1)),
+      pressure_drop_kpa: Number(pressureDropKpa.toFixed(1)),
+      site_origin_locked: true,
+      origin_x: 0,
+      origin_y: 0,
+      origin_z: 0,
+      maturity_index: Number(maturityIndex.toFixed(3)),
+      strike_alert: strikeAlert,
+    };
+  });
+}
+
 export function mergeSpatialFacts(
   canvasFacts: SpatialObject[],
   cadFacts: SpatialObject[],
 ): SpatialObject[] {
   // Prefer CAD when present for hardscape quantities; keep softscape pins.
-  if (cadFacts.length === 0) return canvasFacts;
-  const soft = canvasFacts.filter(
-    (f) => f.layer === "softscape" || f.layer === "irrigation",
-  );
-  return [...cadFacts, ...soft];
+  const merged = cadFacts.length === 0 ? canvasFacts : [...cadFacts, ...canvasFacts.filter((f) => f.layer === "softscape" || f.layer === "irrigation")];
+  return withSpatialTruthDefaults(merged);
 }
 
 /** Stable fingerprint for invalidate/preempt. */

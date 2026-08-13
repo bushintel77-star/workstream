@@ -29,7 +29,7 @@
   color: var(--ws-frame-ink);
   font-family: var(--font-body);
   pointer-events: auto;
-  transition: opacity 220ms var(--ws-ease, ease);
+  transition: opacity 220ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 /* Idle: rail recedes but never leaves — persistent by design. */
@@ -87,20 +87,21 @@
   font: inherit;
   cursor: pointer;
   transition:
-    background var(--ws-dur-1, 120ms) var(--ws-ease-out, ease),
-    border-color var(--ws-dur-1, 120ms) var(--ws-ease-out, ease),
-    color var(--ws-dur-1, 120ms) var(--ws-ease-out, ease),
-    transform var(--ws-dur-1, 120ms) var(--ws-ease-out, ease);
+    background var(--ws-dur-1, 120ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    border-color var(--ws-dur-1, 120ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    color var(--ws-dur-1, 120ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform var(--ws-dur-1, 120ms) var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 .btn:hover {
+  transform: translateY(-0.5px);
   background: var(--ws-frame-wash);
   border-color: var(--ws-frame-hair);
   color: var(--ws-frame-ink);
 }
 
 .btn:active {
-  transform: scale(0.94);
+  transform: translateY(1px) scale(0.98);
 }
 
 /*

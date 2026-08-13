@@ -151,6 +151,13 @@
   font-weight: 650;
   font-family: var(--font-mono);
   color: var(--ws-frame-ink);
+  background: color-mix(in srgb, var(--ws-frame) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ws-frame-ink) 10%, transparent);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow:
+    0 4px 12px color-mix(in srgb, var(--hc-ink) 15%, transparent),
+    0 20px 40px color-mix(in srgb, var(--hc-ink) 25%, transparent);
 }
 
 .confTrack {

@@ -64,9 +64,9 @@
   position: absolute;
   inset: 0;
   /* Translucent roof wash — not cream card over the plan grid. */
-  background: color-mix(in srgb, var(--existing-stroke) 14%, transparent);
+  background: color-mix(in srgb, var(--existing-stroke) 17%, transparent);
   border: 1px solid
-    color-mix(in srgb, var(--existing-stroke) 55%, transparent);
+    color-mix(in srgb, var(--existing-stroke) 68%, transparent);
   box-shadow: none;
 }
 
@@ -93,7 +93,7 @@
    * azimuth (TiltBuildingExtrusion.wallWashGradient). Crisp edge so the
    * volume reads as drafted massing, not a faint wash. */
   border: 1.25px solid
-    color-mix(in srgb, var(--existing-stroke) 55%, transparent);
+    color-mix(in srgb, var(--existing-stroke) 68%, transparent);
   box-shadow: none;
 }
 
@@ -107,7 +107,7 @@
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--hc-ink) 22%, transparent);
   box-shadow: none;
-  opacity: 0.55;
+  opacity: 0.66;
 }
 
 .groundDeck {
@@ -137,14 +137,14 @@
   min-height: 44px;
   padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pill);
-  border: 1px solid var(--hc-line);
-  background: var(--hc-glass-soft);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 8px 24px var(--hc-neu-shadow);
+  border: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(20 20 20 / 85%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--ws-milled-shadow);
   font-family: var(--font-sans, system-ui);
   font-size: var(--text-xs);
-  color: color-mix(in srgb, var(--hc-ink) 78%, transparent);
+  color: rgb(255 255 255);
   pointer-events: auto;
   white-space: nowrap;
 }
@@ -161,14 +161,14 @@
   min-height: 44px;
   padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pill);
-  border: 1px solid var(--hc-line);
-  background: var(--hc-glass-soft);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 8px 24px var(--hc-neu-shadow);
+  border: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(20 20 20 / 85%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--ws-milled-shadow);
   font-family: var(--font-sans, system-ui);
   font-size: var(--text-xs);
-  color: color-mix(in srgb, var(--hc-ink) 78%, transparent);
+  color: rgb(255 255 255);
   pointer-events: auto;
   white-space: nowrap;
 }
@@ -190,12 +190,19 @@
   padding: 0 var(--s-2);
   border: 1px solid var(--hc-line) !important;
   border-radius: var(--hc-r-control, 8px);
-  background: var(--hc-glass-soft) !important;
-  color: var(--hc-ink) !important;
+  background: var(--ws-recessed-surface) !important;
+  box-shadow: var(--ws-recessed-shadow);
+  color: rgb(255 255 255) !important;
   font-size: var(--text-xs) !important;
   font-weight: 650;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.pillAction:active {
+  background: rgb(0 0 0) !important;
+  box-shadow: var(--ws-recessed-pressed-shadow);
+  transform: translateY(1px);
 }
 
 .hintPill button:focus-visible,

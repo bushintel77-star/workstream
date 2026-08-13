@@ -10,26 +10,14 @@ type SentryModule = {
 
 let sentryReady = false;
 
-/**
- * Load @sentry/nextjs without the bundler resolving it at compile time.
- * `import("@sentry/nextjs" as string)` still lets Turbopack/webpack see the
- * specifier and fail the build when the package is absent. Building the path
- * from a variable defeats static resolution, so production builds succeed
- * without @sentry/nextjs installed; the .catch handles the runtime absence.
- */
-async function loadSentry(): Promise<SentryModule | null> {
-  // The module specifier is built via indirect eval so Turbopack/webpack
-  // cannot statically resolve it. Every other form (literal, variable,
-  // join()) still produces a "Module not found" build warning because the
-  // optional @sentry/nextjs package is not installed.
+async function safeLoadSentry(): Promise<SentryModule | null> {
+  if (typeof window !== "undefined") return null;
+
   try {
     const dynamicImport = new Function(
-      "spec",
-      "return import(spec)",
-    ) as (spec: string) => Promise<Record<string, unknown>>;
-    const mod = (await dynamicImport("@sentry/nextjs").catch(() => null));
-    if (!mod || typeof mod.init !== "function") return null;
-    return mod as unknown as SentryModule;
+      "return import('@sentry/nextjs')",
+    ) as () => Promise<SentryModule>;
+    return await dynamicImport().catch(() => null);
   } catch {
     return null;
   }
@@ -39,7 +27,7 @@ export async function initSentry(): Promise<void> {
   const dsn = process.env.SENTRY_DSN;
   if (!dsn || typeof window !== "undefined") return;
   try {
-    const Sentry = await loadSentry();
+    const Sentry = await safeLoadSentry();
     if (!Sentry?.init) {
       console.warn("[sentry] @sentry/nextjs not installed; skipping");
       return;
@@ -64,7 +52,7 @@ export function captureWebError(
     try {
       if (!sentryReady) await initSentry();
       if (!sentryReady) return;
-      const Sentry = await loadSentry();
+      const Sentry = await safeLoadSentry();
       Sentry?.captureException(err, { extra: context });
     } catch {
       /* swallow */

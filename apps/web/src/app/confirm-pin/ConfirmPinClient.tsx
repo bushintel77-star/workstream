@@ -119,6 +119,9 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
         if (alive && preview) {
           setNeighbourhoodUri(preview.neighbourhood_uri);
           setLotUri(preview.aerial_uri);
+          if (preview.title_ring && preview.title_ring.length >= 4) {
+            setTitleRing(preview.title_ring);
+          }
         }
 
         await sleep(120);

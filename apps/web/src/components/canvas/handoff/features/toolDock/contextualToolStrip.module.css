@@ -20,7 +20,7 @@
   color: var(--ws-frame-ink);
   font-family: var(--font-body);
   pointer-events: auto;
-  transition: opacity 220ms var(--ws-ease, ease);
+  transition: opacity 180ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 /* Idle: tools recede into the frame so the plan is all that reads. */
@@ -78,13 +78,20 @@
   font: inherit;
   cursor: pointer;
   transition:
-    background 140ms var(--ws-ease, ease),
-    color 140ms var(--ws-ease, ease);
+    transform 180ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    opacity 140ms var(--ws-ease, cubic-bezier(0.22, 1, 0.36, 1));
+  transform: translate3d(var(--mag-x, 0px), var(--mag-y, 0px), 0);
+  will-change: transform, opacity;
+  box-shadow: inset 0.5px 0.5px 0 color-mix(in srgb, var(--ws-frame-ink) 18%, transparent);
 }
 
 .btn:hover {
   background: var(--ws-frame-wash);
   color: var(--ws-frame-ink);
+  transform: translate3d(var(--mag-x, 0px), calc(var(--mag-y, 0px) - 1px), 0) scale(1.04);
+  box-shadow:
+    inset 0.5px 0.5px 0 color-mix(in srgb, var(--ws-frame-ink) 24%, transparent),
+    0 0 18px color-mix(in srgb, var(--hc-accent) 18%, transparent);
 }
 
 .btnActive,
@@ -122,5 +129,6 @@
   .btn,
   .strip {
     transition: none;
+    transform: none;
   }
 }

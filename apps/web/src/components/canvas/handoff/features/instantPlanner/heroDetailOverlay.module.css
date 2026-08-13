@@ -7,7 +7,36 @@
   background: color-mix(in srgb, var(--hc-ink) 65%, transparent);
   backdrop-filter: blur(16px) saturate(1.1);
   -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  animation: heroIn 280ms var(--ws-ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  animation: heroIn 300ms cubic-bezier(0.16, 1.35, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.canvasLabel {
+  position: absolute;
+  z-index: var(--ws-z-annotate);
+  left: 50%;
+  top: 50%;
+  padding: 0.3rem 0.55rem;
+  border: 0.5px solid color-mix(in srgb, var(--ws-frame-ink) 28%, transparent);
+  border-radius: var(--hc-r-control, 10px);
+  background: color-mix(in srgb, var(--hc-frost) 78%, transparent);
+  color: var(--ws-frame-ink);
+  font-family: var(--font-mono);
+  font-size: clamp(0.58rem, 0.7vw, 0.72rem);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  backdrop-filter: blur(10px) saturate(1.15);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--hc-ink) 35%, transparent),
+    0 8px 20px color-mix(in srgb, var(--hc-ink) 22%, transparent),
+    inset 0.5px 0.5px 0 color-mix(in srgb, var(--ws-frame-ink) 16%, transparent);
+  will-change: transform, opacity;
 }
 
 @keyframes heroIn {
@@ -23,18 +52,13 @@
 }
 
 .modal {
-  width: min(66vw, 52rem);
-  max-width: calc(100vw - 1.5rem);
+  width: min(560px, calc(100vw - clamp(1rem, 3vw, 1.5rem)));
+  max-width: calc(100vw - clamp(1rem, 3vw, 1.5rem));
   max-height: min(78vh, 40rem);
-  border-radius: var(--hc-r-pop, 16px);
-  background: var(--hc-frost, var(--hc-glass-soft));
-  border: 1px solid var(--hc-line, var(--hc-line-soft));
-  box-shadow:
-    0 18px 48px color-mix(in srgb, var(--hc-ink) 35%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--hc-ink) 8%, transparent);
-  backdrop-filter: blur(20px) saturate(1.15);
-  -webkit-backdrop-filter: blur(20px) saturate(1.15);
-  /* --hc-frost is dark in both themes -- pair with the frame's pale ink. */
+  border-radius: calc(var(--r-sm) - 1px);
+  background: var(--surface-deep);
+  border: 1px solid rgb(255 255 255 / 15%);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 90%);
   color: var(--ws-frame-ink);
   display: flex;
   flex-direction: column;
@@ -96,9 +120,12 @@
 
 .title {
   margin: 0;
-  font-family: var(--display, "Fraunces", Georgia, serif);
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 70%);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -113,20 +140,25 @@
 
 .back,
 .freeze {
-  border: 1px solid var(--hc-line, var(--hc-line-soft));
-  border-radius: var(--hc-r-control, 10px);
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: calc(var(--r-sm) - 1px);
   min-height: 44px;
   padding: 0.4rem 0.85rem;
   font: inherit;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
-  background: var(--hc-frost, var(--hc-glass-soft));
+  background: var(--surface-deep);
   color: var(--ws-frame-ink);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: all 180ms var(--ws-ease, ease-out);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--hc-ink) 12%, transparent);
+  transition:
+    transform 150ms cubic-bezier(0, 0, 0.2, 1),
+    background 150ms cubic-bezier(0, 0, 0.2, 1),
+    color 150ms cubic-bezier(0, 0, 0.2, 1);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--hc-ink) 30%, transparent),
+    0 6px 16px color-mix(in srgb, var(--hc-ink) 18%, transparent);
 }
 
 .back:focus-visible,
@@ -160,6 +192,14 @@
   box-shadow: 0 4px 12px color-mix(in srgb, var(--hc-ink) 35%, transparent);
 }
 
+.back:active,
+.freeze:active {
+  transition: transform 40ms cubic-bezier(0, 0, 0, 1);
+  transform: translateY(1px) scale(0.98);
+  background: var(--hc-paper);
+  color: var(--hc-ink);
+}
+
 .body {
   display: grid;
   grid-template-columns: 1.4fr 0.8fr;
@@ -169,7 +209,10 @@
 
 .canvas {
   min-height: 16rem;
-  background: linear-gradient(135deg, var(--hc-ink) 0%, color-mix(in srgb, var(--hc-ink) 85%, var(--hc-paper)) 100%);
+  background: var(--gray-d-0);
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: calc(var(--r-sm) - 3px);
+  box-shadow: inset 0 4px 12px rgb(0 0 0 / 90%);
   position: relative;
   overflow: hidden;
 }
@@ -178,8 +221,24 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--hc-paper) 15%, transparent) 0%, transparent 50%);
+  background:
+    linear-gradient(rgb(255 255 255 / 45%), rgb(255 255 255 / 45%)) left 12px top 12px / 18px 1px no-repeat,
+    linear-gradient(rgb(255 255 255 / 45%), rgb(255 255 255 / 45%)) left 12px top 12px / 1px 18px no-repeat,
+    linear-gradient(rgb(255 255 255 / 45%), rgb(255 255 255 / 45%)) right 12px top 12px / 18px 1px no-repeat,
+    linear-gradient(rgb(255 255 255 / 45%), rgb(255 255 255 / 45%)) right 12px top 12px / 1px 18px no-repeat;
   pointer-events: none;
+}
+
+.canvas::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgb(255 255 255 / 45%), rgb(255 255 255 / 45%)) left 12px bottom 12px / 18px 1px no-repeat,
+    linear-gradient(rgb(255 255 255 / 45%), rgb(255 255 255 / 45%)) left 12px bottom 12px / 1px 18px no-repeat,
+    linear-gradient(rgb(255 255 255 / 45%), rgb(255 255 255 / 45%)) right 12px bottom 12px / 18px 1px no-repeat,
+    linear-gradient(rgb(255 255 255 / 45%), rgb(255 255 255 / 45%)) right 12px bottom 12px / 1px 18px no-repeat;
 }
 
 .canvas canvas {
@@ -212,6 +271,8 @@
 }
 
 .sliderValue {
+  font-family: "Space Mono", var(--font-mono), monospace;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   color: var(--ws-frame-ink);
@@ -225,7 +286,7 @@
   background: color-mix(in srgb, var(--ws-frame-ink) 20%, transparent);
   appearance: none;
   cursor: pointer;
-  transition: background 180ms var(--ws-ease, ease-out);
+  transition: opacity 140ms ease-out;
 }
 
 .sliderLabel input::-webkit-slider-thumb {
@@ -236,7 +297,7 @@
   background: var(--ws-frame-ink);
   cursor: pointer;
   box-shadow: 0 2px 6px color-mix(in srgb, var(--ws-frame-ink) 30%, transparent);
-  transition: transform 180ms var(--ws-ease, ease-out), box-shadow 180ms var(--ws-ease, ease-out);
+  transition: transform 180ms cubic-bezier(0.16, 1.35, 0.3, 1), box-shadow 180ms ease-out;
 }
 
 .sliderLabel input::-webkit-slider-thumb:hover {
@@ -252,7 +313,7 @@
   cursor: pointer;
   border: none;
   box-shadow: 0 2px 6px color-mix(in srgb, var(--ws-frame-ink) 30%, transparent);
-  transition: transform 180ms var(--ws-ease, ease-out), box-shadow 180ms var(--ws-ease, ease-out);
+  transition: transform 180ms cubic-bezier(0.16, 1.35, 0.3, 1), box-shadow 180ms ease-out;
 }
 
 .sliderLabel input::-moz-range-thumb:hover {
@@ -271,7 +332,7 @@
   color: var(--ws-frame-ink);
   padding: 0.35rem 0;
   min-height: 44px;
-  transition: color 180ms var(--ws-ease, ease-out);
+  transition: opacity 140ms ease-out;
   position: relative;
 }
 
@@ -279,7 +340,7 @@
   content: '+';
   position: absolute;
   right: 0;
-  transition: transform 180ms var(--ws-ease, ease-out);
+  transition: transform 180ms cubic-bezier(0.16, 1.35, 0.3, 1);
 }
 
 .specsToggle[aria-expanded="true"]::after {

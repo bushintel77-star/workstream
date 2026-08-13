@@ -75,6 +75,7 @@ export function SurveyAnnotationLayer({
   const [calibPts, setCalibPts] = useState<PctPoint[]>([]);
   const annotationLod = resolveAnnotationLod(planZoom);
   const rlLabelOpacity = annotationLod.opacity.rl;
+  const annotationScale = Math.max(0.82, Math.min(1.35, 0.92 + Math.log2(Math.max(0.5, planZoom)) * 0.12));
 
   useEffect(() => {
     if (!active) {
@@ -377,6 +378,7 @@ export function SurveyAnnotationLayer({
               left: `${s[0]!.x}%`,
               top: `${s[0]!.y}%`,
               opacity: councilOp,
+              ["--annotation-scale" as string]: annotationScale,
             }}
           >
             {s.length >= 3 ? "Easement" : "Service"}
@@ -393,6 +395,7 @@ export function SurveyAnnotationLayer({
               left: `${ring[0]!.x}%`,
               top: `${ring[0]!.y}%`,
               opacity: councilOp,
+              ["--annotation-scale" as string]: annotationScale,
             }}
           >
             Easement
@@ -410,6 +413,7 @@ export function SurveyAnnotationLayer({
               top: `${lv.y}%`,
               opacity: surveyOp * rlLabelOpacity,
               color: ink,
+              ["--annotation-scale" as string]: annotationScale,
             }}
           >
             P{i + 1} · RL {lv.z.toFixed(2)} m
@@ -427,6 +431,7 @@ export function SurveyAnnotationLayer({
               left: `${(fall.high.x + fall.low.x) / 2}%`,
               top: `${(fall.high.y + fall.low.y) / 2}%`,
               opacity: surveyOp * rlLabelOpacity,
+              ["--annotation-scale" as string]: annotationScale,
             }}
           >
             {fall.flat ? "LEVEL" : `↓ ${fall.fallPct}%`} · {fall.deltaMm} mm

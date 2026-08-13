@@ -1,0 +1,38 @@
+.hud {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--r-xl);
+  background: rgba(30, 35, 41, 0.72);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.toneDefault {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.toneGold {
+  border-color: rgba(251, 191, 36, 0.28);
+  box-shadow:
+    0 24px 54px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(251, 191, 36, 0.08) inset;
+}
+
+.toneBlue {
+  border-color: rgba(0, 48, 207, 0.28);
+  box-shadow:
+    0 24px 54px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(0, 48, 207, 0.12) inset;
+}
+
+.padSm {
+  padding: 1rem;
+}
+
+.padMd {
+  padding: 1.25rem;
+}
+
+.padLg {
+  padding: 1.5rem;
+}

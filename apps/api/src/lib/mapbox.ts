@@ -19,6 +19,22 @@ export type GeocodeSuggestion = {
   lng: number;
 };
 
+function lngLatToWorldPx(
+  lng: number,
+  lat: number,
+  zoom: number,
+): [number, number] {
+  const scale = 256 * 2 ** zoom;
+  const x = ((lng + 180) / 360) * scale;
+  const latRad = (Math.max(-85.051129, Math.min(85.051129, lat)) * Math.PI) / 180;
+  const y =
+    ((1 -
+      Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) /
+      2) *
+    scale;
+  return [x, y];
+}
+
 async function nominatimSearch(
   query: string,
   limit: number,
@@ -187,6 +203,58 @@ export type AerialImageOpts = {
   /** Drop a Mapbox Static pin on the geocode centre (confirm-lot UX). */
   pin?: boolean;
 };
+
+export type LngLatRing = [number, number][];
+
+function ringBounds(ring: LngLatRing) {
+  const valid = ring.filter(
+    ([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat),
+  );
+  if (valid.length === 0) return null;
+  return valid.reduce(
+    (bounds, [lng, lat]) => ({
+      minLng: Math.min(bounds.minLng, lng),
+      maxLng: Math.max(bounds.maxLng, lng),
+      minLat: Math.min(bounds.minLat, lat),
+      maxLat: Math.max(bounds.maxLat, lat),
+    }),
+    {
+      minLng: valid[0]![0],
+      maxLng: valid[0]![0],
+      minLat: valid[0]![1],
+      maxLat: valid[0]![1],
+    },
+  );
+}
+
+/**
+ * Build a static view around the actual title parcel rather than the
+ * geocoder's point. The pin can land on a frontage or neighbouring roof;
+ * the cadastral ring is the authoritative footprint for aerial capture.
+ */
+export function aerialImageUrlForRing(
+  ring: LngLatRing,
+  width = 800,
+  height = 480,
+  opts: AerialImageOpts = {},
+): string | null {
+  const bounds = ringBounds(ring);
+  if (!bounds) return null;
+
+  const centreLng = (bounds.minLng + bounds.maxLng) / 2;
+  const centreLat = (bounds.minLat + bounds.maxLat) / 2;
+  const spanLng = Math.max(bounds.maxLng - bounds.minLng, 0.00001);
+  const usableWidth = width * 0.78;
+  const usableHeight = height * 0.78;
+  const zoomX = Math.log2((usableWidth * 360) / (256 * spanLng));
+  const northMin = lngLatToWorldPx(centreLng, bounds.maxLat, 0)[1];
+  const southMax = lngLatToWorldPx(centreLng, bounds.minLat, 0)[1];
+  const zoomY = Math.log2(
+    usableHeight / Math.max(Math.abs(southMax - northMin), 0.00001),
+  );
+  const zoom = Math.max(16, Math.min(21, Math.floor(Math.min(zoomX, zoomY))));
+  return aerialImageUrl(centreLat, centreLng, width, height, zoom, opts);
+}
 
 export function aerialImageUrl(
   lat: number,
