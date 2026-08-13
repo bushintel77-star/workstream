@@ -8,6 +8,8 @@ import {
 } from "@workstream/domain";
 import { HandoffDesignStudio } from "../../../components/canvas/handoff/HandoffDesignStudio";
 import { StudioSkeleton } from "../../../components/canvas/handoff/StudioSkeleton";
+import { WebGLStudioPreview } from "../../../components/canvas/webgl/WebGLStudioPreview";
+import type { PctPoint } from "../../../components/canvas/webgl/coordTransform";
 import {
   getCadastralTitle,
   getDesignCanvas,
@@ -55,7 +57,7 @@ export default async function ProjectCanvasPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ mode?: string }>;
+  searchParams: Promise<{ mode?: string; webgl?: string }>;
 }) {
   await requireSignedIn();
   const { id } = await params;
@@ -84,6 +86,42 @@ export default async function ProjectCanvasPage({
   };
   /** Clamp locked deep-links before first paint — avoids cad→survey flash. */
   const initialMode = resolveCanvasMode(sp.mode, progress) as StudioMode;
+
+  /** Dev preview: ?webgl=1 mounts the R3F WebGL board instead of the SVG studio. */
+  const webglPreview = sp.webgl === "1";
+  const frame = canvas?.site_frame ?? null;
+  const webglScaleM = frame?.board_width_m ?? 110;
+  const webglBoardAspect =
+    frame && frame.boundary && frame.boundary.length > 0
+      ? (() => {
+          const ys = frame.boundary!.map((p) => p.y_pct);
+          const xs = frame.boundary!.map((p) => p.x_pct);
+          const w = Math.max(...xs) - Math.min(...xs) || 100;
+          const h = Math.max(...ys) - Math.min(...ys) || 100;
+          return h / w;
+        })()
+      : 1;
+
+  if (webglPreview) {
+    return (
+      <main aria-label="Design canvas" style={{ position: "fixed", inset: 0 }}>
+        <WebGLStudioPreview
+          scaleM={webglScaleM}
+          boardAspect={webglBoardAspect}
+          boundaryPct={
+            (frame?.boundary?.map((p) => ({ x: p.x_pct, y: p.y_pct })) as
+              | PctPoint[]
+              | undefined) ?? []
+          }
+          buildingPct={
+            frame?.building
+              ? (frame.building.map((p) => ({ x: p.x_pct, y: p.y_pct })) as PctPoint[])
+              : undefined
+          }
+        />
+      </main>
+    );
+  }
 
   return (
     <main aria-label="Design canvas">

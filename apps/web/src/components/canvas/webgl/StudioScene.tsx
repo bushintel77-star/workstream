@@ -24,6 +24,7 @@ import * as THREE from "three";
 import type { StudioCameraRig } from "./cameraRig";
 import { pctToWorld, type PctPoint } from "./coordTransform";
 import { SceneItems, type RenderItem } from "./sceneItems";
+import { StudioControls } from "./StudioControls";
 
 export interface StudioSceneProps {
   scaleM: number;
@@ -35,6 +36,9 @@ export interface StudioSceneProps {
   items?: RenderItem[];
   buildingOpacity?: number;
   cameraRig: StudioCameraRig;
+  onRigChange?: (rig: StudioCameraRig) => void;
+  onGroundClick?: (pct: PctPoint) => void;
+  onCursorMove?: (pct: PctPoint | null) => void;
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
@@ -233,6 +237,9 @@ export function StudioScene({
   items = [],
   buildingOpacity = 1,
   cameraRig,
+  onRigChange,
+  onGroundClick,
+  onCursorMove,
 }: StudioSceneProps) {
   return (
     <>
@@ -240,6 +247,19 @@ export function StudioScene({
       <directionalLight position={[10, 20, 10]} intensity={0.3} />
 
       <CameraController rig={cameraRig} />
+
+      {/* Input capture — invisible ground plane for raycasting */}
+      {onRigChange && (
+        <StudioControls
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+          rig={cameraRig}
+          onRigChange={onRigChange}
+          onGroundClick={onGroundClick}
+          onCursorMove={onCursorMove}
+          tiltLocked={cameraRig.tiltDeg > 0.5}
+        />
+      )}
 
       <GroundPlane scaleM={scaleM} boardAspect={boardAspect} />
       <OriginPeg />

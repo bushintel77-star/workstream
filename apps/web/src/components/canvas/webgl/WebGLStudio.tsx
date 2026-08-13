@@ -32,6 +32,9 @@ export interface WebGLStudioProps {
   items?: RenderItem[];
   buildingOpacity?: number;
   cameraRig: StudioCameraRig;
+  onRigChange?: (rig: StudioCameraRig) => void;
+  onGroundClick?: (pct: PctPoint) => void;
+  onCursorMove?: (pct: PctPoint | null) => void;
   children?: ReactNode;
   style?: CSSProperties;
 }
@@ -46,6 +49,9 @@ export function WebGLStudio({
   items,
   buildingOpacity,
   cameraRig,
+  onRigChange,
+  onGroundClick,
+  onCursorMove,
   children,
   style,
 }: WebGLStudioProps) {
@@ -76,6 +82,9 @@ export function WebGLStudio({
           items={items}
           buildingOpacity={buildingOpacity}
           cameraRig={cameraRig}
+          onRigChange={onRigChange}
+          onGroundClick={onGroundClick}
+          onCursorMove={onCursorMove}
         />
       </Canvas>
 
