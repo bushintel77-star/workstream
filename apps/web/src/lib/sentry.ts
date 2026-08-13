@@ -10,15 +10,24 @@ type SentryModule = {
 
 let sentryReady = false;
 
+async function safeLoadSentry(): Promise<SentryModule | null> {
+  if (typeof window !== "undefined") return null;
+
+  try {
+    const dynamicImport = new Function(
+      "return import('@sentry/nextjs')",
+    ) as () => Promise<SentryModule>;
+    return await dynamicImport().catch(() => null);
+  } catch {
+    return null;
+  }
+}
+
 export async function initSentry(): Promise<void> {
   const dsn = process.env.SENTRY_DSN;
   if (!dsn || typeof window !== "undefined") return;
   try {
-    // "as string" keeps the dynamic import typed as Promise<any> so the
-    // optional dependency does not need to be installed for typecheck.
-    const Sentry = (await import("@sentry/nextjs" as string).catch(
-      () => null,
-    )) as SentryModule | null;
+    const Sentry = await safeLoadSentry();
     if (!Sentry?.init) {
       console.warn("[sentry] @sentry/nextjs not installed; skipping");
       return;
@@ -43,9 +52,7 @@ export function captureWebError(
     try {
       if (!sentryReady) await initSentry();
       if (!sentryReady) return;
-      const Sentry = (await import("@sentry/nextjs" as string).catch(
-        () => null,
-      )) as SentryModule | null;
+      const Sentry = await safeLoadSentry();
       Sentry?.captureException(err, { extra: context });
     } catch {
       /* swallow */
