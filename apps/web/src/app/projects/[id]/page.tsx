@@ -9,7 +9,9 @@ import {
 import { HandoffDesignStudio } from "../../../components/canvas/handoff/HandoffDesignStudio";
 import { StudioSkeleton } from "../../../components/canvas/handoff/StudioSkeleton";
 import { WebGLStudioPreview } from "../../../components/canvas/webgl/WebGLStudioPreview";
+import { toRenderItems } from "../../../components/canvas/webgl/stateBridge";
 import type { PctPoint } from "../../../components/canvas/webgl/coordTransform";
+import { placementsToItems } from "../../../components/canvas/handoff/state/canvasBridge";
 import {
   getCadastralTitle,
   getDesignCanvas,
@@ -103,6 +105,7 @@ export default async function ProjectCanvasPage({
       : 1;
 
   if (webglPreview) {
+    const webglItems = toRenderItems(placementsToItems(canvas?.placements ?? []));
     return (
       <main aria-label="Design canvas" style={{ position: "fixed", inset: 0 }}>
         <WebGLStudioPreview
@@ -118,6 +121,12 @@ export default async function ProjectCanvasPage({
               ? (frame.building.map((p) => ({ x: p.x_pct, y: p.y_pct })) as PctPoint[])
               : undefined
           }
+          easementsPct={
+            frame?.easements?.map((ring) =>
+              ring.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+            )
+          }
+          items={webglItems}
         />
       </main>
     );
