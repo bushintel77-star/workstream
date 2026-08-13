@@ -11,7 +11,7 @@
   border-radius: var(--hc-r-pill);
   background: var(--hc-accent-wash);
   color: var(--hc-ink-muted);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-femto);
   font-weight: 600;
   line-height: 1.2;
@@ -33,7 +33,7 @@
   gap: var(--s-2);
   margin: var(--s-1) 1px 0;
   color: var(--hc-ink-muted);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-pico);
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -208,7 +208,7 @@
   width: 15px;
   margin-right: var(--s-1);
   color: var(--hc-danger);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   font-weight: 600;
   text-align: center;
@@ -217,7 +217,7 @@
 .metric {
   flex-shrink: 0;
   color: var(--hc-ink);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 8.75px;
   font-weight: 600;
 }
@@ -225,7 +225,7 @@
 .detail {
   overflow: hidden;
   color: var(--hc-ink-muted);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 7.75px;
   line-height: 1.25;
   text-overflow: ellipsis;
@@ -239,7 +239,7 @@
   border-radius: var(--hc-r-panel);
   background: var(--hc-glass-soft);
   color: var(--hc-ink-muted);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 8.75px;
   line-height: 1.5;
 }
@@ -265,7 +265,7 @@
   background: var(--hc-glass-soft);
   box-shadow: var(--hc-neu-out-sm);
   color: var(--hc-ink-muted);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 7.5px;
   font-weight: 600;
   cursor: pointer;
@@ -328,7 +328,7 @@
   border: 1px solid var(--hc-line-soft);
   border-radius: var(--hc-r-pill);
   color: var(--hc-ink-faint);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 6.75px;
   font-weight: 650;
   line-height: 1.35;

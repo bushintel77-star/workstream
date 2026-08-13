@@ -41,13 +41,13 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .countPill {
   font-size: var(--text-micro);
   font-weight: 700;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   padding: 2px 8px;
   background: var(--hc-line-soft);
   color: var(--hc-ink);
@@ -89,7 +89,7 @@
   font-size: var(--text-base);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .ok {
@@ -150,7 +150,7 @@
 }
 
 .modelLabel {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-style: normal;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -187,7 +187,7 @@
   justify-content: center;
   border-radius: var(--hc-r-control, 4px);
   border: 1px solid var(--hc-line-soft);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   font-weight: 650;
   color: var(--hc-ink-muted);

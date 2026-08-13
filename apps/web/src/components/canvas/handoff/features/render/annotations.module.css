@@ -61,7 +61,7 @@
   border-radius: 4px;
   border: 1px dashed color-mix(in srgb, var(--hc-danger) 70%, transparent);
   color: var(--hc-danger);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   line-height: var(--text-xs-lh);
   text-align: center;

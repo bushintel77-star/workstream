@@ -19,7 +19,7 @@
   padding: 3px 7px;
   border: 1px solid color-mix(in srgb, var(--hc-ink) 16%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 90%, transparent);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-pico);
   letter-spacing: 0.08em;
   text-transform: uppercase;

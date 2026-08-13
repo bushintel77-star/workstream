@@ -603,9 +603,14 @@ export function CadPlanBoard({
    * not idle chrome. Show it while editing, in the Fit sheet, in Stage 1 title
    * mode, or in Survey — but let idle CAD (even a Vicmap-locked title) stay a
    * calm drawing. Dims return in <=1 interaction (arm Edit / open Fit sheet).
+   * Suppressed in tilt: outside dims portal through CameraChrome project,
+   * which cannot model tilt (boardPctToClientOffset has no tilt path), so the
+   * labels misanchor over TiltBillboard tree canopies. Area labels already
+   * follow this guard (see showAutoAreaLabels below).
    */
   const showDims =
     !sketchPassthrough &&
+    !isTiltActive(tiltDeg) &&
     (editing || frameOn || foundationCleanse || mode === "survey");
   /**
    * Neighbour-lot fabric is Stage-1 foundation chrome only. When Vicmap locks

@@ -4,7 +4,7 @@
     radial-gradient(120% 80% at 50% -10%, var(--accent-soft) 0%, transparent 55%),
     linear-gradient(180deg, var(--surface-elevated) 0%, var(--surface-base) 100%);
   color: var(--ink-primary);
-  font-family: var(--font-body, "Sora", system-ui, sans-serif);
+  font-family: var(--font-body, "Inter", system-ui, sans-serif);
 }
 
 .shell {
@@ -24,11 +24,11 @@
     radial-gradient(120% 80% at 50% -10%, var(--accent-soft) 0%, transparent 55%),
     linear-gradient(180deg, var(--surface-elevated) 0%, var(--surface-base) 100%);
   color: var(--ink-primary);
-  font-family: var(--font-body, "Sora", system-ui, sans-serif);
+  font-family: var(--font-body, "Inter", system-ui, sans-serif);
 }
 
 .kicker {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   letter-spacing: 0.14em;
   text-transform: uppercase;

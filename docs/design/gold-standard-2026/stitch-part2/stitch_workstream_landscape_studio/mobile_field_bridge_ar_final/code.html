@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mobile Field Bridge - AR View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#e0e3e8",
+                      "primary-container": "#fbbf24",
+                      "on-tertiary-container": "#005c6e",
+                      "on-primary-fixed": "#261a00",
+                      "surface-dim": "#101418",
+                      "primary": "#ffe1a7",
+                      "outline": "#9c8f79",
+                      "inverse-on-surface": "#2d3135",
+                      "background": "#101418",
+                      "on-error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#bac3ff",
+                      "secondary-container": "#0130cf",
+                      "tertiary": "#b6edff",
+                      "on-surface": "#e0e3e8",
+                      "surface-bright": "#2A3037",
+                      "tertiary-fixed": "#afecff",
+                      "surface-tint": "#f9bd22",
+                      "on-primary-container": "#6c4f00",
+                      "on-primary-fixed-variant": "#5c4300",
+                      "tertiary-container": "#34daff",
+                      "on-tertiary": "#003641",
+                      "inverse-surface": "#e0e3e8",
+                      "on-tertiary-fixed": "#001f27",
+                      "surface-container-highest": "#31353a",
+                      "surface-variant": "#31353a",
+                      "tertiary-fixed-dim": "#30d8fd",
+                      "outline-variant": "#4f4633",
+                      "on-surface-variant": "#d3c5ac",
+                      "on-error": "#690005",
+                      "primary-fixed-dim": "#f9bd22",
+                      "on-secondary-fixed-variant": "#002eca",
+                      "secondary": "#bac3ff",
+                      "surface-container": "#1c2024",
+                      "on-primary": "#402d00",
+                      "error-container": "#93000a",
+                      "secondary-fixed": "#dee0ff",
+                      "error": "#ffb4ab",
+                      "surface": "#101418",
+                      "inverse-primary": "#795900",
+                      "surface-container-lowest": "#0b0f12",
+                      "on-secondary-fixed": "#00105b",
+                      "gold-highlight": "#FBBF24",
+                      "on-secondary-container": "#a8b4ff",
+                      "signal-blue": "#0030CF",
+                      "surface-container-low": "#181c20",
+                      "cloud-mist": "#D7E1EC",
+                      "surface-container-high": "#262a2f",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "on-secondary": "#001f90",
+                      "primary-fixed": "#ffdf9f"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-safe": "32px",
+                      "gutter": "16px",
+                      "unit": "4px",
+                      "sidebar-width": "280px",
+                      "toolbar-width": "56px"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": [
+                              "Space Grotesk"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "display-lg": [
+                              "Space Grotesk"
+                      ],
+                      "technical-data": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Space Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "52px",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "technical-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24
+    }
+.bg-camera-feed {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBIs8LYwF94MDDskWfrHFiXC85O5MmN0QVWLp1Ymx9-3dX_oyAf8H3ncNpnYtOeoAxcFgP4htzurBLRNewEvQ3XXteBN8Q0PzyAlmh6diTMpBcZkHdeqDJWg3INFBLuhWY6S5UJ74DiUUkhASi3KnRHvugpVafDa-WKlColR0SkV9dEbH-MXBcaCJpCXzSw29EsXQs3QlhYG8p91aY4EUPUsvwtzCv0iW4Y8VSHBT5MHG2swsfs14iGJQ);
+    background-size: cover;
+    background-position: center
+    }
+.ar-overlay {
+    background: radial-gradient(circle at center, rgba(0, 48, 207, 0.1) 0%, transparent 70%)
+    }</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface h-screen w-screen overflow-hidden relative font-body-md">
+<!-- Camera Feed Background -->
+<div class="absolute inset-0 bg-camera-feed z-0" data-alt="First-person view of a residential backyard with a green lawn, wooden fences, and a small garden shed. The camera angle suggests a mobile device held at chest height, capturing the outdoor scene in daylight. The aesthetic is realistic, high-definition, and bright, serving as a clean canvas for AR overlays in an architectural or engineering context."></div>
+<!-- Top Status Bar (AR Fixed) -->
+<div class="absolute top-0 left-0 w-full z-50 flex justify-between items-center px-4 py-6 pt-12 pointer-events-none">
+<button class="w-12 h-12 rounded-full bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 flex items-center justify-center pointer-events-auto hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined text-on-surface">arrow_back_ios_new</span>
+</button>
+<div class="px-6 py-2 rounded-full bg-surface-dim/80 backdrop-blur-md border-2 border-gold-highlight flex items-center gap-2 shadow-[0_0_15px_rgba(251,191,36,0.2)]">
+<span class="w-2 h-2 rounded-full bg-gold-highlight animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-gold-highlight">RTK FIXED</span>
+</div>
+<button class="w-12 h-12 rounded-full bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 flex items-center justify-center pointer-events-auto hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined text-on-surface">settings</span>
+</button>
+</div>
+<!-- AR Elements Layer (Simulated) -->
+<div class="absolute inset-0 z-10 pointer-events-none ar-overlay flex items-center justify-center">
+<!-- Simulated Pipe Lines -->
+<div class="absolute w-full h-1 bg-signal-blue/30 shadow-[0_0_10px_rgba(0,48,207,0.8)] rotate-45 top-1/2 left-0 transform -translate-y-1/2"></div>
+<div class="absolute w-full h-1 bg-signal-blue/30 shadow-[0_0_10px_rgba(0,48,207,0.8)] -rotate-12 top-1/3 left-0 transform -translate-y-1/2"></div>
+<div class="absolute w-full h-1 bg-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.8)] rotate-12 top-2/3 left-0 transform -translate-y-1/2"></div>
+<!-- Staking Chips -->
+<div class="absolute top-[40%] left-[30%] flex flex-col items-center gap-1 pointer-events-auto">
+<div class="px-2 py-1 rounded bg-surface-dim/80 backdrop-blur-sm border border-on-surface/20 font-technical-data text-technical-data text-on-surface">W-101</div>
+<div class="w-8 h-8 rounded-full bg-gold-highlight shadow-[0_0_20px_rgba(251,191,36,0.6)] border-2 border-white/20 transform hover:scale-110 transition-transform cursor-pointer relative">
+<div class="absolute -bottom-16 left-1/2 w-0.5 h-16 bg-gradient-to-b from-gold-highlight to-transparent -translate-x-1/2"></div>
+</div>
+</div>
+<div class="absolute top-[55%] left-[60%] flex flex-col items-center gap-1 pointer-events-auto">
+<div class="px-2 py-1 rounded bg-surface-dim/80 backdrop-blur-sm border border-on-surface/20 font-technical-data text-technical-data text-on-surface">E-202</div>
+<div class="w-8 h-8 rounded-full bg-gold-highlight shadow-[0_0_20px_rgba(251,191,36,0.6)] border-2 border-white/20 transform hover:scale-110 transition-transform cursor-pointer relative">
+<div class="absolute -bottom-16 left-1/2 w-0.5 h-16 bg-gradient-to-b from-gold-highlight to-transparent -translate-x-1/2"></div>
+</div>
+</div>
+</div>
+<!-- Debug Info Panel -->
+<div class="absolute bottom-32 right-4 z-40 bg-surface-dim/80 backdrop-blur-md border border-on-surface/10 rounded-lg p-3 font-technical-data text-[10px] leading-tight text-on-surface-variant pointer-events-none">
+<div class="text-on-surface mb-1 font-semibold">Developer debug</div>
+<div class="flex justify-between gap-4"><span>coordinates:</span> <span>-7.749,039</span></div>
+<div class="flex justify-between gap-4"><span>crd:</span> <span>-3.736,8972</span></div>
+<div class="flex justify-between gap-4"><span>ntw:</span> <span>-3.397,9373</span></div>
+<div class="flex justify-between gap-4"><span>Network:</span> <span>4/3</span></div>
+<div class="flex justify-between gap-4"><span>vato:</span> <span>0.56</span></div>
+<div class="flex justify-between gap-4"><span>stats:</span> <span>0.30</span></div>
+</div>
+<!-- Secondary Settings FAB -->
+<button class="absolute bottom-32 left-4 z-40 w-12 h-12 rounded-full bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 flex items-center justify-center hover:bg-surface-variant/50 transition-colors shadow-lg">
+<span class="material-symbols-outlined text-on-surface">settings_b_roll</span>
+</button>
+<!-- Bottom Action HUD -->
+<div class="absolute bottom-0 w-full z-50 px-4 pb-8 pt-4 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/90 to-transparent">
+<div class="max-w-md mx-auto w-full bg-surface-dim/60 backdrop-blur-xl border border-on-surface/10 rounded-2xl p-1.5 flex gap-1 shadow-2xl relative">
+<!-- Drag Handle Indicator -->
+<div class="absolute -top-3 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-on-surface-variant/30 rounded-full"></div>
+<button class="flex-1 py-3 rounded-xl font-body-md text-on-surface-variant hover:text-on-surface transition-colors text-center">
+                Survey
+            </button>
+<button class="flex-1 py-3 rounded-xl bg-surface-bright border border-gold-highlight/30 text-gold-highlight font-medium shadow-[0_0_10px_rgba(251,191,36,0.1)] text-center transition-all">
+                Staking
+            </button>
+<button class="flex-1 py-3 rounded-xl font-body-md text-on-surface-variant hover:text-on-surface transition-colors text-center">
+                Subsurface
+            </button>
+</div>
+<!-- Home Indicator space -->
+<div class="w-1/3 h-1 bg-on-surface/20 rounded-full mx-auto mt-6"></div>
+</div>
+</body></html>

@@ -25,7 +25,7 @@
   position: absolute;
   z-index: var(--ws-z-annotate);
   pointer-events: none;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -78,6 +78,6 @@
   border-radius: 0;
   padding: var(--s-1) var(--s-3);
   pointer-events: none;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   white-space: nowrap;
 }

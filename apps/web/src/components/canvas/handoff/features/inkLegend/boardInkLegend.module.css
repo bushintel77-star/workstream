@@ -31,7 +31,7 @@
 }
 
 .label {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   color: var(--hc-ink-muted);
 }

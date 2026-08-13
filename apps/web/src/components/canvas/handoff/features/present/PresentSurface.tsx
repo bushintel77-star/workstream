@@ -253,19 +253,29 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
   const [confirmIssue, setConfirmIssue] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deckRevisionRef = useRef(0);
+  // Latest-callback ref for onSaveStatusChange — the parent passes an inline
+  // arrow that changes identity every render. If it sat in the effect's dep
+  // array, the effect re-ran on every parent render, called the callback with
+  // Date.now() (always new), the parent re-rendered, and the cycle pinned
+  // React into "Maximum update depth exceeded" once saveStatus hit "saved".
+  // The ref breaks the cycle: the effect now only fires when saveStatus
+  // actually changes, and reads the freshest callback from the ref.
+  const onSaveStatusChangeRef = useRef(onSaveStatusChange);
+  onSaveStatusChangeRef.current = onSaveStatusChange;
 
   // Lift save status to parent for UnifiedSaveStatus (audit 2.3 / spec §4)
   useEffect(() => {
-    if (!onSaveStatusChange) return;
+    const cb = onSaveStatusChangeRef.current;
+    if (!cb) return;
     if (saveStatus === "saved") {
       deckRevisionRef.current += 1;
-      onSaveStatusChange("saved", Date.now(), deckRevisionRef.current);
+      cb("saved", Date.now(), deckRevisionRef.current);
     } else if (saveStatus === "saving") {
-      onSaveStatusChange("saving");
+      cb("saving");
     } else if (saveStatus === "error") {
-      onSaveStatusChange("error");
+      cb("error");
     }
-  }, [saveStatus, onSaveStatusChange]);
+  }, [saveStatus]);
 
   // --- Plan dissection ghost review state (Phase 2) ---
   const [ghosts, setGhosts] = useState<PresentationDissectGhost[]>([]);
@@ -297,10 +307,19 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
     void loadDocuments();
   }, [loadDocuments]);
 
-  // Debounced autosave when activeDoc changes (issued decks are frozen)
+  // Debounced autosave when activeDoc changes (issued decks are frozen).
+  // The save callback calls setActiveDoc(updated) — the API response is a new
+  // object even when content is identical, which would re-trigger this effect
+  // and schedule another save forever (a 1500ms-interval infinite loop).
+  // lastSavedDocRef holds the reference we last persisted; if activeDoc IS
+  // that reference (the save just round-tripped), skip — only user edits
+  // (which produce a different object) schedule a new save.
+  const lastSavedDocRef = useRef<PresentationDocument | null>(null);
+
   useEffect(() => {
     if (!activeDoc) return;
     if (activeDoc.status === "issued") return;
+    if (activeDoc === lastSavedDocRef.current) return;
     setSaveStatus("saving");
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
@@ -317,6 +336,7 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
             pages: activeDoc.pages,
           },
         );
+        lastSavedDocRef.current = updated;
         setActiveDoc(updated);
         setSaveStatus("saved");
       } catch (err) {

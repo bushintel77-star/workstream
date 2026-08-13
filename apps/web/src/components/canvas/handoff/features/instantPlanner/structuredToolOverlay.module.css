@@ -22,7 +22,7 @@
 
 .kicker {
   margin: 0;
-  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-family: var(--font-mono, var(--font-mono));
   font-size: 8.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -62,7 +62,7 @@
 
 .microCost {
   margin: 0;
-  font-family: var(--font-mono, "IBM Plex Mono", monospace);
+  font-family: var(--font-mono, var(--font-mono));
   font-size: 0.68rem;
   font-weight: 600;
   color: var(--ws-frame-ink);

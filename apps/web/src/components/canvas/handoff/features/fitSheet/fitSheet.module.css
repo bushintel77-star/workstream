@@ -60,7 +60,7 @@
   display: flex;
   align-items: baseline;
   gap: var(--s-2);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-hud, 11px);
   font-weight: 700;
   color: var(--hc-ink);
@@ -137,7 +137,7 @@
 }
 
 .weatherTemp {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -239,7 +239,7 @@
 
 .addr {
   margin: 2px 0 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   color: var(--hc-ink-muted);
   white-space: nowrap;
@@ -249,7 +249,7 @@
 
 .titleSource {
   margin: 4px 0 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-pico);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -265,7 +265,7 @@
 }
 
 .north {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   color: var(--hc-ink);
   flex: none;
@@ -294,7 +294,7 @@
 
 .kicker {
   margin: 0 0 var(--s-1);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-pico);
   letter-spacing: 0.14em;
   color: var(--hc-ink-faint);
@@ -311,7 +311,7 @@
 }
 
 .mono {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-2);
 }
 
@@ -325,7 +325,7 @@
   display: flex;
   justify-content: space-between;
   padding: 2px 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-2);
   color: var(--hc-ink);
 }
@@ -351,7 +351,7 @@
   display: flex;
   justify-content: space-between;
   margin-top: 8px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   color: var(--hc-ink);
 }
@@ -384,7 +384,7 @@
   position: absolute;
   left: 0;
   top: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 7.5px;
   letter-spacing: 0.12em;
   color: var(--hc-ink-faint);
@@ -404,7 +404,7 @@
   position: absolute;
   left: 0;
   bottom: 3px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-femto);
   letter-spacing: 0.04em;
   color: var(--hc-ink-faint);
@@ -426,7 +426,7 @@
   position: absolute;
   right: 0;
   bottom: 3px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 7.5px;
   color: var(--hc-ink-muted);
 }

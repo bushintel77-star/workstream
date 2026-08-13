@@ -28,7 +28,13 @@ export const SpatialObjectSchema = z.object({
   y_pct: z.number().min(0).max(100).optional(),
   mature_canopy_m: z.number().nonnegative().optional(),
   root_radius_m: z.number().nonnegative().optional(),
+  // Gold Standard 2026 extensions — merged from both branches
+  x_m: z.number().optional(),           // metre-space position (origin = survey peg)
+  y_m: z.number().optional(),           // metre-space position
+  elevation_m: z.number().optional(),   // relative level (RL)
+  utility_type: z.enum(["gas", "water", "sewer", "electric", "comms", "reclaimed"]).optional(),
   gpm: z.number().nonnegative().optional(),
+  pressure_drop: z.number().optional(),        // alias
   pressure_drop_kpa: z.number().nonnegative().optional(),
   site_origin_locked: z.boolean().default(true).optional(),
   origin_x: z.number().optional(),

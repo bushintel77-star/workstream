@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Workstream - CAD Studio (Zero-Chrome)</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Inter and Space Grotesk -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+              "studio-base": "#101418",
+              "studio-panel": "#1E2329",
+              "studio-highlight": "#fbbf24",
+              "studio-signal": "#0030CF",
+              "studio-text": "#E2E8F0",
+              "studio-text-muted": "#94A3B8"
+            },
+            "fontFamily": {
+              "ui": ["Inter", "sans-serif"],
+              "data": ["Space Grotesk", "sans-serif"],
+              "mono": ["JetBrains Mono", "monospace"]
+            }
+          }
+        },
+      }
+    </script>
+<style>
+        /* Base styles - Zero Chrome Full Bleed */
+        body {
+            background-color: theme('colors.studio-base');
+            color: theme('colors.studio-text');
+            margin: 0;
+            overflow: hidden;
+            font-family: theme('fontFamily.ui');
+        }
+
+        /* Material Symbols Fill variant */
+        .material-symbols-outlined[data-weight="fill"] {
+          font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Infinite Fractal Dot Grid */
+        .canvas-grid {
+            background-size: 24px 24px, 120px 120px;
+            background-image: 
+                radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px),
+                radial-gradient(circle, rgba(255,255,255,0.1) 1.5px, transparent 1.5px);
+            background-position: 0 0, 0 0;
+        }
+
+        /* Glass Card HUD Profile */
+        .glass-hud {
+            background-color: rgba(30, 35, 41, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        /* SVG Canvas Styles */
+        svg {
+            /* Basic resets to ensure crisp rendering */
+            shape-rendering: geometricPrecision;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col antialiased relative selection:bg-studio-highlight/30">
+<!-- 100% Full Bleed Canvas Area -->
+<main class="absolute inset-0 z-0 overflow-hidden">
+<!-- Fractal Grid Background -->
+<div class="absolute inset-0 canvas-grid"></div>
+<!-- The Actual CAD SVG Canvas -->
+<div class="absolute inset-0 flex items-center justify-center cursor-crosshair">
+<svg class="w-full h-full opacity-90" preserveaspectratio="xMidYMid slice" viewbox="0 0 1200 800">
+<!-- Grid Lines for alignment context -->
+<g stroke="rgba(255,255,255,0.03)" stroke-width="1">
+<line x1="0" x2="1200" y1="400" y2="400"></line>
+<line x1="600" x2="600" y1="0" y2="800"></line>
+</g>
+<!-- Existing Structure Outline (Muted/Ghosted) -->
+<path d="M 200,150 L 900,150 L 900,250 L 200,250 Z" fill="none" stroke="theme('colors.studio-text-muted')" stroke-dasharray="8,8" stroke-width="1.5"></path>
+<text fill="theme('colors.studio-text-muted')" font-family="JetBrains Mono" font-size="10" letter-spacing="1" x="210" y="140">EXISTING STRUCTURE</text>
+<!-- Proposed Deck (Highlight Focus) -->
+<rect fill="rgba(251, 191, 36, 0.1)" height="180" rx="4" stroke="theme('colors.studio-highlight')" stroke-width="2" width="350" x="350" y="320"></rect>
+<!-- Deck Pattern -->
+<path d="M 350,340 L 700,340 M 350,360 L 700,360 M 350,380 L 700,380 M 350,400 L 700,400 M 350,420 L 700,420 M 350,440 L 700,440 M 350,460 L 700,460 M 350,480 L 700,480" stroke="rgba(251, 191, 36, 0.2)" stroke-width="1"></path>
+<text fill="theme('colors.studio-highlight')" font-family="JetBrains Mono" font-size="10" letter-spacing="1" x="360" y="310">PROPOSED TIMBER DECK</text>
+<!-- Dimensions -->
+<text class="font-medium" fill="theme('colors.studio-highlight')" font-family="Space Grotesk" font-size="12" text-anchor="middle" x="525" y="415">24' x 12'</text>
+<!-- Path/Walkway -->
+<path d="M 450,500 C 450,600 650,650 700,750 L 740,730 C 690,630 490,580 490,500 Z" fill="rgba(226, 232, 240, 0.05)" stroke="theme('colors.studio-text-muted')" stroke-width="1.5"></path>
+<!-- Planting/Root Zone Indicator (AI Insight Subject) -->
+<path d="M 750,250 C 900,300 850,450 750,400 C 650,350 700,200 750,250 Z" fill="none" stroke="rgba(0, 255, 128, 0.4)" stroke-dasharray="4,4" stroke-width="1.5"></path>
+<circle cx="780" cy="320" fill="rgba(0, 255, 128, 0.1)" r="20" stroke="rgba(0, 255, 128, 0.3)"></circle>
+<circle cx="780" cy="320" fill="rgba(0, 255, 128, 0.8)" r="3"></circle>
+<text fill="rgba(0, 255, 128, 0.8)" font-family="JetBrains Mono" font-size="9" x="805" y="323">ROOT ZONE</text>
+</svg>
+</div>
+</main>
+<!-- FLOATING UI LAYER (Z-index above canvas) -->
+<!-- Left: Vertical Tool Ribbon -->
+<nav class="absolute left-6 top-1/2 -translate-y-1/2 z-40 glass-hud p-2 flex flex-col gap-2">
+<!-- Logo / Brand indicator at top of ribbon -->
+<div class="mb-4 flex justify-center p-2 border-b border-white/10">
+<span class="material-symbols-outlined text-studio-text text-xl">architecture</span>
+</div>
+<button class="w-10 h-10 rounded-xl bg-studio-highlight text-studio-base flex items-center justify-center hover:brightness-110 transition-colors shadow-lg shadow-studio-highlight/20" title="Select / Move">
+<span class="material-symbols-outlined text-[20px]" data-weight="fill">near_me</span>
+</button>
+<button class="w-10 h-10 rounded-xl text-studio-text-muted hover:text-studio-text hover:bg-white/5 transition-colors flex items-center justify-center" title="Draw Path">
+<span class="material-symbols-outlined text-[20px]">gesture</span>
+</button>
+<button class="w-10 h-10 rounded-xl text-studio-text-muted hover:text-studio-text hover:bg-white/5 transition-colors flex items-center justify-center" title="Define Zone">
+<span class="material-symbols-outlined text-[20px]">dashboard_customize</span>
+</button>
+<div class="mx-2 h-[1px] bg-white/10 my-1"></div>
+<button class="w-10 h-10 rounded-xl text-studio-text-muted hover:text-studio-text hover:bg-white/5 transition-colors flex items-center justify-center" title="Place Assets">
+<span class="material-symbols-outlined text-[20px]">park</span>
+</button>
+<button class="w-10 h-10 rounded-xl text-studio-text-muted hover:text-studio-text hover:bg-white/5 transition-colors flex items-center justify-center" title="Material Properties">
+<span class="material-symbols-outlined text-[20px]">texture</span>
+</button>
+<button class="w-10 h-10 rounded-xl text-studio-text-muted hover:text-studio-text hover:bg-white/5 transition-colors flex items-center justify-center" title="Layer Manager">
+<span class="material-symbols-outlined text-[20px]">layers</span>
+</button>
+<!-- View Controls at bottom of ribbon -->
+<div class="mt-4 flex flex-col gap-1 border-t border-white/10 pt-2">
+<button class="w-10 h-8 rounded-lg text-studio-text-muted hover:text-studio-text hover:bg-white/5 transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">zoom_in</span>
+</button>
+<button class="w-10 h-8 rounded-lg text-studio-text-muted hover:text-studio-text hover:bg-white/5 transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">zoom_out</span>
+</button>
+</div>
+</nav>
+<!-- Right: Technical Meta Chips & Insights -->
+<aside class="absolute right-6 top-6 bottom-20 z-40 w-72 flex flex-col gap-4 pointer-events-none">
+<!-- Site Details Chip -->
+<div class="glass-hud p-4 pointer-events-auto">
+<div class="flex items-center justify-between mb-4">
+<span class="font-mono text-[10px] text-studio-text-muted uppercase tracking-widest">Site Parameters</span>
+<span class="material-symbols-outlined text-studio-text-muted text-[16px]">tune</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-1">
+<span class="font-ui text-[11px] text-studio-text-muted uppercase">Total Area</span>
+<span class="font-data text-lg font-medium text-studio-text">1,240 <span class="text-xs text-studio-text-muted font-ui">sqft</span></span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-ui text-[11px] text-studio-text-muted uppercase">Permeability</span>
+<span class="font-data text-lg font-medium text-studio-highlight">68%</span>
+</div>
+</div>
+</div>
+<!-- Active Layers HUD -->
+<div class="glass-hud p-4 pointer-events-auto">
+<div class="flex items-center justify-between mb-3">
+<span class="font-mono text-[10px] text-studio-text-muted uppercase tracking-widest">Active Layers</span>
+<button class="text-studio-highlight hover:brightness-125"><span class="material-symbols-outlined text-[16px]">add</span></button>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between group cursor-pointer hover:bg-white/5 p-1 -mx-1 rounded">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-studio-highlight text-[14px]" data-weight="fill">visibility</span>
+<span class="font-ui text-xs text-studio-text">Proposed Hardscape</span>
+</div>
+</div>
+<div class="flex items-center justify-between group cursor-pointer hover:bg-white/5 p-1 -mx-1 rounded">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#00ff80] text-[14px]" data-weight="fill">visibility</span>
+<span class="font-ui text-xs text-studio-text">Planting Zones</span>
+</div>
+</div>
+<div class="flex items-center justify-between group cursor-pointer hover:bg-white/5 p-1 -mx-1 rounded opacity-50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-studio-text-muted text-[14px]">visibility_off</span>
+<span class="font-ui text-xs text-studio-text-muted">Existing Topo</span>
+</div>
+</div>
+</div>
+</div>
+<!-- AI Insight Modal / Card -->
+<div class="glass-hud p-4 pointer-events-auto border-t-2 border-t-studio-highlight/50 bg-gradient-to-b from-studio-highlight/10 to-transparent mt-auto">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-studio-highlight text-[16px]">auto_awesome</span>
+<span class="font-mono text-[10px] text-studio-highlight uppercase tracking-wider">AI Insight</span>
+</div>
+<p class="font-ui text-sm text-studio-text/90 leading-relaxed mb-3">
+            Deck path intersects with primary tree root zones. Consider realigning path trajectory by 15° west to preserve canopy health.
+        </p>
+<button class="w-full bg-white/10 hover:bg-white/20 text-studio-text py-2 rounded-lg font-ui text-xs font-medium transition-colors flex items-center justify-center gap-2 border border-white/5">
+<span class="material-symbols-outlined text-[14px]">route</span>
+            Apply Adjustment
+        </button>
+</div>
+</aside>
+<!-- Top Center: Quick Action / Context (Optional, kept minimal) -->
+<div class="absolute top-6 left-1/2 -translate-x-1/2 z-40 pointer-events-auto">
+<div class="glass-hud px-6 py-2 flex items-center gap-4">
+<div class="flex items-center gap-2 border-r border-white/10 pr-4">
+<span class="font-mono text-xs text-studio-text">SMITH RESIDENCE</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-studio-text-muted hover:text-studio-text font-ui text-xs uppercase tracking-wide">Survey</button>
+<button class="text-studio-text-muted hover:text-studio-text font-ui text-xs uppercase tracking-wide">Sketch</button>
+<button class="text-studio-highlight font-ui text-xs uppercase tracking-wide font-medium flex flex-col items-center">
+                 CAD
+                 <div class="h-[2px] w-full bg-studio-highlight mt-1 rounded-full"></div>
+</button>
+<button class="text-studio-text-muted hover:text-studio-text font-ui text-xs uppercase tracking-wide">Elev</button>
+</div>
+</div>
+</div>
+<!-- Bottom: Slim Technical Telemetry Bar -->
+<footer class="absolute bottom-0 left-0 right-0 h-10 bg-studio-signal/90 backdrop-blur-md z-50 flex items-center justify-between px-6 border-t border-white/10">
+<!-- Left: Telemetry / Status -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#00ff80] animate-pulse"></div>
+<span class="font-mono text-[10px] text-white/80 uppercase">Sync Active</span>
+</div>
+<div class="flex items-center gap-2 text-white/60 font-mono text-[10px]">
+<span>X: <span class="text-white">450.2</span></span>
+<span>Y: <span class="text-white">500.8</span></span>
+</div>
+<div class="flex items-center gap-1 text-white/60 font-mono text-[10px]">
+<span class="material-symbols-outlined text-[12px]">grid_4x4</span>
+<span>Snap: 1/4"</span>
+</div>
+</div>
+<!-- Right: Cost & Promotion -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3 bg-black/20 px-3 py-1 rounded">
+<span class="font-mono text-[10px] text-white/60 uppercase">Est. Cost</span>
+<span class="font-data text-sm font-bold text-white">$12,450</span>
+</div>
+<button class="flex items-center gap-2 text-white font-ui text-xs font-medium hover:text-white/80 transition-colors">
+            Generate Quote
+            <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</footer>
+</body></html>

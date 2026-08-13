@@ -35,7 +35,7 @@
    * needed. The container's translate(-50%, -140%) is applied via the
    * portal's transform when placed at a projected point.
    */
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-3);
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
@@ -70,7 +70,7 @@
   border-radius: var(--hc-r-control);
   padding: var(--s-1) var(--s-2);
   pointer-events: none;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 @media (prefers-reduced-motion: reduce) {

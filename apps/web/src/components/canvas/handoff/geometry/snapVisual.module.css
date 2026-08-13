@@ -43,7 +43,7 @@
   border-radius: var(--hc-r-control);
   background: var(--panel);
   color: var(--planting-new-text);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   line-height: 1;
   pointer-events: none;

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Mobile Sketch Studio - Workstream</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container-high": "#dce9ff",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#c3c6d7",
+                        "background": "#f8f9ff",
+                        "on-tertiary-fixed-variant": "#005226",
+                        "surface-dim": "#cbdbf5",
+                        "tertiary-fixed-dim": "#8bd79b",
+                        "on-secondary-fixed-variant": "#93000b",
+                        "tertiary": "#116231",
+                        "outline": "#737686",
+                        "on-tertiary-fixed": "#00210b",
+                        "tertiary-fixed": "#a6f4b5",
+                        "surface-container-highest": "#d3e4fe",
+                        "primary-container": "#2563eb",
+                        "on-surface-variant": "#434655",
+                        "inverse-surface": "#213145",
+                        "on-secondary-container": "#fffbff",
+                        "primary": "#004ac6",
+                        "surface-variant": "#d3e4fe",
+                        "on-error-container": "#93000a",
+                        "secondary": "#bb0112",
+                        "inverse-primary": "#b4c5ff",
+                        "secondary-fixed": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#e02928",
+                        "inverse-on-surface": "#eaf1ff",
+                        "error": "#ba1a1a",
+                        "surface": "#f8f9ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-container": "#c2ffca",
+                        "surface-bright": "#f8f9ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#410002",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#dbe1ff",
+                        "on-primary-fixed": "#00174b",
+                        "tertiary-container": "#307b47",
+                        "on-background": "#0b1c30",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#ffb4ab",
+                        "on-surface": "#0b1c30",
+                        "surface-container": "#e5eeff",
+                        "surface-tint": "#0053db",
+                        "on-primary-fixed-variant": "#003ea8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "panel-width": "280px",
+                        "gutter": "12px",
+                        "toolbar-height": "48px",
+                        "margin": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Camera Feed Background (Simulated) */
+        .camera-feed {
+            background-color: #1a1b1e;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,0.05) 0%, transparent 60%),
+                linear-gradient(rgba(0,0,0,0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.3) 1px, transparent 1px);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
+        }
+        
+        .studio-dark-glass {
+            background: rgba(26, 27, 30, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/></head>
+<body class="bg-black text-white h-full flex flex-col overflow-hidden font-body-md select-none touch-none dark">
+<!-- TopAppBar -->
+<!-- Main Workspace -->
+<main class="flex-1 relative overflow-hidden flex">
+<!-- Canvas Area -->
+<div class="flex-1 relative camera-feed overflow-hidden cursor-crosshair"><div class="absolute inset-0 z-0 overflow-hidden"><svg class="w-full h-full" viewbox="0 0 800 600"><g class="opacity-20" fill="none" stroke="#f8f9ff" stroke-width="0.5"><path d="M 0 100 Q 200 80 400 120 T 800 100"></path><path d="M 0 200 Q 250 180 500 220 T 800 200"></path><path d="M 0 300 Q 300 280 600 320 T 800 300"></path><path d="M 0 400 Q 350 380 700 420 T 800 400"></path></g><g><circle class="animate-pulse shadow-[0_0_10px_#fbbf24]" cx="250" cy="200" fill="#fbbf24" r="6"></circle><text class="font-label-mono text-[10px]" fill="#fbbf24" x="265" y="205">SOIL SAMPLE S-04</text><circle class="opacity-80" cx="550" cy="150" fill="#4ade80" r="4"></circle><text class="font-label-mono text-[10px]" fill="#4ade80" x="560" y="155">PLANTING SITE A-1</text></g><g class="opacity-80"><path d="M 0 450 Q 400 430 800 450" fill="none" stroke="#ef4444" stroke-dasharray="8 4" stroke-width="2"></path><path class="opacity-80" d="M 100 600 L 300 400 L 500 450" fill="none" stroke="#ef4444" stroke-width="4"></path><text class="font-label-mono text-[12px]" fill="#ef4444" filter="drop-shadow(0px 2px 2px rgba(0,0,0,0.8))" x="120" y="580">GAS_MAIN -1.2m</text><path class="opacity-80" d="M 600 600 L 450 350" fill="none" stroke="#9ca3af" stroke-width="4"></path><text class="font-label-mono text-[12px]" fill="#9ca3af" filter="drop-shadow(0px 2px 2px rgba(0,0,0,0.8))" x="550" y="580">WATER_L2 -0.8m</text></g><g><circle class="animate-pulse" cx="400" cy="300" fill="#9ca3af" filter="drop-shadow(0 0 8px rgba(156,163,175,0.8))" r="12"></circle><circle class="opacity-50" cx="400" cy="300" fill="none" r="24" stroke="#9ca3af" stroke-width="2"></circle><text class="font-label-mono text-[10px]" fill="#9ca3af" x="430" y="305">SITE_ORIGIN</text></g></svg></div><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-[#f8f9ff]/50 rounded-full flex items-center justify-center pointer-events-none shadow-[0_0_15px_rgba(248,249,255,0.3)]"><div class="w-2 h-2 bg-[#f8f9ff] rounded-full shadow-[0_0_10px_#f8f9ff]"></div><div class="absolute inset-0 border-t-2 border-[#f8f9ff] animate-spin" style="animation-duration: 4s;"></div><div class="absolute -top-6 text-[#f8f9ff] font-label-mono text-[10px] tracking-wider">&lt; 12mm ACCURACY</div></div><div class="absolute top-16 left-1/2 -translate-x-1/2 flex flex-col gap-2 items-center"><div class="studio-dark-glass px-5 py-3 rounded-2xl flex flex-col items-center"><div class="flex items-center gap-2 mb-1"><span class="w-2 h-2 rounded-full bg-[#f8f9ff] animate-pulse"></span><span class="font-label-caps text-[10px] text-[#f8f9ff] tracking-widest">STK-01 RTK LOCK</span></div><span class="font-bold text-xl text-white tracking-tight" style="font-family: 'Space Grotesk', sans-serif;">42.358° N, 71.060° W</span><div class="flex gap-4 mt-2"><span class="text-xs text-gray-300 font-medium" style="font-family: 'Space Grotesk', sans-serif;">ELV: +12.45m</span><span class="text-[10px] text-[#fbbf24] font-bold font-label-caps px-2 py-0.5 bg-[#fbbf24]/10 rounded border border-[#fbbf24]/50">GOLD STANDARD</span></div></div></div>
+<!-- Strike Alert HUD -->
+<div class="absolute bottom-32 left-margin right-margin flex justify-center">
+<div class="bg-red-900/80 backdrop-blur-md border border-red-500/50 px-6 py-3 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.4)] flex items-center gap-3 animate-pulse"><span class="material-symbols-outlined text-[#ef4444]">warning</span><span class="font-label-caps text-xs text-red-100 tracking-wider">SUBSURFACE STRIKE RISK: GAS MAIN &lt; 0.5m</span></div>
+</div>
+<div class="absolute bottom-16 left-margin right-margin flex justify-between items-end"><div class="studio-dark-glass p-2 rounded-2xl flex flex-col gap-2"><button class="w-12 h-12 rounded-xl bg-[#f8f9ff] text-black flex items-center justify-center shadow-[0_4px_10px_rgba(248,249,255,0.4)]"><span class="material-symbols-outlined">gps_fixed</span></button><button class="w-12 h-12 rounded-xl hover:bg-white/10 flex items-center justify-center text-white"><span class="material-symbols-outlined">layers</span></button><button class="w-12 h-12 rounded-xl hover:bg-white/10 flex items-center justify-center text-white"><span class="material-symbols-outlined">3d_rotation</span></button></div><div class="studio-dark-glass p-1.5 rounded-full flex items-center gap-1">
+<button class="px-5 py-2.5 rounded-full bg-[#f8f9ff] text-black font-label-caps text-[11px] shadow-[0_2px_8px_rgba(248,249,255,0.3)]">STAKING</button>
+<button class="px-5 py-2.5 rounded-full text-gray-300 font-label-caps text-[11px] hover:bg-white/10 transition-colors">SUBSURFACE</button>
+<button class="px-5 py-2.5 rounded-full text-gray-300 font-label-caps text-[11px] hover:bg-white/10 transition-colors">PLANTING</button>
+</div></div></div>
+<!-- Floating Tool Dock (Right Side) -->
+</main>
+<!-- BottomNavBar (Mobile specific navigation shell) -->
+<!-- Slim Live Cost / Action Footer (Desktop/Tablet mainly, pushed above bottom nav on mobile) -->
+</body></html>

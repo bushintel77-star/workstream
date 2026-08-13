@@ -70,7 +70,7 @@
 
 .ambientKicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-pico);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -117,7 +117,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-pico);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -131,7 +131,7 @@
 }
 
 .count {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   font-weight: 700;
   color: var(--ink);
@@ -180,7 +180,7 @@
 }
 
 .priority {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-pico);
   letter-spacing: 0.04em;
   text-transform: uppercase;

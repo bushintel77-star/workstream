@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Mobile Sketch Studio - Workstream</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;family=JetBrains+Mono:wght@400&amp;family=Libre+Caslon+Text:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "primary-fixed-dim": "#c6c7c1",
+                "error": "#ba1a1a",
+                "tertiary": "#2a1209",
+                "background": "#faf9f5",
+                "inverse-primary": "#c6c7c1",
+                "surface-container-lowest": "#ffffff",
+                "secondary-fixed": "#dde6cf",
+                "on-error": "#ffffff",
+                "on-tertiary-fixed-variant": "#5f3f34",
+                "surface": "#faf9f5",
+                "on-primary-container": "#949590",
+                "surface-container-high": "#e9e8e4",
+                "inverse-surface": "#2f312e",
+                "on-surface": "#1b1c1a",
+                "on-tertiary-container": "#b48b7d",
+                "primary-container": "#2c2e2a",
+                "surface-tint": "#5d5f5a",
+                "secondary-container": "#dde6cf",
+                "primary": "#171916",
+                "tertiary-fixed": "#ffdbcf",
+                "on-primary": "#ffffff",
+                "on-primary-fixed-variant": "#454743",
+                "secondary": "#59614f",
+                "surface-bright": "#faf9f5",
+                "on-secondary-container": "#5f6755",
+                "outline-variant": "#c6c7c0",
+                "error-container": "#ffdad6",
+                "on-tertiary-fixed": "#2d150c",
+                "secondary-fixed-dim": "#c1c9b4",
+                "on-secondary-fixed": "#171e10",
+                "on-secondary-fixed-variant": "#424939",
+                "surface-container-low": "#f4f4f0",
+                "on-primary-fixed": "#1a1c19",
+                "tertiary-container": "#42261c",
+                "on-secondary": "#ffffff",
+                "inverse-on-surface": "#f2f1ed",
+                "outline": "#767872",
+                "surface-dim": "#dbdad6",
+                "on-background": "#1b1c1a",
+                "surface-container": "#efeeea",
+                "tertiary-fixed-dim": "#eabcad",
+                "surface-variant": "#e3e2df",
+                "on-surface-variant": "#454842",
+                "surface-container-highest": "#e3e2df",
+                "on-tertiary": "#ffffff",
+                "on-error-container": "#93000a",
+                "primary-fixed": "#e3e3dd"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "stack-xs": "8px",
+                "stack-xl": "64px",
+                "stack-md": "24px",
+                "gutter": "24px",
+                "unit": "4px",
+                "margin-edge": "40px"
+        },
+        "fontFamily": {
+                "headline-lg-mobile": [
+                        "Libre Caslon Text"
+                ],
+                "label-caps": [
+                        "Hanken Grotesk"
+                ],
+                "body-md": [
+                        "Hanken Grotesk"
+                ],
+                "technical-sm": [
+                        "JetBrains Mono"
+                ],
+                "headline-lg": [
+                        "Libre Caslon Text"
+                ],
+                "display-lg": [
+                        "Libre Caslon Text"
+                ]
+        },
+        "fontSize": {
+                "headline-lg-mobile": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-caps": [
+                        "11px",
+                        {
+                                "lineHeight": "12px",
+                                "letterSpacing": "0.1em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "technical-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "56px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        /* Camera Feed Background (Simulated) */
+        .camera-feed {
+            background-color: #1A1C1E;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(250,249,245,0.03) 0%, transparent 60%),
+                linear-gradient(rgba(26,28,30,0.5) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(26,28,30,0.5) 1px, transparent 1px);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
+        }
+        
+        .studio-dark-glass {
+            background: rgba(26, 28, 30, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(250, 249, 245, 0.08);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-[#1A1C1E] text-white h-full flex flex-col overflow-hidden font-body-md select-none touch-none dark">
+<!-- TopAppBar -->
+<!-- Main Workspace -->
+<main class="flex-1 relative overflow-hidden flex">
+<!-- Canvas Area -->
+<div class="flex-1 relative camera-feed overflow-hidden cursor-crosshair"><div class="absolute inset-0 z-0 overflow-hidden"><svg class="w-full h-full" viewbox="0 0 800 600"><g class="opacity-10" fill="none" stroke="#faf9f5" stroke-width="0.5"><path d="M 0 100 Q 200 80 400 120 T 800 100"></path><path d="M 0 200 Q 250 180 500 220 T 800 200"></path><path d="M 0 300 Q 300 280 600 320 T 800 300"></path><path d="M 0 400 Q 350 380 700 420 T 800 400"></path></g><g><circle class="opacity-60" cx="250" cy="200" fill="none" r="10" stroke="#b48b7d" stroke-width="1"></circle><circle class="animate-pulse shadow-[0_0_10px_#b48b7d]" cx="250" cy="200" fill="#b48b7d" r="3"></circle><text class="font-technical-sm text-[10px]" fill="#b48b7d" x="265" y="205">SOIL S-04</text><circle class="opacity-40" cx="550" cy="150" fill="none" r="14" stroke="#dde6cf" stroke-dasharray="2 2" stroke-width="1"></circle><circle class="opacity-80" cx="550" cy="150" fill="#dde6cf" r="3"></circle><text class="font-technical-sm text-[10px]" fill="#dde6cf" x="570" y="155">SITE A-1</text></g><g class="opacity-60"><path d="M 0 450 Q 400 430 800 450" fill="none" stroke="#b48b7d" stroke-dasharray="4 4" stroke-width="1"></path><path class="opacity-60" d="M 100 600 L 300 400 L 500 450" fill="none" stroke="#b48b7d" stroke-width="1.5"></path><text class="font-technical-sm text-[10px]" fill="#b48b7d" x="120" y="580">EXISTING LINE -1.2m</text><path class="opacity-40" d="M 600 600 L 450 350" fill="none" stroke="#c6c7c1" stroke-width="1.5"></path><text class="font-technical-sm text-[10px]" fill="#c6c7c1" x="550" y="580">GRADE_L2 -0.8m</text></g><g><circle cx="400" cy="300" fill="#faf9f5" r="2"></circle><circle class="opacity-30" cx="400" cy="300" fill="none" r="32" stroke="#faf9f5" stroke-width="1"></circle><circle class="opacity-10" cx="400" cy="300" fill="none" r="48" stroke="#faf9f5" stroke-dasharray="4 2" stroke-width="1"></circle><text class="font-technical-sm text-[10px]" fill="#faf9f5" opacity="0.7" x="440" y="305">ORIGIN</text></g></svg></div><div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-[#faf9f5]/20 rounded-full flex items-center justify-center pointer-events-none shadow-[inset_0_0_40px_rgba(250,249,245,0.02)]"><div class="w-1.5 h-1.5 bg-[#faf9f5] rounded-full opacity-80"></div><div class="absolute inset-0 border-t border-[#faf9f5]/40 rounded-full animate-spin" style="animation-duration: 8s;"></div><div class="absolute -top-8 text-[#faf9f5]/60 font-technical-sm text-[10px] tracking-widest uppercase">Radius: 12mm</div></div><div class="absolute top-16 left-1/2 -translate-x-1/2 flex flex-col gap-2 items-center"><div class="studio-dark-glass px-6 py-4 rounded-xl flex flex-col items-center shadow-lg"><div class="flex items-center gap-2 mb-2"><span class="w-1.5 h-1.5 rounded-full bg-[#faf9f5] opacity-80"></span><span class="font-headline-lg-mobile text-[14px] text-[#faf9f5] tracking-wide">STK-01 RTK LOCK</span></div><span class="font-headline-lg text-3xl text-white tracking-tight">42.358° N, 71.060° W</span><div class="flex gap-4 mt-3 items-center"><span class="text-xs text-[#c6c7c1] font-technical-sm">ELV: +12.45m</span><span class="text-[10px] text-[#2a1209] font-label-caps px-2 py-1 bg-[#b48b7d] rounded-sm">STANDARD</span></div></div></div>
+<!-- Strike Alert HUD -->
+<div class="absolute bottom-32 left-margin right-margin flex justify-center">
+<div class="bg-[#2a1209]/80 backdrop-blur-md border border-[#b48b7d]/30 px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-pulse"><span class="material-symbols-outlined text-[#b48b7d] text-sm">warning</span><span class="font-technical-sm text-xs text-[#eabcad] tracking-widest uppercase">SUBSURFACE RISK: MAIN &lt; 0.5m</span></div>
+</div>
+<div class="absolute bottom-16 left-margin right-margin flex justify-between items-end"><div class="studio-dark-glass p-2 rounded-xl flex flex-col gap-2"><button class="w-12 h-12 rounded-lg bg-[#faf9f5] text-[#1b1c1a] flex items-center justify-center shadow-sm"><span class="material-symbols-outlined text-xl">gps_fixed</span></button><button class="w-12 h-12 rounded-lg hover:bg-white/5 flex items-center justify-center text-[#c6c7c1]"><span class="material-symbols-outlined text-xl">layers</span></button><button class="w-12 h-12 rounded-lg hover:bg-white/5 flex items-center justify-center text-[#c6c7c1]"><span class="material-symbols-outlined text-xl">3d_rotation</span></button></div><div class="bg-[#faf9f5] p-1.5 rounded-full flex items-center gap-1 shadow-md">
+<button class="px-6 py-2.5 rounded-full bg-[#1A1C1E] text-[#faf9f5] font-headline-lg-mobile text-[13px] tracking-wide shadow-sm">Staking</button>
+<button class="px-6 py-2.5 rounded-full text-[#5d5f5a] font-headline-lg-mobile text-[13px] hover:text-[#1b1c1a] transition-colors tracking-wide">Subsurface</button>
+<button class="px-6 py-2.5 rounded-full text-[#5d5f5a] font-headline-lg-mobile text-[13px] hover:text-[#1b1c1a] transition-colors tracking-wide">Planting</button>
+</div></div></div>
+<!-- Floating Tool Dock (Right Side) -->
+</main>
+<!-- BottomNavBar (Mobile specific navigation shell) -->
+<!-- Slim Live Cost / Action Footer (Desktop/Tablet mainly, pushed above bottom nav on mobile) -->
+</body></html>

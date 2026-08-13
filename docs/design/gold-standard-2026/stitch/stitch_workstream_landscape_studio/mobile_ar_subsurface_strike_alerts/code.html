@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Workstream - Mobile Field Bridge AR</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#323128",
+                    "primary-fixed-dim": "#c5c6cc",
+                    "primary-fixed": "#e1e2e8",
+                    "strike-red": "#ef4444",
+                    "on-error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "surface-container-low": "#1c1b1c",
+                    "on-primary-fixed-variant": "#44474c",
+                    "on-secondary-container": "#a9bad3",
+                    "secondary": "#b7c8e1",
+                    "on-primary-container": "#626469",
+                    "error": "#ffb4ab",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-primary-fixed": "#191c20",
+                    "surface-container-highest": "#353435",
+                    "error-container": "#93000a",
+                    "tertiary-container": "#e7e2d6",
+                    "primary-container": "#e1e2e8",
+                    "selection-white": "#ffffff",
+                    "outline": "#8f9095",
+                    "inverse-surface": "#e5e2e2",
+                    "glass-border": "rgba(255, 255, 255, 0.05)",
+                    "tertiary-fixed": "#e7e2d6",
+                    "on-primary": "#2e3135",
+                    "surface": "#101418",
+                    "on-secondary": "#213145",
+                    "inverse-primary": "#5c5e63",
+                    "surface-bright": "#3a3939",
+                    "tertiary-fixed-dim": "#cac6ba",
+                    "outline-variant": "#45474a",
+                    "on-surface-variant": "#c6c6cb",
+                    "on-tertiary-fixed": "#1d1c14",
+                    "on-background": "#e5e2e2",
+                    "on-tertiary-fixed-variant": "#49473e",
+                    "background": "#131314",
+                    "on-surface": "#e5e2e2",
+                    "primary": "#ffffff",
+                    "surface-container": "#201f20",
+                    "secondary-container": "#3a4a5f",
+                    "on-tertiary-container": "#67645a",
+                    "tertiary": "#ffffff",
+                    "surface-variant": "#353435",
+                    "surface-tint": "#c5c6cc",
+                    "on-error": "#690005",
+                    "inverse-on-surface": "#313030",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "surface-dim": "#131314",
+                    "secondary-fixed": "#d3e4fe",
+                    "on-secondary-fixed": "#0b1c30",
+                    "surface-container-high": "#2a2a2a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "chip-gap": "0.5rem",
+                    "stack-gap": "1rem",
+                    "viewport-margin": "2rem",
+                    "hud-padding": "1.25rem"
+            },
+            "fontFamily": {
+                    "data-display-mobile": ["Space Grotesk"],
+                    "technical-metadata": ["Space Grotesk"],
+                    "data-display-lg": ["Space Grotesk"],
+                    "ui-label-sm": ["Inter"],
+                    "data-display-md": ["Space Grotesk"],
+                    "ui-label-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "data-display-mobile": ["20px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "technical-metadata": ["13px", {"lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "400"}],
+                    "data-display-lg": ["40px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "ui-label-sm": ["11px", {"lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "500"}],
+                    "data-display-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                    "ui-label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        .hud-panel {
+            background-color: rgba(16, 20, 24, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Simulated AR elements */
+        .ar-line {
+            position: absolute;
+            height: 40px;
+            border-radius: 20px;
+            filter: blur(4px);
+            opacity: 0.6;
+            transform-origin: left center;
+        }
+        .ar-line.gas {
+            background: linear-gradient(90deg, transparent, #fb923c, transparent);
+            box-shadow: 0 0 20px #fb923c;
+        }
+        .ar-line.water {
+            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+            box-shadow: 0 0 20px #3b82f6;
+        }
+
+        .meta-chip {
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: absolute;
+            transform: translate(-50%, -100%);
+            pointer-events: none;
+        }
+        
+        .meta-chip::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            width: 1px;
+            height: 20px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .strike-alert {
+            background: rgba(239, 68, 68, 0.95);
+            border: 1px solid #ef4444;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.7); }
+            100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+        }
+
+        /* Crosshair */
+        .crosshair::before, .crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255,255,255,0.2);
+            pointer-events: none;
+        }
+        .crosshair::before { top: 0; bottom: 0; left: 50%; width: 1px; }
+        .crosshair::after { left: 0; right: 0; top: 50%; height: 1px; }
+        
+        .center-dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(255,255,255,0.8);
+        }
+    </style>
+</head>
+<body class="text-on-surface font-technical-metadata h-screen w-screen relative">
+<!-- Camera Feed Background (Simulated) -->
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-cover bg-center" data-alt="A lush, green suburban backyard on a bright, sunny day. The grass is neatly trimmed. A wooden fence lines the back perimeter, bordered by mature, leafy trees casting soft, dappled shadows. The lighting is natural and realistic, simulating a high-quality smartphone camera feed capturing a typical outdoor residential scene in daylight. The overall mood is calm and ordinary, providing a realistic canvas for augmented reality overlays." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDrslpt9PZBd2on6EbuBHtOul2-2w3HyVsJC1JFoim8yWsC0GOQFLR-AU2GsPPyNyopXFhyZQkizNlyraa6o4Fd1bMlKITg7DJ8M1vEs5w-CDCapgd1egqEv-XeL8ii_JO21Udg408XsR6Bg3GBmwZWfXZzpn7jhLFiSbeR7SofTwoeEj_PbyWpd4VfQKl-wEIPZZ_vSDAcqMPVyAhvSYKX4rwLnr8i5g2xSsNKxI7A8uMquNzUveuqKA')"></div>
+</div>
+<!-- AR Canvas Overlay -->
+<div class="absolute inset-0 z-10 crosshair overflow-hidden pointer-events-none">
+<div class="center-dot"></div>
+<!-- Simulated AR Volumes (Pipes) -->
+<!-- Gas Line -->
+<div class="ar-line gas w-full" style="top: 60%; left: -10%; transform: rotate(15deg);"></div>
+<!-- Water Line -->
+<div class="ar-line water w-[120%]" style="top: 80%; left: -20%; transform: rotate(-25deg);"></div>
+<!-- Meta Chips (Anchored to physical space) -->
+<!-- Gas Main Chip 1 -->
+<div class="meta-chip rounded flex items-center gap-2 p-2" style="top: 45%; left: 30%;">
+<span class="material-symbols-outlined text-green-400" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<div class="font-ui-label-sm text-ui-label-sm text-on-surface flex gap-1">GAS MAIN <span class="text-green-400">ACTIVE</span></div>
+<div class="text-[10px] text-on-surface-variant">Depth -600mm</div>
+</div>
+</div>
+<!-- Hexagon marker 1 -->
+<div class="meta-chip rounded hexagon p-1 border-yellow-600/50 text-yellow-500 text-[9px] text-center" style="top: 55%; left: 35%; background: rgba(30, 25, 10, 0.8);">
+            N 41.505,<br/>W 81.693
+        </div>
+<!-- Hexagon marker 2 -->
+<div class="meta-chip rounded hexagon p-1 border-yellow-600/50 text-yellow-500 text-[9px] text-center" style="top: 40%; left: 70%; background: rgba(30, 25, 10, 0.8);">
+            N 41.508,<br/>W 81.690
+        </div>
+<!-- Strike Alert (Conflict Zone) -->
+<div class="meta-chip strike-alert rounded-lg p-2 flex flex-col gap-1" style="top: 65%; left: 65%; z-index: 20;">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span class="font-ui-label-lg text-ui-label-lg text-white font-bold tracking-wider">STRIKE ALERT</span>
+</div>
+<div class="text-[11px] text-white/90">WATER LINE CONFLICT</div>
+<div class="text-[10px] text-white/70">Depth Clearance: <span class="font-bold text-white">FAILED (-200mm)</span></div>
+</div>
+<!-- Hexagon marker 3 -->
+<div class="meta-chip rounded hexagon p-1 border-yellow-600/50 text-yellow-500 text-[9px] text-center" style="top: 80%; left: 55%; background: rgba(30, 25, 10, 0.8);">
+            N 41.506,<br/>W 81.692
+        </div>
+</div>
+<!-- Top HUD Overlay -->
+<div class="absolute top-0 w-full z-40 px-4 pt-12 pb-4 flex justify-between items-start pointer-events-none">
+<!-- Compass/Orientation Widget -->
+<div class="hud-panel w-12 h-12 rounded-full flex items-center justify-center pointer-events-auto shadow-lg relative">
+<!-- Simulated compass needle -->
+<div class="w-1 h-8 bg-gradient-to-b from-strike-red to-transparent rounded-full absolute transform rotate-45"></div>
+<span class="material-symbols-outlined text-on-surface text-sm z-10" style="font-variation-settings: 'FILL' 1;">navigation</span>
+</div>
+<!-- Central Tool Palette -->
+<div class="hud-panel rounded-xl flex pointer-events-auto p-1 shadow-lg">
+<button class="flex flex-col items-center justify-center w-16 py-2 rounded-lg text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined mb-1">straighten</span>
+<span class="font-ui-label-sm text-ui-label-sm">Measure</span>
+</button>
+<button class="flex flex-col items-center justify-center w-16 py-2 rounded-lg bg-primary/10 text-primary border-b-2 border-primary">
+<span class="material-symbols-outlined mb-1 text-primary" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<span class="font-ui-label-sm text-ui-label-sm">Locate</span>
+</button>
+<button class="flex flex-col items-center justify-center w-16 py-2 rounded-lg text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined mb-1">map</span>
+<span class="font-ui-label-sm text-ui-label-sm">Map</span>
+</button>
+</div>
+<!-- Settings Action -->
+<div class="hud-panel w-10 h-10 rounded-full flex items-center justify-center pointer-events-auto shadow-lg">
+<span class="material-symbols-outlined text-on-surface">settings</span>
+</div>
+</div>
+<!-- Bottom Navigation Bar (Shared Component Logic) -->
+<!-- Applying logic: "AR Bridge" is the active state based on context -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden bg-surface/70 dark:bg-surface/70 backdrop-blur-md border-t border-glass-border rounded-t-xl font-ui-label-sm text-ui-label-sm">
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-transform duration-200">
+<span class="material-symbols-outlined">gesture</span>
+<span class="mt-1">Draw</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-transform duration-200">
+<span class="material-symbols-outlined">analytics</span>
+<span class="mt-1">Pulse</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-transform duration-200">
+<span class="material-symbols-outlined">straighten</span>
+<span class="mt-1">Slice</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-lg p-2 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">view_in_ar</span>
+<span class="mt-1">AR Bridge</span>
+</button>
+</nav>
+<!-- Desktop Navigation Warning (Hidden on mobile) -->
+<div class="hidden md:flex absolute inset-0 z-50 bg-background items-center justify-center flex-col">
+<span class="material-symbols-outlined text-6xl text-strike-red mb-4">smartphone</span>
+<h1 class="font-data-display-md text-data-display-md text-primary">Mobile Experience Required</h1>
+<p class="font-technical-metadata text-technical-metadata text-on-surface-variant mt-2">AR Bridge is optimized for mobile device sensors.</p>
+</div>
+</body></html>

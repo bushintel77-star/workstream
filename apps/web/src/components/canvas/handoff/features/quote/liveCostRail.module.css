@@ -38,7 +38,7 @@
 
 .kicker {
   margin: 0;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -170,7 +170,7 @@
 }
 
 .statLabel {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -187,7 +187,7 @@
 
 .sectionLabel {
   margin: 0 0 6px;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -387,7 +387,8 @@
 .shareBtn {
   background: color-mix(in srgb, var(--accent) 84%, var(--gray-l-900));
   border-color: transparent;
-  color: var(--ws-frame-ink);
+  /* Dark ink on gold — light text fails WCAG AA on #fbbf24 at 1.86:1 */
+  color: var(--gs-canvas);
 }
 
 .shareBtn:hover {
@@ -407,7 +408,7 @@
   margin: 0;
   padding: 8px 14px;
   border-top: 1px solid var(--ws-frame-hair);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   letter-spacing: 0.06em;
   text-transform: uppercase;

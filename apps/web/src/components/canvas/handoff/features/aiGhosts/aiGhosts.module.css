@@ -75,7 +75,7 @@
 .rowMeta {
   font-size: var(--text-micro);
   color: var(--ws-frame-ink-dim);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .detail {
@@ -110,7 +110,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ws-frame-ink-dim);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .badge[data-stale="true"] {
@@ -128,7 +128,7 @@
   margin: 0;
   font-size: var(--text-xs);
   font-weight: 600;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   color: color-mix(in srgb, var(--ws-frame-ink) 80%, var(--hc-success));
 }
 
@@ -149,7 +149,7 @@
 .confLabel {
   font-size: var(--text-xs);
   font-weight: 650;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   color: var(--ws-frame-ink);
   background: color-mix(in srgb, var(--ws-frame) 72%, transparent);
   border: 1px solid color-mix(in srgb, var(--ws-frame-ink) 10%, transparent);
@@ -194,7 +194,7 @@
   justify-content: space-between;
   gap: var(--s-2);
   font-size: var(--text-micro);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   color: var(--ws-frame-ink-dim);
 }
 
@@ -237,7 +237,7 @@
   gap: var(--s-1);
   margin-top: 8px;
   color: var(--ws-frame-ink-dim);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
 }
 

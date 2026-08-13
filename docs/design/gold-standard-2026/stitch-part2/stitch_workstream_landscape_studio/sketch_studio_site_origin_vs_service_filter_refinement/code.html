@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lens Dial - Hydrological Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;family=Work+Sans:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-tint": "#3d57ba",
+                        "primary": "#00288e",
+                        "surface-container-highest": "#d4e4fa",
+                        "surface-dim": "#ccdbf2",
+                        "success-zone": "#a6f4b5",
+                        "secondary-fixed": "#d5e3fc",
+                        "surface-container-low": "#eef4ff",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#c4c5d5",
+                        "inverse-on-surface": "#e9f1ff",
+                        "tertiary-container": "#1f552f",
+                        "on-primary-fixed-variant": "#213da0",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#dbe9ff",
+                        "on-surface-variant": "#444653",
+                        "secondary-container": "#d2e1fa",
+                        "surface-container": "#e5efff",
+                        "outline": "#757684",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#9ad4a3",
+                        "error-container": "#ffdad6",
+                        "secondary": "#515f74",
+                        "on-primary-container": "#a9b8ff",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-tertiary-fixed-variant": "#1a512b",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "on-primary-fixed": "#001453",
+                        "surface": "#f8f9ff",
+                        "primary-container": "#2642a5",
+                        "on-tertiary-fixed": "#00210b",
+                        "on-secondary-container": "#556379",
+                        "tertiary-fixed": "#b6f1be",
+                        "on-background": "#0d1c2d",
+                        "tertiary": "#003d1a",
+                        "inverse-surface": "#233143",
+                        "background": "#f8f9ff",
+                        "existing-condition": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "inverse-primary": "#b8c4ff",
+                        "on-surface": "#0d1c2d",
+                        "surface-bright": "#f8f9ff",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#8fc898",
+                        "surface-variant": "#d4e4fa",
+                        "primary-fixed": "#dde1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "sidebar-data-width": "320px",
+                        "footer-height": "56px",
+                        "sidebar-tool-width": "64px",
+                        "stack-sm": "8px",
+                        "header-height": "48px",
+                        "gutter": "24px",
+                        "margin-desktop": "40px",
+                        "margin-mobile": "16px",
+                        "unit": "4px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "label-xs": ["JetBrains Mono"],
+                        "body-md": ["Work Sans"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "display-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-xs": ["10px", { "lineHeight": "12px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0f1115; /* Studio Dark */
+            color: #e9f1ff; /* inverse-on-surface */
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Grid Canvas Background */
+        .grid-canvas {
+            background-size: 24px 24px;
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        /* Subtle Blueprint Line */
+        .blueprint-line {
+            position: absolute;
+            height: 2px;
+            background-color: rgba(213, 227, 252, 0.2); /* secondary-fixed with opacity */
+            box-shadow: 0 0 8px rgba(213, 227, 252, 0.4);
+            transform-origin: left center;
+        }
+        
+        .blueprint-line-main {
+            background-color: #b8c4ff; /* primary-fixed-dim */
+            box-shadow: 0 0 12px rgba(184, 196, 255, 0.6);
+            height: 4px;
+        }
+
+        /* 1px Leader Line */
+        .leader-line {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.4);
+            height: 1px;
+            transform-origin: left center;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        /* Pulse Animation for active nodes */
+        @keyframes pulse-node {
+            0% { transform: scale(1) translate(-50%, -50%); box-shadow: 0 0 0 0 rgba(184, 196, 255, 0.7); }
+            70% { transform: scale(1.1) translate(-45%, -45%); box-shadow: 0 0 0 10px rgba(184, 196, 255, 0); }
+            100% { transform: scale(1) translate(-50%, -50%); box-shadow: 0 0 0 0 rgba(184, 196, 255, 0); }
+        }
+        
+        .node-active {
+            animation: pulse-node 2s infinite;
+        }
+
+        /* Hydraulic HUD Panel */
+        .hydraulic-hud {
+            background-color: rgba(35, 49, 67, 0.85); /* inverse-surface with opacity */
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(196, 197, 213, 0.15); /* outline-variant */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            z-index: 20;
+        }
+        
+        /* Gold Standard Highlights (Semantic mapping to success/tertiary colors for water flow) */
+        .text-flow-highlight { color: #a6f4b5; } /* success-zone */
+        .bg-flow-highlight { background-color: rgba(166, 244, 181, 0.1); }
+        
+        /* Coordinate Marker */
+        .coord-marker {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-left: 2px solid rgba(255,255,255,0.2);
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            bottom: 40px;
+            left: 40px;
+            z-index: 5;
+        }
+        
+        .coord-marker::before {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: -5px;
+            width: 8px;
+            height: 8px;
+            background-color: #b8c4ff;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="antialiased font-body-md relative h-screen w-screen selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation Anchor (Project Pulse) -->
+<!-- Applying exact styles from JSON: style_bg_color, style_primary_color, style_typography, style_brand_logo, style_component_shape, style_separation_logic, style_shadows_and_elevation, style_shell_layout -->
+<header class="bg-surface-dim/70 backdrop-blur-md text-primary dark:text-primary-fixed font-label-xs text-label-xs docked full-width top-0 h-6 border-b border-outline-variant/20 flex justify-between items-center px-4 w-full absolute z-50">
+<div class="font-label-caps text-label-caps uppercase tracking-widest text-on-surface dark:text-inverse-on-surface font-bold">Project Pulse</div>
+<div class="flex items-center gap-4">
+<!-- Trailing Icons -->
+<span class="material-symbols-outlined text-on-surface-variant hover:bg-surface-variant/50 transition-opacity duration-300 cursor-pointer" style="font-variation-settings: 'FILL' 0;">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:bg-surface-variant/50 transition-opacity duration-300 cursor-pointer" style="font-variation-settings: 'FILL' 0;">settings</span>
+</div>
+</header>
+<!-- SideNavBar (Lens Dial) -->
+<!-- Applying exact styles from JSON: style_bg_color, style_primary_color, style_typography, style_brand_logo, style_component_shape, style_separation_logic, style_shadows_and_elevation, style_shell_layout -->
+<!-- Note: Suppressed contextually as per prompt "No sidebars or bulky panels", but structure maintained if needed for responsive. Kept hidden to respect prompt. -->
+<nav class="hidden fixed left-gutter z-50 flex flex-col gap-stack-sm items-center bg-surface dark:bg-inverse-surface text-primary dark:text-primary-fixed-dim font-label-caps text-label-caps fixed left-4 top-1/2 -translate-y-1/2 w-16 h-auto rounded-full py-4 outline outline-1 outline-outline-variant/20 shadow-sm shadow-sm">
+<div class="font-headline-lg text-headline-lg text-primary mb-4" title="Lens Dial">
+<span class="material-symbols-outlined text-3xl">lens</span>
+</div>
+<!-- Active: Infrastructure (closest match to Hydrological/Irrigation) -->
+<a class="w-10 h-10 flex items-center justify-center hover:bg-surface-container-highest rounded-full scale-110 transition-transform duration-200 text-on-surface-variant group relative" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">architecture</span>
+<span class="absolute left-14 opacity-0 group-hover:opacity-100 transition-opacity bg-inverse-surface text-inverse-on-surface px-2 py-1 rounded text-xs whitespace-nowrap">Survey</span>
+</a>
+<a class="w-10 h-10 flex items-center justify-center hover:bg-surface-container-highest rounded-full scale-110 transition-transform duration-200 text-on-surface-variant group relative" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">precision_manufacturing</span>
+<span class="absolute left-14 opacity-0 group-hover:opacity-100 transition-opacity bg-inverse-surface text-inverse-on-surface px-2 py-1 rounded text-xs whitespace-nowrap">CAD</span>
+</a>
+<a class="bg-primary-container text-on-primary-container rounded-full w-10 h-10 flex items-center justify-center hover:bg-surface-container-highest rounded-full scale-110 transition-transform duration-200 group relative" href="#">
+<span class="material-symbols-outlined">lan</span>
+<span class="absolute left-14 opacity-0 group-hover:opacity-100 transition-opacity bg-inverse-surface text-inverse-on-surface px-2 py-1 rounded text-xs whitespace-nowrap">Infrastructure</span>
+</a>
+</nav>
+<!-- Main Canvas -->
+<main class="relative w-full h-full pt-[24px]">
+<!-- Background Grid -->
+<div class="grid-canvas"></div>
+<!-- Base Map Imagery (Darkened for Studio Dark contrast) -->
+<div class="absolute inset-0 opacity-30 pointer-events-none mix-blend-luminosity grayscale bg-cover bg-center" data-alt="High-resolution, top-down satellite view of a complex commercial landscape site, rendered in ultra-dark grayscale suitable for a technical UI background. The image should highlight topographical variations and basic structural footprints without distracting details, setting a somber, professional mood." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDwKGh5a2E4tukoioZUiW8t7mQjy6JDXMHBddJlCX1EWDKB2tw39ahUhUvEvhICEWf91Gqq7RJT5CCk04QgllCrf7auYL0C-ruDHxkrpG9M-CgIu5XxBv7I1lYUmnGtAONroPQYJQtOgAvthBYV_gJKaIxDUNE9Xkdeaf7K1mMx9qL2Hhnd_9P62AbbkFkKQwii5dG7hs8GkO2nhYJo1fedyTNccBA3_2S9W25m3Pqih0s0ZDJxg2awhA");'></div>
+<!-- Geometry Layer (Irrigation Lines) -->
+<div class="absolute inset-0 z-10">
+<!-- Main Line -->
+<div class="blueprint-line-main absolute" style="top: 60%; left: 15%; width: 50%; transform: rotate(-15deg);"></div>
+<div class="blueprint-line-main absolute" style="top: 47%; left: 63.5%; width: 30%; transform: rotate(10deg);"></div>
+<!-- Lateral Lines -->
+<div class="blueprint-line absolute" style="top: 55%; left: 30%; width: 15%; transform: rotate(75deg);"></div>
+<div class="blueprint-line absolute" style="top: 48%; left: 45%; width: 20%; transform: rotate(80deg);"></div>
+<div class="blueprint-line absolute" style="top: 45%; left: 55%; width: 10%; transform: rotate(70deg);"></div>
+<div class="blueprint-line absolute" style="top: 50%; left: 75%; width: 18%; transform: rotate(100deg);"></div>
+<!-- Nodes (Sprinkler Heads / Valves) -->
+<div class="absolute w-3 h-3 rounded-full bg-outline-variant border border-surface-container" style="top: 72%; left: 32%; transform: translate(-50%, -50%);"></div>
+<div class="absolute w-3 h-3 rounded-full bg-outline-variant border border-surface-container" style="top: 67%; left: 47%; transform: translate(-50%, -50%);"></div>
+<!-- Active Selected Node (Valve Box) -->
+<div class="absolute w-4 h-4 rounded-sm bg-primary-fixed-dim border-2 border-surface node-active z-20 cursor-pointer" id="active-valve" style="top: 47%; left: 63.5%; transform: translate(-50%, -50%);"></div>
+</div>
+<!-- Connecting Leader Line to HUD -->
+<!-- Positioned via JS or rough CSS approximation -->
+<div class="leader-line" style="top: 47%; left: 63.5%; width: 12%; transform: rotate(-25deg); background-color: rgba(229, 239, 255, 0.9);"></div>
+<!-- Hydraulic HUD -->
+<div class="absolute p-4 w-[340px] flex flex-col gap-4 z-20 backdrop-blur-md bg-surface-container/80 rounded-xl border border-outline-variant/30 shadow-sm" style="top: 30%; left: 74%;">
+<div class="flex justify-between items-start border-b border-outline-variant/20 pb-3">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-outline-variant tracking-wider uppercase mb-1">Active Service Zone</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface m-0 leading-tight">VZ-North-04</h2>
+</div>
+<div class="bg-primary-container/20 px-2 py-1 rounded-full flex items-center gap-1 border border-primary-container/30">
+<div class="w-2 h-2 rounded-full bg-success-zone animate-pulse"></div>
+<span class="font-label-xs text-label-xs text-primary-fixed-dim font-bold">LIVE</span>
+</div>
+</div>
+<div class="flex items-end justify-between bg-surface-bright/10 rounded-lg p-3 border border-outline-variant/10">
+<div class="flex flex-col">
+<span class="font-label-xs text-label-xs text-outline-variant uppercase tracking-widest mb-1">Flow Rate</span>
+<div class="flex items-baseline gap-1">
+<span class="font-display-lg text-display-lg text-flow-highlight">124.5</span>
+<span class="font-label-caps text-label-caps text-outline-variant">Active Service Zone</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-flow-highlight mb-2" style="font-size: 32px; font-variation-settings: 'FILL' 1;">water_drop</span>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-surface-bright/10 rounded-lg p-3 border border-outline-variant/10 flex flex-col gap-1">
+<div class="flex items-center gap-1 text-outline-variant">
+<span class="material-symbols-outlined text-[16px]">speed</span>
+<span class="font-label-xs text-label-xs uppercase">Pressure Drop</span>
+</div>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">-4.2</span>
+<span class="font-label-xs text-label-xs text-outline-variant">PSI</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest mt-2 rounded-full overflow-hidden">
+<div class="h-full bg-error w-[15%]"></div>
+</div>
+</div>
+<div class="bg-surface-bright/10 rounded-lg p-3 border border-outline-variant/10 flex flex-col gap-1">
+<div class="flex items-center gap-1 text-outline-variant">
+<span class="material-symbols-outlined text-[16px]">area_chart</span>
+<span class="font-label-xs text-label-xs uppercase">Catchment Vol</span>
+</div>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-flow-highlight">3.8</span>
+<span class="font-label-xs text-label-xs text-outline-variant">K GAL</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest mt-2 rounded-full overflow-hidden">
+<div class="h-full bg-success-zone w-[65%]"></div>
+</div>
+</div>
+</div>
+<button class="mt-2 w-full py-2 bg-primary-container/10 hover:bg-primary-container/20 border border-primary-container/30 rounded text-center transition-colors font-label-caps text-label-caps text-on-surface flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+    Adjust Parameters
+  </button>
+</div>
+<!-- Site Origin Anchor -->
+<div class="coord-marker bg-surface-container/80 backdrop-blur-md rounded-lg p-3 border border-signal-blue/50 shadow-sm">
+<div class="absolute -top-8 left-0 flex items-center gap-2 bg-secondary-container px-2 py-1 rounded-sm border border-signal-blue/30">
+<span class="material-symbols-outlined text-[16px] text-on-secondary-container">location_on</span>
+<span class="font-label-caps text-[10px] text-on-secondary-container uppercase tracking-widest font-bold">Active Service Zone</span>
+</div>
+<div class="absolute bottom-1 left-3 flex flex-col font-label-xs text-label-xs text-on-surface-variant">
+<span class="tracking-widest opacity-80">N 34° 03' 08"</span>
+<span class="tracking-widest opacity-80">W 118° 14' 37"</span>
+<span class="text-primary-fixed-dim mt-1 tracking-widest font-bold">ELEV +42.5m</span>
+</div>
+<div class="absolute top-1 right-1 opacity-40">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+</div></div>
+</main>
+<!-- Footer (Ctrl+K for Command Bar) -->
+<!-- Applying exact styles from JSON: style_bg_color, style_primary_color, style_typography, style_brand_logo, style_component_shape, style_separation_logic, style_shadows_and_elevation, style_shell_layout -->
+<footer class="bg-surface-container-lowest/50 dark:bg-surface-container-lowest/10 text-secondary dark:text-secondary-fixed-dim font-label-xs text-label-xs fixed bottom-0 w-full h-[56px] bg-gradient-to-t from-surface-container to-transparent flat no shadows fixed bottom-0 left-0 w-full flex justify-between items-center px-gutter h-footer-height pointer-events-none z-50">
+<div class="font-label-caps text-label-caps text-on-surface dark:text-inverse-on-surface pointer-events-auto">Ctrl+K for Command Bar</div>
+<div class="flex gap-4 pointer-events-auto">
+<a class="text-on-secondary-fixed-variant hover:text-primary transition-colors" href="#">Canvas Guide</a>
+<a class="text-on-secondary-fixed-variant hover:text-primary transition-colors" href="#">Data Integrity</a>
+</div>
+</footer>
+</body></html>

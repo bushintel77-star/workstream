@@ -17,7 +17,7 @@
 
 .kicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -120,7 +120,7 @@
 }
 
 .letter {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   font-weight: 700;
   text-align: center;
@@ -134,7 +134,7 @@
   border: 1px dashed var(--hc-line);
   background: transparent;
   color: var(--hc-ink-muted);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   cursor: pointer;
 }

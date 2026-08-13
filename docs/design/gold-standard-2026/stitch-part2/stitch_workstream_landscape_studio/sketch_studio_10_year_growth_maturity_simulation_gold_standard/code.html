@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>10-Year Growth Maturity Simulation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Inter:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed-dim": "#bac3ff",
+                        "inverse-surface": "#e0e3e8",
+                        "on-error": "#690005",
+                        "surface-variant": "#31353a",
+                        "gold-highlight": "#FBBF24",
+                        "on-tertiary-container": "#005c6e",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#0130cf",
+                        "primary-fixed": "#ffdf9f",
+                        "on-primary-container": "#6c4f00",
+                        "secondary-fixed": "#dee0ff",
+                        "tertiary-fixed": "#afecff",
+                        "on-primary": "#402d00",
+                        "on-secondary": "#001f90",
+                        "tertiary-container": "#34daff",
+                        "on-secondary-container": "#a8b4ff",
+                        "inverse-primary": "#795900",
+                        "on-surface-variant": "#d3c5ac",
+                        "secondary": "#bac3ff",
+                        "surface-tint": "#f9bd22",
+                        "surface-dim": "#1E2329",
+                        "on-surface": "#e0e3e8",
+                        "outline-variant": "#4f4633",
+                        "on-tertiary-fixed-variant": "#004e5d",
+                        "on-primary-fixed": "#261a00",
+                        "tertiary-fixed-dim": "#30d8fd",
+                        "error": "#ffb4ab",
+                        "tertiary": "#b6edff",
+                        "on-secondary-fixed": "#00105b",
+                        "surface-container-low": "#181c20",
+                        "on-primary-fixed-variant": "#5c4300",
+                        "on-background": "#e0e3e8",
+                        "outline": "#9c8f79",
+                        "surface": "#101418",
+                        "signal-blue": "#0030CF",
+                        "background": "#101418",
+                        "surface-container-highest": "#31353a",
+                        "primary": "#ffe1a7",
+                        "primary-container": "#fbbf24",
+                        "on-secondary-fixed-variant": "#002eca",
+                        "on-tertiary-fixed": "#001f27",
+                        "on-tertiary": "#003641",
+                        "surface-bright": "#363a3e",
+                        "surface-container-high": "#262a2f",
+                        "cloud-mist": "#D7E1EC",
+                        "error-container": "#93000a",
+                        "surface-container-lowest": "#0b0f12",
+                        "surface-container": "#1c2024",
+                        "inverse-on-surface": "#2d3135",
+                        "primary-fixed-dim": "#f9bd22"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem",
+                        "2xl": "1rem"
+                    },
+                    spacing: {
+                        "unit": "4px",
+                        "sidebar-width": "280px",
+                        "margin-safe": "32px",
+                        "toolbar-width": "56px",
+                        "gutter": "16px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Space Grotesk"],
+                        "label-caps": ["JetBrains Mono"],
+                        "technical-data": ["JetBrains Mono"],
+                        "display-lg": ["Space Grotesk"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Space Grotesk"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                        "technical-data": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .fractal-grid {
+            background-image: radial-gradient(circle, rgba(224, 227, 232, 0.1) 1px, transparent 1px);
+            background-size: 32px 32px;
+            background-position: 0 0;
+        }
+        .crosshair-center::before, .crosshair-center::after {
+            content: '';
+            position: absolute;
+            background-color: #0030CF;
+        }
+        .crosshair-center::before { top: 50%; left: -20px; right: -20px; height: 1px; transform: translateY(-50%); }
+        .crosshair-center::after { left: 50%; top: -20px; bottom: -20px; width: 1px; transform: translateX(-50%); }
+        
+        /* Ensure absolute zero chrome as requested */
+        body { margin: 0; overflow: hidden; background-color: #101418; }
+    </style>
+</head>
+<body class="text-on-surface font-body-md h-screen w-screen relative">
+<!-- Infinite Fractal Grid Canvas -->
+<div class="absolute inset-0 fractal-grid z-0"></div>
+<!-- 3D Landscape Canvas (Simulated via Image Placeholder for structure) -->
+<div class="absolute inset-0 z-10 flex items-center justify-center opacity-80" data-alt="A highly realistic 3D architectural rendering of a luxury suburban landscape design. The scene is viewed from a slightly elevated perspective, showcasing a mature garden with established oak trees, structured planting volumes, and a modern architectural home in the background. The lighting is neutral, studio-dark, resembling a professional CAD environment, emphasizing precise geometry and shadows." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCnY8UxXpQyhhqr9YlvbeB8Tpik7chiio-iNdf3m_68LzZ_0p0FwiyGkpN4YNxsYPYY_6_KzgC1szZBM-EIhgRALOaSMVXdW0XeN9gTzXPsdhMGu3suf9UUZkBIQgZK0WXEoqN5ghdSVs1wHepS85m1ZMmz7KwvmZG60WF8GHcFff9CN0aJHuGXj-V-c0gGf2O9Spo2ur8qT3FCuTJDUIeQaA36YCsXdtnWO9d-4I9P8AEgmLR4AWMSpQ'); background-size: cover; background-position: center; mix-blend-mode: luminosity;">
+<!-- Site Origin Crosshair -->
+<div class="absolute crosshair-center w-4 h-4" style="top: 55%; left: 45%;">
+<span class="absolute top-6 left-6 font-technical-data text-[10px] text-signal-blue whitespace-nowrap bg-background/80 px-1 py-0.5 border border-signal-blue/30 rounded">ORIGIN (0,0,0)</span>
+</div>
+<!-- Meta Chips (Anchored to Coordinates) -->
+<!-- Chip 1: Healthy Specimen -->
+<div class="absolute flex flex-col items-start gap-1" style="top: 30%; left: 25%;">
+<div class="w-2 h-2 rounded-full bg-[#f8f9ff] shadow-[0_0_8px_#f8f9ff]"></div>
+<div class="bg-surface-dim/80 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5 flex items-center gap-2 mt-1 shadow-lg transform -translate-x-1/2">
+<span class="font-headline-lg text-[12px] text-[#f8f9ff] tracking-tight">Quercus virginiana</span>
+<div class="h-3 w-px bg-white/20"></div>
+<span class="font-technical-data text-[11px] text-on-surface/80">H: 8.4m</span>
+<div class="h-3 w-px bg-white/20"></div>
+<span class="font-technical-data text-[11px] text-[#f8f9ff]">Mat: 92%</span>
+</div>
+</div>
+<!-- Chip 2: Healthy Specimen -->
+<div class="absolute flex flex-col items-start gap-1" style="top: 45%; left: 70%;">
+<div class="w-2 h-2 rounded-full bg-[#f8f9ff] shadow-[0_0_8px_#f8f9ff]"></div>
+<div class="bg-surface-dim/80 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5 flex items-center gap-2 mt-1 shadow-lg transform -translate-x-1/2">
+<span class="font-headline-lg text-[12px] text-[#f8f9ff] tracking-tight">Acer palmatum</span>
+<div class="h-3 w-px bg-white/20"></div>
+<span class="font-technical-data text-[11px] text-on-surface/80">H: 4.2m</span>
+<div class="h-3 w-px bg-white/20"></div>
+<span class="font-technical-data text-[11px] text-[#f8f9ff]">Mat: 85%</span>
+</div>
+</div>
+<!-- Chip 3: Root Conflict (Semantic Red) -->
+<div class="absolute flex flex-col items-start gap-1" style="top: 65%; left: 35%;">
+<div class="w-2 h-2 rounded-full bg-[#ef4444] shadow-[0_0_8px_#ef4444] animate-pulse"></div>
+<div class="bg-surface-dim/90 backdrop-blur-md border border-[#ef4444]/50 rounded-full px-3 py-1.5 flex items-center gap-2 mt-1 shadow-[0_4px_12px_rgba(239,68,68,0.15)] transform -translate-x-1/2">
+<span class="material-symbols-outlined text-[#ef4444] text-[14px]">warning</span>
+<span class="font-headline-lg text-[12px] text-[#f8f9ff] tracking-tight">Olea europaea</span>
+<div class="h-3 w-px bg-[#ef4444]/30"></div>
+<span class="font-technical-data text-[11px] text-[#ef4444]">ROOT_CONFLICT_DETECTED</span>
+</div>
+</div>
+</div>
+<!-- Temporal Scrubber HUD (Floating Bottom) -->
+<div class="absolute bottom-margin-safe left-1/2 -translate-x-1/2 w-[600px] max-w-[90vw] z-50">
+<div class="bg-surface-dim/70 backdrop-blur-md rounded-2xl border border-white/5 p-4 flex flex-col gap-4 shadow-2xl">
+<div class="flex justify-between items-center px-1">
+<span class="font-technical-data text-[10px] text-on-surface/60 uppercase tracking-widest">Temporal Growth Sim</span>
+<span class="font-headline-lg text-[14px] text-[#f8f9ff]">YEAR 10 <span class="text-on-surface/40 font-normal">/ MATURITY</span></span>
+</div>
+<!-- Scrubber Track -->
+<div class="relative h-1.5 bg-white/10 rounded-full w-full group cursor-pointer">
+<!-- Progress -->
+<div class="absolute top-0 left-0 h-full bg-[#f8f9ff] rounded-full w-full"></div>
+<!-- Nodes -->
+<div class="absolute top-1/2 -translate-y-1/2 left-[0%] w-2 h-2 rounded-full bg-white/20"></div>
+<div class="absolute top-1/2 -translate-y-1/2 left-[25%] w-2 h-2 rounded-full bg-white/20"></div>
+<div class="absolute top-1/2 -translate-y-1/2 left-[50%] w-2 h-2 rounded-full bg-white/20"></div>
+<div class="absolute top-1/2 -translate-y-1/2 left-[75%] w-2 h-2 rounded-full bg-white/20"></div>
+<!-- Thumb -->
+<div class="absolute top-1/2 -translate-y-1/2 left-[100%] w-4 h-4 rounded-full bg-[#f8f9ff] shadow-[0_0_10px_#f8f9ff] border-2 border-surface-dim transform -translate-x-1/2 group-hover:scale-125 transition-transform"></div>
+</div>
+<div class="flex justify-between items-center px-1">
+<span class="font-technical-data text-[11px] text-on-surface/40">Step 0: Survey</span>
+<div class="flex gap-4">
+<button class="text-on-surface/60 hover:text-[#f8f9ff] transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">fast_rewind</span>
+</button>
+<button class="text-on-surface/60 hover:text-[#f8f9ff] transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">play_arrow</span>
+</button>
+<button class="text-on-surface/60 hover:text-[#f8f9ff] transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">fast_forward</span>
+</button>
+</div>
+<span class="font-technical-data text-[11px] text-[#f8f9ff]">Step 10: Maturity</span>
+</div>
+</div>
+</div>
+</body></html>
