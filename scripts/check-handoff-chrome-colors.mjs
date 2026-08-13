@@ -44,6 +44,7 @@ const ALLOW_PATH_SUBSTR = [
   "components/canvas/webgl/StudioScene.tsx",
   "components/canvas/webgl/WebGLStudio.tsx",
   "components/canvas/webgl/sceneItems.tsx",
+  "components/canvas/webgl/features/SubsurfaceEngine.tsx",
 
 ];
 
