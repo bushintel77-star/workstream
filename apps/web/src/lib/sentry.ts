@@ -18,12 +18,16 @@ let sentryReady = false;
  * without @sentry/nextjs installed; the .catch handles the runtime absence.
  */
 async function loadSentry(): Promise<SentryModule | null> {
-  const moduleName = "@sentry/nextjs";
+  // The module specifier is built via indirect eval so Turbopack/webpack
+  // cannot statically resolve it. Every other form (literal, variable,
+  // join()) still produces a "Module not found" build warning because the
+  // optional @sentry/nextjs package is not installed.
   try {
-    const mod = (await import(moduleName as string).catch(() => null)) as Record<
-      string,
-      unknown
-    > | null;
+    const dynamicImport = new Function(
+      "spec",
+      "return import(spec)",
+    ) as (spec: string) => Promise<Record<string, unknown>>;
+    const mod = (await dynamicImport("@sentry/nextjs").catch(() => null));
     if (!mod || typeof mod.init !== "function") return null;
     return mod as unknown as SentryModule;
   } catch {
