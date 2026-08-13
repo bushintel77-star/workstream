@@ -22,6 +22,7 @@ import type { StudioCameraRig } from "./cameraRig";
 import type { PctPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
 import type { SubsurfaceUtility, StrikeAlertData } from "./features/SubsurfaceEngine";
+import type { PresentationLensFilter } from "./PresentationLens";
 
 export interface WebGLStudioProps {
   scaleM: number;
@@ -38,6 +39,7 @@ export interface WebGLStudioProps {
   onCursorMove?: (pct: PctPoint | null) => void;
   subsurfaceUtilities?: SubsurfaceUtility[];
   strikeAlerts?: StrikeAlertData[];
+  lens?: PresentationLensFilter;
   children?: ReactNode;
   style?: CSSProperties;
 }
@@ -57,6 +59,7 @@ export function WebGLStudio({
   onCursorMove,
   subsurfaceUtilities,
   strikeAlerts,
+  lens,
   children,
   style,
 }: WebGLStudioProps) {
@@ -92,6 +95,7 @@ export function WebGLStudio({
           onCursorMove={onCursorMove}
           subsurfaceUtilities={subsurfaceUtilities}
           strikeAlerts={strikeAlerts}
+          lens={lens}
         />
       </Canvas>
 

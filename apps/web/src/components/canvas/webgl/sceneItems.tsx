@@ -80,10 +80,12 @@ function TreeMesh({
   item,
   scaleM,
   boardAspect,
+  hideTpz = false,
 }: {
   item: RenderItem;
   scaleM: number;
   boardAspect: number;
+  hideTpz?: boolean;
 }) {
   const [wx, wz] = pctToWorld(item, scaleM, boardAspect);
   const isExist = item.t === "exist";
@@ -118,8 +120,8 @@ function TreeMesh({
           roughness={0.8}
         />
       </mesh>
-      {/* TPZ ring (existing trees only) */}
-      {tpzRadiusM > 0 && (
+      {/* TPZ ring (existing trees only, hidden in Presentation Lens) */}
+      {tpzRadiusM > 0 && !hideTpz && (
         <TpzRing position={[0, 0.02, 0]} radiusM={tpzRadiusM} color={COLORS.exist} />
       )}
     </group>
@@ -172,13 +174,15 @@ export function SceneItem({
   item,
   scaleM,
   boardAspect,
+  hideTpz = false,
 }: {
   item: RenderItem;
   scaleM: number;
   boardAspect: number;
+  hideTpz?: boolean;
 }) {
   if (SPECIES_TYPES.has(item.t)) {
-    return <TreeMesh item={item} scaleM={scaleM} boardAspect={boardAspect} />;
+    return <TreeMesh item={item} scaleM={scaleM} boardAspect={boardAspect} hideTpz={hideTpz} />;
   }
   if (REGION_TYPES.has(item.t) && item.outlinePct) {
     return <RegionMesh item={item} scaleM={scaleM} boardAspect={boardAspect} />;
@@ -202,15 +206,17 @@ export function SceneItems({
   items,
   scaleM,
   boardAspect,
+  hideTpz = false,
 }: {
   items: RenderItem[];
   scaleM: number;
   boardAspect: number;
+  hideTpz?: boolean;
 }) {
   return (
     <>
       {items.map((item) => (
-        <SceneItem key={item.id} item={item} scaleM={scaleM} boardAspect={boardAspect} />
+        <SceneItem key={item.id} item={item} scaleM={scaleM} boardAspect={boardAspect} hideTpz={hideTpz} />
       ))}
     </>
   );

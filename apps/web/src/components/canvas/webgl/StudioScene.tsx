@@ -26,6 +26,7 @@ import { pctToWorld, type PctPoint } from "./coordTransform";
 import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
+import { type PresentationLensFilter } from "./PresentationLens";
 
 export interface StudioSceneProps {
   scaleM: number;
@@ -44,6 +45,8 @@ export interface StudioSceneProps {
   subsurfaceUtilities?: SubsurfaceUtility[];
   /** Strike alerts to render (Phase 2 Strike Alert Engine). */
   strikeAlerts?: StrikeAlertData[];
+  /** Presentation Lens filter — hides technical layers when active. */
+  lens?: PresentationLensFilter;
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
@@ -247,6 +250,7 @@ export function StudioScene({
   onCursorMove,
   subsurfaceUtilities,
   strikeAlerts,
+  lens,
 }: StudioSceneProps) {
   return (
     <>
@@ -279,11 +283,18 @@ export function StudioScene({
           opacity={buildingOpacity}
         />
       )}
-      <Easements rings={easementsPct} scaleM={scaleM} boardAspect={boardAspect} />
-      <Services lines={servicesPct} scaleM={scaleM} boardAspect={boardAspect} />
-      <SceneItems items={items} scaleM={scaleM} boardAspect={boardAspect} />
-      {subsurfaceUtilities && (
-        <SubsurfaceEngine utilities={subsurfaceUtilities} alerts={strikeAlerts} />
+      {!lens?.hideEasements && (
+        <Easements rings={easementsPct} scaleM={scaleM} boardAspect={boardAspect} />
+      )}
+      {!lens?.hideServices && (
+        <Services lines={servicesPct} scaleM={scaleM} boardAspect={boardAspect} />
+      )}
+      <SceneItems items={items} scaleM={scaleM} boardAspect={boardAspect} hideTpz={lens?.hideTpz} />
+      {subsurfaceUtilities && !lens?.hideSubsurface && (
+        <SubsurfaceEngine
+          utilities={subsurfaceUtilities}
+          alerts={lens?.hideStrikes ? [] : strikeAlerts}
+        />
       )}
     </>
   );

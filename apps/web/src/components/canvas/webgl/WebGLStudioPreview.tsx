@@ -15,6 +15,7 @@ import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
 import type { PctPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
 import type { SubsurfaceUtility } from "./features/SubsurfaceEngine";
+import { PRESENTATION_LENS, TECHNICAL_LENS } from "./PresentationLens";
 
 // R3F Canvas requires the browser — dynamic import with ssr:false
 const WebGLStudio = dynamic(() => import("./WebGLStudio").then((m) => m.WebGLStudio), {
@@ -42,6 +43,7 @@ export function WebGLStudioPreview({
   items,
 }: WebGLStudioPreviewProps) {
   const [rig, setRig] = useState<StudioCameraRig>(DEFAULT_CAMERA_RIG);
+  const [presentationMode, setPresentationMode] = useState(false);
 
   // Sample subsurface utilities for Phase 2 visual verification
   const sampleUtilities: SubsurfaceUtility[] = useMemo(
@@ -98,6 +100,7 @@ export function WebGLStudioPreview({
       cameraRig={rig}
       onRigChange={setRig}
       subsurfaceUtilities={sampleUtilities}
+      lens={presentationMode ? PRESENTATION_LENS : TECHNICAL_LENS}
     >
       {/* Dev overlay — scene stats + tilt toggle */}
       <GlassCard position="top-left" style={{ padding: "12px 16px" }}>
@@ -128,6 +131,24 @@ export function WebGLStudioPreview({
             }}
           >
             {rig.tiltDeg > 1 ? "▾ Top-down" : "▸ Tilt 55°"}
+          </button>
+          <button
+            onClick={() => setPresentationMode((p) => !p)}
+            style={{
+              marginTop: 4,
+              marginLeft: 4,
+              padding: "4px 12px",
+              borderRadius: 8,
+              border: "1px solid var(--gs-line)",
+              background: presentationMode ? "var(--gs-primary)" : "transparent",
+              color: presentationMode ? "var(--gs-canvas)" : "var(--gs-ink)",
+              fontFamily: "var(--font-ui)",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            {presentationMode ? "▾ Technical" : "▸ Present"}
           </button>
         </div>
       </GlassCard>
