@@ -3,18 +3,17 @@
  *
  * Binding: docs/GOLD-STANDARD-2026-ARCHITECTURE.md §2–3
  *
- * This is the R3F scene rendered inside <Canvas>. It contains:
+ * Renders inside the R3F <Canvas>. Contains:
  *   - Lighting (ambient + directional for sun)
- *   - The ground plane (--gs-canvas, adaptive grid)
- *   - The origin peg (Signal Blue crosshair at (0,0,0))
- *   - The lot boundary (Signal Blue line)
- *   - The building footprint (extruded mesh, opacity-gated)
+ *   - Ground plane (--gs-canvas, adaptive grid)
+ *   - Origin peg (Signal Blue crosshair at (0,0,0))
+ *   - Lot boundary (Signal Blue line)
+ *   - Easements (Signal Blue dashed lines)
+ *   - Services (APWA-coloured lines)
+ *   - Building footprint (extruded mesh)
+ *   - Placed items (trees, regions, hardscape)
  *
- * Coordinate system: metre-space. % space (0–100) is converted to metres via
- * pctToMetres at the component boundary. Origin (0,0,0) is the survey peg.
- *
- * The scene is consumed by WebGLStudio — it never renders DOM chrome. All
- * overlay UI lives in the sibling DOM layer (Layer 3).
+ * Coordinate system: metre-space. % space (0–100) is converted via coordTransform.
  */
 
 import { useMemo } from "react";
@@ -23,50 +22,36 @@ import { Line } from "@react-three/drei";
 import type { OrthographicCamera } from "three";
 import * as THREE from "three";
 import type { StudioCameraRig } from "./cameraRig";
+import { pctToWorld, type PctPoint } from "./coordTransform";
+import { SceneItems, type RenderItem } from "./sceneItems";
 
 export interface StudioSceneProps {
   scaleM: number;
   boardAspect: number;
-  boundaryPct: Array<{ x: number; y: number }>;
-  buildingPct?: Array<{ x: number; y: number }>;
+  boundaryPct: PctPoint[];
+  buildingPct?: PctPoint[];
+  easementsPct?: PctPoint[][];
+  servicesPct?: PctPoint[][];
+  items?: RenderItem[];
+  buildingOpacity?: number;
   cameraRig: StudioCameraRig;
-}
-
-/**
- * Convert a % space point (0–100) to metre-space world coordinates.
- * The lot spans `scaleM` metres across its shorter axis. The X axis maps
- * directly; the Y axis is divided by boardAspect (height/width) to account
- * for the non-uniform stretch that preserveAspectRatio="none" used to handle.
- */
-function pctToWorld(
-  pct: { x: number; y: number },
-  scaleM: number,
-  boardAspect: number,
-): [number, number] {
-  const xM = (pct.x / 100) * scaleM;
-  const yM = (pct.y / 100) * scaleM * boardAspect;
-  // Centre the lot on the origin peg
-  return [xM - scaleM / 2, yM - (scaleM * boardAspect) / 2];
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
 function OriginPeg() {
   const blue = "#0030CF";
-  const armLength = 1.2;
+  const arm = 1.2;
   return (
     <group position={[0, 0, 0.01]}>
-      {/* Horizontal arm */}
       <mesh>
-        <boxGeometry args={[armLength * 2, 0.08, 0.01]} />
+        <boxGeometry args={[arm * 2, 0.08, 0.01]} />
         <meshBasicMaterial color={blue} />
       </mesh>
-      {/* Vertical arm */}
       <mesh>
-        <boxGeometry args={[0.08, armLength * 2, 0.01]} />
+        <boxGeometry args={[0.08, arm * 2, 0.01]} />
         <meshBasicMaterial color={blue} />
       </mesh>
-      {/* Centre dot */}
-      <mesh>
+      <mesh position={[0, 0.005, 0]}>
         <circleGeometry args={[0.15, 16]} />
         <meshBasicMaterial color={blue} />
       </mesh>
@@ -74,38 +59,109 @@ function OriginPeg() {
   );
 }
 
-/** The lot boundary — a Signal Blue line in metre-space. */
+/** Convert a % ring to Three.js world line points (with small Z offset). */
+function useWorldLine(points: PctPoint[], scaleM: number, boardAspect: number, z = 0.02) {
+  return useMemo(
+    () =>
+      points.map(
+        (p) => [...pctToWorld(p, scaleM, boardAspect), z] as [number, number, number],
+      ),
+    [points, scaleM, boardAspect, z],
+  );
+}
+
+/** The lot boundary — a Signal Blue line. */
 function LotBoundary({
   points,
   scaleM,
   boardAspect,
 }: {
-  points: Array<{ x: number; y: number }>;
+  points: PctPoint[];
   scaleM: number;
   boardAspect: number;
 }) {
-  const worldPoints = useMemo(
-    () =>
-      points.map(
-        (p) => [...pctToWorld(p, scaleM, boardAspect), 0.02] as [number, number, number],
-      ),
-    [points, scaleM, boardAspect],
-  );
+  const linePoints = useWorldLine(points, scaleM, boardAspect, 0.02);
+  if (linePoints.length < 2) return null;
+  return <Line points={linePoints} color="#0030CF" lineWidth={2} />;
+}
 
-  if (worldPoints.length < 2) return null;
+/** Easements — Signal Blue dashed lines. */
+function Easements({
+  rings,
+  scaleM,
+  boardAspect,
+}: {
+  rings: PctPoint[][];
+  scaleM: number;
+  boardAspect: number;
+}) {
   return (
-    <Line points={worldPoints} color="#0030CF" lineWidth={2} />
+    <>
+      {rings.map((ring, i) => {
+        if (ring.length < 2) return null;
+        const pts = ring.map(
+          (p) => [...pctToWorld(p, scaleM, boardAspect), 0.015] as [number, number, number],
+        );
+        return (
+          <Line
+            key={`easement-${i}`}
+            points={pts}
+            color="#0030CF"
+            lineWidth={1}
+            dashed
+            dashSize={0.4}
+            gapSize={0.3}
+            opacity={0.5}
+            transparent
+          />
+        );
+      })}
+    </>
   );
 }
 
-/** The building footprint — an extruded mesh, opacity-gated. */
+/** Services / utility corridors — coloured by APWA convention. */
+function Services({
+  lines,
+  scaleM,
+  boardAspect,
+}: {
+  lines: PctPoint[][];
+  scaleM: number;
+  boardAspect: number;
+}) {
+  const apwaColors = ["#1e88c7", "#2f8f4e", "#e8b000", "#d63b2f", "#e8722f"];
+  return (
+    <>
+      {lines.map((line, i) => {
+        if (line.length < 2) return null;
+        const pts = line.map(
+          (p) => [...pctToWorld(p, scaleM, boardAspect), 0.012] as [number, number, number],
+        );
+        return (
+          <Line
+            key={`service-${i}`}
+            points={pts}
+            color={apwaColors[i % apwaColors.length]}
+            lineWidth={1.5}
+            dashed
+            dashSize={0.3}
+            gapSize={0.2}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+/** The building footprint — a flat mesh with opacity. */
 function BuildingFootprint({
   points,
   scaleM,
   boardAspect,
   opacity = 1,
 }: {
-  points: Array<{ x: number; y: number }>;
+  points: PctPoint[];
   scaleM: number;
   boardAspect: number;
   opacity?: number;
@@ -115,50 +171,36 @@ function BuildingFootprint({
     const shape = new THREE.Shape();
     const world = points.map((p) => pctToWorld(p, scaleM, boardAspect));
     shape.moveTo(world[0][0], world[0][1]);
-    for (let i = 1; i < world.length; i++) {
-      shape.lineTo(world[i][0], world[i][1]);
-    }
+    for (let i = 1; i < world.length; i++) shape.lineTo(world[i][0], world[i][1]);
     shape.closePath();
     return shape;
   }, [points, scaleM, boardAspect]);
 
   if (!shape) return null;
-
   return (
-    <mesh position={[0, 0, 0.015]}>
+    <mesh position={[0, 0, 0.015]} rotation={[-Math.PI / 2, 0, 0]}>
       <shapeGeometry args={[shape]} />
-      <meshBasicMaterial
-        color="#1e2329"
-        transparent
-        opacity={opacity}
-      />
+      <meshStandardMaterial color="#1e2329" transparent opacity={opacity} roughness={0.9} />
     </mesh>
   );
 }
 
-/** The ground plane — --gs-canvas with a subtle grid. */
+/** The ground plane — --gs-canvas with a grid. */
 function GroundPlane({ scaleM, boardAspect }: { scaleM: number; boardAspect: number }) {
-  const w = scaleM * 2;
-  const h = scaleM * boardAspect * 2;
+  const w = scaleM * 3;
+  const h = scaleM * boardAspect * 3;
   return (
     <>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[w, h]} />
         <meshBasicMaterial color="#101418" />
       </mesh>
-      {/* Grid overlay */}
-      <gridHelper
-        args={[w, Math.round(w), "#2e343c", "#23282e"]}
-        position={[0, 0, 0.001]}
-      />
+      <gridHelper args={[w, Math.round(w), "#2e343c", "#23282e"]} position={[0, 0.001, 0]} />
     </>
   );
 }
 
-/**
- * Camera controller — applies the rig state (pan/zoom/rotate/tilt) to the
- * orthographic camera each frame. This replaces the CSS transform on .zoomWorld.
- */
+/** Camera controller — applies the rig state to the ortho camera. */
 function CameraController({ rig }: { rig: StudioCameraRig }) {
   const { camera } = useThree();
 
@@ -168,21 +210,13 @@ function CameraController({ rig }: { rig: StudioCameraRig }) {
     const rotateRad = (rig.rotateDeg * Math.PI) / 180;
     const height = 100;
 
-    // Tilt: lower the camera from top-down to oblique.
-    // At tilt=0: looking straight down (-Z in our Y-up scene means looking down -Y... )
-    // We use the convention: camera at [panX, height*cos(tilt), height*sin(tilt)]
-    // looking at [panX, panY, 0].
     cam.position.set(
       rig.panX,
       height * Math.cos(tiltRad),
       height * Math.sin(tiltRad) + rig.panY,
     );
     cam.zoom = rig.zoom * 8;
-    cam.rotation.set(
-      -tiltRad,
-      0,
-      -rotateRad,
-    );
+    cam.rotation.set(-tiltRad, 0, -rotateRad);
     cam.updateProjectionMatrix();
   });
 
@@ -194,18 +228,19 @@ export function StudioScene({
   boardAspect,
   boundaryPct,
   buildingPct,
+  easementsPct = [],
+  servicesPct = [],
+  items = [],
+  buildingOpacity = 1,
   cameraRig,
 }: StudioSceneProps) {
   return (
     <>
-      {/* Lighting */}
       <ambientLight intensity={0.8} />
       <directionalLight position={[10, 20, 10]} intensity={0.3} />
 
-      {/* Camera */}
       <CameraController rig={cameraRig} />
 
-      {/* Scene content */}
       <GroundPlane scaleM={scaleM} boardAspect={boardAspect} />
       <OriginPeg />
       <LotBoundary points={boundaryPct} scaleM={scaleM} boardAspect={boardAspect} />
@@ -214,8 +249,12 @@ export function StudioScene({
           points={buildingPct}
           scaleM={scaleM}
           boardAspect={boardAspect}
+          opacity={buildingOpacity}
         />
       )}
+      <Easements rings={easementsPct} scaleM={scaleM} boardAspect={boardAspect} />
+      <Services lines={servicesPct} scaleM={scaleM} boardAspect={boardAspect} />
+      <SceneItems items={items} scaleM={scaleM} boardAspect={boardAspect} />
     </>
   );
 }

@@ -43,6 +43,7 @@ const ALLOW_PATH_SUBSTR = [
   // in GlassCard.tsx which uses var(--gs-*) tokens, not hex.
   "components/canvas/webgl/StudioScene.tsx",
   "components/canvas/webgl/WebGLStudio.tsx",
+  "components/canvas/webgl/sceneItems.tsx",
 
 ];
 
