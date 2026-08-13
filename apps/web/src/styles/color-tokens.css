@@ -1,13 +1,51 @@
 /**
- * Curtis & Co — color token spec v2
+ * Curtis & Co — Gold Standard 2026 color token spec.
+ *
+ * The studio is Studio Dark. The old light/parchment default is retired.
+ * Binding doc: docs/GOLD-STANDARD-2026-TOKENS.md (supreme).
+ *
  * Raw palette (§1) — never paint components from these directly.
  * Semantic tokens (§2–4) — what components use.
- * Contrast pairs verified WCAG 2.1 — see docs comment in §5 of the spec.
- * Dark mode: never use *-stroke tokens for label text; use *-text.
+ * The --gs-* namespace is the Gold Standard signal palette.
+ * Contrast pairs verified WCAG 2.2 AA — see GOLD-STANDARD-2026-TOKENS.md §4.
  */
 
 :root {
-  /* neutrals — light */
+  /* ================================================================
+   * Gold Standard 2026 signal palette (--gs-*)
+   * Binding: docs/GOLD-STANDARD-2026-TOKENS.md §1
+   * ================================================================ */
+
+  /* Surface tokens */
+  --gs-canvas: #101418;          /* Canvas base — WebGL clear color / ground plane */
+  --gs-glass: #1e2329;           /* Glass Card body (used at 70% opacity) */
+  --gs-glass-strong: #252b33;    /* Glass Card elevated / hovered */
+  --gs-glass-sunken: #171b20;    /* Glass Card inset / pressed */
+  --gs-frame: #0c0f12;           /* Gallery frame border (darker than canvas) */
+  --gs-line: #2e343c;            /* Hairline borders on glass surfaces */
+  --gs-line-soft: #23282e;       /* Subtle dividers */
+
+  /* Semantic signal tokens */
+  --gs-primary: #fbbf24;         /* Gold Standard — active, compliant, verified, staking */
+  --gs-primary-dim: #9c7416;     /* Gold at rest / disabled */
+  --gs-truth: #0030cf;           /* Signal Blue — boundaries, origin peg, easements, title */
+  --gs-truth-soft: #1e45e8;      /* Signal Blue hover/secondary */
+  --gs-truth-ink: #6b8eea;       /* Signal Blue text on dark (AA: ~5.1:1 on glass) */
+  --gs-conflict: #ef4444;        /* Strike Alert — utility/root zone collision */
+  --gs-conflict-soft: #f87171;   /* Strike text on dark (AA: ~5.8:1 on glass) */
+  --gs-success: #22c55e;         /* Compliance pass */
+  --gs-warning: #f59e0b;         /* Advisory / non-blocking */
+
+  /* Ink tokens (text on glass/canvas) */
+  --gs-ink: #e8e9ec;             /* Primary text */
+  --gs-ink-secondary: #9aa0ac;   /* Secondary text, labels */
+  --gs-ink-muted: #6b7078;       /* Muted meta — large text / non-essential only */
+
+  /* ================================================================
+   * Raw neutral ramps (retained for material/planting palettes below)
+   * ================================================================ */
+
+  /* neutrals — light (legacy ramp, kept for material/planting aliases) */
   --gray-l-0: #ffffff;
   --gray-l-25: #fafaf8;
   --gray-l-50: #f7f6f3;
@@ -97,93 +135,61 @@
   --locked-opacity: 0.55;
 }
 
-/* Default theme = light — the canvas/drawing surface is off-white; the
-   studio gallery frame (handoffStudio --ws-frame) is the dark premium
-   border. The app shell (globals.css --surface-*) is dark grey separately.
-   Dark mode for the studio board is opt-in via .rootDark (handoffStudio). */
+/* ================================================================
+ * Gold Standard 2026 — Studio Dark is the only theme.
+ * The old light/parchment default is retired. The default :root resolves
+ * to Studio Dark values. [data-theme="dark"] is an alias of the same.
+ * The canvas/drawing surface is #101418 (dark); chrome is glass (#1E2329).
+ * Binding: docs/GOLD-STANDARD-2026-TOKENS.md.
+ * ================================================================ */
 :root,
 :root[data-theme="light"],
-[data-theme="light"] {
-  --canvas: var(--gray-l-50);
-  --panel: var(--gray-l-100);
-  --grid-line: var(--gray-l-150);
-  --border: var(--gray-l-200);
-  --border-strong: var(--gray-l-300);
-  /*
-   * WCAG 2.2 AA floor on paper. --gray-l-400 (#9aa0ac) is only 2.63:1 on white,
-   * so it failed 4.5:1 everywhere it was used for 8-11px chrome labels. On a
-   * white surface any AA-passing grey sits in a narrow band, so "muted" and
-   * "secondary" share one ink and the quiet tier is carried by size, weight,
-   * letter-spacing and caps instead of lightness. --gray-l-400 stays on the
-   * ramp for hairlines, borders and disabled fills.
-   */
-  --text-muted: var(--gray-l-500);
-  --text-secondary: var(--gray-l-500);
-  --text-primary: var(--gray-l-900);
-
-  --existing-stroke: var(--crimson-l-600);
-  --existing-text: var(--crimson-l-600);
-  --proposed-stroke: var(--cobalt-l-600);
-  --proposed-text: var(--cobalt-l-600);
-  --planting-retain-stroke: var(--forest-l-600);
-  --planting-retain-text: var(--forest-l-600);
-  --planting-new-stroke: var(--sprout-l-500);
-  --planting-new-text: var(--sprout-l-500);
-  --easement-stroke: var(--slate-l-500);
-
-  --proposed-hover: color-mix(in srgb, var(--cobalt-l-600) 85%, white);
-  --proposed-active: color-mix(in srgb, var(--cobalt-l-600) 80%, black);
-  --proposed-disabled: var(--gray-l-300);
-  --existing-hover: color-mix(in srgb, var(--crimson-l-600) 85%, white);
-  --existing-active: color-mix(in srgb, var(--crimson-l-600) 80%, black);
-  --existing-disabled: var(--gray-l-300);
-  --planting-retain-hover: color-mix(in srgb, var(--forest-l-600) 85%, white);
-  --planting-retain-active: color-mix(in srgb, var(--forest-l-600) 80%, black);
-  --planting-retain-disabled: var(--gray-l-300);
-  --focus-ring: var(--cobalt-l-600);
-  --focus-ring-offset: var(--canvas);
-  /* Chrome status (toast / compliance) */
-  --warning: #b8860b;
-  --danger: var(--crimson-l-600);
-  --success: var(--sprout-l-500);
-}
-
+[data-theme="light"],
 :root[data-theme="dark"],
 [data-theme="dark"] {
-  --canvas: var(--gray-d-0);
-  --panel: var(--gray-d-100);
-  --grid-line: var(--gray-d-150);
-  --border: var(--gray-d-200);
-  --border-strong: var(--gray-d-300);
-  --text-muted: var(--gray-d-500);
-  --text-secondary: var(--gray-d-500);
-  --text-primary: var(--gray-d-900);
+  --canvas: var(--gs-canvas);
+  --panel: var(--gs-glass);
+  --grid-line: var(--gs-line-soft);
+  --border: var(--gs-line);
+  --border-strong: var(--gs-line);
+  /*
+   * WCAG 2.2 AA on Studio Dark. Ink tokens resolve to --gs-ink-* which are
+   * verified against #1E2329 glass at 70% over #101418.
+   * --gs-ink-muted (#6b7078) is ~3.9:1 — large text / non-essential only.
+   */
+  --text-muted: var(--gs-ink-muted);
+  --text-secondary: var(--gs-ink-secondary);
+  --text-primary: var(--gs-ink);
 
-  /* stroke ≠ text in dark — labels must use *-text (AA). */
-  --existing-stroke: var(--crimson-d-500);
-  --existing-text: var(--crimson-d-400);
-  --proposed-stroke: var(--cobalt-d-500);
-  --proposed-text: var(--cobalt-d-400);
-  --planting-retain-stroke: var(--forest-d-550);
+  /* Geometry strokes map to Gold Standard signals.
+   * Existing = Strike Red (semantic: "what's already there").
+   * Proposed = Signal Blue (the design truth).
+   * Easements = Signal Blue. */
+  --existing-stroke: var(--gs-conflict);
+  --existing-text: var(--gs-conflict-soft);
+  --proposed-stroke: var(--gs-truth);
+  --proposed-text: var(--gs-truth-ink);
+  --planting-retain-stroke: var(--forest-l-600);
   --planting-retain-text: var(--forest-d-400);
-  --planting-new-stroke: var(--sprout-d-400);
+  --planting-new-stroke: var(--sprout-l-500);
   --planting-new-text: var(--sprout-d-400);
-  --easement-stroke: var(--slate-d-400);
+  --easement-stroke: var(--gs-truth);
 
-  --proposed-hover: color-mix(in srgb, var(--cobalt-d-500) 85%, white);
-  --proposed-active: color-mix(in srgb, var(--cobalt-d-500) 80%, black);
+  --proposed-hover: color-mix(in srgb, var(--gs-truth) 85%, white);
+  --proposed-active: color-mix(in srgb, var(--gs-truth) 80%, black);
   --proposed-disabled: var(--gray-d-300);
-  --existing-hover: color-mix(in srgb, var(--crimson-d-500) 85%, white);
-  --existing-active: color-mix(in srgb, var(--crimson-d-500) 80%, black);
+  --existing-hover: color-mix(in srgb, var(--gs-conflict) 85%, white);
+  --existing-active: color-mix(in srgb, var(--gs-conflict) 80%, black);
   --existing-disabled: var(--gray-d-300);
-  --planting-retain-hover: color-mix(in srgb, var(--forest-d-550) 85%, white);
-  --planting-retain-active: color-mix(in srgb, var(--forest-d-550) 80%, black);
+  --planting-retain-hover: color-mix(in srgb, var(--forest-l-600) 85%, white);
+  --planting-retain-active: color-mix(in srgb, var(--forest-l-600) 80%, black);
   --planting-retain-disabled: var(--gray-d-300);
-  --focus-ring: var(--cobalt-d-400);
-  --focus-ring-offset: var(--canvas);
-  --warning: #d4a017;
-  --danger: var(--crimson-d-400);
-  --success: var(--sprout-d-400);
+  --focus-ring: var(--gs-primary);
+  --focus-ring-offset: var(--gs-canvas);
+  /* Chrome status (toast / compliance) */
+  --warning: var(--gs-warning);
+  --danger: var(--gs-conflict);
+  --success: var(--gs-success);
 }
 
 /* §4 — fills via color-mix against canvas (not hex-alpha). */

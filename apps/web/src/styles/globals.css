@@ -1,21 +1,22 @@
-/* Workstream — Design Studio v4
- * Curtis & Co operator chrome — dark grey gallery frame, cream plan is the subject.
+/* Workstream — Gold Standard 2026
+ * Curtis & Co operator chrome — Studio Dark. The drawing is the product.
+ * Binding: docs/GOLD-STANDARD-2026.md (supreme) + GOLD-STANDARD-2026-TOKENS.md.
  * Unified with @workstream/ui tokens (packages/ui/src/tokens.ts).
- * Plan/CAD colour system: color-tokens.css (v2 semantic tokens). */
+ * Plan/CAD colour system: color-tokens.css (--gs-* signal palette). */
 
 @import "./color-tokens.css";
 
 :root {
-  /* surfaces — dark grey gallery mount; chrome recedes so colour belongs to the plan */
-  --surface-base: #14171C;
-  --surface-elevated: #1B1E24;
-  --surface-sunken: #0F1115;
-  --surface-inverted: #E8E9EC;
-  --surface-overlay: #20242B;
-  --surface-inset: #0F1115;
-  --surface-panel: #1B1E24;
+  /* surfaces — Studio Dark; chrome recedes so colour belongs to the plan */
+  --surface-base: var(--gs-canvas);
+  --surface-elevated: var(--gs-glass);
+  --surface-sunken: var(--gs-glass-sunken);
+  --surface-inverted: var(--gs-ink);
+  --surface-overlay: var(--gs-glass-strong);
+  --surface-inset: var(--gs-glass-sunken);
+  --surface-panel: var(--gs-glass);
   /* deep — same as base now; kept for portal/hero gradient compat */
-  --surface-deep: #14171C;
+  --surface-deep: var(--gs-canvas);
 
   /* Client-presentation dark chrome (portal/quote/confirm-pin/share) — one
      identity, aliased to the same brand tokens used everywhere else. No
@@ -39,46 +40,47 @@
   --portal-ink-strong: var(--ink-primary);
   --portal-accent-muted: var(--accent);
 
-  /* ink — light text on dark surfaces */
-  --ink-primary: #E8E9EC;
-  --ink-secondary: #9AA0AC;
-  --ink-tertiary: #7A8088;
-  --ink-inverted: #1B1E23;
+  /* ink — light text on Studio Dark surfaces */
+  --ink-primary: var(--gs-ink);
+  --ink-secondary: var(--gs-ink-secondary);
+  --ink-tertiary: var(--gs-ink-muted);
+  --ink-inverted: var(--gs-glass-sunken);
 
-  /* lines — dark grey hairlines on dark surfaces */
-  --line-hairline: rgba(232, 233, 236, 0.10);
-  --line-subtle: rgba(232, 233, 236, 0.05);
-  --line-strong: rgba(232, 233, 236, 0.18);
-  --line-ink: #E8E9EC;
+  /* lines — hairlines on dark glass surfaces */
+  --line-hairline: color-mix(in srgb, var(--gs-ink) 10%, transparent);
+  --line-subtle: color-mix(in srgb, var(--gs-ink) 5%, transparent);
+  --line-strong: var(--gs-line);
+  --line-ink: var(--gs-ink);
 
-  /* accent — muted blueprint slate.
-     Kept distinct from canvas cobalt (#2450c7 proposed) + easement slate
-     (#5b7fbf) so chrome never reads as plan geometry. */
-  --accent: #5A789B;
-  --accent-soft: #1E2A38;
-  --accent-ink: #8BA4C4;
-  --accent-bright: #7B9BC4;
-  --accent-water: #8a94a0;
+  /* accent — Gold Standard Primary (#fbbf24). Active/compliant/verified states. */
+  --accent: var(--gs-primary);
+  --accent-soft: color-mix(in srgb, var(--gs-primary) 15%, transparent);
+  --accent-ink: var(--gs-primary);
+  --accent-bright: var(--gs-primary);
+  --accent-water: var(--apwa-water);
 
-  /* signal — the single technical-annotation spark ("issued for permitting"
-     orange). One hero element per surface, never on the canvas
-     (canvas keeps crimson=existing / cobalt=proposed / amber=warning). */
-  --signal: #e65416;
-  --signal-ink: #231206;
-  --signal-soft: color-mix(in srgb, #e65416 16%, transparent);
+  /* signal — Gold Standard Primary (same as accent in GS2026). */
+  --signal: var(--gs-primary);
+  --signal-ink: var(--gs-primary);
+  --signal-soft: color-mix(in srgb, var(--gs-primary) 16%, transparent);
 
-  /* semantic — brightened for dark surface contrast */
-  --ok: #4C9662;
-  --warn: #D4A017;
-  --block: #C4463B;
-  --info: #6E93E0;
+  /* semantic — Gold Standard signals */
+  --ok: var(--gs-success);
+  --warn: var(--gs-warning);
+  --block: var(--gs-conflict);
+  --info: var(--gs-truth-ink);
 
-  /* type — Aegis professional-services families */
-  --font-display: "IBM Plex Mono", monospace;
-  --font-body: "IBM Plex Sans", sans-serif;
-  --font-serif: "IBM Plex Serif", serif;
-  --font-mono: "IBM Plex Mono", monospace;
+  /* type — Gold Standard 2026 typography.
+     Space Grotesk = technical/numeric; Inter = UI labels/buttons/inputs.
+     (Phase 0.5 will load these via next/font; the fallback stacks cover
+     the interim before the font swap lands.) */
+  --font-display: "Fraunces", serif;
+  --font-body: "Inter", sans-serif;
+  --font-serif: "Fraunces", serif;
+  --font-mono: "Space Grotesk", monospace;
   --font-hand: "Architects Daughter", cursive;
+  --font-tech: "Space Grotesk", sans-serif;
+  --font-ui: "Inter", sans-serif;
 
   /* type scale — 1.125 ratio, all components reference these.
      Sub-micro sizes (nano/pico/femto) are for dense canvas chrome:

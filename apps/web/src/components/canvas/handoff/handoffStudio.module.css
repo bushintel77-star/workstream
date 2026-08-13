@@ -1,26 +1,30 @@
 .root {
   /*
-   * Handoff chrome API (--hc-*) — light values alias color-tokens v2.
-   * Crisp dock plastic + matte panels; no blush pink leftovers.
+   * Handoff chrome API (--hc-*) — Gold Standard 2026 Studio Dark.
+   * All chrome is Glass Cards per docs/GOLD-STANDARD-2026.md §2:
+   * bg #1E2329/70 + backdrop-blur-md + rounded-2xl. No neumorphic plastic.
+   * These aliases cascade the --gs-* signal palette to the 103 consumer
+   * files that still reference --hc-* names.
    * CAD vectors keep --sds-* separately.
    */
-  --hc-ink: var(--text-primary);
-  --hc-ink-muted: var(--text-secondary);
-  --hc-ink-faint: var(--text-muted);
-  --hc-paper: var(--gray-l-0);
-  --hc-invert: var(--gray-l-25);
+  --hc-ink: var(--gs-ink);
+  --hc-ink-muted: var(--gs-ink-secondary);
+  --hc-ink-faint: var(--gs-ink-muted);
+  --hc-paper: var(--gs-glass);
+  --hc-invert: var(--gs-glass-strong);
   /*
-   * Frost AA floor (Tier-1 2026): blur alone is not enough over CAD ink.
-   * Keep glass ≥ ~92% opaque cream + hairline (--hc-line) via --hc-elev-*.
+   * Glass Cards: #1E2329 body at 70% + backdrop-blur-md (§2 Code Law).
+   * --hc-glass is the card surface; --hc-glass-soft for larger/off-canvas
+   * surfaces. Both resolve against --gs-glass, not cream.
    */
-  --hc-glass: color-mix(in srgb, var(--gray-l-0) 96%, transparent);
-  --hc-glass-soft: color-mix(in srgb, var(--gray-l-0) 92%, transparent);
-  --hc-line: color-mix(in srgb, var(--text-primary) 14%, transparent);
-  --hc-line-soft: color-mix(in srgb, var(--text-primary) 10%, transparent);
-  --hc-signal: var(--signal);
-  --hc-signal-ink: var(--signal-ink);
-  --hc-accent: var(--accent);
-  --hc-deep: var(--surface-deep);
+  --hc-glass: color-mix(in srgb, var(--gs-glass) 70%, transparent);
+  --hc-glass-soft: color-mix(in srgb, var(--gs-glass) 85%, transparent);
+  --hc-line: var(--gs-line);
+  --hc-line-soft: var(--gs-line-soft);
+  --hc-signal: var(--gs-primary);
+  --hc-signal-ink: var(--gs-primary);
+  --hc-accent: var(--gs-primary);
+  --hc-deep: var(--gs-glass-sunken);
   --hc-r-control: 6px;
   --hc-r-panel: 8px;
   --hc-r-dock: var(--hc-r-panel);
@@ -35,52 +39,49 @@
   --hc-fs-4: 12px;
   --hc-fs-5: 15px;
   --hc-fs-6: 19px;
-  --hc-elev-1: 0 1px 2px color-mix(in srgb, var(--text-primary) 10%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--text-primary) 8%, transparent);
-  --hc-elev-2: 0 2px 6px color-mix(in srgb, var(--text-primary) 12%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--text-primary) 10%, transparent);
-  --hc-elev-3: 0 6px 16px color-mix(in srgb, var(--text-primary) 16%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--text-primary) 12%, transparent);
+  --hc-elev-1: 0 1px 2px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--gs-line-soft);
+  --hc-elev-2: 0 2px 6px rgba(0, 0, 0, 0.35),
+    0 0 0 1px var(--gs-line-soft);
+  --hc-elev-3: 0 6px 16px rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--gs-line);
   --hc-elev: var(--hc-elev-2);
-  --hc-blur: 0px;
+  --hc-blur: 12px;
   --hc-motion: 180ms;
-  --hc-neu-surface: var(--panel);
-  --hc-neu-raised: var(--gray-l-25);
-  --hc-neu-light: color-mix(in srgb, var(--gray-l-0) 45%, transparent);
-  --hc-neu-shadow: color-mix(in srgb, var(--text-primary) 14%, transparent);
-  --hc-neu-out: -1px -1px 2px var(--hc-neu-light),
-    1px 1px 3px var(--hc-neu-shadow), 0 0 0 1px var(--hc-line-soft);
-  --hc-neu-out-sm: -1px -1px 1.5px var(--hc-neu-light),
-    1px 1px 2.5px var(--hc-neu-shadow), 0 0 0 1px var(--hc-line-soft);
-  --hc-neu-in: inset 1px 1px 2px var(--hc-neu-shadow),
-    inset -1px -1px 1.5px var(--hc-neu-light);
+  /* Neumorphic plastic retired — flat glass. These aliases keep consumers
+     working but resolve to flat glass surfaces, not plastic relief. */
+  --hc-neu-surface: var(--gs-glass);
+  --hc-neu-raised: var(--gs-glass-strong);
+  --hc-neu-light: var(--gs-glass-strong);
+  --hc-neu-shadow: rgba(0, 0, 0, 0.25);
+  --hc-neu-out: 0 0 0 1px var(--gs-line);
+  --hc-neu-out-sm: 0 0 0 1px var(--gs-line-soft);
+  --hc-neu-in: inset 0 0 0 1px var(--gs-line);
   --hc-pad: 8px;
-  --hc-danger: var(--existing-stroke);
-  --hc-danger-soft: color-mix(in srgb, var(--existing-stroke) 16%, var(--canvas));
-  --hc-success: var(--planting-new-stroke);
-  --hc-warning: var(--warning);
-  --hc-water: var(--water-l-500);
-  --hc-accent-wash: color-mix(in srgb, var(--proposed-stroke) 12%, var(--canvas));
+  --hc-danger: var(--gs-conflict);
+  --hc-danger-soft: color-mix(in srgb, var(--gs-conflict) 16%, var(--gs-canvas));
+  --hc-success: var(--gs-success);
+  --hc-warning: var(--gs-warning);
+  --hc-water: var(--apwa-water);
+  --hc-accent-wash: color-mix(in srgb, var(--gs-primary) 12%, var(--gs-canvas));
 
   /*
-   * Tier-1 Top Bar — unified dark-slate header surface (spec §1).
-   * Mode-agnostic (always dark, like a VS Code titlebar); the gallery frame
-   * is already dark grey, so these tokens define the consolidated top bar's
-   * surface, ink, dividers, active backlight, and focus ring. Single source
+   * Tier-1 Top Bar — Gold Standard 2026 Glass header surface.
+   * Mode-agnostic dark glass (like a VS Code titlebar). Single source
    * for Tier1TopBar + DeckInspectorDock.
    */
-  --tier1-bar-bg: var(--surface-elevated);
-  --tier1-bar-ink: var(--ink-primary);
-  --tier1-bar-ink-muted: var(--ink-secondary);
-  --tier1-bar-line: var(--line-subtle, var(--surface-panel));
-  --tier1-bar-line-strong: var(--line, var(--surface-overlay));
-  --tier1-bar-active-bg: var(--surface-deep);
-  --tier1-bar-active-ink: var(--ink-primary);
-  --tier1-bar-focus-ring: var(--ink-tertiary);
+  --tier1-bar-bg: var(--gs-glass);
+  --tier1-bar-ink: var(--gs-ink);
+  --tier1-bar-ink-muted: var(--gs-ink-secondary);
+  --tier1-bar-line: var(--gs-line);
+  --tier1-bar-line-strong: var(--gs-line);
+  --tier1-bar-active-bg: var(--gs-glass-strong);
+  --tier1-bar-active-ink: var(--gs-primary);
+  --tier1-bar-focus-ring: var(--gs-primary);
 
-  --sheet-paper: var(--gray-l-25);
-  --sheet-ink: var(--text-primary);
-  --sheet-border: color-mix(in srgb, var(--text-primary) 35%, transparent);
+  --sheet-paper: var(--gs-glass);
+  --sheet-ink: var(--gs-ink);
+  --sheet-border: var(--gs-line);
 
   --sds-canvas-bg: var(--canvas);
   --sds-vector-primary: var(--text-primary);
@@ -192,32 +193,29 @@
   --ws-w-accent: 1.6;
 
   /*
-   * Gallery frame (binding) — the drawing is the artwork, the frame is the
-   * mount. Premium dark grey in BOTH themes so the cream plan always reads as
-   * the subject. Icons live inside these bands, never on the plan.
+   * Gallery frame (Gold Standard 2026) — the drawing is the artwork, the frame
+   * is the mount. Darker than the canvas (--gs-frame #0C0F12 < --gs-canvas
+   * #101418). Icons live inside these bands, never on the plan.
    */
-  --ws-frame: var(--gray-d-50);
-  --ws-frame-raise: var(--gray-d-150);
+  --ws-frame: var(--gs-frame);
+  --ws-frame-raise: var(--gs-glass-sunken);
   /* Matte-metal endpoints — top catches ambient light, base sinks. */
-  --ws-frame-lit: color-mix(in srgb, var(--gray-d-50) 88%, #fff);
-  --ws-frame-sunk: color-mix(in srgb, var(--gray-d-50) 82%, #000);
-  --ws-frame-ink: var(--gray-d-900);
+  --ws-frame-lit: color-mix(in srgb, var(--gs-frame) 88%, #fff);
+  --ws-frame-sunk: color-mix(in srgb, var(--gs-frame) 82%, #000);
+  --ws-frame-ink: var(--gs-ink);
   /*
    * Alpha sets contrast on the dark frame, so these are WCAG floors, not taste:
-   * against --ws-frame, 58% lands at ~4.4:1 and 34% at ~2.6:1. 66% / 62% clear
-   * 4.5:1 for the mode tabs, chip labels and meta faces that use them.
+   * against --gs-frame, 66% / 62% clear 4.5:1 for mode tabs, chip labels, meta.
    */
-  --ws-frame-ink-dim: color-mix(in srgb, var(--gray-d-900) 66%, transparent);
-  --ws-frame-ink-faint: color-mix(in srgb, var(--gray-d-900) 62%, transparent);
-  --ws-frame-hair: color-mix(in srgb, var(--gray-d-900) 12%, transparent);
-  --ws-frame-wash: color-mix(in srgb, var(--gray-d-900) 10%, transparent);
+  --ws-frame-ink-dim: color-mix(in srgb, var(--gs-ink) 66%, transparent);
+  --ws-frame-ink-faint: color-mix(in srgb, var(--gs-ink) 62%, transparent);
+  --ws-frame-hair: color-mix(in srgb, var(--gs-ink) 12%, transparent);
+  --ws-frame-wash: color-mix(in srgb, var(--gs-ink) 10%, transparent);
   /*
-   * Summoned frost over the plan — matches the gallery frame, not cream glass.
-   * Consumers that still say var(--hc-frost) without a prior definition used to
-   * fall through to light --hc-glass; this is the binding substrate.
+   * Summoned frost — Glass Card surface, matching --gs-glass.
    */
-  --hc-frost: color-mix(in srgb, var(--ws-frame) 88%, transparent);
-  --hc-frost-shadow: 0 16px 40px -10px color-mix(in srgb, var(--gray-d-0) 55%, transparent);
+  --hc-frost: var(--hc-glass);
+  --hc-frost-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5);
   --ws-frame-top: 46px;
   --ws-frame-left: 48px;
   --ws-frame-right: 14px;
