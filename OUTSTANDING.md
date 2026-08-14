@@ -755,9 +755,13 @@ Cross-check against build status below before treating any phase as shipped.
       (`fitSheet.ts` + `FitSheetCard` — live itemized quotation + material
       stock pulse chips, client-side estimate + trade-hub matching, zero
       fetch, live-synced to canvas geometry by construction; "Quote" chip,
-      open by default when placements exist). Still open under Phase 3:
-      Presentation Lens polish and Comparison Lens split-view on the GL
-      surface.
+      open by default when placements exist). **Comparison Lens split-view
+      is ALSO built now** (`SplitViewLens.tsx` + `FusedCamera
+      viewBlendLocked` + the rail's Split tool: locked ortho plan | live
+      perspective, two full canvases with linked cameras via one shared
+      rig — the dual-screen CAD/sketch workflow inside the one studio;
+      e2e-verified `webgl-split-view.spec.ts`). Still open under Phase 3:
+      Presentation Lens polish only.
 - [ ] **§3 Phase 4 Build Pack** — compliance audit + contractor CAD/spec
       bundle export on this surface: **not built**.
 - [ ] **§4 Mobile Field Bridge (AR)** — **explicitly not built, by design

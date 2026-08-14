@@ -255,6 +255,8 @@ apps/web/src/components/canvas/webgl/
 ├── assetPalette.ts           # Fan-out dock palette — TYPE_TO_SYMBOL + real catalog botany (pure, tested)
 ├── AssetFanOutDock.tsx       # Bottom fan-out dock; collapses to armed hint pill
 ├── AssetPlaceLayer.tsx       # Armed click-to-place capture (grid snap → CatalogPlacement)
+├── StudioToolRail.tsx        # Left slim tool rail — bare icons, all toggles (names: "▸ Label")
+├── SplitViewLens.tsx         # Plan|3D split — two canvases, linked rig, locked-ortho left
 ├── floraWorld.ts             # Flora ring math: shade grid → rank → exposure/scale (pure, tested)
 ├── FloraRingLayer.tsx        # Ranked suggestion ring — ghost disc + first clickable <Html> card
 ├── canvasBridges.ts          # BYDA/trench/irrigation/levels → live studio data
