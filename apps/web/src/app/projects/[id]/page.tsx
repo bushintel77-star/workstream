@@ -170,6 +170,14 @@ export default async function ProjectCanvasPage({
           irrigationZones={canvas?.irrigation_zones ?? []}
           levels={frame?.levels ?? []}
           aerialUri={survey?.aerial_uri ?? null}
+          outdoorM2={
+            resolveAreaM2({
+              titleLotM2: titleBlock?.lotAreaM2,
+              titleHouseM2: titleBlock?.houseAreaM2,
+              survey,
+              canvas,
+            }) ?? 0
+          }
         />
       </main>
     );

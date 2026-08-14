@@ -250,6 +250,8 @@ apps/web/src/components/canvas/webgl/
 ├── snapWorld.ts              # Metre-space snap ladder: close → vertex → 45° angle (pure, tested)
 ├── DimensionLayer.tsx        # Boundary/building dim ring — SVG engine reused, <Html> labels
 ├── MeasureTapeLayer.tsx      # Armed two-point measure tape (draped, ephemeral)
+├── fitSheet.ts               # Estimate args builder + fit-sheet summary (pure, tested)
+├── FitSheetCard.tsx          # Live itemized quotation + stock-pulse GlassCard (Phase 3)
 ├── canvasBridges.ts          # BYDA/trench/irrigation/levels → live studio data
 └── features/
     └── SubsurfaceEngine.tsx  # SchematicConduit (hairline Line2) + StrikePulse
@@ -367,10 +369,25 @@ bullets resolved:
 Notable unexamined in `docs/design/gold-standard-2026/stitch/`:
 - ~~Hydrological Pulse Flow HUD~~ — implemented (drainage instruments above)
 - ~~Elevation Slice Analysis~~ — implemented (Vertical Truth)
-- Asset Discovery Fan-Out
-- Itemized Fit-Sheet
-- Solar Impact 3D
-- Revision History HUD
+- ~~Itemized Fit-Sheet~~ — implemented (`fitSheet.ts` + `FitSheetCard`): the live
+  itemized quotation + material stock pulse, Phase 3 mandate. Everything derives
+  client-side from geometry the studio already holds — `useStudioEstimate`
+  (sync seed + worker settle) prices the drawing, `solveLiveTradeEstimate`
+  matches Melbourne hub offers for IN STOCK / LOW STOCK / AI EST chips,
+  `sectionForEstimateTier` groups lines into quote sections. Zero fetch — the
+  sheet is live-synced to the canvas by construction. Top-6 itemized rows +
+  section chips + Subtotal/GST/Total summary + site stats (m²/m³/tippers) +
+  gold procurement alert on out-of-stock matches + "Indicative — confirm
+  before tender" footer. `outdoorM2` flows from the page via the existing
+  `resolveAreaM2` (same source as the SVG studio's area prop).
+- Asset Discovery Fan-Out — NEXT (biggest functional hole: no way to place an
+  asset in the WebGL studio; `rankFlora` domain intelligence is dormant)
+- Solar Impact 3D — mostly subsumed (real sun rig + shadows exist); the delta
+  (exposure %/shadow-zone readouts) falls out of the Fan-Out build's
+  shade-grid needs
+- Revision History HUD — infra exists (design-branches API + DesignBranchDock
+  on SVG studio); weakest signal (the Stitch turned out to be a phase
+  scrubber, not a commit list)
 
 ### Gap 6: Mobile licensable sketch tool — FUTURE PHASE ⚠️
 The expo mobile app has `MobileSketchTopbar`/`MobileToolStrip` components. Sketching is

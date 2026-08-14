@@ -143,6 +143,8 @@ export interface StudioStoreState {
   measureActive: boolean;
   /** The current tape in board-% (a = anchor, b = drag end); null = no tape. */
   measureTape: { a: PctPoint; b: PctPoint } | null;
+  /** Itemized fit-sheet quotation card (Phase 3 live quote). */
+  fitSheetOpen: boolean;
 
   // --- Fused rendering context ---
   /**
@@ -198,6 +200,8 @@ export interface StudioStoreState {
   /** Replace the tape (a new anchor press) or clear it (null, null). */
   setMeasureTape: (a: PctPoint | null, b: PctPoint | null) => void;
 
+  setFitSheetOpen: (v: boolean) => void;
+
   /** Replace the entire stroke array (e.g., on hydrate / undo / redo). */
   setSketchStrokes: (strokes: CanvasStroke[]) => void;
   /** Append a single committed stroke. */
@@ -243,6 +247,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   measureActive: false,
   measureTape: null,
 
+  // Fit-sheet default ON — the live quote IS the product (the card
+  // self-gates on an empty canvas).
+  fitSheetOpen: true,
+
   // Ink
   sketchStrokes: [],
 
@@ -281,6 +289,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set(measureActive ? { measureActive: true, sketchMode: false } : { measureActive: false }),
   setMeasureTape: (a, b) =>
     set({ measureTape: a && b ? { a, b } : null }),
+
+  setFitSheetOpen: (fitSheetOpen) => set({ fitSheetOpen }),
 
   setSketchStrokes: (sketchStrokes) => set({ sketchStrokes }),
   addSketchStroke: (stroke) =>

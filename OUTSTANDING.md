@@ -743,6 +743,13 @@ Cross-check against build status below before treating any phase as shipped.
       fit-sheet quotation sync, and Comparison Lens split-view are **not
       built** on the Gold Standard surface. (The blush-frost studio has its
       own fit-sheet/quote surfaces; not the same thing as this spec's lens.)
+      **Update**: the itemized fit-sheet IS now built on the WebGL studio
+      (`fitSheet.ts` + `FitSheetCard` — live itemized quotation + material
+      stock pulse chips, client-side estimate + trade-hub matching, zero
+      fetch, live-synced to canvas geometry by construction; "Quote" chip,
+      open by default when placements exist). Still open under Phase 3:
+      Presentation Lens polish and Comparison Lens split-view on the GL
+      surface.
 - [ ] **§3 Phase 4 Build Pack** — compliance audit + contractor CAD/spec
       bundle export on this surface: **not built**.
 - [ ] **§4 Mobile Field Bridge (AR)** — **explicitly not built, by design

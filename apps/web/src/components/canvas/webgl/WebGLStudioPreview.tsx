@@ -48,6 +48,7 @@ import { computeLiveStudioData } from "./canvasBridges";
 import { SliceProfileCard } from "./SliceProfileCard";
 import { DrainageFlowCard } from "./DrainageFlowCard";
 import { EarthworksCard } from "./EarthworksCard";
+import { FitSheetCard } from "./FitSheetCard";
 
 /** Day arc bounds — same as the 2D SunGrowthDock (~06:20 → ~19:40). */
 const DAY_START = 6 * 60 + 20;
@@ -84,6 +85,8 @@ export interface WebGLStudioPreviewProps {
   irrigationZones?: IrrigationZone[];
   /** Spot levels from site_frame → feed terrain heightmap. */
   levels?: DesignSiteFrameLevel[];
+  /** Outdoor area m² (page-computed from survey/title/site_frame) → fit-sheet. */
+  outdoorM2?: number;
   /** Aerial photo URI (for the ground underlay texture). */
   aerialUri?: string | null;
   /** Activate sketch mode on mount (from ?tool=sketch deep link). */
@@ -106,6 +109,7 @@ export function WebGLStudioPreview({
   constructionTrenches = [],
   irrigationZones = [],
   levels = [],
+  outdoorM2 = 0,
   aerialUri = null,
   initialSketchMode = false,
 }: WebGLStudioPreviewProps) {
@@ -137,6 +141,8 @@ export function WebGLStudioPreview({
   const setDimsView = useStudioStore((s) => s.setDimsView);
   const measureActive = useStudioStore((s) => s.measureActive);
   const setMeasureActive = useStudioStore((s) => s.setMeasureActive);
+  const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
+  const setFitSheetOpen = useStudioStore((s) => s.setFitSheetOpen);
   // Save status is rendered by <SaveStatusChip /> which subscribes independently
   // (so only the chip re-renders on status change, not the whole HUD).
 
@@ -361,6 +367,16 @@ export function WebGLStudioPreview({
             >
               {measureActive ? "▾ Measure" : "▸ Measure"}
             </ToggleChip>
+            {/* Itemized fit-sheet — needs placed items */}
+            {(items?.length ?? 0) > 0 && (
+              <ToggleChip
+                active={fitSheetOpen}
+                onClick={() => setFitSheetOpen(!fitSheetOpen)}
+                activeColor="var(--gs-primary)"
+              >
+                {fitSheetOpen ? "▾ Quote" : "▸ Quote"}
+              </ToggleChip>
+            )}
           </div>
 
           {/* Measure readout — DOM twin of the in-canvas tape label. A11y +
@@ -455,19 +471,42 @@ export function WebGLStudioPreview({
         />
       </GlassCard>
 
-      {/* ---- Top-right: live conditions chips ---- */}
-      <GlassCard position="top-right" style={{ padding: "10px 14px" }}>
-        <div style={{ fontFamily: "var(--font-tech)", fontSize: 12, color: "var(--gs-ink)" }}>
-          <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gs-ink-secondary)" }}>
-            Live Conditions
+      {/* ---- Top-right HUD column: live conditions + itemized fit-sheet ---- */}
+      <div
+        style={{
+          position: "absolute",
+          top: 16,
+          right: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          alignItems: "flex-end",
+          pointerEvents: "none",
+        }}
+      >
+        <GlassCard position={{ position: "relative" }} style={{ padding: "10px 14px" }}>
+          <div style={{ fontFamily: "var(--font-tech)", fontSize: 12, color: "var(--gs-ink)" }}>
+            <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gs-ink-secondary)" }}>
+              Live Conditions
+            </div>
+            <div style={{ color: "var(--gs-ink-secondary)", lineHeight: 1.7 }}>
+              Season: <span style={{ color: "var(--gs-ink)" }}>{seasonLabel(seasonProgress)}</span><br />
+              Leaf Status: <span style={{ color: "var(--gs-primary)" }}>{leafStatus(seasonProgress, year)}</span><br />
+              Sun Elev: <span style={{ color: "var(--gs-ink)" }}>{sunMin}</span> min
+            </div>
           </div>
-          <div style={{ color: "var(--gs-ink-secondary)", lineHeight: 1.7 }}>
-            Season: <span style={{ color: "var(--gs-ink)" }}>{seasonLabel(seasonProgress)}</span><br />
-            Leaf Status: <span style={{ color: "var(--gs-primary)" }}>{leafStatus(seasonProgress, year)}</span><br />
-            Sun Elev: <span style={{ color: "var(--gs-ink)" }}>{sunMin}</span> min
-          </div>
-        </div>
-      </GlassCard>
+        </GlassCard>
+        {(items?.length ?? 0) > 0 && (
+          <FitSheetCard
+            items={items ?? []}
+            boundaryPct={boundaryPct}
+            constructionTrenches={constructionTrenches}
+            irrigationZones={irrigationZones}
+            scaleM={scaleM}
+            outdoorM2={outdoorM2}
+          />
+        )}
+      </div>
       <GlassCard position="bottom-left" style={{ padding: "10px 14px" }}>
         <div style={{ fontFamily: "var(--font-tech)", fontSize: 12, color: "var(--gs-ink)" }}>
           <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gs-ink-secondary)" }}>
