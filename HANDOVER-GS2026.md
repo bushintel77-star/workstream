@@ -252,6 +252,9 @@ apps/web/src/components/canvas/webgl/
 ├── MeasureTapeLayer.tsx      # Armed two-point measure tape (draped, ephemeral)
 ├── fitSheet.ts               # Estimate args builder + fit-sheet summary (pure, tested)
 ├── FitSheetCard.tsx          # Live itemized quotation + stock-pulse GlassCard (Phase 3)
+├── assetPalette.ts           # Fan-out dock palette — TYPE_TO_SYMBOL + real catalog botany (pure, tested)
+├── AssetFanOutDock.tsx       # Bottom fan-out dock; collapses to armed hint pill
+├── AssetPlaceLayer.tsx       # Armed click-to-place capture (grid snap → CatalogPlacement)
 ├── canvasBridges.ts          # BYDA/trench/irrigation/levels → live studio data
 └── features/
     └── SubsurfaceEngine.tsx  # SchematicConduit (hairline Line2) + StrikePulse
@@ -380,10 +383,22 @@ Notable unexamined in `docs/design/gold-standard-2026/stitch/`:
   gold procurement alert on out-of-stock matches + "Indicative — confirm
   before tender" footer. `outdoorM2` flows from the page via the existing
   `resolveAreaM2` (same source as the SVG studio's area prop).
-- Asset Discovery Fan-Out — NEXT (biggest functional hole: no way to place an
-  asset in the WebGL studio; `rankFlora` domain intelligence is dormant)
+- ~~Asset Discovery Fan-Out~~ — implemented (`assetPalette.ts` + `AssetFanOutDock` +
+  `AssetPlaceLayer`): the "▸ Assets" chip opens the bottom fan-out dock (Stitch
+  phase_1.1 idiom — glass cards, gold active treatment, real catalog botany
+  "never invented"); picking a card arms it (the dock collapses to an armed hint
+  pill — an armed tool never has chrome over the lot), a canvas click
+  half-metre-grid-snaps and mints a `CatalogPlacement` in the store; items now
+  derive CLIENT-SIDE from store placements (`toRenderItems(placementsToItems(...))`
+  — the server items prop is gone), so the 3D item renders instantly and the
+  existing autosave PUT persists it (round-trip e2e-verified: place → Saved →
+  reload → Items: 1). Placements + arming live in `studioStore` with mutual
+  exclusion across the three capture layers (sketch / measure / asset).
+  Honest follow-up: flora RANKING (`rankCurtisFloraCandidates`) needs the click
+  cell's shade context — the flora ring at click is the next increment; v1
+  ships curated order rather than fake scores.
 - Solar Impact 3D — mostly subsumed (real sun rig + shadows exist); the delta
-  (exposure %/shadow-zone readouts) falls out of the Fan-Out build's
+  (exposure %/shadow-zone readouts) falls out of the flora-ring build's
   shade-grid needs
 - Revision History HUD — infra exists (design-branches API + DesignBranchDock
   on SVG studio); weakest signal (the Stitch turned out to be a phase

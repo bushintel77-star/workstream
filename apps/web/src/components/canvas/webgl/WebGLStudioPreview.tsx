@@ -35,7 +35,6 @@ import { VignetteOverlay } from "./VignetteOverlay";
 import { SaveStatusChip } from "./SaveStatusChip";
 import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
 import { pctToWorld, type PctPoint } from "./coordTransform";
-import type { RenderItem } from "./sceneItems";
 import { PRESENTATION_LENS, TECHNICAL_LENS } from "./PresentationLens";
 import {
   useStudioStore,
@@ -49,6 +48,9 @@ import { SliceProfileCard } from "./SliceProfileCard";
 import { DrainageFlowCard } from "./DrainageFlowCard";
 import { EarthworksCard } from "./EarthworksCard";
 import { FitSheetCard } from "./FitSheetCard";
+import { AssetFanOutDock } from "./AssetFanOutDock";
+import { placementsToItems } from "../handoff/state/canvasBridge";
+import { toRenderItems } from "./stateBridge";
 
 /** Day arc bounds — same as the 2D SunGrowthDock (~06:20 → ~19:40). */
 const DAY_START = 6 * 60 + 20;
@@ -69,13 +71,13 @@ export interface WebGLStudioPreviewProps {
   boundaryPct: PctPoint[];
   buildingPct?: PctPoint[];
   easementsPct?: PctPoint[][];
-  items?: RenderItem[];
   /** Project latitude (decimal degrees). Defaults to Prahran demo. */
   lat?: number;
   lng?: number;
   /** Persisted canvas strokes (hydrated into the store on mount). */
   initialStrokes?: CanvasStroke[];
-  /** Persisted placements (for autosave). */
+  /** Persisted placements — hydrated into the store on mount; the store is
+   *  the live source thereafter (items + autosave derive from it). */
   placements?: CatalogPlacement[];
   /** BYDA assets from site_frame → converted to subsurface utilities. */
   bydaAssets?: DesignBydaAsset[];
@@ -100,11 +102,10 @@ export function WebGLStudioPreview({
   boundaryPct,
   buildingPct,
   easementsPct,
-  items,
   lat,
   lng,
   initialStrokes,
-  placements = [],
+  placements: initialPlacements = [],
   bydaAssets = [],
   constructionTrenches = [],
   irrigationZones = [],
@@ -143,10 +144,14 @@ export function WebGLStudioPreview({
   const setMeasureActive = useStudioStore((s) => s.setMeasureActive);
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
   const setFitSheetOpen = useStudioStore((s) => s.setFitSheetOpen);
+  const assetsOpen = useStudioStore((s) => s.assetsOpen);
+  const setAssetsOpen = useStudioStore((s) => s.setAssetsOpen);
+  const armedSymbolId = useStudioStore((s) => s.armedSymbolId);
+  const setArmedSymbolId = useStudioStore((s) => s.setArmedSymbolId);
   // Save status is rendered by <SaveStatusChip /> which subscribes independently
   // (so only the chip re-renders on status change, not the whole HUD).
 
-  // --- Hydrate the store on mount (strokes + project context) ---
+  // --- Hydrate the store on mount (strokes + placements + project context) ---
   // This runs once when the component mounts with the server-fetched data.
   const hydratedRef = useState({ done: false });
   useEffect(() => {
@@ -154,9 +159,19 @@ export function WebGLStudioPreview({
     hydratedRef[0].done = true;
     const store = useStudioStore.getState();
     store.setSketchStrokes(initialStrokes ?? []);
+    store.setPlacements(initialPlacements);
     store.setProjectContext(projectId, aerialUri);
     if (initialSketchMode) store.setSketchMode(true);
-  }, [initialStrokes, projectId, aerialUri, initialSketchMode, hydratedRef]);
+  }, [initialStrokes, initialPlacements, projectId, aerialUri, initialSketchMode, hydratedRef]);
+
+  // Placements live in the store after hydration — the live source for both
+  // the 3D items and the autosave doc. Pure client-side bridge (proven in
+  // the SVG studio's client hook); unknown symbol ids degrade gracefully.
+  const storePlacements = useStudioStore((s) => s.placements);
+  const items = useMemo(
+    () => toRenderItems(placementsToItems(storePlacements)),
+    [storePlacements],
+  );
 
   // --- Compute live studio data (replaces hardcoded sample utilities) ---
   const liveData = useMemo(
@@ -174,8 +189,8 @@ export function WebGLStudioPreview({
 
   // --- Autosave (debounced + retry + backoff) ---
   const autosaveDoc = useMemo(
-    () => ({ placements, strokes }),
-    [placements, strokes],
+    () => ({ placements: storePlacements, strokes }),
+    [storePlacements, strokes],
   );
   useStudioAutosave(projectId, autosaveDoc);
   useBeforeUnloadGuard();
@@ -226,6 +241,9 @@ export function WebGLStudioPreview({
     >
       {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
       <VignetteOverlay />
+
+      {/* Asset discovery fan-out dock — bottom-centre, above the growth card */}
+      <AssetFanOutDock />
 
       {/* ---- Top-left: scene stats + view toggle ---- */}
       <GlassCard position="top-left" style={{ padding: "12px 16px" }}>
@@ -309,10 +327,13 @@ export function WebGLStudioPreview({
             <ToggleChip
               active={sketchMode}
               onClick={() => {
-                // Arming sketch disarms measure (they compete for pointer
-                // capture on the ground plane).
+                // Arming sketch disarms the other capture layers (asset
+                // placement / measure) — they compete for ground pointers.
                 const next = !sketchMode;
-                if (next) setMeasureActive(false);
+                if (next) {
+                  setArmedSymbolId(null);
+                  setMeasureActive(false);
+                }
                 setSketchMode(next);
               }}
               activeColor="var(--gs-primary)"
@@ -366,6 +387,18 @@ export function WebGLStudioPreview({
               activeColor="var(--gs-truth)"
             >
               {measureActive ? "▾ Measure" : "▸ Measure"}
+            </ToggleChip>
+            {/* Asset discovery fan-out — dock + place tool */}
+            <ToggleChip
+              active={assetsOpen || armedSymbolId != null}
+              onClick={() => {
+                const next = !assetsOpen;
+                if (!next) setArmedSymbolId(null);
+                setAssetsOpen(next);
+              }}
+              activeColor="var(--gs-primary)"
+            >
+              {assetsOpen || armedSymbolId != null ? "▾ Assets" : "▸ Assets"}
             </ToggleChip>
             {/* Itemized fit-sheet — needs placed items */}
             {(items?.length ?? 0) > 0 && (

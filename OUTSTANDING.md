@@ -692,8 +692,13 @@ Cross-check against build status below before treating any phase as shipped.
       unified studio is the only sketch environment (deep links land via
       `?tool=sketch`). Still missing on the GL surface: the floating tool
       ribbon (Polyline/Curve — planned next; Area routes to
-      `SpatialObject`/`outline_pct`, not a stroke) and the Asset Fan-Out
-      carousel (mobile only).
+      `SpatialObject`/`outline_pct`, not a stroke). ~~The Asset Fan-Out
+      carousel~~ — SHIPPED on the GL surface (`AssetFanOutDock` +
+      `AssetPlaceLayer` + `assetPalette.ts`: curated TYPE_TO_SYMBOL palette
+      with real catalog botany, gold active card, armed hint pill, half-metre
+      grid snap, store placements with client-derived items, autosave
+      round-trip e2e-verified). Flora ranking at click (the flora ring)
+      remains the follow-up.
       Concept references: [concept-01-cad-operator-studio.png](docs/design-spec/concept-mockups/concept-01-cad-operator-studio.png)
       (floating tool ribbon, asset carousel, meta chips) and
       [concept-03-auto-placement-logic.png](docs/design-spec/concept-mockups/concept-03-auto-placement-logic.png)

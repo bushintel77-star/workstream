@@ -25,7 +25,7 @@
  */
 
 import { create } from "zustand";
-import type { CanvasStroke } from "@workstream/contracts";
+import type { CanvasStroke, CatalogPlacement } from "@workstream/contracts";
 import type { PctPoint } from "./coordTransform";
 
 /* -------------------------------------------------------------------------- */
@@ -146,6 +146,14 @@ export interface StudioStoreState {
   /** Itemized fit-sheet quotation card (Phase 3 live quote). */
   fitSheetOpen: boolean;
 
+  // --- Asset discovery fan-out (Gap 5) ---
+  /** The bottom fan-out dock (asset palette). */
+  assetsOpen: boolean;
+  /** Armed catalog symbol — click the lot to place it; null = not armed. */
+  armedSymbolId: string | null;
+  /** All canvas placements (CatalogPlacement contract schema). */
+  placements: CatalogPlacement[];
+
   // --- Fused rendering context ---
   /**
    * The TARGET view blend. 0 = orthographic plan, 1 = perspective 3D.
@@ -202,6 +210,14 @@ export interface StudioStoreState {
 
   setFitSheetOpen: (v: boolean) => void;
 
+  setAssetsOpen: (v: boolean) => void;
+  /** Arming an asset disarms sketch + measure (pointer-capture exclusion). */
+  setArmedSymbolId: (id: string | null) => void;
+  /** Replace the entire placement array (hydrate / undo / branch checkout). */
+  setPlacements: (placements: CatalogPlacement[]) => void;
+  /** Append a single placement (a place gesture). */
+  addPlacement: (placement: CatalogPlacement) => void;
+
   /** Replace the entire stroke array (e.g., on hydrate / undo / redo). */
   setSketchStrokes: (strokes: CanvasStroke[]) => void;
   /** Append a single committed stroke. */
@@ -251,6 +267,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // self-gates on an empty canvas).
   fitSheetOpen: true,
 
+  // Asset fan-out defaults — dock closed (chrome), nothing armed.
+  assetsOpen: false,
+  armedSymbolId: null,
+  placements: [],
+
   // Ink
   sketchStrokes: [],
 
@@ -291,6 +312,19 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set({ measureTape: a && b ? { a, b } : null }),
 
   setFitSheetOpen: (fitSheetOpen) => set({ fitSheetOpen }),
+
+  setAssetsOpen: (assetsOpen) => set({ assetsOpen }),
+  // Mutual exclusion: the armed placement layer owns ground pointer events,
+  // so sketch mode and the measure tape must stand down.
+  setArmedSymbolId: (armedSymbolId) =>
+    set(
+      armedSymbolId
+        ? { armedSymbolId, sketchMode: false, measureActive: false }
+        : { armedSymbolId: null },
+    ),
+  setPlacements: (placements) => set({ placements }),
+  addPlacement: (placement) =>
+    set((s) => ({ placements: [...s.placements, placement] })),
 
   setSketchStrokes: (sketchStrokes) => set({ sketchStrokes }),
   addSketchStroke: (stroke) =>

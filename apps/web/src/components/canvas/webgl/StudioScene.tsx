@@ -37,6 +37,7 @@ import { DrainageFlowLayer } from "./DrainageFlowLayer";
 import { EarthworksLayer } from "./EarthworksLayer";
 import { DimensionLayer } from "./DimensionLayer";
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
+import { AssetPlaceLayer } from "./AssetPlaceLayer";
 import { type PresentationLensFilter } from "./PresentationLens";
 
 /** Prahran demo fallback — same default as the 2D sun/growth dock + GrowthStudio. */
@@ -690,6 +691,8 @@ export function StudioScene({
         boardAspect={boardAspect}
         heightmapPoints={heightmapPoints}
       />
+      {/* Asset placement — armed fan-out symbol, self-gates on armedSymbolId. */}
+      <AssetPlaceLayer scaleM={scaleM} boardAspect={boardAspect} />
       {/* Aerial photo underlay — opaque in plan view, fades in 3D. */}
       <AerialUnderlay aerialUri={aerialUri} scaleM={scaleM} boardAspect={boardAspect} />
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the
