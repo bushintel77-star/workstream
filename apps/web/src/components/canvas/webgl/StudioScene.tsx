@@ -33,6 +33,8 @@ import { FusedCamera } from "./FusedCamera";
 import { FusedSketchLayer } from "./FusedSketchLayer";
 import { TerrainMesh } from "./TerrainMesh";
 import { ElevationSliceLine } from "./ElevationSliceLine";
+import { DrainageFlowLayer } from "./DrainageFlowLayer";
+import { EarthworksLayer } from "./EarthworksLayer";
 import { type PresentationLensFilter } from "./PresentationLens";
 
 /** Prahran demo fallback — same default as the 2D sun/growth dock + GrowthStudio. */
@@ -400,8 +402,12 @@ function BuildingFootprint({
     if (points.length < 3) return null;
     const shape = new THREE.Shape();
     const world = points.map((p) => pctToWorld(p, scaleM, boardAspect));
-    shape.moveTo(world[0][0], world[0][1]);
-    for (let i = 1; i < world.length; i++) shape.lineTo(world[i][0], world[i][1]);
+    // Shape Y must be NEGATED world Z: the [-π/2, 0, 0] rotation maps local
+    // +Y → world −Z, so (x, −z) in shape space lands at world (x, z) —
+    // keeping the mass under its own ground outline instead of N/S-mirrored.
+    shape.moveTo(world[0]![0], -world[0]![1]);
+    for (let i = 1; i < world.length; i++)
+      shape.lineTo(world[i]![0], -world[i]![1]);
     shape.closePath();
     // Extrude depth = building height. bevel gives a soft roof edge.
     return new THREE.ExtrudeGeometry(shape, {
@@ -645,6 +651,24 @@ export function StudioScene({
           mounts when terrain exists; the DOM profile panel is in WebGLStudioPreview. */}
       {heightmapPoints.length > 0 && (
         <ElevationSliceLine
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+          heightmapPoints={heightmapPoints}
+        />
+      )}
+      {/* Drainage overland flow — D8 streams + ponding markers on the terrain
+          (self-gates on drainageView; DOM telemetry card in WebGLStudioPreview). */}
+      {heightmapPoints.length > 0 && (
+        <DrainageFlowLayer
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+          heightmapPoints={heightmapPoints}
+        />
+      )}
+      {/* Earthworks — committed pad masses + cut/fill zones (self-gates on
+          earthworksView + the presence of extruded strokes). */}
+      {heightmapPoints.length > 0 && (
+        <EarthworksLayer
           scaleM={scaleM}
           boardAspect={boardAspect}
           heightmapPoints={heightmapPoints}

@@ -711,7 +711,19 @@ Cross-check against build status below before treating any phase as shipped.
       tilts (per-vertex Y lerp on `viewBlend`), and the elevation-slice
       instrument (`ElevationSliceLine` + `SliceProfileCard`: draggable
       axis-aligned cut + live SVG profile with ×3 vert-exaggeration, datum,
-      Δ-real readouts). Annotations are panel readouts, not in-scene
+      Δ-real readouts). **Terrain follow-ups now shipped**: drainage
+      overland-flow (D8 routing on the mesh's own 60×60 grid —
+      `flowField.ts`/`DrainageFlowLayer`/`DrainageFlowCard`: pulse-animated
+      stream network, ponding markers, Σ GPM + max kPa telemetry from the
+      wired `computeHydraulics()` results) and cut/fill earthworks against
+      extruded sketch pads (`cutFill.ts`/`EarthworksLayer`/`EarthworksCard`:
+      committed pad masses finally render outside sketch mode, red/gold
+      cut/fill zone patchwork on the terrain, per-pad + total m³ readouts,
+      ÷3 real-metre convention — no schema change, `extrude_height_m` reused
+      as the design surface). Also fixed three pre-existing Z-mirror bugs
+      where the `[-π/2,0,0]` rotation N/S-mirrored the terrain relief, the
+      building mass, and the extrude preview vs the ink/slice samplers.
+      Annotations are panel readouts, not in-scene
       dimension callouts — those remain open polish.
       Concept reference: [concept-02-solar-subsurface-analysis.png](docs/design-spec/concept-mockups/concept-02-solar-subsurface-analysis.png)
       (subsurface legend + Strike Alert chip — matches what's built; the

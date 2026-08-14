@@ -315,6 +315,8 @@ describe("computeLiveStudioData", () => {
     // The trench crosses the gas line → should detect a strike.
     expect(result.strikeAlerts.length).toBeGreaterThan(0);
     expect(result.heightmapPoints).toHaveLength(1);
+    // No irrigation zones → no hydraulic runs.
+    expect(result.hydraulicResults).toEqual([]);
   });
 
   it("handles empty canvas data gracefully", () => {
@@ -329,5 +331,6 @@ describe("computeLiveStudioData", () => {
     expect(result.subsurfaceUtilities).toEqual([]);
     expect(result.strikeAlerts).toEqual([]);
     expect(result.heightmapPoints).toEqual([]);
+    expect(result.hydraulicResults).toEqual([]);
   });
 });

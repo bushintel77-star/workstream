@@ -129,6 +129,12 @@ export interface StudioStoreState {
   /** Position of the cut along the cross-axis, in world metres (lot-centred). */
   slicePosM: number;
 
+  // --- Terrain analysis instruments (drainage + earthworks) ---
+  /** Drainage overland-flow overlay (streams + ponding markers). Opt-in. */
+  drainageView: boolean;
+  /** Earthworks overlay — committed pad masses + cut/fill zones. */
+  earthworksView: boolean;
+
   // --- Fused rendering context ---
   /**
    * The TARGET view blend. 0 = orthographic plan, 1 = perspective 3D.
@@ -174,6 +180,9 @@ export interface StudioStoreState {
   setSliceAxis: (a: "x" | "z") => void;
   setSlicePosM: (v: number) => void;
 
+  setDrainageView: (v: boolean) => void;
+  setEarthworksView: (v: boolean) => void;
+
   /** Replace the entire stroke array (e.g., on hydrate / undo / redo). */
   setSketchStrokes: (strokes: CanvasStroke[]) => void;
   /** Append a single committed stroke. */
@@ -208,6 +217,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   sliceAxis: "z",
   slicePosM: 0,
 
+  // Terrain analysis defaults — earthworks ON: the analysis IS the product,
+  // pads + zones appear the moment a pad exists. Drainage is opt-in chrome.
+  drainageView: false,
+  earthworksView: true,
+
   // Ink
   sketchStrokes: [],
 
@@ -236,6 +250,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setSliceActive: (sliceActive) => set({ sliceActive }),
   setSliceAxis: (sliceAxis) => set({ sliceAxis }),
   setSlicePosM: (slicePosM) => set({ slicePosM }),
+
+  setDrainageView: (drainageView) => set({ drainageView }),
+  setEarthworksView: (earthworksView) => set({ earthworksView }),
 
   setSketchStrokes: (sketchStrokes) => set({ sketchStrokes }),
   addSketchStroke: (stroke) =>

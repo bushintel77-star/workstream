@@ -3,10 +3,10 @@
  *
  * Builds a real topographic surface from site_frame.levels using inverse-distance
  * weighting (IDW). When levels exist, the ground plane becomes a displaced mesh
- * with real relief — unlocking:
+ * with real relief — which the terrain instruments consume:
  *   - True 3D drape for sketch strokes (ink follows topography)
- *   - Cut/fill volume visualization potential
- *   - Drainage flow direction (water flows down gradients)
+ *   - Cut/fill earthworks against extruded sketch pads (EarthworksLayer/cutFill.ts)
+ *   - Drainage overland flow — D8 streams + ponding (DrainageFlowLayer/flowField.ts)
  *
  * When NO levels exist, the mesh is perfectly flat at y=0 (degenerates to the
  * current flat ground — zero visual change for projects without survey data).
@@ -55,11 +55,14 @@ export function TerrainMesh({ scaleM, boardAspect, heightmapPoints }: TerrainMes
     const searchRadius = Math.max(scaleM, scaleM * boardAspect) * SEARCH_RADIUS_FACTOR;
 
     // PlaneGeometry is in the XY plane — we need to displace Z (which becomes
-    // Y after the mesh is rotated -90° around X to lie flat).
+    // Y after the mesh is rotated -90° around X to lie flat). The rotation
+    // maps local +Y → world −Z, so the world-space sample for a local vertex
+    // (vx, vy) is (vx, −vy). Sampling at +vy would mirror the relief N/S
+    // relative to the drape/slice samplers (which query world z directly).
     for (let i = 0; i < pos.count; i++) {
       const vx = pos.getX(i);
       const vy = pos.getY(i);
-      const elev = idwElevation(vx, vy, normalizedSamples, searchRadius);
+      const elev = idwElevation(vx, -vy, normalizedSamples, searchRadius);
       pos.setZ(i, elev);
     }
 

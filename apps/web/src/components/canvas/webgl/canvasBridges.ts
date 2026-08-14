@@ -27,6 +27,7 @@ import {
   detectStrikes,
   calculateHydraulicRuns,
   type DesignExcavation,
+  type HydraulicResult,
   type HydraulicRun,
   type StrikeAlert,
   type UtilityLine,
@@ -298,6 +299,8 @@ export interface LiveStudioData {
   subsurfaceUtilities: SubsurfaceUtility[];
   strikeAlerts: StrikeAlertData[];
   heightmapPoints: HeightmapPoint[];
+  /** Hazen-Williams results per irrigation run (Drainage HUD telemetry). */
+  hydraulicResults: HydraulicResult[];
 }
 
 /**
@@ -323,10 +326,7 @@ export function computeLiveStudioData(params: {
   const excavations = trenchesToExcavations(trenches, scaleM, boardAspect);
   const strikeAlerts = computeStrikeAlerts(excavations, subsurfaceUtilities);
   const heightmapPoints = levelsToHeightmapPoints(levels, scaleM, boardAspect);
+  const hydraulicResults = computeHydraulics(irrigationZones, scaleM, boardAspect);
 
-  // Irrigation zones feed the hydraulic computation (results available for
-  // future HUD/telemetry, not yet rendered in the scene).
-  computeHydraulics(irrigationZones, scaleM, boardAspect);
-
-  return { subsurfaceUtilities, strikeAlerts, heightmapPoints };
+  return { subsurfaceUtilities, strikeAlerts, heightmapPoints, hydraulicResults };
 }

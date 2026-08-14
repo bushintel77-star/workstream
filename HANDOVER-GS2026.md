@@ -225,28 +225,34 @@ apps/web/src/components/canvas/webgl/
 ├── WebGLStudio.tsx          # Canvas shell: EffectComposer, Environment, fog, ACES, VSM
 ├── StudioScene.tsx           # Scene graph: SunRig (useFrame), fog controller, ground, items, sketch layer
 ├── sceneItems.tsx            # Trees (multi-lobe), hedges, paving, deck, bollard, regions
-├── SketchLayer3D.tsx         # 3D sketch: raycast plane, drape, extrude gesture
-├── seasonalStore.ts          # zustand: growthYear, seasonProgress, sunMin, subsurfaceView, sketchMode
+├── FusedSketchLayer.tsx      # THE unified ink: raycast capture, drape, extrude gesture
+├── studioStore.ts            # zustand (supersedes seasonalStore.ts shim): temporal + view +
+│                            #   slice/drainage/earthworks instruments + sketchStrokes + save machine
 ├── StudioControls.tsx        # Pan/zoom/raycast — gated by sketchMode
-├── WebGLStudioPreview.tsx    # HUD: stats, growth/sun/season scrubbers, metadata chips, toggles
+├── WebGLStudioPreview.tsx    # HUD: stats, growth/sun/season scrubbers, toggle chips,
+│                            #   bottom-right instrument stack (Section/Flow/Earth cards)
 ├── GlassCard.tsx             # Frosted-glass DOM overlay primitive
 ├── cameraRig.ts              # Ortho camera rig (panX, panY, zoom, rotateDeg, tiltDeg)
 ├── coordTransform.ts         # pctToWorld / worldToPct (board-% ↔ metre-space)
 ├── PresentationLens.tsx      # Hide technical layers in present mode
 ├── ComparisonLens.tsx        # Split-view synced camera
 ├── stateBridge.ts            # StudioItem → RenderItem structural pick
+├── terrainMath.ts            # SHARED IDW sampler — mesh/drape/slice/flow/earthworks all sample this
+├── TerrainMesh.tsx           # 60×60 displaced heightmap from site_frame.levels
+├── ElevationSliceLine.tsx    # Draggable section cut (Vertical Truth)
+├── SliceProfileCard.tsx      # Live SVG elevation profile card
+├── flowField.ts              # D8 flow routing + accumulation + ponding (pure, tested)
+├── DrainageFlowLayer.tsx     # Stream network + ponding markers on the terrain
+├── DrainageFlowCard.tsx      # Drainage telemetry card (streams/fall/ponding, GPM/kPa)
+├── cutFill.ts                # Pad selection + cut/fill rasteriser (pure, tested)
+├── EarthworksLayer.tsx       # Committed pad masses + red/gold cut/fill zone mesh
+├── EarthworksCard.tsx        # Per-pad + total cut/fill m³ readout card
+├── canvasBridges.ts          # BYDA/trench/irrigation/levels → live studio data
 └── features/
     └── SubsurfaceEngine.tsx  # SchematicConduit (hairline Line2) + StrikePulse
 
-apps/web/src/components/canvas/sketch/
-├── SketchPad.tsx             # Full-screen aerial + SVG surface + Plan/Elevation toggle
-├── SketchSidebar.tsx         # Left-border icon rail
-├── SketchChips.tsx           # Corner metadata chips (area/height/cost)
-└── sketchHelpers.ts          # freehandPath, polygonAreaM2, undo/redo, snap-close
-
 apps/web/src/app/projects/[id]/
-├── page.tsx                  # Default = WebGL; ?svg=1 = legacy SVG studio
-└── sketch/page.tsx           # 2D sketch pad route
+└── page.tsx                  # Default = WebGL; ?svg=1 = legacy SVG studio; ?tool=sketch arms ink
 ```
 
 ### How to access everything
@@ -295,8 +301,21 @@ construction trenches → `detectStrikes()` excavations, irrigation zones → `c
   `viewBlend` (published by `FusedCamera`), zero re-renders/allocs
 - Elevation slice — `ElevationSliceLine` (draggable axis-aligned cut) + `SliceProfileCard`
   (live SVG profile, ×3 label, Δ-real readouts)
-- Still open under this umbrella: cut/fill volumes, drainage-flow rendering (the mesh is
-  the prerequisite, not those consumers)
+- ~~Still open under this umbrella: cut/fill volumes, drainage-flow rendering~~ — both
+  shipped on top of the heightmap:
+  - **Drainage flow** (`flowField.ts` + `DrainageFlowLayer` + `DrainageFlowCard`): D8
+    steepest-descent routing + flow accumulation on the same 60×60 grid the mesh renders;
+    dashed pulse-animated stream polylines, ponding-point markers + telemetry card
+    (streams / max fall / ponding, Σ GPM + max kPa from the wired `computeHydraulics()`
+    results). Ponds are honest (no sink filling) — they're the actionable insight.
+  - **Cut/fill earthworks** (`cutFill.ts` + `EarthworksLayer` + `EarthworksCard`): the
+    design surface is extruded sketch pads (`extrude_height_m` — no schema change); WYSIWYG
+    render-space comparison vs the sampler, real m³ readouts (÷3, labelled). Committed pad
+    masses now render outside sketch mode (previously invisible metadata), with red/gold
+    cut/fill zone patchwork on the terrain and per-pad + total volume HUD.
+  - Same session fixed three pre-existing Z-mirror bugs (local +Y → world −Z under the
+    `[-π/2,0,0]` rotation): `TerrainMesh` relief, `BuildingFootprint` mass, and the
+    extrude preview were N/S-mirrored vs the ink/slice samplers.
 
 ### Gap 3: Port SVG layers to WebGL — MEDIUM ⚠️
 These exist in `CadPlanBoard.tsx` (SVG) but aren't in the WebGL scene:
@@ -312,8 +331,8 @@ These exist in `CadPlanBoard.tsx` (SVG) but aren't in the WebGL scene:
 
 ### Gap 5: 46 unexamined Stitch screens — EXPLORATION ⚠️
 Notable unexamined in `docs/design/gold-standard-2026/stitch/`:
-- Hydrological Pulse Flow HUD
-- Elevation Slice Analysis
+- ~~Hydrological Pulse Flow HUD~~ — implemented (drainage instruments above)
+- ~~Elevation Slice Analysis~~ — implemented (Vertical Truth)
 - Asset Discovery Fan-Out
 - Itemized Fit-Sheet
 - Solar Impact 3D

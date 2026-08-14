@@ -104,7 +104,9 @@ export function SliceProfileCard({
 
   return (
     <GlassCard
-      position="bottom-right"
+      // Relative — this card is a child of the WebGLStudioPreview bottom-right
+      // instrument stack column, not an independently positioned card.
+      position={{ position: "relative" }}
       style={{ width: W + 16, padding: "12px 14px" }}
     >
       <div style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)" }}>

@@ -65,6 +65,7 @@ export const PALETTE = {
   // WebGL render values — physical light/shadow (mirrors color-tokens.css --gs-* render tokens)
   gsCanvas: "#101418", // canvas clear color + fog (--gs-canvas)
   gsConflict: "#EF4444", // strike alert / conflict red (--gs-conflict)
+  gsPrimary: "#FBBF24", // Primary Gold — HUD accent / earthworks fill zone (--gs-primary)
   sunWarm: "#FFF1D6",
   skyCool: "#8A9BB5",
   gsShadow: "#05070A",

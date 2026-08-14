@@ -41,6 +41,7 @@ import { PALETTE } from "../../../styles/colorTokens";
 import { useStudioStore } from "./studioStore";
 import { pctToWorld, worldToPct, type PctPoint, type HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
+import { pointInPolygonXZ } from "./cutFill";
 
 /** Snap-close threshold in world metres. */
 const SNAP_CLOSE_M = 2.0;
@@ -103,7 +104,7 @@ export function FusedSketchLayer({
       // Convert committed strokes to world-space polygons for the point-in-poly test.
       const inside = strokes.find((s) => {
         const pts = strokeToWorldPoints(s, scaleM, boardAspect);
-        return pts.length >= 3 && pointInPolygon(pt, pts);
+        return pts.length >= 3 && pointInPolygonXZ(pt.x, pt.z, pts);
       });
       if (inside) {
         isExtrudingRef.current = true;
@@ -419,9 +420,11 @@ function ExtrudeMass({
     });
     if (worldPts.length < 3) return null;
     const shape = new THREE.Shape();
-    shape.moveTo(worldPts[0]![0], worldPts[0]![1]);
+    // Shape Y = NEGATED world Z (the [-π/2, 0, 0] rotation maps local +Y →
+    // world −Z) so the mass lands under the stroke ink, not N/S-mirrored.
+    shape.moveTo(worldPts[0]![0], -worldPts[0]![1]);
     for (let i = 1; i < worldPts.length; i++) {
-      shape.lineTo(worldPts[i]![0], worldPts[i]![1]);
+      shape.lineTo(worldPts[i]![0], -worldPts[i]![1]);
     }
     shape.closePath();
     return new THREE.ExtrudeGeometry(shape, {
@@ -454,24 +457,4 @@ function ExtrudeMass({
       />
     </mesh>
   );
-}
-
-/**
- * Point-in-polygon test (ray casting) in the XZ plane.
- */
-function pointInPolygon(pt: THREE.Vector3, polygon: THREE.Vector3[]): boolean {
-  if (polygon.length < 3) return false;
-  let inside = false;
-  const x = pt.x;
-  const z = pt.z;
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const xi = polygon[i]!.x;
-    const zi = polygon[i]!.z;
-    const xj = polygon[j]!.x;
-    const zj = polygon[j]!.z;
-    const intersect =
-      zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi;
-    if (intersect) inside = !inside;
-  }
-  return inside;
 }

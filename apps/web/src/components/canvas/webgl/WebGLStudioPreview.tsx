@@ -46,6 +46,8 @@ import {
 import { useStudioAutosave, useBeforeUnloadGuard } from "./useStudioAutosave";
 import { computeLiveStudioData } from "./canvasBridges";
 import { SliceProfileCard } from "./SliceProfileCard";
+import { DrainageFlowCard } from "./DrainageFlowCard";
+import { EarthworksCard } from "./EarthworksCard";
 
 /** Day arc bounds — same as the 2D SunGrowthDock (~06:20 → ~19:40). */
 const DAY_START = 6 * 60 + 20;
@@ -127,6 +129,10 @@ export function WebGLStudioPreview({
   const strokes = useStudioStore((s) => s.sketchStrokes);
   const sliceActive = useStudioStore((s) => s.sliceActive);
   const setSliceActive = useStudioStore((s) => s.setSliceActive);
+  const drainageView = useStudioStore((s) => s.drainageView);
+  const setDrainageView = useStudioStore((s) => s.setDrainageView);
+  const earthworksView = useStudioStore((s) => s.earthworksView);
+  const setEarthworksView = useStudioStore((s) => s.setEarthworksView);
   // Save status is rendered by <SaveStatusChip /> which subscribes independently
   // (so only the chip re-renders on status change, not the whole HUD).
 
@@ -180,6 +186,13 @@ export function WebGLStudioPreview({
   );
 
   const is3D = viewBlendTarget > 0.5;
+
+  // Pads exist ⇔ any committed stroke carries an extrusion height — gates the
+  // Earth toggle + EarthworksCard.
+  const hasPads = useMemo(
+    () => strokes.some((s) => (s.extrude_height_m ?? 0) > 0),
+    [strokes],
+  );
 
   return (
     <WebGLStudio
@@ -300,6 +313,26 @@ export function WebGLStudioPreview({
                 {sliceActive ? "▾ Section" : "▸ Section"}
               </ToggleChip>
             )}
+            {/* Drainage overland flow — terrain-gated */}
+            {liveData.heightmapPoints.length > 0 && (
+              <ToggleChip
+                active={drainageView}
+                onClick={() => setDrainageView(!drainageView)}
+                activeColor="var(--gs-truth)"
+              >
+                {drainageView ? "▾ Flow" : "▸ Flow"}
+              </ToggleChip>
+            )}
+            {/* Earthworks cut/fill — needs terrain AND at least one pad */}
+            {liveData.heightmapPoints.length > 0 && hasPads && (
+              <ToggleChip
+                active={earthworksView}
+                onClick={() => setEarthworksView(!earthworksView)}
+                activeColor="var(--gs-primary)"
+              >
+                {earthworksView ? "▾ Earth" : "▸ Earth"}
+              </ToggleChip>
+            )}
           </div>
         </div>
       </GlassCard>
@@ -415,14 +448,44 @@ export function WebGLStudioPreview({
         </div>
       </GlassCard>
 
-      {/* Elevation Slice profile panel (Vertical Truth) — only when terrain exists */}
-      {liveData.heightmapPoints.length > 0 && (
-        <SliceProfileCard
-          scaleM={scaleM}
-          boardAspect={boardAspect}
-          heightmapPoints={liveData.heightmapPoints}
-        />
-      )}
+      {/* Bottom-right instrument stack — Section / Drainage / Earthworks.
+          Each card self-gates (returns null when its instrument is off), so
+          the column collapses to whatever is active. */}
+      <div
+        style={{
+          position: "absolute",
+          right: 16,
+          bottom: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          alignItems: "flex-end",
+          pointerEvents: "none",
+        }}
+      >
+        {liveData.heightmapPoints.length > 0 && (
+          <SliceProfileCard
+            scaleM={scaleM}
+            boardAspect={boardAspect}
+            heightmapPoints={liveData.heightmapPoints}
+          />
+        )}
+        {liveData.heightmapPoints.length > 0 && (
+          <DrainageFlowCard
+            scaleM={scaleM}
+            boardAspect={boardAspect}
+            heightmapPoints={liveData.heightmapPoints}
+            hydraulicResults={liveData.hydraulicResults}
+          />
+        )}
+        {liveData.heightmapPoints.length > 0 && (
+          <EarthworksCard
+            scaleM={scaleM}
+            boardAspect={boardAspect}
+            heightmapPoints={liveData.heightmapPoints}
+          />
+        )}
+      </div>
     </WebGLStudio>
   );
 }
