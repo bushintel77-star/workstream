@@ -171,7 +171,9 @@ export function AssetFanOutDock() {
         style={{
           position: "absolute",
           bottom: 96,
-          left: "50%",
+          // Centre in the safe zone (between the tool rail and the right
+          // chrome column), not the raw viewport — collision-spec guaranteed.
+          left: "calc(50% - 85px)",
           transform: "translateX(-50%)",
           padding: "5px 12px",
           borderRadius: 999,
@@ -196,7 +198,10 @@ export function AssetFanOutDock() {
       style={{
         position: "absolute",
         bottom: 96, // stacked above the growth scrubber card
-        left: "50%",
+        // Centred in the safe zone between the tool rail and the right
+        // chrome column; width capped to the same zone so the fan never
+        // swings into the instrument cards (collision-spec guaranteed).
+        left: "calc(50% - 85px)",
         transform: "translateX(-50%)",
         display: "flex",
         alignItems: "flex-end",
@@ -211,7 +216,7 @@ export function AssetFanOutDock() {
         // screen centre, so only the cards themselves may capture (Stitch
         // phase_1.1 does exactly this: pointer-events-none dock, auto cards).
         pointerEvents: "none",
-        maxWidth: "min(94vw, 64rem)",
+        maxWidth: "min(64rem, calc(100vw - 460px))",
       }}
     >
       {palette.map((entry) => (

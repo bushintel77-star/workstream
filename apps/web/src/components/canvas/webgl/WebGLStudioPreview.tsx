@@ -49,6 +49,7 @@ import { DrainageFlowCard } from "./DrainageFlowCard";
 import { EarthworksCard } from "./EarthworksCard";
 import { FitSheetCard } from "./FitSheetCard";
 import { AssetFanOutDock } from "./AssetFanOutDock";
+import { StudioToolRail } from "./StudioToolRail";
 import { placementsToItems } from "../handoff/state/canvasBridge";
 import { toRenderItems } from "./stateBridge";
 
@@ -128,29 +129,9 @@ export function WebGLStudioPreview({
   const setSunMin = useStudioStore((s) => s.setSunMin);
   const seasonProgress = useStudioStore((s) => s.seasonProgress);
   const setSeasonProgress = useStudioStore((s) => s.setSeasonProgress);
-  const subsurfaceView = useStudioStore((s) => s.subsurfaceView);
-  const setSubsurfaceView = useStudioStore((s) => s.setSubsurfaceView);
-  const sketchMode = useStudioStore((s) => s.sketchMode);
-  const setSketchMode = useStudioStore((s) => s.setSketchMode);
   const viewBlendTarget = useStudioStore((s) => s.viewBlendTarget);
   const setViewBlendTarget = useStudioStore((s) => s.setViewBlendTarget);
   const strokes = useStudioStore((s) => s.sketchStrokes);
-  const sliceActive = useStudioStore((s) => s.sliceActive);
-  const setSliceActive = useStudioStore((s) => s.setSliceActive);
-  const drainageView = useStudioStore((s) => s.drainageView);
-  const setDrainageView = useStudioStore((s) => s.setDrainageView);
-  const earthworksView = useStudioStore((s) => s.earthworksView);
-  const setEarthworksView = useStudioStore((s) => s.setEarthworksView);
-  const dimsView = useStudioStore((s) => s.dimsView);
-  const setDimsView = useStudioStore((s) => s.setDimsView);
-  const measureActive = useStudioStore((s) => s.measureActive);
-  const setMeasureActive = useStudioStore((s) => s.setMeasureActive);
-  const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
-  const setFitSheetOpen = useStudioStore((s) => s.setFitSheetOpen);
-  const assetsOpen = useStudioStore((s) => s.assetsOpen);
-  const setAssetsOpen = useStudioStore((s) => s.setAssetsOpen);
-  const armedSymbolId = useStudioStore((s) => s.armedSymbolId);
-  const setArmedSymbolId = useStudioStore((s) => s.setArmedSymbolId);
   // Save status is rendered by <SaveStatusChip /> which subscribes independently
   // (so only the chip re-renders on status change, not the whole HUD).
 
@@ -245,6 +226,17 @@ export function WebGLStudioPreview({
       {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
       <VignetteOverlay />
 
+      {/* Left slim tool icons — bare (no container), border chrome per the
+          Stitch reference; the drawing owns the middle. */}
+      <StudioToolRail
+        showTerrainTools={liveData.heightmapPoints.length > 0}
+        showDims={boundaryPct.length >= 3}
+        showEarth={liveData.heightmapPoints.length > 0 && hasPads}
+        showQuote={(items?.length ?? 0) > 0}
+        presentActive={presentationMode}
+        onPresentToggle={() => setPresentationMode((p) => !p)}
+      />
+
       {/* Asset discovery fan-out dock — bottom-centre, above the growth card */}
       <AssetFanOutDock />
 
@@ -320,110 +312,6 @@ export function WebGLStudioPreview({
             </button>
           </div>
 
-          {/* Layer toggles — meta chip set */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: 5 }}>
-            <ToggleChip
-              active={presentationMode}
-              onClick={() => setPresentationMode((p) => !p)}
-              activeColor="var(--gs-primary)"
-            >
-              {presentationMode ? "▾ Technical" : "▸ Present"}
-            </ToggleChip>
-            <ToggleChip
-              active={subsurfaceView}
-              onClick={() => setSubsurfaceView(!subsurfaceView)}
-              activeColor="var(--gs-truth)"
-            >
-              {subsurfaceView ? "▾ Physical" : "▸ Underground"}
-            </ToggleChip>
-            <ToggleChip
-              active={sketchMode}
-              onClick={() => {
-                // Arming sketch disarms the other capture layers (asset
-                // placement / measure) — they compete for ground pointers.
-                const next = !sketchMode;
-                if (next) {
-                  setArmedSymbolId(null);
-                  setMeasureActive(false);
-                }
-                setSketchMode(next);
-              }}
-              activeColor="var(--gs-primary)"
-            >
-              {sketchMode ? "▾ Orbit" : "▸ Sketch"}
-            </ToggleChip>
-            {/* Section / Vertical Truth — only when terrain exists */}
-            {liveData.heightmapPoints.length > 0 && (
-              <ToggleChip
-                active={sliceActive}
-                onClick={() => setSliceActive(!sliceActive)}
-                activeColor="var(--gs-truth)"
-              >
-                {sliceActive ? "▾ Section" : "▸ Section"}
-              </ToggleChip>
-            )}
-            {/* Drainage overland flow — terrain-gated */}
-            {liveData.heightmapPoints.length > 0 && (
-              <ToggleChip
-                active={drainageView}
-                onClick={() => setDrainageView(!drainageView)}
-                activeColor="var(--gs-truth)"
-              >
-                {drainageView ? "▾ Flow" : "▸ Flow"}
-              </ToggleChip>
-            )}
-            {/* Earthworks cut/fill — needs terrain AND at least one pad */}
-            {liveData.heightmapPoints.length > 0 && hasPads && (
-              <ToggleChip
-                active={earthworksView}
-                onClick={() => setEarthworksView(!earthworksView)}
-                activeColor="var(--gs-primary)"
-              >
-                {earthworksView ? "▾ Earth" : "▸ Earth"}
-              </ToggleChip>
-            )}
-            {/* Working-drawing dimension ring — needs a boundary */}
-            {boundaryPct.length >= 3 && (
-              <ToggleChip
-                active={dimsView}
-                onClick={() => setDimsView(!dimsView)}
-                activeColor="var(--gs-truth)"
-              >
-                {dimsView ? "▾ Dims" : "▸ Dims"}
-              </ToggleChip>
-            )}
-            {/* Measure tape — armed tool (store setter disarms sketch mode) */}
-            <ToggleChip
-              active={measureActive}
-              onClick={() => setMeasureActive(!measureActive)}
-              activeColor="var(--gs-truth)"
-            >
-              {measureActive ? "▾ Measure" : "▸ Measure"}
-            </ToggleChip>
-            {/* Asset discovery fan-out — dock + place tool */}
-            <ToggleChip
-              active={assetsOpen || armedSymbolId != null}
-              onClick={() => {
-                const next = !assetsOpen;
-                if (!next) setArmedSymbolId(null);
-                setAssetsOpen(next);
-              }}
-              activeColor="var(--gs-primary)"
-            >
-              {assetsOpen || armedSymbolId != null ? "▾ Assets" : "▸ Assets"}
-            </ToggleChip>
-            {/* Itemized fit-sheet — needs placed items */}
-            {(items?.length ?? 0) > 0 && (
-              <ToggleChip
-                active={fitSheetOpen}
-                onClick={() => setFitSheetOpen(!fitSheetOpen)}
-                activeColor="var(--gs-primary)"
-              >
-                {fitSheetOpen ? "▾ Quote" : "▸ Quote"}
-              </ToggleChip>
-            )}
-          </div>
-
           {/* Measure readout — DOM twin of the in-canvas tape label. A11y +
               e2e surface; subscribes independently so only the chip re-renders. */}
           <MeasureReadoutChip scaleM={scaleM} boardAspect={boardAspect} />
@@ -432,8 +320,16 @@ export function WebGLStudioPreview({
 
       {/* ---- Bottom-center: growth timeline scrubber (compact) ---- */}
       <GlassCard
-        position={{ bottom: 16, left: "50%", transform: "translateX(-50%)" }}
-        style={{ width: "min(70%, 30rem)", padding: "8px 12px" }}
+        position={{
+          bottom: 16,
+          // Safe-zone centre (clear of the tool rail + right column).
+          left: "calc(50% - 85px)",
+          transform: "translateX(-50%)",
+        }}
+        style={{
+          width: "min(30rem, calc(100vw - 620px))",
+          padding: "8px 12px",
+        }}
       >
         <div
           style={{
@@ -464,7 +360,8 @@ export function WebGLStudioPreview({
         style={{
           position: "absolute",
           top: 12,
-          left: "50%",
+          // Safe-zone centre (clear of the tool rail + right column).
+          left: "calc(50% - 85px)",
           transform: "translateX(-50%)",
           display: "flex",
           gap: 8,
@@ -521,8 +418,13 @@ export function WebGLStudioPreview({
         </GlassCard>
       </div>
 
-      {/* ---- Top-right HUD column: meta chip conditions + itemized fit-sheet ---- */}
+      {/* ---- THE right-hand chrome column — one column, flex-laid-out.
+          Two independently anchored stacks on the same edge collided when
+          the fit-sheet grew (caught by webgl-chrome-collision.spec); a single
+          flex column cannot self-intersect, and scrolls internally in the
+          everything-on state. Fit-content width keeps the strip narrow. */}
       <div
+        data-testid="right-chrome-column"
         style={{
           position: "absolute",
           top: 12,
@@ -531,7 +433,11 @@ export function WebGLStudioPreview({
           flexDirection: "column",
           gap: 8,
           alignItems: "flex-end",
-          pointerEvents: "none",
+          maxHeight: "calc(100dvh - 24px)",
+          overflowY: "auto",
+          pointerEvents: "auto",
+          width: "fit-content",
+          scrollbarWidth: "thin",
         }}
       >
         {/* Live conditions as a meta chip set — not a card block */}
@@ -563,23 +469,6 @@ export function WebGLStudioPreview({
             outdoorM2={outdoorM2}
           />
         )}
-      </div>
-
-      {/* Bottom-right instrument stack — Section / Drainage / Earthworks.
-          Each card self-gates (returns null when its instrument is off), so
-          the column collapses to whatever is active. */}
-      <div
-        style={{
-          position: "absolute",
-          right: 16,
-          bottom: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          alignItems: "flex-end",
-          pointerEvents: "none",
-        }}
-      >
         {liveData.heightmapPoints.length > 0 && (
           <SliceProfileCard
             scaleM={scaleM}
@@ -656,39 +545,6 @@ function MetaChip({
         {value}
       </span>
     </span>
-  );
-}
-
-/** Small toggle chip button (meta-chip density). */
-function ToggleChip({
-  active,
-  onClick,
-  activeColor,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  activeColor: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        padding: "2px 7px",
-        borderRadius: 6,
-        border: "1px solid var(--gs-line)",
-        background: active ? activeColor : "transparent",
-        color: active ? "var(--gs-canvas)" : "var(--gs-ink-secondary)",
-        fontFamily: "var(--font-ui)",
-        fontSize: 10,
-        fontWeight: 600,
-        cursor: "pointer",
-        transition: "background 0.2s, color 0.2s",
-      }}
-    >
-      {children}
-    </button>
   );
 }
 
