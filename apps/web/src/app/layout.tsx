@@ -5,7 +5,6 @@ import {
   Inter,
   JetBrains_Mono,
   Space_Grotesk,
-  Sora,
 } from "next/font/google";
 import "../styles/globals.css";
 import { ToastHost } from "../components/ToastHost";

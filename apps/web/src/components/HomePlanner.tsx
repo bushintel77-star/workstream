@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   createTaskAction,
   getWeatherAction,
@@ -86,10 +86,7 @@ function monthGrid(year: number, month: number): (Date | null)[] {
 export function HomePlanner({ projects }: Props) {
   const [now, setNow] = useState(() => new Date());
   const [weather, setWeather] = useState<WeatherForecast | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [taskInput, setTaskInput] = useState("");
-  const [taskError, setTaskError] = useState<string | null>(null);
-  const [loadingTasks, setLoadingTasks] = useState(false);
   const [savingTask, setSavingTask] = useState(false);
 
   // Tick every minute
@@ -121,15 +118,32 @@ export function HomePlanner({ projects }: Props) {
     };
   }, [weatherProjectId]);
 
-  useEffect(() => {
-    if (!reminderProjectId) {
-      setTasks([]);
-      setTaskError(null);
-      return;
-    }
-    let cancelled = false;
-    setLoadingTasks(true);
+  // Reset the reminders state during render when the project changes — this is
+  // the React-19 idiom for "reset state when a prop/dependency changes" (see
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders).
+  // Doing it here avoids the set-state-in-effect anti-pattern: the effect below
+  // is a pure fetch that only mutates state from async callbacks, never
+  // synchronously in its body.
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskError, setTaskError] = useState<string | null>(null);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+  const prevReminderProjectIdRef = useRef<string | null>(reminderProjectId);
+  if (prevReminderProjectIdRef.current !== reminderProjectId) {
+    prevReminderProjectIdRef.current = reminderProjectId;
+    // Project changed (or cleared) → reset reminders to the new project's
+    // pre-fetch state. Done during render (the React-19 idiom) so the effect
+    // below is a pure fetch that only mutates state from async callbacks.
+    setTasks([]);
     setTaskError(null);
+    // A new (non-null) project means a fetch is pending; a null project means
+    // nothing is loading. Set this here, not in the effect, to keep the effect
+    // side-effect-free at sync time.
+    setLoadingTasks(reminderProjectId !== null);
+  }
+
+  useEffect(() => {
+    if (!reminderProjectId) return;
+    let cancelled = false;
     void listProjectTasksAction(reminderProjectId)
       .then((list) => {
         if (!cancelled) setTasks(list);

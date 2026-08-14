@@ -51,8 +51,6 @@ export interface RenderItem {
 
 const SPECIES_TYPES = new Set(["canopy", "feature", "exist"]);
 const REGION_TYPES = new Set(["lawn", "bed", "paving", "deck"]);
-/** Hardscape types that build extruded geometry with the Bevel Rule. */
-const HARDSCAPE_TYPES = new Set(["paving", "deck"]);
 
 /** Gold Standard base hues for foliage, per planting family (three.js needs
  *  concrete hex — these are material/physical values, sourced from the token
@@ -196,12 +194,10 @@ function CanopyLobe({
  */
 function CanopyCluster({
   radiusM,
-  baseColor,
   seed,
   ghost,
 }: {
   radiusM: number;
-  baseColor: string;
   seed: string;
   ghost: boolean;
 }) {
@@ -290,7 +286,6 @@ function TreeMesh({
   const canopyRadius = (canopyM * item.scale) / 2;
   const trunkHeight = heightM * 0.42;
   const canopyY = trunkHeight + canopyRadius * 0.7;
-  const color = foliageColor(item.t, item.id, item.ghost);
 
   const tpzRadiusM = useMemo(() => {
     if (!isExist || !item.dbhM) return 0;
@@ -324,7 +319,6 @@ function TreeMesh({
       <group ref={canopyScaleRef} position={[0, canopyY, 0]}>
         <CanopyCluster
           radiusM={canopyRadius}
-          baseColor={color}
           seed={item.id}
           ghost={item.ghost}
         />
@@ -522,7 +516,7 @@ function DeckMesh({
   }, [outlinePct, scaleM, boardAspect]);
 
   if (planks.length === 0) return null;
-  const [ox, oz] = origin;
+  const [ox] = origin;
   const plankDepth = planks[0]?.[1] ?? 1;
   const plankHeight = 0.04; // 40mm sleeper thickness
 

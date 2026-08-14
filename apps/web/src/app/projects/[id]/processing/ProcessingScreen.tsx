@@ -65,13 +65,6 @@ function completedCountFor(status: ProjectStatus): number {
   return 0;
 }
 
-function activeIndexFor(status: ProjectStatus): number {
-  const count = completedCountFor(status);
-  if (count >= STAGES.length) return -1;
-  if (status === "recording" || status === "processing") return Math.max(count, 0);
-  return 0;
-}
-
 function stageFlagsFromStatus(status: ProjectStatus): boolean[] {
   const count = completedCountFor(status);
   return STAGES.map((_, index) => index < count);
@@ -89,15 +82,19 @@ export function ProcessingScreen({ projectId, address, status, progress }: Props
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [pollCount, setPollCount] = useState(0);
-  const stageFlags = progress
-   ? [
-       progress.hasTranscript,
-       progress.hasSurvey,
-       progress.hasDesign,
-       progress.hasCosting,
-       progress.hasAudit,
-     ]
-   : stageFlagsFromStatus(status);
+  const stageFlags = useMemo(
+    () =>
+      progress
+        ? [
+            progress.hasTranscript,
+            progress.hasSurvey,
+            progress.hasDesign,
+            progress.hasCosting,
+            progress.hasAudit,
+          ]
+        : stageFlagsFromStatus(status),
+    [progress, status],
+  );
   const completeCount = stageFlags.filter(Boolean).length;
   const activeIndex = stageFlags.findIndex((flag) => !flag);
   const complete = progress ? progress.ready : completeCount >= STAGES.length;
