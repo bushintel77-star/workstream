@@ -135,7 +135,7 @@ export function StudioControls({
   const onPointerMove = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       // When sketchMode is active, suppress camera pan so the drag becomes a
-      // stroke captured by SketchLayer3D's own raycast plane.
+      // stroke captured by FusedSketchLayer's own raycast plane.
       const sketchActive = useSeasonalStore.getState().sketchMode;
       if (dragState.current.active && !sketchActive) {
         const dx = e.nativeEvent.clientX - dragState.current.startX;

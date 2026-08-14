@@ -73,7 +73,7 @@ export default async function ProjectCanvasPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ mode?: string; webgl?: string; svg?: string }>;
+  searchParams: Promise<{ mode?: string; webgl?: string; svg?: string; tool?: string }>;
 }) {
   await requireSignedIn();
   const { id } = await params;
@@ -141,6 +141,8 @@ export default async function ProjectCanvasPage({
     return (
       <main aria-label="Design canvas" style={{ position: "fixed", inset: 0 }}>
         <WebGLStudioPreview
+          projectId={id}
+          initialSketchMode={sp.tool === "sketch"}
           scaleM={webglScaleM}
           boardAspect={webglBoardAspect}
           boundaryPct={
@@ -161,6 +163,13 @@ export default async function ProjectCanvasPage({
           items={webglItems}
           lat={project.lat ?? undefined}
           lng={project.lng ?? undefined}
+          initialStrokes={canvas?.strokes ?? []}
+          placements={canvas?.placements ?? []}
+          bydaAssets={frame?.byda_assets ?? []}
+          constructionTrenches={canvas?.construction_trenches ?? []}
+          irrigationZones={canvas?.irrigation_zones ?? []}
+          levels={frame?.levels ?? []}
+          aerialUri={survey?.aerial_uri ?? null}
         />
       </main>
     );

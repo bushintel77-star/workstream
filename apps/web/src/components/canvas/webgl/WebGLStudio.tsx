@@ -67,6 +67,10 @@ export interface WebGLStudioProps {
   lng?: number;
   /** Minutes past Melbourne midnight — time-of-day for the sun sample. */
   sunMin?: number;
+  /** Aerial photo URI — rendered as a ground underlay texture (fades in 3D). */
+  aerialUri?: string | null;
+  /** Spot level sample points for the terrain heightmap (world space). */
+  heightmapPoints?: Array<{ x: number; z: number; y: number }>;
   children?: ReactNode;
   style?: CSSProperties;
 }
@@ -125,6 +129,8 @@ export function WebGLStudio({
   lat,
   lng,
   sunMin,
+  aerialUri,
+  heightmapPoints,
   children,
   style,
 }: WebGLStudioProps) {
@@ -148,9 +154,8 @@ export function WebGLStudio({
       style={{ position: "absolute", inset: 0, overflow: "hidden", ...style }}
     >
       <Canvas
-        orthographic
         shadows="variance"
-        camera={{ position: [0, 100, 0.001], zoom: 8, near: 0.1, far: 10000 }}
+        camera={{ position: [0, 100, 0.001], fov: 30, near: 0.1, far: 10000 }}
         gl={{ antialias: true, alpha: false }}
         onCreated={onCanvasCreated}
         style={{ position: "absolute", inset: 0 }}
@@ -184,6 +189,8 @@ export function WebGLStudio({
           lat={lat}
           lng={lng}
           sunMin={sunMin}
+          aerialUri={aerialUri}
+          heightmapPoints={heightmapPoints}
         />
 
         <RenderFX />

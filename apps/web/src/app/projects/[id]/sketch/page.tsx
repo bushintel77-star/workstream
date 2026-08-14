@@ -1,14 +1,20 @@
-import { notFound } from "next/navigation";
-import { SketchPad } from "../../../../components/canvas/sketch/SketchPad";
-import { getDesignCanvas, getProject, getSurvey } from "../../../../lib/api";
+import { notFound, redirect } from "next/navigation";
+import { getProject } from "../../../../lib/api";
 import { requireSignedIn } from "../../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Sketch Pad route — canvas-first, minimal-chrome sketching over the site
- * aerial. A dedicated full-screen surface (no pipeline banner, no studio
- * chrome). Loads the same project/survey/canvas data as the main page.
+ * Sketch Pad route — REDIRECTED to the unified WebGL studio.
+ *
+ * The sketch pad is no longer a separate SVG route. It has been absorbed into
+ * the Fused Rendering Context: the same R3F canvas renders strokes in both
+ * plan view (flat ink) and 3D view (terrain-draped). There is no separate
+ * component tree, no hard cut, no page load.
+ *
+ * This route redirects to the main project canvas with ?tool=sketch, which
+ * the unified studio reads to activate sketch mode on mount. Existing bookmarks
+ * and deep links continue to work — they land in the unified studio.
  */
 export default async function SketchPadPage({
   params,
@@ -17,37 +23,8 @@ export default async function SketchPadPage({
 }) {
   await requireSignedIn();
   const { id } = await params;
-  const [project, survey, canvas] = await Promise.all([
-    getProject(id),
-    getSurvey(id),
-    getDesignCanvas(id),
-  ]);
-
+  // Verify the project exists before redirecting (gives a 404 vs a bad redirect).
+  const project = await getProject(id);
   if (!project) notFound();
-
-  const aerialUri = survey?.aerial_uri ?? null;
-  const strokes = canvas?.strokes ?? [];
-  const scaleM = canvas?.site_frame?.board_width_m ?? 40;
-  // Derive board aspect from the boundary if present, else square.
-  const boundary = canvas?.site_frame?.boundary;
-  const boardAspect =
-    boundary && boundary.length > 0
-      ? (() => {
-          const ys = boundary.map((p) => p.y_pct);
-          const xs = boundary.map((p) => p.x_pct);
-          const w = Math.max(...xs) - Math.min(...xs) || 100;
-          const h = Math.max(...ys) - Math.min(...ys) || 100;
-          return h / w;
-        })()
-      : 1;
-
-  return (
-    <SketchPad
-      aerialUri={aerialUri}
-      scaleM={scaleM}
-      boardAspect={boardAspect}
-      initialStrokes={strokes}
-      projectTitle={project.address}
-    />
-  );
+  redirect(`/projects/${id}?tool=sketch`);
 }

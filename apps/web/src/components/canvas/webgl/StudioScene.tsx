@@ -19,7 +19,6 @@
 import { useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Line, ContactShadows } from "@react-three/drei";
-import type { OrthographicCamera } from "three";
 import * as THREE from "three";
 import { sunPositionAt } from "@workstream/domain";
 import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
@@ -30,7 +29,9 @@ import { pctToWorld, type PctPoint } from "./coordTransform";
 import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
-import { SketchLayer3D } from "./SketchLayer3D";
+import { FusedCamera } from "./FusedCamera";
+import { FusedSketchLayer } from "./FusedSketchLayer";
+import { TerrainMesh } from "./TerrainMesh";
 import { type PresentationLensFilter } from "./PresentationLens";
 
 /** Prahran demo fallback — same default as the 2D sun/growth dock + GrowthStudio. */
@@ -96,6 +97,10 @@ export interface StudioSceneProps {
   lng?: number;
   /** Minutes past Melbourne midnight — the time-of-day the sun is sampled at. */
   sunMin?: number;
+  /** Aerial photo URI — rendered as a ground underlay texture (fades in 3D). */
+  aerialUri?: string | null;
+  /** Spot level sample points for the terrain heightmap (world space). */
+  heightmapPoints?: Array<{ x: number; z: number; y: number }>;
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
@@ -509,27 +514,61 @@ function GroundPlane({ scaleM, boardAspect }: { scaleM: number; boardAspect: num
   );
 }
 
-/** Camera controller — applies the rig state to the ortho camera. */
-function CameraController({ rig }: { rig: StudioCameraRig }) {
-  const { camera } = useThree();
+/**
+ * Aerial underlay — the site photo rendered as a texture on a plane just above
+ * the ground. In plan view (blend≈0) it's fully opaque (the photo reads as the
+ * drawing surface, like the old sketch pad). As the camera transitions to 3D
+ * (blend→1), the aerial fades out so the 3D geometry/textures take over.
+ *
+ * This replaces the old <img> element in SketchPad.tsx with a real scene-graph
+ * texture — no DOM layer to swap, no hard cut.
+ */
+function AerialUnderlay({
+  aerialUri,
+  scaleM,
+  boardAspect,
+}: {
+  aerialUri: string | null;
+  scaleM: number;
+  boardAspect: number;
+}) {
+  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+  const texture = useMemo(() => {
+    if (!aerialUri) return null;
+    const loader = new THREE.TextureLoader();
+    const tex = loader.load(aerialUri);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }, [aerialUri]);
 
-  useFrame(() => {
-    const cam = camera as OrthographicCamera;
-    const tiltRad = (rig.tiltDeg * Math.PI) / 180;
-    const rotateRad = (rig.rotateDeg * Math.PI) / 180;
-    const height = 100;
+  const w = scaleM;
+  const h = scaleM * boardAspect;
 
-    cam.position.set(
-      rig.panX,
-      height * Math.cos(tiltRad),
-      height * Math.sin(tiltRad) + rig.panY,
-    );
-    cam.zoom = rig.zoom * 8;
-    cam.rotation.set(-tiltRad, 0, -rotateRad);
-    cam.updateProjectionMatrix();
+  useFrame((_, delta) => {
+    const mat = matRef.current;
+    if (!mat) return;
+    // Fade out as we transition to 3D. At blend=0: opacity 0.85 (photo visible).
+    // At blend=1: opacity 0 (photo gone, 3D geometry visible).
+    const { viewBlendTarget } = useSeasonalStore.getState();
+    const targetOpacity = 0.85 * (1 - viewBlendTarget);
+    const k = Math.min(1, delta * 4);
+    mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, k);
   });
 
-  return null;
+  if (!texture) return null;
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
+      <planeGeometry args={[w, h]} />
+      <meshBasicMaterial
+        ref={matRef}
+        map={texture}
+        transparent
+        opacity={0.85}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  );
 }
 
 export function StudioScene({
@@ -551,8 +590,16 @@ export function StudioScene({
   growthFactor,
   lat = DEFAULT_SUN_LAT,
   lng = DEFAULT_SUN_LNG,
-  sunMin = 12 * 60,
+  // sunMin is read from the store by SunRig (not used directly here), but kept
+  // in the props for API completeness / future direct-pass use.
+  sunMin: _sunMin = 12 * 60,
+  aerialUri = null,
+  heightmapPoints = [],
 }: StudioSceneProps) {
+  // Subscribe to the view blend target — drives the editing-lock for controls
+  // (editing is disabled when the camera is in 3D perspective mode).
+  const viewBlendTarget = useSeasonalStore((s) => s.viewBlendTarget);
+
   return (
     <>
       {/* Note: soft shadows come from VSMShadowMap (set in WebGLStudio
@@ -572,9 +619,10 @@ export function StudioScene({
       {/* Seasonal fog — pulls fog closer in winter (denser atmosphere). */}
       <SeasonalFogController scaleM={scaleM} />
 
-      <CameraController rig={cameraRig} />
+      <FusedCamera rig={cameraRig} scaleM={scaleM} boardAspect={boardAspect} />
 
-      {/* Input capture — invisible ground plane for raycasting */}
+      {/* Input capture — invisible ground plane for raycasting.
+          Editing is locked when the camera is in 3D mode (viewBlend > 0.5). */}
       {onRigChange && (
         <StudioControls
           scaleM={scaleM}
@@ -583,11 +631,18 @@ export function StudioScene({
           onRigChange={onRigChange}
           onGroundClick={onGroundClick}
           onCursorMove={onCursorMove}
-          tiltLocked={cameraRig.tiltDeg > 0.5}
+          tiltLocked={viewBlendTarget > 0.5}
         />
       )}
 
-      <GroundPlane scaleM={scaleM} boardAspect={boardAspect} />
+      {/* Ground — real terrain mesh when spot levels exist, flat plane otherwise. */}
+      {heightmapPoints.length > 0 ? (
+        <TerrainMesh scaleM={scaleM} boardAspect={boardAspect} heightmapPoints={heightmapPoints} />
+      ) : (
+        <GroundPlane scaleM={scaleM} boardAspect={boardAspect} />
+      )}
+      {/* Aerial photo underlay — opaque in plan view, fades in 3D. */}
+      <AerialUnderlay aerialUri={aerialUri} scaleM={scaleM} boardAspect={boardAspect} />
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the
           drawing surface, complementing the directional sun shadows. */}
       <GroundContactShadows scaleM={scaleM} boardAspect={boardAspect} />
@@ -620,9 +675,11 @@ export function StudioScene({
           alerts={lens?.hideStrikes ? [] : strikeAlerts}
         />
       )}
-      {/* 3D Sketch Layer — self-mounts when sketchMode is on (reads the store
-          internally so only it re-renders on toggle, not the whole scene). */}
-      <SketchLayer3D scaleM={scaleM} boardAspect={boardAspect} />
+      {/* Fused Sketch Layer — the shared 2D↔3D ink system. Self-mounts when
+          sketchMode is on (reads the store internally). Strokes live in the
+          unified store (CanvasStroke[] in board-% space) and render in BOTH
+          plan and 3D views — no separate SVG surface. */}
+      <FusedSketchLayer scaleM={scaleM} boardAspect={boardAspect} />
     </>
   );
 }
