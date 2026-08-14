@@ -147,6 +147,9 @@ export interface StudioStoreState {
   /** Itemized fit-sheet quotation card (Phase 3 live quote). */
   fitSheetOpen: boolean;
 
+  /** Split view — locked plan | live 3D with linked cameras. */
+  splitView: boolean;
+
   // --- Asset discovery fan-out (Gap 5) ---
   /** The bottom fan-out dock (asset palette). */
   assetsOpen: boolean;
@@ -228,6 +231,8 @@ export interface StudioStoreState {
 
   setFitSheetOpen: (v: boolean) => void;
 
+  setSplitView: (v: boolean) => void;
+
   setAssetsOpen: (v: boolean) => void;
   /** Arming an asset disarms sketch + measure (pointer-capture exclusion). */
   setArmedSymbolId: (id: string | null) => void;
@@ -296,6 +301,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // self-gates on an empty canvas).
   fitSheetOpen: true,
 
+  // Split view default off — an explicit two-viewport mode.
+  splitView: false,
+
   // Asset fan-out defaults — dock closed (chrome), nothing armed.
   assetsOpen: false,
   armedSymbolId: null,
@@ -345,6 +353,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set({ measureTape: a && b ? { a, b } : null }),
 
   setFitSheetOpen: (fitSheetOpen) => set({ fitSheetOpen }),
+
+  setSplitView: (splitView) => set({ splitView }),
 
   setAssetsOpen: (assetsOpen) => set({ assetsOpen }),
   // Mutual exclusion: the armed placement layer owns ground pointer events,

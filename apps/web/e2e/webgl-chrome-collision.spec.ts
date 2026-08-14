@@ -102,6 +102,9 @@ function expectNoCollisions(rects: Rect[], vw: number, vh: number, label: string
 }
 
 test.describe("WebGL chrome collision", () => {
+  // Four states × two viewports, including two full split-view canvas
+  // mounts — exceeds the default budget on cold hardware.
+  test.setTimeout(300_000);
   test("no chrome overlaps across states and viewports", async ({
     page,
     request,
@@ -202,6 +205,44 @@ test.describe("WebGL chrome collision", () => {
       await page.waitForTimeout(600);
       expectNoCollisions(await chromeRects(page), vw, vh, `assets ${vw}x${vh}`);
       await page.getByRole("button", { name: "▾ Assets" }).click();
+
+      // State 4: split view — chrome wraps TWO viewports; the per-half
+      // label chips (25%/75% width) are the new chrome elements.
+      await page.getByRole("button", { name: "▸ Split" }).click();
+      await page.waitForTimeout(1200);
+      const splitRects = await page.evaluate(() => {
+        const els = document.querySelectorAll<HTMLElement>(
+          "[data-gs-glass-card], [data-testid='asset-dock'], [data-testid='studio-tool-rail'], [data-testid='split-label-plan'], [data-testid='split-label-sketch']",
+        );
+        return Array.from(els).map((el) => {
+          const r = el.getBoundingClientRect();
+          let inScroller = false;
+          for (
+            let a = el.parentElement;
+            a && a instanceof HTMLElement;
+            a = a.parentElement
+          ) {
+            const oy = getComputedStyle(a).overflowY;
+            if (
+              (oy === "auto" || oy === "scroll") &&
+              a.scrollHeight > a.clientHeight
+            ) {
+              inScroller = true;
+              break;
+            }
+          }
+          return {
+            id: el.getAttribute("data-testid") ?? "card",
+            x: r.x,
+            y: r.y,
+            w: r.width,
+            h: r.height,
+            inScroller,
+          };
+        });
+      });
+      expectNoCollisions(splitRects, vw, vh, `split ${vw}x${vh}`);
+      await page.getByRole("button", { name: "▾ Split" }).click();
     }
 
     const fatal = errors.filter(

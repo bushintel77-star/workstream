@@ -63,6 +63,8 @@ export function StudioToolRail({
   const setDimsView = useStudioStore((s) => s.setDimsView);
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
   const setFitSheetOpen = useStudioStore((s) => s.setFitSheetOpen);
+  const splitView = useStudioStore((s) => s.splitView);
+  const setSplitView = useStudioStore((s) => s.setSplitView);
 
   const tools: RailTool[] = [
     {
@@ -120,6 +122,15 @@ export function StudioToolRail({
       onToggle: () => setSubsurfaceView(!subsurfaceView),
       accent: "var(--gs-truth)",
       title: "Subsurface blueprint",
+    },
+    {
+      id: "split",
+      glyph: "⧓",
+      label: "Split",
+      active: splitView,
+      onToggle: () => setSplitView(!splitView),
+      accent: "var(--gs-primary)",
+      title: "Plan | 3D split view (linked cameras)",
     },
     ...(showDims
       ? [

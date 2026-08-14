@@ -53,6 +53,8 @@ export interface WebGLStudioProps {
   items?: RenderItem[];
   buildingOpacity?: number;
   cameraRig: StudioCameraRig;
+  /** Pin the camera blend (split view's locked half). See FusedCamera. */
+  viewBlendLocked?: number;
   onRigChange?: (rig: StudioCameraRig) => void;
   onGroundClick?: (pct: PctPoint) => void;
   onCursorMove?: (pct: PctPoint | null) => void;
@@ -119,6 +121,7 @@ export function WebGLStudio({
   items,
   buildingOpacity,
   cameraRig,
+  viewBlendLocked,
   onRigChange,
   onGroundClick,
   onCursorMove,
@@ -179,6 +182,7 @@ export function WebGLStudio({
           items={items}
           buildingOpacity={buildingOpacity}
           cameraRig={cameraRig}
+          viewBlendLocked={viewBlendLocked}
           onRigChange={onRigChange}
           onGroundClick={onGroundClick}
           onCursorMove={onCursorMove}

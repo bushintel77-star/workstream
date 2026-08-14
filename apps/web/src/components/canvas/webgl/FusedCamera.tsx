@@ -53,6 +53,13 @@ export interface FusedCameraProps {
   rig: StudioCameraRig;
   scaleM: number;
   boardAspect: number;
+  /**
+   * Pin the blend (0 = locked ortho plan, 1 = locked persp). Used by the
+   * split view's locked half: when set, this instance springs toward the
+   * pinned value and does NOT write the store's viewBlend (two instances
+   * must not fight over the singleton field).
+   */
+  viewBlendLocked?: number;
 }
 
 /**
@@ -61,7 +68,12 @@ export interface FusedCameraProps {
  */
 const VIEW_PADDING = 1.3;
 
-export function FusedCamera({ rig, scaleM, boardAspect }: FusedCameraProps) {
+export function FusedCamera({
+  rig,
+  scaleM,
+  boardAspect,
+  viewBlendLocked,
+}: FusedCameraProps) {
   const { camera, size } = useThree();
 
   // The spring state — persists velocity across frames so the camera motion is
@@ -81,17 +93,21 @@ export function FusedCamera({ rig, scaleM, boardAspect }: FusedCameraProps) {
   const currentLookAtRef = useRef(new THREE.Vector3(0, 0, 0));
 
   useFrame((_, delta) => {
-    // Read the target blend from the store (transient — zero re-renders).
-    const { viewBlendTarget, setViewBlend } = useStudioStore.getState();
+    // Locked instances (split view's pinned half) spring toward their pin
+    // and leave the store's viewBlend to the free instance.
+    const target =
+      viewBlendLocked != null ? viewBlendLocked : useStudioStore.getState().viewBlendTarget;
 
     // Spring physics — the camera has physical weight. When the user toggles
     // mid-transition, the spring's velocity carries into the new direction
     // seamlessly (no snap, no reset). Semi-implicit Euler with sub-stepping.
-    const blend = springStep(springRef.current, viewBlendTarget, CAMERA_SPRING, delta);
+    const blend = springStep(springRef.current, target, CAMERA_SPRING, delta);
 
     // Publish the animated blend so in-lockstep consumers (stroke drape) can
     // read it via getState() in their own useFrame without re-subscribing.
-    setViewBlend(blend);
+    if (viewBlendLocked == null) {
+      useStudioStore.getState().setViewBlend(blend);
+    }
 
     // Viewport aspect ratio.
     const viewportAspect = size.width / size.height || 1;

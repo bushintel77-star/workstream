@@ -87,6 +87,8 @@ export interface StudioSceneProps {
   items?: RenderItem[];
   buildingOpacity?: number;
   cameraRig: StudioCameraRig;
+  /** Pin the camera blend (split view's locked half). See FusedCamera. */
+  viewBlendLocked?: number;
   onRigChange?: (rig: StudioCameraRig) => void;
   onGroundClick?: (pct: PctPoint) => void;
   onCursorMove?: (pct: PctPoint | null) => void;
@@ -591,6 +593,7 @@ export function StudioScene({
   items = [],
   buildingOpacity = 1,
   cameraRig,
+  viewBlendLocked,
   onRigChange,
   onGroundClick,
   onCursorMove,
@@ -629,7 +632,12 @@ export function StudioScene({
       {/* Seasonal fog — pulls fog closer in winter (denser atmosphere). */}
       <SeasonalFogController scaleM={scaleM} />
 
-      <FusedCamera rig={cameraRig} scaleM={scaleM} boardAspect={boardAspect} />
+      <FusedCamera
+        rig={cameraRig}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        viewBlendLocked={viewBlendLocked}
+      />
 
       {/* Input capture — invisible ground plane for raycasting.
           Editing is locked when the camera is in 3D mode (viewBlend > 0.5). */}

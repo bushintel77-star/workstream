@@ -50,6 +50,7 @@ import { EarthworksCard } from "./EarthworksCard";
 import { FitSheetCard } from "./FitSheetCard";
 import { AssetFanOutDock } from "./AssetFanOutDock";
 import { StudioToolRail } from "./StudioToolRail";
+import { SplitViewLens } from "./SplitViewLens";
 import { placementsToItems } from "../handoff/state/canvasBridge";
 import { toRenderItems } from "./stateBridge";
 
@@ -152,6 +153,7 @@ export function WebGLStudioPreview({
   // the 3D items and the autosave doc. Pure client-side bridge (proven in
   // the SVG studio's client hook); unknown symbol ids degrade gracefully.
   const storePlacements = useStudioStore((s) => s.placements);
+  const splitView = useStudioStore((s) => s.splitView);
   const items = useMemo(
     () => toRenderItems(placementsToItems(storePlacements)),
     [storePlacements],
@@ -203,26 +205,38 @@ export function WebGLStudioPreview({
     [strokes],
   );
 
+  // Scene props shared by the single studio and both split halves.
+  const sceneProps = {
+    scaleM,
+    boardAspect,
+    boundaryPct,
+    buildingPct,
+    easementsPct,
+    items,
+    subsurfaceUtilities: liveData.subsurfaceUtilities,
+    strikeAlerts: liveData.strikeAlerts,
+    lens: presentationMode ? PRESENTATION_LENS : TECHNICAL_LENS,
+    growthFactor,
+    lat,
+    lng,
+    sunMin,
+    aerialUri,
+    heightmapPoints: liveData.heightmapPoints,
+  } as const;
+
   return (
-    <WebGLStudio
-      scaleM={scaleM}
-      boardAspect={boardAspect}
-      boundaryPct={boundaryPct}
-      buildingPct={buildingPct}
-      easementsPct={easementsPct}
-      items={items}
-      cameraRig={rig}
-      onRigChange={setRig}
-      subsurfaceUtilities={liveData.subsurfaceUtilities}
-      strikeAlerts={liveData.strikeAlerts}
-      lens={presentationMode ? PRESENTATION_LENS : TECHNICAL_LENS}
-      growthFactor={growthFactor}
-      lat={lat}
-      lng={lng}
-      sunMin={sunMin}
-      aerialUri={aerialUri}
-      heightmapPoints={liveData.heightmapPoints}
-    >
+    <div style={{ position: "absolute", inset: 0 }}>
+      {/* The render surface: ONE studio, or the split lens (locked plan |
+          live 3D, linked cameras). The DOM chrome overlays whichever is
+          mounted — one chrome, two viewports. */}
+      {splitView ? (
+        <SplitViewLens sceneProps={sceneProps} rig={rig} onRigChange={setRig} />
+      ) : (
+        <WebGLStudio {...sceneProps} cameraRig={rig} onRigChange={setRig} />
+      )}
+
+      {/* ---- The chrome overlay (pointer-transparent; children opt in) ---- */}
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
       {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
       <VignetteOverlay />
 
@@ -492,7 +506,8 @@ export function WebGLStudioPreview({
           />
         )}
       </div>
-    </WebGLStudio>
+      </div>
+    </div>
   );
 }
 
