@@ -18,6 +18,7 @@ import { useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import type { StudioCameraRig } from "./cameraRig";
 import { worldToPct, type PctPoint } from "./coordTransform";
+import { useSeasonalStore } from "./seasonalStore";
 
 export interface StudioControlsProps {
   scaleM: number;
@@ -129,10 +130,14 @@ export function StudioControls({
     [rig.panX, rig.panY],
   );
 
-  /** Pointer move — pan if dragging, otherwise report cursor position. */
+  /** Pointer move — pan if dragging (unless sketchMode is on, in which case
+   *  drags are strokes, not camera moves). Always report cursor position. */
   const onPointerMove = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
-      if (dragState.current.active) {
+      // When sketchMode is active, suppress camera pan so the drag becomes a
+      // stroke captured by SketchLayer3D's own raycast plane.
+      const sketchActive = useSeasonalStore.getState().sketchMode;
+      if (dragState.current.active && !sketchActive) {
         const dx = e.nativeEvent.clientX - dragState.current.startX;
         const dy = e.nativeEvent.clientY - dragState.current.startY;
         if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {

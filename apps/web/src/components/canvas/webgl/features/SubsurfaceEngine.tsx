@@ -3,28 +3,46 @@
  *
  * Binding: docs/GOLD-STANDARD-2026.md §3 Phase 2
  *
- * Renders subsurface utility lines as 3D tube geometry below the ground plane,
- * coloured by APWA convention. Strike Alerts render as red pulse volumes at
- * collision points.
+ * Underground utilities render as a **hairline CAD schematic** — not physical
+ * PVC pipes. Drei <Line> (Line2/LineMaterial) draws screen-space-constant 2px
+ * vectors in muted drafting colours, with an agonizingly slow dashOffset flow
+ * that communicates directionality without distracting the eye. depthTest is
+ * disabled so the lines show through the vellum ground plane in blueprint mode.
  *
- * Lives inside the R3F <Canvas> (Layer 2). These are Three.js materials with
- * numeric colour values — allowlisted in the chrome-color gate.
+ * Strike Alerts remain physical (emissive PBR spheres + Billboard text) — they
+ * are alerts, not data, so they carry visual weight via the Bloom pass.
+ *
+ * Lives inside the R3F <Canvas> (Layer 2). CAD line colours are sourced from
+ * the PALETTE mirror of the --gs-cad-* render tokens (gate-clean).
  */
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type ElementRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Line, Billboard, Text } from "@react-three/drei";
 import * as THREE from "three";
 import type { UtilityType } from "@workstream/domain";
+import { PALETTE } from "../../../../styles/colorTokens";
+import { useSeasonalStore } from "../seasonalStore";
 
-// APWA utility locate colours (industry standard, mode-invariant)
+/** Muted drafting CAD colours (NOT neon). Reads as engineering vellum. */
 const UTILITY_COLORS: Record<UtilityType, string> = {
-  gas: "#e8b000",
-  water: "#1e88c7",
-  sewer: "#2f8f4e",
-  electric: "#d63b2f",
-  comms: "#e8722f",
-  reclaimed: "#8b4fc7",
+  water: PALETTE.cadWater,
+  sewer: PALETTE.cadSewer,
+  gas: PALETTE.cadGas,
+  electric: PALETTE.cadElectric,
+  comms: PALETTE.cadComms,
+  reclaimed: PALETTE.cadReclaimed,
+};
+
+/** Flow animation speeds (world units / second). Agonizingly slow — the eye
+ *  tracks direction only if the user stares. Electric/data fast; drainage slow. */
+const FLOW_SPEEDS: Record<UtilityType, number> = {
+  electric: 0.15,
+  comms: 0.15,
+  water: 0.08,
+  gas: 0.08,
+  reclaimed: 0.08,
+  sewer: 0.03,
 };
 
 export interface SubsurfaceUtility {
@@ -43,53 +61,64 @@ export interface StrikeAlertData {
   severity: "direct" | "near" | "proximity";
 }
 
-/** A single subsurface utility line rendered as a translucent tube. */
-function UtilityTube({ util }: { util: SubsurfaceUtility }) {
-  const color = UTILITY_COLORS[util.type] ?? "#6b7078";
+/**
+ * Schematic conduit — a hairline CAD line representing an underground utility.
+ *
+ * Replaces the old TubeGeometry + meshStandardMaterial (which read as a
+ * plastic pipe). Uses drei <Line> (Line2/LineMaterial) for screen-space-
+ * constant 2px width regardless of ortho zoom. The dashOffset creeps slowly
+ * to show flow direction. depthTest={false} + renderOrder=1 so the line
+ * renders crisply on top of the vellum ground in blueprint mode.
+ *
+ * The conduit is only visible when subsurfaceView is toggled on (drops from
+ * the render loop entirely when off — zero draw-call cost).
+ */
+function SchematicConduit({ util }: { util: SubsurfaceUtility }) {
+  // drei <Line> forwards a Line2 whose .material is a LineMaterial with a
+  // mutable dashOffset. ElementRef<typeof Line> resolves to Line2 | LineSegments2
+  // without needing to import three-stdlib directly.
+  const lineRef = useRef<ElementRef<typeof Line>>(null);
+  const color = UTILITY_COLORS[util.type] ?? PALETTE.cadWater;
+  const flowSpeed = FLOW_SPEEDS[util.type] ?? 0.05;
 
-  const tubeGeo = useMemo(() => {
-    const start = new THREE.Vector3(util.start[0], -util.depthM, util.start[1]);
-    const end = new THREE.Vector3(util.end[0], -util.depthM, util.end[1]);
-    const dir = new THREE.Vector3().subVectors(end, start);
-    const length = dir.length();
-    if (length < 0.01) return null;
-    const path = new THREE.LineCurve3(start, end);
-    return new THREE.TubeGeometry(path, Math.max(2, Math.ceil(length)), util.toleranceM, 8, false);
-  }, [util]);
+  // Build the 2-point path at the utility's burial depth (y negative = below
+  // ground plane). Slightly raised (-depthM + 0.008) to avoid z-fighting with
+  // the ground surface in non-blueprint mode.
+  const points = useMemo<[number, number, number][]>(
+    () => [
+      [util.start[0], -util.depthM + 0.008, util.start[1]],
+      [util.end[0], -util.depthM + 0.008, util.end[1]],
+    ],
+    [util.start, util.end, util.depthM],
+  );
 
-  if (!tubeGeo) return null;
+  // Micro-animation — creep the dashOffset. Barely perceptible.
+  useFrame((_, delta) => {
+    const line = lineRef.current;
+    if (!line) return;
+    line.material.dashOffset -= delta * flowSpeed;
+  });
 
   return (
-    <group>
-      <mesh geometry={tubeGeo}>
-        <meshStandardMaterial
-          color={color}
-          transparent
-          opacity={0.6}
-          roughness={0.4}
-          emissive={color}
-          emissiveIntensity={0.2}
-        />
-      </mesh>
-      {/* Surface marker — a dashed line on the ground showing the utility path */}
-      <Line
-        points={[
-          [util.start[0], 0.008, util.start[1]],
-          [util.end[0], 0.008, util.end[1]],
-        ]}
-        color={color}
-        lineWidth={1}
-        dashed
-        dashSize={0.3}
-        gapSize={0.2}
-        opacity={0.4}
-        transparent
-      />
-    </group>
+    <Line
+      ref={lineRef}
+      points={points}
+      color={color}
+      lineWidth={2}
+      dashed
+      dashSize={0.5}
+      gapSize={0.35}
+      depthTest={false}
+      renderOrder={1}
+      transparent
+      opacity={0.9}
+    />
   );
 }
 
-/** A Strike Alert pulse — a red glowing sphere at the collision point. */
+/** Strike alert — an emissive pulsing sphere at a collision point. Physical
+ *  (PBR + emissive) so it carries visual weight via the Bloom pass. The
+ *  toneMapped={false} flag bypasses ACES so the glow isn't crushed. */
 function StrikePulse({ alert }: { alert: StrikeAlertData }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const glowRef = useRef<THREE.Mesh>(null);
@@ -111,21 +140,29 @@ function StrikePulse({ alert }: { alert: StrikeAlertData }) {
 
   return (
     <group position={alert.point}>
-      {/* Core alert sphere */}
+      {/* Core alert sphere — emissive so the Bloom pass picks it up as a real
+          glow. */}
       <mesh ref={meshRef}>
         <sphereGeometry args={[radius, 16, 16]} />
-        <meshBasicMaterial color="#ef4444" transparent opacity={opacity} />
+        <meshStandardMaterial
+          color={PALETTE.gsConflict}
+          emissive={PALETTE.gsConflict}
+          emissiveIntensity={2.2}
+          transparent
+          opacity={opacity}
+          roughness={0.4}
+        />
       </mesh>
-      {/* Glow halo */}
+      {/* Glow halo — kept subtle; Bloom contributes the diffuse glow. */}
       <mesh ref={glowRef}>
-        <sphereGeometry args={[radius * 2, 16, 16]} />
-        <meshBasicMaterial color="#ef4444" transparent opacity={0.15} />
+        <sphereGeometry args={[radius * 1.8, 16, 16]} />
+        <meshBasicMaterial color={PALETTE.gsConflict} transparent opacity={0.1} depthWrite={false} />
       </mesh>
       {/* Billboarded label (§5 Billboarding mandate) */}
       <Billboard position={[0, radius + 0.5, 0]}>
         <Text
           fontSize={0.25}
-          color="#ef4444"
+          color={PALETTE.gsConflict}
           anchorX="center"
           anchorY="middle"
           outlineWidth={0.02}
@@ -139,7 +176,8 @@ function StrikePulse({ alert }: { alert: StrikeAlertData }) {
 }
 
 /**
- * Render all subsurface utilities + strike alerts.
+ * Render all subsurface utilities + strike alerts. Utilities only render when
+ * subsurfaceView is on (read via getState — no re-render).
  */
 export function SubsurfaceEngine({
   utilities,
@@ -148,10 +186,11 @@ export function SubsurfaceEngine({
   utilities: SubsurfaceUtility[];
   alerts?: StrikeAlertData[];
 }) {
+  const subsurfaceView = useSeasonalStore((s) => s.subsurfaceView);
   return (
-    <group>
+    <group visible={subsurfaceView}>
       {utilities.map((u) => (
-        <UtilityTube key={u.id} util={u} />
+        <SchematicConduit key={u.id} util={u} />
       ))}
       {alerts.map((a) => (
         <StrikePulse key={a.id} alert={a} />
