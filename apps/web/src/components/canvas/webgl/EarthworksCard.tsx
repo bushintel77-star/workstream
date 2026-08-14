@@ -35,7 +35,7 @@ export interface EarthworksCardProps {
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 9,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -46,13 +46,13 @@ const rowStyle: React.CSSProperties = {
   justifyContent: "space-between",
   alignItems: "baseline",
   borderBottom: "1px solid var(--gs-line)",
-  paddingBottom: 6,
-  marginBottom: 6,
+  paddingBottom: 3,
+  marginBottom: 3,
 };
 
 const valueStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 16,
+  fontSize: 12,
   fontWeight: 500,
   color: "var(--gs-ink)",
 };
@@ -101,7 +101,7 @@ export function EarthworksCard({
   return (
     <GlassCard
       position={{ position: "relative" }}
-      style={{ width: 300, padding: "12px 14px" }}
+      style={{ width: 252, padding: "8px 10px" }}
     >
       <div
         data-testid="earthworks-card"
@@ -112,14 +112,14 @@ export function EarthworksCard({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "baseline",
-            marginBottom: 8,
+            marginBottom: 5,
           }}
         >
           <span style={labelStyle}>Earthworks · Cut/Fill</span>
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 11,
+              fontSize: 9,
               color: "var(--gs-ink-secondary)",
             }}
           >
@@ -129,11 +129,11 @@ export function EarthworksCard({
 
         {summary.perPad.map((p, i) => (
           <div key={p.id} style={rowStyle}>
-            <span style={{ fontSize: 11, color: "var(--gs-ink-secondary)" }}>
+            <span style={{ fontSize: 9, color: "var(--gs-ink-secondary)" }}>
               Pad {i + 1} · {p.result.areaM2.toFixed(0)} m² · top +
               {p.topRealM.toFixed(2)}m
             </span>
-            <span style={{ fontSize: 11, fontFamily: "var(--font-tech)" }}>
+            <span style={{ fontSize: 9, fontFamily: "var(--font-tech)" }}>
               <span style={{ color: "var(--gs-conflict)" }}>
                 −{fmtM3(p.result.cutM3)}
               </span>{" "}
@@ -175,7 +175,7 @@ export function EarthworksCard({
         <div
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 11,
+            fontSize: 9,
             color: "var(--gs-ink-secondary)",
             marginTop: 4,
           }}

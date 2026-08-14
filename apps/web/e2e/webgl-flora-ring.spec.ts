@@ -64,7 +64,7 @@ test.describe("WebGL flora ring (ranked suggestions)", () => {
     // Accept the active candidate — one item placed, ring closes.
     await page.locator('[data-testid="flora-accept"]').click();
     const stats = page.locator("[data-gs-glass-card]").first();
-    await expect(stats).toContainText("Items: 1", { timeout: 10_000 });
+    await expect(stats).toContainText("I1", { timeout: 10_000 });
     await expect(ring).toHaveCount(0);
 
     // No fatal console errors.

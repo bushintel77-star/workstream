@@ -82,8 +82,8 @@ export function SliceProfileCard({
   const cutLen = sliceAxis === "z" ? scaleM : scaleM * boardAspect;
 
   // SVG layout.
-  const W = 320;
-  const H = 130;
+  const W = 268;
+  const H = 108;
   const padL = 38;
   const padR = 12;
   const padT = 14;
@@ -107,7 +107,7 @@ export function SliceProfileCard({
       // Relative — this card is a child of the WebGLStudioPreview bottom-right
       // instrument stack column, not an independently positioned card.
       position={{ position: "relative" }}
-      style={{ width: W + 16, padding: "12px 14px" }}
+      style={{ width: W + 12, padding: "8px 10px" }}
     >
       <div style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)" }}>
         <div
@@ -120,7 +120,7 @@ export function SliceProfileCard({
         >
           <span
             style={{
-              fontSize: 11,
+              fontSize: 9,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
               color: "var(--gs-ink-secondary)",
@@ -131,7 +131,7 @@ export function SliceProfileCard({
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 11,
+              fontSize: 9,
               color: "var(--gs-truth, #0030CF)",
             }}
           >
@@ -178,7 +178,7 @@ export function SliceProfileCard({
             justifyContent: "space-between",
             marginTop: 4,
             fontFamily: "var(--font-tech)",
-            fontSize: 11,
+            fontSize: 9,
             color: "var(--gs-ink-secondary)",
           }}
         >

@@ -43,7 +43,7 @@ const TAPE_SAMPLES = 24;
 
 const measureLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 13,
+  fontSize: 11,
   fontWeight: 600,
   color: "var(--gs-primary, #FBBF24)",
   background: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",

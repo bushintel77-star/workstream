@@ -248,20 +248,30 @@ export function WebGLStudioPreview({
       {/* Asset discovery fan-out dock — bottom-centre, above the growth card */}
       <AssetFanOutDock />
 
-      {/* ---- Top-left: scene stats + view toggle ---- */}
-      <GlassCard position="top-left" style={{ padding: "12px 16px" }}>
-        <div style={{ fontFamily: "var(--font-tech)", fontSize: 13, color: "var(--gs-ink)" }}>
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>Studio</div>
-          <div style={{ color: "var(--gs-ink-secondary)", lineHeight: 1.5 }}>
-            Boundary: {stats.boundaryPoints} pts | Items: {stats.items}<br />
-            Strokes: {stats.strokes} | Utilities: {stats.utilities}
-            {stats.strikes > 0 && (
-              <span style={{ color: "var(--gs-conflict)" }}> | ⚠ {stats.strikes} strikes</span>
-            )}<br />
-            Scale: {stats.scaleM.toFixed(0)}m
+      {/* ---- Top-left: compact studio meta + view toggle ---- */}
+      <GlassCard position="top-left" style={{ padding: "8px 10px" }}>
+        <div style={{ fontFamily: "var(--font-tech)", fontSize: 10, color: "var(--gs-ink)" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              gap: 12,
+              marginBottom: 4,
+            }}
+          >
+            <span style={{ fontWeight: 600, letterSpacing: "0.06em" }}>STUDIO</span>
+            {/* Canvas meta as one dense chip line — the drawing IS the hero */}
+            <span style={{ color: "var(--gs-ink-secondary)", fontSize: 9 }}>
+              B{stats.boundaryPoints} · I{stats.items} · S{stats.strokes}
+              {stats.strikes > 0 && (
+                <span style={{ color: "var(--gs-conflict)" }}> · ⚠{stats.strikes}</span>
+              )}
+              {" "}| {stats.scaleM.toFixed(0)}m
+            </span>
           </div>
           {/* Save status chip — zero layout shift, fixed-width reserved space */}
-          <div style={{ marginTop: 6 }}>
+          <div style={{ marginBottom: 4 }}>
             <SaveStatusChip />
           </div>
 
@@ -269,8 +279,7 @@ export function WebGLStudioPreview({
           <div
             style={{
               display: "flex",
-              marginTop: 8,
-              borderRadius: 8,
+              borderRadius: 6,
               border: "1px solid var(--gs-line)",
               overflow: "hidden",
             }}
@@ -279,12 +288,12 @@ export function WebGLStudioPreview({
               onClick={() => setViewBlendTarget(0)}
               style={{
                 flex: 1,
-                padding: "6px 14px",
+                padding: "2px 10px",
                 border: "none",
                 background: !is3D ? "var(--gs-primary)" : "transparent",
                 color: !is3D ? "var(--gs-canvas)" : "var(--gs-ink-secondary)",
                 fontFamily: "var(--font-ui)",
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: 600,
                 cursor: "pointer",
                 transition: "background 0.2s, color 0.2s",
@@ -296,12 +305,12 @@ export function WebGLStudioPreview({
               onClick={() => setViewBlendTarget(1)}
               style={{
                 flex: 1,
-                padding: "6px 14px",
+                padding: "2px 10px",
                 border: "none",
                 background: is3D ? "var(--gs-primary)" : "transparent",
                 color: is3D ? "var(--gs-canvas)" : "var(--gs-ink-secondary)",
                 fontFamily: "var(--font-ui)",
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: 600,
                 cursor: "pointer",
                 transition: "background 0.2s, color 0.2s",
@@ -311,8 +320,8 @@ export function WebGLStudioPreview({
             </button>
           </div>
 
-          {/* Layer toggles */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+          {/* Layer toggles — meta chip set */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: 5 }}>
             <ToggleChip
               active={presentationMode}
               onClick={() => setPresentationMode((p) => !p)}
@@ -421,10 +430,10 @@ export function WebGLStudioPreview({
         </div>
       </GlassCard>
 
-      {/* ---- Bottom-center: growth timeline scrubber ---- */}
+      {/* ---- Bottom-center: growth timeline scrubber (compact) ---- */}
       <GlassCard
-        position={{ bottom: 24, left: "50%", transform: "translateX(-50%)" }}
-        style={{ width: "min(80%, 48rem)", padding: "16px 20px" }}
+        position={{ bottom: 16, left: "50%", transform: "translateX(-50%)" }}
+        style={{ width: "min(70%, 30rem)", padding: "8px 12px" }}
       >
         <div
           style={{
@@ -450,88 +459,100 @@ export function WebGLStudioPreview({
         />
       </GlassCard>
 
-      {/* ---- Top-center: sun position scrubber ---- */}
-      <GlassCard
-        position={{ top: 16, left: "50%", transform: "translateX(-50%)" }}
-        style={{ width: "min(64%, 38rem)", padding: "12px 18px" }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline",
-            marginBottom: 10,
-          }}
-        >
-          <span style={scrubberLabelStyle}>Sun · Real Shadows</span>
-          <span style={{ ...scrubberValueStyle, fontSize: 20 }}>
-            {String(Math.floor(sunMin / 60)).padStart(2, "0")}:
-            {String(sunMin % 60).padStart(2, "0")}
-          </span>
-        </div>
-        <ScrubberTrack
-          value={(sunMin - DAY_START) / (DAY_END - DAY_START)}
-          min={DAY_START}
-          max={DAY_END}
-          step={5}
-          onChange={setSunMin}
-          ariaLabel="Time of day"
-          labels={["06:20", "13:00", "19:40"]}
-        />
-      </GlassCard>
-
-      {/* ---- Top-center offset: season scrubber ---- */}
-      <GlassCard
-        position={{ top: 80, left: "50%", transform: "translateX(-50%)" }}
-        style={{ width: "min(64%, 38rem)", padding: "12px 18px" }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline",
-            marginBottom: 10,
-          }}
-        >
-          <span style={scrubberLabelStyle}>Season · {seasonLabel(seasonProgress)}</span>
-          <span style={{ ...scrubberValueStyle, fontSize: 20 }}>{seasonMonth(seasonProgress)}</span>
-        </div>
-        <ScrubberTrack
-          value={seasonProgress}
-          min={0}
-          max={1}
-          step={0.01}
-          onChange={setSeasonProgress}
-          ariaLabel="Season"
-          labels={["Jan", "Apr", "Jul", "Oct", "Dec"]}
-        />
-      </GlassCard>
-
-      {/* ---- Top-right HUD column: live conditions + itemized fit-sheet ---- */}
+      {/* ---- Top-center: sun + season scrubbers (compact twin row) ---- */}
       <div
         style={{
           position: "absolute",
-          top: 16,
-          right: 16,
+          top: 12,
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          gap: 8,
+          alignItems: "flex-start",
+          pointerEvents: "none",
+        }}
+      >
+        <GlassCard position={{ position: "relative" }} style={{ width: 224, padding: "6px 10px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              marginBottom: 6,
+            }}
+          >
+            <span style={scrubberLabelStyle}>Sun</span>
+            <span style={{ ...scrubberValueStyle, fontSize: 14 }}>
+              {String(Math.floor(sunMin / 60)).padStart(2, "0")}:
+              {String(sunMin % 60).padStart(2, "0")}
+            </span>
+          </div>
+          <ScrubberTrack
+            value={(sunMin - DAY_START) / (DAY_END - DAY_START)}
+            min={DAY_START}
+            max={DAY_END}
+            step={5}
+            onChange={setSunMin}
+            ariaLabel="Time of day"
+            labels={["06:20", "13:00", "19:40"]}
+          />
+        </GlassCard>
+        <GlassCard position={{ position: "relative" }} style={{ width: 224, padding: "6px 10px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              marginBottom: 6,
+            }}
+          >
+            <span style={scrubberLabelStyle}>Season · {seasonLabel(seasonProgress)}</span>
+            <span style={{ ...scrubberValueStyle, fontSize: 14 }}>{seasonMonth(seasonProgress)}</span>
+          </div>
+          <ScrubberTrack
+            value={seasonProgress}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={setSeasonProgress}
+            ariaLabel="Season"
+            labels={["Jan", "Jul", "Dec"]}
+          />
+        </GlassCard>
+      </div>
+
+      {/* ---- Top-right HUD column: meta chip conditions + itemized fit-sheet ---- */}
+      <div
+        style={{
+          position: "absolute",
+          top: 12,
+          right: 12,
           display: "flex",
           flexDirection: "column",
-          gap: 12,
+          gap: 8,
           alignItems: "flex-end",
           pointerEvents: "none",
         }}
       >
-        <GlassCard position={{ position: "relative" }} style={{ padding: "10px 14px" }}>
-          <div style={{ fontFamily: "var(--font-tech)", fontSize: 12, color: "var(--gs-ink)" }}>
-            <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gs-ink-secondary)" }}>
-              Live Conditions
-            </div>
-            <div style={{ color: "var(--gs-ink-secondary)", lineHeight: 1.7 }}>
-              Season: <span style={{ color: "var(--gs-ink)" }}>{seasonLabel(seasonProgress)}</span><br />
-              Leaf Status: <span style={{ color: "var(--gs-primary)" }}>{leafStatus(seasonProgress, year)}</span><br />
-              Sun Elev: <span style={{ color: "var(--gs-ink)" }}>{sunMin}</span> min
-            </div>
-          </div>
-        </GlassCard>
+        {/* Live conditions as a meta chip set — not a card block */}
+        <div
+          data-gs-glass-card
+          style={{
+            display: "flex",
+            gap: 4,
+            padding: "4px 6px",
+            borderRadius: 10,
+            background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+            pointerEvents: "auto",
+          }}
+        >
+          <MetaChip label="Season" value={seasonLabel(seasonProgress)} />
+          <MetaChip label="Leaf" value={leafStatus(seasonProgress, year)} accent />
+          <MetaChip label="Sun" value={`${sunMin}m`} />
+        </div>
         {(items?.length ?? 0) > 0 && (
           <FitSheetCard
             items={items ?? []}
@@ -543,17 +564,6 @@ export function WebGLStudioPreview({
           />
         )}
       </div>
-      <GlassCard position="bottom-left" style={{ padding: "10px 14px" }}>
-        <div style={{ fontFamily: "var(--font-tech)", fontSize: 12, color: "var(--gs-ink)" }}>
-          <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--gs-ink-secondary)" }}>
-            Growth Axis
-          </div>
-          <div style={{ color: "var(--gs-ink-secondary)", lineHeight: 1.7 }}>
-            Year: <span style={{ color: "var(--gs-primary)" }}>{year.toFixed(0)}</span> / 10<br />
-            Root Spread: <span style={{ color: "var(--gs-ink)" }}>{(growthFactor * 100).toFixed(0)}%</span>
-          </div>
-        </div>
-      </GlassCard>
 
       {/* Bottom-right instrument stack — Section / Drainage / Earthworks.
           Each card self-gates (returns null when its instrument is off), so
@@ -603,7 +613,7 @@ export function WebGLStudioPreview({
 
 const scrubberLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 11,
+  fontSize: 9,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -611,12 +621,45 @@ const scrubberLabelStyle: React.CSSProperties = {
 
 const scrubberValueStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 24,
+  fontSize: 14,
   fontWeight: 500,
   color: "var(--gs-primary)",
 };
 
-/** Small toggle chip button. */
+/** A tiny meta chip — label + value in one pill (canvas-first chrome unit). */
+function MetaChip({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "baseline",
+        gap: 4,
+        padding: "2px 7px",
+        borderRadius: 999,
+        border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
+        fontFamily: "var(--font-tech)",
+        fontSize: 9,
+        color: "var(--gs-ink-secondary)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span style={{ letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</span>
+      <span style={{ color: accent ? "var(--gs-primary)" : "var(--gs-ink)", fontSize: 10 }}>
+        {value}
+      </span>
+    </span>
+  );
+}
+
+/** Small toggle chip button (meta-chip density). */
 function ToggleChip({
   active,
   onClick,
@@ -632,13 +675,13 @@ function ToggleChip({
     <button
       onClick={onClick}
       style={{
-        padding: "4px 10px",
-        borderRadius: 8,
+        padding: "2px 7px",
+        borderRadius: 6,
         border: "1px solid var(--gs-line)",
         background: active ? activeColor : "transparent",
         color: active ? "var(--gs-canvas)" : "var(--gs-ink-secondary)",
         fontFamily: "var(--font-ui)",
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: 600,
         cursor: "pointer",
         transition: "background 0.2s, color 0.2s",
@@ -675,9 +718,9 @@ function MeasureReadoutChip({
     <div
       data-testid="measure-readout"
       style={{
-        marginTop: 6,
+        marginTop: 4,
         fontFamily: "var(--font-tech)",
-        fontSize: 12,
+        fontSize: 10,
         color: "var(--gs-primary)",
       }}
     >
@@ -686,7 +729,7 @@ function MeasureReadoutChip({
   );
 }
 
-/** A reusable scrubber track with a progress fill + range input overlay. */
+/** A reusable scrubber track with a progress fill + range input overlay (compact). */
 function ScrubberTrack({
   value,
   min,
@@ -715,7 +758,7 @@ function ScrubberTrack({
         style={{
           position: "relative",
           width: "100%",
-          height: 4,
+          height: 3,
           background: "var(--gs-line)",
           borderRadius: 9999,
         }}
@@ -754,13 +797,13 @@ function ScrubberTrack({
             position: "absolute",
             top: "50%",
             left: `${pct}%`,
-            width: 14,
-            height: 14,
+            width: 10,
+            height: 10,
             transform: "translate(-50%, -50%)",
             background: "var(--gs-primary)",
             border: "2px solid var(--gs-canvas)",
             borderRadius: "50%",
-            boxShadow: "0 0 10px rgba(251,191,36,0.6)",
+            boxShadow: "0 0 8px rgba(251,191,36,0.6)",
             pointerEvents: "none",
           }}
         />
@@ -769,9 +812,9 @@ function ScrubberTrack({
         style={{
           display: "flex",
           justifyContent: "space-between",
-          marginTop: 6,
+          marginTop: 4,
           fontFamily: "var(--font-tech)",
-          fontSize: 12,
+          fontSize: 9,
           color: "var(--gs-ink-secondary)",
         }}
       >

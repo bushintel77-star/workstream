@@ -38,13 +38,13 @@ const DIM_Y = 0.04;
 
 const dimLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 11,
+  fontSize: 9,
   fontWeight: 500,
   color: "var(--gs-truth, #0030CF)",
   background: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
   borderRadius: 6,
-  padding: "1px 6px",
+  padding: "0px 5px",
   whiteSpace: "nowrap",
   pointerEvents: "none",
 };

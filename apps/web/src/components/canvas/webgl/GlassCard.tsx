@@ -7,7 +7,10 @@ import type { CSSProperties, ReactNode } from "react";
  *
  * Binding: docs/GOLD-STANDARD-2026.md §2 ("All UI must be floating Glass Cards")
  *
- * bg #1E2329/70 + backdrop-blur-md + rounded-2xl.
+ * Canvas-first density law: the glass is a SINGLE semi-opaque layer — the
+ * drawing reads through every card (one layer of canvas at all times), so
+ * cards float on the drawing instead of paneling over it. Compact chrome:
+ * small radii, hairline borders, content supplies its own tight spacing.
  *
  * This replaces the neumorphic --hc-neu-* dock plastic and the frost-paper
  * patterns. Glass Cards float over the drawing in the DOM chrome overlay
@@ -30,10 +33,10 @@ export interface GlassCardProps {
 }
 
 const positionMap: Record<string, CSSProperties> = {
-  "top-left": { top: 16, left: 16 },
-  "top-right": { top: 16, right: 16 },
-  "bottom-left": { bottom: 16, left: 16 },
-  "bottom-right": { bottom: 16, right: 16 },
+  "top-left": { top: 12, left: 12 },
+  "top-right": { top: 12, right: 12 },
+  "bottom-left": { bottom: 12, left: 12 },
+  "bottom-right": { bottom: 12, right: 12 },
   center: { top: "50%", left: "50%", transform: "translate(-50%, -50%)" },
 };
 
@@ -54,12 +57,13 @@ export function GlassCard({
       style={{
         position: "absolute",
         pointerEvents: "auto",
-        // Gold Standard §2: Glass Card = --gs-glass at 70% + backdrop-blur-md
-        background: "color-mix(in srgb, var(--gs-glass) 70%, transparent)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        borderRadius: "16px",
-        border: "1px solid color-mix(in srgb, var(--gs-line) 50%, transparent)",
+        // Canvas-first: ~38% glass — the drawing reads through the card,
+        // keeping "one layer of canvas" always present under the chrome.
+        background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        borderRadius: 12,
+        border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
         ...posStyle,
         ...style,
       }}

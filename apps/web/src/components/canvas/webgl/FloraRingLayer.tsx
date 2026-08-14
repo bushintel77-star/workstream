@@ -44,8 +44,8 @@ import {
 const GOLD = "var(--gs-primary)";
 
 const cardStyle: React.CSSProperties = {
-  width: 268,
-  padding: "12px 14px",
+  width: 238,
+  padding: "9px 11px",
   borderRadius: 14,
   border: `1px solid color-mix(in srgb, ${GOLD} 40%, transparent)`,
   background: "color-mix(in srgb, var(--gs-glass) 88%, transparent)",
@@ -62,7 +62,7 @@ const chipBase: React.CSSProperties = {
   display: "block",
   width: "100%",
   textAlign: "left",
-  padding: "6px 8px",
+  padding: "4px 6px",
   borderRadius: 8,
   border: "1px solid var(--gs-line)",
   background: "transparent",
@@ -195,7 +195,7 @@ export function FloraRingLayer({
           >
             <span
               style={{
-                fontSize: 10,
+                fontSize: 8.5,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 color: "var(--gs-ink-secondary)",
@@ -207,7 +207,7 @@ export function FloraRingLayer({
               data-testid="flora-sun-chip"
               style={{
                 fontFamily: "var(--font-tech)",
-                fontSize: 10,
+                fontSize: 8.5,
                 color: "var(--gs-truth)",
                 border: "1px solid color-mix(in srgb, var(--gs-truth) 35%, transparent)",
                 borderRadius: 999,
@@ -236,7 +236,7 @@ export function FloraRingLayer({
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>{c.label}</span>
+                  <span style={{ fontSize: 10.5, fontWeight: 600 }}>{c.label}</span>
                   {c.plantWindow === "spring_hold" && (
                     <span
                       style={{
@@ -252,7 +252,7 @@ export function FloraRingLayer({
                 <div
                   style={{
                     fontFamily: "var(--font-tech)",
-                    fontSize: 10,
+                    fontSize: 8.5,
                     color: "var(--gs-ink-secondary)",
                     marginTop: 2,
                   }}
@@ -260,7 +260,7 @@ export function FloraRingLayer({
                   <em>{c.botanicalName}</em> · {c.matureHeightM.toFixed(1)} m ·{" "}
                   {c.sun}
                 </div>
-                <div style={{ fontSize: 10, color: "var(--gs-ink-secondary)", marginTop: 2 }}>
+                <div style={{ fontSize: 8.5, color: "var(--gs-ink-secondary)", marginTop: 2 }}>
                   {c.why}
                 </div>
               </button>
@@ -274,7 +274,7 @@ export function FloraRingLayer({
               disabled={summary.blocked}
               style={{
                 flex: 1,
-                padding: "6px 10px",
+                padding: "4px 8px",
                 borderRadius: 999,
                 border: `1px solid color-mix(in srgb, ${GOLD} 50%, transparent)`,
                 background: summary.blocked
@@ -293,7 +293,7 @@ export function FloraRingLayer({
               data-testid="flora-dismiss"
               onClick={() => setFloraSession(null)}
               style={{
-                padding: "6px 10px",
+                padding: "4px 8px",
                 borderRadius: 999,
                 border: "1px solid var(--gs-line)",
                 background: "transparent",
@@ -309,7 +309,7 @@ export function FloraRingLayer({
 
           <div
             style={{
-              marginTop: 8,
+              marginTop: 5,
               fontSize: 9,
               color: "var(--gs-ink-secondary)",
             }}

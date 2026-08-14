@@ -54,7 +54,7 @@ test.describe("WebGL asset fan-out (place + persist)", () => {
     const box = (await canvas.boundingBox())!;
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     const stats = page.locator("[data-gs-glass-card]").first();
-    await expect(stats).toContainText("Items: 1", { timeout: 10_000 });
+    await expect(stats).toContainText("I1", { timeout: 10_000 });
 
     // Wait for the debounced autosave to persist BEFORE reloading (a real
     // operator sees the save chip; reloading inside the 1.1s debounce would
@@ -68,7 +68,7 @@ test.describe("WebGL asset fan-out (place + persist)", () => {
       timeout: 10_000,
     });
     const statsAfter = page.locator("[data-gs-glass-card]").first();
-    await expect(statsAfter).toContainText("Items: 1", { timeout: 10_000 });
+    await expect(statsAfter).toContainText("I1", { timeout: 10_000 });
 
     // 5. No fatal console errors.
     const fatal = errors.filter(

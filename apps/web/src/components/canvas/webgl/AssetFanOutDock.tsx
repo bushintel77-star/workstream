@@ -23,13 +23,13 @@ const GOLD = "var(--gs-primary)";
 function cardFaceStyle(active: boolean): React.CSSProperties {
   return active
     ? {
-        width: 176,
-        minHeight: 224,
+        width: 108,
+        minHeight: 138,
         border: `1px solid color-mix(in srgb, ${GOLD} 50%, transparent)`,
         background: `color-mix(in srgb, ${GOLD} 6%, var(--gs-glass))`,
-        boxShadow: "0 0 24px color-mix(in srgb, var(--gs-primary) 12%, transparent)",
+        boxShadow: "0 0 18px color-mix(in srgb, var(--gs-primary) 12%, transparent)",
       }
-    : { width: 148, minHeight: 192 };
+    : { width: 92, minHeight: 118 };
 }
 
 function AssetCard({
@@ -51,13 +51,13 @@ function AssetCard({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 6,
-        padding: 14,
-        borderRadius: 14,
+        gap: 3,
+        padding: 8,
+        borderRadius: 10,
         border: "1px solid var(--gs-line)",
-        background: "color-mix(in srgb, var(--gs-glass) 70%, transparent)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
+        background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
         cursor: "pointer",
         transition: "transform 0.2s ease, box-shadow 0.2s ease",
         pointerEvents: "auto",
@@ -73,7 +73,7 @@ function AssetCard({
             left: 0,
             width: "100%",
             height: 2,
-            borderRadius: "14px 14px 0 0",
+            borderRadius: "10px 10px 0 0",
             background: GOLD,
             opacity: 0.6,
           }}
@@ -81,7 +81,7 @@ function AssetCard({
       )}
       <span
         style={{
-          fontSize: active ? 34 : 26,
+          fontSize: active ? 20 : 16,
           lineHeight: 1,
           color: active ? GOLD : "var(--gs-ink-secondary)",
         }}
@@ -92,10 +92,11 @@ function AssetCard({
       <span
         style={{
           fontFamily: "var(--font-ui)",
-          fontSize: 12,
+          fontSize: 9.5,
           fontWeight: 600,
           color: "var(--gs-ink)",
           textAlign: "center",
+          lineHeight: 1.25,
         }}
       >
         {entry.label}
@@ -103,17 +104,18 @@ function AssetCard({
       <span
         style={{
           fontFamily: "var(--font-tech)",
-          fontSize: 10,
+          fontSize: 8,
           color: "var(--gs-ink-secondary)",
           textAlign: "center",
-          lineHeight: 1.5,
+          lineHeight: 1.4,
         }}
       >
         {entry.botanicalName && <em>{entry.botanicalName}</em>}
         {entry.heightM != null && (
           <div>
-            Hgt {entry.heightM.toFixed(1)}m
-            {entry.spreadM != null ? ` · Rad ${entry.spreadM.toFixed(1)}m` : ""}
+            H {entry.heightM.toFixed(1)}
+            {entry.spreadM != null ? ` · R ${entry.spreadM.toFixed(1)}`
+              : ""}
           </div>
         )}
       </span>
@@ -121,18 +123,18 @@ function AssetCard({
         <span
           data-testid="asset-place-cta"
           style={{
-            marginTop: 6,
-            padding: "4px 14px",
+            marginTop: 2,
+            padding: "1px 9px",
             borderRadius: 999,
             border: `1px solid color-mix(in srgb, ${GOLD} 50%, transparent)`,
             background: `color-mix(in srgb, ${GOLD} 20%, transparent)`,
             color: GOLD,
             fontFamily: "var(--font-ui)",
-            fontSize: 11,
+            fontSize: 9,
             fontWeight: 600,
           }}
         >
-          Place Asset
+          Place
         </span>
       )}
     </button>
@@ -168,18 +170,18 @@ export function AssetFanOutDock() {
         data-testid="asset-dock"
         style={{
           position: "absolute",
-          bottom: 132,
+          bottom: 96,
           left: "50%",
           transform: "translateX(-50%)",
-          padding: "8px 16px",
+          padding: "5px 12px",
           borderRadius: 999,
           border: `1px solid color-mix(in srgb, ${GOLD} 40%, transparent)`,
-          background: "color-mix(in srgb, var(--gs-glass) 60%, transparent)",
+          background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
           pointerEvents: "none",
           fontFamily: "var(--font-tech)",
-          fontSize: 11,
+          fontSize: 10,
           color: GOLD,
         }}
       >
@@ -193,23 +195,23 @@ export function AssetFanOutDock() {
       data-testid="asset-dock"
       style={{
         position: "absolute",
-        bottom: 132, // stacked above the growth scrubber card
+        bottom: 96, // stacked above the growth scrubber card
         left: "50%",
         transform: "translateX(-50%)",
         display: "flex",
         alignItems: "flex-end",
-        gap: 10,
-        padding: "12px 14px",
-        borderRadius: 16,
-        border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
-        background: "color-mix(in srgb, var(--gs-glass) 40%, transparent)",
+        gap: 6,
+        padding: "7px 9px",
+        borderRadius: 12,
+        border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+        background: "color-mix(in srgb, var(--gs-glass) 24%, transparent)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
         // Container passes clicks through to the canvas — the dock spans the
         // screen centre, so only the cards themselves may capture (Stitch
         // phase_1.1 does exactly this: pointer-events-none dock, auto cards).
         pointerEvents: "none",
-        maxWidth: "min(92vw, 60rem)",
+        maxWidth: "min(94vw, 64rem)",
       }}
     >
       {palette.map((entry) => (
@@ -225,10 +227,10 @@ export function AssetFanOutDock() {
       <div
         style={{
           alignSelf: "center",
-          maxWidth: 160,
+          maxWidth: 110,
           fontFamily: "var(--font-tech)",
-          fontSize: 10,
-          lineHeight: 1.6,
+          fontSize: 9,
+          lineHeight: 1.5,
           color: armedSymbolId ? GOLD : "var(--gs-ink-secondary)",
         }}
       >

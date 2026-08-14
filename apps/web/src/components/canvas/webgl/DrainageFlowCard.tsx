@@ -38,7 +38,7 @@ export interface DrainageFlowCardProps {
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 9,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -49,13 +49,13 @@ const rowStyle: React.CSSProperties = {
   justifyContent: "space-between",
   alignItems: "baseline",
   borderBottom: "1px solid var(--gs-line)",
-  paddingBottom: 6,
-  marginBottom: 6,
+  paddingBottom: 3,
+  marginBottom: 3,
 };
 
 const valueStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 16,
+  fontSize: 12,
   fontWeight: 500,
   color: "var(--gs-ink)",
 };
@@ -101,7 +101,7 @@ export function DrainageFlowCard({
   return (
     <GlassCard
       position={{ position: "relative" }}
-      style={{ width: 300, padding: "12px 14px" }}
+      style={{ width: 252, padding: "8px 10px" }}
     >
       <div
         data-testid="drainage-flow-card"
@@ -112,14 +112,14 @@ export function DrainageFlowCard({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "baseline",
-            marginBottom: 8,
+            marginBottom: 5,
           }}
         >
           <span style={labelStyle}>Drainage · Overland Flow</span>
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 11,
+              fontSize: 9,
               color: "var(--gs-ink-secondary)",
             }}
           >
@@ -156,7 +156,7 @@ export function DrainageFlowCard({
                   display: "flex",
                   justifyContent: "space-between",
                   fontFamily: "var(--font-tech)",
-                  fontSize: 11,
+                  fontSize: 9,
                   color: "var(--gs-ink-secondary)",
                   lineHeight: 1.7,
                 }}
@@ -200,7 +200,7 @@ export function DrainageFlowCard({
             marginTop: 4,
             padding: "6px 10px",
             borderRadius: 8,
-            fontSize: 11,
+            fontSize: 9,
             fontFamily: "var(--font-ui)",
             fontWeight: 600,
             color:

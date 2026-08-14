@@ -34,7 +34,7 @@ import type {
 import { buildEstimateArgsFromStudio, summarizeFitSheet, fmtAud } from "./fitSheet";
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 9,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -44,15 +44,15 @@ const rowStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "baseline",
-  gap: 8,
+  gap: 6,
   borderBottom: "1px solid var(--gs-line)",
-  paddingBottom: 5,
-  marginBottom: 5,
+  paddingBottom: 3,
+  marginBottom: 3,
 };
 
 const figureStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 12,
+  fontSize: 10,
   color: "var(--gs-ink)",
   whiteSpace: "nowrap",
 };
@@ -70,14 +70,14 @@ function StockChip({ inStock, mode }: { inStock: boolean; mode: string }) {
       data-testid="fit-sheet-stock-chip"
       style={{
         fontFamily: "var(--font-tech)",
-        fontSize: 9,
+        fontSize: 8,
         fontWeight: 600,
-        letterSpacing: "0.06em",
+        letterSpacing: "0.05em",
         color,
         border: `1px solid color-mix(in srgb, ${color} 35%, transparent)`,
         background: `color-mix(in srgb, ${color} 12%, transparent)`,
         borderRadius: 999,
-        padding: "1px 6px",
+        padding: "0px 5px",
         whiteSpace: "nowrap",
       }}
     >
@@ -132,7 +132,7 @@ export function FitSheetCard({
     <GlassCard
       // Relative — a child of the top-right HUD column in WebGLStudioPreview.
       position={{ position: "relative" }}
-      style={{ width: 340, padding: "12px 14px" }}
+      style={{ width: 272, padding: "8px 10px" }}
     >
       <div
         data-testid="fit-sheet-card"
@@ -148,12 +148,12 @@ export function FitSheetCard({
           }}
         >
           <span style={labelStyle}>Itemized Quotation</span>
-          {settling && (
+            {settling && (
             <span
               data-testid="fit-sheet-settling"
               style={{
                 fontFamily: "var(--font-tech)",
-                fontSize: 10,
+                fontSize: 8,
                 color: "var(--gs-primary)",
               }}
             >
@@ -173,7 +173,7 @@ export function FitSheetCard({
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: 9.5,
                       color: "var(--gs-ink)",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -234,14 +234,14 @@ export function FitSheetCard({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "baseline",
-            marginTop: 6,
+            marginTop: 4,
           }}
         >
           <span style={{ ...labelStyle, color: "var(--gs-ink)" }}>Total incl GST</span>
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 22,
+              fontSize: 16,
               fontWeight: 600,
               color: "var(--gs-primary)",
             }}
@@ -255,7 +255,7 @@ export function FitSheetCard({
           style={{
             display: "flex",
             justifyContent: "space-between",
-            marginTop: 8,
+            marginTop: 5,
             fontFamily: "var(--font-tech)",
             fontSize: 10,
             color: "var(--gs-ink-secondary)",
@@ -271,7 +271,7 @@ export function FitSheetCard({
           <div
             data-testid="fit-sheet-alert"
             style={{
-              marginTop: 8,
+              marginTop: 5,
               padding: "6px 8px 6px 10px",
               borderLeft: "2px solid var(--gs-primary)",
               background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
@@ -288,7 +288,7 @@ export function FitSheetCard({
         {/* Honesty footer */}
         <div
           style={{
-            marginTop: 8,
+            marginTop: 5,
             fontSize: 9,
             color: "var(--gs-ink-secondary)",
             letterSpacing: "0.04em",
