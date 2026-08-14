@@ -697,8 +697,11 @@ Cross-check against build status below before treating any phase as shipped.
       `AssetPlaceLayer` + `assetPalette.ts`: curated TYPE_TO_SYMBOL palette
       with real catalog botany, gold active card, armed hint pill, half-metre
       grid snap, store placements with client-derived items, autosave
-      round-trip e2e-verified). Flora ranking at click (the flora ring)
-      remains the follow-up.
+      round-trip e2e-verified). The **flora ring** also shipped on the GL
+      surface (`floraWorld.ts` + `FloraRingLayer`: plant cards open ≤3
+      ranked candidates at the click — project lat/lng + live sun-scrubber
+      shade grid, TPZ/canopy guard on accept, sun/exposure chip = the Solar
+      Impact readout). Soil/aspect soft filters remain SVG-only for now.
       Concept references: [concept-01-cad-operator-studio.png](docs/design-spec/concept-mockups/concept-01-cad-operator-studio.png)
       (floating tool ribbon, asset carousel, meta chips) and
       [concept-03-auto-placement-logic.png](docs/design-spec/concept-mockups/concept-03-auto-placement-logic.png)

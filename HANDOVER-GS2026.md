@@ -255,6 +255,8 @@ apps/web/src/components/canvas/webgl/
 ├── assetPalette.ts           # Fan-out dock palette — TYPE_TO_SYMBOL + real catalog botany (pure, tested)
 ├── AssetFanOutDock.tsx       # Bottom fan-out dock; collapses to armed hint pill
 ├── AssetPlaceLayer.tsx       # Armed click-to-place capture (grid snap → CatalogPlacement)
+├── floraWorld.ts             # Flora ring math: shade grid → rank → exposure/scale (pure, tested)
+├── FloraRingLayer.tsx        # Ranked suggestion ring — ghost disc + first clickable <Html> card
 ├── canvasBridges.ts          # BYDA/trench/irrigation/levels → live studio data
 └── features/
     └── SubsurfaceEngine.tsx  # SchematicConduit (hairline Line2) + StrikePulse
@@ -394,15 +396,24 @@ Notable unexamined in `docs/design/gold-standard-2026/stitch/`:
   existing autosave PUT persists it (round-trip e2e-verified: place → Saved →
   reload → Items: 1). Placements + arming live in `studioStore` with mutual
   exclusion across the three capture layers (sketch / measure / asset).
-  Honest follow-up: flora RANKING (`rankCurtisFloraCandidates`) needs the click
-  cell's shade context — the flora ring at click is the next increment; v1
-  ships curated order rather than fake scores.
-- Solar Impact 3D — mostly subsumed (real sun rig + shadows exist); the delta
-  (exposure %/shadow-zone readouts) falls out of the flora-ring build's
-  shade-grid needs
-- Revision History HUD — infra exists (design-branches API + DesignBranchDock
-  on SVG studio); weakest signal (the Stitch turned out to be a phase
-  scrubber, not a commit list)
+  Honest follow-up: flora RANKING now shipped too — see below. Soil/aspect
+  soft filters remain the SVG-side gap.
+- ~~Flora Ring~~ — implemented (`floraWorld.ts` + `FloraRingLayer`): arming a
+  PLANT card now opens the ranked suggestion ring at the click instead of a
+  direct placement (SVG flora-session semantics; hardscape cards still place
+  directly). ≤3 real candidates from `rankCurtisFloraCandidates` with the
+  project's lat/lng (better than the SVG's hardcoded Prahran) + the LIVE sun
+  scrubber feeding `buildIndicativeShadeGrid` — scrub the sun, the ring
+  re-ranks in place. Ghost canopy disc (spread-sized, TPZ/canopy-guard
+  tinted via `assessPlantingPlacement`), the studio's first CLICKABLE drei
+  `<Html>` card (candidate chips + `why` microcopy + Spring-hold badge), and
+  the sun/exposure chip — the Solar Impact delta, delivered. Accept mints the
+  placement (scale from mature spread, SVG parity); dismiss keeps armed.
+- ~~Solar Impact 3D~~ — closed by absorption: the real-sun rig + VSM shadows
+  shipped earlier, and the ring's live sun-hours/exposure chip delivers the
+  analysis readout the Stitch screens added. Remaining under Gap 5: Revision
+  History HUD only (weakest signal — the Stitch is a phase scrubber, not a
+  commit list; infra exists via design-branches API).
 
 ### Gap 6: Mobile licensable sketch tool — FUTURE PHASE ⚠️
 The expo mobile app has `MobileSketchTopbar`/`MobileToolStrip` components. Sketching is

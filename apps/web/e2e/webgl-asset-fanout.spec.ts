@@ -42,10 +42,11 @@ test.describe("WebGL asset fan-out (place + persist)", () => {
     await page.getByRole("button", { name: "▸ Assets" }).click();
     const dock = page.locator('[data-testid="asset-dock"]');
     await expect(dock).toBeVisible({ timeout: 5_000 });
-    await expect(page.locator('[data-testid="asset-card-olive-standard"]')).toBeVisible();
+    await expect(page.locator('[data-testid="asset-card-bluestone-paver"]')).toBeVisible();
 
-    // 2. Arm the olive (canopy tree) — the dock collapses to the armed hint.
-    await page.locator('[data-testid="asset-card-olive-standard"]').click();
+    // 2. Arm the paver — a HARDSCAPE symbol (plants now open the flora ring,
+    //    which has its own spec; this spec pins the direct-place + persist path).
+    await page.locator('[data-testid="asset-card-bluestone-paver"]').click();
     await expect(dock).toContainText("Armed", { timeout: 5_000 });
 
     // 3. Click the lot centre — one item placed.

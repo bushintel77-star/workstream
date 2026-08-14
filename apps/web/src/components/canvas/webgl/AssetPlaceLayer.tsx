@@ -21,6 +21,7 @@ import type { ThreeEvent } from "@react-three/fiber";
 import { useStudioStore } from "./studioStore";
 import { worldToPct } from "./coordTransform";
 import { snapToGridMetres } from "../handoff/geometry/snap";
+import { symbolToFloraForm } from "./floraWorld";
 
 export interface AssetPlaceLayerProps {
   scaleM: number;
@@ -33,6 +34,7 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
   const addPlacement = useStudioStore((s) => s.addPlacement);
   const armedSymbolId = useStudioStore((s) => s.armedSymbolId);
   const setArmedSymbolId = useStudioStore((s) => s.setArmedSymbolId);
+  const setFloraSession = useStudioStore((s) => s.setFloraSession);
 
   // One placement per arm — guards the stale-closure window between the
   // store update (disarm) and the next render. Reset when a NEW arm happens.
@@ -44,17 +46,28 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (!armedSymbolId || placedRef.current || !e.point) return;
     e.stopPropagation();
-    placedRef.current = true;
 
     // Snap to the half-metre CAD grid (board-% via the shared snap math).
     const raw = worldToPct(e.point.x, e.point.z, scaleM, boardAspect);
     const snapped = snapToGridMetres(raw, scaleM);
+    const x = clampPct(snapped.x);
+    const y = clampPct(snapped.y);
 
+    // Flora forms open the ranked suggestion ring at the click instead of
+    // placing directly (SVG flora-session semantics); the session stays
+    // armed so a second click can move it.
+    const form = symbolToFloraForm(armedSymbolId);
+    if (form) {
+      setFloraSession({ x, y, form });
+      return;
+    }
+
+    placedRef.current = true;
     addPlacement({
       id: crypto.randomUUID(),
       symbol_id: armedSymbolId,
-      x_pct: clampPct(snapped.x),
-      y_pct: clampPct(snapped.y),
+      x_pct: x,
+      y_pct: y,
       rotation_deg: 0,
       scale: 1,
     });

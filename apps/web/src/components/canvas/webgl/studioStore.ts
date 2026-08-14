@@ -26,6 +26,7 @@
 
 import { create } from "zustand";
 import type { CanvasStroke, CatalogPlacement } from "@workstream/contracts";
+import type { FloraStudioForm } from "@workstream/domain";
 import type { PctPoint } from "./coordTransform";
 
 /* -------------------------------------------------------------------------- */
@@ -154,6 +155,21 @@ export interface StudioStoreState {
   /** All canvas placements (CatalogPlacement contract schema). */
   placements: CatalogPlacement[];
 
+  // --- Flora ring (ranked planting suggestions at a click) ---
+  /**
+   * The open flora session: click point (board-%), armed form, and the
+   * active candidate index. Candidates are DERIVED (FloraRingLayer memo —
+   * they re-rank live with the sun scrubber + placements). Opening or
+   * moving the session does not disarm; accept disarms, dismiss keeps armed
+   * (SVG studio semantics).
+   */
+  floraSession: {
+    x: number;
+    y: number;
+    form: FloraStudioForm;
+    activeIdx: number;
+  } | null;
+
   // --- Fused rendering context ---
   /**
    * The TARGET view blend. 0 = orthographic plan, 1 = perspective 3D.
@@ -173,9 +189,11 @@ export interface StudioStoreState {
   /** All sketch strokes in board-% space (the CanvasStroke contract schema). */
   sketchStrokes: CanvasStroke[];
 
-  // --- Project context (for persistence + aerial) ---
+  // --- Project context (for persistence + aerial + flora ranking) ---
   projectId: string;
   aerialUri: string | null;
+  /** Project address — feeds flora municipality style-boost + microcopy. */
+  projectAddress: string;
 
   // --- Save status machine ---
   saveStatus: SaveStatus;
@@ -218,6 +236,13 @@ export interface StudioStoreState {
   /** Append a single placement (a place gesture). */
   addPlacement: (placement: CatalogPlacement) => void;
 
+  /** Open/move the flora session at a point, or dismiss with null. */
+  setFloraSession: (
+    session: { x: number; y: number; form: FloraStudioForm } | null,
+  ) => void;
+  /** Select the active candidate (clamped to the candidate range). */
+  setFloraActiveIdx: (idx: number) => void;
+
   /** Replace the entire stroke array (e.g., on hydrate / undo / redo). */
   setSketchStrokes: (strokes: CanvasStroke[]) => void;
   /** Append a single committed stroke. */
@@ -227,7 +252,11 @@ export interface StudioStoreState {
   /** Update a single stroke (e.g., extrude height metadata). */
   updateSketchStroke: (id: string, patch: Partial<CanvasStroke>) => void;
 
-  setProjectContext: (projectId: string, aerialUri: string | null) => void;
+  setProjectContext: (
+    projectId: string,
+    aerialUri: string | null,
+    projectAddress?: string,
+  ) => void;
 
   setSaveStatus: (status: SaveStatus, errorKind?: SaveErrorKind) => void;
   markSaved: () => void;
@@ -272,12 +301,16 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   armedSymbolId: null,
   placements: [],
 
+  // Flora ring defaults — no open session.
+  floraSession: null,
+
   // Ink
   sketchStrokes: [],
 
   // Context
   projectId: "",
   aerialUri: null,
+  projectAddress: "",
 
   // Save status
   saveStatus: "idle",
@@ -326,6 +359,19 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   addPlacement: (placement) =>
     set((s) => ({ placements: [...s.placements, placement] })),
 
+  setFloraSession: (session) =>
+    set((s) =>
+      session
+        ? { floraSession: { ...session, activeIdx: 0 }, armedSymbolId: s.armedSymbolId }
+        : { floraSession: null },
+    ),
+  setFloraActiveIdx: (idx) =>
+    set((s) =>
+      s.floraSession
+        ? { floraSession: { ...s.floraSession, activeIdx: Math.max(0, idx) } }
+        : {},
+    ),
+
   setSketchStrokes: (sketchStrokes) => set({ sketchStrokes }),
   addSketchStroke: (stroke) =>
     set((s) => ({ sketchStrokes: [...s.sketchStrokes, stroke] })),
@@ -340,7 +386,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       ),
     })),
 
-  setProjectContext: (projectId, aerialUri) => set({ projectId, aerialUri }),
+  setProjectContext: (projectId, aerialUri, projectAddress) =>
+    set({ projectId, aerialUri, projectAddress: projectAddress ?? "" }),
 
   setSaveStatus: (saveStatus, errorKind) =>
     set({ saveStatus, saveErrorKind: errorKind ?? null }),

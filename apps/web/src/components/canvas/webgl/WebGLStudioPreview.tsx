@@ -74,6 +74,8 @@ export interface WebGLStudioPreviewProps {
   /** Project latitude (decimal degrees). Defaults to Prahran demo. */
   lat?: number;
   lng?: number;
+  /** Project address — feeds the flora ring's municipality ranking. */
+  projectAddress?: string;
   /** Persisted canvas strokes (hydrated into the store on mount). */
   initialStrokes?: CanvasStroke[];
   /** Persisted placements — hydrated into the store on mount; the store is
@@ -104,6 +106,7 @@ export function WebGLStudioPreview({
   easementsPct,
   lat,
   lng,
+  projectAddress = "",
   initialStrokes,
   placements: initialPlacements = [],
   bydaAssets = [],
@@ -160,9 +163,9 @@ export function WebGLStudioPreview({
     const store = useStudioStore.getState();
     store.setSketchStrokes(initialStrokes ?? []);
     store.setPlacements(initialPlacements);
-    store.setProjectContext(projectId, aerialUri);
+    store.setProjectContext(projectId, aerialUri, projectAddress);
     if (initialSketchMode) store.setSketchMode(true);
-  }, [initialStrokes, initialPlacements, projectId, aerialUri, initialSketchMode, hydratedRef]);
+  }, [initialStrokes, initialPlacements, projectId, aerialUri, projectAddress, initialSketchMode, hydratedRef]);
 
   // Placements live in the store after hydration — the live source for both
   // the 3D items and the autosave doc. Pure client-side bridge (proven in

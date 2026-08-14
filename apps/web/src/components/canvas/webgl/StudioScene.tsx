@@ -38,6 +38,7 @@ import { EarthworksLayer } from "./EarthworksLayer";
 import { DimensionLayer } from "./DimensionLayer";
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { AssetPlaceLayer } from "./AssetPlaceLayer";
+import { FloraRingLayer } from "./FloraRingLayer";
 import { type PresentationLensFilter } from "./PresentationLens";
 
 /** Prahran demo fallback — same default as the 2D sun/growth dock + GrowthStudio. */
@@ -693,6 +694,14 @@ export function StudioScene({
       />
       {/* Asset placement — armed fan-out symbol, self-gates on armedSymbolId. */}
       <AssetPlaceLayer scaleM={scaleM} boardAspect={boardAspect} />
+      {/* Flora ring — ranked suggestions at a click (self-gates on the
+          session; candidates derive from lat/lng + live sun + placements). */}
+      <FloraRingLayer
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        lat={lat}
+        lng={lng}
+      />
       {/* Aerial photo underlay — opaque in plan view, fades in 3D. */}
       <AerialUnderlay aerialUri={aerialUri} scaleM={scaleM} boardAspect={boardAspect} />
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the

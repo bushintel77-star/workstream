@@ -159,6 +159,7 @@ export default async function ProjectCanvasPage({
           }
           lat={project.lat ?? undefined}
           lng={project.lng ?? undefined}
+          projectAddress={project.address}
           initialStrokes={canvas?.strokes ?? []}
           placements={canvas?.placements ?? []}
           bydaAssets={frame?.byda_assets ?? []}
