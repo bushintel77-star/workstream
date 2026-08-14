@@ -35,6 +35,8 @@ import { TerrainMesh } from "./TerrainMesh";
 import { ElevationSliceLine } from "./ElevationSliceLine";
 import { DrainageFlowLayer } from "./DrainageFlowLayer";
 import { EarthworksLayer } from "./EarthworksLayer";
+import { DimensionLayer } from "./DimensionLayer";
+import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { type PresentationLensFilter } from "./PresentationLens";
 
 /** Prahran demo fallback — same default as the 2D sun/growth dock + GrowthStudio. */
@@ -674,6 +676,20 @@ export function StudioScene({
           heightmapPoints={heightmapPoints}
         />
       )}
+      {/* Working-drawing dimension ring (boundary B… + building F…) —
+          self-gates on dimsView; stays visible in Presentation mode. */}
+      <DimensionLayer
+        boundaryPct={boundaryPct}
+        buildingPct={buildingPct}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+      />
+      {/* Measure tape — armed tool, self-gates on measureActive. */}
+      <MeasureTapeLayer
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        heightmapPoints={heightmapPoints}
+      />
       {/* Aerial photo underlay — opaque in plan view, fades in 3D. */}
       <AerialUnderlay aerialUri={aerialUri} scaleM={scaleM} boardAspect={boardAspect} />
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the

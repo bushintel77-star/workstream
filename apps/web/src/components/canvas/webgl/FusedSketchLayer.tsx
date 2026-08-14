@@ -34,7 +34,7 @@
 
 import { useCallback, useMemo, useRef, useState, type ElementRef } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { Line } from "@react-three/drei";
+import { Line, Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { CanvasStroke } from "@workstream/contracts";
 import { PALETTE } from "../../../styles/colorTokens";
@@ -42,6 +42,7 @@ import { useStudioStore } from "./studioStore";
 import { pctToWorld, worldToPct, type PctPoint, type HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
 import { pointInPolygonXZ } from "./cutFill";
+import { snapDrawPointer, type SnapHint } from "./snapWorld";
 
 /** Snap-close threshold in world metres. */
 const SNAP_CLOSE_M = 2.0;
@@ -84,11 +85,32 @@ export function FusedSketchLayer({
   // Extrusion state.
   const [extrudeTarget, setExtrudeTarget] = useState<CanvasStroke | null>(null);
   const [extrudeHeight, setExtrudeHeight] = useState(0);
+  // Active snap decision for the pointer (renders the SnapMarker).
+  const [snapHint, setSnapHint] = useState<SnapHint | null>(null);
 
   const isDrawingRef = useRef(false);
   const isExtrudingRef = useRef(false);
   const extrudeStartYRef = useRef(0);
   const pointsRef = useRef<THREE.Vector3[]>([]);
+
+  // Vertex magnets — committed stroke endpoints in world metres.
+  const snapVertices = useMemo(
+    () =>
+      strokes.flatMap((s) => {
+        const pts = s.points ?? [];
+        if (pts.length === 0) return [];
+        const ends = [pts[0]!, pts[pts.length - 1]!];
+        return ends.map((p) => {
+          const [x, z] = pctToWorld(
+            { x: p.x_pct, y: p.y_pct },
+            scaleM,
+            boardAspect,
+          );
+          return { x, z };
+        });
+      }),
+    [strokes, scaleM, boardAspect],
+  );
 
   const planeSize = scaleM * 5;
 
@@ -117,6 +139,7 @@ export function FusedSketchLayer({
       // Otherwise start a new freehand stroke. Seed the first point at FLAT_Y —
       // the live-stroke renderer will drape it as the camera tilts.
       isDrawingRef.current = true;
+      setSnapHint(null);
       pointsRef.current = [new THREE.Vector3(pt.x, FLAT_Y, pt.z)];
       setLivePoints(pointsRef.current);
     },
@@ -138,12 +161,26 @@ export function FusedSketchLayer({
       if (!isDrawingRef.current) return;
       e.stopPropagation();
       const pt = e.point;
+
+      // Draw-time snap (close → vertex → 45° angle) resolves where the
+      // pointer SHOULD read before the point is accepted.
+      const origin = pointsRef.current[0];
       const last = pointsRef.current[pointsRef.current.length - 1];
-      if (last && last.distanceTo(new THREE.Vector3(pt.x, FLAT_Y, pt.z)) < 0.15) return;
-      pointsRef.current.push(new THREE.Vector3(pt.x, FLAT_Y, pt.z));
+      const snap = snapDrawPointer(pt.x, pt.z, {
+        origin:
+          pointsRef.current.length >= 3 && origin
+            ? { x: origin.x, z: origin.z }
+            : null,
+        last: last ? { x: last.x, z: last.z } : null,
+        vertices: snapVertices,
+      });
+      setSnapHint(snap.kind ? snap : null);
+
+      if (last && last.distanceTo(new THREE.Vector3(snap.x, FLAT_Y, snap.z)) < 0.15) return;
+      pointsRef.current.push(new THREE.Vector3(snap.x, FLAT_Y, snap.z));
       setLivePoints([...pointsRef.current]);
     },
-    [sketchMode, extrudeTarget, scaleM],
+    [sketchMode, extrudeTarget, scaleM, snapVertices],
   );
 
   const onPointerUp = useCallback(() => {
@@ -163,6 +200,7 @@ export function FusedSketchLayer({
 
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
+    setSnapHint(null);
 
     const worldPts = pointsRef.current;
     if (worldPts.length < 2) {
@@ -245,6 +283,9 @@ export function FusedSketchLayer({
       {livePoints.length >= 2 && (
         <DrapedLiveLine points={livePoints} sampler={sampler} />
       )}
+
+      {/* Draw-time snap marker (kind-coloured ring + glyph chip) */}
+      {snapHint && <SnapMarker hint={snapHint} />}
     </group>
   );
 }
@@ -456,5 +497,64 @@ function ExtrudeMass({
         dithering
       />
     </mesh>
+  );
+}
+
+/**
+ * Snap marker — kind-coloured ring + disc + glyph chip at the snapped point.
+ * Colour language mirrors the SVG studio's snap visuals: crimson = vertex
+ * lock, truth blue = angle, gold = close. The glyph chip is a constant-px
+ * drei <Html> span (the SVG snapGlyph badge equivalent).
+ */
+function SnapMarker({ hint }: { hint: SnapHint }) {
+  const color =
+    hint.kind === "vertex"
+      ? PALETTE.gsConflict
+      : hint.kind === "close"
+        ? PALETTE.gsPrimary
+        : "#0030CF"; // angle — Signal Blue (truth)
+  const glyph =
+    hint.kind === "vertex" ? "●" : hint.kind === "close" ? "◎" : "∠";
+
+  return (
+    <group position={[hint.x, FLAT_Y + 0.07, hint.z]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.45, 0.58, 24]} />
+        <meshBasicMaterial
+          color={color}
+          transparent
+          opacity={0.9}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.14, 16]} />
+        <meshBasicMaterial color={color} transparent opacity={0.95} depthWrite={false} />
+      </mesh>
+      <Html
+        position={[0, 0.5, 0]}
+        center
+        zIndexRange={[20, 10]}
+        style={{ pointerEvents: "none" }}
+      >
+        <span
+          data-testid="snap-glyph"
+          style={{
+            fontFamily: "var(--font-tech)",
+            fontSize: 13,
+            fontWeight: 600,
+            color,
+            background: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
+            borderRadius: 6,
+            padding: "0px 5px",
+            pointerEvents: "none",
+          }}
+        >
+          {glyph}
+        </span>
+      </Html>
+    </group>
   );
 }

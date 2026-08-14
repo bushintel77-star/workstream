@@ -247,6 +247,9 @@ apps/web/src/components/canvas/webgl/
 ├── cutFill.ts                # Pad selection + cut/fill rasteriser (pure, tested)
 ├── EarthworksLayer.tsx       # Committed pad masses + red/gold cut/fill zone mesh
 ├── EarthworksCard.tsx        # Per-pad + total cut/fill m³ readout card
+├── snapWorld.ts              # Metre-space snap ladder: close → vertex → 45° angle (pure, tested)
+├── DimensionLayer.tsx        # Boundary/building dim ring — SVG engine reused, <Html> labels
+├── MeasureTapeLayer.tsx      # Armed two-point measure tape (draped, ephemeral)
 ├── canvasBridges.ts          # BYDA/trench/irrigation/levels → live studio data
 └── features/
     └── SubsurfaceEngine.tsx  # SchematicConduit (hairline Line2) + StrikePulse
@@ -317,11 +320,42 @@ construction trenches → `detectStrikes()` excavations, irrigation zones → `c
     `[-π/2,0,0]` rotation): `TerrainMesh` relief, `BuildingFootprint` mass, and the
     extrude preview were N/S-mirrored vs the ink/slice samplers.
 
-### Gap 3: Port SVG layers to WebGL — MEDIUM ⚠️
-These exist in `CadPlanBoard.tsx` (SVG) but aren't in the WebGL scene:
-- Dimension annotations / measurement lines
-- Snap visuals
-- Sun shadow polygons (2D `SunCastOverlay` — though 3D sun rig now casts real shadows)
+### Gap 3: Port SVG layers to WebGL — CLOSED ✅
+~~These exist in `CadPlanBoard.tsx` (SVG) but aren't in the WebGL scene.~~ All three
+bullets resolved:
+- **Dimension annotations** — `DimensionLayer.tsx`: reuses the SVG engine as-is
+  (`edgeSegments` + `buildOutsideDims` + `declutterOutsideDims` are pure board-%
+  functions, imported across the boundary — same precedent as `sunDatePreset`). All
+  line work renders as ONE drei `<Line segments>` draw call; labels are constant-px
+  drei `<Html>` chips (`data-testid="dim-label"`) — the WebGL equivalent of the SVG
+  `CameraChrome` label portal. Boundary B… + building F… rings, decluttered. Toggles
+  via the `dimsView` store chip; stays visible in Presentation mode (the lens doc
+  mandates "the client wants to see sizes").
+- **Measurement lines** — `MeasureTapeLayer.tsx` + `snapWorld.ts`: an armed
+  two-point tape (anchor press → drag → live metres, aspect-correct), draped over
+  the terrain sampler, dashed Signal Blue with endpoint discs + gold `<Html>`
+  midpoint label. Ephemeral by design (SVG parity — nothing persists). DOM twin
+  `MeasureReadoutChip` (`data-testid="measure-readout"`) subscribes independently.
+  Esc disarms + clears. Measure ↔ sketch mode are mutually exclusive at the store.
+- **Snap visuals** — `snapWorld.ts` (pure, 14 tests) ports the SVG snap ladder to
+  metre space: close (2 m, matches SNAP_CLOSE_M) → vertex (committed stroke
+  endpoints, 1.2 m) → 45° angle (±5°, distance-preserving projection). Applied in
+  `FusedSketchLayer.onPointerMove`; the `SnapMarker` renders a kind-coloured ring +
+  glyph chip (● vertex crimson / ∠ angle truth / ◎ close gold) as DOM-testable
+  `data-testid="snap-glyph"`.
+- **Sun shadow polygons** — RETIRED as superseded: the 2D `SunCastOverlay` +
+  `castRingShadowPct` faked shadows on a flat SVG board; the WebGL studio casts
+  REAL shadows from the real sun (SunRig → `sunPositionAt`, VSM shadow maps,
+  seasonal elevation). The domain `plan-sun-cast.ts` math is untouched — the SVG
+  fallback studio still uses it.
+- **Same session fixed a pre-existing production bug**: freehand drawing was
+  DEAD on the WebGL studio — `StudioControls.onPointerDown` stopped propagation
+  unconditionally from its coplanar ground plane (mounted first in the scene),
+  so `FusedSketchLayer` never received the gesture (the sketch-mode pan gate
+  existed for moves, not for the down capture). StudioControls now yields the
+  gesture when a capture layer is armed (`sketchMode || measureActive`), restoring
+  ink drawing and enabling the measure tape. Caught by the new e2e; verified with
+  a live drag probe (Strokes: 0 → 1).
 
 ### Gap 4: Stroke persistence — CLOSED ✅ (pre-wired; verified `e305e2d`)
 ~~Strokes are local React state only.~~ The chain was already built end-to-end

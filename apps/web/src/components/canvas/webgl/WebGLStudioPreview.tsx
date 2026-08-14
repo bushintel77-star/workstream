@@ -34,7 +34,7 @@ import { GlassCard } from "./GlassCard";
 import { VignetteOverlay } from "./VignetteOverlay";
 import { SaveStatusChip } from "./SaveStatusChip";
 import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
-import type { PctPoint } from "./coordTransform";
+import { pctToWorld, type PctPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
 import { PRESENTATION_LENS, TECHNICAL_LENS } from "./PresentationLens";
 import {
@@ -133,6 +133,10 @@ export function WebGLStudioPreview({
   const setDrainageView = useStudioStore((s) => s.setDrainageView);
   const earthworksView = useStudioStore((s) => s.earthworksView);
   const setEarthworksView = useStudioStore((s) => s.setEarthworksView);
+  const dimsView = useStudioStore((s) => s.dimsView);
+  const setDimsView = useStudioStore((s) => s.setDimsView);
+  const measureActive = useStudioStore((s) => s.measureActive);
+  const setMeasureActive = useStudioStore((s) => s.setMeasureActive);
   // Save status is rendered by <SaveStatusChip /> which subscribes independently
   // (so only the chip re-renders on status change, not the whole HUD).
 
@@ -298,7 +302,13 @@ export function WebGLStudioPreview({
             </ToggleChip>
             <ToggleChip
               active={sketchMode}
-              onClick={() => setSketchMode(!sketchMode)}
+              onClick={() => {
+                // Arming sketch disarms measure (they compete for pointer
+                // capture on the ground plane).
+                const next = !sketchMode;
+                if (next) setMeasureActive(false);
+                setSketchMode(next);
+              }}
               activeColor="var(--gs-primary)"
             >
               {sketchMode ? "▾ Orbit" : "▸ Sketch"}
@@ -333,7 +343,29 @@ export function WebGLStudioPreview({
                 {earthworksView ? "▾ Earth" : "▸ Earth"}
               </ToggleChip>
             )}
+            {/* Working-drawing dimension ring — needs a boundary */}
+            {boundaryPct.length >= 3 && (
+              <ToggleChip
+                active={dimsView}
+                onClick={() => setDimsView(!dimsView)}
+                activeColor="var(--gs-truth)"
+              >
+                {dimsView ? "▾ Dims" : "▸ Dims"}
+              </ToggleChip>
+            )}
+            {/* Measure tape — armed tool (store setter disarms sketch mode) */}
+            <ToggleChip
+              active={measureActive}
+              onClick={() => setMeasureActive(!measureActive)}
+              activeColor="var(--gs-truth)"
+            >
+              {measureActive ? "▾ Measure" : "▸ Measure"}
+            </ToggleChip>
           </div>
+
+          {/* Measure readout — DOM twin of the in-canvas tape label. A11y +
+              e2e surface; subscribes independently so only the chip re-renders. */}
+          <MeasureReadoutChip scaleM={scaleM} boardAspect={boardAspect} />
         </div>
       </GlassCard>
 
@@ -539,6 +571,43 @@ function ToggleChip({
     >
       {children}
     </button>
+  );
+}
+
+/**
+ * Measure tape readout — the DOM twin of the in-canvas tape label. Renders
+ * the live/last measurement in true metres while the tool is armed and a
+ * tape exists. Subscribes to the store independently so pointer-move updates
+ * re-render only this chip, not the whole HUD (SaveStatusChip pattern).
+ */
+function MeasureReadoutChip({
+  scaleM,
+  boardAspect,
+}: {
+  scaleM: number;
+  boardAspect: number;
+}) {
+  const measureActive = useStudioStore((s) => s.measureActive);
+  const tape = useStudioStore((s) => s.measureTape);
+
+  if (!measureActive || !tape) return null;
+
+  const [ax, az] = pctToWorld(tape.a, scaleM, boardAspect);
+  const [bx, bz] = pctToWorld(tape.b, scaleM, boardAspect);
+  const lengthM = Math.hypot(bx - ax, bz - az);
+
+  return (
+    <div
+      data-testid="measure-readout"
+      style={{
+        marginTop: 6,
+        fontFamily: "var(--font-tech)",
+        fontSize: 12,
+        color: "var(--gs-primary)",
+      }}
+    >
+      Measure · {lengthM.toFixed(2)} m · Esc clears
+    </div>
   );
 }
 

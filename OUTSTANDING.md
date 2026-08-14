@@ -723,8 +723,17 @@ Cross-check against build status below before treating any phase as shipped.
       as the design surface). Also fixed three pre-existing Z-mirror bugs
       where the `[-π/2,0,0]` rotation N/S-mirrored the terrain relief, the
       building mass, and the extrude preview vs the ink/slice samplers.
-      Annotations are panel readouts, not in-scene
-      dimension callouts — those remain open polish.
+      **Gap 3 (SVG→WebGL layer port) now shipped**: the working-drawing
+      dimension ring (`DimensionLayer` — SVG `outsideDims` engine reused
+      as-is, line work as one `<Line segments>` draw call, constant-px
+      `<Html>` label chips), the interactive measure tape
+      (`MeasureTapeLayer` + `snapWorld.ts` — draped, ephemeral, Esc clears,
+      mutual exclusion with sketch mode), and draw-time snap visuals
+      (`snapWorld.ts` close→vertex→45° ladder + kind-coloured SnapMarker in
+      `FusedSketchLayer`). The 2D `SunCastOverlay` shadow polygons are
+      retired as superseded — the WebGL studio casts real VSM shadows from
+      the real sun. With the dimension ring, in-scene CAD callouts now exist
+      on the GL surface — the old "panel readouts only" caveat is closed.
       Concept reference: [concept-02-solar-subsurface-analysis.png](docs/design-spec/concept-mockups/concept-02-solar-subsurface-analysis.png)
       (subsurface legend + Strike Alert chip — matches what's built; the
       Solar Trajectory time-of-day scrubber in that same image is built on

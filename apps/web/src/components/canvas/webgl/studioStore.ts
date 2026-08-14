@@ -26,6 +26,7 @@
 
 import { create } from "zustand";
 import type { CanvasStroke } from "@workstream/contracts";
+import type { PctPoint } from "./coordTransform";
 
 /* -------------------------------------------------------------------------- */
 /* Save status types (ported from useStudioState.ts Ui slice)                 */
@@ -135,6 +136,14 @@ export interface StudioStoreState {
   /** Earthworks overlay — committed pad masses + cut/fill zones. */
   earthworksView: boolean;
 
+  // --- CAD annotation layers (SVG-studio port, Gap 3) ---
+  /** Working-drawing dimension ring (boundary B… + building F… edges). */
+  dimsView: boolean;
+  /** Interactive measure tape tool (mutually exclusive with sketchMode). */
+  measureActive: boolean;
+  /** The current tape in board-% (a = anchor, b = drag end); null = no tape. */
+  measureTape: { a: PctPoint; b: PctPoint } | null;
+
   // --- Fused rendering context ---
   /**
    * The TARGET view blend. 0 = orthographic plan, 1 = perspective 3D.
@@ -183,6 +192,12 @@ export interface StudioStoreState {
   setDrainageView: (v: boolean) => void;
   setEarthworksView: (v: boolean) => void;
 
+  setDimsView: (v: boolean) => void;
+  /** Arming measure disarms sketch mode (they compete for pointer capture). */
+  setMeasureActive: (v: boolean) => void;
+  /** Replace the tape (a new anchor press) or clear it (null, null). */
+  setMeasureTape: (a: PctPoint | null, b: PctPoint | null) => void;
+
   /** Replace the entire stroke array (e.g., on hydrate / undo / redo). */
   setSketchStrokes: (strokes: CanvasStroke[]) => void;
   /** Append a single committed stroke. */
@@ -222,6 +237,12 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   drainageView: false,
   earthworksView: true,
 
+  // CAD annotation defaults — dims ON (the client wants to see sizes);
+  // the measure tape is an armed tool, off by default.
+  dimsView: true,
+  measureActive: false,
+  measureTape: null,
+
   // Ink
   sketchStrokes: [],
 
@@ -253,6 +274,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
 
   setDrainageView: (drainageView) => set({ drainageView }),
   setEarthworksView: (earthworksView) => set({ earthworksView }),
+
+  setDimsView: (dimsView) => set({ dimsView }),
+  // Mutual exclusion with sketch mode — both capture ground pointer events.
+  setMeasureActive: (measureActive) =>
+    set(measureActive ? { measureActive: true, sketchMode: false } : { measureActive: false }),
+  setMeasureTape: (a, b) =>
+    set({ measureTape: a && b ? { a, b } : null }),
 
   setSketchStrokes: (sketchStrokes) => set({ sketchStrokes }),
   addSketchStroke: (stroke) =>

@@ -113,9 +113,15 @@ export function StudioControls({
     [rig, onRigChange, gl, tiltLocked],
   );
 
-  /** Pointer down — start tracking a potential drag. */
+  /** Pointer down — start tracking a potential drag. Yields the gesture when
+   *  a capture layer is armed (sketch ink / measure tape): without this, the
+   *  early stopPropagation on this coplanar plane (mounted first in the
+   *  scene) eats the pointerdown before those layers ever see it. */
   const onPointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
+      const { sketchMode: inkArmed, measureActive: tapeArmed } =
+        useSeasonalStore.getState();
+      if (inkArmed || tapeArmed) return; // let the capture layer win
       e.stopPropagation();
       dragState.current = {
         active: true,
