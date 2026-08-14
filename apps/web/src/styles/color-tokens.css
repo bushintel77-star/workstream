@@ -42,6 +42,38 @@
   --gs-ink-muted: #919196;       /* Muted meta — AA: ~4.5:1 on glass-strong, ~5.5:1 on glass-over-canvas */
 
   /* ================================================================
+   * WebGL render tokens — physical light/shadow values (not chrome).
+   * Like ClientShareTwin.tsx's allowlisted render colours, these drive
+   * Three.js material/light properties, not UI identity. The Studio Dark
+   * identity (#101418 clear color) is preserved; these only tint the
+   * motivated lighting that gives geometry form and depth.
+   * ================================================================ */
+  --gs-sun-warm: #fff1d6;        /* Warm key-light tint (low-amber sun) */
+  --gs-sky-cool: #8a9bb5;        /* Cool sky-bounce hemisphere tint */
+  --gs-shadow: #05070a;          /* Contact/AO shadow colour (near-black, slight cool) */
+  --gs-foliage-tint: #3d6b48;    /* Canopy subsurface/scatter tint */
+  --gs-ground-olive: #161f18;    /* Ground plane — near-black olive (soil/mulch read) */
+  --gs-ground-bounce: #1a1f16;   /* Hemisphere ground-bounce (dark olive green) */
+  --gs-ambient-cool: #aebfd0;    /* Cool ambient fill (sky-lit shadow lift) */
+  --gs-rim-cool: #c8d8ee;        /* Cool rim/back-light (silhouette separation) */
+  --gs-window-glow: #ffd989;     /* Building window emissive (warm interior glow) */
+  --gs-bark: #4a3d2e;            /* Tree trunk bark (warm brown) */
+  --gs-concrete: #8c9294;        /* Architectural concrete (paving, walls) — PBR albedo */
+  --gs-anodized-metal: #2a2d30;  /* Dark anodized metal (planters, railings, bollards) */
+  --gs-timber-weathered: #5c4a3d;/* Weathered timber (decking, sleeper walls) */
+  --gs-led-warm: #ffeedd;        /* Fixture LED emissive (step lights, bollards, under-cap) */
+  --gs-summer-green: #4c9662;    /* Seasonal foliage — summer canopy anchor */
+  --gs-autumn-orange: #c87f3a;   /* Seasonal foliage — autumn canopy anchor */
+  --gs-cad-water: #4fa3d1;       /* Subsurface schematic — drafting blue */
+  --gs-cad-electric: #d17a4f;    /* Subsurface schematic — terracotta */
+  --gs-cad-sewer: #5ba874;       /* Subsurface schematic — sage green */
+  --gs-cad-gas: #c9a84c;         /* Subsurface schematic — muted gold */
+  --gs-cad-comms: #b8845a;       /* Subsurface schematic — bronze */
+  --gs-cad-reclaimed: #8e6bb0;   /* Subsurface schematic — muted lilac */
+  --gs-blueprint-ground: #2a2f33;/* Blueprint vellum transition — muted grey */
+  --gs-sketch-ink: #ff2ef6;      /* Freehand stroke ink (CanvasStroke default) */
+
+  /* ================================================================
    * Raw neutral ramps (retained for material/planting palettes below)
    * ================================================================ */
 

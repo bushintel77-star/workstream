@@ -62,6 +62,37 @@ export const PALETTE = {
   waterD400: "#4098C4",
   warningL500: "#B8860B",
   warningD400: "#D4A017",
+  // WebGL render values — physical light/shadow (mirrors color-tokens.css --gs-* render tokens)
+  gsCanvas: "#101418", // canvas clear color + fog (--gs-canvas)
+  gsConflict: "#EF4444", // strike alert / conflict red (--gs-conflict)
+  sunWarm: "#FFF1D6",
+  skyCool: "#8A9BB5",
+  gsShadow: "#05070A",
+  foliageTint: "#3D6B48",
+  groundOlive: "#161F18",
+  groundBounce: "#1A1F16",
+  ambientCool: "#AEBFD0",
+  rimCool: "#C8D8EE",
+  windowGlow: "#FFD989",
+  bark: "#4A3D2E",
+  // LA hardscape PBR baselines (Rule 3 of the LA Hardscape Specification)
+  concrete: "#8C9294",
+  anodizedMetal: "#2A2D30",
+  timberWeathered: "#5C4A3D",
+  ledWarm: "#FFEEDD",
+  // Seasonal foliage color anchors (LA Seasonal Dynamics Rule 3)
+  summerGreen: "#4C9662",
+  autumnOrange: "#C87F3A",
+  // Subsurface schematic — muted drafting CAD colors (not neon). Hairline
+  // lines that read as engineering vellum, not a video game.
+  cadWater: "#4FA3D1",       // drafting blue (irrigation/water)
+  cadElectric: "#D17A4F",    // terracotta (power conduit)
+  cadSewer: "#5BA874",       // sage green (drainage/sewer)
+  cadGas: "#C9A84C",         // muted gold (gas)
+  cadComms: "#B8845A",       // bronze (comms/data)
+  cadReclaimed: "#8E6BB0",   // muted lilac (reclaimed water)
+  renderBlueprintGround: "#2A2F33", // muted grey for vellum transition
+  sketchInk: "#FF2EF6", // magenta freehand stroke ink (CanvasStroke default)
 } as const;
 
 /** Semantic plan colours — light theme. */
@@ -171,6 +202,11 @@ export const CSS_TOKEN = {
   warning: "var(--warning)",
   danger: "var(--danger)",
   success: "var(--success)",
+  // WebGL render values (mirrors color-tokens.css --gs-* render tokens)
+  sunWarm: "var(--gs-sun-warm)",
+  skyCool: "var(--gs-sky-cool)",
+  gsShadow: "var(--gs-shadow)",
+  foliageTint: "var(--gs-foliage-tint)",
 } as const;
 
 /** Common plan fills as ready-to-paint CSS strings. */

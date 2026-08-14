@@ -42,8 +42,9 @@ test.describe("WebGL preview (?webgl=1)", () => {
     const canvas = page.locator('[data-testid="webgl-studio"]');
     await expect(canvas).toBeVisible({ timeout: 10_000 });
 
-    // The Glass Card stats overlay should be visible
-    const glassCard = page.locator("[data-gs-glass-card]");
+    // The Glass Card stats overlay should be visible (at least one card — the
+    // studio now renders multiple HUD cards: stats, growth scrubber, sun scrubber)
+    const glassCard = page.locator("[data-gs-glass-card]").first();
     await expect(glassCard).toBeVisible();
 
     // No React render loops or fatal errors

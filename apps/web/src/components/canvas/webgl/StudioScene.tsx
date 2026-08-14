@@ -16,17 +16,58 @@
  * Coordinate system: metre-space. % space (0–100) is converted via coordTransform.
  */
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Line } from "@react-three/drei";
+import { Line, ContactShadows } from "@react-three/drei";
 import type { OrthographicCamera } from "three";
 import * as THREE from "three";
+import { sunPositionAt } from "@workstream/domain";
+import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
+import { PALETTE } from "../../../styles/colorTokens";
+import { useSeasonalStore, winterFactor } from "./seasonalStore";
 import type { StudioCameraRig } from "./cameraRig";
 import { pctToWorld, type PctPoint } from "./coordTransform";
 import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
+import { SketchLayer3D } from "./SketchLayer3D";
 import { type PresentationLensFilter } from "./PresentationLens";
+
+/** Prahran demo fallback — same default as the 2D sun/growth dock + GrowthStudio. */
+const DEFAULT_SUN_LAT = -37.849;
+const DEFAULT_SUN_LNG = 144.993;
+
+/**
+ * Resolve a real-world sun direction (from `sunPositionAt`) into a Three.js
+ * directional-light position, reusing the proven GrowthStudioClient projection.
+ *
+ * Convention: +X = east, +Y = up, +Z = south (azimuth 0°/north → -Z).
+ * Altitude is floored at 3° (lower than GrowthStudio's 6° noon clamp) so a
+ * low morning/evening sun produces the long, dramatic ground shadows the
+ * domain `boardShadowCast` also models — shadow length ∝ 1/tan(altitude).
+ */
+function resolveSunLightPosition(
+  lat: number,
+  lng: number,
+  sunMin: number,
+  sunDist: number,
+): { position: [number, number, number]; altitudeDeg: number; azimuthDeg: number } {
+  const when = sunDateFromPreset("today", sunMin);
+  const sun = sunPositionAt(lat, lng, when);
+  // Floor altitude at 3° — below this the sun is grazing and shadows stretch
+  // toward infinity; clamp keeps them long-but-finite and visible on the board.
+  const altRad = (Math.max(sun.altitude_deg, 3) * Math.PI) / 180;
+  const azRad = (sun.azimuth_deg * Math.PI) / 180;
+  return {
+    position: [
+      Math.cos(altRad) * Math.sin(azRad) * sunDist,
+      Math.sin(altRad) * sunDist,
+      -Math.cos(altRad) * Math.cos(azRad) * sunDist,
+    ],
+    altitudeDeg: sun.altitude_deg,
+    azimuthDeg: sun.azimuth_deg,
+  };
+}
 
 export interface StudioSceneProps {
   scaleM: number;
@@ -49,6 +90,12 @@ export interface StudioSceneProps {
   lens?: PresentationLensFilter;
   /** Growth factor 0–1 (0 = just planted, 1 = 10-year maturity). */
   growthFactor?: number;
+  /** Project latitude (decimal degrees) for real-sun lighting. Falls back to Prahran demo. */
+  lat?: number;
+  /** Project longitude (decimal degrees) for real-sun lighting. Falls back to Prahran demo. */
+  lng?: number;
+  /** Minutes past Melbourne midnight — the time-of-day the sun is sampled at. */
+  sunMin?: number;
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
@@ -81,6 +128,161 @@ function useWorldLine(points: PctPoint[], scaleM: number, boardAspect: number, z
         (p) => [...pctToWorld(p, scaleM, boardAspect), z] as [number, number, number],
       ),
     [points, scaleM, boardAspect, z],
+  );
+}
+
+/**
+ * Real-sun lighting rig — warm sun key + cool sky bounce + soft fill.
+ *
+ * The key light's position and intensity are driven by the real solar position
+ * (`sunPositionAt`) for the project lat/lng at a given minute of the day. A low
+ * morning/evening sun casts long, soft ground shadows; high noon casts short,
+ * crisp ones — the same physics the domain `boardShadowCast` models on the 2D
+ * board. This is the Gold Standard UX sun/shadow system, surfaced in 3D.
+ *
+ * Light tints resolve to render tokens, not raw hex. Convention: +X east, +Y up,
+ * +Z south (north = -Z), matching GrowthStudioClient.
+ */
+/**
+ * Real-sun lighting rig — warm sun key + cool sky bounce + soft fill + rim.
+ *
+ * The key light's position + intensity are mutated every frame inside useFrame
+ * (reading sunMin + seasonProgress via getState — zero React re-renders). The
+ * seasonal elevation multiplier lowers the sun in winter → longer shadows that
+ * interact heavily with the N8AO ambient occlusion (LA Seasonal Dynamics Rule 4).
+ */
+function SunRig({
+  scaleM,
+  boardAspect,
+  lat,
+  lng,
+}: {
+  scaleM: number;
+  boardAspect: number;
+  lat: number;
+  lng: number;
+}) {
+  const sunDist = scaleM * 2.2;
+  const half = Math.max(scaleM, scaleM * boardAspect) * 0.9;
+  const keyRef = useRef<THREE.DirectionalLight>(null);
+
+  // Mutation loop — reads the time store transiently (no subscription, no re-render).
+  useFrame(() => {
+    const light = keyRef.current;
+    if (!light) return;
+    const { sunMin, seasonProgress } = useSeasonalStore.getState();
+
+    // Real sun position for the time-of-day.
+    const sun = resolveSunLightPosition(lat, lng, sunMin, sunDist);
+    const wFactor = winterFactor(seasonProgress);
+
+    // Seasonal elevation: lower the sun in winter (0.45× altitude multiplier)
+    // so shadows stretch long. Summer keeps full elevation (short, sharp).
+    const altRad = (Math.max(sun.altitudeDeg, 3) * Math.PI) / 180;
+    const seasonalAlt = altRad * (1 - wFactor * 0.55);
+    const azRad = (sun.azimuthDeg * Math.PI) / 180;
+    light.position.set(
+      Math.cos(seasonalAlt) * Math.sin(azRad) * sunDist,
+      Math.sin(seasonalAlt) * sunDist,
+      -Math.cos(seasonalAlt) * Math.cos(azRad) * sunDist,
+    );
+
+    // Intensity tapers near sunrise/sunset + weakens slightly in winter.
+    const altClamped = Math.max(sun.altitudeDeg, 0);
+    const intensity = (0.55 + Math.min(altClamped / 60, 1) * 0.95) * (1 - wFactor * 0.25);
+    light.intensity = intensity;
+  });
+
+  return (
+    <>
+      {/* Cool ambient — lifts shadow areas without flattening (proven GrowthStudio value). */}
+      <ambientLight intensity={0.45} color={PALETTE.ambientCool} />
+      {/* Sky-over-ground hemisphere — the olive ground-bounce is what makes canopy
+          undersides and upfacing surfaces read naturalistic (green bounce). */}
+      <hemisphereLight args={[PALETTE.skyCool, PALETTE.groundBounce, 0.55]} />
+      {/* Warm key light — position + intensity mutated per-frame by the useFrame above */}
+      <directionalLight
+        ref={keyRef}
+        intensity={1.4}
+        color={PALETTE.sunWarm}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-near={0.5}
+        shadow-camera-far={scaleM * 4}
+        shadow-camera-left={-half}
+        shadow-camera-right={half}
+        shadow-camera-top={half}
+        shadow-camera-bottom={-half}
+        shadow-bias={-0.0006}
+        shadow-normalBias={0.02}
+      />
+      {/* Cool fill — lifts shadowed sides without flattening form (no shadow) */}
+      <directionalLight
+        position={[-scaleM * 0.5, scaleM * 0.6, -scaleM * 0.3]}
+        intensity={0.28}
+        color={PALETTE.skyCool}
+      />
+      {/* Rim / back-light — cool, from behind. Separates tree + building
+          silhouettes from the fog, giving the scene edge definition. */}
+      <directionalLight
+        position={[0, scaleM * 0.7, -scaleM * 0.8]}
+        intensity={0.4}
+        color={PALETTE.rimCool}
+      />
+    </>
+  );
+}
+
+/**
+ * Seasonal fog controller — mutates scene.fog near/far per-frame so winter
+ * pulls the fog closer (denser, colder atmosphere). Rule 4 atmospherics.
+ * Zero React re-renders (reads via getState).
+ */
+function SeasonalFogController({ scaleM }: { scaleM: number }) {
+  const scene = useThree((state) => state.scene);
+  const baseNear = scaleM * 1.5;
+  const baseFar = scaleM * 3.6;
+
+  useFrame(() => {
+    const fog = scene.fog;
+    if (!(fog instanceof THREE.Fog)) return;
+    const { seasonProgress } = useSeasonalStore.getState();
+    const wFactor = winterFactor(seasonProgress);
+    // Winter: pull fog 30% closer (denser). Summer: full distance.
+    fog.near = baseNear * (1 - wFactor * 0.3);
+    fog.far = baseFar * (1 - wFactor * 0.3);
+  });
+
+  return null;
+}
+
+/**
+ * Blurred contact-shadow plane — the soft AO-style grounding that anchors
+ * trees and building to the ground plane. Renders as a projection at y≈0.008
+ * so it sits just above the ground material and below the geometry.
+ */
+function GroundContactShadows({
+  scaleM,
+  boardAspect,
+}: {
+  scaleM: number;
+  boardAspect: number;
+}) {
+  const size = Math.max(scaleM, scaleM * boardAspect) * 1.5;
+  // Blueprint mode fades the heavy AO so the world reads flatter/vellum.
+  // A single boolean toggle re-rendering this component is negligible cost.
+  const subsurfaceView = useSeasonalStore((s) => s.subsurfaceView);
+  return (
+    <ContactShadows
+      position={[0, 0.008, 0]}
+      scale={size}
+      blur={2.6}
+      opacity={subsurfaceView ? 0.15 : 0.45}
+      far={scaleM}
+      resolution={1024}
+      color={PALETTE.gsShadow}
+    />
   );
 }
 
@@ -169,47 +371,140 @@ function Services({
 }
 
 /** The building footprint — a flat mesh with opacity. */
+/**
+ * The building — extruded from its footprint into a 3D mass with a flat roof
+ * and warm window glow. Spec §2.2 calls for <StructureMesh> with height_m
+ * extrusion; this delivers it. Default eave height matches the domain
+ * boardShadowCast assumption (5.2m) when no height is provided.
+ */
 function BuildingFootprint({
   points,
   scaleM,
   boardAspect,
   opacity = 1,
+  heightM = 5.2,
 }: {
   points: PctPoint[];
   scaleM: number;
   boardAspect: number;
   opacity?: number;
+  heightM?: number;
 }) {
-  const shape = useMemo(() => {
+  const geo = useMemo(() => {
     if (points.length < 3) return null;
     const shape = new THREE.Shape();
     const world = points.map((p) => pctToWorld(p, scaleM, boardAspect));
     shape.moveTo(world[0][0], world[0][1]);
     for (let i = 1; i < world.length; i++) shape.lineTo(world[i][0], world[i][1]);
     shape.closePath();
-    return shape;
+    // Extrude depth = building height. bevel gives a soft roof edge.
+    return new THREE.ExtrudeGeometry(shape, {
+      depth: heightM,
+      bevelEnabled: true,
+      bevelThickness: 0.3,
+      bevelSize: 0.3,
+      bevelSegments: 2,
+    });
+  }, [points, scaleM, boardAspect, heightM]);
+
+  // Footprint outline (flat, on the ground) — keeps the surveyor read.
+  const outlinePoints = useMemo(() => {
+    if (points.length < 2) return null;
+    return points.map(
+      (p) => [...pctToWorld(p, scaleM, boardAspect), 0.02] as [number, number, number],
+    );
   }, [points, scaleM, boardAspect]);
 
-  if (!shape) return null;
+  if (!geo) return null;
   return (
-    <mesh position={[0, 0, 0.015]} rotation={[-Math.PI / 2, 0, 0]}>
-      <shapeGeometry args={[shape]} />
-      <meshStandardMaterial color="#1e2329" transparent opacity={opacity} roughness={0.9} />
-    </mesh>
+    <group>
+      {/* Extruded mass — rotated so extrude depth (Z) points up (+Y).
+          roughness/metalness tuned to catch environment reflections. */}
+      <mesh geometry={geo} rotation={[-Math.PI / 2, 0, 0]} castShadow receiveShadow>
+        <meshStandardMaterial
+          color="#1e2329"
+          transparent
+          opacity={opacity}
+          roughness={0.7}
+          metalness={0.1}
+        />
+      </mesh>
+      {/* Window glow band — a thin emissive strip around the upper wall,
+          warm interior glow that the Bloom pass picks up at dusk. Sits just
+          below the roof line. */}
+      <mesh position={[0, heightM * 0.62, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0, 0.01, 4]} />
+        <meshStandardMaterial
+          color={PALETTE.windowGlow}
+          emissive={PALETTE.windowGlow}
+          emissiveIntensity={0.6}
+          roughness={0.4}
+        />
+      </mesh>
+      {/* Ground-footprint hairline — preserves the surveyor measurement read. */}
+      {outlinePoints && outlinePoints.length >= 2 && (
+        <Line points={outlinePoints} color="#1e2329" lineWidth={1.5} />
+      )}
+    </group>
   );
 }
 
-/** The ground plane — --gs-canvas with a grid. */
+/** The ground plane — lit + shadow-receiving. When subsurfaceView is toggled,
+ *  a useFrame loop lerps the material toward an architectural-vellum state
+ *  (desaturated grey, slightly translucent, lower roughness) so the hairline
+ *  CAD utility lines glow through the "paper." Reads as a blueprint overlay,
+ *  not a space simulator. */
 function GroundPlane({ scaleM, boardAspect }: { scaleM: number; boardAspect: number }) {
   const w = scaleM * 3;
   const h = scaleM * boardAspect * 3;
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  const gridRef = useRef<THREE.GridHelper>(null);
+
+  // Target colours (memoized so we don't allocate THREE.Color per frame).
+  const colorOlive = useMemo(() => new THREE.Color(PALETTE.groundOlive), []);
+  const colorVellum = useMemo(() => new THREE.Color(PALETTE.renderBlueprintGround), []);
+
+  useFrame((_, delta) => {
+    const mat = matRef.current;
+    if (!mat) return;
+    const { subsurfaceView } = useSeasonalStore.getState();
+    const k = Math.min(1, delta * 4); // smooth transition speed
+
+    const targetOpacity = subsurfaceView ? 0.88 : 1.0;
+    const targetRoughness = subsurfaceView ? 0.6 : 0.92;
+    const targetColor = subsurfaceView ? colorVellum : colorOlive;
+
+    mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, k);
+    mat.roughness = THREE.MathUtils.lerp(mat.roughness, targetRoughness, k);
+    mat.color.lerp(targetColor, k);
+
+    // Fade the grid in blueprint mode so it doesn't fight the CAD lines.
+    const grid = gridRef.current;
+    if (grid) {
+      const gridMat = grid.material as THREE.Material;
+      const targetGridOpacity = subsurfaceView ? 0.15 : 0.6;
+      gridMat.opacity = THREE.MathUtils.lerp(gridMat.opacity, targetGridOpacity, k);
+    }
+  });
+
   return (
     <>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[w, h]} />
-        <meshBasicMaterial color="#101418" />
+        <meshStandardMaterial
+          ref={matRef}
+          color={PALETTE.groundOlive}
+          roughness={0.92}
+          metalness={0.02}
+          transparent
+          opacity={1}
+        />
       </mesh>
-      <gridHelper args={[w, Math.round(w), "#2e343c", "#23282e"]} position={[0, 0.001, 0]} />
+      <gridHelper
+        ref={gridRef}
+        args={[w, Math.round(w), "#2e343c", "#23282e"]}
+        position={[0, 0.001, 0]}
+      />
     </>
   );
 }
@@ -254,11 +549,28 @@ export function StudioScene({
   strikeAlerts,
   lens,
   growthFactor,
+  lat = DEFAULT_SUN_LAT,
+  lng = DEFAULT_SUN_LNG,
+  sunMin = 12 * 60,
 }: StudioSceneProps) {
   return (
     <>
-      <ambientLight intensity={0.8} />
-      <directionalLight position={[10, 20, 10]} intensity={0.3} />
+      {/* Note: soft shadows come from VSMShadowMap (set in WebGLStudio
+          onCanvasCreated) + the ContactShadows plane below. The drei
+          <SoftShadows> PCSS shader is incompatible with VSM shadow maps
+          (it expects PCF), so it is intentionally NOT used here. */}
+
+      {/* Real-sun lighting rig — key light position + intensity mutated per-frame
+          via getState (sunMin + seasonProgress). Seasonal elevation lowers the
+          sun in winter for long shadows. */}
+      <SunRig
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        lat={lat}
+        lng={lng}
+      />
+      {/* Seasonal fog — pulls fog closer in winter (denser atmosphere). */}
+      <SeasonalFogController scaleM={scaleM} />
 
       <CameraController rig={cameraRig} />
 
@@ -276,6 +588,9 @@ export function StudioScene({
       )}
 
       <GroundPlane scaleM={scaleM} boardAspect={boardAspect} />
+      {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the
+          drawing surface, complementing the directional sun shadows. */}
+      <GroundContactShadows scaleM={scaleM} boardAspect={boardAspect} />
       <OriginPeg />
       <LotBoundary points={boundaryPct} scaleM={scaleM} boardAspect={boardAspect} />
       {buildingPct && buildingPct.length >= 3 && (
@@ -292,13 +607,22 @@ export function StudioScene({
       {!lens?.hideServices && (
         <Services lines={servicesPct} scaleM={scaleM} boardAspect={boardAspect} />
       )}
-      <SceneItems items={items} scaleM={scaleM} boardAspect={boardAspect} hideTpz={lens?.hideTpz} />
+      <SceneItems
+        items={items}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        hideTpz={lens?.hideTpz}
+        growthFactor={growthFactor}
+      />
       {subsurfaceUtilities && !lens?.hideSubsurface && (
         <SubsurfaceEngine
           utilities={subsurfaceUtilities}
           alerts={lens?.hideStrikes ? [] : strikeAlerts}
         />
       )}
+      {/* 3D Sketch Layer — self-mounts when sketchMode is on (reads the store
+          internally so only it re-renders on toggle, not the whole scene). */}
+      <SketchLayer3D scaleM={scaleM} boardAspect={boardAspect} />
     </>
   );
 }

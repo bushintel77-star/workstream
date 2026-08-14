@@ -158,6 +158,8 @@ export default async function ProjectCanvasPage({
             )
           }
           items={webglItems}
+          lat={project.lat ?? undefined}
+          lng={project.lng ?? undefined}
         />
       </main>
     );
