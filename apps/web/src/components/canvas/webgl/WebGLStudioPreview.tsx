@@ -31,6 +31,8 @@ import type {
   IrrigationZone,
 } from "@workstream/contracts";
 import { GlassCard } from "./GlassCard";
+import { VignetteOverlay } from "./VignetteOverlay";
+import { SaveStatusChip } from "./SaveStatusChip";
 import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
 import type { PctPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
@@ -122,7 +124,8 @@ export function WebGLStudioPreview({
   const viewBlendTarget = useStudioStore((s) => s.viewBlendTarget);
   const setViewBlendTarget = useStudioStore((s) => s.setViewBlendTarget);
   const strokes = useStudioStore((s) => s.sketchStrokes);
-  const saveStatus = useStudioStore((s) => s.saveStatus);
+  // Save status is rendered by <SaveStatusChip /> which subscribes independently
+  // (so only the chip re-renders on status change, not the whole HUD).
 
   // --- Hydrate the store on mount (strokes + project context) ---
   // This runs once when the component mounts with the server-fetched data.
@@ -195,6 +198,9 @@ export function WebGLStudioPreview({
       aerialUri={aerialUri}
       heightmapPoints={liveData.heightmapPoints}
     >
+      {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
+      <VignetteOverlay />
+
       {/* ---- Top-left: scene stats + view toggle ---- */}
       <GlassCard position="top-left" style={{ padding: "12px 16px" }}>
         <div style={{ fontFamily: "var(--font-tech)", fontSize: 13, color: "var(--gs-ink)" }}>
@@ -205,7 +211,11 @@ export function WebGLStudioPreview({
             {stats.strikes > 0 && (
               <span style={{ color: "var(--gs-conflict)" }}> | ⚠ {stats.strikes} strikes</span>
             )}<br />
-            Scale: {stats.scaleM.toFixed(0)}m | Save: {saveStatus}
+            Scale: {stats.scaleM.toFixed(0)}m
+          </div>
+          {/* Save status chip — zero layout shift, fixed-width reserved space */}
+          <div style={{ marginTop: 6 }}>
+            <SaveStatusChip />
           </div>
 
           {/* View toggle — Plan ↔ 3D (drives the fused camera) */}

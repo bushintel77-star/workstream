@@ -23,23 +23,29 @@
  *      straight down — identical to ortho) to the oblique angle (blend=1,
  *      perspective tilt). The lot centre stays as the fixed look-at target.
  *
- *   4. viewBlend is ANIMATED toward viewBlendTarget (in the store) each frame
- *      via exponential decay — ~600ms for a full 0→1 transition. The user
- *      toggles or slides the target; the camera glides.
+ *   4. viewBlend is driven by a SPRING (mass-spring-damper) toward
+ *      viewBlendTarget. The spring is 100% interruptible — toggling back
+ *      mid-transition preserves velocity and redirects smoothly.
+ *
+ * 60FPS FRAME BUDGET (Cinematic & Polish Pass):
+ *   All per-frame matrix operations use a pre-allocated FusedCameraScratch
+ *   context — zero object allocations in the hot loop. The two scratch cameras
+ *   (ortho + persp) are reused by updating their frustum params + calling
+ *   updateProjectionMatrix(). Temp vectors are reused. This eliminates GC
+ *   pressure on tablet hardware during rapid view toggling.
  *
  * Binding: docs/GOLD-STANDARD-2026-ARCHITECTURE.md §1.3 (Fused Rendering Context)
  */
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { StudioCameraRig } from "./cameraRig";
 import {
-  buildOrthoMatrix,
-  buildPerspMatrix,
-  fusedCameraPosition,
-  lerpProjectionMatrix,
-  approachEased,
+  FusedCameraScratch,
+  springStep,
+  CAMERA_SPRING,
+  type SpringState,
 } from "./cameraAnimation";
 import { useStudioStore } from "./studioStore";
 
@@ -58,11 +64,17 @@ const VIEW_PADDING = 1.3;
 export function FusedCamera({ rig, scaleM, boardAspect }: FusedCameraProps) {
   const { camera, size } = useThree();
 
-  // The actual animated blend value — kept in a ref, mutated per-frame.
-  // Starts at 0 (plan view). The store holds the TARGET; we ease toward it.
-  const blendRef = useRef(0);
+  // The spring state — persists velocity across frames so the camera motion is
+  // 100% interruptible. When the target changes mid-flight, the existing
+  // velocity carries into the new trajectory (no reset, no jump, no snap).
+  // Starts at rest at position 0 (plan view).
+  const springRef = useRef<SpringState>({ position: 0, velocity: 0 });
 
-  // Reusable temp objects (avoid per-frame allocation).
+  // Pre-allocated scratch context — created ONCE, reused every frame.
+  // This is the 60FPS optimization: zero allocations in the hot loop.
+  const scratch = useMemo(() => new FusedCameraScratch(), []);
+
+  // Reusable temp matrices (avoid per-frame allocation).
   const orthoMatrixRef = useRef(new THREE.Matrix4());
   const perspMatrixRef = useRef(new THREE.Matrix4());
   const tempMatrixRef = useRef(new THREE.Matrix4());
@@ -72,9 +84,10 @@ export function FusedCamera({ rig, scaleM, boardAspect }: FusedCameraProps) {
     // Read the target blend from the store (transient — zero re-renders).
     const { viewBlendTarget } = useStudioStore.getState();
 
-    // Ease the actual blend toward the target.
-    blendRef.current = approachEased(blendRef.current, viewBlendTarget, delta);
-    const blend = blendRef.current;
+    // Spring physics — the camera has physical weight. When the user toggles
+    // mid-transition, the spring's velocity carries into the new direction
+    // seamlessly (no snap, no reset). Semi-implicit Euler with sub-stepping.
+    const blend = springStep(springRef.current, viewBlendTarget, CAMERA_SPRING, delta);
 
     // Viewport aspect ratio.
     const viewportAspect = size.width / size.height || 1;
@@ -85,27 +98,25 @@ export function FusedCamera({ rig, scaleM, boardAspect }: FusedCameraProps) {
     // Tilt from the rig (degrees → radians). Max 55° = natural architectural.
     const tiltRad = Math.min((rig.tiltDeg * Math.PI) / 180, (55 * Math.PI) / 180);
 
-    // Build both projection matrices.
-    orthoMatrixRef.current = buildOrthoMatrix(
+    // Build both projection matrices IN-PLACE (zero allocation).
+    scratch.updateOrtho(
+      orthoMatrixRef.current,
       rig.zoom,
       viewportAspect,
-      scaleM,
       boardAspect,
       viewSize,
     );
 
-    const { matrix: perspMatrix, distance } = buildPerspMatrix(
+    const distance = scratch.updatePersp(
+      perspMatrixRef.current,
       rig.zoom,
       viewportAspect,
-      scaleM,
       boardAspect,
       viewSize,
-      tiltRad,
     );
-    perspMatrixRef.current = perspMatrix;
 
-    // Lerp the projection matrix between ortho and persp by blend.
-    lerpProjectionMatrix(
+    // Lerp the projection matrix between ortho and persp by blend (in-place).
+    scratch.lerpProjection(
       tempMatrixRef.current,
       orthoMatrixRef.current,
       perspMatrixRef.current,
@@ -117,9 +128,11 @@ export function FusedCamera({ rig, scaleM, boardAspect }: FusedCameraProps) {
     // Also update the inverse (needed for raycasting / unprojection).
     camera.projectionMatrixInverse.copy(tempMatrixRef.current).invert();
 
-    // Compute camera position along the arc.
+    // Compute camera position along the arc (in-place, zero allocation).
     const rotateRad = (rig.rotateDeg * Math.PI) / 180;
-    const { position, lookAt } = fusedCameraPosition(
+    scratch.computePosition(
+      scratch.tempPos,
+      scratch.tempLook,
       blend,
       tiltRad,
       distance,
@@ -131,16 +144,16 @@ export function FusedCamera({ rig, scaleM, boardAspect }: FusedCameraProps) {
     if (Math.abs(rotateRad) > 0.001) {
       const cos = Math.cos(rotateRad);
       const sin = Math.sin(rotateRad);
-      const x = position.x;
-      const z = position.z;
-      position.x = x * cos - z * sin;
-      position.z = x * sin + z * cos;
+      const x = scratch.tempPos.x;
+      const z = scratch.tempPos.z;
+      scratch.tempPos.x = x * cos - z * sin;
+      scratch.tempPos.z = x * sin + z * cos;
     }
 
-    camera.position.copy(position);
+    camera.position.copy(scratch.tempPos);
 
     // Smoothly approach the look-at target (avoids jerk on pan).
-    currentLookAtRef.current.lerp(lookAt, Math.min(1, delta * 10));
+    currentLookAtRef.current.lerp(scratch.tempLook, Math.min(1, delta * 10));
     camera.lookAt(currentLookAtRef.current);
 
     camera.updateMatrixWorld(true);
