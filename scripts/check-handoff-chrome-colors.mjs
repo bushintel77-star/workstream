@@ -43,6 +43,10 @@ const ALLOW_PATH_SUBSTR = [
   "components/share/ClientShareTwin.tsx",
   // Gold Standard Studio Dark token source of truth (Growth/Subsurface studios)
   "components/canvas/goldStandardStudio.module.css",
+  // WebGL studio Three.js material/light colours — physical render values
+  // (canopy foliage, trunk bark, APWA utility colours, boundary lines, grid),
+  // not chrome identity. Same category as ClientShareTwin.tsx above.
+  "components/canvas/webgl/",
 ];
 
 /** Hex values permitted when they appear (mask / none). */
