@@ -45,6 +45,7 @@ import {
 } from "./studioStore";
 import { useStudioAutosave, useBeforeUnloadGuard } from "./useStudioAutosave";
 import { computeLiveStudioData } from "./canvasBridges";
+import { SliceProfileCard } from "./SliceProfileCard";
 
 /** Day arc bounds — same as the 2D SunGrowthDock (~06:20 → ~19:40). */
 const DAY_START = 6 * 60 + 20;
@@ -124,6 +125,8 @@ export function WebGLStudioPreview({
   const viewBlendTarget = useStudioStore((s) => s.viewBlendTarget);
   const setViewBlendTarget = useStudioStore((s) => s.setViewBlendTarget);
   const strokes = useStudioStore((s) => s.sketchStrokes);
+  const sliceActive = useStudioStore((s) => s.sliceActive);
+  const setSliceActive = useStudioStore((s) => s.setSliceActive);
   // Save status is rendered by <SaveStatusChip /> which subscribes independently
   // (so only the chip re-renders on status change, not the whole HUD).
 
@@ -287,6 +290,16 @@ export function WebGLStudioPreview({
             >
               {sketchMode ? "▾ Orbit" : "▸ Sketch"}
             </ToggleChip>
+            {/* Section / Vertical Truth — only when terrain exists */}
+            {liveData.heightmapPoints.length > 0 && (
+              <ToggleChip
+                active={sliceActive}
+                onClick={() => setSliceActive(!sliceActive)}
+                activeColor="var(--gs-truth)"
+              >
+                {sliceActive ? "▾ Section" : "▸ Section"}
+              </ToggleChip>
+            )}
           </div>
         </div>
       </GlassCard>
@@ -401,6 +414,15 @@ export function WebGLStudioPreview({
           </div>
         </div>
       </GlassCard>
+
+      {/* Elevation Slice profile panel (Vertical Truth) — only when terrain exists */}
+      {liveData.heightmapPoints.length > 0 && (
+        <SliceProfileCard
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+          heightmapPoints={liveData.heightmapPoints}
+        />
+      )}
     </WebGLStudio>
   );
 }

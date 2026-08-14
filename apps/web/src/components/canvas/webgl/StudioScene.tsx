@@ -25,13 +25,14 @@ import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore, winterFactor } from "./seasonalStore";
 import type { StudioCameraRig } from "./cameraRig";
-import { pctToWorld, type PctPoint } from "./coordTransform";
+import { pctToWorld, type PctPoint, type HeightmapPoint } from "./coordTransform";
 import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
 import { FusedCamera } from "./FusedCamera";
 import { FusedSketchLayer } from "./FusedSketchLayer";
 import { TerrainMesh } from "./TerrainMesh";
+import { ElevationSliceLine } from "./ElevationSliceLine";
 import { type PresentationLensFilter } from "./PresentationLens";
 
 /** Prahran demo fallback — same default as the 2D sun/growth dock + GrowthStudio. */
@@ -100,7 +101,7 @@ export interface StudioSceneProps {
   /** Aerial photo URI — rendered as a ground underlay texture (fades in 3D). */
   aerialUri?: string | null;
   /** Spot level sample points for the terrain heightmap (world space). */
-  heightmapPoints?: Array<{ x: number; z: number; y: number }>;
+  heightmapPoints?: HeightmapPoint[];
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
@@ -520,8 +521,7 @@ function GroundPlane({ scaleM, boardAspect }: { scaleM: number; boardAspect: num
  * drawing surface, like the old sketch pad). As the camera transitions to 3D
  * (blend→1), the aerial fades out so the 3D geometry/textures take over.
  *
- * This replaces the old <img> element in SketchPad.tsx with a real scene-graph
- * texture — no DOM layer to swap, no hard cut.
+ * Rendered as a real scene-graph texture — no DOM layer to swap, no hard cut.
  */
 function AerialUnderlay({
   aerialUri,
@@ -641,6 +641,15 @@ export function StudioScene({
       ) : (
         <GroundPlane scaleM={scaleM} boardAspect={boardAspect} />
       )}
+      {/* Elevation Slice — draggable section-cut line (Vertical Truth). Only
+          mounts when terrain exists; the DOM profile panel is in WebGLStudioPreview. */}
+      {heightmapPoints.length > 0 && (
+        <ElevationSliceLine
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+          heightmapPoints={heightmapPoints}
+        />
+      )}
       {/* Aerial photo underlay — opaque in plan view, fades in 3D. */}
       <AerialUnderlay aerialUri={aerialUri} scaleM={scaleM} boardAspect={boardAspect} />
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the
@@ -679,7 +688,11 @@ export function StudioScene({
           sketchMode is on (reads the store internally). Strokes live in the
           unified store (CanvasStroke[] in board-% space) and render in BOTH
           plan and 3D views — no separate SVG surface. */}
-      <FusedSketchLayer scaleM={scaleM} boardAspect={boardAspect} />
+      <FusedSketchLayer
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        heightmapPoints={heightmapPoints}
+      />
     </>
   );
 }

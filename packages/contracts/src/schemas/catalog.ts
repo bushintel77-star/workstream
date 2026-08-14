@@ -109,6 +109,12 @@ export const CanvasStrokeSchema = z.object({
   shape_tool: z.enum(["line", "rect", "circle"]).optional(),
   shape_start: CanvasStrokePointSchema.optional(),
   shape_end: CanvasStrokePointSchema.optional(),
+  /**
+   * Extrusion height (metres) — set when a closed stroke footprint is extruded
+   * into a 3D mass via the FusedSketchLayer drag-up gesture. Absent on flat
+   * ink strokes. Optional / no migration.
+   */
+  extrude_height_m: z.number().positive().optional(),
 });
 export type CanvasStroke = z.infer<typeof CanvasStrokeSchema>;
 

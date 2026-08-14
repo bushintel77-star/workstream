@@ -13,20 +13,20 @@
 
 import type { RenderItem } from "./sceneItems";
 import type { PctPoint } from "./coordTransform";
+import type { StudioItem } from "../handoff/studioCatalog";
 
-/** The StudioItem fields the WebGL renderer needs (structural subset). */
-interface StudioItemLike {
-  id: string;
-  t: RenderItem["t"];
-  x: number;
-  y: number;
-  rot: number;
-  scale: number;
-  ghost: boolean;
-  outlinePct?: Array<{ x: number; y: number }>;
-  dbhM?: number;
-  heightM?: number;
-}
+/**
+ * The StudioItem fields the WebGL renderer needs — derived from the canonical
+ * handoff-layer StudioItem so field drift surfaces as a compile error (a new
+ * required field on StudioItem, or a renamed one, will fail the Omit).
+ *
+ * outlinePct is StudioItem.Pt[] ({x,y}) which is structurally identical to
+ * PctPoint — the cast below is safe and compiler-checked.
+ */
+type StudioItemLike = Omit<
+  StudioItem,
+  "why" | "conf" | "stale" | "stemDbhM" | "symbolId" | "pathWidthM" | "edgeType" | "pathFilletM" | "source"
+>;
 
 /**
  * Convert StudioItem[] → RenderItem[].

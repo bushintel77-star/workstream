@@ -38,7 +38,7 @@ import type { WebGLRenderer } from "three";
 import { PALETTE } from "../../../styles/colorTokens";
 import { StudioScene } from "./StudioScene";
 import type { StudioCameraRig } from "./cameraRig";
-import type { PctPoint } from "./coordTransform";
+import type { PctPoint, HeightmapPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
 import type { SubsurfaceUtility, StrikeAlertData } from "./features/SubsurfaceEngine";
 import type { PresentationLensFilter } from "./PresentationLens";
@@ -70,7 +70,7 @@ export interface WebGLStudioProps {
   /** Aerial photo URI — rendered as a ground underlay texture (fades in 3D). */
   aerialUri?: string | null;
   /** Spot level sample points for the terrain heightmap (world space). */
-  heightmapPoints?: Array<{ x: number; z: number; y: number }>;
+  heightmapPoints?: HeightmapPoint[];
   children?: ReactNode;
   style?: CSSProperties;
 }

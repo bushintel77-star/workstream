@@ -56,10 +56,13 @@ export interface StudioAutosaveDoc {
  * 1 decimal to avoid float jitter triggering spurious saves). Placement
  * fingerprint includes id, position, scale, rotation, and type.
  */
-function buildPersistKey(doc: StudioAutosaveDoc): string {
+export function buildPersistKey(doc: StudioAutosaveDoc): string {
   const strokeParts = doc.strokes.map(
     (s) =>
-      `${s.id}:${s.width_px}:${s.color}:${
+      `${s.id}:${s.width_px}:${s.color}:${s.extrude_height_m ?? 0}:${
+        // points is required by the schema, but legacy/handoff-authored strokes
+        // may predate the field — guard defensively rather than at the contract
+        // (changing the contract would risk the handoff stroke path).
         (s.points ?? [])
           .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
           .join("|")

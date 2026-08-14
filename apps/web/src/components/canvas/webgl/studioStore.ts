@@ -121,6 +121,14 @@ export interface StudioStoreState {
   /** 3D sketch capture mode — suppresses camera pan, drags become strokes. */
   sketchMode: boolean;
 
+  // --- Elevation Slice instrument (Vertical Truth) ---
+  /** Whether the section-cut instrument is active. DOM-subscribed. */
+  sliceActive: boolean;
+  /** Which axis the cut runs along. "z" = E/W cut (N/S profile), "x" = N/S cut. */
+  sliceAxis: "x" | "z";
+  /** Position of the cut along the cross-axis, in world metres (lot-centred). */
+  slicePosM: number;
+
   // --- Fused rendering context ---
   /**
    * The TARGET view blend. 0 = orthographic plan, 1 = perspective 3D.
@@ -128,6 +136,13 @@ export interface StudioStoreState {
    * Set instantly (toggles) or via a slider — the animation handles smoothing.
    */
   viewBlendTarget: number;
+  /**
+   * The ACTUAL (animated) view blend — the spring-driven value the FusedCamera
+   * writes each frame as it eases toward viewBlendTarget. Read via getState()
+   * inside useFrame by consumers that must track the camera in lockstep (e.g.,
+   * the stroke-drape Y lerp). NOT for DOM subscription — it changes every frame.
+   */
+  viewBlend: number;
 
   // --- Shared ink layer ---
   /** All sketch strokes in board-% space (the CanvasStroke contract schema). */
@@ -152,6 +167,12 @@ export interface StudioStoreState {
   setSubsurfaceView: (v: boolean) => void;
   setSketchMode: (v: boolean) => void;
   setViewBlendTarget: (v: number) => void;
+  /** Write the animated blend — called per-frame by FusedCamera (transient). */
+  setViewBlend: (v: number) => void;
+
+  setSliceActive: (v: boolean) => void;
+  setSliceAxis: (a: "x" | "z") => void;
+  setSlicePosM: (v: number) => void;
 
   /** Replace the entire stroke array (e.g., on hydrate / undo / redo). */
   setSketchStrokes: (strokes: CanvasStroke[]) => void;
@@ -180,6 +201,12 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   subsurfaceView: false,
   sketchMode: false,
   viewBlendTarget: 0, // start in plan view (ortho, CAD-accurate)
+  viewBlend: 0, // animated value — FusedCamera writes this each frame
+
+  // Elevation Slice defaults
+  sliceActive: false,
+  sliceAxis: "z",
+  slicePosM: 0,
 
   // Ink
   sketchStrokes: [],
@@ -201,6 +228,14 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setSketchMode: (sketchMode) => set({ sketchMode }),
   setViewBlendTarget: (viewBlendTarget) =>
     set({ viewBlendTarget: Math.max(0, Math.min(1, viewBlendTarget)) }),
+  // Transient per-frame write — no DOM consumer should subscribe to viewBlend
+  // directly (it changes every frame). Use viewBlendTarget for UI. Consumers
+  // that must track the camera (stroke drape) read via getState() in useFrame.
+  setViewBlend: (viewBlend) => set({ viewBlend }),
+
+  setSliceActive: (sliceActive) => set({ sliceActive }),
+  setSliceAxis: (sliceAxis) => set({ sliceAxis }),
+  setSlicePosM: (slicePosM) => set({ slicePosM }),
 
   setSketchStrokes: (sketchStrokes) => set({ sketchStrokes }),
   addSketchStroke: (stroke) =>

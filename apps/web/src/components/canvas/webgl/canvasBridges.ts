@@ -28,9 +28,11 @@ import {
   calculateHydraulicRuns,
   type DesignExcavation,
   type HydraulicRun,
+  type StrikeAlert,
+  type UtilityLine,
   type UtilityType,
 } from "@workstream/domain";
-import { pctToWorld } from "./coordTransform";
+import { pctToWorld, type HeightmapPoint } from "./coordTransform";
 import type { SubsurfaceUtility, StrikeAlertData } from "./features/SubsurfaceEngine";
 
 /* -------------------------------------------------------------------------- */
@@ -150,12 +152,8 @@ export function trenchesToExcavations(
     .filter((t) => !t.ghost)
     .map((t) => ({
       id: t.id,
-      path: t.points.map(
-        (p) =>
-          pctToWorld({ x: p.x_pct, y: p.y_pct }, scaleM, boardAspect) as [
-            number,
-            number,
-          ],
+      path: t.points.map((p) =>
+        pctToWorld({ x: p.x_pct, y: p.y_pct }, scaleM, boardAspect),
       ),
       depthM: (t.depth_mm ?? 300) / 1000,
       widthM: TRENCH_WIDTH_M[t.kind] ?? 0.3,
@@ -171,20 +169,18 @@ export function computeStrikeAlerts(
   excavations: DesignExcavation[],
   utilities: SubsurfaceUtility[],
 ): StrikeAlertData[] {
-  // The domain detectStrikes expects UtilityLine[] — structurally compatible
-  // with SubsurfaceUtility (same fields, same types).
-  const utilityLines = utilities.map((u) => ({
-    id: u.id,
-    type: u.type,
-    start: u.start,
-    end: u.end,
-    depthM: u.depthM,
-    toleranceM: u.toleranceM,
-  }));
+  // SubsurfaceUtility and the domain UtilityLine are structurally identical
+  // (same fields, same types). Cast once so the compiler validates the shape
+  // — if either type drifts, this becomes a compile error rather than a
+  // silent field drop.
+  const utilityLines = utilities as unknown as UtilityLine[];
 
-  const alerts = detectStrikes(excavations, utilityLines);
+  const alerts: StrikeAlert[] = detectStrikes(excavations, utilityLines);
 
-  return alerts.map((a) => ({
+  // Map domain StrikeAlert → renderer StrikeAlertData (drops the join IDs and
+  // distanceM the renderer doesn't consume). Explicit return type above keeps
+  // the mapping honest.
+  return alerts.map((a: StrikeAlert) => ({
     id: a.id,
     utilityType: a.utilityType,
     point: a.point,
@@ -283,7 +279,7 @@ export function levelsToHeightmapPoints(
   levels: DesignSiteFrameLevel[],
   scaleM: number,
   boardAspect: number,
-): Array<{ x: number; z: number; y: number }> {
+): HeightmapPoint[] {
   return levels.map((lv) => {
     const [x, z] = pctToWorld(
       { x: lv.x_pct, y: lv.y_pct },
@@ -301,7 +297,7 @@ export function levelsToHeightmapPoints(
 export interface LiveStudioData {
   subsurfaceUtilities: SubsurfaceUtility[];
   strikeAlerts: StrikeAlertData[];
-  heightmapPoints: Array<{ x: number; z: number; y: number }>;
+  heightmapPoints: HeightmapPoint[];
 }
 
 /**

@@ -82,12 +82,16 @@ export function FusedCamera({ rig, scaleM, boardAspect }: FusedCameraProps) {
 
   useFrame((_, delta) => {
     // Read the target blend from the store (transient — zero re-renders).
-    const { viewBlendTarget } = useStudioStore.getState();
+    const { viewBlendTarget, setViewBlend } = useStudioStore.getState();
 
     // Spring physics — the camera has physical weight. When the user toggles
     // mid-transition, the spring's velocity carries into the new direction
     // seamlessly (no snap, no reset). Semi-implicit Euler with sub-stepping.
     const blend = springStep(springRef.current, viewBlendTarget, CAMERA_SPRING, delta);
+
+    // Publish the animated blend so in-lockstep consumers (stroke drape) can
+    // read it via getState() in their own useFrame without re-subscribing.
+    setViewBlend(blend);
 
     // Viewport aspect ratio.
     const viewportAspect = size.width / size.height || 1;

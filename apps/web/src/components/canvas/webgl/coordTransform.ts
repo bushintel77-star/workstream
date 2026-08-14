@@ -13,6 +13,20 @@
 export type PctPoint = { x: number; y: number };
 
 /**
+ * A world-space elevation sample for the terrain heightmap.
+ *   - x, z: horizontal world position (metres, lot-centred)
+ *   - y:    elevation (metres; AHD/local RL from site_frame.levels.z_m)
+ *
+ * Single source of truth shared by TerrainMesh, the stroke drape, and the
+ * elevation slice — so all three consumers sample identical terrain.
+ */
+export interface HeightmapPoint {
+  x: number;
+  z: number;
+  y: number;
+}
+
+/**
  * Convert a board-% point to metre-space world [x, z] coordinates.
  * The lot spans `scaleM` metres across the board width (X axis).
  * The Y axis is divided by boardAspect to account for the non-uniform
@@ -50,32 +64,4 @@ export function worldToPct(
     x: ((xM + lotWidthM / 2) / lotWidthM) * 100,
     y: ((zM + lotHeightM / 2) / lotHeightM) * 100,
   };
-}
-
-/**
- * Convert a board-% ring to metre-space planar coordinates.
- * This mirrors geometry/polygon.ts pctRingToPlanarM but returns centred
- * world coords (origin at lot centre) instead of top-left-anchored.
- */
-export function pctRingToWorld(
-  pts: PctPoint[],
-  scaleM: number,
-  boardAspect: number,
-): [number, number][] {
-  return pts.map((p) => pctToWorld(p, scaleM, boardAspect));
-}
-
-/**
- * Convert a board-% distance to metres (for a single axis or diagonal).
- * Mirrors geometry/polygon.ts pctToMetres.
- */
-export function pctDeltaToMetres(
-  dxPct: number,
-  dyPct: number,
-  scaleM: number,
-  boardAspect = 1,
-): number {
-  const mx = (dxPct / 100) * scaleM;
-  const my = (dyPct / 100) * (scaleM / boardAspect);
-  return Math.hypot(mx, my);
 }

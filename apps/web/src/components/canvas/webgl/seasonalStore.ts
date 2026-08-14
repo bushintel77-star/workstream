@@ -20,5 +20,4 @@ export {
   seasonLabel,
   seasonMonth,
   leafStatus,
-  type StudioStoreState as SeasonalState,
 } from "./studioStore";
