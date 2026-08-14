@@ -60,8 +60,8 @@ export function GlassCard({
         // Canvas-first: ~38% glass — the drawing reads through the card,
         // keeping "one layer of canvas" always present under the chrome.
         background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
+        backdropFilter: "blur(var(--gs-blur))",
+        WebkitBackdropFilter: "blur(var(--gs-blur))",
         borderRadius: 12,
         border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
         ...posStyle,

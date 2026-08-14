@@ -44,7 +44,7 @@
     bottom: 0;
     width: 100%;
     max-height: min(70vh, calc(100% - var(--ws-safe-top, 40px) - 8px));
-    border-radius: 16px 16px 0 0;
+    border-radius: 12px 16px 0 0;
     border-left: none;
     border-top: 1px solid var(--hc-line-soft);
     box-shadow: 0 -8px 28px var(--hc-neu-shadow);

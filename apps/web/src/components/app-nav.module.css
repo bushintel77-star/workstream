@@ -5,8 +5,8 @@
   width: 100%;
   padding: 0;
   background: color-mix(in srgb, var(--surface-base) 92%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
   border-bottom: 1px solid var(--line-subtle);
 }
 

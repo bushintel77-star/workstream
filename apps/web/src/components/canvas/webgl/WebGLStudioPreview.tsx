@@ -543,8 +543,8 @@ export function WebGLStudioPreview({
             padding: "4px 6px",
             borderRadius: 10,
             background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
+            backdropFilter: "blur(var(--gs-blur))",
+            WebkitBackdropFilter: "blur(var(--gs-blur))",
             border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
             pointerEvents: "auto",
           }}

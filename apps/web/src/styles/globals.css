@@ -89,10 +89,10 @@
   --info: var(--gs-truth-ink);
 
   /* type — Aegis professional-services families */
-  --font-display: "IBM Plex Mono", monospace;
-  --font-body: "IBM Plex Sans", sans-serif;
-  --font-serif: "IBM Plex Serif", serif;
-  --font-mono: "IBM Plex Mono", monospace;
+  --font-display: var(--font-tech), "Space Grotesk", sans-serif;
+  --font-body: var(--font-ui), "Inter", sans-serif;
+  --font-serif: var(--font-ui), "Inter", sans-serif;
+  --font-mono: var(--font-technical-mono), "JetBrains Mono", monospace;
   --font-hand: "Architects Daughter", cursive;
 
   /* type scale — 1.125 ratio, all components reference these.

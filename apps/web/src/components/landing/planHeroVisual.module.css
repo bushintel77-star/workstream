@@ -9,7 +9,7 @@
   --hero-chalk: var(--ink-primary);
   --hero-crimson: var(--crimson-d-500);
   --hero-pink: color-mix(in srgb, var(--crimson-d-500) 25%, var(--ink-primary));
-  --hero-wash-mid: color-mix(in srgb, var(--gold-standard) 42%, var(--surface-deep));
+  --hero-wash-mid: color-mix(in srgb, var(--gs-primary) 42%, var(--surface-deep));
 }
 
 .strokeDraw,

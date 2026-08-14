@@ -56,8 +56,8 @@ function AssetCard({
         borderRadius: 10,
         border: "1px solid var(--gs-line)",
         background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
+        backdropFilter: "blur(var(--gs-blur))",
+        WebkitBackdropFilter: "blur(var(--gs-blur))",
         cursor: "pointer",
         transition: "transform 0.2s ease, box-shadow 0.2s ease",
         pointerEvents: "auto",
@@ -177,8 +177,8 @@ export function AssetFanOutDock() {
           borderRadius: 999,
           border: `1px solid color-mix(in srgb, ${GOLD} 40%, transparent)`,
           background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
+          backdropFilter: "blur(var(--gs-blur))",
+          WebkitBackdropFilter: "blur(var(--gs-blur))",
           pointerEvents: "none",
           fontFamily: "var(--font-tech)",
           fontSize: 10,
@@ -205,8 +205,8 @@ export function AssetFanOutDock() {
         borderRadius: 12,
         border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
         background: "color-mix(in srgb, var(--gs-glass) 24%, transparent)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
+        backdropFilter: "blur(var(--gs-blur))",
+        WebkitBackdropFilter: "blur(var(--gs-blur))",
         // Container passes clicks through to the canvas — the dock spans the
         // screen centre, so only the cards themselves may capture (Stitch
         // phase_1.1 does exactly this: pointer-events-none dock, auto cards).

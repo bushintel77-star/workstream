@@ -14,7 +14,7 @@
   height: 100vh;
   overflow: hidden;
   isolation: isolate;
-  background: var(--canvas-base);
+  background: var(--gs-canvas);
   color: var(--gold-standard-ink);
   font-family: var(--font-inter), sans-serif;
 }
@@ -36,7 +36,7 @@
 .canvasBase {
   background:
     radial-gradient(circle at 50% 40%, rgba(251, 191, 36, 0.06), transparent 58%),
-    linear-gradient(160deg, var(--canvas-base-high) 0%, var(--canvas-base) 55%, var(--canvas-base-low) 100%);
+    linear-gradient(160deg, var(--gs-glass-sunken) 0%, var(--gs-canvas) 55%, var(--gs-frame) 100%);
 }
 
 .gridOverlay {
@@ -71,8 +71,8 @@
   inset: 0;
   border: 2px solid rgba(251, 191, 36, 0.6);
   background: rgba(16, 20, 24, 0.1);
-  backdrop-filter: blur(1px);
-  -webkit-backdrop-filter: blur(1px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
   border-radius: 0.125rem;
   animation: pulseCapture 3s ease-in-out infinite;
   overflow: hidden;
@@ -86,7 +86,7 @@
 }
 
 .propertyBoundary {
-  stroke: var(--gold-standard);
+  stroke: var(--gs-primary);
   stroke-dasharray: 2 2;
   stroke-width: 0.5;
 }
@@ -129,7 +129,7 @@
   top: 50%;
   width: 0.75rem;
   height: 0.75rem;
-  border: 2px solid var(--signal-blue);
+  border: 2px solid var(--gs-truth);
   border-radius: var(--r-pill);
   transform: translate(-50%, -50%);
 }
@@ -223,8 +223,8 @@
 }
 
 .searchInput:focus {
-  border-color: var(--gold-standard);
-  outline: 2px solid var(--gold-standard);
+  border-color: var(--gs-primary);
+  outline: 2px solid var(--gs-primary);
   outline-offset: 1px;
 }
 
@@ -242,8 +242,8 @@
   padding: 0 0.8rem;
   border: none;
   border-radius: 0.25rem;
-  background: var(--gold-standard);
-  color: var(--canvas-base);
+  background: var(--gs-primary);
+  color: var(--gs-canvas);
   font-family: var(--font-tech), sans-serif;
   font-size: 0.75rem;
   font-weight: 700;
@@ -284,8 +284,8 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.5rem;
   background: rgba(20, 24, 28, 0.96);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
@@ -399,7 +399,7 @@
 }
 
 .step-complete {
-  color: var(--gold-standard);
+  color: var(--gs-primary);
 }
 
 .step-active {
@@ -472,7 +472,7 @@
 }
 
 .data-gold {
-  color: var(--gold-standard) !important;
+  color: var(--gs-primary) !important;
 }
 
 .data-blue {
@@ -489,7 +489,7 @@
   width: 0.4rem;
   height: 0.4rem;
   border-radius: var(--r-pill);
-  background: var(--signal-blue);
+  background: var(--gs-truth);
   box-shadow: 0 0 8px rgba(0, 48, 207, 0.8);
   animation: statusPulse 1.8s ease-in-out infinite;
 }
@@ -511,7 +511,7 @@
   width: 0.28rem;
   height: 0.28rem;
   border-radius: var(--r-pill);
-  background: var(--gold-standard);
+  background: var(--gs-primary);
   content: "";
   transform: translate(-50%, -50%);
 }

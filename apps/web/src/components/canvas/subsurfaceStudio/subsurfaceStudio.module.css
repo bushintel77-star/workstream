@@ -56,8 +56,8 @@
   border-radius: var(--gs-radius-panel);
   border: 1px solid var(--gs-line);
   background: var(--gs-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
@@ -96,8 +96,8 @@
   border-radius: var(--gs-radius-panel);
   border: 1px solid var(--gs-line);
   background: var(--gs-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
   color: var(--gs-ink-muted);
   font-family: var(--gs-font-tech);
   font-size: 12px;
@@ -126,8 +126,8 @@
   border-radius: var(--gs-radius-pill);
   border: 1px solid var(--gs-line);
   background: var(--gs-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
@@ -173,8 +173,8 @@
   border-radius: var(--gs-radius-panel);
   border: 1px solid var(--gs-line);
   background: var(--gs-glass-strong);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
@@ -263,8 +263,8 @@
   border-radius: var(--gs-radius-chip);
   border: 1px solid var(--gs-line);
   background: var(--gs-glass-strong);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
   white-space: nowrap;
   will-change: left, top, opacity;
@@ -338,8 +338,8 @@
   border-radius: var(--gs-radius-panel);
   border: 1px solid var(--gs-line);
   background: var(--gs-glass-strong);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
@@ -462,8 +462,8 @@
   padding: 6px 16px;
   background: rgba(11, 15, 18, 0.8);
   border-top: 1px solid var(--gs-line);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
 }
 
 .statusCoords {
@@ -501,8 +501,8 @@
   border-radius: var(--gs-radius-panel);
   border: 1px solid var(--gs-line);
   background: var(--gs-glass-strong);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
 }
 
 .emptyTitle {
