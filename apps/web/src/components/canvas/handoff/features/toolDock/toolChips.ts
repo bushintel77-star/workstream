@@ -33,6 +33,7 @@ const PRIMARY: ToolChip[] = [
   },
   { id: "path", label: "Path", icon: "⌁", title: "Author a residential path" },
   { id: "measure", label: "Measure", icon: "⟋", title: "Measure" },
+  { id: "grid", label: "Grid", icon: "▦", title: "Toggle grid" },
 ];
 
 /** Shared chip list for ToolDock (desktop) and ContextualToolStrip (compact). */

@@ -73,7 +73,7 @@ export default async function ProjectCanvasPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ mode?: string; webgl?: string }>;
+  searchParams: Promise<{ mode?: string; webgl?: string; svg?: string }>;
 }) {
   await requireSignedIn();
   const { id } = await params;
@@ -120,8 +120,9 @@ export default async function ProjectCanvasPage({
     runOutputAction,
   });
 
-  /** Dev preview: ?webgl=1 mounts the R3F WebGL board instead of the SVG studio. */
-  const webglPreview = sp.webgl === "1";
+  /** WebGL studio is now the default mount. Pass ?svg=1 to fall back to the
+   *  legacy SVG studio (HandoffDesignStudio). */
+  const webglPreview = sp.svg !== "1";
   const frame = canvas?.site_frame ?? null;
   const webglScaleM = frame?.board_width_m ?? 110;
   const webglBoardAspect =
