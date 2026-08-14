@@ -82,7 +82,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       **web is not covered** — see the P3 item below.
 - [x] **Local CI guardrails** — root `pnpm run ci` now runs install,
       mobile placeholder detection, portal Edge runtime/import guard, typecheck, lint,
-      and Vitest.
+      and Vitest. Lint is `--max-warnings 0`; went red on main (pre-existing
+      `set-state-in-effect` + unused-var warnings) and cleared in `48ee40e`
+      (HomePlanner React-19 derived-state refactor + dead-code cleanup) —
+      `pnpm run ci` exits 0 again.
 - [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox; route spans
       use active context, token usage is attached to provider spans, aerial
       fetches are traced, and worker shutdown flushes telemetry.
@@ -681,23 +684,40 @@ Cross-check against build status below before treating any phase as shipped.
       section above). Not yet unified into one Gold-Standard-dark surface —
       that's the "second, intentionally distinct surface family" boundary
       documented in `docs/GOLD-STANDARD-STUDIO-HANDOVER.md`.
+      **Update (e305e2d)**: the unified WebGL studio
+      (`apps/web/src/components/canvas/webgl/`) is now the default canvas
+      mount with fused ortho↔persp navigation, shared ink
+      (`FusedSketchLayer`: freehand + extrude-to-mass, terrain-draped), and
+      the legacy isolated `/projects/[id]/sketch` route was deleted — the
+      unified studio is the only sketch environment (deep links land via
+      `?tool=sketch`). Still missing on the GL surface: the floating tool
+      ribbon (Polyline/Curve — planned next; Area routes to
+      `SpatialObject`/`outline_pct`, not a stroke) and the Asset Fan-Out
+      carousel (mobile only).
       Concept references: [concept-01-cad-operator-studio.png](docs/design-spec/concept-mockups/concept-01-cad-operator-studio.png)
       (floating tool ribbon, asset carousel, meta chips) and
       [concept-03-auto-placement-logic.png](docs/design-spec/concept-mockups/concept-03-auto-placement-logic.png)
       (AI Auto-Placement ghost + Confirm/Cancel — the direct source for the
       mobile Ghost & Snap flow shipped this session).
-- [~] **§3 Phase 2 CAD Operator** — Subsurface Studio
+- [x] **§3 Phase 2 CAD Operator** — Subsurface Studio
       (`/subsurface-studio/[id]`) ships the real Subsurface Engine (BYDA
       gas/water/power volumes, `pathsCross` conflict/Strike-Alert detection)
       and Hydrological Pulse (real GPM + pressure-drop via
       `summarizeIrrigationZones`/`assessLvRuns`, not fabricated). Vertical
-      Truth (3D tilt + elevation slices with technical annotations) is
-      **not built** — Subsurface Studio has a depth-reveal scrubber, not a
-      tilt/elevation-slice instrument.
+      Truth shipped on the unified WebGL studio (`60a2295` → `e305e2d`):
+      3D tilt via the fused ortho↔persp camera (spring physics, no hard
+      cut), terrain heightmap from spot levels (IDW, `terrainMath.ts` —
+      shared bit-identical sampler), ink drapes over terrain as the camera
+      tilts (per-vertex Y lerp on `viewBlend`), and the elevation-slice
+      instrument (`ElevationSliceLine` + `SliceProfileCard`: draggable
+      axis-aligned cut + live SVG profile with ×3 vert-exaggeration, datum,
+      Δ-real readouts). Annotations are panel readouts, not in-scene
+      dimension callouts — those remain open polish.
       Concept reference: [concept-02-solar-subsurface-analysis.png](docs/design-spec/concept-mockups/concept-02-solar-subsurface-analysis.png)
       (subsurface legend + Strike Alert chip — matches what's built; the
-      Solar Trajectory time-of-day scrubber in that same image is **not**
-      built, see the mockup's mapping notes).
+      Solar Trajectory time-of-day scrubber in that same image is built on
+      the WebGL studio as the real-sun `Sun · Real Shadows` scrubber, not
+      on Subsurface Studio).
 - [ ] **§3 Phase 3 Client Proposal** — Presentation Lens, itemized live
       fit-sheet quotation sync, and Comparison Lens split-view are **not
       built** on the Gold Standard surface. (The blush-frost studio has its

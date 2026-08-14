@@ -255,7 +255,7 @@ apps/web/src/app/projects/[id]/
 |---------|-----|
 | **WebGL studio** (default) | `/projects/{id}` |
 | Legacy SVG studio | `/projects/{id}?svg=1` |
-| 2D sketch pad | `/projects/{id}/sketch` |
+| ~~2D sketch pad~~ | deleted (`e305e2d`) — deep links `/projects/{id}/sketch` are gone; the unified studio is the only sketch environment (`?tool=sketch` arms it) |
 | Production web | `https://web-production-3c194.up.railway.app/projects/{id}` |
 | Production API | `https://api-production-a8ff1.up.railway.app` |
 
@@ -266,8 +266,8 @@ apps/web/src/app/projects/[id]/
 | Gate | Status |
 |------|--------|
 | Typecheck (13/13) | ✅ |
-| Lint | ✅ |
-| Tests (1566/1566, 264 files) | ✅ |
+| Lint (`--max-warnings 0`) | ✅ (red → green in `48ee40e`) |
+| Tests (1609/1609, 268 files) | ✅ |
 | Chrome-color gate | ✅ (`webgl/` allowlisted as render-material colours) |
 | Web build (Railway) | ✅ |
 | e2e smoke (`webgl-preview-smoke.spec.ts`) | ✅ |
@@ -276,18 +276,27 @@ apps/web/src/app/projects/[id]/
 
 ## Remaining gaps (priority order)
 
-### Gap 1: Live data wiring — MEDIUM 🔶
-The subsurface utilities, strike excavations, and hydrological runs all use **sample/demo data**. Wire real canvas data:
-- BYDA assets → `SubsurfaceUtility[]` (replace `sampleUtilities` in `WebGLStudioPreview.tsx`)
-- Construction trenches → strike `Excavation[]` for `detectStrikes()`
-- Irrigation zones → hydrological runs for `calculateHydraulicRun()`
-- Project lat/lng already wired (page.tsx → WebGLStudioPreview → SunRig)
+> **Update (`e305e2d` + `48ee40e`)**: Gaps 1, 2, and 4 below were written before the
+> fused-rendering-context and Vertical Truth commits. They are now CLOSED — see notes.
 
-### Gap 2: Terrain heightmap — LARGE ⚠️
-The ground is flat at Y=0. The 3D sketch draping architecture is ready (raycast against the ground mesh), but there's no topography to drape *over*. A DEM/survey-data heightmap would unlock:
-- Real cut/fill volume calculations
-- Drainage flow simulation (water flows down gradients)
-- True topographical drape for 3D sketch strokes
+### Gap 1: Live data wiring — CLOSED ✅ (`60a2295`)
+~~The subsurface utilities, strike excavations, and hydrological runs all use sample/demo data.~~
+Wired via `computeLiveStudioData()` (`canvasBridges.ts`): BYDA assets → `SubsurfaceUtility[]`,
+construction trenches → `detectStrikes()` excavations, irrigation zones → `calculateHydraulicRuns()`,
+`site_frame.levels` → terrain heightmap. `WebGLStudioPreview` consumes real canvas data.
+
+### Gap 2: Terrain heightmap — CLOSED ✅ (`60a2295` + `e305e2d`)
+~~The ground is flat at Y=0.~~ Shipped as the **Vertical Truth** milestone:
+- `terrainMath.ts` — shared IDW sampler (`createElevationSampler`); the mesh, stroke drape,
+  and elevation slice all sample bit-identical terrain
+- `TerrainMesh` — displaced 60×60 heightmap from `site_frame.levels` (×3 vert exaggeration,
+  mean-datum normalisation); flat projects degrade to the plane with zero visual change
+- Stroke drape — ink lerps Y from flat (plan) to terrain (3D) per-frame on the animated
+  `viewBlend` (published by `FusedCamera`), zero re-renders/allocs
+- Elevation slice — `ElevationSliceLine` (draggable axis-aligned cut) + `SliceProfileCard`
+  (live SVG profile, ×3 label, Δ-real readouts)
+- Still open under this umbrella: cut/fill volumes, drainage-flow rendering (the mesh is
+  the prerequisite, not those consumers)
 
 ### Gap 3: Port SVG layers to WebGL — MEDIUM ⚠️
 These exist in `CadPlanBoard.tsx` (SVG) but aren't in the WebGL scene:
@@ -295,8 +304,11 @@ These exist in `CadPlanBoard.tsx` (SVG) but aren't in the WebGL scene:
 - Snap visuals
 - Sun shadow polygons (2D `SunCastOverlay` — though 3D sun rig now casts real shadows)
 
-### Gap 4: Stroke persistence — SMALL-MEDIUM ⚠️
-Both the 2D sketch pad and 3D sketch mode store strokes in **local React state** only. No save to the API. The `saveDesignCanvasApi()` function exists (`lib/api.ts`) — needs wiring to a "Save" action.
+### Gap 4: Stroke persistence — CLOSED ✅ (pre-wired; verified `e305e2d`)
+~~Strokes are local React state only.~~ The chain was already built end-to-end
+(`studioStore.sketchStrokes` → `useStudioAutosave` → `saveDesignCanvasClient` → PUT
+`design-canvas`); round-trip verified live (draw → save → reload → hydrate, including
+`extrude_height_m`, added to `CanvasStrokeSchema` in `e305e2d`).
 
 ### Gap 5: 46 unexamined Stitch screens — EXPLORATION ⚠️
 Notable unexamined in `docs/design/gold-standard-2026/stitch/`:
@@ -308,7 +320,10 @@ Notable unexamined in `docs/design/gold-standard-2026/stitch/`:
 - Revision History HUD
 
 ### Gap 6: Mobile licensable sketch tool — FUTURE PHASE ⚠️
-The expo mobile app has `MobileSketchTopbar`/`MobileToolStrip` components. The 2D sketch pad (`/sketch`) is web-first. Porting to mobile (React Native + Skia/WebView) is the "licensable onsite tool" endpoint. The `CanvasStroke` schema is shared via `@workstream/contracts`.
+The expo mobile app has `MobileSketchTopbar`/`MobileToolStrip` components. Sketching is
+web-first in the unified WebGL studio (the isolated `/sketch` route was deleted in `e305e2d`).
+Porting to mobile (React Native + Skia/WebView) is the "licensable onsite tool" endpoint. The
+`CanvasStroke` schema is shared via `@workstream/contracts`.
 
 ---
 
