@@ -11,7 +11,9 @@ import {
  * full QuoteBuilder so the Tier-1 ledger and target are rendered.
  */
 async function openQuoteBuilder(page: Page, projectId: string) {
-  await page.goto(`/projects/${projectId}?mode=cad`);
+  // The QuoteBuilder lives on the legacy SVG studio — WebGL is the default
+  // mount since a1a5c43, so the SVG surface needs ?svg=1.
+  await page.goto(`/projects/${projectId}?mode=cad&svg=1`);
   await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
   await clickHeaderViewItem(page, "live-cost-top");
   await expect(page.getByTestId("live-cost-rail")).toBeVisible({

@@ -18,7 +18,7 @@
 
   /* Surface tokens */
   --gs-canvas: #101418;          /* Canvas base — WebGL clear color / ground plane */
-  --gs-glass: #1e2329;           /* Glass Card body (used at 70% opacity) */
+  --gs-glass: #1e2329;           /* Glass Card body (see --gs-glass-veil for the chrome mix) */
   --gs-glass-strong: #252b33;    /* Glass Card elevated / hovered */
   --gs-glass-sunken: #171b20;    /* Glass Card inset / pressed */
   --gs-frame: #0c0f12;           /* Gallery frame border (darker than canvas) */
@@ -40,6 +40,29 @@
   --gs-ink: #e8e9ec;             /* Primary text */
   --gs-ink-secondary: #9aa0ac;   /* Secondary text, labels */
   --gs-ink-muted: #919196;       /* Muted meta — AA: ~4.5:1 on glass-strong, ~5.5:1 on glass-over-canvas */
+
+  /* ================================================================
+   * Canvas-first density law (§1.4) — the single chrome recipe app-wide.
+   * Glass floats as ONE semi-opaque layer: the drawing reads through
+   * every card. Components never hardcode these values.
+   * ================================================================ */
+  --gs-glass-veil: color-mix(in srgb, var(--gs-glass) 38%, transparent);
+  --gs-glass-veil-strong: color-mix(in srgb, var(--gs-glass) 55%, transparent);
+  --gs-blur: 10px;
+  --gs-radius-panel: 12px;
+  --gs-radius-chip: 6px;
+  --gs-radius-pill: 999px;
+
+  /* Dialect-merge aliases — the module-scoped Gold Standard names resolve
+   * to the same values at root so var(--gs-glass) means one thing everywhere. */
+  --gs-gold: var(--gs-primary);
+  --gs-gold-ink: #402d00;        /* Dark ink on gold fills (AA pair) */
+  --gs-signal-blue: var(--gs-truth);
+  --gs-signal-blue-ink: var(--gs-truth-ink);
+  --gs-surface: var(--gs-canvas);
+  --gs-surface-dim: var(--gs-glass);
+  --gs-surface-bright: var(--gs-glass-strong);
+  --gs-conflict-veil: color-mix(in srgb, var(--gs-conflict) 16%, transparent);
 
   /* ================================================================
    * WebGL render tokens — physical light/shadow values (not chrome).

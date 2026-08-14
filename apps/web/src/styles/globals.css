@@ -6,31 +6,30 @@
 @import "./color-tokens.css";
 
 :root {
-  /* Gold Standard Studio Dark — root-scope mirrors of the `--gs-*` tokens in
-     goldStandardStudio.module.css, for chrome outside `.goldStandardRoot`
-     (landing hero preview, meta chips) that still needs the exact same
-     charcoal/gold/signal-blue identity. */
-  --canvas-base: #101418;
-  --canvas-base-high: #171b1f;
-  --canvas-base-low: #0b0f12;
-  --gold-standard: #fbbf24;
+  /* Gold Standard Studio Dark — the v4 bridge. Every mirror resolves to the
+     authoritative --gs-* namespace (color-tokens.css), so all operator chrome
+     speaks the same palette as the WebGL studio. Gold is the app accent. */
+  --canvas-base: var(--gs-canvas);
+  --canvas-base-high: var(--gs-glass-sunken);
+  --canvas-base-low: var(--gs-frame);
+  --gold-standard: var(--gs-primary);
   --gold-standard-bright: #ffe1a7;
-  --gold-standard-ink: #e0e3e8;
+  --gold-standard-ink: var(--gs-ink);
   --gold-standard-ink-bright: #f5f7fb;
-  --signal-blue: #0030cf;
-  --signal-blue-ink: #a8b4ff;
+  --signal-blue: var(--gs-truth);
+  --signal-blue-ink: var(--gs-truth-ink);
   --signal-blue-chip-ink: #a9bcff;
-  --conflict-ink: #ffb4ab;
-  /* surfaces — dark grey gallery mount; chrome recedes so colour belongs to the plan */
-  --surface-base: #12161B;
-  --surface-elevated: #191E25;
-  --surface-sunken: #0D1014;
-  --surface-inverted: #E8E9EC;
-  --surface-overlay: #202731;
-  --surface-inset: #0D1014;
-  --surface-panel: #1C222B;
+  --conflict-ink: var(--gs-conflict-soft);
+  /* surfaces — gallery mount on the GS glass ramp */
+  --surface-base: var(--gs-glass-sunken);
+  --surface-elevated: var(--gs-glass);
+  --surface-sunken: var(--gs-frame);
+  --surface-inverted: var(--gs-ink);
+  --surface-overlay: var(--gs-glass-strong);
+  --surface-inset: var(--gs-frame);
+  --surface-panel: var(--gs-glass);
   /* deep — same as base now; kept for portal/hero gradient compat */
-  --surface-deep: #14171C;
+  --surface-deep: var(--gs-canvas);
 
   /* Client-presentation dark chrome (portal/quote/confirm-pin/share) — one
      identity, aliased to the same brand tokens used everywhere else. No
@@ -55,25 +54,26 @@
   --portal-accent-muted: var(--accent);
 
   /* ink — light text on dark surfaces */
-  --ink-primary: #E8E9EC;
-  --ink-secondary: #9AA0AC;
-  --ink-tertiary: #7A8088;
+  --ink-primary: var(--gs-ink);
+  --ink-secondary: var(--gs-ink-secondary);
+  --ink-tertiary: var(--gs-ink-muted);
   --ink-inverted: #1B1E23;
 
   /* lines — dark grey hairlines on dark surfaces */
-  --line-hairline: rgba(232, 233, 236, 0.08);
-  --line-subtle: rgba(232, 233, 236, 0.045);
-  --line-strong: rgba(232, 233, 236, 0.16);
-  --line-ink: #E8E9EC;
+  --line-hairline: color-mix(in srgb, var(--gs-line) 55%, transparent);
+  --line-subtle: color-mix(in srgb, var(--gs-line-soft) 70%, transparent);
+  --line-strong: var(--gs-line);
+  --line-ink: var(--gs-ink);
 
-  /* accent — muted blueprint slate.
-     Kept distinct from canvas cobalt (#2450c7 proposed) + easement slate
-     (#5b7fbf) so chrome never reads as plan geometry. */
-  --accent: #5A789B;
-  --accent-soft: #1E2A38;
-  --accent-ink: #8BA4C4;
-  --accent-bright: #7B9BC4;
-  --accent-water: #8a94a0;
+  /* accent — Gold Standard gold. One accent identity app-wide: the studio's
+     gold is the operator chrome's gold (canvas geometry keeps its own
+     cobalt/crimson/amber drawing tokens, which chrome never borrows). */
+  --accent: var(--gs-primary);
+  --accent-soft: color-mix(in srgb, var(--gs-primary) 14%, transparent);
+  /* accent-ink = accent as TEXT on dark surfaces (light gold, AA on glass) */
+  --accent-ink: #ffd970;
+  --accent-bright: #ffd970;
+  --accent-water: var(--gs-ink-secondary);
 
   /* signal — the single technical-annotation spark ("issued for permitting"
      orange). One hero element per surface, never on the canvas
@@ -82,11 +82,11 @@
   --signal-ink: #231206;
   --signal-soft: color-mix(in srgb, #e65416 16%, transparent);
 
-  /* semantic — brightened for dark surface contrast */
-  --ok: #4C9662;
-  --warn: #D4A017;
-  --block: #C4463B;
-  --info: #6E93E0;
+  /* semantic — the GS status set */
+  --ok: var(--gs-success);
+  --warn: var(--gs-warning);
+  --block: var(--gs-conflict);
+  --info: var(--gs-truth-ink);
 
   /* type — Aegis professional-services families */
   --font-display: "IBM Plex Mono", monospace;

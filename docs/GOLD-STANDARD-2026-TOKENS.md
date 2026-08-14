@@ -19,7 +19,7 @@ dark. The old cream-on-dark-gallery-frame system is retired.
 | Token | Value | Role |
 |-------|-------|------|
 | `--gs-canvas` | `#101418` | Canvas base — the WebGL clear color / ground plane |
-| `--gs-glass` | `#1E2329` | Glass Card body (used at 70% opacity, see §1.3) |
+| `--gs-glass` | `#1E2329` | Glass Card body (chrome mixes it at 38% — see §1.4) |
 | `--gs-glass-strong` | `#252B33` | Glass Card elevated / hovered |
 | `--gs-glass-sunken` | `#171B20` | Glass Card inset / pressed |
 | `--gs-frame` | `#0C0F12` | Gallery frame border (darker than canvas) |
@@ -50,18 +50,36 @@ dark. The old cream-on-dark-gallery-frame system is retired.
 | `--gs-ink-truth` | `#6B8EEA` | Signal Blue ink for boundary labels (AA on dark) |
 | `--gs-ink-conflict` | `#F87171` | Strike ink for alert labels (AA on dark) |
 
-### 1.4 Glass opacity
+### 1.4 Glass density — the canvas-first law (updated)
 
-Glass Cards use the body color at **70% opacity** with `backdrop-blur-md`:
+**Canvas-first (2df3f05):** Glass Cards are ONE semi-opaque layer — the drawing
+reads through every card, so chrome floats on the canvas instead of paneling
+over it. The density recipe is tokenized and binding app-wide (studio HUD,
+landing HUDs, operator chrome):
 
 ```css
 .glass-card {
-  background: color-mix(in srgb, var(--gs-glass) 70%, transparent);
-  backdrop-filter: blur(12px);
-  border-radius: 16px; /* rounded-2xl */
-  border: 1px solid color-mix(in srgb, var(--gs-line) 50%, transparent);
+  background: var(--gs-glass-veil); /* color-mix(in srgb, var(--gs-glass) 38%, transparent) */
+  backdrop-filter: blur(var(--gs-blur));         /* 10px */
+  border-radius: var(--gs-radius-panel);          /* 12px */
+  border: 1px solid color-mix(in srgb, var(--gs-line) 35%, transparent);
 }
 ```
+
+Density tokens (defined once in `styles/color-tokens.css`):
+`--gs-glass-veil` (38%), `--gs-glass-veil-strong` (55%), `--gs-blur` (10px),
+`--gs-radius-panel` (12px), `--gs-radius-chip` (6px), `--gs-radius-pill` (999px).
+
+The retired 70% / blur-12 / radius-16 recipe applied only during the Phase 0–2
+transition and no longer represents the standard. Chrome text uses the meta
+chip idiom: Space Grotesk (`--font-tech`) figures 9–10px, Inter labels,
+`--gs-radius-chip` pills.
+
+**V4 bridge (globals.css):** all operator chrome tokens (`--canvas-base`,
+`--surface-*`, `--ink-*`, `--line-*`, `--accent`, `--ok/--warn/--block/--info`)
+resolve to this `--gs-*` namespace, and `--accent` is Gold (`--gs-primary`) —
+one accent identity app-wide. The only intentional exception: the client
+document sheet on portal surfaces stays light (`--portal-sheet`).
 
 ### 1.5 APWA utility locate colors (mode-invariant, retained)
 

@@ -2,10 +2,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.125rem;
-  background: rgba(16, 20, 24, 0.8);
+  padding: 0.2rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--gs-line) 60%, transparent);
+  border-radius: var(--gs-radius-chip);
+  background: var(--gs-glass-veil);
   opacity: 0;
   transform: translateX(-8px);
   animation: revealChip 460ms var(--ease, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
@@ -13,45 +13,45 @@
 }
 
 .toneGold {
-  color: var(--gold-standard);
-  border-color: rgba(251, 191, 36, 0.3);
+  color: var(--gs-primary);
+  border-color: color-mix(in srgb, var(--gs-primary) 30%, transparent);
 }
 
 .toneBlue {
   color: var(--signal-blue-chip-ink);
-  border-color: rgba(0, 48, 207, 0.3);
+  border-color: color-mix(in srgb, var(--gs-truth) 30%, transparent);
 }
 
 .toneNormal {
-  color: var(--gold-standard-ink);
-  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--gs-ink);
+  border-color: color-mix(in srgb, var(--gs-line) 60%, transparent);
 }
 
 .toneDimmed {
-  color: rgba(211, 197, 172, 0.5);
-  border-color: rgba(255, 255, 255, 0.1);
+  color: color-mix(in srgb, var(--gs-ink-secondary) 70%, transparent);
+  border-color: color-mix(in srgb, var(--gs-line) 60%, transparent);
 }
 
 .icon {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   line-height: 1;
 }
 
 .label {
   font-family: var(--font-tech), sans-serif;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .value {
   margin-left: auto;
-  color: var(--gold-standard-ink-bright);
+  color: var(--gs-ink);
   font-family: var(--font-tech), sans-serif;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 

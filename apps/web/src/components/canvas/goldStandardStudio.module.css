@@ -13,27 +13,36 @@
  */
 
 .goldStandardRoot {
+  /*
+   * Dialect merge: the five names that ALSO exist at :root (color-tokens.css)
+   * now carry the same VALUES here (written as literals — a var() chain back
+   * into the merged names would cycle, since the root veil token itself
+   * references --gs-glass). var(--gs-glass)/--gs-line/--gs-ink/
+   * --gs-ink-muted/--gs-conflict-soft mean ONE thing app-wide; the
+   * surface-specific names below stay local (no root collision).
+   */
   --gs-surface: #101418;
   --gs-surface-dim: #1e2329;
-  --gs-surface-bright: #2a3037;
+  --gs-surface-bright: #252b33;
   --gs-surface-container-high: #262a2f;
-  --gs-surface-container-lowest: #0b0f12;
-  --gs-glass: rgba(30, 35, 41, 0.7);
-  --gs-glass-strong: rgba(30, 35, 41, 0.88);
-  --gs-line: rgba(224, 227, 232, 0.1);
-  --gs-line-strong: rgba(224, 227, 232, 0.18);
-  --gs-ink: #e0e3e8;
-  --gs-ink-muted: #d3c5ac;
-  --gs-ink-faint: color-mix(in srgb, #d3c5ac 55%, transparent);
+  --gs-surface-container-lowest: #0c0f12;
+  /* Canvas-first density law: 38% veil glass (same recipe as root --gs-glass-veil) */
+  --gs-glass: color-mix(in srgb, #1e2329 38%, transparent);
+  --gs-glass-strong: color-mix(in srgb, #1e2329 55%, transparent);
+  --gs-line: color-mix(in srgb, #2e343c 55%, transparent);
+  --gs-line-strong: #2e343c;
+  --gs-ink: #e8e9ec;
+  --gs-ink-muted: #9aa0ac;
+  --gs-ink-faint: color-mix(in srgb, #9aa0ac 55%, transparent);
   --gs-gold: #fbbf24;
   --gs-gold-ink: #402d00;
   --gs-signal-blue: #0030cf;
   --gs-signal-blue-ink: #bac3ff;
   --gs-conflict: #ef4444;
-  --gs-conflict-soft: rgba(239, 68, 68, 0.16);
+  --gs-conflict-soft: color-mix(in srgb, #ef4444 16%, transparent);
   --gs-conflict-ink: #fee2e2;
   --gs-radius-panel: 12px;
-  --gs-radius-chip: 8px;
+  --gs-radius-chip: 6px;
   --gs-radius-control: 4px;
   --gs-radius-pill: 999px;
   /*

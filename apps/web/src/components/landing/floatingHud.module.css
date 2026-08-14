@@ -1,38 +1,40 @@
+/* Canvas-first density law (GOLD-STANDARD-2026-TOKENS.md §1.4): one
+ * semi-opaque glass layer — the scene reads through every HUD. */
 .hud {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--r-xl);
-  background: rgba(30, 35, 41, 0.72);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid color-mix(in srgb, var(--gs-line) 55%, transparent);
+  border-radius: var(--gs-radius-panel);
+  background: var(--gs-glass-veil);
+  backdrop-filter: blur(var(--gs-blur));
+  box-shadow: 0 18px 36px -12px rgba(0, 0, 0, 0.45);
 }
 
 .toneDefault {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: color-mix(in srgb, var(--gs-line) 70%, transparent);
 }
 
 .toneGold {
-  border-color: rgba(251, 191, 36, 0.28);
+  border-color: color-mix(in srgb, var(--gs-primary) 28%, transparent);
   box-shadow:
-    0 24px 54px rgba(0, 0, 0, 0.34),
-    0 0 0 1px rgba(251, 191, 36, 0.08) inset;
+    0 18px 40px rgba(0, 0, 0, 0.32),
+    0 0 0 1px color-mix(in srgb, var(--gs-primary) 8%, transparent) inset;
 }
 
 .toneBlue {
-  border-color: rgba(0, 48, 207, 0.28);
+  border-color: color-mix(in srgb, var(--gs-truth) 28%, transparent);
   box-shadow:
-    0 24px 54px rgba(0, 0, 0, 0.34),
-    0 0 0 1px rgba(0, 48, 207, 0.12) inset;
+    0 18px 40px rgba(0, 0, 0, 0.32),
+    0 0 0 1px color-mix(in srgb, var(--gs-truth) 12%, transparent) inset;
 }
 
 .padSm {
-  padding: 1rem;
+  padding: 0.75rem;
 }
 
 .padMd {
-  padding: 1.25rem;
+  padding: 0.9rem;
 }
 
 .padLg {
-  padding: 1.5rem;
+  padding: 1.05rem;
 }
