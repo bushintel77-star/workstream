@@ -39,7 +39,7 @@
   /* Ink tokens (text on glass/canvas) */
   --gs-ink: #e8e9ec;             /* Primary text */
   --gs-ink-secondary: #9aa0ac;   /* Secondary text, labels */
-  --gs-ink-muted: #919196;       /* Muted meta — AA: ~4.5:1 on glass-strong, ~5.5:1 on glass-over-canvas */
+  --gs-ink-muted: #8B8F96;       /* Muted meta — AA: ~4.5:1 on glass-strong, ~5.5:1 on glass-over-canvas */
 
   /* ================================================================
    * Canvas-first density law (§1.4) — the single chrome recipe app-wide.
