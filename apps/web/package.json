@@ -18,7 +18,7 @@
     "@types/three": "^0.185.1",
     "@workstream/contracts": "workspace:*",
     "@workstream/domain": "workspace:*",
-    "next": "^16.2.12",
+    "next": "^16.3.0",
     "pdfjs-dist": "4.10.38",
     "perfect-freehand": "1.2.3",
     "postprocessing": "^6.39.4",
