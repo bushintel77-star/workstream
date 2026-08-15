@@ -18,7 +18,7 @@
     "web:check-tier1-2026-spec": "node scripts/check-tier1-2026-spec-gap.mjs",
     "web:check-reachability": "node scripts/check-feature-reachability.mjs",
     "web:check-css-scales": "node scripts/check-css-scales.mjs",
-    "web:check-bundle-size": "pnpm --filter @workstream/web build && node scripts/check-bundle-size.mjs",
+    "web:check-bundle-size": "pnpm exec turbo run build --filter=@workstream/web... && node scripts/check-bundle-size.mjs",
     "ci": "pnpm install --frozen-lockfile && pnpm mobile:check-placeholders && pnpm mobile:check-distribution && pnpm web:check-portal-edge && pnpm web:check-handoff-colors && pnpm web:check-studio-dialect && node scripts/check-tier1-2026-spec-gap.mjs --require && pnpm web:check-reachability && pnpm web:check-css-scales && pnpm web:check-bundle-size && pnpm typecheck && pnpm lint && pnpm test",
     "build:docker:api": "docker build -f apps/api/Dockerfile -t workstream-api:local .",
     "build:docker:web": "docker build -f apps/web/Dockerfile --build-arg NEXT_PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app -t workstream-web:local .",
