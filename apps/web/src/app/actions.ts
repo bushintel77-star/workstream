@@ -1257,3 +1257,23 @@ export async function upsertQuoteDocAction(
     throw wrapApiError(err, "Could not save quote");
   }
 }
+
+/** Vicmap auto-trace payload for the WebGL site-truth import. */
+export async function autoTraceBoundaryDataAction(projectId: string) {
+  const { autoTraceBoundaryApi } = await import("../lib/api");
+  try {
+    return await autoTraceBoundaryApi(projectId, true);
+  } catch (err) {
+    throw wrapApiError(err, "Auto-trace failed");
+  }
+}
+
+/** Keyless overlay hydration payload for the site-truth import. */
+export async function hydrateKeylessDataAction(projectId: string) {
+  const { hydrateKeylessApi } = await import("../lib/api");
+  try {
+    return await hydrateKeylessApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Overlay hydration failed");
+  }
+}

@@ -23,6 +23,7 @@ import { GlassCard } from "./GlassCard";
 import { useStudioStore } from "./studioStore";
 import type { HeightmapPoint } from "./coordTransform";
 import { createElevationSampler, VERTICAL_SCALE } from "./terrainMath";
+import { InstrumentCard } from "./InstrumentCard";
 import {
   buildStudioFlowGrid,
   traceStreamNetwork,
@@ -98,6 +99,8 @@ export function DrainageFlowCard({
   const { streams, ponds, maxFallPct } = flow;
   const topPonds = ponds.slice(0, 3);
 
+  return (
+    <InstrumentCard label="Flow" value={(flow?.maxFallPct ?? 0) > 0 ? (flow?.maxFallPct ?? 0).toFixed(0) + "%" : "—"}>
   return (
     <GlassCard
       position={{ position: "relative" }}
@@ -222,5 +225,6 @@ export function DrainageFlowCard({
         </div>
       </div>
     </GlassCard>
+    </InstrumentCard>
   );
 }

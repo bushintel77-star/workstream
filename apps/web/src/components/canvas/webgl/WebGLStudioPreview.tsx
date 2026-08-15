@@ -52,6 +52,7 @@ import { AssetFanOutDock } from "./AssetFanOutDock";
 import { StudioToolRail } from "./StudioToolRail";
 import { StudioModeTabs } from "./StudioModeTabs";
 import { canvasLayerPolicy } from "./layerPolicy";
+import { importSiteTruth } from "./siteTruthImport";
 import { StudioCommandPalette } from "./StudioCommandPalette";
 import { StudioElevationCard } from "./StudioElevationCard";
 import { StudioCadCard } from "./StudioCadCard";
@@ -281,6 +282,33 @@ export function WebGLStudioPreview({
     [projectId],
   );
 
+  // Site-truth import — the Vicmap bridge (survey mode owns it).
+  const [truthBusy, setTruthBusy] = useState(false);
+  const [truthMsg, setTruthMsg] = useState<string | null>(null);
+  const runSiteTruthImport = useCallback(async () => {
+    setTruthBusy(true);
+    setTruthMsg(null);
+    try {
+      const canvasRes = await fetch(`/api/projects/${projectId}/design-canvas`);
+      const canvasJson = canvasRes.ok
+        ? ((await canvasRes.json()) as { canvas: import("@workstream/contracts").DesignCanvas | null })
+        : { canvas: null };
+      const r = await importSiteTruth(projectId, canvasJson.canvas ?? null);
+      setTruthMsg(
+        `Traced: boundary ${r.boundaryPts} pts` +
+          (r.buildingPts ? ` · dwelling ${r.buildingPts} pts` : "") +
+          (r.trees ? ` · ${r.trees} trees` : "") +
+          (r.easements ? ` · ${r.easements} easements` : "") +
+          (r.overlays ? ` · ${r.overlays} overlays` : "") +
+          (r.levels ? ` · ${r.levels} indicative levels` : ""),
+      );
+      window.location.reload();
+    } catch (e) {
+      setTruthMsg(e instanceof Error ? e.message : "Site truth import failed");
+      setTruthBusy(false);
+    }
+  }, [projectId]);
+
   // Command palette — Cmd/Ctrl+K summons; Esc closes (handled inside).
   const [paletteOpen, setPaletteOpen] = useState(false);
   useEffect(() => {
@@ -392,7 +420,23 @@ export function WebGLStudioPreview({
   } as const;
 
   return (
-    <div style={{ position: "absolute", inset: 0 }}>
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        cursor: "grab",
+      }}
+      onPointerDown={(e) => {
+        // Grabbing while panning the drawing; text inputs opt back out.
+        if (
+          e.target instanceof HTMLElement &&
+          (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)
+        ) return;
+        e.currentTarget.style.cursor = "grabbing";
+      }}
+      onPointerUp={(e) => { e.currentTarget.style.cursor = "grab"; }}
+      onPointerLeave={(e) => { e.currentTarget.style.cursor = "grab"; }}
+    >
       {/* The render surface: ONE studio, or the split lens (locked plan |
           live 3D, linked cameras). The DOM chrome overlays whichever is
           mounted — one chrome, two viewports. */}
@@ -505,6 +549,44 @@ export function WebGLStudioPreview({
             padding: 10,
           }}
         >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+              marginBottom: 8,
+            }}
+          >
+            <button
+              type="button"
+              data-testid="import-site-truth"
+              disabled={truthBusy}
+              onClick={() => void runSiteTruthImport()}
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: 11,
+                fontWeight: 600,
+                padding: "6px 10px",
+                borderRadius: "var(--gs-radius-chip)",
+                border:
+                  "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
+                background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
+                color: "var(--gs-primary)",
+                cursor: truthBusy ? "wait" : "pointer",
+              }}
+            >
+              {truthBusy ? "Tracing Vicmap…" : "Import site truth (Vicmap)"}
+            </button>
+            {truthMsg ? (
+              <p
+                role="status"
+                data-testid="site-truth-result"
+                style={{ margin: 0, fontSize: 10.5, color: "var(--gs-ink-secondary)" }}
+              >
+                {truthMsg}
+              </p>
+            ) : null}
+          </div>
           <SurveyChecklist
             boundary={boundaryPct}
             building={buildingPct ?? []}

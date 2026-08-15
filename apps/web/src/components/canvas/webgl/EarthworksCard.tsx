@@ -24,6 +24,7 @@ import { useStudioStore } from "./studioStore";
 import type { HeightmapPoint } from "./coordTransform";
 import { createElevationSampler, VERTICAL_SCALE } from "./terrainMath";
 import { padStrokes, padCutFill, CUT_FILL_CELL_M } from "./cutFill";
+import { InstrumentCard } from "./InstrumentCard";
 
 /** Volume swell factor for excavated material (matches domain estimates). */
 const SPOIL_SWELL = 1.6;
@@ -98,6 +99,8 @@ export function EarthworksCard({
 
   const netM3 = summary.totalFillM3 - summary.totalCutM3;
 
+  return (
+    <InstrumentCard label="Earth" value={pads.length + " pads"}>
   return (
     <GlassCard
       position={{ position: "relative" }}
@@ -185,5 +188,6 @@ export function EarthworksCard({
         </div>
       </div>
     </GlassCard>
+    </InstrumentCard>
   );
 }

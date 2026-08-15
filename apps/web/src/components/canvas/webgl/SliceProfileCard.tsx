@@ -23,6 +23,7 @@ import { GlassCard } from "./GlassCard";
 import { useStudioStore } from "./studioStore";
 import type { HeightmapPoint } from "./coordTransform";
 import { createElevationSampler, VERTICAL_SCALE } from "./terrainMath";
+import { InstrumentCard } from "./InstrumentCard";
 
 /** Number of samples along the profile (chart resolution). */
 const PROFILE_SAMPLES = 80;
@@ -102,6 +103,8 @@ export function SliceProfileCard({
 
   const axisLabel = sliceAxis === "z" ? "E↔W" : "N↔S";
 
+  return (
+    <InstrumentCard label="Section" value={heightmapPoints.length ? "Δ" + (Math.max(...heightmapPoints.map((p) => p.y)) - Math.min(...heightmapPoints.map((p) => p.y))).toFixed(1) + " m" : "—"}>
   return (
     <GlassCard
       // Relative — this card is a child of the WebGLStudioPreview bottom-right
@@ -191,5 +194,6 @@ export function SliceProfileCard({
         </div>
       </div>
     </GlassCard>
+    </InstrumentCard>
   );
 }
