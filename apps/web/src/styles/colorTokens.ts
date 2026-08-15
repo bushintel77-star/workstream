@@ -71,6 +71,9 @@ export const PALETTE = {
   gsShadow: "#05070A",
   foliageTint: "#3D6B48",
   groundOlive: "#2F4132",
+  // CAD drafting surface — Swiss-Brutalist neutral grey, maximises
+  // contrast for geometry + dimensions (mode policy: CAD hides the aerial).
+  draftingGrey: "#23282E",
   groundBounce: "#2A3424",
   ambientCool: "#AEBFD0",
   rimCool: "#C8D8EE",

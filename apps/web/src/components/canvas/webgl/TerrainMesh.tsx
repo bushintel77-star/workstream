@@ -38,6 +38,8 @@ export interface TerrainMeshProps {
   boardAspect: number;
   /** Spot level sample points in world space [{x, z, y}]. */
   heightmapPoints: HeightmapPoint[];
+  /** CAD mode: the surface lerps to the neutral drafting grey. */
+  draftingSurface?: boolean;
 }
 
 /**
@@ -72,7 +74,7 @@ export function buildTerrainGeometry(
   return geo;
 }
 
-export function TerrainMesh({ scaleM, boardAspect, heightmapPoints }: TerrainMeshProps) {
+export function TerrainMesh({ scaleM, boardAspect, heightmapPoints, draftingSurface = false }: TerrainMeshProps) {
   const geometry = useMemo(
     () => buildTerrainGeometry(scaleM, boardAspect, heightmapPoints),
     [scaleM, boardAspect, heightmapPoints],
@@ -93,13 +95,23 @@ export function TerrainMesh({ scaleM, boardAspect, heightmapPoints }: TerrainMes
     () => new THREE.Color(PALETTE.renderBlueprintGround),
     [],
   );
+  const colorDrafting = useMemo(
+    () => new THREE.Color(PALETTE.draftingGrey),
+    [],
+  );
   useFrame((_, delta) => {
     const mat = matRef.current;
     const { subsurfaceView } = useSeasonalStore.getState();
     const k = Math.min(1, delta * 4);
     mat.opacity = THREE.MathUtils.lerp(mat.opacity, subsurfaceView ? 0.88 : 1.0, k);
     mat.roughness = THREE.MathUtils.lerp(mat.roughness, subsurfaceView ? 0.6 : 0.92, k);
-    mat.color.lerp(subsurfaceView ? colorVellum : colorOlive, k);
+    // Mode surface law: CAD drafting grey > subsurface vellum > site olive.
+    const target = draftingSurface
+      ? colorDrafting
+      : subsurfaceView
+        ? colorVellum
+        : colorOlive;
+    mat.color.lerp(target, k);
   });
 
   if (!geometry) return null;

@@ -27,6 +27,7 @@ import {
 } from "./terrainMath";
 import { buildTerrainGeometry } from "./TerrainMesh";
 import { SPATIAL_LAYER } from "./layerContract";
+import type { CanvasLayerPolicy } from "./layerPolicy";
 import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore, winterFactor } from "./seasonalStore";
@@ -114,6 +115,8 @@ export interface StudioSceneProps {
   sunMin?: number;
   /** Aerial photo URI — rendered as a ground underlay texture (fades in 3D). */
   aerialUri?: string | null;
+  /** Mode-driven layer policy — backgrounds + data layer visibility. */
+  layerPolicy?: CanvasLayerPolicy;
   /** Spot level sample points for the terrain heightmap (world space). */
   heightmapPoints?: HeightmapPoint[];
 }
@@ -510,7 +513,15 @@ function BuildingFootprint({
  *  (desaturated grey, slightly translucent, lower roughness) so the hairline
  *  CAD utility lines glow through the "paper." Reads as a blueprint overlay,
  *  not a space simulator. */
-function GroundPlane({ scaleM, boardAspect }: { scaleM: number; boardAspect: number }) {
+function GroundPlane({
+  scaleM,
+  boardAspect,
+  draftingSurface = false,
+}: {
+  scaleM: number;
+  boardAspect: number;
+  draftingSurface?: boolean;
+}) {
   const w = scaleM * 3;
   const h = scaleM * boardAspect * 3;
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
@@ -519,6 +530,7 @@ function GroundPlane({ scaleM, boardAspect }: { scaleM: number; boardAspect: num
   // Target colours (memoized so we don't allocate THREE.Color per frame).
   const colorOlive = useMemo(() => new THREE.Color(PALETTE.groundOlive), []);
   const colorVellum = useMemo(() => new THREE.Color(PALETTE.renderBlueprintGround), []);
+  const colorDrafting = useMemo(() => new THREE.Color(PALETTE.draftingGrey), []);
 
   useFrame((_, delta) => {
     const mat = matRef.current;
@@ -528,7 +540,11 @@ function GroundPlane({ scaleM, boardAspect }: { scaleM: number; boardAspect: num
 
     const targetOpacity = subsurfaceView ? 0.88 : 1.0;
     const targetRoughness = subsurfaceView ? 0.6 : 0.92;
-    const targetColor = subsurfaceView ? colorVellum : colorOlive;
+    const targetColor = draftingSurface
+      ? colorDrafting
+      : subsurfaceView
+        ? colorVellum
+        : colorOlive;
 
     mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, k);
     mat.roughness = THREE.MathUtils.lerp(mat.roughness, targetRoughness, k);
@@ -578,11 +594,14 @@ function AerialUnderlay({
   scaleM,
   boardAspect,
   heightmapPoints,
+  opacityTarget,
 }: {
   aerialUri: string | null;
   scaleM: number;
   boardAspect: number;
   heightmapPoints: HeightmapPoint[];
+  /** Mode policy target — CAD = 0 (clean drafting), sketch = full trace. */
+  opacityTarget: number;
 }) {
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
   const texture = useMemo(() => {
@@ -608,12 +627,14 @@ function AerialUnderlay({
   useFrame((_, delta) => {
     const mat = matRef.current;
     if (!mat) return;
-    // Fade out as we transition to 3D. At blend=0: opacity 0.85 (photo visible).
-    // At blend=1: opacity 0 (photo gone, 3D geometry visible).
+    // Mode policy × view blend: the photo fades out as the camera moves to
+    // 3D (geometry takes over) AND follows the mode target — CAD hides it
+    // entirely for the clean drafting surface. Lerp only — no remounts.
     const { viewBlendTarget } = useSeasonalStore.getState();
-    const targetOpacity = 0.85 * (1 - viewBlendTarget);
+    const targetOpacity = opacityTarget * (1 - viewBlendTarget);
     const k = Math.min(1, delta * 4);
     mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, k);
+    mat.visible = mat.opacity > 0.01;
   });
 
   if (!texture) return null;
@@ -660,8 +681,17 @@ export function StudioScene({
   // in the props for API completeness / future direct-pass use.
   sunMin: _sunMin = 12 * 60,
   aerialUri = null,
+  layerPolicy,
   heightmapPoints = [],
 }: StudioSceneProps) {
+  // Default policy keeps every mode's legacy behaviour when unset.
+  const policy: CanvasLayerPolicy = layerPolicy ?? {
+    aerialOpacity: 0.85,
+    subsurface: false,
+    utilities: true,
+    easements: true,
+    draftingSurface: false,
+  };
   // Subscribe to the view blend target — drives the editing-lock for controls
   // (editing is disabled when the camera is in 3D perspective mode).
   const viewBlendTarget = useSeasonalStore((s) => s.viewBlendTarget);
@@ -715,9 +745,9 @@ export function StudioScene({
 
       {/* Ground — real terrain mesh when spot levels exist, flat plane otherwise. */}
       {heightmapPoints.length > 0 ? (
-        <TerrainMesh scaleM={scaleM} boardAspect={boardAspect} heightmapPoints={heightmapPoints} />
+        <TerrainMesh scaleM={scaleM} boardAspect={boardAspect} heightmapPoints={heightmapPoints} draftingSurface={policy.draftingSurface} />
       ) : (
-        <GroundPlane scaleM={scaleM} boardAspect={boardAspect} />
+        <GroundPlane scaleM={scaleM} boardAspect={boardAspect} draftingSurface={policy.draftingSurface} />
       )}
       {/* Elevation Slice — draggable section-cut line (Vertical Truth). Only
           mounts when terrain exists; the DOM profile panel is in WebGLStudioPreview. */}
@@ -771,7 +801,7 @@ export function StudioScene({
         lng={lng}
       />
       {/* Aerial photo underlay — opaque in plan view, fades in 3D. */}
-      <AerialUnderlay aerialUri={aerialUri} scaleM={scaleM} boardAspect={boardAspect} heightmapPoints={heightmapPoints} />
+      <AerialUnderlay aerialUri={aerialUri} scaleM={scaleM} boardAspect={boardAspect} heightmapPoints={heightmapPoints} opacityTarget={policy.aerialOpacity} />
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the
           drawing surface, complementing the directional sun shadows. */}
       <GroundContactShadows scaleM={scaleM} boardAspect={boardAspect} />
@@ -785,10 +815,10 @@ export function StudioScene({
           opacity={buildingOpacity}
         />
       )}
-      {!lens?.hideEasements && (
+      {!lens?.hideEasements && policy.easements && (
         <Easements rings={easementsPct} scaleM={scaleM} boardAspect={boardAspect} sampler={elevationSampler} />
       )}
-      {!lens?.hideServices && (
+      {!lens?.hideServices && policy.utilities && (
         <Services lines={servicesPct} scaleM={scaleM} boardAspect={boardAspect} sampler={elevationSampler} />
       )}
       <SceneItems

@@ -20,7 +20,7 @@
  *   - Live data: sample utilities replaced by real BYDA/trench/level data.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type {
   CanvasStroke,
@@ -51,6 +51,7 @@ import { FitSheetCard } from "./FitSheetCard";
 import { AssetFanOutDock } from "./AssetFanOutDock";
 import { StudioToolRail } from "./StudioToolRail";
 import { StudioModeTabs } from "./StudioModeTabs";
+import { canvasLayerPolicy } from "./layerPolicy";
 import { StudioCommandPalette } from "./StudioCommandPalette";
 import { StudioElevationCard } from "./StudioElevationCard";
 import { StudioCadCard } from "./StudioCadCard";
@@ -252,6 +253,34 @@ export function WebGLStudioPreview({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Sketch photo underlay — upload an on-site aerial/elevation photo as
+  // the tracing base (persisted server-side on the survey; refresh re-renders
+  // the server component with the new aerialUri — no remount of the scene).
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const uploadSitePhoto = useCallback(
+    async (file: File) => {
+      setPhotoBusy(true);
+      try {
+        const body = new FormData();
+        body.append("aerial", file);
+        const res = await fetch(`/api/projects/${projectId}/aerial`, {
+          method: "POST",
+          body,
+        });
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => null)) as
+            | { error?: string }
+            | null;
+          throw new Error(payload?.error ?? `Upload failed (${res.status})`);
+        }
+        window.location.reload();
+      } finally {
+        setPhotoBusy(false);
+      }
+    },
+    [projectId],
+  );
+
   // Command palette — Cmd/Ctrl+K summons; Esc closes (handled inside).
   const [paletteOpen, setPaletteOpen] = useState(false);
   useEffect(() => {
@@ -286,6 +315,15 @@ export function WebGLStudioPreview({
     [progress, aerialUri, strokes, storePlacements, boundaryPct],
   );
   const unlocked = useMemo(() => unlockedModes(liveProgress), [liveProgress]);
+  // Mode-driven layer law — flows into the scene as props (no remounts).
+  const policy = useMemo(() => canvasLayerPolicy(activeMode), [activeMode]);
+  // Survey owns the subsurface works: entering survey arms the blueprint
+  // ground (the Underground rail toggle remains the operator override).
+  useEffect(() => {
+    if (policy.subsurface) {
+      useStudioStore.getState().setSubsurfaceView(true);
+    }
+  }, [policy.subsurface]);
 
   // --- Compute live studio data (replaces hardcoded sample utilities) ---
   const liveData = useMemo(
@@ -350,6 +388,7 @@ export function WebGLStudioPreview({
     sunMin,
     aerialUri,
     heightmapPoints: liveData.heightmapPoints,
+    layerPolicy: policy,
   } as const;
 
   return (
@@ -779,6 +818,37 @@ export function WebGLStudioPreview({
         </div>
         {/* Council planning badges + season (GET /site-context) */}
         <SiteContextBadges projectId={projectId} variant="glass" />
+        {activeMode === "sketch" && (
+          <label
+            data-testid="sketch-photo-upload"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "5px 10px",
+              borderRadius: "var(--gs-radius-pill)",
+              background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--gs-primary) 40%, transparent)",
+              color: "var(--gs-primary)",
+              fontFamily: "var(--font-ui)",
+              fontSize: 10.5,
+              cursor: photoBusy ? "wait" : "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {photoBusy ? "Uploading…" : "Trace a site photo"}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void uploadSitePhoto(f);
+                e.currentTarget.value = "";
+              }}
+            />
+          </label>
+        )}
         {/* In-context deep link while the subsurface blueprint is open. */}
         {subsurfaceView && (
           <a
