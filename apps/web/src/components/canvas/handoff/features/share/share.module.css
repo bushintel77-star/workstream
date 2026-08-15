@@ -70,9 +70,11 @@
 }
 
 .primary {
-  border: 1px solid var(--hc-ink);
-  background: var(--hc-ink);
-  color: var(--canvas);
+  /* --hc-* lives in the classic studio scope; the global fallbacks keep the
+   * button correct on the WebGL mount (dark-on-light inversion either way). */
+  border: 1px solid var(--hc-ink, var(--ink-primary));
+  background: var(--hc-ink, var(--ink-primary));
+  color: var(--canvas, #101418);
 }
 
 .primary:disabled {
@@ -81,15 +83,15 @@
 }
 
 .secondary {
-  border: 1px solid var(--hc-line);
+  border: 1px solid var(--hc-line, var(--line-strong));
   background: transparent;
-  color: var(--hc-ink);
+  color: var(--hc-ink, var(--ink-primary));
 }
 
 .ghost {
   border: none;
   background: transparent;
-  color: var(--hc-ink-muted);
+  color: var(--hc-ink-muted, var(--ink-secondary));
   align-self: flex-start;
   padding-left: 0;
 }

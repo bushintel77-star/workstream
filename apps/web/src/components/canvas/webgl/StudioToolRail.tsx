@@ -98,7 +98,7 @@ export function StudioToolRail({
       label: "Measure",
       active: measureActive,
       onToggle: () => setMeasureActive(!measureActive),
-      accent: "var(--gs-truth)",
+      accent: "var(--gs-ink-truth)",
       title: "Two-point tape",
     },
     {
@@ -120,7 +120,7 @@ export function StudioToolRail({
       label: "Underground",
       active: subsurfaceView,
       onToggle: () => setSubsurfaceView(!subsurfaceView),
-      accent: "var(--gs-truth)",
+      accent: "var(--gs-ink-truth)",
       title: "Subsurface blueprint",
     },
     {
@@ -140,7 +140,7 @@ export function StudioToolRail({
             label: "Dims",
             active: dimsView,
             onToggle: () => setDimsView(!dimsView),
-            accent: "var(--gs-truth)",
+            accent: "var(--gs-ink-truth)",
             title: "Working-drawing dimensions",
           },
         ]
@@ -153,7 +153,7 @@ export function StudioToolRail({
             label: "Section",
             active: sliceActive,
             onToggle: () => setSliceActive(!sliceActive),
-            accent: "var(--gs-truth)",
+            accent: "var(--gs-ink-truth)",
             title: "Elevation slice",
           },
           {
@@ -162,7 +162,7 @@ export function StudioToolRail({
             label: "Flow",
             active: drainageView,
             onToggle: () => setDrainageView(!drainageView),
-            accent: "var(--gs-truth)",
+            accent: "var(--gs-ink-truth)",
             title: "Drainage overland flow",
           },
         ]

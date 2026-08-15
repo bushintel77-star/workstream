@@ -40,7 +40,7 @@ const dimLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
   fontSize: 10.5,
   fontWeight: 500,
-  color: "var(--gs-truth, #0030CF)",
+  color: "var(--gs-ink-truth, #6B8EEA)",
   background: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
   borderRadius: 6,
