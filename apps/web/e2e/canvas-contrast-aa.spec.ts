@@ -147,7 +147,9 @@ test.describe("Canvas text contrast (WCAG 2.2 AA)", () => {
 
     const report: string[] = [];
     for (const mode of MODES) {
-      await page.goto(`/projects/${projectId}?mode=${mode}`);
+      // The classic surfaces carry the dense text — audit them explicitly
+      // (the default WebGL mount owns sketch/quote natively).
+      await page.goto(`/projects/${projectId}?svg=1&mode=${mode}`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
       // Let coaching cards / lanes finish their enter animation before reading
       // computed colour, or a mid-fade opacity is measured as a failure.

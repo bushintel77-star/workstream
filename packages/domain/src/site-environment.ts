@@ -110,6 +110,23 @@ function toDeg(rad: number): number {
   return (rad * 180) / Math.PI;
 }
 
+/** Melbourne UTC offset in hours at the given instant — +10 AEST, +11 AEDT
+ *  (first Sunday of October → first Sunday of April). Read from the zone
+ *  rules rather than hard-coding, so solar time doesn't drift an hour
+ *  during daylight saving. */
+function melbourneUtcOffsetHours(when: Date): number {
+  const tzName = new Intl.DateTimeFormat("en-AU", {
+    timeZone: "Australia/Melbourne",
+    timeZoneName: "longOffset",
+  })
+    .formatToParts(when)
+    .find((p) => p.type === "timeZoneName")?.value;
+  const match = tzName ? /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(tzName) : null;
+  if (!match) return 10;
+  const sign = match[1] === "-" ? -1 : 1;
+  return sign * (Number(match[2]) + Number(match[3] ?? 0) / 60);
+}
+
 /** Solar elevation and azimuth (0° = north, 90° = east), Melbourne convention. */
 export function sunPositionAt(
   lat: number,
@@ -128,7 +145,8 @@ export function sunPositionAt(
   }).formatToParts(when);
   const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 12);
   const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
-  const solarTime = hour + minute / 60 + lng / 15 - 10; // AEDT approx
+  const solarTime =
+    hour + minute / 60 + lng / 15 - melbourneUtcOffsetHours(when);
   const hourAngle = toRad(15 * (solarTime - 12));
 
   const sinAlt =

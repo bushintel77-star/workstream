@@ -379,6 +379,94 @@ export async function getWeatherAction(projectId: string) {
   }
 }
 
+/** Site context — season, sun summary, and council planning badges. */
+export async function getSiteContextAction(projectId: string) {
+  if (!projectId.trim()) return null;
+  const { getSiteContext } = await import("../lib/api");
+  try {
+    return await getSiteContext(projectId);
+  } catch {
+    return null;
+  }
+}
+
+/** Budget envelope brief from the survey (±15/20% bands + planning flags). */
+export async function getEnvelopeBriefAction(projectId: string) {
+  if (!projectId.trim()) return null;
+  const { getEnvelopeBrief } = await import("../lib/api");
+  try {
+    return await getEnvelopeBrief(projectId);
+  } catch {
+    return null;
+  }
+}
+
+/** Vision photo-measurement history for the measurements surface. */
+export async function listPhotoMeasurementsAction(projectId: string) {
+  if (!projectId.trim()) return [];
+  const { listPhotoMeasurements } = await import("../lib/api");
+  try {
+    return await listPhotoMeasurements(projectId);
+  } catch {
+    return [];
+  }
+}
+
+/** Project activity audit trail (deletions, restores, integration changes). */
+export async function listProjectActivityAction(projectId: string) {
+  if (!projectId.trim()) return [];
+  const { listProjectActivity } = await import("../lib/api");
+  try {
+    return await listProjectActivity(projectId);
+  } catch {
+    return [];
+  }
+}
+
+/* -- Workspace license / billing ---------------------------------------- */
+
+/** Workspace license + price configuration (license page). */
+export async function getWorkspaceLicenseAction() {
+  const { getWorkspaceLicenseApi } = await import("../lib/api");
+  try {
+    return await getWorkspaceLicenseApi();
+  } catch {
+    return null;
+  }
+}
+
+/** Stripe studio-plan checkout — returns the hosted checkout URL. */
+export async function startStudioCheckoutAction() {
+  const { startStudioCheckoutApi } = await import("../lib/api");
+  return startStudioCheckoutApi();
+}
+
+/** Stripe extra-seat checkout — returns the hosted checkout URL. */
+export async function startSeatCheckoutAction(extraSeats = 1) {
+  const { startSeatCheckoutApi } = await import("../lib/api");
+  return startSeatCheckoutApi(extraSeats);
+}
+
+/** Add a member to the workspace seat license. */
+export async function inviteWorkspaceMemberAction(userId: string) {
+  const { inviteWorkspaceMemberApi } = await import("../lib/api");
+  try {
+    return await inviteWorkspaceMemberApi(userId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not add member");
+  }
+}
+
+/** Remove a member from the workspace seat license. */
+export async function removeWorkspaceMemberAction(userId: string) {
+  const { removeWorkspaceMemberApi } = await import("../lib/api");
+  try {
+    return await removeWorkspaceMemberApi(userId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not remove member");
+  }
+}
+
 /** Architectural title block · Vicmap cadastral for the selected address. */
 export async function lookupCadastralTitleAction(
   projectId: string,
@@ -817,6 +905,21 @@ export async function runSketchCostingAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}/costing`);
   revalidatePath(`/projects/${projectId}/design`);
   revalidatePath(`/projects/${projectId}/design/develop`);
+}
+
+/**
+ * Sketch-costing payload for the WebGL fit-sheet — the backend instant
+ * estimate (POST /costing/sketch) beside the client-side parametric total,
+ * so drift between the two pricing paths is visible on the card.
+ */
+export async function fetchSketchEstimateAction(projectId: string) {
+  if (!projectId.trim()) return null;
+  const { runSketchCosting } = await import("../lib/api");
+  try {
+    return await runSketchCosting(projectId);
+  } catch {
+    return null;
+  }
 }
 
 export async function runDevelopFromSketchAction(formData: FormData) {

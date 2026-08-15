@@ -23,6 +23,7 @@ import {
 import { requireSignedIn } from "../../../lib/auth";
 import {
   resolveCanvasMode,
+  webglStudioSupportsMode,
   type CanvasProgress,
 } from "../../../lib/canvas-mode";
 import { resolveProjectNextAction } from "../../../lib/project-next-action";
@@ -71,7 +72,12 @@ export default async function ProjectCanvasPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ mode?: string; webgl?: string; svg?: string; tool?: string }>;
+  searchParams: Promise<{
+    mode?: string;
+    webgl?: string;
+    svg?: string;
+    tool?: string;
+  }>;
 }) {
   await requireSignedIn();
   const { id } = await params;
@@ -118,9 +124,17 @@ export default async function ProjectCanvasPage({
     runOutputAction,
   });
 
-  /** WebGL studio is now the default mount. Pass ?svg=1 to fall back to the
-   *  legacy SVG studio (HandoffDesignStudio). */
-  const webglPreview = sp.svg !== "1";
+  /** WebGL studio is the default mount for the modes it implements.
+   * Modes only the legacy SVG studio renders (survey checklist, CAD board,
+   * elevation, garden, share) fall back to it — otherwise the ?mode= query
+   * silently does nothing on the WebGL mount. ?webgl=1 forces the WebGL
+   * studio (the e2e mount contract); ?svg=1 forces the legacy studio;
+   * ?tool=sketch arms the WebGL sketch surface directly. */
+  const webglPreview =
+    sp.svg !== "1" &&
+    (sp.webgl === "1" ||
+      webglStudioSupportsMode(initialMode) ||
+      sp.tool === "sketch");
   const frame = canvas?.site_frame ?? null;
   const webglScaleM = frame?.board_width_m ?? 110;
   const webglBoardAspect =
@@ -140,6 +154,10 @@ export default async function ProjectCanvasPage({
         <WebGLStudioPreview
           projectId={id}
           initialSketchMode={sp.tool === "sketch"}
+          initialMode={
+            webglStudioSupportsMode(initialMode) ? initialMode : "sketch"
+          }
+          progress={progress}
           scaleM={webglScaleM}
           boardAspect={webglBoardAspect}
           boundaryPct={

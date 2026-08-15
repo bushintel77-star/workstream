@@ -249,8 +249,11 @@
 }
 
 .pillInfo {
-  background: color-mix(in srgb, var(--info) 20%, var(--surface-elevated));
-  color: color-mix(in srgb, var(--info) 85%, var(--ink-primary));
+  /* Text/background must not share the info-blue channel — an 85% info text
+   * over a 20% info tint read ~4:1 (axe serious). Lighten the ink and ease
+   * the tint so the pill clears AA with the blue identity intact. */
+  background: color-mix(in srgb, var(--info) 12%, var(--surface-elevated));
+  color: color-mix(in srgb, var(--info) 55%, var(--ink-primary));
   border-color: color-mix(in srgb, var(--info) 18%, var(--line-hairline));
 }
 

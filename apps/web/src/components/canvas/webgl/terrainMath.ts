@@ -106,3 +106,49 @@ export function createElevationSampler(
   return (worldX: number, worldZ: number) =>
     idwElevation(worldX, worldZ, normalized, searchRadius);
 }
+
+/**
+ * Drape a %-space ring onto the terrain surface as world-space 3D line
+ * points. Each edge is subdivided to <= segmentM so the line follows relief
+ * between vertices instead of chording through hills, and every point sits
+ * at terrain height + offsetM (the spatial-layer clearance — semantic lines
+ * use a larger clearance than draped ink). Without a sampler (flat project)
+ * the ring renders at the flat offset, preserving the old behaviour.
+ */
+export function drapeRingToSurface(
+  points: Array<{ x: number; y: number }>,
+  opts: {
+    sampler: ((worldX: number, worldZ: number) => number) | null;
+    scaleM: number;
+    boardAspect: number;
+    offsetM: number;
+    segmentM?: number;
+  },
+): Array<[number, number, number]> {
+  const { sampler, scaleM, boardAspect, offsetM, segmentM = 4 } = opts;
+  const toWorld = (p: { x: number; y: number }): [number, number] => [
+    (p.x / 100 - 0.5) * scaleM,
+    (p.y / 100 - 0.5) * scaleM * boardAspect,
+  ];
+  const heightAt = (wx: number, wz: number) =>
+    (sampler ? sampler(wx, wz) : 0) + offsetM;
+
+  const out: Array<[number, number, number]> = [];
+  if (points.length < 2) return out;
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = toWorld(points[i]);
+    const b = toWorld(points[i + 1]);
+    const lenM = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const steps = Math.max(1, Math.ceil(lenM / segmentM));
+    for (let s = 0; s < steps; s++) {
+      const t = s / steps;
+      const wx = a[0] + (b[0] - a[0]) * t;
+      const wz = a[1] + (b[1] - a[1]) * t;
+      out.push([wx, heightAt(wx, wz), wz]);
+    }
+  }
+  // Terminus (closed or open rings alike).
+  const last = toWorld(points[points.length - 1]);
+  out.push([last[0], heightAt(last[0], last[1]), last[1]]);
+  return out;
+}

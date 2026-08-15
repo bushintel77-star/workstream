@@ -2,8 +2,7 @@ import home from "./home.module.css";
 
 /**
  * Register loading state. Uses the SAME full-bleed `/home` shell so no
- * responsive "compromise" frame flashes between the landing page and the
- * desktop register.
+ * responsive "compromise" frame flashes before the desktop register renders.
  */
 export default function DashboardLoading() {
   return (

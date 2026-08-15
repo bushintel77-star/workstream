@@ -157,6 +157,9 @@ export interface StudioStoreState {
   armedSymbolId: string | null;
   /** All canvas placements (CatalogPlacement contract schema). */
   placements: CatalogPlacement[];
+  /** Undo/redo doc history — snapshots of {placements, strokes} (cap 50). */
+  historyPast: Array<{ placements: CatalogPlacement[]; strokes: CanvasStroke[] }>;
+  historyFuture: Array<{ placements: CatalogPlacement[]; strokes: CanvasStroke[] }>;
 
   // --- Flora ring (ranked planting suggestions at a click) ---
   /**
@@ -238,8 +241,14 @@ export interface StudioStoreState {
   setArmedSymbolId: (id: string | null) => void;
   /** Replace the entire placement array (hydrate / undo / branch checkout). */
   setPlacements: (placements: CatalogPlacement[]) => void;
-  /** Append a single placement (a place gesture). */
+  /** Append a single placement (a place gesture — commits undo history). */
   addPlacement: (placement: CatalogPlacement) => void;
+
+  /** Push the current doc onto the undo stack (called by mutating actions). */
+  commitHistory: () => void;
+  /** Undo / redo the last doc mutation (placements + strokes together). */
+  undo: () => void;
+  redo: () => void;
 
   /** Open/move the flora session at a point, or dismiss with null. */
   setFloraSession: (
@@ -308,6 +317,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   assetsOpen: false,
   armedSymbolId: null,
   placements: [],
+  /** Undo/redo doc history — snapshots of {placements, strokes} (cap 50). */
+  historyPast: [],
+  historyFuture: [],
 
   // Flora ring defaults — no open session.
   floraSession: null,
@@ -367,7 +379,50 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     ),
   setPlacements: (placements) => set({ placements }),
   addPlacement: (placement) =>
-    set((s) => ({ placements: [...s.placements, placement] })),
+    set((s) => {
+      const past = [
+        ...s.historyPast,
+        { placements: [...s.placements], strokes: [...s.sketchStrokes] },
+      ].slice(-50);
+      return { placements: [...s.placements, placement], historyPast: past, historyFuture: [] };
+    }),
+
+  commitHistory: () =>
+    set((s) => ({
+      historyPast: [
+        ...s.historyPast,
+        { placements: [...s.placements], strokes: [...s.sketchStrokes] },
+      ].slice(-50),
+      historyFuture: [],
+    })),
+  undo: () =>
+    set((s) => {
+      const prev = s.historyPast[s.historyPast.length - 1];
+      if (!prev) return {};
+      return {
+        placements: prev.placements,
+        sketchStrokes: prev.strokes,
+        historyPast: s.historyPast.slice(0, -1),
+        historyFuture: [
+          ...s.historyFuture,
+          { placements: [...s.placements], strokes: [...s.sketchStrokes] },
+        ].slice(-50),
+      };
+    }),
+  redo: () =>
+    set((s) => {
+      const next = s.historyFuture[s.historyFuture.length - 1];
+      if (!next) return {};
+      return {
+        placements: next.placements,
+        sketchStrokes: next.strokes,
+        historyFuture: s.historyFuture.slice(0, -1),
+        historyPast: [
+          ...s.historyPast,
+          { placements: [...s.placements], strokes: [...s.sketchStrokes] },
+        ].slice(-50),
+      };
+    }),
 
   setFloraSession: (session) =>
     set((s) =>
@@ -384,10 +439,22 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
 
   setSketchStrokes: (sketchStrokes) => set({ sketchStrokes }),
   addSketchStroke: (stroke) =>
-    set((s) => ({ sketchStrokes: [...s.sketchStrokes, stroke] })),
+    set((s) => {
+      const past = [
+        ...s.historyPast,
+        { placements: [...s.placements], strokes: [...s.sketchStrokes] },
+      ].slice(-50);
+      return { sketchStrokes: [...s.sketchStrokes, stroke], historyPast: past, historyFuture: [] };
+    }),
   removeSketchStrokes: (ids) => {
     const idSet = new Set(ids);
-    set((s) => ({ sketchStrokes: s.sketchStrokes.filter((st) => !idSet.has(st.id)) }));
+    set((s) => {
+      const past = [
+        ...s.historyPast,
+        { placements: [...s.placements], strokes: [...s.sketchStrokes] },
+      ].slice(-50);
+      return { sketchStrokes: s.sketchStrokes.filter((st) => !idSet.has(st.id)), historyPast: past, historyFuture: [] };
+    });
   },
   updateSketchStroke: (id, patch) =>
     set((s) => ({

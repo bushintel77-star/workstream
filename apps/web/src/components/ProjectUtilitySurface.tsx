@@ -1,9 +1,11 @@
 import type {
+  ActivityEvent,
   Audit,
   CarbonReport,
   Output,
   OutputKind,
   Override,
+  PhotoMeasurement,
   Recording,
 } from "../lib/api";
 import {
@@ -12,6 +14,8 @@ import {
   runOutputAction,
 } from "../app/actions";
 import { SubmitButton } from "./SubmitButton";
+import { PhotoMeasureUpload } from "./PhotoMeasureUpload";
+import { RecordingUpload } from "./RecordingUpload";
 import styles from "../app/projects/[id]/project.module.css";
 
 const OUTPUTS: Array<{ kind: OutputKind; label: string; description: string }> = [
@@ -40,9 +44,15 @@ type ProjectUtilityProps =
       designReady: boolean;
       audit: Audit | null;
       overrides: Override[];
+      activity: ActivityEvent[];
     }
   | { type: "carbon"; projectId: string; report: CarbonReport | null }
   | { type: "outputs"; projectId: string; outputs: Output[] }
+  | {
+      type: "measurements";
+      projectId: string;
+      measurements: PhotoMeasurement[];
+    }
   | { type: "recordings"; projectId: string; recordings: Recording[] };
 
 export function ProjectUtilitySurface(props: ProjectUtilityProps) {
@@ -54,6 +64,7 @@ export function ProjectUtilitySurface(props: ProjectUtilityProps) {
           designReady={props.designReady}
           audit={props.audit}
           overrides={props.overrides}
+          activity={props.activity}
         />
       ) : null}
       {props.type === "carbon" ? (
@@ -62,8 +73,17 @@ export function ProjectUtilitySurface(props: ProjectUtilityProps) {
       {props.type === "outputs" ? (
         <OutputsSurface projectId={props.projectId} outputs={props.outputs} />
       ) : null}
+      {props.type === "measurements" ? (
+        <MeasurementsSurface
+          projectId={props.projectId}
+          measurements={props.measurements}
+        />
+      ) : null}
       {props.type === "recordings" ? (
-        <RecordingsSurface recordings={props.recordings} />
+        <RecordingsSurface
+          projectId={props.projectId}
+          recordings={props.recordings}
+        />
       ) : null}
     </main>
   );
@@ -84,11 +104,13 @@ export function AuditSurface({
   designReady,
   audit,
   overrides,
+  activity,
 }: {
   projectId: string;
   designReady: boolean;
   audit: Audit | null;
   overrides: Override[];
+  activity: ActivityEvent[];
 }) {
   return (
     <>
@@ -187,6 +209,28 @@ export function AuditSurface({
         </>
       ) : designReady ? (
         <div className={styles.empty}>Run the audit to surface design risks and issue readiness.</div>
+      ) : null}
+      {activity.length > 0 ? (
+        <section aria-labelledby="activity-heading">
+          <h2 id="activity-heading" className={styles.sectionHeading}>
+            Activity trail
+          </h2>
+          <div className={styles.card} role="list" aria-label="Project activity">
+            {activity.map((event) => (
+              <div
+                className={styles.outputCard}
+                role="listitem"
+                key={event.id}
+              >
+                <div className={styles.outputMain}>
+                  <span className={styles.outputKind}>{event.action}</span>
+                  <span className={styles.outputMeta}>{event.detail}</span>
+                </div>
+                <span className={styles.mono}>{formatDate(event.created_at)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
     </>
   );
@@ -306,16 +350,24 @@ export function OutputsSurface({
   );
 }
 
-export function RecordingsSurface({ recordings }: { recordings: Recording[] }) {
+export function RecordingsSurface({
+  projectId,
+  recordings,
+}: {
+  projectId: string;
+  recordings: Recording[];
+}) {
   return (
     <>
       <header className={styles.processingHero}>
         <p className={styles.totalKicker}>Site voice notes</p>
         <h1 className={styles.headline}>Recordings</h1>
         <p className={styles.processingCopy}>
-          Review field notes and transcripts captured during the site conversation.
+          Capture the site conversation — transcription feeds survey, design,
+          and cost in the background.
         </p>
       </header>
+      <RecordingUpload projectId={projectId} />
       {recordings.length > 0 ? (
         <section aria-labelledby="recordings-heading">
           <h2 id="recordings-heading" className={styles.sectionHeading}>
@@ -351,6 +403,106 @@ export function RecordingsSurface({ recordings }: { recordings: Recording[] }) {
         </section>
       ) : (
         <div className={styles.empty}>No site recordings have been captured yet.</div>
+      )}
+    </>
+  );
+}
+
+const UNIT_LABEL: Record<PhotoMeasurement["items"][number]["unit"], string> = {
+  meters: "m",
+  centimeters: "cm",
+  millimeters: "mm",
+  square_meters: "m²",
+  cubic_meters: "m³",
+  unknown: "—",
+};
+
+export function MeasurementsSurface({
+  projectId,
+  measurements,
+}: {
+  projectId: string;
+  measurements: PhotoMeasurement[];
+}) {
+  return (
+    <>
+      <header className={styles.processingHero}>
+        <p className={styles.totalKicker}>Site dimensions</p>
+        <h1 className={styles.headline}>Measurements</h1>
+        <p className={styles.processingCopy}>
+          Vision-measured quantities from site photos — each value carries its
+          reference and confidence. Confirm against tape before construction.
+        </p>
+      </header>
+      <PhotoMeasureUpload projectId={projectId} />
+      {measurements.length > 0 ? (
+        <section aria-labelledby="measurements-heading">
+          <h2 id="measurements-heading" className={styles.sectionHeading}>
+            Captured measurements
+          </h2>
+          {measurements.map((measurement) => (
+            <article
+              className={styles.measurementCard}
+              key={measurement.id}
+              data-testid="measurement-card"
+            >
+              <div className={styles.measurementHead}>
+                <span className={styles.mono}>
+                  {formatDate(measurement.created_at)}
+                </span>
+                <span className={styles.pill}>
+                  {measurement.items.length}{" "}
+                  {measurement.items.length === 1 ? "item" : "items"}
+                </span>
+              </div>
+              {measurement.items.length > 0 ? (
+                <div className={styles.card} role="list">
+                  {measurement.items.map((item, index) => (
+                    <div
+                      className={styles.outputCard}
+                      role="listitem"
+                      key={`${measurement.id}-${index}`}
+                    >
+                      <div className={styles.outputMain}>
+                        <span className={styles.outputKind}>
+                          {item.description}
+                        </span>
+                        <span className={styles.outputMeta}>
+                          {item.reference_used
+                            ? `ref: ${item.reference_used}`
+                            : "no stated reference"}
+                        </span>
+                      </div>
+                      <span className={styles.mono}>
+                        {item.value.toFixed(2)} {UNIT_LABEL[item.unit]} ·{" "}
+                        {Math.round(item.confidence * 100)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className={styles.empty}>
+                  No quantities were extracted from this photo.
+                </p>
+              )}
+              {measurement.notes ? (
+                <p className={styles.findingStatement}>{measurement.notes}</p>
+              ) : null}
+              <a
+                className={styles.utilityLink}
+                href={measurement.image_uri}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open source photo
+              </a>
+            </article>
+          ))}
+        </section>
+      ) : (
+        <div className={styles.empty}>
+          No photo measurements yet — upload a site photo above.
+        </div>
       )}
     </>
   );

@@ -102,9 +102,30 @@ Each `SpatialObject` renders as an R3F component based on its `layer`:
 
 ### 2.3 Boundary + origin
 
-- **Lot boundary:** `<LotBoundary>` — `<Line>` (drei) in `--gs-truth`. Data from Vicmap title or traced polygon.
-- **Easements:** `<Easement>` — dashed `<Line>` in `--gs-truth`.
+- **Lot boundary:** `<LotBoundary>` — `<Line>` (drei) in `--gs-truth-soft`. Data from Vicmap title or traced polygon.
+- **Easements:** `<Easement>` — dashed `<Line>` in `--gs-truth-soft`.
 - **Origin peg:** `<OriginPeg>` — Signal Blue crosshair at `(0, 0, 0)`, always visible.
+
+### 2.4 Spatial layer contract (2026-08-15)
+
+In-canvas geometry declares its render policy via `layerContract.ts` — no
+component invents its own depth offset. Law:
+
+| Layer | Policy |
+|---|---|
+| `terrain` (0) | The ONE ground surface — `TerrainMesh` (levels) XOR flat `GroundPlane`, never both |
+| `draped` (1) | Surface-following overlays (ink, flow, aerial): terrain height + 0.02 m, depth-tested |
+| `semantic` (2) | Title/council truth (boundary, easements, services): terrain height + 0.06 m clearance |
+| `markers` (3) | Survey furniture (origin peg): + 0.08 m |
+
+Every line samples the shared terrain field
+(`terrainMath.createElevationSampler` — the same math that displaces the
+mesh), so geometry sits **on** the surface by construction. Constant-world-Z
+lines are prohibited: the measured failure mode was the title boundary
+intersecting ±7 m of relief — buried on high ground, floating on low
+(`terrainDrape.test.ts` pins this). The terrain material itself is contoured
+(elevation banding at the surveyor's 0.5 m interval + slope-based albedo +
+noise breakup — `terrainMaterial.ts`) so relief reads from any light angle.
 
 ---
 

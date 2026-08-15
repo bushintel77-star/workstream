@@ -87,8 +87,29 @@ export function modeForLegacyPath(pathname: string): CanvasMode {
   if (/\/design\/?$/.test(pathname)) return "sketch";
   if (/\/costing\/?$/.test(pathname)) return "quote";
   if (/\/(outputs|audit|filing)\/?$/.test(pathname)) return "share";
-  if (/\/(overview|processing|tasks|recordings|measurements|carbon)\/?$/.test(pathname)) {
+  if (/\/(overview|processing|tasks|recordings|carbon)\/?$/.test(pathname)) {
     return "sketch";
   }
   return "sketch";
+}
+
+/**
+ * Every canvas mode now mounts natively in the WebGL studio (tool rail,
+ * glass cards, or a mounted classic feature module per ARCHITECTURE §5).
+ * The legacy SVG studio remains reachable only by explicit ?svg=1 — it is
+ * no longer part of the mode system's routing.
+ */
+const WEBGL_STUDIO_MODES: ReadonlySet<CanvasMode> = new Set([
+  "survey",
+  "sketch",
+  "cad",
+  "elevation",
+  "garden",
+  "quote",
+  "present",
+  "share",
+]);
+
+export function webglStudioSupportsMode(mode: CanvasMode): boolean {
+  return WEBGL_STUDIO_MODES.has(mode);
 }

@@ -20,7 +20,7 @@
  * Binding: docs/GOLD-STANDARD-2026.md §3 Phase 3 (Itemized Fit-Sheet)
  */
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { solveLiveTradeEstimate } from "@workstream/domain";
 import { GlassCard } from "./GlassCard";
 import { useStudioStore } from "./studioStore";
@@ -34,7 +34,7 @@ import type {
 import { buildEstimateArgsFromStudio, summarizeFitSheet, fmtAud } from "./fitSheet";
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 9,
+  fontSize: 10.5,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -70,7 +70,7 @@ function StockChip({ inStock, mode }: { inStock: boolean; mode: string }) {
       data-testid="fit-sheet-stock-chip"
       style={{
         fontFamily: "var(--font-tech)",
-        fontSize: 8,
+        fontSize: 9.5,
         fontWeight: 600,
         letterSpacing: "0.05em",
         color,
@@ -93,6 +93,8 @@ export interface FitSheetCardProps {
   irrigationZones: IrrigationZone[];
   scaleM: number;
   outdoorM2: number;
+  /** For the backend sketch-cost fetch (one visible source of truth). */
+  projectId: string;
 }
 
 export function FitSheetCard({
@@ -102,6 +104,7 @@ export function FitSheetCard({
   irrigationZones,
   scaleM,
   outdoorM2,
+  projectId,
 }: FitSheetCardProps) {
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
 
@@ -125,6 +128,37 @@ export function FitSheetCard({
     const telemetry = solveLiveTradeEstimate({ report: estimate });
     return summarizeFitSheet(estimate, telemetry);
   }, [estimate]);
+
+  // Backend instant estimate (POST /costing/sketch) — prices the SAVED
+  // canvas, fetched once when the card opens + on manual refresh. Drift vs
+  // the client-side parametric total is shown so the two paths can't silently
+  // diverge. The attempt-once ref matters: a failed fetch returns null, and a
+  // null-check gate would refire the effect forever (each fire is a POST
+  // that also writes a costing row).
+  const [backendTotal, setBackendTotal] = useState<number | null>(null);
+  const [backendBusy, setBackendBusy] = useState(false);
+  const attemptedRef = useRef(false);
+  const runBackendFetch = useCallback(async () => {
+    if (!projectId) return;
+    setBackendBusy(true);
+    try {
+      const { fetchSketchEstimateAction } = await import("../../../app/actions");
+      const res = await fetchSketchEstimateAction(projectId);
+      setBackendTotal(res?.costing?.total ?? null);
+    } finally {
+      setBackendBusy(false);
+    }
+  }, [projectId]);
+  useEffect(() => {
+    if (!fitSheetOpen || attemptedRef.current) return;
+    attemptedRef.current = true;
+    void runBackendFetch();
+  }, [fitSheetOpen, runBackendFetch]);
+
+  const driftPct =
+    backendTotal != null && backendTotal > 0 && summary
+      ? (summary.total / backendTotal - 1) * 100
+      : null;
 
   if (!fitSheetOpen || items.length === 0 || !summary) return null;
 
@@ -153,7 +187,7 @@ export function FitSheetCard({
               data-testid="fit-sheet-settling"
               style={{
                 fontFamily: "var(--font-tech)",
-                fontSize: 8,
+                fontSize: 9.5,
                 color: "var(--gs-primary)",
               }}
             >
@@ -173,7 +207,7 @@ export function FitSheetCard({
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div
                     style={{
-                      fontSize: 9.5,
+                      fontSize: 11,
                       color: "var(--gs-ink)",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -183,7 +217,7 @@ export function FitSheetCard({
                   >
                     {line.label}
                   </div>
-                  <div style={{ fontSize: 9, color: "var(--gs-ink-secondary)" }}>
+                  <div style={{ fontSize: 10, color: "var(--gs-ink-secondary)" }}>
                     {section} · {line.qty.toFixed(1)} {line.unit} @ {fmtAud(line.rate)}
                   </div>
                 </div>
@@ -250,6 +284,71 @@ export function FitSheetCard({
           </span>
         </div>
 
+        {/* Backend sketch estimate — one visible source of truth (the saved
+            canvas is priced server-side; refresh re-prices after autosave). */}
+        <div
+          data-testid="fit-sheet-backend"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: 6,
+            marginTop: 3,
+          }}
+          title="Backend instant estimate of the saved canvas (POST /costing/sketch)"
+        >
+          <span style={labelStyle}>Backend estimate</span>
+          <span style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            {driftPct != null && Math.abs(driftPct) > 2 ? (
+              <span
+                data-testid="fit-sheet-drift"
+                style={{
+                  fontFamily: "var(--font-tech)",
+                  fontSize: 10,
+                  padding: "1px 5px",
+                  borderRadius: 999,
+                  color:
+                    Math.abs(driftPct) > 10
+                      ? "var(--gs-warning)"
+                      : "var(--gs-ink-truth)",
+                  border: `1px solid color-mix(in srgb, ${
+                    Math.abs(driftPct) > 10
+                      ? "var(--gs-warning)"
+                      : "var(--gs-ink-truth)"
+                  } 45%, transparent)`,
+                }}
+              >
+                {driftPct > 0 ? "+" : "−"}
+                {Math.abs(driftPct).toFixed(0)}% studio vs backend
+              </span>
+            ) : null}
+            <span style={{ ...figureStyle, color: "var(--gs-ink-secondary)" }}>
+              {backendBusy
+                ? "…"
+                : backendTotal != null
+                  ? fmtAud(backendTotal)
+                  : "—"}
+            </span>
+            <button
+              type="button"
+              aria-label="Refresh backend estimate"
+              title="Re-price the saved canvas"
+              onClick={() => void runBackendFetch()}
+              disabled={backendBusy}
+              style={{
+                all: "unset",
+                cursor: backendBusy ? "wait" : "pointer",
+                fontFamily: "var(--font-tech)",
+                fontSize: 11,
+                color: "var(--gs-ink-secondary)",
+                padding: "0 2px",
+              }}
+            >
+              ⟳
+            </button>
+          </span>
+        </div>
+
         {/* Site stats */}
         <div
           style={{
@@ -289,7 +388,7 @@ export function FitSheetCard({
         <div
           style={{
             marginTop: 5,
-            fontSize: 9,
+            fontSize: 10,
             color: "var(--gs-ink-secondary)",
             letterSpacing: "0.04em",
           }}

@@ -54,7 +54,7 @@ being rebuilt as a **Zero-Chrome WebGL studio** (Three.js / React Three Fiber)
 per the master brief. The old SVG `%`-coord parchment board + `HandoffDesignStudio`
 is being replaced by `WebGLStudio` (R3F `<Canvas>` + DOM Glass Card overlay).
 
-- Home: `/` — address composer + sites list
+- Home: `/` redirects to `/home` — operator dashboard (address composer + sites list). The old marketing landing with mock telemetry was removed (zero-mock-data law; `docs/UI-PARITY-AUDIT-2026.md` §4)
 - Operator canvas: `/projects/[id]?mode=survey|sketch|cad|elevation|quote|present|share|garden`
 
 **Binding docs (read before touching canvas/chrome/rendering):**
@@ -65,7 +65,7 @@ is being replaced by `WebGLStudio` (R3F `<Canvas>` + DOM Glass Card overlay).
 
 **Archived (pre-Gold-Standard, do not follow):** `docs/archive/pre-gold-standard-2026/` — contains the retired `STUDIO-STYLING-AND-UX.md`, `CAD-AI-2026-UX.md`, `OPERATOR-STUDIO-GOLD-WALKTHROUGH.md`, `ENV-AND-SITE-META-STICKY.md`, and `CANVAS-FIRST-*.md` SDS docs. Retained for historical reference only.
 
-**Migration status:** Phase 0 (docs + tokens + fonts + CI gates) is in progress. The board is still SVG during Phase 0; the WebGL rewrite lands in Phase 1. Until Phase 1 completes, the SVG board renders against the new Studio Dark tokens.
+**Migration status:** The WebGL studio is THE front end — every canvas mode (survey checklist, sketch, CAD AI-hub, elevation sheet, garden 3D, quote fit-sheet, present lens, share portal) mounts natively as glass chrome over the R3F canvas (ARCHITECTURE §5 pattern: classic feature modules consumed by the new shell). The SVG `HandoffDesignStudio` is a `?svg=1`-only deep fallback for vector node-editing and the long tail of feature docks — it is no longer part of mode routing.
 
 **Vicmap cadastral** (API): keyless DELWP GeoServer WFS at `opendata.maps.vic.gov.au` — `apps/api/src/lib/vicmap.ts` self-discovers property/building layers via GetCapabilities (no `VICMAP_ENABLED` / developer.vic.gov.au API key).
 

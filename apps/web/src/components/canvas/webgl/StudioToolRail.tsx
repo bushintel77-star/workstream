@@ -251,7 +251,7 @@ export function StudioToolRail({
               aria-hidden
               style={{
                 fontFamily: "var(--font-ui)",
-                fontSize: 7.5,
+                fontSize: 10,
                 letterSpacing: "0.04em",
                 lineHeight: 1,
               }}

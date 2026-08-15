@@ -104,7 +104,7 @@ function AssetCard({
       <span
         style={{
           fontFamily: "var(--font-tech)",
-          fontSize: 8,
+          fontSize: 9.5,
           color: "var(--gs-ink-secondary)",
           textAlign: "center",
           lineHeight: 1.4,
@@ -130,7 +130,7 @@ function AssetCard({
             background: `color-mix(in srgb, ${GOLD} 20%, transparent)`,
             color: GOLD,
             fontFamily: "var(--font-ui)",
-            fontSize: 9,
+            fontSize: 10.5,
             fontWeight: 600,
           }}
         >
@@ -234,7 +234,7 @@ export function AssetFanOutDock() {
           alignSelf: "center",
           maxWidth: 110,
           fontFamily: "var(--font-tech)",
-          fontSize: 9,
+          fontSize: 10.5,
           lineHeight: 1.5,
           color: armedSymbolId ? GOLD : "var(--gs-ink-secondary)",
         }}

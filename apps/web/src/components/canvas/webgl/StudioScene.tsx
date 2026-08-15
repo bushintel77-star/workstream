@@ -21,6 +21,12 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Line, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { sunPositionAt } from "@workstream/domain";
+import {
+  createElevationSampler,
+  drapeRingToSurface,
+} from "./terrainMath";
+import { buildTerrainGeometry } from "./TerrainMesh";
+import { SPATIAL_LAYER } from "./layerContract";
 import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore, winterFactor } from "./seasonalStore";
@@ -113,11 +119,19 @@ export interface StudioSceneProps {
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
-function OriginPeg() {
-  const blue = "#0030CF";
+function OriginPeg({
+  sampler,
+}: {
+  sampler: ((worldX: number, worldZ: number) => number) | null;
+}) {
+  // truth-soft — the origin crosshair must stay visible on the dark ground.
+  const blue = "#6B8EEA";
   const arm = 1.2;
+  // Survey furniture rides the terrain (the peg anchors real ground, not a
+  // floating datum) at the marker-layer clearance.
+  const y = (sampler ? sampler(0, 0) : 0) + SPATIAL_LAYER.markers.offsetM;
   return (
-    <group position={[0, 0, 0.01]}>
+    <group position={[0, y, 0]} renderOrder={SPATIAL_LAYER.markers.renderOrder}>
       <mesh>
         <boxGeometry args={[arm * 2, 0.08, 0.01]} />
         <meshBasicMaterial color={blue} />
@@ -134,16 +148,6 @@ function OriginPeg() {
   );
 }
 
-/** Convert a % ring to Three.js world line points (with small Z offset). */
-function useWorldLine(points: PctPoint[], scaleM: number, boardAspect: number, z = 0.02) {
-  return useMemo(
-    () =>
-      points.map(
-        (p) => [...pctToWorld(p, scaleM, boardAspect), z] as [number, number, number],
-      ),
-    [points, scaleM, boardAspect, z],
-  );
-}
 
 /**
  * Real-sun lighting rig — warm sun key + cool sky bounce + soft fill.
@@ -201,19 +205,22 @@ function SunRig({
       -Math.cos(seasonalAlt) * Math.cos(azRad) * sunDist,
     );
 
-    // Intensity tapers near sunrise/sunset + weakens slightly in winter.
+    // Intensity tapers near sunrise/sunset, with a legibility floor — the
+    // design must stay readable in autumn/winter light; season reads through
+    // shadow length + canopy, not through murk. Winter dimming is mild (0.15).
     const altClamped = Math.max(sun.altitudeDeg, 0);
-    const intensity = (0.55 + Math.min(altClamped / 60, 1) * 0.95) * (1 - wFactor * 0.25);
+    const intensity =
+      (0.75 + Math.min(altClamped / 60, 1) * 1.05) * (1 - wFactor * 0.15);
     light.intensity = intensity;
   });
 
   return (
     <>
       {/* Cool ambient — lifts shadow areas without flattening (proven GrowthStudio value). */}
-      <ambientLight intensity={0.45} color={PALETTE.ambientCool} />
+      <ambientLight intensity={0.5} color={PALETTE.ambientCool} />
       {/* Sky-over-ground hemisphere — the olive ground-bounce is what makes canopy
           undersides and upfacing surfaces read naturalistic (green bounce). */}
-      <hemisphereLight args={[PALETTE.skyCool, PALETTE.groundBounce, 0.55]} />
+      <hemisphereLight args={[PALETTE.skyCool, PALETTE.groundBounce, 0.65]} />
       {/* Warm key light — position + intensity mutated per-frame by the useFrame above */}
       <directionalLight
         ref={keyRef}
@@ -300,49 +307,74 @@ function GroundContactShadows({
   );
 }
 
-/** The lot boundary — a Signal Blue line. */
+/** The lot boundary — a Signal Blue line. Scene geometry follows the text
+ *  law: --gs-ink-truth (#6B8EEA) on dark surfaces — measured 3.47:1 on the
+ *  ground token (SC 1.4.11 non-text ≥3:1; truth-soft was 2.04:1 — fail). */
 function LotBoundary({
   points,
   scaleM,
   boardAspect,
+  sampler,
 }: {
   points: PctPoint[];
   scaleM: number;
   boardAspect: number;
+  sampler: ((worldX: number, worldZ: number) => number) | null;
 }) {
-  const linePoints = useWorldLine(points, scaleM, boardAspect, 0.02);
+  // Draped: every point samples the terrain field + the semantic clearance,
+  // so the title line rides the surface instead of intersecting it (the old
+  // constant-z line buried up to 7.6 m on high ground / floated on low).
+  const linePoints = drapeRingToSurface(points, {
+    sampler,
+    scaleM,
+    boardAspect,
+    offsetM: SPATIAL_LAYER.semantic.offsetM,
+  });
   if (linePoints.length < 2) return null;
-  return <Line points={linePoints} color="#0030CF" lineWidth={2} />;
+  return (
+    <Line
+      points={linePoints}
+      color="#6B8EEA"
+      lineWidth={2.5}
+      renderOrder={SPATIAL_LAYER.semantic.renderOrder}
+    />
+  );
 }
 
-/** Easements — Signal Blue dashed lines. */
+/** Easements — Signal Blue dashed lines (truth-soft for dark-ground visibility). */
 function Easements({
   rings,
   scaleM,
   boardAspect,
+  sampler,
 }: {
   rings: PctPoint[][];
   scaleM: number;
   boardAspect: number;
+  sampler: ((worldX: number, worldZ: number) => number) | null;
 }) {
   return (
     <>
       {rings.map((ring, i) => {
         if (ring.length < 2) return null;
-        const pts = ring.map(
-          (p) => [...pctToWorld(p, scaleM, boardAspect), 0.015] as [number, number, number],
-        );
+        const pts = drapeRingToSurface(ring, {
+          sampler,
+          scaleM,
+          boardAspect,
+          offsetM: SPATIAL_LAYER.semantic.offsetM - 0.01,
+        });
         return (
           <Line
             key={`easement-${i}`}
             points={pts}
-            color="#0030CF"
+            color="#6B8EEA"
             lineWidth={1}
             dashed
             dashSize={0.4}
             gapSize={0.3}
             opacity={0.5}
             transparent
+            renderOrder={SPATIAL_LAYER.semantic.renderOrder}
           />
         );
       })}
@@ -355,19 +387,24 @@ function Services({
   lines,
   scaleM,
   boardAspect,
+  sampler,
 }: {
   lines: PctPoint[][];
   scaleM: number;
   boardAspect: number;
+  sampler: ((worldX: number, worldZ: number) => number) | null;
 }) {
   const apwaColors = ["#1e88c7", "#2f8f4e", "#e8b000", "#d63b2f", "#e8722f"];
   return (
     <>
       {lines.map((line, i) => {
         if (line.length < 2) return null;
-        const pts = line.map(
-          (p) => [...pctToWorld(p, scaleM, boardAspect), 0.012] as [number, number, number],
-        );
+        const pts = drapeRingToSurface(line, {
+          sampler,
+          scaleM,
+          boardAspect,
+          offsetM: SPATIAL_LAYER.semantic.offsetM - 0.02,
+        });
         return (
           <Line
             key={`service-${i}`}
@@ -377,6 +414,7 @@ function Services({
             dashed
             dashSize={0.3}
             gapSize={0.2}
+            renderOrder={SPATIAL_LAYER.semantic.renderOrder}
           />
         );
       })}
@@ -520,7 +558,7 @@ function GroundPlane({ scaleM, boardAspect }: { scaleM: number; boardAspect: num
       </mesh>
       <gridHelper
         ref={gridRef}
-        args={[w, Math.round(w), "#2e343c", "#23282e"]}
+        args={[w, Math.round(w), "#404A54", "#2C343C"]}
         position={[0, 0.001, 0]}
       />
     </>
@@ -539,10 +577,12 @@ function AerialUnderlay({
   aerialUri,
   scaleM,
   boardAspect,
+  heightmapPoints,
 }: {
   aerialUri: string | null;
   scaleM: number;
   boardAspect: number;
+  heightmapPoints: HeightmapPoint[];
 }) {
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
   const texture = useMemo(() => {
@@ -552,9 +592,18 @@ function AerialUnderlay({
     tex.colorSpace = THREE.SRGBColorSpace;
     return tex;
   }, [aerialUri]);
-
-  const w = scaleM;
-  const h = scaleM * boardAspect;
+  // Draped: on terrain projects the photo rides the SAME displaced geometry
+  // as the ground (shared builder) instead of sinking under raised ground.
+  const flatGeometry = useMemo(
+    () => new THREE.PlaneGeometry(scaleM, scaleM * boardAspect),
+    [scaleM, boardAspect],
+  );
+  const geometry = useMemo(
+    () =>
+      buildTerrainGeometry(scaleM, boardAspect, heightmapPoints) ??
+      flatGeometry,
+    [flatGeometry, scaleM, boardAspect, heightmapPoints],
+  );
 
   useFrame((_, delta) => {
     const mat = matRef.current;
@@ -569,8 +618,12 @@ function AerialUnderlay({
 
   if (!texture) return null;
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
-      <planeGeometry args={[w, h]} />
+    <mesh
+      geometry={geometry}
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, SPATIAL_LAYER.draped.offsetM, 0]}
+      renderOrder={SPATIAL_LAYER.draped.renderOrder}
+    >
       <meshBasicMaterial
         ref={matRef}
         map={texture}
@@ -612,6 +665,13 @@ export function StudioScene({
   // Subscribe to the view blend target — drives the editing-lock for controls
   // (editing is disabled when the camera is in 3D perspective mode).
   const viewBlendTarget = useSeasonalStore((s) => s.viewBlendTarget);
+
+  // THE terrain field — one sampler, every spatial layer samples it (mesh,
+  // semantic lines, aerial). Null on flat projects (no levels).
+  const elevationSampler = useMemo(
+    () => createElevationSampler(heightmapPoints, scaleM, boardAspect),
+    [heightmapPoints, scaleM, boardAspect],
+  );
 
   return (
     <>
@@ -711,12 +771,12 @@ export function StudioScene({
         lng={lng}
       />
       {/* Aerial photo underlay — opaque in plan view, fades in 3D. */}
-      <AerialUnderlay aerialUri={aerialUri} scaleM={scaleM} boardAspect={boardAspect} />
+      <AerialUnderlay aerialUri={aerialUri} scaleM={scaleM} boardAspect={boardAspect} heightmapPoints={heightmapPoints} />
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the
           drawing surface, complementing the directional sun shadows. */}
       <GroundContactShadows scaleM={scaleM} boardAspect={boardAspect} />
-      <OriginPeg />
-      <LotBoundary points={boundaryPct} scaleM={scaleM} boardAspect={boardAspect} />
+      <OriginPeg sampler={elevationSampler} />
+      <LotBoundary points={boundaryPct} scaleM={scaleM} boardAspect={boardAspect} sampler={elevationSampler} />
       {buildingPct && buildingPct.length >= 3 && (
         <BuildingFootprint
           points={buildingPct}
@@ -726,10 +786,10 @@ export function StudioScene({
         />
       )}
       {!lens?.hideEasements && (
-        <Easements rings={easementsPct} scaleM={scaleM} boardAspect={boardAspect} />
+        <Easements rings={easementsPct} scaleM={scaleM} boardAspect={boardAspect} sampler={elevationSampler} />
       )}
       {!lens?.hideServices && (
-        <Services lines={servicesPct} scaleM={scaleM} boardAspect={boardAspect} />
+        <Services lines={servicesPct} scaleM={scaleM} boardAspect={boardAspect} sampler={elevationSampler} />
       )}
       <SceneItems
         items={items}

@@ -5747,6 +5747,7 @@ export function HandoffDesignStudio({
               playing={ui.sunPlay}
               shadeOn={ui.shadeOn}
               streetChips={streetContextChips}
+              projectId={projectId}
               onClose={() => studio.setUi({ rightDataPanel: null })}
               onSunMin={(sunMin) => studio.setUi({ sunMin })}
               onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}

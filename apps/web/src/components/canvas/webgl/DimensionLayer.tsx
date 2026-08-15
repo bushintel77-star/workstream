@@ -38,7 +38,7 @@ const DIM_Y = 0.04;
 
 const dimLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 9,
+  fontSize: 10.5,
   fontWeight: 500,
   color: "var(--gs-truth, #0030CF)",
   background: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",

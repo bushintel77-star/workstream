@@ -195,7 +195,7 @@ export function FloraRingLayer({
           >
             <span
               style={{
-                fontSize: 8.5,
+                fontSize: 10,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 color: "var(--gs-ink-secondary)",
@@ -207,7 +207,7 @@ export function FloraRingLayer({
               data-testid="flora-sun-chip"
               style={{
                 fontFamily: "var(--font-tech)",
-                fontSize: 8.5,
+                fontSize: 10,
                 color: "var(--gs-truth)",
                 border: "1px solid color-mix(in srgb, var(--gs-truth) 35%, transparent)",
                 borderRadius: 999,
@@ -240,7 +240,7 @@ export function FloraRingLayer({
                   {c.plantWindow === "spring_hold" && (
                     <span
                       style={{
-                        fontSize: 9,
+                        fontSize: 10,
                         fontFamily: "var(--font-tech)",
                         color: "var(--gs-primary)",
                       }}
@@ -252,7 +252,7 @@ export function FloraRingLayer({
                 <div
                   style={{
                     fontFamily: "var(--font-tech)",
-                    fontSize: 8.5,
+                    fontSize: 10,
                     color: "var(--gs-ink-secondary)",
                     marginTop: 2,
                   }}
@@ -260,7 +260,7 @@ export function FloraRingLayer({
                   <em>{c.botanicalName}</em> · {c.matureHeightM.toFixed(1)} m ·{" "}
                   {c.sun}
                 </div>
-                <div style={{ fontSize: 8.5, color: "var(--gs-ink-secondary)", marginTop: 2 }}>
+                <div style={{ fontSize: 10, color: "var(--gs-ink-secondary)", marginTop: 2 }}>
                   {c.why}
                 </div>
               </button>
@@ -310,7 +310,7 @@ export function FloraRingLayer({
           <div
             style={{
               marginTop: 5,
-              fontSize: 9,
+              fontSize: 10,
               color: "var(--gs-ink-secondary)",
             }}
           >

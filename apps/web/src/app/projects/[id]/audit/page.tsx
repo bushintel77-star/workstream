@@ -1,6 +1,12 @@
 import { notFound } from "next/navigation";
 import { requireSignedIn } from "../../../../lib/auth";
-import { getAudit, getDesign, getProject, listOverrides } from "../../../../lib/api";
+import {
+  getAudit,
+  getDesign,
+  getProject,
+  listOverrides,
+  listProjectActivity,
+} from "../../../../lib/api";
 import { ProjectUtilitySurface } from "../../../../components/ProjectUtilitySurface";
 
 export const dynamic = "force-dynamic";
@@ -14,10 +20,11 @@ export default async function AuditPage({
   await requireSignedIn();
   const project = await getProject(id);
   if (!project) notFound();
-  const [audit, design, overrides] = await Promise.all([
+  const [audit, design, overrides, activity] = await Promise.all([
     getAudit(id),
     getDesign(id),
     listOverrides(id),
+    listProjectActivity(id).catch(() => []),
   ]);
   return (
     <ProjectUtilitySurface
@@ -26,6 +33,7 @@ export default async function AuditPage({
       designReady={design != null}
       audit={audit}
       overrides={overrides}
+      activity={activity}
     />
   );
 }

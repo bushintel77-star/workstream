@@ -35,7 +35,7 @@ export interface EarthworksCardProps {
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 9,
+  fontSize: 10.5,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -119,7 +119,7 @@ export function EarthworksCard({
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 9,
+              fontSize: 10.5,
               color: "var(--gs-ink-secondary)",
             }}
           >
@@ -129,11 +129,11 @@ export function EarthworksCard({
 
         {summary.perPad.map((p, i) => (
           <div key={p.id} style={rowStyle}>
-            <span style={{ fontSize: 9, color: "var(--gs-ink-secondary)" }}>
+            <span style={{ fontSize: 10.5, color: "var(--gs-ink-secondary)" }}>
               Pad {i + 1} · {p.result.areaM2.toFixed(0)} m² · top +
               {p.topRealM.toFixed(2)}m
             </span>
-            <span style={{ fontSize: 9, fontFamily: "var(--font-tech)" }}>
+            <span style={{ fontSize: 10.5, fontFamily: "var(--font-tech)" }}>
               <span style={{ color: "var(--gs-conflict)" }}>
                 −{fmtM3(p.result.cutM3)}
               </span>{" "}
@@ -175,7 +175,7 @@ export function EarthworksCard({
         <div
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 9,
+            fontSize: 10.5,
             color: "var(--gs-ink-secondary)",
             marginTop: 4,
           }}

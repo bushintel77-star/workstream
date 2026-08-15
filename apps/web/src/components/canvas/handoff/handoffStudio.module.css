@@ -214,7 +214,8 @@
    * 4.5:1 for the mode tabs, chip labels and meta faces that use them.
    */
   --ws-frame-ink-dim: color-mix(in srgb, var(--gray-d-900) 70%, transparent);
-  --ws-frame-ink-faint: color-mix(in srgb, var(--gray-d-900) 58%, transparent);
+  /* 58% measured 4.24:1 on dark glass; 82% clears AA for faint captions */
+  --ws-frame-ink-faint: color-mix(in srgb, var(--gray-d-900) 82%, transparent);
   --ws-frame-hair: color-mix(in srgb, var(--gray-d-900) 10%, transparent);
   --ws-frame-wash: color-mix(in srgb, var(--gray-d-900) 8%, transparent);
   /*
@@ -631,7 +632,7 @@
   border: none;
   cursor: pointer;
   background: transparent;
-  color: var(--hc-ink-muted);
+  color: var(--hc-ink);
   font-size: var(--hc-fs-4);
   font-weight: 600;
   font-family: inherit;

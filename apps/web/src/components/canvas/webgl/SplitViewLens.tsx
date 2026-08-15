@@ -7,8 +7,8 @@
  * retargeted from variant A/B to the dual-screen workflow from the product
  * research brief: the CAD side (locked orthographic plan) and the sketch
  * side (live perspective) visible simultaneously, cameras LINKED — pan or
- * zoom on either half and both follow (one shared rig, the dormant
- * ComparisonLens pattern).
+ * zoom on either half and both follow (one shared rig, the comparison-lens
+ * pattern).
  *
  * Two full WebGLStudio canvases (50/50 CSS split): each keeps its own
  * EffectComposer — the only architecture that preserves the full post-FX
@@ -62,7 +62,7 @@ const labelChip: CSSProperties = {
   backdropFilter: "blur(var(--gs-blur))",
   WebkitBackdropFilter: "blur(var(--gs-blur))",
   fontFamily: "var(--font-tech)",
-  fontSize: 9,
+  fontSize: 10,
   letterSpacing: "0.08em",
   pointerEvents: "none",
 };

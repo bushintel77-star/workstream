@@ -38,7 +38,7 @@ export interface DrainageFlowCardProps {
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 9,
+  fontSize: 10.5,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -119,7 +119,7 @@ export function DrainageFlowCard({
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 9,
+              fontSize: 10.5,
               color: "var(--gs-ink-secondary)",
             }}
           >
@@ -156,7 +156,7 @@ export function DrainageFlowCard({
                   display: "flex",
                   justifyContent: "space-between",
                   fontFamily: "var(--font-tech)",
-                  fontSize: 9,
+                  fontSize: 10.5,
                   color: "var(--gs-ink-secondary)",
                   lineHeight: 1.7,
                 }}
@@ -200,7 +200,7 @@ export function DrainageFlowCard({
             marginTop: 4,
             padding: "6px 10px",
             borderRadius: 8,
-            fontSize: 9,
+            fontSize: 10.5,
             fontFamily: "var(--font-ui)",
             fontWeight: 600,
             color:

@@ -50,9 +50,19 @@ import { EarthworksCard } from "./EarthworksCard";
 import { FitSheetCard } from "./FitSheetCard";
 import { AssetFanOutDock } from "./AssetFanOutDock";
 import { StudioToolRail } from "./StudioToolRail";
+import { StudioModeTabs } from "./StudioModeTabs";
+import { StudioCommandPalette } from "./StudioCommandPalette";
+import { StudioElevationCard } from "./StudioElevationCard";
+import { StudioCadCard } from "./StudioCadCard";
 import { SplitViewLens } from "./SplitViewLens";
 import { placementsToItems } from "../handoff/state/canvasBridge";
 import { toRenderItems } from "./stateBridge";
+import { unlockedModes, type CanvasMode, type CanvasProgress } from "../../../lib/canvas-mode";
+import { SiteContextBadges } from "../../SiteContextBadges";
+import { GardenViewpointStrip } from "../handoff/features/viewpoint/GardenViewpointStrip";
+import { viewpointYawDeg, type GardenViewpointLook } from "../handoff/features/tilt/tiltMath";
+import { SurveyChecklist } from "../handoff/features/survey/SurveyChecklist";
+import { ShareSurface } from "../handoff/features/share/ShareSurface";
 
 /** Day arc bounds — same as the 2D SunGrowthDock (~06:20 → ~19:40). */
 const DAY_START = 6 * 60 + 20;
@@ -97,6 +107,11 @@ export interface WebGLStudioPreviewProps {
   aerialUri?: string | null;
   /** Activate sketch mode on mount (from ?tool=sketch deep link). */
   initialSketchMode?: boolean;
+  /** Resolved canvas mode for the mode tabs (page clamps to a WebGL-native
+   *  mode — legacy modes render the SVG studio instead). */
+  initialMode?: CanvasMode;
+  /** Progressive-unlock progress flags driving mode tab lock states. */
+  progress?: CanvasProgress;
 }
 
 export function WebGLStudioPreview({
@@ -118,9 +133,65 @@ export function WebGLStudioPreview({
   outdoorM2 = 0,
   aerialUri = null,
   initialSketchMode = false,
+  initialMode = "sketch",
+  progress = {
+    hasAerial: false,
+    hasSketch: false,
+    hasCad: false,
+    hasQuote: false,
+  },
 }: WebGLStudioPreviewProps) {
   const [rig, setRig] = useState<StudioCameraRig>(DEFAULT_CAMERA_RIG);
   const [presentationMode, setPresentationMode] = useState(false);
+  const [activeMode, setActiveMode] = useState<CanvasMode>(initialMode);
+
+  // Deep-link entry: ?mode=quote opens the fit-sheet, ?mode=present arms the
+  // presentation lens, ?mode=garden frames the 3D garden view. Sketch stays
+  // un-armed (the rail / ?tool=sketch owns the draw cursor) — the tab already
+  // marks the sketch surface active.
+  useEffect(() => {
+    if (initialMode === "quote") {
+      useStudioStore.getState().setFitSheetOpen(true);
+    } else if (initialMode === "present") {
+      setPresentationMode(true);
+    }
+  }, [initialMode]);
+
+  // Garden viewpoint — eye-level rig presets per cardinal look. The yaw
+  // reuses the classic tiltMath mapping so N/E/S/W mean the same thing in
+  // both studios.
+  const [gardenLook, setGardenLook] = useState<GardenViewpointLook>("S");
+  const applyGardenLook = (look: GardenViewpointLook) => {
+    setGardenLook(look);
+    setViewBlendTarget(1);
+    setRig({
+      ...DEFAULT_CAMERA_RIG,
+      tiltDeg: 76,
+      zoom: 1.45,
+      rotateDeg: viewpointYawDeg(look),
+    });
+  };
+
+  const onNativeMode = (mode: CanvasMode) => {
+    setActiveMode(mode);
+    const store = useStudioStore.getState();
+    if (mode === "sketch") {
+      store.setArmedSymbolId(null);
+      store.setMeasureActive(false);
+      store.setSketchMode(true);
+    } else if (mode === "quote") {
+      store.setFitSheetOpen(true);
+    } else if (mode === "garden") {
+      applyGardenLook(gardenLook);
+    } else if (mode === "cad") {
+      // CAD style = technical 2D: locked plan view with working-drawing dims.
+      store.setViewBlendTarget(0);
+      if (boundaryPct.length >= 3) store.setDimsView(true);
+    } else if (mode === "present") {
+      setPresentationMode(true);
+    }
+    // survey / share / elevation mount their glass cards on activeMode.
+  };
 
   // --- Store subscriptions (DOM HUD re-renders; 3D reads via getState) ---
   const year = useStudioStore((s) => s.growthYear);
@@ -132,6 +203,9 @@ export function WebGLStudioPreview({
   const setSeasonProgress = useStudioStore((s) => s.setSeasonProgress);
   const viewBlendTarget = useStudioStore((s) => s.viewBlendTarget);
   const setViewBlendTarget = useStudioStore((s) => s.setViewBlendTarget);
+  const canUndo = useStudioStore((s) => s.historyPast.length > 0);
+  const canRedo = useStudioStore((s) => s.historyFuture.length > 0);
+  const subsurfaceView = useStudioStore((s) => s.subsurfaceView);
   const strokes = useStudioStore((s) => s.sketchStrokes);
   // Save status is rendered by <SaveStatusChip /> which subscribes independently
   // (so only the chip re-renders on status change, not the whole HUD).
@@ -158,6 +232,60 @@ export function WebGLStudioPreview({
     () => toRenderItems(placementsToItems(storePlacements)),
     [storePlacements],
   );
+  // Undo / redo — Cmd/Ctrl+Z (+Shift). Skipped while typing in chrome
+  // inputs so the palette/assist fields keep native text undo.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (typing || !(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z") return;
+      e.preventDefault();
+      const store = useStudioStore.getState();
+      if (e.shiftKey) store.redo();
+      else store.undo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Command palette — Cmd/Ctrl+K summons; Esc closes (handled inside).
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Placements as classic StudioItems — the elevation board consumes the
+  // same shape the SVG studio feeds it (ARCHITECTURE §5 state contract).
+  const studioItems = useMemo(
+    () => placementsToItems(storePlacements),
+    [storePlacements],
+  );
+
+  // Progress re-derives live from the store — placing the first asset or
+  // drawing the first stroke unlocks CAD/quote/present without a reload
+  // (the server-rendered snapshot only seeds the initial state).
+  const liveProgress = useMemo<CanvasProgress>(
+    () => ({
+      hasAerial: progress.hasAerial || Boolean(aerialUri),
+      hasSketch: progress.hasSketch || strokes.length > 0,
+      hasCad:
+        progress.hasCad || storePlacements.length > 0 || boundaryPct.length > 0,
+      hasQuote: progress.hasQuote,
+    }),
+    [progress, aerialUri, strokes, storePlacements, boundaryPct],
+  );
+  const unlocked = useMemo(() => unlockedModes(liveProgress), [liveProgress]);
 
   // --- Compute live studio data (replaces hardcoded sample utilities) ---
   const liveData = useMemo(
@@ -254,9 +382,143 @@ export function WebGLStudioPreview({
       {/* Asset discovery fan-out dock — bottom-centre, above the growth card */}
       <AssetFanOutDock />
 
+      {/* Command palette — the power-operator surface (Cmd/Ctrl+K). */}
+      <StudioCommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        projectId={projectId}
+        onMode={(m) => onNativeMode(m as Parameters<typeof onNativeMode>[0])}
+        onZoom={(dir) =>
+          setRig((r) => ({
+            ...r,
+            zoom: Math.min(Math.max(r.zoom * (dir === 1 ? 1.25 : 1 / 1.25), 0.1), 50),
+          }))
+        }
+      />
+
+      {/* First-run controls hint — dismissed for the session once seen. */}
+      <FirstRunHint />
+
+      {/* Mode tabs — the preserved 8-mode system (GOLD-STANDARD-2026
+          ARCHITECTURE §6). Native modes switch in place; classic-board modes
+          navigate to ?svg=1&mode=… so nothing dead-ends. */}
+      <StudioModeTabs
+        projectId={projectId}
+        activeMode={activeMode}
+        unlocked={unlocked}
+        onNativeMode={onNativeMode}
+      />
+
+      {/* Native elevation — the classic ElevationBoard as a glass sheet
+          (ARCHITECTURE §5: the feature module consumes the new shell). */}
+      {activeMode === "elevation" && (
+        <StudioElevationCard
+          boundaryPct={boundaryPct}
+          buildingPct={buildingPct}
+          items={studioItems}
+          scaleM={scaleM}
+          onTraceInPlan={() => setActiveMode("sketch")}
+          onClose={() => setActiveMode("sketch")}
+        />
+      )}
+
+      {/* Native garden — eye-level viewpoints over the live 3D. */}
+      {activeMode === "garden" && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 18,
+            left: "50%",
+            transform: "translateX(-50%)",
+            pointerEvents: "auto",
+            zIndex: 5,
+          }}
+        >
+          <GardenViewpointStrip
+            activeLook={gardenLook}
+            elevLook={null}
+            mode="plan"
+            onSelect={applyGardenLook}
+          />
+        </div>
+      )}
+
+      {/* Native CAD — the AI drafter hub mounts in the right lane (plan
+          locks to technical 2D with working-drawing dims — "CAD style 2D"). */}
+
+      {/* Native survey — the completeness checklist as lane glass (the five
+          site-truth items; onTraceBuilding stays a classic-board flow). */}
+      {activeMode === "survey" && (
+        <div
+          data-testid="studio-survey-card"
+          style={{
+            position: "absolute",
+            top: 118,
+            right: 12,
+            width: 292,
+            pointerEvents: "auto",
+            zIndex: 5,
+            borderRadius: "var(--gs-radius-panel)",
+            background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
+            backdropFilter: "blur(var(--gs-blur))",
+            WebkitBackdropFilter: "blur(var(--gs-blur))",
+            border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+            padding: 10,
+          }}
+        >
+          <SurveyChecklist
+            boundary={boundaryPct}
+            building={buildingPct ?? []}
+            items={studioItems}
+            levels={levels.map((l) => ({
+              x: l.x_pct,
+              y: l.y_pct,
+              z: l.z_m,
+              provenance: l.source === "vicmap_contour" ? "vicmap_contour" : "authored",
+            }))}
+            services={bydaAssets.map((a) =>
+              a.ring.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+            )}
+            easements={(easementsPct ?? []).map((ring) =>
+              ring.map((p) => ({ x: p.x, y: p.y })),
+            )}
+            onClose={() => setActiveMode("sketch")}
+          />
+        </div>
+      )}
+
+      {/* Native share — client portal promotion, centered glass. */}
+      {activeMode === "share" && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "auto",
+            zIndex: 6,
+            background: "color-mix(in srgb, var(--gs-canvas) 55%, transparent)",
+          }}
+        >
+          <div style={{ width: "min(460px, 92vw)" }}>
+            <ShareSurface
+              projectId={projectId}
+              draftUnverified={false}
+              pendingGhosts={0}
+              quotePersisted={false}
+              portalUri={null}
+              onQuotePersisted={() => undefined}
+              onReviewGhosts={() => setActiveMode("cad")}
+              onBack={() => setActiveMode("sketch")}
+            />
+          </div>
+        </div>
+      )}
+
       {/* ---- Top-left: compact studio meta + view toggle ---- */}
       <GlassCard position="top-left" style={{ padding: "8px 10px" }}>
-        <div style={{ fontFamily: "var(--font-tech)", fontSize: 10, color: "var(--gs-ink)" }}>
+        <div style={{ fontFamily: "var(--font-tech)", fontSize: 11, color: "var(--gs-ink)" }}>
           <div
             style={{
               display: "flex",
@@ -268,7 +530,7 @@ export function WebGLStudioPreview({
           >
             <span style={{ fontWeight: 600, letterSpacing: "0.06em" }}>STUDIO</span>
             {/* Canvas meta as one dense chip line — the drawing IS the hero */}
-            <span style={{ color: "var(--gs-ink-secondary)", fontSize: 9 }}>
+            <span style={{ color: "var(--gs-ink-secondary)", fontSize: 10.5 }}>
               B{stats.boundaryPoints} · I{stats.items} · S{stats.strokes}
               {stats.strikes > 0 && (
                 <span style={{ color: "var(--gs-conflict)" }}> · ⚠{stats.strikes}</span>
@@ -299,7 +561,7 @@ export function WebGLStudioPreview({
                 background: !is3D ? "var(--gs-primary)" : "transparent",
                 color: !is3D ? "var(--gs-canvas)" : "var(--gs-ink-secondary)",
                 fontFamily: "var(--font-ui)",
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 600,
                 cursor: "pointer",
                 transition: "background 0.2s, color 0.2s",
@@ -316,7 +578,7 @@ export function WebGLStudioPreview({
                 background: is3D ? "var(--gs-primary)" : "transparent",
                 color: is3D ? "var(--gs-canvas)" : "var(--gs-ink-secondary)",
                 fontFamily: "var(--font-ui)",
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 600,
                 cursor: "pointer",
                 transition: "background 0.2s, color 0.2s",
@@ -324,6 +586,48 @@ export function WebGLStudioPreview({
             >
               3D
             </button>
+          </div>
+
+          {/* Camera + history affordances — zoom is wheel-first; the buttons
+              make it discoverable and touch-usable. Undo/redo mirror Cmd+Z. */}
+          <div
+            style={{ display: "flex", gap: 4, marginTop: 6 }}
+            role="group"
+            aria-label="Camera and history"
+          >
+            {(
+              [
+                ["−", "Zoom out", () => setRig((r) => ({ ...r, zoom: Math.max(r.zoom / 1.25, 0.1) }))],
+                ["+", "Zoom in", () => setRig((r) => ({ ...r, zoom: Math.min(r.zoom * 1.25, 50) }))],
+                ["↶", "Undo (Ctrl+Z)", () => useStudioStore.getState().undo()],
+                ["↷", "Redo (Ctrl+Shift+Z)", () => useStudioStore.getState().redo()],
+              ] as Array<[string, string, () => void]>
+            ).map(([glyph, label, fn]) => {
+              const disabled = label.startsWith("Undo") ? !canUndo : label.startsWith("Redo") ? !canRedo : false;
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  aria-label={label}
+                  data-testid={label.startsWith("Zoom out") ? "zoom-out" : label.startsWith("Zoom in") ? "zoom-in" : label.startsWith("Undo") ? "undo-btn" : "redo-btn"}
+                  disabled={disabled}
+                  onClick={fn}
+                  style={{
+                    flex: 1,
+                    padding: "2px 0",
+                    border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+                    borderRadius: "var(--gs-radius-chip)",
+                    background: "transparent",
+                    color: disabled ? "var(--gs-ink-muted)" : "var(--gs-ink-secondary)",
+                    fontFamily: "var(--font-tech)",
+                    fontSize: 12,
+                    cursor: disabled ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {glyph}
+                </button>
+              );
+            })}
           </div>
 
           {/* Measure readout — DOM twin of the in-canvas tape label. A11y +
@@ -473,8 +777,39 @@ export function WebGLStudioPreview({
           <MetaChip label="Leaf" value={leafStatus(seasonProgress, year)} accent />
           <MetaChip label="Sun" value={`${sunMin}m`} />
         </div>
-        {(items?.length ?? 0) > 0 && (
+        {/* Council planning badges + season (GET /site-context) */}
+        <SiteContextBadges projectId={projectId} variant="glass" />
+        {/* In-context deep link while the subsurface blueprint is open. */}
+        {subsurfaceView && (
+          <a
+            href={`/subsurface-studio/${projectId}`}
+            data-testid="open-subsurface-studio"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "4px 8px",
+              borderRadius: "var(--gs-radius-pill)",
+              background: "color-mix(in srgb, var(--gs-truth-ink) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--gs-truth-ink) 40%, transparent)",
+              color: "var(--gs-ink-truth)",
+              fontFamily: "var(--font-ui)",
+              fontSize: 10.5,
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Open full subsurface studio →
+          </a>
+        )}
+        {activeMode === "cad" && <StudioCadCard projectId={projectId} />}
+        {(items?.length ?? 0) > 0 &&
+          (activeMode === "sketch" ||
+            activeMode === "cad" ||
+            activeMode === "quote" ||
+            activeMode === "garden") && (
           <FitSheetCard
+            projectId={projectId}
             items={items ?? []}
             boundaryPct={boundaryPct}
             constructionTrenches={constructionTrenches}
@@ -511,13 +846,72 @@ export function WebGLStudioPreview({
   );
 }
 
+
+/**
+ * First-run controls hint — one dismissible chip, remembered for the
+ * browser session. Zoom/pan/Cmd+K were invisible until asked; make the
+ * control scheme discoverable once.
+ */
+function FirstRunHint() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (!sessionStorage.getItem("gs-controls-hint-seen")) setShow(true);
+  }, []);
+  if (!show) return null;
+  return (
+    <div
+      data-testid="controls-hint"
+      style={{
+        position: "absolute",
+        bottom: 86,
+        left: "50%",
+        transform: "translateX(-50%)",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "5px 10px",
+        borderRadius: "var(--gs-radius-pill)",
+        background: "color-mix(in srgb, var(--gs-glass) 45%, transparent)",
+        backdropFilter: "blur(var(--gs-blur))",
+        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+        pointerEvents: "auto",
+        zIndex: 5,
+        fontFamily: "var(--font-ui)",
+        fontSize: 11,
+        color: "var(--gs-ink-secondary)",
+      }}
+    >
+      <span>Wheel = zoom · Drag = pan · Plan/3D top-left · Ctrl+K = commands</span>
+      <button
+        type="button"
+        aria-label="Dismiss controls hint"
+        data-testid="controls-hint-dismiss"
+        onClick={() => {
+          sessionStorage.setItem("gs-controls-hint-seen", "1");
+          setShow(false);
+        }}
+        style={{
+          all: "unset",
+          cursor: "pointer",
+          color: "var(--gs-primary)",
+          fontFamily: "var(--font-tech)",
+          padding: "0 4px",
+        }}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /* Shared UI primitives                                                       */
 /* -------------------------------------------------------------------------- */
 
 const scrubberLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 9,
+  fontSize: 10.5,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -550,13 +944,13 @@ function MetaChip({
         borderRadius: 999,
         border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
         fontFamily: "var(--font-tech)",
-        fontSize: 9,
+        fontSize: 10.5,
         color: "var(--gs-ink-secondary)",
         whiteSpace: "nowrap",
       }}
     >
       <span style={{ letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</span>
-      <span style={{ color: accent ? "var(--gs-primary)" : "var(--gs-ink)", fontSize: 10 }}>
+      <span style={{ color: accent ? "var(--gs-primary)" : "var(--gs-ink)", fontSize: 11 }}>
         {value}
       </span>
     </span>
@@ -591,7 +985,7 @@ function MeasureReadoutChip({
       style={{
         marginTop: 4,
         fontFamily: "var(--font-tech)",
-        fontSize: 10,
+        fontSize: 11,
         color: "var(--gs-primary)",
       }}
     >
@@ -685,7 +1079,7 @@ function ScrubberTrack({
           justifyContent: "space-between",
           marginTop: 4,
           fontFamily: "var(--font-tech)",
-          fontSize: 9,
+          fontSize: 10.5,
           color: "var(--gs-ink-secondary)",
         }}
       >

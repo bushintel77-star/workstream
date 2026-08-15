@@ -47,6 +47,9 @@ export interface RenderItem {
   outlinePct?: PctPoint[];
   dbhM?: number;
   heightM?: number;
+  /** Species leaf habit from the catalog symbol keywords — drives the winter
+   *  canopy drop when declared; falls back to existing-vs-new planting. */
+  leafRetention?: "deciduous" | "evergreen";
 }
 
 const SPECIES_TYPES = new Set(["canopy", "feature", "exist"]);
@@ -188,18 +191,22 @@ function CanopyLobe({
  * the GrowthStudio reference deliberately does NOT use flatShading.
  *
  * Seasonal mutation (Rule 3): a useFrame loop traverses the group's children
- * and lerps every lobe material's colour from summer green → autumn orange,
- * and drops opacity toward bare in winter. Zero React re-renders — reads via
+ * and lerps lobe material colours toward autumn orange — DECIDUOUS species
+ * only (species truth via the catalog keywords; evergreens hold their green,
+ * which is what keeps a Melbourne garden reading green through April).
+ * Winter drops opacity toward bare. Zero React re-renders — reads via
  * getState(). Ghost canopies skip the seasonal lerp (they're muted already).
  */
 function CanopyCluster({
   radiusM,
   seed,
   ghost,
+  leafRetention,
 }: {
   radiusM: number;
   seed: string;
   ghost: boolean;
+  leafRetention?: "deciduous" | "evergreen";
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const opacity = ghost ? 0.38 : 0.92;
@@ -219,10 +226,16 @@ function CanopyCluster({
   useFrame(() => {
     if (ghost || !groupRef.current) return;
     const { seasonProgress } = useSeasonalStore.getState();
-    const aFactor = autumnFactor(seasonProgress);
-    const wFactor = winterFactor(seasonProgress);
+    // Species truth: only deciduous canopies lerp toward autumn orange.
+    const aFactor =
+      leafRetention === "evergreen" ? 0 : autumnFactor(seasonProgress);
+    const wFactor =
+      leafRetention === "evergreen" ? 0 : winterFactor(seasonProgress);
     // Winter opacity drop: full → bare (0.1 keeps a faint silhouette).
-    const seasonalOpacity = opacity * (1 - wFactor * 0.85);
+    const seasonalOpacity =
+      leafRetention === "evergreen"
+        ? opacity * (1 - 0.1 * winterFactor(seasonProgress))
+        : opacity * (1 - wFactor * 0.85);
 
     let ci = 0;
     groupRef.current.traverse((child) => {
@@ -297,14 +310,23 @@ function TreeMesh({
   const trunkBotR = Math.max(0.06, canopyRadius * 0.08);
 
   // Rule 2 — winter canopy drop multiplier: finalScale = growthScale * lerp(1, 0, winter).
-  // Existing (evergreen/mature) trees keep 70% of their canopy in winter; deciduous
-  // new plantings drop toward bare. Trunk + branches stay full-size (bare winter read).
+  // Species truth first: evergreen symbols hold 70% of their canopy in winter,
+  // deciduous symbols go bare. Without a declared habit, fall back to the
+  // existing-vs-new heuristic (retained trees read mature/evergreen).
+  // Trunk + branches stay full-size (bare winter read).
   useFrame(() => {
     const grp = canopyScaleRef.current;
     if (!grp) return;
     const { seasonProgress } = useSeasonalStore.getState();
     const wFactor = winterFactor(seasonProgress);
-    const retention = isExist ? 0.7 : 0.05; // existing hold leaves, new plantings go bare
+    const retention =
+      item.leafRetention === "evergreen"
+        ? 0.7
+        : item.leafRetention === "deciduous"
+          ? 0.05
+          : isExist
+            ? 0.7
+            : 0.05;
     grp.scale.setScalar(1 - wFactor * (1 - retention));
   });
 
@@ -321,6 +343,7 @@ function TreeMesh({
           radiusM={canopyRadius}
           seed={item.id}
           ghost={item.ghost}
+          leafRetention={item.leafRetention}
         />
       </group>
       {/* TPZ ring (existing trees only, hidden in Presentation Lens).

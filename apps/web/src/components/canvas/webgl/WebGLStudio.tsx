@@ -103,7 +103,7 @@ function RenderFX() {
       />
       <Vignette
         offset={0.32}
-        darkness={0.65}
+        darkness={0.45}
         blendFunction={BlendFunction.NORMAL}
       />
       <SMAA />
@@ -143,7 +143,10 @@ export function WebGLStudio({
     // harsh linear clip (NoToneMapping) that makes the default render read as
     // flat/plastic. The single biggest "design render vs CG" lever.
     gl.toneMapping = THREE.ACESFilmicToneMapping;
-    gl.toneMappingExposure = 1.05;
+    /* ACES filmic compresses mid-tones hard — a daylight garden scene needs
+     * ~1.4 to read sunlit rather than dusk (calibrated on the Wrights Terrace
+     * demo for foliage legibility while keeping shadow shape). */
+    gl.toneMappingExposure = 1.4;
     gl.outputColorSpace = THREE.SRGBColorSpace;
     // Linear fog matching the canvas colour — fades distant geometry into the
     // void for depth, hides the ground-plane edge cliff. Same technique the

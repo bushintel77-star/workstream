@@ -1,10 +1,25 @@
-import { redirectToCanvas } from "../../../../lib/redirect-to-canvas";
+import { notFound } from "next/navigation";
+import { requireSignedIn } from "../../../../lib/auth";
+import { getProject, listPhotoMeasurements } from "../../../../lib/api";
+import { ProjectUtilitySurface } from "../../../../components/ProjectUtilitySurface";
 
-export default async function MeasurementsRedirect({
+export const dynamic = "force-dynamic";
+
+export default async function MeasurementsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  redirectToCanvas(id, "sketch");
+  await requireSignedIn();
+  const project = await getProject(id);
+  if (!project) notFound();
+  const measurements = await listPhotoMeasurements(id).catch(() => []);
+  return (
+    <ProjectUtilitySurface
+      type="measurements"
+      projectId={id}
+      measurements={measurements}
+    />
+  );
 }

@@ -72,8 +72,15 @@ Density tokens (defined once in `styles/color-tokens.css`):
 
 The retired 70% / blur-12 / radius-16 recipe applied only during the Phase 0–2
 transition and no longer represents the standard. Chrome text uses the meta
-chip idiom: Space Grotesk (`--font-tech`) figures 9–10px, Inter labels,
+chip idiom: Space Grotesk (`--font-tech`) figures, Inter labels,
 `--gs-radius-chip` pills.
+
+**Amendment (2026-08-15, operator directive): chrome type floor is 10.5px for
+labels and 11px for figures.** The original 9–10px meta-chip figures were
+unreadable at operator viewing distance; glyph accents (stock marks, ⤢
+hand-off marks) may floor at 9.5px. WebGL chrome has been swept to this law
+(`StudioToolRail` 7.5→9, scrubber/meta labels 9→10.5–11, card labels
+9→10.5–11).
 
 **V4 bridge (globals.css):** all operator chrome tokens (`--canvas-base`,
 `--surface-*`, `--ink-*`, `--line-*`, `--accent`, `--ok/--warn/--block/--info`)
