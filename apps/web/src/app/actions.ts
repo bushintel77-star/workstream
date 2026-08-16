@@ -74,8 +74,8 @@ export async function listProjectsAction() {
 export async function geocodeSearchAction(query: string) {
   try {
     return await geocodeSearchApi(query);
-  } catch {
-    return [];
+  } catch (err) {
+    throw wrapApiError(err, "Address search is unavailable");
   }
 }
 
@@ -111,8 +111,14 @@ export async function createProjectWithSurveyAction(formData: FormData) {
     throw new Error("Enter a valid street address");
   }
   const { lat, lng } = parseProjectCoords(formData);
+  let project: Awaited<ReturnType<typeof createProjectApi>>;
   try {
-    const project = await createProjectApi({ address, lat, lng });
+    project = await createProjectApi({ address, lat, lng });
+  } catch (err) {
+    throw wrapApiError(err, "Could not create project");
+  }
+
+  try {
     const survey = await runSurvey(project.id);
     revalidatePath("/");
     revalidatePath(`/projects/${project.id}`);
@@ -125,9 +131,21 @@ export async function createProjectWithSurveyAction(formData: FormData) {
       aerialUri: survey.aerial_uri,
       titleRing: ring && ring.length >= 4 ? ring : null,
       lotAreaM2: survey.lot_area_m2 ?? null,
+      surveyWarning: null,
     };
   } catch (err) {
-    throw wrapApiError(err, "Could not create project");
+    revalidatePath("/");
+    revalidatePath(`/projects/${project.id}`);
+    return {
+      projectId: project.id,
+      aerialUri: null,
+      titleRing: null,
+      lotAreaM2: null,
+      surveyWarning: wrapApiError(
+        err,
+        "The site was created, but site-truth capture needs to be retried",
+      ).message,
+    };
   }
 }
 
@@ -381,12 +399,12 @@ export async function getWeatherAction(projectId: string) {
 
 /** Site context — season, sun summary, and council planning badges. */
 export async function getSiteContextAction(projectId: string) {
-  if (!projectId.trim()) return null;
+  if (!projectId.trim()) throw new Error("Missing project");
   const { getSiteContext } = await import("../lib/api");
   try {
     return await getSiteContext(projectId);
-  } catch {
-    return null;
+  } catch (err) {
+    throw wrapApiError(err, "Could not load site context");
   }
 }
 

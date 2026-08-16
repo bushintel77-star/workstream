@@ -11,7 +11,7 @@ test.describe("Mode lock copy", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     const share = page.getByTestId("canvas-mode-share");

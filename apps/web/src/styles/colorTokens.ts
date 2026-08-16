@@ -1,22 +1,27 @@
 /**
- * Curtis & Co color token spec v2 — TS mirror of `color-tokens.css`.
+ * Curtis & Co color token spec — TS mirror of `color-tokens.css` (Studio Paper).
  * Use for SVG/canvas paint that needs concrete hex (tests, PDF export).
  * Prefer CSS `var(--…)` / `mixOnCanvas()` in components. Never invent hex here.
+ *
+ * DRIFT GUARD: colorTokens-css-sync.test.ts parses color-tokens.css and
+ * asserts the mirrored entries below stay identical. Update both together.
  */
 
 export const PALETTE = {
+  // Studio Paper neutrals (dead-neutral ramp — mirrors --gray-l-*)
   grayL0: "#FFFFFF",
-  grayL25: "#FAFAF8",
-  grayL50: "#F7F6F3",
-  grayL100: "#F4F5F7",
-  grayL150: "#E9E6DE",
-  grayL200: "#DEE1E6",
-  grayL300: "#C7CBD1",
-  grayL400: "#9AA0AC",
-  grayL500: "#6B7078",
-  grayL700: "#3A3D44",
-  grayL800: "#24272D",
-  grayL900: "#1B1E23",
+  grayL25: "#FAFAFA",
+  grayL50: "#F4F4F4",
+  grayL100: "#EBEBEB",
+  grayL150: "#E4E4E4",
+  grayL200: "#D4D4D4",
+  grayL300: "#A3A3A3",
+  grayL400: "#636363",
+  grayL500: "#525252",
+  grayL700: "#262626",
+  grayL800: "#1A1A1A",
+  grayL900: "#111111",
+  // Legacy dark ramp — export round-trips only; nothing presents from it.
   grayD0: "#0F1115",
   grayD50: "#14171C",
   grayD100: "#1B1E24",
@@ -27,9 +32,10 @@ export const PALETTE = {
   grayD500: "#9AA0AC",
   grayD800: "#D5D7DB",
   grayD900: "#E8E9EC",
-  crimsonL600: "#B33A32",
-  crimsonD500: "#C4463B",
-  crimsonD400: "#D9584C",
+  // Crimson — the only chromatic UI accent (mirrors --gs-primary-*)
+  crimsonL600: "#B91C1C",
+  crimsonD500: "#C41E1E",
+  crimsonD400: "#DC2626",
   cobaltL600: "#2450C7",
   cobaltD500: "#3D6BE0",
   cobaltD400: "#6B8EEA",
@@ -60,21 +66,34 @@ export const PALETTE = {
   apwaReclaimed: "#8B4FC7",
   waterL500: "#2E86AB",
   waterD400: "#4098C4",
-  warningL500: "#B8860B",
-  warningD400: "#D4A017",
+  warningL500: "#525252", // status = ink + iconography (crimson reserved for critical)
+  warningD400: "#525252",
+  // Studio Paper chrome (--gs-* mirrors)
+  gsCanvas: "#F4F4F4", // canvas clear color + fog (--gs-canvas)
+  gsPanel: "#FFFFFF", // floating panel body (--gs-panel)
+  gsLine: "#D4D4D4", // decorative hairline (--gs-line)
+  gsLineStrong: "#8C8C8C", // interactive boundaries (--gs-line-strong)
+  gsInk: "#1A1A1A", // primary ink (--gs-ink)
+  gsInkStrong: "#111111", // emphasis ink (--gs-ink-strong)
+  gsInkSecondary: "#525252", // secondary ink (--gs-ink-secondary)
+  gsInkMuted: "#636363", // single muted value (--gs-ink-muted)
+  gsChipActive: "#1A1A1A", // charcoal selection chips (--gs-chip-active)
+  gsChipActiveInk: "#FFFFFF", // ink on charcoal chips (--gs-chip-active-ink)
+  gsConflict: "#C41E1E", // strike alert / critical crimson (--gs-conflict)
+  gsConflictInk: "#B91C1C", // crimson as text (--gs-primary-ink)
+  gsPrimary: "#C41E1E", // Primary Crimson — CTA/focus/active (--gs-primary)
+  gsPrimaryInk: "#B91C1C", // crimson text on paper (--gs-primary-ink)
+  gsEarthworksFill: "#C9A84C", // earthworks fill data pair (--gs-earthworks-fill)
   // WebGL render values — physical light/shadow (mirrors color-tokens.css --gs-* render tokens)
-  gsCanvas: "#101418", // canvas clear color + fog (--gs-canvas)
-  gsConflict: "#EF4444", // strike alert / conflict red (--gs-conflict)
-  gsPrimary: "#FBBF24", // Primary Gold — HUD accent / earthworks fill zone (--gs-primary)
   sunWarm: "#FFF1D6",
   skyCool: "#8A9BB5",
   gsShadow: "#05070A",
   foliageTint: "#3D6B48",
-  groundOlive: "#2F4132",
-  // CAD drafting surface — Swiss-Brutalist neutral grey, maximises
-  // contrast for geometry + dimensions (mode policy: CAD hides the aerial).
-  draftingGrey: "#23282E",
-  groundBounce: "#2A3424",
+  groundOlive: "#66745F",
+  // CAD drafting surface — neutral drafting grey, maximises contrast for
+  // geometry + dimensions (mode policy: CAD hides the aerial).
+  draftingGrey: "#59636B",
+  groundBounce: "#45513A",
   ambientCool: "#AEBFD0",
   rimCool: "#C8D8EE",
   windowGlow: "#FFD989",
@@ -99,60 +118,38 @@ export const PALETTE = {
   sketchInk: "#FF2EF6", // magenta freehand stroke ink (CanvasStroke default)
 } as const;
 
-/** Semantic plan colours — light theme. */
-export const SEMANTIC_LIGHT = {
+/** Semantic plan colours — Studio Paper is the single theme.
+ *  SEMANTIC_LIGHT/SEMANTIC_DARK are retained as aliases for call sites. */
+export const SEMANTIC = {
   canvas: PALETTE.grayL50,
-  panel: PALETTE.grayL100,
-  textPrimary: PALETTE.grayL900,
+  panel: PALETTE.grayL0,
+  textPrimary: PALETTE.grayL800,
   textSecondary: PALETTE.grayL500,
   textMuted: PALETTE.grayL400,
-  existingStroke: PALETTE.crimsonL600,
+  existingStroke: PALETTE.crimsonD500,
   existingText: PALETTE.crimsonL600,
-  proposedStroke: PALETTE.cobaltL600,
+  proposedStroke: "#0030CF", // --gs-truth data stroke (8.22:1 on paper)
   proposedText: PALETTE.cobaltL600,
   plantingRetainStroke: PALETTE.forestL600,
   plantingRetainText: PALETTE.forestL600,
   plantingNewStroke: PALETTE.sproutL500,
   plantingNewText: PALETTE.sproutL500,
-  easementStroke: PALETTE.slateL500,
+  easementStroke: PALETTE.cobaltL600,
   bluestone: PALETTE.bluestoneL400,
   timber: PALETTE.timberL400,
   water: PALETTE.waterL500,
   hedge: PALETTE.hedgeL600,
   warning: PALETTE.warningL500,
-  danger: PALETTE.crimsonL600,
-  success: PALETTE.sproutL500,
-  sheetPaper: PALETTE.grayL50,
+  danger: PALETTE.crimsonD500,
+  success: PALETTE.grayL500,
+  sheetPaper: PALETTE.grayL0,
 } as const;
 
-/** Semantic plan colours — dark theme (stroke ≠ text). */
-export const SEMANTIC_DARK = {
-  canvas: PALETTE.grayD0,
-  panel: PALETTE.grayD100,
-  textPrimary: PALETTE.grayD900,
-  textSecondary: PALETTE.grayD500,
-  textMuted: PALETTE.grayD500,
-  existingStroke: PALETTE.crimsonD500,
-  existingText: PALETTE.crimsonD400,
-  proposedStroke: PALETTE.cobaltD500,
-  proposedText: PALETTE.cobaltD400,
-  plantingRetainStroke: PALETTE.forestD550,
-  plantingRetainText: PALETTE.forestD400,
-  plantingNewStroke: PALETTE.sproutD400,
-  plantingNewText: PALETTE.sproutD400,
-  easementStroke: PALETTE.slateD400,
-  bluestone: PALETTE.bluestoneD300,
-  timber: PALETTE.timberD300,
-  water: PALETTE.waterD400,
-  hedge: PALETTE.hedgeD500,
-  warning: PALETTE.warningD400,
-  danger: PALETTE.crimsonD400,
-  success: PALETTE.sproutD400,
-  sheetPaper: PALETTE.grayD0,
-} as const;
+export const SEMANTIC_LIGHT = SEMANTIC;
+export const SEMANTIC_DARK = SEMANTIC;
 
-export function semanticForTheme(dark: boolean) {
-  return dark ? SEMANTIC_DARK : SEMANTIC_LIGHT;
+export function semanticForTheme(_dark: boolean) {
+  return SEMANTIC;
 }
 
 /**
@@ -206,6 +203,20 @@ export const CSS_TOKEN = {
   warning: "var(--warning)",
   danger: "var(--danger)",
   success: "var(--success)",
+  // Studio Paper chrome tokens (mirrors color-tokens.css --gs-*)
+  gsCanvas: "var(--gs-canvas)",
+  gsPanel: "var(--gs-panel)",
+  gsLine: "var(--gs-line)",
+  gsLineStrong: "var(--gs-line-strong)",
+  gsInk: "var(--gs-ink)",
+  gsInkStrong: "var(--gs-ink-strong)",
+  gsInkSecondary: "var(--gs-ink-secondary)",
+  gsInkMuted: "var(--gs-ink-muted)",
+  gsChipActive: "var(--gs-chip-active)",
+  gsChipActiveInk: "var(--gs-chip-active-ink)",
+  gsPrimary: "var(--gs-primary)",
+  gsPrimaryInk: "var(--gs-primary-ink)",
+  gsConflict: "var(--gs-conflict)",
   // WebGL render values (mirrors color-tokens.css --gs-* render tokens)
   sunWarm: "var(--gs-sun-warm)",
   skyCool: "var(--gs-sky-cool)",

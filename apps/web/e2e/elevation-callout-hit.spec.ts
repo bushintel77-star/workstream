@@ -26,7 +26,7 @@ test.describe("Elevation callout hit-testing", () => {
     const { projectId } = await createSurveyProject(request);
     await seedElevationGarden(request, projectId);
 
-    await page.goto(`/projects/${projectId}?mode=elevation`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=elevation`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("elevation-profile")).toBeVisible({
       timeout: 20_000,
@@ -109,7 +109,7 @@ test.describe("Elevation callout hit-testing", () => {
     const { projectId } = await createSurveyProject(request);
     await seedElevationGarden(request, projectId);
 
-    await page.goto(`/projects/${projectId}?mode=elevation`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=elevation`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("elevation-profile")).toBeVisible({
       timeout: 20_000,

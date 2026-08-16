@@ -23,7 +23,7 @@ test.describe("Operator happy path", () => {
     );
     expect(pipeline.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}`);
+    await page.goto(`/projects/${projectId}?svg=1`);
     await expect(handoffStudio(page)).toBeVisible({
       timeout: 30_000,
     });

@@ -6,7 +6,8 @@
  * The Stitch reference chrome: a slim vertical glass rail pinned to the
  * left border carries every tool toggle — the top-left card no longer
  * accumulates chip rows (the clutter the collision issues came from).
- * Icon + 7.5px label per tool; active tools go gold.
+ * Icon + 7.5px label per tool; active tools go charcoal (the selection
+ * vocabulary — crimson stays reserved for CTA/critical per TOKENS.md §1).
  *
  * Accessible names keep the "▸/▾ Label" contract the e2e suite clicks by
  * (aria-label), so the rail is a pure layout move, not a behaviour change.
@@ -202,8 +203,7 @@ export function StudioToolRail({
       style={{
         position: "absolute",
         left: 8,
-        top: "50%",
-        transform: "translateY(-50%)",
+        top: 152,
         display: "flex",
         flexDirection: "column",
         gap: 2,
@@ -216,6 +216,7 @@ export function StudioToolRail({
         const name = `${active ? "▾" : "▸"} ${t.label}`;
         return (
           <button
+            type="button"
             key={t.id}
             data-testid={`rail-${t.id}`}
             aria-label={name}
@@ -230,10 +231,10 @@ export function StudioToolRail({
               padding: "5px 0 4px",
               borderRadius: 8,
               border: "1px solid transparent",
-              background: active
-                ? `color-mix(in srgb, ${t.accent} 12%, transparent)`
-                : "transparent",
-              color: active ? t.accent : "var(--gs-ink-secondary)",
+              background: active ? "var(--gs-chip-active)" : "transparent",
+              color: active
+                ? "var(--gs-chip-active-ink)"
+                : "var(--gs-ink-secondary)",
               cursor: "pointer",
               transition: "background 0.15s, color 0.15s",
             }}
@@ -251,7 +252,7 @@ export function StudioToolRail({
               aria-hidden
               style={{
                 fontFamily: "var(--font-ui)",
-                fontSize: 10,
+                fontSize: 10.5,
                 letterSpacing: "0.04em",
                 lineHeight: 1,
               }}

@@ -1,11 +1,15 @@
 /*
- * Gold Standard Studio Dark — shared design DNA.
+ * Gold Standard Studio Paper — shared design DNA.
  *
  * The base token set for every "Gold Standard" full-bleed 3D surface
  * (Growth Studio, Subsurface Studio, and future additions). Distilled from
- * the Stitch Studio Dark concept exports: deep charcoal canvas, glass HUD
- * panels, gold as the sole active/positive accent, signal blue for
- * immutable "site truth" data, strike red for conflicts.
+ * the Studio Paper concept: high-key paper canvas, white gradient-lit HUD
+ * panels with neutral shadow tiers, charcoal ink, crimson as the sole
+ * active/critical accent, cobalt for immutable "site truth" data.
+ *
+ * Every --gs-* colour this sheet used to re-declare now resolves from
+ * :root (color-tokens.css) — single source, no dialect drift. Only
+ * surface-local names (no root collision) are declared here.
  *
  * Each surface composes `.goldStandardRoot` via CSS Modules `composes:` and
  * layers its own surface-specific classes on top — same DNA, deliberate
@@ -13,34 +17,13 @@
  */
 
 .goldStandardRoot {
-  /*
-   * Dialect merge: the five names that ALSO exist at :root (color-tokens.css)
-   * now carry the same VALUES here (written as literals — a var() chain back
-   * into the merged names would cycle, since the root veil token itself
-   * references --gs-glass). var(--gs-glass)/--gs-line/--gs-ink/
-   * --gs-ink-muted/--gs-conflict-soft mean ONE thing app-wide; the
-   * surface-specific names below stay local (no root collision).
-   */
-  --gs-surface: #101418;
-  --gs-surface-dim: #1e2329;
-  --gs-surface-bright: #252b33;
-  --gs-surface-container-high: #262a2f;
-  --gs-surface-container-lowest: #0c0f12;
-  /* Canvas-first density law: 38% veil glass (same recipe as root --gs-glass-veil) */
-  --gs-glass: color-mix(in srgb, #1e2329 38%, transparent);
-  --gs-glass-strong: color-mix(in srgb, #1e2329 55%, transparent);
-  --gs-line: color-mix(in srgb, #2e343c 55%, transparent);
-  --gs-line-strong: #2e343c;
-  --gs-ink: #e8e9ec;
-  --gs-ink-muted: #9aa0ac;
-  --gs-ink-faint: color-mix(in srgb, #9aa0ac 55%, transparent);
-  --gs-gold: #fbbf24;
-  --gs-gold-ink: #402d00;
-  --gs-signal-blue: #0030cf;
-  --gs-signal-blue-ink: #bac3ff;
-  --gs-conflict: #ef4444;
-  --gs-conflict-soft: color-mix(in srgb, #ef4444 16%, transparent);
-  --gs-conflict-ink: #fee2e2;
+  /* Paper container steps (local names — no root collision) */
+  --gs-surface-container-high: #fafafa;
+  --gs-surface-container-lowest: #e4e4e4;
+  /* Faint ink for decorative glyphs only (never body text) */
+  --gs-ink-faint: color-mix(in srgb, var(--gs-ink-muted) 55%, transparent);
+  /* Crimson label ink (root owns --gs-ink-conflict; this order variant stays local) */
+  --gs-conflict-ink: #b91c1c;
   --gs-radius-panel: 12px;
   --gs-radius-chip: 6px;
   --gs-radius-control: 4px;
@@ -54,7 +37,7 @@
    *   vignette      2   canvas backdrop gradient (above the 3D canvas, below chrome)
    *   overlay       3   full-cover state overlays (empty state, loading)
    *   scene-labels  4   in-scene floating labels anchored to 3D world positions
-   *   hud           5   floating glass HUD panels (top bar, side panels)
+   *   hud           5   floating HUD panels (top bar, side panels)
    *   controls      6   bottom-fixed control bars (scrubber, camera controls)
    */
   --gs-z-vignette: 2;

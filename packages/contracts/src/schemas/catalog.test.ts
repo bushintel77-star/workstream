@@ -4,7 +4,12 @@
  * stored). It is optional (legacy frames omit it) and constrained to 0–360.
  */
 import { describe, expect, it } from "vitest";
-import { DesignSiteFrameSchema } from "../index";
+import {
+  CatalogPlacementSchema,
+  DesignBydaAssetSchema,
+  DesignSiteFrameSchema,
+  IrrigationZoneSchema,
+} from "../index";
 
 describe("DesignSiteFrameSchema north_bearing", () => {
   it("parses a frame without north_bearing (legacy, uncalibrated)", () => {
@@ -41,6 +46,38 @@ describe("DesignSiteFrameSchema neighbour_buildings", () => {
 
   it("defaults to an empty array on legacy frames", () => {
     expect(DesignSiteFrameSchema.parse({}).neighbour_buildings).toEqual([]);
+  });
+
+  describe("site-specific dimensions", () => {
+    it("preserves measured tree dimensions on a placement", () => {
+      const placement = CatalogPlacementSchema.parse({
+        id: "39e6fd42-0336-43fe-8f65-bb588c210884",
+        symbol_id: "tree-canopy",
+        x_pct: 50,
+        y_pct: 50,
+        height_m: 9.2,
+        canopy_radius_m: 3.4,
+      });
+      expect(placement.height_m).toBe(9.2);
+      expect(placement.canopy_radius_m).toBe(3.4);
+    });
+
+    it("keeps utility depth and hydraulic inputs optional rather than inventing them", () => {
+      const asset = DesignBydaAssetSchema.parse({
+        id: "gas-1",
+        kind: "gas",
+        ring: [{ x_pct: 10, y_pct: 10 }, { x_pct: 20, y_pct: 20 }],
+      });
+      const zone = IrrigationZoneSchema.parse({
+        id: "f320ee29-dbee-4cf5-8f87-a2aed6824ea2",
+        name: "Drip line",
+        points: [{ x_pct: 10, y_pct: 10 }, { x_pct: 20, y_pct: 20 }],
+      });
+      expect(asset.depth_m).toBeUndefined();
+      expect(asset.tolerance_m).toBeUndefined();
+      expect(zone.pipe_diameter_mm).toBeUndefined();
+      expect(zone.hazen_williams_c).toBeUndefined();
+    });
   });
 
   it("accepts a footprint and applies source/height_source defaults", () => {

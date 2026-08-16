@@ -130,6 +130,8 @@ export function useStudioAutosave(
   projectIdRef.current = projectId;
   const docRef = useRef(doc);
   docRef.current = doc;
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const requestedSaveRef = useRef(0);
 
   // Store setters (stable identity from zustand).
   const setSaveStatus = useStudioStore((s) => s.setSaveStatus);
@@ -143,19 +145,31 @@ export function useStudioAutosave(
     const pid = projectIdRef.current;
     if (!pid) return;
     const current = docRef.current;
+    const saveId = ++requestedSaveRef.current;
 
     setSaveStatus("saving");
-    try {
+    const queuedSave = saveQueueRef.current
+      .catch(() => undefined)
+      .then(async () => {
       await saveDesignCanvasClient(pid, {
         placements: current.placements,
         strokes: current.strokes,
       });
+      });
+    saveQueueRef.current = queuedSave.catch(() => undefined);
+
+    try {
+      await queuedSave;
       bumpSaveRevision();
-      setSaveStatus("saved");
+      if (saveId === requestedSaveRef.current) {
+        setSaveStatus("saved");
+      }
     } catch (err) {
       const kind = classifySaveError(err);
       console.error("[useStudioAutosave] save failed", err);
-      setSaveStatus("error", kind);
+      if (saveId === requestedSaveRef.current) {
+        setSaveStatus("error", kind);
+      }
       throw err instanceof Error ? err : new Error(String(err));
     }
   }, [setSaveStatus, bumpSaveRevision]);

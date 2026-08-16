@@ -69,7 +69,7 @@ test.describe("Garden elevation silhouettes", () => {
     const { projectId } = await createSurveyProject(request);
     await seedElevationGarden(request, projectId);
 
-    await page.goto(`/projects/${projectId}?mode=elevation`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=elevation`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     const board = page.getByTestId("elevation-profile");
     await expect(board).toBeVisible({ timeout: 20_000 });
@@ -152,7 +152,7 @@ test.describe("Garden elevation silhouettes", () => {
     const { projectId } = await createSurveyProject(request);
     await seedElevationGarden(request, projectId);
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     await clickHeaderViewItem(page, "fit-sheet-top");

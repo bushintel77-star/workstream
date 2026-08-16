@@ -48,6 +48,7 @@ import {
   type SpringState,
 } from "./cameraAnimation";
 import { useStudioStore } from "./studioStore";
+import { useReducedMotion } from "./useReducedMotion";
 
 export interface FusedCameraProps {
   rig: StudioCameraRig;
@@ -75,6 +76,7 @@ export function FusedCamera({
   viewBlendLocked,
 }: FusedCameraProps) {
   const { camera, size } = useThree();
+  const reducedMotion = useReducedMotion();
 
   // The spring state — persists velocity across frames so the camera motion is
   // 100% interruptible. When the target changes mid-flight, the existing
@@ -101,7 +103,13 @@ export function FusedCamera({
     // Spring physics — the camera has physical weight. When the user toggles
     // mid-transition, the spring's velocity carries into the new direction
     // seamlessly (no snap, no reset). Semi-implicit Euler with sub-stepping.
-    const blend = springStep(springRef.current, target, CAMERA_SPRING, delta);
+    const blend = reducedMotion
+      ? target
+      : springStep(springRef.current, target, CAMERA_SPRING, delta);
+    if (reducedMotion) {
+      springRef.current.position = target;
+      springRef.current.velocity = 0;
+    }
 
     // Publish the animated blend so in-lockstep consumers (stroke drape) can
     // read it via getState() in their own useFrame without re-subscribing.
@@ -173,7 +181,11 @@ export function FusedCamera({
     camera.position.copy(scratch.tempPos);
 
     // Smoothly approach the look-at target (avoids jerk on pan).
-    currentLookAtRef.current.lerp(scratch.tempLook, Math.min(1, delta * 10));
+    if (reducedMotion) {
+      currentLookAtRef.current.copy(scratch.tempLook);
+    } else {
+      currentLookAtRef.current.lerp(scratch.tempLook, Math.min(1, delta * 10));
+    }
     camera.lookAt(currentLookAtRef.current);
 
     camera.updateMatrixWorld(true);

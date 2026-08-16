@@ -73,7 +73,7 @@ test.describe("Easement honesty loop", () => {
     );
     expect(seed.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 15_000,
@@ -111,7 +111,7 @@ test.describe("Easement honesty loop", () => {
     const survey = await request.post(`${API}/projects/${projectId}/survey`);
     expect(survey.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("survey-annotation-layer")).toBeVisible({
       timeout: 15_000,
@@ -146,7 +146,7 @@ test.describe("Easement honesty loop", () => {
       { timeout: 15_000 },
     );
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 20_000,
     });

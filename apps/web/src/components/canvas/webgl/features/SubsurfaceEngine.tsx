@@ -21,6 +21,7 @@ import { useFrame } from "@react-three/fiber";
 import { Line, Billboard, Text } from "@react-three/drei";
 import * as THREE from "three";
 import type { UtilityType } from "@workstream/domain";
+import { useReducedMotion } from "../useReducedMotion";
 import { PALETTE } from "../../../../styles/colorTokens";
 import { useSeasonalStore } from "../seasonalStore";
 
@@ -52,6 +53,8 @@ export interface SubsurfaceUtility {
   end: [number, number]; // metre-space [x, z]
   depthM: number;
   toleranceM: number;
+  depthSource: "assumed" | "measured";
+  source: "byda" | "traced" | "assumed";
 }
 
 export interface StrikeAlertData {
@@ -74,6 +77,7 @@ export interface StrikeAlertData {
  * the render loop entirely when off — zero draw-call cost).
  */
 function SchematicConduit({ util }: { util: SubsurfaceUtility }) {
+  const reducedMotion = useReducedMotion();
   // drei <Line> forwards a Line2 whose .material is a LineMaterial with a
   // mutable dashOffset. ElementRef<typeof Line> resolves to Line2 | LineSegments2
   // without needing to import three-stdlib directly.
@@ -95,24 +99,44 @@ function SchematicConduit({ util }: { util: SubsurfaceUtility }) {
   // Micro-animation — creep the dashOffset. Barely perceptible.
   useFrame((_, delta) => {
     const line = lineRef.current;
-    if (!line) return;
+    if (!line || reducedMotion) return;
     line.material.dashOffset -= delta * flowSpeed;
   });
 
   return (
-    <Line
-      ref={lineRef}
-      points={points}
-      color={color}
-      lineWidth={2}
-      dashed
-      dashSize={0.5}
-      gapSize={0.35}
-      depthTest={false}
-      renderOrder={1}
-      transparent
-      opacity={0.9}
-    />
+    <>
+      <Line
+        ref={lineRef}
+        points={points}
+        color={color}
+        lineWidth={2}
+        dashed
+        dashSize={0.5}
+        gapSize={0.35}
+        depthTest={false}
+        renderOrder={1}
+        transparent
+        opacity={0.9}
+      />
+      <Billboard
+        position={[
+          (util.start[0] + util.end[0]) / 2,
+          -util.depthM + 0.2,
+          (util.start[1] + util.end[1]) / 2,
+        ]}
+      >
+        <Text
+          fontSize={0.28}
+          color={color}
+          anchorX="center"
+          anchorY="bottom"
+          outlineWidth={0.015}
+          outlineColor={PALETTE.gsCanvas}
+        >
+          {`${util.type.toUpperCase()} · ${util.depthSource.toUpperCase()} ${util.depthM.toFixed(2)}m`}
+        </Text>
+      </Billboard>
+    </>
   );
 }
 
@@ -122,8 +146,14 @@ function SchematicConduit({ util }: { util: SubsurfaceUtility }) {
 function StrikePulse({ alert }: { alert: StrikeAlertData }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const glowRef = useRef<THREE.Mesh>(null);
+  const reducedMotion = useReducedMotion();
 
   useFrame((state) => {
+    if (reducedMotion) {
+      meshRef.current?.scale.setScalar(1);
+      glowRef.current?.scale.setScalar(1);
+      return;
+    }
     const t = state.clock.elapsedTime;
     if (meshRef.current) {
       const pulse = 1 + Math.sin(t * 4) * 0.15;
@@ -166,9 +196,9 @@ function StrikePulse({ alert }: { alert: StrikeAlertData }) {
           anchorX="center"
           anchorY="middle"
           outlineWidth={0.02}
-          outlineColor="#101418"
+          outlineColor={PALETTE.gsCanvas}
         >
-          {`STRIKE: ${alert.utilityType.toUpperCase()}`}
+          {`INDICATIVE CONFLICT: ${alert.utilityType.toUpperCase()}`}
         </Text>
       </Billboard>
     </group>

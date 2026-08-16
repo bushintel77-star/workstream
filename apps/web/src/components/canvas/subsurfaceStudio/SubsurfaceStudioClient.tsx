@@ -138,8 +138,8 @@ export function SubsurfaceStudioClient({
     const h = host.clientHeight || 600;
 
     const threeScene = new THREE.Scene();
-    threeScene.background = new THREE.Color(0x101418);
-    threeScene.fog = new THREE.Fog(0x101418, scaleM * 1.5, scaleM * 3.6);
+    threeScene.background = new THREE.Color(0xf4f4f4);
+    threeScene.fog = new THREE.Fog(0xf4f4f4, scaleM * 1.5, scaleM * 3.6);
 
     const camera = new THREE.PerspectiveCamera(38, w / h, 0.1, scaleM * 24);
     const initialCamPos = new THREE.Vector3(

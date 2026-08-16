@@ -13,8 +13,9 @@
  *     label, "Retrying…", so shorter labels like "Saved" don't shrink it).
  *   - A status dot that pulses during active states (saving/retrying) via CSS
  *     animation — communicates network activity without changing dimensions.
- *   - Color-coded: gold (saving), amber (retrying), green (saved), red (error),
- *     muted (idle). All from --gs-* tokens.
+ *   - Color-coded per the Studio Paper status law: charcoal ink (saving /
+ *     retrying — the pulse carries the activity), neutral ink (saved),
+ *     crimson (error — critical). All from --gs-* tokens.
  *   - The text label uses text-align:center so the dot+label composition stays
  *     balanced within the fixed width.
  *
@@ -32,10 +33,10 @@ const STATUS_CONFIG: Record<
   { label: string; color: string; pulse: boolean }
 > = {
   idle: { label: "Idle", color: "var(--gs-ink-secondary)", pulse: false },
-  saving: { label: "Saving…", color: "var(--gs-primary)", pulse: true },
-  retrying: { label: "Retrying…", color: "var(--gs-primary)", pulse: true },
-  saved: { label: "Saved", color: "#4ade80", pulse: false },
-  error: { label: "Save failed", color: "var(--gs-conflict)", pulse: false },
+  saving: { label: "Saving…", color: "var(--gs-ink)", pulse: true },
+  retrying: { label: "Retrying…", color: "var(--gs-ink)", pulse: true },
+  saved: { label: "Saved", color: "var(--gs-success)", pulse: false },
+  error: { label: "Save failed", color: "var(--gs-ink-conflict)", pulse: false },
 };
 
 /** Fixed width — fits the longest label ("Retrying…") + dot + padding. */
@@ -64,6 +65,8 @@ export const SaveStatusChip = memo(function SaveStatusChip() {
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       data-testid="save-status-chip"
       data-status={saveStatus}
       data-error-kind={saveErrorKind ?? undefined}

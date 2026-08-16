@@ -80,7 +80,7 @@ export function InstrumentCard({
         WebkitBackdropFilter: "blur(var(--gs-blur))",
         border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
         fontFamily: "var(--font-ui)",
-        fontSize: 10,
+        fontSize: 10.5,
         letterSpacing: "0.06em",
         textTransform: "uppercase",
         color: "var(--gs-ink-secondary)",

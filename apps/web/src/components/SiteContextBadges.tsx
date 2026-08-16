@@ -29,20 +29,46 @@ export function SiteContextBadges({
   variant?: "bare" | "glass";
 }) {
   const [ctx, setCtx] = useState<SiteContext | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
     let cancelled = false;
     void (async () => {
       const { getSiteContextAction } = await import("../app/actions");
-      const context = await getSiteContextAction(projectId);
-      if (!cancelled) setCtx(context);
+      try {
+        const context = await getSiteContextAction(projectId);
+        if (!cancelled) setCtx(context);
+      } catch (cause) {
+        if (!cancelled) {
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : "Site context is unavailable",
+          );
+        }
+      }
     })();
     return () => {
       cancelled = true;
     };
   }, [projectId]);
 
+  if (error) {
+    return (
+      <p
+        role="status"
+        style={{
+          margin: 0,
+          maxWidth: 280,
+          color: "var(--gs-ink-secondary)",
+          fontSize: 11,
+        }}
+      >
+        {error}
+      </p>
+    );
+  }
   if (!ctx) return null;
   if (!showSeason && ctx.planning_badges.length === 0) return null;
 
@@ -89,6 +115,32 @@ export function SiteContextBadges({
           {badge.label}
         </span>
       ))}
+      {ctx.weather_note ? (
+        <span
+          title={`Government and live climate context fetched ${ctx.fetched_at}`}
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: 11,
+            color: "var(--gs-ink-secondary)",
+            whiteSpace: "normal",
+          }}
+        >
+          {ctx.weather_note}
+        </span>
+      ) : null}
+      <a
+        href="https://www.vic.gov.au/find-my-local-council"
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          fontFamily: "var(--font-ui)",
+          fontSize: 11,
+          color: "var(--gs-primary)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Council tools
+      </a>
     </div>
   );
 

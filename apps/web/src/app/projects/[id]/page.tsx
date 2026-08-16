@@ -15,6 +15,7 @@ import {
   getAudit,
   getDesignCanvas,
   getDesign,
+  getCadDocumentApi,
   getProject,
   getSurvey,
   listCostings,
@@ -99,6 +100,7 @@ export default async function ProjectCanvasPage({
     listCostings(id).catch(() => []),
     getAudit(id).catch(() => null),
   ]);
+  const cad = await getCadDocumentApi(id).catch(() => null);
 
   const quoteOut = outputs.find((o) => o.kind === "quote") ?? null;
   const progress: CanvasProgress = {
@@ -184,6 +186,8 @@ export default async function ProjectCanvasPage({
           constructionTrenches={canvas?.construction_trenches ?? []}
           irrigationZones={canvas?.irrigation_zones ?? []}
           levels={frame?.levels ?? []}
+          keylessOverlays={frame?.keyless_overlays ?? []}
+          neighbourBuildings={frame?.neighbour_buildings ?? []}
           aerialUri={survey?.aerial_uri ?? null}
           outdoorM2={
             resolveAreaM2({
@@ -193,6 +197,9 @@ export default async function ProjectCanvasPage({
               canvas,
             }) ?? 0
           }
+          hasQuote={Boolean(quoteOut)}
+          quotePortalUri={quoteOut?.uri ?? null}
+          initialCadGhostCount={cad?.ghost_count ?? null}
         />
       </main>
     );

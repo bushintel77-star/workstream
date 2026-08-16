@@ -74,7 +74,7 @@
    * button correct on the WebGL mount (dark-on-light inversion either way). */
   border: 1px solid var(--hc-ink, var(--ink-primary));
   background: var(--hc-ink, var(--ink-primary));
-  color: var(--canvas, #101418);
+  color: var(--canvas, var(--gs-canvas));
 }
 
 .primary:disabled {

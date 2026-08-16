@@ -33,7 +33,7 @@ import { useStudioStore } from "./studioStore";
 
 /** The vignette gradient — matches the 3D post-processing Vignette parameters. */
 const VIGNETTE_GRADIENT =
-  "radial-gradient(120% 90% at 50% 50%, transparent 32%, rgba(6, 8, 10, 0.65) 100%)";
+  "radial-gradient(120% 90% at 50% 50%, transparent 32%, rgba(17, 17, 17, 0.22) 100%)";
 
 /**
  * A subtle inner glow at the vignette edge that gives GlassCards a consistent

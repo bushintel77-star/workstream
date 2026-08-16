@@ -628,7 +628,7 @@
   padding: 4px 8px;
   font-size: 11px;
   font-family: inherit;
-  background: rgba(229, 72, 77, 0.1);
+  background: color-mix(in srgb, var(--gs-conflict) 10%, transparent);
   border: 0;
   border-radius: var(--pv-r-chip);
   color: var(--color-danger);

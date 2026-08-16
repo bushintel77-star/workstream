@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { canvasLayerPolicy } from "./layerPolicy";
 
 describe("canvasLayerPolicy (mode-driven layer law)", () => {
-  it("CAD is a clean drafting surface — no aerial, no subsurface, no utilities", () => {
+  it("CAD keeps the site image below accepted geometry without a murky drafting ground", () => {
     const p = canvasLayerPolicy("cad");
-    expect(p.aerialOpacity).toBe(0);
+    expect(p.aerialOpacity).toBeGreaterThan(0);
     expect(p.subsurface).toBe(false);
     expect(p.utilities).toBe(false);
-    expect(p.easements).toBe(false);
-    expect(p.draftingSurface).toBe(true);
+    expect(p.easements).toBe(true);
+    expect(p.draftingSurface).toBe(false);
   });
 
   it("SKETCH is trace-friendly — full aerial/photo base under the ink", () => {

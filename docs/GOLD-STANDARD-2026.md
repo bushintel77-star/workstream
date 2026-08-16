@@ -29,15 +29,16 @@ Workstream is an AI-native, professional workspace for landscape architects. The
 
 - **Viewport**: 100% full-bleed. `overflow: hidden` on root.
 - **Canvas**: Absolute `inset-0`. The Three.js/WebGL context is the primary surface.
-- **Instruments**: No sidebars or headers. All UI must be floating **Glass Cards** (`bg-[#1E2329]/70`, `backdrop-blur-md`, `rounded-2xl`).
+- **Instruments**: No sidebars or headers. All UI must be floating **Paper Cards** — white gradient-lit panels (`--gs-panel-grad`), frost + blur on HUD chrome, neutral shadow tiers (`--gs-shadow-1..4`), hairline borders only.
 - **Typography**:
   - `Space Grotesk`: Mandatory for technical, numeric, and coordinate data.
   - `Inter`: Mandatory for UI labels, buttons, and inputs.
-- **Tokens (Studio Dark)**:
-  - **Canvas Base**: `#101418`
-  - **Primary (Gold Standard)**: `#fbbf24` (Used for active, compliant, and verified states).
-  - **Truth Anchor (Signal Blue)**: `#0030CF` (Used for boundaries, (0,0,0) origin, and easements).
-  - **Conflict (Strike Alert)**: `#ef4444` (Used for utility and root zone collisions).
+- **Tokens (Studio Paper — 2026 pivot, see GOLD-STANDARD-2026-TOKENS.md)**:
+  - **Canvas Base**: `#F4F4F4` (high-key drafting paper — the drawing is the most saturated thing on screen).
+  - **Primary (Crimson)**: `#C41E1E` (Reserved exclusively for primary CTA, active tool state, focus rings, critical indicators).
+  - **Selection (Charcoal)**: `#1A1A1A` chips with white ink (active tools / "you are here" states — keeps crimson rare).
+  - **Truth Anchor (Cobalt — drawing data)**: `#0030CF` (Boundaries, (0,0,0) origin, easements. 8.2:1 on paper; the dark-era 2:1 failure is cured).
+  - **Conflict (Strike Alert)**: `#C41E1E` (unified with primary — utility and root zone collisions).
 
 ---
 
@@ -84,7 +85,7 @@ Workstream is an AI-native, professional workspace for landscape architects. The
 ## 4. MOBILE FIELD BRIDGE (On-Site Execution)
 
 - **Environment**: 100% Camera feed with high-precision AR overlay.
-- **Staking Logic**: Digital "Staking Chips" (#fbbf24) anchored to physical GPS/RTK ground coordinates.
+- **Staking Logic**: Digital "Staking Chips" (`--gs-primary`, crimson `#C41E1E`) anchored to physical GPS/RTK ground coordinates.
 - **Subsurface Ghosting**: Visualise underground utilities as translucent 3D volumes in the camera feed.
 - **Strike Alerts**: High-contrast Red alerts for site workers when digging near verified utilities.
 

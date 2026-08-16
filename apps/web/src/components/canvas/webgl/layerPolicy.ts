@@ -8,8 +8,8 @@
  *
  * Law (operator directive, 2026-08-15):
  *   SKETCH  — trace-friendly: aerial/photo base visible under the ink.
- *   CAD     — clean drafting surface: NO aerial, NO photo, NO subsurface —
- *             geometry and dimensions only, dark-grey Swiss-Brutalist ground.
+ *   CAD     — photo-referenced drafting: aerial remains visible below accepted
+ *             geometry and dimensions; subsurface remains explicitly opt-in.
  *   SURVEY  — owns the subsurface works: blueprint ground, BYDA utilities,
  *             easements, services rendered distinct (dashed/coloured).
  *   GARDEN/QUOTE/PRESENT — presentation contexts: aerial per view blend,
@@ -43,11 +43,11 @@ export function canvasLayerPolicy(mode: CanvasMode): CanvasLayerPolicy {
       };
     case "cad":
       return {
-        aerialOpacity: 0,
+        aerialOpacity: 0.42,
         subsurface: false,
         utilities: false,
-        easements: false,
-        draftingSurface: true,
+        easements: true,
+        draftingSurface: false,
       };
     case "survey":
       return {

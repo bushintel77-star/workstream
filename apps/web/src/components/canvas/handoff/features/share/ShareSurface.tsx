@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import {
   cadQuoteAction,
   copyPortalLinkAction,
@@ -9,6 +10,7 @@ import css from "./share.module.css";
 
 type Props = {
   projectId: string;
+  verificationUnavailable?: boolean;
   draftUnverified: boolean;
   pendingGhosts: number;
   quotePersisted: boolean;
@@ -25,6 +27,7 @@ type Props = {
  */
 export function ShareSurface({
   projectId,
+  verificationUnavailable = false,
   draftUnverified,
   pendingGhosts,
   quotePersisted,
@@ -38,13 +41,50 @@ export function ShareSurface({
   const [link, setLink] = useState<string | null>(portalUri);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(true, cardRef, onBack);
+
+  if (verificationUnavailable) {
+    return (
+      <div className={css.root} data-testid="share-surface">
+        <div
+          ref={cardRef}
+          className={css.card}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="share-verification-title"
+        >
+          <p className={css.kicker}>Share</p>
+          <h2 id="share-verification-title" className={css.title}>
+            CAD verification unavailable
+          </h2>
+          <p className={css.lead}>
+            Workstream could not verify whether AI proposals are still staged.
+            Reload the studio before creating a client link.
+          </p>
+          <button type="button" className={css.ghost} onClick={onBack}>
+            Back to CAD
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (draftUnverified) {
     return (
       <div className={css.root} data-testid="share-surface">
-        <div className={css.card} data-testid="share-ai-draft-gate">
+        <div
+          ref={cardRef}
+          className={css.card}
+          data-testid="share-ai-draft-gate"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="share-ai-draft-title"
+        >
           <p className={css.kicker}>Share</p>
-          <h2 className={css.title}>AI draft still open</h2>
+          <h2 id="share-ai-draft-title" className={css.title}>
+            AI draft still open
+          </h2>
           <p className={css.lead}>
             {pendingGhosts} proposal{pendingGhosts === 1 ? "" : "s"} still need
             Accept or Reject before this looks client-ready.
@@ -62,9 +102,15 @@ export function ShareSurface({
 
   return (
     <div className={css.root} data-testid="share-surface">
-      <div className={css.card}>
+      <div
+        ref={cardRef}
+        className={css.card}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-title"
+      >
         <p className={css.kicker}>Share</p>
-        <h2 className={css.title}>
+        <h2 id="share-title" className={css.title}>
           {quotePersisted ? "Client portal ready" : "Promote quote to unlock"}
         </h2>
         <p className={css.lead}>

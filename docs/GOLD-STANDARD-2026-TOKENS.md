@@ -5,88 +5,103 @@
 > operator canvas, chrome, and mobile surface must resolve to a token defined
 > here. Raw `#hex` / `rgba` literals in handoff modules are CI-gated
 > (`scripts/check-handoff-chrome-colors.mjs`) — the gate's allowlist is the
-> `--gs-*` namespace defined below.
+> `--gs-*` namespace defined below. The TS mirror (`colorTokens.ts`) is pinned
+> to this file by `colorTokens-css-sync.test.ts`.
 
 ---
 
-## 1. Studio Dark palette
+## 1. Studio Paper palette
 
-The single theme. There is no light/canvas-parchment default — the board is
-dark. The old cream-on-dark-gallery-frame system is retired.
+The single theme (2026 pivot). The canvas is high-key drafting paper so the
+drawing — landscape content, water gradients, CAD lines — is the most
+saturated thing on screen. The old Studio Dark default is retired: a dark
+canvas swallowed design content and forced every signal colour through
+lifted-stop patches. Depth now comes from light: gradient-lit panels, frost,
+and neutral shadow tiers. Never darkness.
 
-### 1.1 Surface tokens
-
-| Token | Value | Role |
-|-------|-------|------|
-| `--gs-canvas` | `#101418` | Canvas base — the WebGL clear color / ground plane |
-| `--gs-glass` | `#1E2329` | Glass Card body (chrome mixes it at 38% — see §1.4) |
-| `--gs-glass-strong` | `#252B33` | Glass Card elevated / hovered |
-| `--gs-glass-sunken` | `#171B20` | Glass Card inset / pressed |
-| `--gs-frame` | `#0C0F12` | Gallery frame border (darker than canvas) |
-| `--gs-line` | `#2E343C` | Hairline borders on glass surfaces |
-| `--gs-line-soft` | `#23282E` | Subtle dividers |
-
-### 1.2 Semantic signal tokens
+### 1.1 Surface tokens (dead-neutral — R=G=B, zero undertones)
 
 | Token | Value | Role |
 |-------|-------|------|
-| `--gs-primary` | `#fbbf24` | **Gold Standard** — active, compliant, verified, staking chips |
-| `--gs-primary-dim` | `#9c7416` | Gold at rest / disabled |
-| `--gs-truth` | `#0030CF` | **Signal Blue** — boundaries, (0,0,0) origin peg, easements, title |
-| `--gs-truth-soft` | `#1E45E8` | Signal Blue hover/secondary |
-| `--gs-conflict` | `#ef4444` | **Strike Alert** — utility collision, root zone violation |
-| `--gs-conflict-soft` | `#F87171` | Strike at reduced intensity (pulse halo) |
-| `--gs-success` | `#22c55e` | Compliance pass |
-| `--gs-warning` | `#f59e0b` | Advisory / non-blocking warning |
+| `--gs-panel` | `#FFFFFF` | Floating panel body (gradient via `--gs-panel-grad`) |
+| `--gs-canvas` | `#F4F4F4` | Canvas base — the WebGL clear color / drafting paper |
+| `--gs-glass-strong` | `#FAFAFA` | Elevated step / hovered panel fill |
+| `--gs-glass-sunken` | `#EBEBEB` | Inset wells inside panels |
+| `--gs-surface-fill` | `#FAFAFA` | Subtle fills inside white panels |
+| `--gs-sunken` | `#EBEBEB` | Hover fills |
+| `--gs-pressed` | `#E4E4E4` | Pressed fills |
+| `--gs-frame` | `#E4E4E4` | Gallery frame |
+| `--gs-line` | `#D4D4D4` | Decorative hairline only (non-semantic) |
+| `--gs-line-strong` | `#8C8C8C` | Interactive boundaries (3.36:1 on panel) |
+| `--gs-disabled` | `#A3A3A3` | Disabled text/glyphs (AA-exempt) |
 
-### 1.3 Ink tokens (text on glass)
+### 1.2 Semantic signal tokens — Crimson is the ONLY chromatic UI accent
+
+Reserved exclusively for: primary CTA, active tool state, focus rings, and
+critical/strike indicators. Gold is retired from chrome (the murky dim gold
+`#9c7416` and the gold/warning amber collision are dead). Cobalt survives as
+**drawing data only** — where `#0030CF` finally works (8.2:1 on paper; it was
+2:1 on the dark canvas and failed SC 1.4.11).
 
 | Token | Value | Role |
 |-------|-------|------|
-| `--gs-ink` | `#E8E9EC` | Primary text on glass/canvas |
-| `--gs-ink-secondary` | `#9AA0AC` | Secondary text, labels |
-| `--gs-ink-muted` | `#8B8F96` | Muted meta, captions (AA: ~5.1:1 on glass) |
-| `--gs-ink-primary` | `#fbbf24` | Gold ink (numeric highlights) |
-| `--gs-ink-truth` | `#6B8EEA` | Signal Blue ink for boundary labels (AA on dark) |
-| `--gs-ink-conflict` | `#F87171` | Strike ink for alert labels (AA on dark) |
+| `--gs-primary` | `#C41E1E` | **Crimson base** — CTA fill, focus ring (white-on-it 5.91:1) |
+| `--gs-primary-hover` | `#DC2626` | Crimson hover (white-on-it 4.83:1) |
+| `--gs-primary-pressed` | `#A51818` | Crimson pressed (white-on-it 7.65:1) |
+| `--gs-primary-ink` | `#B91C1C` | Crimson as text on paper (6.47:1) |
+| `--gs-primary-quiet` | `#E8C7C7` | Resting crimson borders / veil endpoint |
+| `--gs-truth` | `#0030CF` | **Cobalt data stroke** — proposed geometry, easements, title (8.22:1 on canvas) |
+| `--gs-truth-soft` | `#2450C7` | Cobalt hover/secondary |
+| `--gs-truth-ink` | `#2450C7` | Cobalt label text on paper (6.89:1) |
+| `--gs-conflict` | `#C41E1E` | **Strike Alert** — unified with primary crimson |
+| `--gs-conflict-soft` | `#B91C1C` | Strike text on paper (AA) |
+| `--gs-success` | `#525252` | Status is ink + iconography; colour reserved for critical |
+| `--gs-warning` | `#525252` | Status is ink + iconography; colour reserved for critical |
 
-### 1.4 Glass density — the canvas-first law (updated)
+### 1.3 Ink tokens — the charcoal hierarchy
 
-**Canvas-first (2df3f05):** Glass Cards are ONE semi-opaque layer — the drawing
-reads through every card, so chrome floats on the canvas instead of paneling
-over it. The density recipe is tokenized and binding app-wide (studio HUD,
-landing HUDs, operator chrome):
+| Token | Value | Role |
+|-------|-------|------|
+| `--gs-ink` | `#1A1A1A` | Primary text (17.41:1 on panel) |
+| `--gs-ink-strong` | `#111111` | Emphasis, headings, figures |
+| `--gs-ink-secondary` | `#525252` | Secondary text, labels (7.82:1) |
+| `--gs-ink-muted` | `#636363` | ONE muted value — ≥4.72:1 on every surface incl. pressed |
+| `--gs-ink-truth` | `var(--gs-ink)` | Primary text — the doc name components reference (bug heal: once referenced, never defined) |
+| `--gs-ink-primary` | `var(--gs-ink-strong)` | Emphasis ink — was gold, now charcoal |
+| `--gs-ink-conflict` | `#B91C1C` | Critical/strike label ink |
+
+**Selection vocabulary:** `--gs-chip-active: #1A1A1A` / `--gs-chip-active-ink:
+#FFFFFF` (15.83:1). Active tools, selected modes, and "you are here" states
+are charcoal-filled chips — NOT crimson. Crimson stays rare so it stays sharp.
+
+### 1.4 Panel depth law (replaces the glass density law)
+
+Panels are ONE frosted layer floating above the drawing, lifted by light:
 
 ```css
-.glass-card {
-  background: var(--gs-glass-veil); /* color-mix(in srgb, var(--gs-glass) 38%, transparent) */
-  backdrop-filter: blur(var(--gs-blur));         /* 10px */
-  border-radius: var(--gs-radius-panel);          /* 12px */
-  border: 1px solid color-mix(in srgb, var(--gs-line) 35%, transparent);
+.panel {
+  background: var(--gs-panel-grad);   /* linear-gradient(180deg, #FFFFFF, #FAFAFA) */
+  /* floating HUD variant: */
+  /* background: var(--gs-panel-frost);  86% white + backdrop-blur */
+  backdrop-filter: blur(var(--gs-frost-blur));   /* 12px */
+  border-radius: var(--gs-radius-panel);         /* 12px */
+  border: 1px solid color-mix(in srgb, var(--gs-line) 55%, transparent);
+  box-shadow: var(--gs-shadow-2);
 }
 ```
 
-Density tokens (defined once in `styles/color-tokens.css`):
-`--gs-glass-veil` (38%), `--gs-glass-veil-strong` (55%), `--gs-blur` (10px),
-`--gs-radius-panel` (12px), `--gs-radius-chip` (6px), `--gs-radius-pill` (999px).
+Depth tokens (defined once in `styles/color-tokens.css`):
+`--gs-panel-grad`, `--gs-panel-frost` (86%), `--gs-frost-blur` (12px),
+`--gs-shadow-1..4` (neutral `rgb(17 17 17 / …)` tiers: chip → panel →
+popover → command palette), `--gs-radius-panel` (12px),
+`--gs-radius-chip` (6px), `--gs-radius-pill` (999px).
 
-The retired 70% / blur-12 / radius-16 recipe applied only during the Phase 0–2
-transition and no longer represents the standard. Chrome text uses the meta
-chip idiom: Space Grotesk (`--font-tech`) figures, Inter labels,
-`--gs-radius-chip` pills.
+**No heavy borders.** Hairlines are decorative; anything a user must identify
+by edge uses `--gs-line-strong`. Status is communicated with ink weight +
+iconography, never with extra hue.
 
-**Amendment (2026-08-15, operator directive): chrome type floor is 10.5px for
-labels and 11px for figures.** The original 9–10px meta-chip figures were
-unreadable at operator viewing distance; glyph accents (stock marks, ⤢
-hand-off marks) may floor at 9.5px. WebGL chrome has been swept to this law
-(`StudioToolRail` 7.5→9, scrubber/meta labels 9→10.5–11, card labels
-9→10.5–11).
-
-**V4 bridge (globals.css):** all operator chrome tokens (`--canvas-base`,
-`--surface-*`, `--ink-*`, `--line-*`, `--accent`, `--ok/--warn/--block/--info`)
-resolve to this `--gs-*` namespace, and `--accent` is Gold (`--gs-primary`) —
-one accent identity app-wide. The only intentional exception: the client
-document sheet on portal surfaces stays light (`--portal-sheet`).
+**Chrome type floor (unchanged amendment, 2026-08-15): 10.5px labels / 11px
+figures**; glyph accents may floor at 9.5px.
 
 ### 1.5 APWA utility locate colors (mode-invariant, retained)
 
@@ -107,8 +122,9 @@ the industry-standard utility color code — they must not change.
 The planting palette (`--forest-*`, `--sprout-*`, `--sage-*`, `--hedge-*`,
 `--olive-*`) and material palette (`--soil-*`, `--mulch-*`, `--bluestone-*`,
 `--concrete-*`, `--timber-*`, `--water-*`, `--gravel-*`, `--lawn-*`) are
-retained from the pre-Gold-Standard system. They describe real-world material
-colors, not chrome, and remain in `color-tokens.css` under the dark theme.
+retained. They describe real-world material colors, not chrome. Earthworks
+cut/fill rides `--gs-earthworks-cut` (crimson) / `--gs-earthworks-fill`
+(`#C9A84C` muted drafting gold) — a data pair, never the UI accent.
 
 ---
 
@@ -137,40 +153,41 @@ All fonts load via `next/font/google` in `apps/web/src/app/layout.tsx` with
 
 ---
 
-## 3. Migration mapping (old → new)
+## 3. Migration mapping (Studio Dark → Studio Paper, 2026)
 
-For reference during the migration. Old tokens in `color-tokens.css` /
-`handoffStudio.module.css` map as follows:
-
-| Old token | New token | Note |
-|-----------|-----------|------|
-| `--canvas` (`--gray-l-50`) | `--gs-canvas` (`#101418`) | Board flips from cream to dark |
-| `--hc-glass` | `--gs-glass` | Glass body |
-| `--hc-neu-surface` / `--hc-neu-raised` | `--gs-glass` / `--gs-glass-strong` | Neumorphic plastic → flat glass |
-| `--hc-ink` / `--hc-ink-muted` | `--gs-ink` / `--gs-ink-secondary` | Ink on glass |
-| `--hc-line` | `--gs-line` | Hairline |
-| `--danger` (`--crimson-*`) | `--gs-conflict` (`#ef4444`) | |
-| `--success` (`--sprout-*`) | `--gs-success` (`#22c55e`) | |
-| `--warning` | `--gs-warning` (`#f59e0b`) | |
-| `--proposed-stroke` (`--cobalt-*`) | `--gs-truth` (`#0030CF`) | Proposed geometry = Signal Blue |
-| `--easement-stroke` (`--slate-*`) | `--gs-truth` | Easements = Signal Blue |
-| `--existing-stroke` (`--crimson-*`) | `--gs-conflict` (`#ef4444`) | Existing = Strike Red (semantic: "what's there") |
-| `--font-ui` (Sora) | `--font-ui` (Inter) | |
-| `--font-body` (IBM Plex Sans) | `--font-ui` (Inter) | |
-| `--font-mono` (IBM Plex Mono) | `--font-tech` (Space Grotesk) | |
+| Old token (Dark) | New token (Paper) | Note |
+|-----------|----------|------|
+| `--gs-canvas` (`#101418`) | `--gs-canvas` (`#F4F4F4`) | Canvas flips dark → paper; WebGL clear follows |
+| `--gs-glass` (`#1E2329`) | `--gs-panel` (`#FFFFFF`) | Solid white panels; frost variant for HUD |
+| `--gs-glass-veil` (38% dark) | `--gs-panel-frost` (86% white) | One translucent layer, same law |
+| `--gs-primary` (`#fbbf24` gold) | `--gs-primary` (`#C41E1E` crimson) | Gold retired from chrome; murky `#9c7416` deleted |
+| `--gs-truth` (`#0030CF`, 2:1 on dark) | `--gs-truth` (`#0030CF`) | Same hex — now 8.2:1 on paper; data-only |
+| `--gs-truth-ink` (`#6B8EEA`) | `--gs-truth-ink` (`#2450C7`) | Dark-era lifted stop retired |
+| `--gs-conflict` (`#ef4444`) | `--gs-conflict` (`#C41E1E`) | Unified with primary crimson |
+| `--gs-ink` (`#E8E9EC`) | `--gs-ink` (`#1A1A1A`) | Charcoal hierarchy |
+| `--gs-ink-muted` (3 competing values) | `--gs-ink-muted` (`#636363`) | ONE value, AA on every surface |
+| `--gs-ink-truth` (referenced, never defined) | `--gs-ink-truth` = `--gs-ink` | Bug heal; defined for the first time |
+| `--gs-success` / `--gs-warning` (green/amber) | `#525252` ink | Status = ink + iconography |
+| `.rootDark` (handoff SVG) | no-op alias of `.root` | Single theme |
 
 ---
 
 ## 4. Contrast
 
-All text on glass must meet **WCAG 2.2 AA** (4.5:1 for body, 3:1 for large).
-The dark canvas changes every contrast pair — the gate
-`e2e/canvas-contrast-aa.spec.ts` is retrained against Studio Dark in Phase 0.6.
+All text must meet **WCAG 2.2 AA** (4.5:1 body, 3:1 large; 3:1 non-text for
+boundaries/geometry). Gates: `e2e/canvas-contrast-aa.spec.ts`,
+`e2e/webgl-contrast-aa.spec.ts`, and the vitest math in
+`apps/web/src/styles/colorTokens.test.ts`.
 
-Known-good pairs (verified):
-- `--gs-ink` (`#E8E9EC`) on `--gs-glass`@70% over `--gs-canvas`: ~14.8:1 ✅
-- `--gs-ink-secondary` (`#9AA0AC`) on same: ~6.4:1 ✅
-- `--gs-ink-muted` (`#8B8F96`) on same: ~5.1:1 ✅
-- `--gs-primary` (`#fbbf24`) on `--gs-glass`: ~10.2:1 ✅
-- `--gs-ink-truth` (`#6B8EEA`) on `--gs-glass`: ~5.1:1 ✅ (not raw `#0030CF`, which is ~2.1:1 on dark)
-- `--gs-ink-conflict` (`#F87171`) on `--gs-glass`: ~5.8:1 ✅ (not raw `#ef4444`, which is ~3.4:1)
+Verified pairs (relative-luminance math, panel `#FFFFFF` / canvas `#F4F4F4` /
+sunken `#EBEBEB` / pressed `#E4E4E4`):
+
+- `--gs-ink` (`#1A1A1A`): **17.41 / 15.83 / 14.61 / 13.80** ✅ AAA
+- `--gs-ink-secondary` (`#525252`): **7.82 / 7.11 / 6.56 / 6.15** ✅
+- `--gs-ink-muted` (`#636363`): **6.00 / 5.46 / 5.04 / 4.72** ✅ on every surface
+- white on `--gs-chip-active` (`#1A1A1A`): **15.83** ✅
+- white on `--gs-primary` (`#C41E1E`): **5.91**; hover `#DC2626`: **4.83**; pressed `#A51818`: **7.65** ✅
+- `--gs-primary-ink` (`#B91C1C`) as text: **6.47 / 5.83 / 5.37 / 5.03** ✅
+- `--gs-truth` (`#0030CF`) stroke on canvas: **8.22** ✅ (was 2.1 on dark — the pivot fixes Signal Blue)
+- `--gs-truth-ink` (`#2450C7`) on panel: **6.89** ✅
+- `--gs-line-strong` (`#8C8C8C`) boundary on panel: **3.36** ✅ non-text

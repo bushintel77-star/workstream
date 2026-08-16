@@ -24,6 +24,11 @@
      named step rather than a raw literal. */
   --pipeline-banner-z: 9999;
   z-index: var(--pipeline-banner-z);
+  /* The banner overlays the full-bleed studio's top strip, which occludes
+   * the Tier-1 header dropdowns (the studio root isolates its stacking
+   * context, so no inner z-index can climb above this). Pass pointer
+   * events through the informational copy; only the action stays hot. */
+  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -37,6 +42,11 @@
     var(--surface-elevated) 100%
   );
   box-shadow: var(--elev-1), var(--elev-inset);
+}
+
+.pipelineBanner form,
+.pipelineBanner a {
+  pointer-events: auto;
 }
 
 .pipelineBannerCopy {

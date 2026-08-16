@@ -138,7 +138,7 @@
   padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pill);
   border: 1px solid rgb(255 255 255 / 10%);
-  background: rgb(20 20 20 / 85%);
+  background: color-mix(in srgb, var(--gs-panel) 88%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--ws-milled-shadow);
@@ -162,7 +162,7 @@
   padding: var(--s-2) var(--s-3);
   border-radius: var(--hc-r-pill);
   border: 1px solid rgb(255 255 255 / 10%);
-  background: rgb(20 20 20 / 85%);
+  background: color-mix(in srgb, var(--gs-panel) 88%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--ws-milled-shadow);

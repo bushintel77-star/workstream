@@ -11,6 +11,7 @@
  */
 
 import { useState } from "react";
+import type { CadApiResult } from "../../../lib/api";
 import { GlassCard } from "./GlassCard";
 
 type Status = { tone: "ok" | "err" | "busy"; text: string } | null;
@@ -42,7 +43,13 @@ const label: React.CSSProperties = {
   color: "var(--gs-ink-secondary)",
 };
 
-export function StudioCadCard({ projectId }: { projectId: string }) {
+export function StudioCadCard({
+  projectId,
+  onCadResult,
+}: {
+  projectId: string;
+  onCadResult?: (result: CadApiResult) => void;
+}) {
   const [status, setStatus] = useState<Status>(null);
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -52,6 +59,13 @@ export function StudioCadCard({ projectId }: { projectId: string }) {
     setStatus({ tone: "busy", text: `${label}…` });
     try {
       const res = (await fn()) as Record<string, unknown> | null;
+      if (
+        res &&
+        typeof res.ghost_count === "number" &&
+        ("document" in res || "svg" in res)
+      ) {
+        onCadResult?.(res as CadApiResult);
+      }
       const detail =
         (typeof res === "object" &&
           res &&

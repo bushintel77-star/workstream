@@ -24,7 +24,7 @@ The primary drawing surface is a **WebGL context** rendered via
 </Canvas>
 ```
 
-- `alpha: false` — the canvas clears to `--gs-canvas` (`#101418`) every frame.
+- `alpha: false` — the canvas clears to `--gs-canvas` (`#F4F4F4`, Studio Paper) every frame.
 - The `<Canvas>` is `position: absolute; inset: 0` — full-bleed per §2 Code Law.
 - **SSR boundary:** R3F `<Canvas>` is dynamically imported with `ssr: false`:
   ```ts
@@ -139,7 +139,7 @@ noise breakup — `terrainMaterial.ts`) so relief reads from any light angle.
 ├─────────────────────────────────────────┤
 │  Layer 2: R3F <Canvas> (WebGL)          │  ← the drawing
 ├─────────────────────────────────────────┤
-│  Layer 1: Canvas Base (#101418)         │  ← clear color
+│  Layer 1: Canvas Base (#F4F4F4 paper)   │  ← clear color
 └─────────────────────────────────────────┘
 ```
 
@@ -224,9 +224,9 @@ The mobile AR surface renders the same `SpatialObject` data in a camera-feed
 overlay:
 
 - **react-three-fiber/native** (or expo-gl + three) for the AR scene-graph.
-- **Staking chips:** `--gs-primary` (`#fbbf24`) sprites anchored to GPS/RTK coordinates.
+- **Staking chips:** `--gs-primary` (`#C41E1E` crimson) sprites anchored to GPS/RTK coordinates.
 - **Subsurface ghosting:** translucent utility volumes (same `--apwa-*` colors) rendered at their `depth_m` below the device's ground plane.
-- **Strike alerts:** `--gs-conflict` (`#ef4444`) high-contrast billboards when device GPS enters a utility danger zone.
+- **Strike alerts:** `--gs-conflict` (`#C41E1E`) high-contrast billboards when device GPS enters a utility danger zone.
 
 The mobile scene-graph is a **parallel consumer** of `SpatialObject[]`, not a
 shared component tree with web (R3F native has a different reconciler).

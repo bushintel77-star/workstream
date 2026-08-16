@@ -75,7 +75,7 @@ test.describe("Instant Planner onsite density", () => {
     );
     expect(seed.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     const studio = handoffStudio(page);
     await expect(studio).toBeVisible({ timeout: 30_000 });
     await expect(studio).toHaveAttribute("data-density", "onsite", {

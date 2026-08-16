@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { useStudioStore } from "./studioStore";
 import type { CanvasMode } from "../../../lib/canvas-mode";
 
@@ -37,16 +38,20 @@ export function StudioCommandPalette({
   onMode,
   onZoom,
   projectId,
+  unlocked,
 }: {
   open: boolean;
   onClose: () => void;
   onMode: (mode: CanvasMode) => void;
   onZoom: (direction: 1 | -1) => void;
   projectId: string;
+  unlocked: ReadonlySet<CanvasMode>;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
+  useFocusTrap(open, panelRef, onClose);
 
   useEffect(() => {
     if (open) {
@@ -81,7 +86,7 @@ export function StudioCommandPalette({
     });
     const store = useStudioStore.getState();
     return [
-      ...modes.map<PaletteAction>(([mode, label]) => ({
+      ...modes.filter(([mode]) => unlocked.has(mode)).map<PaletteAction>(([mode, label]) => ({
         id: `mode-${mode}`,
         label,
         group: "Mode",
@@ -156,7 +161,7 @@ export function StudioCommandPalette({
         run: () => window.location.assign(`/subsurface-studio/${projectId}`),
       },
     ];
-  }, [onMode, onZoom, projectId]);
+  }, [onMode, onZoom, projectId, unlocked]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -181,6 +186,7 @@ export function StudioCommandPalette({
 
   return (
     <div
+      ref={panelRef}
       style={{
         position: "absolute",
         top: 110,
@@ -194,12 +200,13 @@ export function StudioCommandPalette({
         backdropFilter: "blur(var(--gs-blur))",
         WebkitBackdropFilter: "blur(var(--gs-blur))",
         border: "1px solid color-mix(in srgb, var(--gs-line) 40%, transparent)",
-        boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+        boxShadow: "0 12px 40px color-mix(in srgb, var(--gs-frame) 75%, transparent)",
         fontFamily: "var(--font-ui)",
         color: "var(--gs-ink)",
         overflow: "hidden",
       }}
       role="dialog"
+      aria-modal="true"
       aria-label="Command palette"
       data-testid="studio-command-palette"
     >
@@ -234,7 +241,6 @@ export function StudioCommandPalette({
           background: "transparent",
           border: "none",
           borderBottom: "1px solid color-mix(in srgb, var(--gs-line) 40%, transparent)",
-          outline: "none",
         }}
       />
       <div role="listbox" aria-label="Commands" style={{ maxHeight: 300, overflowY: "auto" }}>

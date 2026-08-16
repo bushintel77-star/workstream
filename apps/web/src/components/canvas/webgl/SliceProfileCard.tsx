@@ -19,7 +19,6 @@
  */
 
 import { useMemo } from "react";
-import { GlassCard } from "./GlassCard";
 import { useStudioStore } from "./studioStore";
 import type { HeightmapPoint } from "./coordTransform";
 import { createElevationSampler, VERTICAL_SCALE } from "./terrainMath";
@@ -105,13 +104,7 @@ export function SliceProfileCard({
 
   return (
     <InstrumentCard label="Section" value={heightmapPoints.length ? "Δ" + (Math.max(...heightmapPoints.map((p) => p.y)) - Math.min(...heightmapPoints.map((p) => p.y))).toFixed(1) + " m" : "—"}>
-  return (
-    <GlassCard
-      // Relative — this card is a child of the WebGLStudioPreview bottom-right
-      // instrument stack column, not an independently positioned card.
-      position={{ position: "relative" }}
-      style={{ width: W + 12, padding: "8px 10px" }}
-    >
+    <div style={{ width: W + 12 }}>
       <div style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)" }}>
         <div
           style={{
@@ -193,7 +186,7 @@ export function SliceProfileCard({
           </span>
         </div>
       </div>
-    </GlassCard>
+    </div>
     </InstrumentCard>
   );
 }

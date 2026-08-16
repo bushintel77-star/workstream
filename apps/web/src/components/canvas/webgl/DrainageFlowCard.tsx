@@ -19,7 +19,6 @@
 
 import { useMemo } from "react";
 import type { HydraulicResult } from "@workstream/domain";
-import { GlassCard } from "./GlassCard";
 import { useStudioStore } from "./studioStore";
 import type { HeightmapPoint } from "./coordTransform";
 import { createElevationSampler, VERTICAL_SCALE } from "./terrainMath";
@@ -101,11 +100,7 @@ export function DrainageFlowCard({
 
   return (
     <InstrumentCard label="Flow" value={(flow?.maxFallPct ?? 0) > 0 ? (flow?.maxFallPct ?? 0).toFixed(0) + "%" : "—"}>
-  return (
-    <GlassCard
-      position={{ position: "relative" }}
-      style={{ width: 252, padding: "8px 10px" }}
-    >
+    <div style={{ width: 252 }}>
       <div
         data-testid="drainage-flow-card"
         style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)" }}
@@ -184,16 +179,27 @@ export function DrainageFlowCard({
           <>
             <div style={rowStyle}>
               <span style={labelStyle}>Flow rate</span>
-              <span style={{ ...valueStyle, color: "var(--gs-truth)" }}>
+              <span style={{ ...valueStyle, color: "var(--gs-ink-truth)" }}>
                 {telemetry.totalGpm.toFixed(1)} GPM
               </span>
             </div>
             <div style={rowStyle}>
               <span style={labelStyle}>Pressure drop</span>
-              <span style={{ ...valueStyle, color: "var(--gs-truth)" }}>
+              <span style={{ ...valueStyle, color: "var(--gs-ink-truth)" }}>
                 {telemetry.maxKpa.toFixed(1)} kPa
               </span>
             </div>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 10.5,
+                lineHeight: 1.4,
+                color: "var(--gs-ink-secondary)",
+              }}
+            >
+              Indicative model: 25 mm PVC, Hazen-Williams C=150 and
+              emitter-derived demand. Confirm supply and pipe schedule on site.
+            </p>
           </>
         )}
 
@@ -207,7 +213,9 @@ export function DrainageFlowCard({
             fontFamily: "var(--font-ui)",
             fontWeight: 600,
             color:
-              ponds.length > 0 ? "var(--gs-conflict)" : "var(--gs-truth)",
+              ponds.length > 0
+                ? "var(--gs-ink-conflict)"
+                : "var(--gs-ink-truth)",
             background:
               ponds.length > 0
                 ? "color-mix(in srgb, var(--gs-conflict) 14%, transparent)"
@@ -224,7 +232,7 @@ export function DrainageFlowCard({
             : "Free-draining to boundary"}
         </div>
       </div>
-    </GlassCard>
+    </div>
     </InstrumentCard>
   );
 }

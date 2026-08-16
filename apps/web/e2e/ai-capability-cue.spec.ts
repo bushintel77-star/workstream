@@ -53,7 +53,7 @@ test.describe("AI capability cue", () => {
     const { projectId } = await createSurveyProject(request);
     await seedTracedEmptyLot(request, projectId);
 
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     const cue = page.getByTestId("ai-capability-cue");
@@ -81,7 +81,7 @@ test.describe("AI capability cue", () => {
 
     // The Live Cost Rail (quote) is not a drawing surface, so no cue belongs
     // there. Open the rail alongside CAD and confirm the cue stays hidden.
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await clickHeaderViewItem(page, "live-cost-top");
     await expect(page.getByTestId("live-cost-rail")).toBeVisible({
@@ -96,7 +96,7 @@ test.describe("AI capability cue", () => {
   }) => {
     const first = await createSurveyProject(request);
     await seedTracedEmptyLot(request, first.projectId);
-    await page.goto(`/projects/${first.projectId}?mode=survey`);
+    await page.goto(`/projects/${first.projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("ai-capability-cue")).toBeVisible({
       timeout: 20_000,
@@ -107,7 +107,7 @@ test.describe("AI capability cue", () => {
     // Same browser, same localStorage, different project: still teaches.
     const second = await createSurveyProject(request);
     await seedTracedEmptyLot(request, second.projectId);
-    await page.goto(`/projects/${second.projectId}?mode=survey`);
+    await page.goto(`/projects/${second.projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("ai-capability-cue")).toBeVisible({
       timeout: 20_000,

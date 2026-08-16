@@ -5,13 +5,33 @@
  */
 
 .rail {
+  --ws-frame-ink: var(--gs-ink);
+  --ws-frame-ink-dim: color-mix(
+    in srgb,
+    var(--gs-ink) 78%,
+    var(--gs-glass-strong)
+  );
+  --ws-frame-ink-faint: color-mix(
+    in srgb,
+    var(--gs-ink) 70%,
+    var(--gs-glass-strong)
+  );
+  --ws-frame-hair: var(--gs-line);
+  --ws-frame-wash: color-mix(in srgb, var(--gs-ink) 8%, transparent);
+  --hc-accent: var(--gs-primary);
+  --hc-r-control: var(--gs-radius-chip);
+  --hc-r-panel: var(--gs-radius-chip);
+  --hc-fs-1: 9px;
+  --hc-fs-2: 10px;
+  --hc-fs-6: 19px;
   display: flex;
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  background: var(--ws-milled-surface);
-  border: 1px solid var(--ws-milled-border);
-  box-shadow: var(--ws-milled-shadow);
+  background-color: var(--gs-glass-strong);
+  background-image: var(--ws-milled-surface, none);
+  border: 1px solid var(--ws-milled-border, var(--gs-line));
+  box-shadow: var(--ws-milled-shadow, var(--gs-shadow));
   backdrop-filter: blur(20px) saturate(1.15);
   -webkit-backdrop-filter: blur(20px) saturate(1.15);
   color: var(--ws-frame-ink);

@@ -15,7 +15,7 @@ test.describe("Premium sun + client", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("zoom-world")).toBeVisible({
       timeout: 15_000,

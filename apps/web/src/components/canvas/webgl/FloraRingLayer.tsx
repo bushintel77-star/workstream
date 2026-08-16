@@ -165,7 +165,7 @@ export function FloraRingLayer({
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[wx, 0.05, wz]}>
         <ringGeometry args={[ghostRadiusM - 0.15, ghostRadiusM, 32]} />
         <meshBasicMaterial
-          color={summary.blocked ? PALETTE.gsConflict : PALETTE.gsPrimary}
+          color={summary.blocked ? PALETTE.gsConflict : PALETTE.sproutL500}
           transparent
           opacity={0.85}
           depthWrite={false}
@@ -175,7 +175,7 @@ export function FloraRingLayer({
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[wx, 0.045, wz]}>
         <circleGeometry args={[ghostRadiusM, 32]} />
         <meshBasicMaterial
-          color={summary.blocked ? PALETTE.gsConflict : PALETTE.gsPrimary}
+          color={summary.blocked ? PALETTE.gsConflict : PALETTE.sproutL500}
           transparent
           opacity={0.1}
           depthWrite={false}
@@ -208,7 +208,7 @@ export function FloraRingLayer({
               style={{
                 fontFamily: "var(--font-tech)",
                 fontSize: 10,
-                color: "var(--gs-truth)",
+                color: "var(--gs-ink-truth)",
                 border: "1px solid color-mix(in srgb, var(--gs-truth) 35%, transparent)",
                 borderRadius: 999,
                 padding: "1px 7px",
@@ -223,6 +223,8 @@ export function FloraRingLayer({
             return (
               <button
                 key={c.symbolId}
+                type="button"
+                aria-pressed={isActive}
                 data-testid={`flora-chip-${c.symbolId}`}
                 onClick={() => setFloraActiveIdx(i)}
                 style={{
@@ -269,6 +271,7 @@ export function FloraRingLayer({
 
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
             <button
+              type="button"
               data-testid="flora-accept"
               onClick={accept}
               disabled={summary.blocked}
@@ -290,6 +293,7 @@ export function FloraRingLayer({
               {summary.blocked ? "Blocked — shift clear" : `Place ${active.label}`}
             </button>
             <button
+              type="button"
               data-testid="flora-dismiss"
               onClick={() => setFloraSession(null)}
               style={{

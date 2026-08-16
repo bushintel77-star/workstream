@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { createSurveyProject, handoffStudio } from "./helpers";
 
 async function openSketch(page: Page, projectId: string) {
-  await page.goto(`/projects/${projectId}?mode=sketch`);
+  await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
   await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("zoom-world")).toBeVisible({ timeout: 15_000 });
 }
@@ -65,7 +65,7 @@ test.describe("Compact canvas-first chrome", () => {
 
     test("375 CAD Data sheet embeds live cost", async ({ page, request }) => {
       const { projectId } = await createSurveyProject(request);
-      await page.goto(`/projects/${projectId}?mode=cad`);
+      await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
       await expect(handoffStudio(page)).toHaveAttribute("data-compact", "1", {
         timeout: 15_000,

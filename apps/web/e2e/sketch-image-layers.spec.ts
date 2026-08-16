@@ -15,7 +15,7 @@ test.describe("Sketch image layers", () => {
   }) => {
     const { projectId } = await createSurveyProject(request);
 
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(page.getByTestId("sketch-board")).toBeVisible({
       timeout: 30_000,
     });
@@ -64,7 +64,7 @@ test.describe("Sketch image layers", () => {
 
     // A second sketch tab reload keeps the image layer.
     await page.reload();
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(page.getByTestId("image-layer-slot")).toBeVisible({
       timeout: 15_000,
     });

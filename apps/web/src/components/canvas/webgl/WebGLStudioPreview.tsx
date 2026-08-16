@@ -20,13 +20,15 @@
  *   - Live data: sample utilities replaced by real BYDA/trench/level data.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type {
   CanvasStroke,
   CatalogPlacement,
   ConstructionTrench,
   DesignBydaAsset,
+  DesignKeylessOverlay,
+  DesignNeighbourBuilding,
   DesignSiteFrameLevel,
   IrrigationZone,
 } from "@workstream/contracts";
@@ -85,7 +87,7 @@ export interface WebGLStudioPreviewProps {
   boundaryPct: PctPoint[];
   buildingPct?: PctPoint[];
   easementsPct?: PctPoint[][];
-  /** Project latitude (decimal degrees). Defaults to Prahran demo. */
+  /** Project latitude (decimal degrees) when verified for this project. */
   lat?: number;
   lng?: number;
   /** Project address — feeds the flora ring's municipality ranking. */
@@ -103,6 +105,10 @@ export interface WebGLStudioPreviewProps {
   irrigationZones?: IrrigationZone[];
   /** Spot levels from site_frame → feed terrain heightmap. */
   levels?: DesignSiteFrameLevel[];
+  /** Government/state overlays already co-registered to the title frame. */
+  keylessOverlays?: DesignKeylessOverlay[];
+  /** Vicmap neighbouring footprints for real overshadowing context. */
+  neighbourBuildings?: DesignNeighbourBuilding[];
   /** Outdoor area m² (page-computed from survey/title/site_frame) → fit-sheet. */
   outdoorM2?: number;
   /** Aerial photo URI (for the ground underlay texture). */
@@ -114,6 +120,11 @@ export interface WebGLStudioPreviewProps {
   initialMode?: CanvasMode;
   /** Progressive-unlock progress flags driving mode tab lock states. */
   progress?: CanvasProgress;
+  /** Initial durable quote/share state hydrated by the server component. */
+  hasQuote?: boolean;
+  quotePortalUri?: string | null;
+  /** Null means CAD verification could not be loaded and sharing must fail closed. */
+  initialCadGhostCount?: number | null;
 }
 
 export function WebGLStudioPreview({
@@ -132,6 +143,8 @@ export function WebGLStudioPreview({
   constructionTrenches = [],
   irrigationZones = [],
   levels = [],
+  keylessOverlays = [],
+  neighbourBuildings = [],
   outdoorM2 = 0,
   aerialUri = null,
   initialSketchMode = false,
@@ -142,10 +155,37 @@ export function WebGLStudioPreview({
     hasCad: false,
     hasQuote: false,
   },
+  hasQuote = false,
+  quotePortalUri = null,
+  initialCadGhostCount = null,
 }: WebGLStudioPreviewProps) {
   const [rig, setRig] = useState<StudioCameraRig>(DEFAULT_CAMERA_RIG);
   const [presentationMode, setPresentationMode] = useState(false);
   const [activeMode, setActiveMode] = useState<CanvasMode>(initialMode);
+  const [cadGhostCount, setCadGhostCount] = useState<number | null>(
+    initialCadGhostCount,
+  );
+  const [quotePersisted, setQuotePersisted] = useState(hasQuote);
+  const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
+  const [visibleLayers, setVisibleLayers] = useState({
+    aerial: true,
+    sketch: true,
+    siteTruth: true,
+    design: true,
+  });
+  const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null);
+  const [webglLost, setWebglLost] = useState(false);
+
+  useEffect(() => {
+    const probe = document.createElement("canvas");
+    setWebglAvailable(
+      Boolean(
+        probe.getContext("webgl2") ||
+          probe.getContext("webgl") ||
+          probe.getContext("experimental-webgl"),
+      ),
+    );
+  }, []);
 
   // Deep-link entry: ?mode=quote opens the fit-sheet, ?mode=present arms the
   // presentation lens, ?mode=garden frames the 3D garden view. Sketch stays
@@ -176,6 +216,7 @@ export function WebGLStudioPreview({
 
   const onNativeMode = (mode: CanvasMode) => {
     setActiveMode(mode);
+    if (mode !== "present") setPresentationMode(false);
     const store = useStudioStore.getState();
     if (mode === "sketch") {
       store.setArmedSymbolId(null);
@@ -258,9 +299,12 @@ export function WebGLStudioPreview({
   // the tracing base (persisted server-side on the survey; refresh re-renders
   // the server component with the new aerialUri — no remount of the scene).
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const uploadSitePhoto = useCallback(
     async (file: File) => {
       setPhotoBusy(true);
+      setPhotoError(null);
       try {
         const body = new FormData();
         body.append("aerial", file);
@@ -275,6 +319,10 @@ export function WebGLStudioPreview({
           throw new Error(payload?.error ?? `Upload failed (${res.status})`);
         }
         window.location.reload();
+      } catch (error) {
+        setPhotoError(
+          error instanceof Error ? error.message : "Site photo upload failed",
+        );
       } finally {
         setPhotoBusy(false);
       }
@@ -290,9 +338,17 @@ export function WebGLStudioPreview({
     setTruthMsg(null);
     try {
       const canvasRes = await fetch(`/api/projects/${projectId}/design-canvas`);
-      const canvasJson = canvasRes.ok
-        ? ((await canvasRes.json()) as { canvas: import("@workstream/contracts").DesignCanvas | null })
-        : { canvas: null };
+      if (!canvasRes.ok) {
+        const payload = (await canvasRes.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(
+          payload?.error ?? `Could not load the current drawing (${canvasRes.status})`,
+        );
+      }
+      const canvasJson = (await canvasRes.json()) as {
+        canvas: import("@workstream/contracts").DesignCanvas | null;
+      };
       const r = await importSiteTruth(projectId, canvasJson.canvas ?? null);
       setTruthMsg(
         `Traced: boundary ${r.boundaryPts} pts` +
@@ -403,10 +459,15 @@ export function WebGLStudioPreview({
   const sceneProps = {
     scaleM,
     boardAspect,
-    boundaryPct,
-    buildingPct,
-    easementsPct,
-    items,
+    boundaryPct: visibleLayers.siteTruth ? boundaryPct : [],
+    buildingPct: visibleLayers.siteTruth ? buildingPct : undefined,
+    easementsPct: visibleLayers.siteTruth ? easementsPct : [],
+    servicesPct: visibleLayers.siteTruth
+      ? bydaAssets.map((asset) =>
+          asset.ring.map((point) => ({ x: point.x_pct, y: point.y_pct })),
+        )
+      : [],
+    items: visibleLayers.design ? items : [],
     subsurfaceUtilities: liveData.subsurfaceUtilities,
     strikeAlerts: liveData.strikeAlerts,
     lens: presentationMode ? PRESENTATION_LENS : TECHNICAL_LENS,
@@ -414,10 +475,73 @@ export function WebGLStudioPreview({
     lat,
     lng,
     sunMin,
-    aerialUri,
+    aerialUri: visibleLayers.aerial ? aerialUri : null,
     heightmapPoints: liveData.heightmapPoints,
+    keylessOverlays: visibleLayers.siteTruth ? keylessOverlays : [],
+    neighbourBuildings: visibleLayers.siteTruth ? neighbourBuildings : [],
+    showSketch: visibleLayers.sketch,
     layerPolicy: policy,
+    onContextLost: () => setWebglLost(true),
   } as const;
+
+  if (webglAvailable === false || webglLost) {
+    return (
+      <div
+        role="alert"
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "grid",
+          placeItems: "center",
+          padding: 24,
+          background: "var(--gs-canvas)",
+          color: "var(--gs-ink)",
+          fontFamily: "var(--font-ui)",
+        }}
+      >
+        <div
+          style={{
+            width: "min(420px, 100%)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            padding: 20,
+            borderRadius: "var(--gs-radius-panel)",
+            background: "var(--gs-glass-veil-strong)",
+            border: "1px solid var(--gs-line)",
+          }}
+        >
+          <h1 style={{ margin: 0, fontSize: 20 }}>3D canvas unavailable</h1>
+          <p style={{ margin: 0, color: "var(--gs-ink-secondary)" }}>
+            The graphics context is unavailable or was interrupted. Your saved
+            drawing is unchanged.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              style={{
+                minHeight: 40,
+                padding: "0 12px",
+                borderRadius: "var(--gs-radius-chip)",
+                border: "1px solid var(--gs-primary)",
+                background: "var(--gs-primary)",
+                color: "var(--gs-panel)",
+              }}
+            >
+              Reload canvas
+            </button>
+            <a
+              href={`/projects/${projectId}?svg=1&mode=${activeMode}`}
+              style={{ alignSelf: "center", color: "var(--gs-primary)" }}
+            >
+              Open vector fallback
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -447,7 +571,10 @@ export function WebGLStudioPreview({
       )}
 
       {/* ---- The chrome overlay (pointer-transparent; children opt in) ---- */}
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+      <div
+        data-webgl-chrome
+        style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+      >
       {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
       <VignetteOverlay />
 
@@ -470,6 +597,7 @@ export function WebGLStudioPreview({
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
         projectId={projectId}
+        unlocked={unlocked}
         onMode={(m) => onNativeMode(m as Parameters<typeof onNativeMode>[0])}
         onZoom={(dir) =>
           setRig((r) => ({
@@ -568,10 +696,9 @@ export function WebGLStudioPreview({
                 fontWeight: 600,
                 padding: "6px 10px",
                 borderRadius: "var(--gs-radius-chip)",
-                border:
-                  "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
-                background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
-                color: "var(--gs-primary)",
+                border: "1px solid var(--gs-primary)",
+                background: "var(--gs-primary)",
+                color: "var(--gs-panel)",
                 cursor: truthBusy ? "wait" : "pointer",
               }}
             >
@@ -625,11 +752,15 @@ export function WebGLStudioPreview({
           <div style={{ width: "min(460px, 92vw)" }}>
             <ShareSurface
               projectId={projectId}
-              draftUnverified={false}
-              pendingGhosts={0}
-              quotePersisted={false}
-              portalUri={null}
-              onQuotePersisted={() => undefined}
+              verificationUnavailable={cadGhostCount === null}
+              draftUnverified={(cadGhostCount ?? 0) > 0}
+              pendingGhosts={cadGhostCount ?? 0}
+              quotePersisted={quotePersisted}
+              portalUri={portalUri}
+              onQuotePersisted={(uri) => {
+                setQuotePersisted(true);
+                setPortalUri(uri);
+              }}
               onReviewGhosts={() => setActiveMode("cad")}
               onBack={() => setActiveMode("sketch")}
             />
@@ -641,6 +772,8 @@ export function WebGLStudioPreview({
       <GlassCard position="top-left" style={{ padding: "8px 10px" }}>
         <div style={{ fontFamily: "var(--font-tech)", fontSize: 11, color: "var(--gs-ink)" }}>
           <div
+            role="group"
+            aria-label="Canvas view"
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -654,7 +787,7 @@ export function WebGLStudioPreview({
             <span style={{ color: "var(--gs-ink-secondary)", fontSize: 10.5 }}>
               B{stats.boundaryPoints} · I{stats.items} · S{stats.strokes}
               {stats.strikes > 0 && (
-                <span style={{ color: "var(--gs-conflict)" }}> · ⚠{stats.strikes}</span>
+                <span style={{ color: "var(--gs-ink-conflict)" }}> · ⚠{stats.strikes}</span>
               )}
               {" "}| {stats.scaleM.toFixed(0)}m
             </span>
@@ -663,6 +796,23 @@ export function WebGLStudioPreview({
           <div style={{ marginBottom: 4 }}>
             <SaveStatusChip />
           </div>
+          <nav
+            aria-label="Project destinations"
+            style={{ display: "flex", gap: 8, marginBottom: 6 }}
+          >
+            <a
+              href="/home"
+              style={{ color: "var(--gs-ink-secondary)", fontSize: 10.5 }}
+            >
+              Sites
+            </a>
+            <a
+              href={`/projects/${projectId}/outputs`}
+              style={{ color: "var(--gs-primary)", fontSize: 10.5 }}
+            >
+              Outputs
+            </a>
+          </nav>
 
           {/* View toggle — Plan ↔ 3D (drives the fused camera) */}
           <div
@@ -674,13 +824,17 @@ export function WebGLStudioPreview({
             }}
           >
             <button
+              type="button"
+              aria-pressed={!is3D}
               onClick={() => setViewBlendTarget(0)}
               style={{
                 flex: 1,
                 padding: "2px 10px",
                 border: "none",
-                background: !is3D ? "var(--gs-primary)" : "transparent",
-                color: !is3D ? "var(--gs-canvas)" : "var(--gs-ink-secondary)",
+                background: !is3D ? "var(--gs-chip-active)" : "transparent",
+                color: !is3D
+                  ? "var(--gs-chip-active-ink)"
+                  : "var(--gs-ink-secondary)",
                 fontFamily: "var(--font-ui)",
                 fontSize: 11,
                 fontWeight: 600,
@@ -691,13 +845,17 @@ export function WebGLStudioPreview({
               Plan
             </button>
             <button
+              type="button"
+              aria-pressed={is3D}
               onClick={() => setViewBlendTarget(1)}
               style={{
                 flex: 1,
                 padding: "2px 10px",
                 border: "none",
-                background: is3D ? "var(--gs-primary)" : "transparent",
-                color: is3D ? "var(--gs-canvas)" : "var(--gs-ink-secondary)",
+                background: is3D ? "var(--gs-chip-active)" : "transparent",
+                color: is3D
+                  ? "var(--gs-chip-active-ink)"
+                  : "var(--gs-ink-secondary)",
                 fontFamily: "var(--font-ui)",
                 fontSize: 11,
                 fontWeight: 600,
@@ -898,12 +1056,155 @@ export function WebGLStudioPreview({
           <MetaChip label="Leaf" value={leafStatus(seasonProgress, year)} accent />
           <MetaChip label="Sun" value={`${sunMin}m`} />
         </div>
+        <div
+          data-gs-glass-card
+          data-testid="canvas-layer-controls"
+          role="group"
+          aria-label="Canvas layers"
+          style={{
+            display: "flex",
+            gap: 4,
+            padding: "4px 6px",
+            borderRadius: "var(--gs-radius-panel)",
+            background: "var(--gs-glass-veil)",
+            border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+          }}
+        >
+          {(
+            [
+              ["aerial", "Photo"],
+              ["sketch", "Ink"],
+              ["siteTruth", "Site truth"],
+              ["design", "Design"],
+            ] as const
+          ).map(([layer, label]) => (
+            <button
+              key={layer}
+              type="button"
+              aria-pressed={visibleLayers[layer]}
+              onClick={() =>
+                setVisibleLayers((current) => ({
+                  ...current,
+                  [layer]: !current[layer],
+                }))
+              }
+              style={{
+                padding: "3px 7px",
+                borderRadius: "var(--gs-radius-chip)",
+                border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
+                background: visibleLayers[layer]
+                  ? "var(--gs-chip-active)"
+                  : "transparent",
+                color: visibleLayers[layer]
+                  ? "var(--gs-chip-active-ink)"
+                  : "var(--gs-ink-secondary)",
+                fontFamily: "var(--font-ui)",
+                fontSize: 10.5,
+                cursor: "pointer",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         {/* Council planning badges + season (GET /site-context) */}
         <SiteContextBadges projectId={projectId} variant="glass" />
-        {activeMode === "sketch" && (
-          <label
-            data-testid="sketch-photo-upload"
+        {keylessOverlays.length > 0 ? (
+          <div
+            data-testid="government-overlay-legend"
             style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "flex-end",
+              gap: 4,
+              maxWidth: 300,
+              padding: "5px 7px",
+              borderRadius: "var(--gs-radius-chip)",
+              background: "var(--gs-glass-veil)",
+              border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+              color: "var(--gs-ink-secondary)",
+              fontFamily: "var(--font-ui)",
+              fontSize: 10.5,
+            }}
+          >
+            <strong style={{ color: "var(--gs-ink)" }}>Government layers</strong>
+            {[...new Set(keylessOverlays.map((overlay) => overlay.kind))].map(
+              (kind) => (
+                <span key={kind}>{kind.replaceAll("_", " ")}</span>
+              ),
+            )}
+            <a
+              href="https://mapshare.vic.gov.au/vicplan/"
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--gs-primary)" }}
+            >
+              Open VicPlan
+            </a>
+            <a
+              href="https://www.vic.gov.au/find-my-local-council"
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--gs-primary)" }}
+            >
+              Council tools
+            </a>
+          </div>
+        ) : null}
+        {(easementsPct?.length ?? 0) > 0 || subsurfaceView ? (
+          <div
+            role="note"
+            data-testid="site-truth-honesty"
+            style={{
+              maxWidth: 300,
+              padding: "6px 9px",
+              borderRadius: "var(--gs-radius-chip)",
+              background: "var(--gs-glass-veil)",
+              border: "1px solid color-mix(in srgb, var(--gs-warning) 45%, transparent)",
+              color: "var(--gs-ink)",
+              fontFamily: "var(--font-ui)",
+              fontSize: 11,
+              lineHeight: 1.4,
+            }}
+          >
+            Easements are legal title constraints, not underground assets.
+            {subsurfaceView
+              ? " Utility depths and strike checks are indicative until surveyed."
+              : null}{" "}
+            <a
+              href="https://www.byda.com.au/"
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--gs-primary)" }}
+            >
+              Request BYDA
+            </a>
+          </div>
+        ) : null}
+        {lat == null || lng == null ? (
+          <div
+            role="status"
+            style={{
+              maxWidth: 280,
+              padding: "5px 8px",
+              borderRadius: "var(--gs-radius-chip)",
+              background: "var(--gs-glass-veil)",
+              color: "var(--gs-ink-secondary)",
+              fontFamily: "var(--font-ui)",
+              fontSize: 11,
+            }}
+          >
+            Solar analysis unavailable until the property pin is verified.
+          </div>
+        ) : null}
+        {activeMode === "sketch" && (
+          <>
+            <button
+              type="button"
+              data-testid="sketch-photo-upload"
+              disabled={photoBusy}
+              onClick={() => photoInputRef.current?.click()}
+              style={{
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
@@ -916,20 +1217,29 @@ export function WebGLStudioPreview({
               fontSize: 10.5,
               cursor: photoBusy ? "wait" : "pointer",
               whiteSpace: "nowrap",
-            }}
-          >
-            {photoBusy ? "Uploading…" : "Trace a site photo"}
+              }}
+            >
+              {photoBusy ? "Uploading…" : "Trace a site photo"}
+            </button>
             <input
+              ref={photoInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png"
+              disabled={photoBusy}
               hidden
+              aria-label="Choose a site photo to trace"
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) void uploadSitePhoto(f);
                 e.currentTarget.value = "";
               }}
             />
-          </label>
+            {photoError ? (
+              <p role="alert" style={{ margin: 0, color: "var(--gs-ink-conflict)", fontSize: 11 }}>
+                {photoError}
+              </p>
+            ) : null}
+          </>
         )}
         {/* In-context deep link while the subsurface blueprint is open. */}
         {subsurfaceView && (
@@ -954,7 +1264,12 @@ export function WebGLStudioPreview({
             Open full subsurface studio →
           </a>
         )}
-        {activeMode === "cad" && <StudioCadCard projectId={projectId} />}
+        {activeMode === "cad" && (
+          <StudioCadCard
+            projectId={projectId}
+            onCadResult={(result) => setCadGhostCount(result.ghost_count)}
+          />
+        )}
         {(items?.length ?? 0) > 0 &&
           (activeMode === "sketch" ||
             activeMode === "cad" ||
@@ -970,6 +1285,45 @@ export function WebGLStudioPreview({
             outdoorM2={outdoorM2}
           />
         )}
+        {activeMode === "quote" && (items?.length ?? 0) === 0 ? (
+          <GlassCard
+            position={{ position: "relative" }}
+            style={{ width: 280, padding: "10px 12px" }}
+          >
+            <div
+              data-testid="quote-empty-state"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                color: "var(--gs-ink)",
+                fontFamily: "var(--font-ui)",
+                fontSize: 11,
+                lineHeight: 1.45,
+              }}
+            >
+              <strong>Build the concept before pricing</strong>
+              <span style={{ color: "var(--gs-ink-secondary)" }}>
+                Add accepted planting or hardscape items to create a live fit-sheet.
+              </span>
+              <button
+                type="button"
+                onClick={() => onNativeMode("cad")}
+                style={{
+                  minHeight: 32,
+                  borderRadius: "var(--gs-radius-chip)",
+                  border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
+                  background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
+                  color: "var(--gs-primary)",
+                  fontFamily: "var(--font-ui)",
+                  cursor: "pointer",
+                }}
+              >
+                Open CAD drafter
+              </button>
+            </div>
+          </GlassCard>
+        ) : null}
         {liveData.heightmapPoints.length > 0 && (
           <SliceProfileCard
             scaleM={scaleM}

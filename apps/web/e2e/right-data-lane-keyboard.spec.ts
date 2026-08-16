@@ -10,7 +10,7 @@ import { createSurveyProject, handoffStudio } from "./helpers";
 test.describe("Right data lane keyboard contract", () => {
   test("Escape closes the survey checklist lane", async ({ page, request }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     // The checklist is collapsed by default (§6 item 7) — open it via the
@@ -31,7 +31,7 @@ test.describe("Right data lane keyboard contract", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     // The checklist is collapsed by default (§6 item 7) — open it via the

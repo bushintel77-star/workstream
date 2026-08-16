@@ -31,6 +31,8 @@ function makeBydaAsset(
     kind,
     ring: ring.map((p) => ({ x_pct: p.x_pct, y_pct: p.y_pct })),
     source: "traced",
+    depth_m: 0.45,
+    tolerance_m: 0.2,
   };
 }
 
@@ -67,6 +69,8 @@ describe("bydaAssetsToSubsurfaceUtilities", () => {
     expect(result[0]!.type).toBe("gas");
     expect(result[0]!.depthM).toBe(0.45);
     expect(result[0]!.toleranceM).toBe(0.2);
+    expect(result[0]!.depthSource).toBe("measured");
+    expect(result[0]!.source).toBe("traced");
   });
 
   it("maps all BYDA kinds to the correct UtilityType", () => {
@@ -102,8 +106,36 @@ describe("bydaAssetsToSubsurfaceUtilities", () => {
     ]);
   });
 
+  it("keeps assumed depth provenance visible", () => {
+    const asset = {
+      ...makeBydaAsset("water", [
+        { x_pct: 10, y_pct: 10 },
+        { x_pct: 90, y_pct: 90 },
+      ]),
+      source: "assumed" as const,
+    };
+    const [utility] = bydaAssetsToSubsurfaceUtilities(
+      [asset],
+      SCALE_M,
+      BOARD_ASPECT,
+    );
+    expect(utility?.depthSource).toBe("assumed");
+  });
+
   it("returns an empty array for no assets", () => {
     expect(bydaAssetsToSubsurfaceUtilities([], SCALE_M, BOARD_ASPECT)).toEqual([]);
+  });
+
+  it("does not invent depth for 2D BYDA linework", () => {
+    const asset = makeBydaAsset("gas", [
+      { x_pct: 10, y_pct: 10 },
+      { x_pct: 90, y_pct: 90 },
+    ]);
+    delete asset.depth_m;
+    delete asset.tolerance_m;
+    expect(
+      bydaAssetsToSubsurfaceUtilities([asset], SCALE_M, BOARD_ASPECT),
+    ).toEqual([]);
   });
 
   it("converts board-% coordinates to metre-space", () => {
@@ -239,6 +271,8 @@ describe("computeHydraulics", () => {
         ],
         emitter_spacing_cm: 30,
         emitter_flow_lph: 2,
+        pipe_diameter_mm: 25,
+        hazen_williams_c: 150,
       },
     ];
     const results = computeHydraulics(zones, SCALE_M, BOARD_ASPECT);
@@ -269,6 +303,18 @@ describe("computeHydraulics", () => {
       },
     ];
     expect(computeHydraulics(zones, SCALE_M, BOARD_ASPECT)).toEqual([]);
+  });
+
+  it("does not calculate pressure drop without verified pipe inputs", () => {
+    const zone: IrrigationZone = {
+      id: "zone-unverified",
+      name: "Unverified main",
+      kind: "drip",
+      points: [{ x_pct: 0, y_pct: 0 }, { x_pct: 50, y_pct: 0 }],
+      emitter_spacing_cm: 30,
+      emitter_flow_lph: 2,
+    };
+    expect(computeHydraulics([zone], SCALE_M, BOARD_ASPECT)).toEqual([]);
   });
 });
 

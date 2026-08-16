@@ -31,7 +31,7 @@ test.describe("Canvas cream + zoom (Phase 0)", () => {
     const body = (await create.json()) as { project: { id: string } };
     const projectId = body.project.id;
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     const aerial = page.getByTestId("aerial-image-slot");

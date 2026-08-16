@@ -78,16 +78,6 @@ const FOLIAGE = {
 const SUMMER_GREEN = new THREE.Color(PALETTE.summerGreen);
 const AUTUMN_ORANGE = new THREE.Color(PALETTE.autumnOrange);
 
-/**
- * Deterministic species hue so the same tree always renders a consistent
- * foliage tint. Lifted from GrowthStudioClient — green → olive band (92–138°).
- */
-function hashHue(seed: string): number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i += 1) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return 92 + (h % 46);
-}
-
 /** Multi-lobe offsets that give a canopy its organic, clustered-foliage mass.
  *  Expanded from GrowthStudioClient's 4-lobe rig to 6 lobes with more
  *  asymmetry + a raised crown tier [x, y, z, scale, lightShift]. */
@@ -142,12 +132,12 @@ function TpzRing({
  *  lightShift jogs the lightness per-lobe so the canopy isn't one flat colour. */
 function foliageColor(
   t: RenderItem["t"],
-  seed: string,
+  _seed: string,
   ghost: boolean,
   lightShift = 0,
 ): string {
   if (ghost) return FOLIAGE.ghost;
-  const hue = hashHue(seed);
+  const hue = t === "exist" ? 132 : 125;
   const sat = t === "exist" ? 26 : 42;
   const baseLight = t === "exist" ? 30 : 34;
   const light = Math.max(12, Math.min(55, baseLight + lightShift));

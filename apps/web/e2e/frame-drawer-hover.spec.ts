@@ -28,7 +28,7 @@ const EDGE_Y = Math.round(DESKTOP.height / 2);
 async function gotoSurvey(page: import("@playwright/test").Page, request: import("@playwright/test").APIRequestContext) {
   await page.setViewportSize(DESKTOP);
   const { projectId } = await createSurveyProject(request);
-  await page.goto(`/projects/${projectId}?mode=survey`);
+  await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
   await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
   const shell = page.getByTestId("frame-drawer-site-meta");
   await expect(shell).toBeVisible({ timeout: 15_000 });

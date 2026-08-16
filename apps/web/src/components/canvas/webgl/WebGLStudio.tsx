@@ -9,14 +9,14 @@
  * drawing as Three.js geometry in metre-space (1 unit = 1 metre, origin at
  * the (0,0,0) Signal Blue survey peg).
  *
- *   Layer 1: Canvas base (#101418 clear color + matching fog)
+ *   Layer 1: Canvas base (Studio Paper #F4F4F4 clear color + matching fog)
  *   Layer 2: R3F <Canvas> — geometry, subsurface, trees, boundaries, IBL
- *   Layer 3: DOM chrome overlay — Glass Cards (sibling div, pointer-events:none)
+ *   Layer 3: DOM chrome overlay — white panels (sibling div, pointer-events:none)
  *
  * Render quality stack (exceeds the GrowthStudio reference):
  *   - ACES Filmic tone mapping + sRGB output
  *   - VSM shadow maps (soft shadows, no r185 PCFSoft deprecation)
- *   - Image-based lighting via drei <Environment> (background=false keeps #101418)
+ *   - Image-based lighting via drei <Environment> (background=false keeps the paper clear)
  *   - Post-processing: Bloom (emissive glow) + N8AO (ambient occlusion) +
  *     Vignette (focus) + SMAA (edge AA)
  *   - Linear fog matching the canvas colour for depth
@@ -35,6 +35,10 @@ import { BlendFunction, KernelSize } from "postprocessing";
 import { useCallback, type CSSProperties, type ReactNode } from "react";
 import * as THREE from "three";
 import type { WebGLRenderer } from "three";
+import type {
+  DesignKeylessOverlay,
+  DesignNeighbourBuilding,
+} from "@workstream/contracts";
 import { PALETTE } from "../../../styles/colorTokens";
 import { StudioScene } from "./StudioScene";
 import type { StudioCameraRig } from "./cameraRig";
@@ -73,6 +77,10 @@ export interface WebGLStudioProps {
   aerialUri?: string | null;
   /** Spot level sample points for the terrain heightmap (world space). */
   heightmapPoints?: HeightmapPoint[];
+  keylessOverlays?: DesignKeylessOverlay[];
+  neighbourBuildings?: DesignNeighbourBuilding[];
+  showSketch?: boolean;
+  onContextLost?: () => void;
   children?: ReactNode;
   style?: CSSProperties;
 }
@@ -87,23 +95,23 @@ function RenderFX() {
   return (
     <EffectComposer multisampling={0} enableNormalPass>
       <N8AO
-        aoRadius={6}
-        intensity={1.4}
+        aoRadius={4}
+        intensity={1.15}
         distanceFalloff={0.8}
         quality="medium"
         color="black"
       />
       <Bloom
-        intensity={0.55}
-        luminanceThreshold={0.65}
+        intensity={0.25}
+        luminanceThreshold={0.85}
         luminanceSmoothing={0.3}
         mipmapBlur
         radius={0.7}
         kernelSize={KernelSize.LARGE}
       />
       <Vignette
-        offset={0.32}
-        darkness={0.45}
+        offset={0.4}
+        darkness={0.12}
         blendFunction={BlendFunction.NORMAL}
       />
       <SMAA />
@@ -134,6 +142,10 @@ export function WebGLStudio({
   sunMin,
   aerialUri,
   heightmapPoints,
+  keylessOverlays,
+  neighbourBuildings,
+  showSketch,
+  onContextLost,
   children,
   style,
 }: WebGLStudioProps) {
@@ -146,13 +158,21 @@ export function WebGLStudio({
     /* ACES filmic compresses mid-tones hard — a daylight garden scene needs
      * ~1.4 to read sunlit rather than dusk (calibrated on the Wrights Terrace
      * demo for foliage legibility while keeping shadow shape). */
-    gl.toneMappingExposure = 1.4;
+    gl.toneMappingExposure = 1.55;
     gl.outputColorSpace = THREE.SRGBColorSpace;
     // Linear fog matching the canvas colour — fades distant geometry into the
     // void for depth, hides the ground-plane edge cliff. Same technique the
     // GrowthStudio reference uses.
-    scene.fog = new THREE.Fog(PALETTE.gsCanvas, scaleM * 1.5, scaleM * 3.6);
-  }, [scaleM]);
+    scene.fog = new THREE.Fog(PALETTE.gsCanvas, scaleM * 4, scaleM * 10);
+    gl.domElement.addEventListener(
+      "webglcontextlost",
+      (event) => {
+        event.preventDefault();
+        onContextLost?.();
+      },
+      { once: true },
+    );
+  }, [onContextLost, scaleM]);
 
   return (
     <div
@@ -161,6 +181,7 @@ export function WebGLStudio({
     >
       <Canvas
         shadows="variance"
+        dpr={[1, 1.5]}
         camera={{ position: [0, 100, 0.001], fov: 30, near: 0.1, far: 10000 }}
         gl={{ antialias: true, alpha: false }}
         onCreated={onCanvasCreated}
@@ -171,9 +192,9 @@ export function WebGLStudio({
          * Image-based lighting — a soft outdoor environment contributes real
          * sky/bounce reflections to every PBR material. background={false} is
          * critical: the IBL lights the scene but the canvas keeps clearing to
-         * #101418 (doc §1.1 binding).
+         * Studio Paper #F4F4F4 (doc §1.1 binding).
          */}
-        <Environment preset="park" background={false} environmentIntensity={0.35} />
+        <Environment preset="park" background={false} environmentIntensity={0.55} />
 
         <StudioScene
           scaleM={scaleM}
@@ -198,6 +219,9 @@ export function WebGLStudio({
           sunMin={sunMin}
           aerialUri={aerialUri}
           heightmapPoints={heightmapPoints}
+          keylessOverlays={keylessOverlays}
+          neighbourBuildings={neighbourBuildings}
+          showSketch={showSketch}
         />
 
         <RenderFX />

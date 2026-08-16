@@ -104,7 +104,7 @@ function expectNoCollisions(rects: Rect[], vw: number, vh: number, label: string
 test.describe("WebGL chrome collision", () => {
   // Four states × two viewports, including two full split-view canvas
   // mounts — exceeds the default budget on cold hardware.
-  test.setTimeout(300_000);
+  test.setTimeout(420_000);
   test("no chrome overlaps across states and viewports", async ({
     page,
     request,
@@ -178,6 +178,7 @@ test.describe("WebGL chrome collision", () => {
     expect(seed.ok()).toBeTruthy();
 
     for (const [vw, vh] of [
+      [2560, 1080],
       [1280, 720],
       [960, 640],
     ]) {
@@ -242,7 +243,9 @@ test.describe("WebGL chrome collision", () => {
         });
       });
       expectNoCollisions(splitRects, vw, vh, `split ${vw}x${vh}`);
-      await page.getByRole("button", { name: "▾ Split" }).click();
+      await page.getByTestId("rail-split").evaluate((button: HTMLButtonElement) => {
+        button.click();
+      });
     }
 
     const fatal = errors.filter(

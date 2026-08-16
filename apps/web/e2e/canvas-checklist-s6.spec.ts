@@ -262,7 +262,7 @@ async function openIdleCad(
   request: import("@playwright/test").APIRequestContext,
 ) {
   const { projectId } = await createSurveyProject(request);
-  await page.goto(`/projects/${projectId}?mode=cad`);
+  await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
   await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("cad-plan-board")).toBeVisible({
     timeout: 20_000,
@@ -361,7 +361,7 @@ test.describe("STUDIO-STYLING-AND-UX §6 — idle canvas", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     // No pointer input — "idle" means nothing has been touched yet.
     await page.waitForTimeout(4_000);

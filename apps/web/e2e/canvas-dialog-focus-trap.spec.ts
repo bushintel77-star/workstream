@@ -29,7 +29,7 @@ test.describe("Canvas dialog focus trap", () => {
   test.describe("Command palette", () => {
     test("Escape closes the command palette", async ({ page, request }) => {
       const { projectId } = await createSurveyProject(request);
-      await page.goto(`/projects/${projectId}?mode=cad`);
+      await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
       await openCommandPalette(page);
@@ -44,7 +44,7 @@ test.describe("Canvas dialog focus trap", () => {
       request,
     }) => {
       const { projectId } = await createSurveyProject(request);
-      await page.goto(`/projects/${projectId}?mode=cad`);
+      await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
       await openCommandPalette(page);
@@ -77,7 +77,7 @@ test.describe("Canvas dialog focus trap", () => {
   test.describe("Sheet compose dock", () => {
     test("Escape closes the sheet compose peel", async ({ page, request }) => {
       const { projectId } = await createSurveyProject(request);
-      await page.goto(`/projects/${projectId}?mode=cad`);
+      await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
       await clickHeaderViewItem(page, "fit-sheet-top");
@@ -97,7 +97,7 @@ test.describe("Canvas dialog focus trap", () => {
       request,
     }) => {
       const { projectId } = await createSurveyProject(request);
-      await page.goto(`/projects/${projectId}?mode=cad`);
+      await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
       await clickHeaderViewItem(page, "fit-sheet-top");
@@ -131,7 +131,7 @@ test.describe("Canvas dialog focus trap", () => {
   test.describe("Share revision popup", () => {
     test("Escape closes the share popup", async ({ page, request }) => {
       const { projectId } = await createWrightsTier1Project(request);
-      await page.goto(`/projects/${projectId}?mode=cad`);
+      await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
       // Wait for the costed BOM to load so the share button enables.
@@ -149,7 +149,7 @@ test.describe("Canvas dialog focus trap", () => {
       request,
     }) => {
       const { projectId } = await createWrightsTier1Project(request);
-      await page.goto(`/projects/${projectId}?mode=cad`);
+      await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
       const shareBtn = page.getByTestId("share-top");
@@ -188,7 +188,7 @@ test.describe("Canvas dialog focus trap", () => {
       });
       await seedPoolWithoutBarrier(request, projectId);
 
-      await page.goto(`/projects/${projectId}?mode=cad`);
+      await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
       const shareBtn = page.getByTestId("share-top");

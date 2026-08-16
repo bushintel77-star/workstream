@@ -19,7 +19,6 @@
  */
 
 import { useMemo } from "react";
-import { GlassCard } from "./GlassCard";
 import { useStudioStore } from "./studioStore";
 import type { HeightmapPoint } from "./coordTransform";
 import { createElevationSampler, VERTICAL_SCALE } from "./terrainMath";
@@ -101,11 +100,7 @@ export function EarthworksCard({
 
   return (
     <InstrumentCard label="Earth" value={pads.length + " pads"}>
-  return (
-    <GlassCard
-      position={{ position: "relative" }}
-      style={{ width: 252, padding: "8px 10px" }}
-    >
+    <div style={{ width: 252 }}>
       <div
         data-testid="earthworks-card"
         style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)" }}
@@ -137,7 +132,7 @@ export function EarthworksCard({
               {p.topRealM.toFixed(2)}m
             </span>
             <span style={{ fontSize: 10.5, fontFamily: "var(--font-tech)" }}>
-              <span style={{ color: "var(--gs-conflict)" }}>
+              <span style={{ color: "var(--gs-ink-conflict)" }}>
                 −{fmtM3(p.result.cutM3)}
               </span>{" "}
               /{" "}
@@ -152,7 +147,7 @@ export function EarthworksCard({
         <div style={rowStyle}>
           <span style={labelStyle}>Cut / Fill total</span>
           <span style={{ ...valueStyle, fontSize: 13 }}>
-            <span style={{ color: "var(--gs-conflict)" }}>
+            <span style={{ color: "var(--gs-ink-conflict)" }}>
               {fmtM3(summary.totalCutM3)}
             </span>{" "}
             /{" "}
@@ -167,7 +162,7 @@ export function EarthworksCard({
           <span
             style={{
               ...valueStyle,
-              color: netM3 >= 0 ? "var(--gs-primary)" : "var(--gs-conflict)",
+              color: netM3 >= 0 ? "var(--gs-primary)" : "var(--gs-ink-conflict)",
             }}
           >
             {netM3 >= 0 ? "+" : ""}
@@ -187,7 +182,7 @@ export function EarthworksCard({
           {SPOIL_SWELL} swell)
         </div>
       </div>
-    </GlassCard>
+    </div>
     </InstrumentCard>
   );
 }

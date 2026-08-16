@@ -43,7 +43,7 @@ test.describe("Canvas foundation honesty", () => {
     );
     expect(canvas.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("building-footprint")).toHaveCount(0);
     await expect(page.getByTestId("building-footprint-empty")).toContainText(
@@ -109,7 +109,7 @@ test.describe("Canvas foundation honesty", () => {
     );
     expect(canvas.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("cad-plan-board")).toHaveAttribute(
       "data-mode",
@@ -148,7 +148,7 @@ test.describe("Canvas foundation honesty", () => {
     const survey = await request.post(`${API}/projects/${projectId}/survey`);
     expect(survey.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     // Wait for quiet hydrate to finish (boundary source flips off seed).

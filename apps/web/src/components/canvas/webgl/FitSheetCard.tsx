@@ -63,7 +63,7 @@ function StockChip({ inStock, mode }: { inStock: boolean; mode: string }) {
     mode !== "live_matched"
       ? "var(--gs-ink-secondary)"
       : inStock
-        ? "var(--gs-truth)"
+        ? "var(--gs-ink-truth)"
         : "var(--gs-primary)";
   return (
     <span

@@ -51,10 +51,11 @@ export function StudioModeTabs({
         gap: 2,
         padding: "3px 4px",
         borderRadius: "var(--gs-radius-pill)",
-        background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
+        background: "var(--gs-glass-veil)",
         backdropFilter: "blur(var(--gs-blur))",
         WebkitBackdropFilter: "blur(var(--gs-blur))",
-        border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+        border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+        boxShadow: "var(--gs-shadow-1)",
         pointerEvents: "auto",
         zIndex: 5,
         maxWidth: "calc(100% - 120px)",
@@ -72,11 +73,7 @@ export function StudioModeTabs({
           letterSpacing: "0.04em",
           padding: "3px 9px",
           borderRadius: "var(--gs-radius-pill)",
-          border: `1px solid ${
-            active
-              ? "color-mix(in srgb, var(--gs-primary) 45%, transparent)"
-              : "transparent"
-          }`,
+          border: "1px solid transparent",
           whiteSpace: "nowrap",
           cursor: locked ? "not-allowed" : "pointer",
           display: "inline-flex",
@@ -114,10 +111,10 @@ export function StudioModeTabs({
               onClick={() => onNativeMode(id)}
               style={{
                 ...shared,
-                background: active
-                  ? "color-mix(in srgb, var(--gs-primary) 16%, transparent)"
-                  : "transparent",
-                color: active ? "var(--gs-primary)" : "var(--gs-ink-secondary)",
+                background: active ? "var(--gs-chip-active)" : "transparent",
+                color: active
+                  ? "var(--gs-chip-active-ink)"
+                  : "var(--gs-ink-secondary)",
                 transition: "background 0.15s, color 0.15s",
               }}
               onMouseEnter={(e) => {
@@ -140,7 +137,10 @@ export function StudioModeTabs({
             title={`${label} — opens the classic board in ${label} mode`}
             style={{
               ...shared,
-              color: active ? "var(--gs-primary)" : "var(--gs-ink-secondary)",
+              background: active ? "var(--gs-chip-active)" : "transparent",
+              color: active
+                ? "var(--gs-chip-active-ink)"
+                : "var(--gs-ink-secondary)",
               textDecoration: "none",
             }}
             onMouseEnter={(e) => {

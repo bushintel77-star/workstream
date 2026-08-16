@@ -3,17 +3,18 @@
 import type { CSSProperties, ReactNode } from "react";
 
 /**
- * Gold Standard 2026 — Glass Card primitive.
+ * Gold Standard 2026 — Glass Card primitive (Studio Paper).
  *
- * Binding: docs/GOLD-STANDARD-2026.md §2 ("All UI must be floating Glass Cards")
+ * Binding: docs/GOLD-STANDARD-2026.md §2 ("All UI must be floating cards")
  *
- * Canvas-first density law: the glass is a SINGLE semi-opaque layer — the
- * drawing reads through every card (one layer of canvas at all times), so
- * cards float on the drawing instead of paneling over it. Compact chrome:
- * small radii, hairline borders, content supplies its own tight spacing.
+ * Studio Paper depth law: the card is a SINGLE frosted layer — white frost,
+ * blur, hairline, and a neutral shadow tier. Depth comes from light
+ * (gradient + shadow), not darkness; the drawing still reads beneath the
+ * frost. Compact chrome: small radii, hairline borders, content supplies
+ * its own tight spacing.
  *
  * This replaces the neumorphic --hc-neu-* dock plastic and the frost-paper
- * patterns. Glass Cards float over the drawing in the DOM chrome overlay
+ * patterns. Cards float over the drawing in the DOM chrome overlay
  * (Layer 3) — they never render inside the R3F <Canvas>.
  *
  * The container is pointer-events:none by default (so the canvas receives
@@ -28,8 +29,6 @@ export interface GlassCardProps {
   className?: string;
   /** Inline style override (merged with position). */
   style?: CSSProperties;
-  /** Click handler. */
-  onClick?: () => void;
 }
 
 const positionMap: Record<string, CSSProperties> = {
@@ -45,7 +44,6 @@ export function GlassCard({
   position,
   className,
   style,
-  onClick,
 }: GlassCardProps) {
   const posStyle =
     typeof position === "string" ? positionMap[position] : position;
@@ -53,17 +51,17 @@ export function GlassCard({
   return (
     <div
       className={className}
-      onClick={onClick}
       style={{
         position: "absolute",
         pointerEvents: "auto",
-        // Canvas-first: ~38% glass — the drawing reads through the card,
-        // keeping "one layer of canvas" always present under the chrome.
-        background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
+        // Studio Paper depth law: frost panel + blur + neutral shadow tier —
+        // the card floats above the drawing on light, not darkness.
+        background: "var(--gs-glass-veil)",
         backdropFilter: "blur(var(--gs-blur))",
         WebkitBackdropFilter: "blur(var(--gs-blur))",
-        borderRadius: 12,
-        border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+        borderRadius: "var(--gs-radius-panel)",
+        border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+        boxShadow: "var(--gs-shadow-2)",
         ...posStyle,
         ...style,
       }}

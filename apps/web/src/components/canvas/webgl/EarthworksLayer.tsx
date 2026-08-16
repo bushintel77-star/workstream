@@ -125,7 +125,7 @@ function PadEarthworks({
     // THREE.Color constructor converts sRGB hex → linear working space, so
     // vertexColors render correctly under the sRGB output colour space.
     const cut = new THREE.Color(PALETTE.gsConflict);
-    const fill = new THREE.Color(PALETTE.gsPrimary);
+    const fill = new THREE.Color(PALETTE.gsEarthworksFill);
 
     cells.forEach((cell, ci) => {
       const color = cell.diffM >= 0 ? fill : cut;

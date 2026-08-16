@@ -41,6 +41,10 @@ type AutoTraceData = {
     height_m?: number | null;
     label?: string | null;
   }>;
+  neighbour_buildings_canvas: Array<{
+    ring: Array<{ x: number; y: number }>;
+    height_m?: number | null;
+  }>;
 };
 type HydrateData = {
   overlays_canvas?: Array<{
@@ -155,6 +159,7 @@ export async function importSiteTruth(
     (currentCanvas?.placements ?? []).map((p) => p.id),
   );
   const treePlacements = (trace.urban_trees_canvas ?? []).flatMap((t, i) => {
+    if (t.height_m == null || t.canopy_radius_m == null) return [];
     const m = tf.toPct({ x: t.x, y: t.y });
     if (!Number.isFinite(m.x_pct) || !Number.isFinite(m.y_pct)) return [];
     // Contract: placement ids are UUIDs. Deterministic per project+index so
@@ -165,12 +170,14 @@ export async function importSiteTruth(
       {
         id,
         symbol_id: "tree-canopy",
-        label: `${t.label ?? "Existing tree"} · ${(t.height_m ?? 8).toFixed(0)}m`,
+        label: `${t.label ?? "Existing tree"} · ${t.height_m.toFixed(0)}m`,
         x_pct: m.x_pct,
         y_pct: m.y_pct,
         rotation_deg: 0,
-        scale: Math.max(0.6, ((t.canopy_radius_m ?? 3) * 2) / 8),
+        scale: Math.max(0.6, (t.canopy_radius_m * 2) / 8),
         source: "vicmap_tree" as const,
+        height_m: t.height_m,
+        canopy_radius_m: t.canopy_radius_m,
       },
     ];
   });
@@ -225,6 +232,17 @@ export async function importSiteTruth(
       ];
     },
   );
+  const neighbourBuildings = (trace.neighbour_buildings_canvas ?? []).map(
+    (neighbour, index) => ({
+      id: `vicmap-neighbour-${index}`,
+      ring: neighbour.ring.map(tf.toPct),
+      height_m: neighbour.height_m ?? undefined,
+      source: "vicmap" as const,
+      height_source: neighbour.height_m == null
+        ? ("assumed" as const)
+        : ("measured" as const),
+    }),
+  );
 
   const merged = {
     ...(currentCanvas ?? {}),
@@ -246,6 +264,10 @@ export async function importSiteTruth(
       easements: easements.length > 0 ? easements : (frame.easements ?? []),
       levels: [...authoredLevels, ...derivedLevels],
       keyless_overlays: overlays,
+      neighbour_buildings:
+        neighbourBuildings.length > 0
+          ? neighbourBuildings
+          : (frame.neighbour_buildings ?? []),
       board_width_m: tf.boardWidthM,
     },
   };

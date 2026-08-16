@@ -55,33 +55,6 @@ const BYDA_KIND_TO_UTILITY_TYPE: Record<BydaAssetKind, UtilityType> = {
 };
 
 /**
- * Default burial depth (metres) per BYDA asset kind. These are typical
- * Melbourne-area service depths — indicative, not DBYD-verified.
- */
-const DEFAULT_DEPTH_M: Record<BydaAssetKind, number> = {
-  sewer: 1.5,
-  stormwater: 0.9,
-  water: 0.6,
-  gas: 0.45,
-  power: 0.6,
-  nbn: 0.3,
-  other: 0.6,
-};
-
-/**
- * Default tolerance radius (metres) per kind — pipe radius + safety buffer.
- */
-const DEFAULT_TOLERANCE_M: Record<BydaAssetKind, number> = {
-  sewer: 0.4,
-  stormwater: 0.3,
-  water: 0.25,
-  gas: 0.2,
-  power: 0.2,
-  nbn: 0.15,
-  other: 0.25,
-};
-
-/**
  * Convert BYDA assets from the canvas (board-% ring polylines) to the renderer's
  * SubsurfaceUtility[] (metre-space line segments with depth + tolerance).
  *
@@ -98,7 +71,8 @@ export function bydaAssetsToSubsurfaceUtilities(
   scaleM: number,
   boardAspect: number,
 ): SubsurfaceUtility[] {
-  return assets.map((asset) => {
+  return assets.flatMap((asset) => {
+    if (asset.depth_m == null || asset.tolerance_m == null) return [];
     const ring = asset.ring;
     const first = ring[0]!;
     const last = ring[ring.length - 1]!;
@@ -117,8 +91,13 @@ export function bydaAssetsToSubsurfaceUtilities(
       type: BYDA_KIND_TO_UTILITY_TYPE[asset.kind] ?? "comms",
       start: startWorld,
       end: endWorld,
-      depthM: DEFAULT_DEPTH_M[asset.kind] ?? 0.6,
-      toleranceM: DEFAULT_TOLERANCE_M[asset.kind] ?? 0.25,
+      depthM: asset.depth_m,
+      toleranceM: asset.tolerance_m,
+      depthSource:
+        asset.source === "assumed"
+          ? ("assumed" as const)
+          : ("measured" as const),
+      source: asset.source,
     };
   });
 }
@@ -150,13 +129,13 @@ export function trenchesToExcavations(
   boardAspect: number,
 ): DesignExcavation[] {
   return trenches
-    .filter((t) => !t.ghost)
+    .filter((t) => !t.ghost && t.depth_mm != null)
     .map((t) => ({
       id: t.id,
       path: t.points.map((p) =>
         pctToWorld({ x: p.x_pct, y: p.y_pct }, scaleM, boardAspect),
       ),
-      depthM: (t.depth_mm ?? 300) / 1000,
+      depthM: t.depth_mm! / 1000,
       widthM: TRENCH_WIDTH_M[t.kind] ?? 0.3,
     }));
 }
@@ -192,11 +171,6 @@ export function computeStrikeAlerts(
 /* -------------------------------------------------------------------------- */
 /* Irrigation Zones → HydraulicRun bridge                                     */
 /* -------------------------------------------------------------------------- */
-
-/** Default pipe diameter for irrigation mains (mm). */
-const DEFAULT_PIPE_DIAMETER_MM = 25;
-/** Hazen-Williams roughness for PVC pipe. */
-const PVC_C_FACTOR = 150;
 
 /**
  * Derive the total run length (metres) from an irrigation zone's point polyline.
@@ -253,15 +227,20 @@ export function computeHydraulics(
   boardAspect: number,
 ) {
   const runs: Array<HydraulicRun & { startIsOrigin?: boolean }> = zones
-    .filter((z) => z.kind === "drip" || z.kind === "spray")
+    .filter(
+      (z) =>
+        (z.kind === "drip" || z.kind === "spray") &&
+        z.pipe_diameter_mm != null &&
+        z.hazen_williams_c != null,
+    )
     .map((z) => {
       const lengthM = zoneLengthM(z, scaleM, boardAspect);
       return {
         id: z.id,
         flowLps: estimateZoneFlowLps(z, lengthM),
-        pipeDiameterMm: DEFAULT_PIPE_DIAMETER_MM,
+        pipeDiameterMm: z.pipe_diameter_mm!,
         lengthM,
-        cFactor: PVC_C_FACTOR,
+        cFactor: z.hazen_williams_c!,
       };
     });
 

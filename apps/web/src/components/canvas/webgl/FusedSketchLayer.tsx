@@ -503,15 +503,15 @@ function ExtrudeMass({
 /**
  * Snap marker — kind-coloured ring + disc + glyph chip at the snapped point.
  * Colour language mirrors the SVG studio's snap visuals: crimson = vertex
- * lock, truth blue = angle, gold = close. The glyph chip is a constant-px
- * drei <Html> span (the SVG snapGlyph badge equivalent).
+ * lock, truth blue = angle, charcoal ink = close. The glyph chip is a
+ * constant-px drei <Html> span (the SVG snapGlyph badge equivalent).
  */
 function SnapMarker({ hint }: { hint: SnapHint }) {
   const color =
     hint.kind === "vertex"
       ? PALETTE.gsConflict
       : hint.kind === "close"
-        ? PALETTE.gsPrimary
+        ? PALETTE.gsInk
         : "#0030CF"; // angle — Signal Blue (truth)
   const glyph =
     hint.kind === "vertex" ? "●" : hint.kind === "close" ? "◎" : "∠";

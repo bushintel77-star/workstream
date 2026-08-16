@@ -283,12 +283,12 @@
   top: 12px;
   bottom: 12px;
   width: 2px;
-  border-radius: 2px;
+  border-radius: var(--gs-radius-chip);
   background: var(--gs-line);
 }
 
 .card.status_draft::before { background: var(--ink-tertiary); }
-.card.status_active::before { background: var(--gs-truth-soft); }
+.card.status_active::before { background: var(--gs-primary); }
 .card.status_review::before { background: var(--gs-warning); }
 .card.status_complete::before { background: var(--gs-success); }
 
@@ -309,7 +309,6 @@
   font-weight: 600;
   line-height: 1;
   color: var(--gs-primary);
-  opacity: 0.85;
 }
 
 .cardDot {
@@ -320,7 +319,7 @@
 }
 
 .cardDot.status_draft { background: var(--ink-tertiary); }
-.cardDot.status_active { background: var(--gs-truth-ink); }
+.cardDot.status_active { background: var(--gs-primary); }
 .cardDot.status_review { background: var(--gs-warning); }
 .cardDot.status_complete { background: var(--gs-success); }
 
@@ -597,7 +596,7 @@
 .seasonMonths {
   width: 6px;
   height: 14px;
-  border-radius: 2px;
+  border-radius: var(--gs-radius-chip);
   background: color-mix(in srgb, var(--gs-line) 80%, transparent);
 }
 
@@ -624,7 +623,7 @@
   font-family: var(--font-tech);
   font-size: 10px;
   color: var(--ink-secondary);
-  border-radius: 3px;
+  border-radius: var(--gs-radius-chip);
 }
 
 .calToday {

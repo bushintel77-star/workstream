@@ -13,7 +13,7 @@ import {
 async function openQuoteBuilder(page: Page, projectId: string) {
   // The QuoteBuilder lives on the legacy SVG studio — WebGL is the default
   // mount since a1a5c43, so the SVG surface needs ?svg=1.
-  await page.goto(`/projects/${projectId}?mode=cad&svg=1`);
+  await page.goto(`/projects/${projectId}?svg=1&mode=cad&svg=1`);
   await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
   await clickHeaderViewItem(page, "live-cost-top");
   await expect(page.getByTestId("live-cost-rail")).toBeVisible({

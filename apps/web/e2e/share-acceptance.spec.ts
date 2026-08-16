@@ -101,7 +101,7 @@ test.describe("Client share acceptance", () => {
     ).revisions as Array<{ status: string; revision: string }>;
     expect(revisions[0]?.status).toBe("accepted");
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     // Fit sheet stamp — open fit sheet and assert Accepted.

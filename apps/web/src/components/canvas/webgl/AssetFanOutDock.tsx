@@ -43,6 +43,8 @@ function AssetCard({
 }) {
   return (
     <button
+      type="button"
+      aria-pressed={active}
       data-testid={`asset-card-${entry.symbolId}`}
       onClick={onPick}
       style={{
@@ -92,7 +94,7 @@ function AssetCard({
       <span
         style={{
           fontFamily: "var(--font-ui)",
-          fontSize: 9.5,
+          fontSize: 10.5,
           fontWeight: 600,
           color: "var(--gs-ink)",
           textAlign: "center",
@@ -104,7 +106,7 @@ function AssetCard({
       <span
         style={{
           fontFamily: "var(--font-tech)",
-          fontSize: 9.5,
+          fontSize: 10.5,
           color: "var(--gs-ink-secondary)",
           textAlign: "center",
           lineHeight: 1.4,
