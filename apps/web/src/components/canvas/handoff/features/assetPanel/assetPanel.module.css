@@ -674,6 +674,13 @@
   pointer-events: none;
 }
 
+/* Only the front card is clickable — back/side slots stay pass-through so
+ * viewport drags keep rotating the ring (the tiles are real buttons; mouse
+ * clicks died here when every slot was pointer-events: none). */
+.carouselSlot[data-active="true"] {
+  pointer-events: auto;
+}
+
 .carouselSlot[data-active="true"] .carouselCard {
   border-color: color-mix(in srgb, var(--hc-accent) 38%, rgb(255 255 255 / 12%));
   box-shadow:

@@ -4,6 +4,13 @@ import { handoffStudio, pipelineShell } from "./helpers";
 const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 test.describe("One canvas modes", () => {
+  // Operator viewport — the header (brand + phase + 8 mode tabs + actions)
+  // is designed for ≥1600px; the Playwright default 1280 crams it off-screen.
+  // Sub-1280 header layout is a tracked product issue, not this spec's law.
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 950 });
+  });
+
   let projectId: string;
 
   test.beforeAll(async ({ request }) => {

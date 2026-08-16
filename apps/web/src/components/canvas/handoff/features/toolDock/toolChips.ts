@@ -52,7 +52,9 @@ export function buildToolChips(
   const allowedByMode: Record<StudioMode, ToolChipId[]> = {
     survey: ["trace", "select", "measure", "grid"],
     sketch: ["select", "add", "paint", "path", "zone", "measure", "grid"],
-    cad: ["select", "add", "path", "zone", "measure", "grid"],
+    // Trace is armed in CAD too — TraceOverlay only excludes sketch mode,
+    // and docs/INTERACTION-LOGIC.md Rule 2 exercises Trace in CAD.
+    cad: ["trace", "select", "add", "path", "zone", "measure", "grid"],
     elevation: ["select", "measure", "grid"],
     garden: ["select", "measure", "grid"],
     quote: ["select", "measure", "grid"],

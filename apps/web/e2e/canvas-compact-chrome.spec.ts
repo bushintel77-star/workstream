@@ -29,7 +29,9 @@ test.describe("Compact canvas-first chrome", () => {
     await page.getByTestId("instruments-peek").click();
     await expect(page.getByTestId("contextual-tool-strip")).toBeVisible();
     await expect(page.getByTestId("instruments-peek")).toHaveCount(0);
-    await expect(page.getByTestId("canvas-tool-trace")).toBeVisible();
+    // Sketch strip: select/add/paint/path/zone/measure/grid — Trace is
+    // survey/CAD only (TraceOverlay is off in sketch by design).
+    await expect(page.getByTestId("canvas-tool-paint")).toBeVisible();
     await expect(page.getByTestId("canvas-mode-overflow")).toBeVisible();
 
     await page.getByTestId("studio-primary-fab").click();
