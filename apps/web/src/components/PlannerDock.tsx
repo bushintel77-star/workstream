@@ -6,16 +6,6 @@ import { BottomDock } from "./BottomDock";
 
 const DESKTOP_MEDIA_QUERY = "(min-width: 769px)";
 
-function subscribeToViewport(callback: () => void) {
-  const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY);
-  mediaQuery.addEventListener("change", callback);
-  return () => mediaQuery.removeEventListener("change", callback);
-}
-
-function getDesktopSnapshot() {
-  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
-}
-
 /**
  * PlannerDock — renders the planner content in the correct drawer for the
  * current viewport. Desktop gets the right-edge RailDrawer, mobile gets the
@@ -27,15 +17,24 @@ function getDesktopSnapshot() {
  * RailDrawer; the client snapshot reads the real matchMedia after hydration
  * and React re-renders if they disagree — no hydration mismatch warning.
  */
-const DESKTOP_QUERY = "(min-width: 769px)";
+const DESKTOP_QUERY = DESKTOP_MEDIA_QUERY;
 
 function subscribeDesktop(callback: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
   const mq = window.matchMedia(DESKTOP_QUERY);
-  mq.addEventListener("change", callback);
-  return () => mq.removeEventListener("change", callback);
+  // Use addEventListener when available, fallback to addListener for older browsers
+  if (typeof mq.addEventListener === "function") {
+    mq.addEventListener("change", callback);
+    return () => mq.removeEventListener("change", callback);
+  }
+  // @ts-ignore - legacy fallback
+  mq.addListener(callback);
+  // @ts-ignore
+  return () => mq.removeListener(callback);
 }
 
 function getDesktopSnapshot(): boolean {
+  if (typeof window === "undefined") return true;
   return window.matchMedia(DESKTOP_QUERY).matches;
 }
 
@@ -53,9 +52,6 @@ export function PlannerDock({
   accent?: "blue" | "red" | "green" | "yellow";
 }) {
   const isDesktop = useSyncExternalStore(
-    subscribeToViewport,
-    getDesktopSnapshot,
-    () => true,
     subscribeDesktop,
     getDesktopSnapshot,
     getDesktopServerSnapshot,
