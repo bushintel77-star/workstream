@@ -4,6 +4,18 @@ import { useSyncExternalStore, type ReactNode } from "react";
 import { RailDrawer } from "./RailDrawer";
 import { BottomDock } from "./BottomDock";
 
+const DESKTOP_MEDIA_QUERY = "(min-width: 769px)";
+
+function subscribeToViewport(callback: () => void) {
+  const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY);
+  mediaQuery.addEventListener("change", callback);
+  return () => mediaQuery.removeEventListener("change", callback);
+}
+
+function getDesktopSnapshot() {
+  return window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
+}
+
 /**
  * PlannerDock — renders the planner content in the correct drawer for the
  * current viewport. Desktop gets the right-edge RailDrawer, mobile gets the
@@ -41,6 +53,9 @@ export function PlannerDock({
   accent?: "blue" | "red" | "green" | "yellow";
 }) {
   const isDesktop = useSyncExternalStore(
+    subscribeToViewport,
+    getDesktopSnapshot,
+    () => true,
     subscribeDesktop,
     getDesktopSnapshot,
     getDesktopServerSnapshot,

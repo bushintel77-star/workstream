@@ -76,9 +76,10 @@ export function DesignAssetPalette({
           return (
             <Pressable
               key={cat}
-              style={[
+              style={({ pressed }) => [
                 styles.tab,
                 category === cat && styles.tabActive,
+                pressed && styles.tabPressed,
               ]}
               onPress={() => setCategory(cat)}
               disabled={disabled}
@@ -100,6 +101,33 @@ export function DesignAssetPalette({
         })}
       </ScrollView>
 
+      <View style={styles.grid}>
+        {filtered.map((sym) => {
+          const active = selectedId === sym.id;
+          return (
+            <Pressable
+              key={sym.id}
+            style={({ pressed }) => [
+                styles.card,
+                { backgroundColor: sym.asset?.preview_bg ?? tokens.color.surface.sunken },
+                active && styles.cardActive,
+              pressed && styles.cardPressed,
+            ]}
+            onPress={() => onSelect(sym.id)}
+            disabled={disabled}
+            accessibilityRole="button"
+              accessibilityLabel={sym.label}
+              accessibilityHint="Select this symbol, then tap the plan to place it"
+              accessibilityState={{ selected: active, disabled }}
+            >
+              <DesignAssetGlyph symbol={sym} size="lg" />
+              <Text style={styles.cardLabel} numberOfLines={2}>
+                {sym.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
       {/*
        * Discovery HUD — fan-out carousel, not a static grid. Cards stagger
        * in on first render/filter change (Apple-dock "fan-out" from the
@@ -134,28 +162,34 @@ const styles = StyleSheet.create({
   wrap: { gap: 10, marginTop: 8 },
   wrapDisabled: { opacity: 0.45 },
   title: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     color: tokens.color.ink.tertiary,
+    textTransform: "uppercase",
   },
   subtitle: { fontSize: 13, color: tokens.color.ink.secondary },
   search: {
     minHeight: 44,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: tokens.color.line.hairline,
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    borderRadius: tokens.radius.md,
+    paddingHorizontal: 14,
     fontSize: 16,
     color: tokens.color.ink.primary,
     backgroundColor: tokens.color.surface.base,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   tabs: { maxHeight: 44 },
   tabsInner: { gap: 8, paddingVertical: 4 },
   tab: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 999,
+    borderRadius: tokens.radius.pill,
     borderWidth: 1,
     borderColor: tokens.color.line.hairline,
     backgroundColor: tokens.color.surface.base,
@@ -164,11 +198,44 @@ const styles = StyleSheet.create({
     borderColor: tokens.color.accent.default,
     backgroundColor: tokens.color.surface.sunken,
   },
+  tabPressed: {
+    transform: [{ translateY: 1 }],
+  },
   tabText: { fontSize: 12, fontWeight: "600", color: tokens.color.ink.secondary },
   tabTextActive: { color: tokens.color.accent.default },
   carousel: {
     flexDirection: "row",
     gap: 10,
+  },
+  card: {
+    width: "48%",
+    minHeight: 126,
+    padding: 12,
+    borderRadius: tokens.radius.lg,
+    borderWidth: 1,
+    borderColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 4,
+  },
+  cardActive: {
+    borderColor: tokens.color.accent.default,
+    shadowOpacity: 0.12,
+  },
+  cardPressed: {
+    transform: [{ translateY: 1 }, { scale: 0.98 }],
+  },
+  cardLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    textAlign: "center",
+    letterSpacing: 0.2,
+    color: tokens.color.ink.primary,
     paddingVertical: 4,
     paddingRight: 8,
   },

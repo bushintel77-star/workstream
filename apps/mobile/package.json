@@ -56,6 +56,7 @@
     "postcss-value-parser": "^4.2.0",
     "query-string": "^9.5.0",
     "react": "^19.2.8",
+    "react-dom": "^19.0.0",
     "react-dom": "^19.2.8",
     "react-fast-compare": "^3.2.2",
     "react-is": "^19.2.8",
@@ -67,6 +68,7 @@
     "react-native-safe-area-context": "~5.0.0",
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.15.5",
+    "react-native-web": "^0.21.2"
     "react-native-web": "^0.21.2",
     "react-refresh": "^0.18.0",
     "scheduler": "^0.27.0",

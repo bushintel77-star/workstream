@@ -132,14 +132,6 @@ export default function HomeScreen() {
         <Text style={styles.indexLabel}>
           {loading ? "Loading" : `${projects.length} ${projects.length === 1 ? "project" : "projects"}`}
         </Text>
-        <Pressable
-          onPress={() => router.push("/(app)/settings")}
-          hitSlop={16}
-          accessibilityRole="link"
-          accessibilityLabel="Open settings"
-        >
-          <Text style={styles.indexAction}>Settings</Text>
-        </Pressable>
       </View>
 
       {loading ? (
@@ -287,15 +279,6 @@ const styles = StyleSheet.create({
     color: tokens.color.ink.tertiary,
     textTransform: "uppercase",
   },
-  indexAction: {
-    fontFamily: tokens.font.mono,
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.8,
-    color: tokens.color.ink.secondary,
-    textTransform: "uppercase",
-  },
-
   // --- List ---
   list: {
     paddingHorizontal: tokens.space[5],
@@ -309,11 +292,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     paddingVertical: tokens.space[4],
+    paddingHorizontal: tokens.space[3],
     gap: tokens.space[3],
     minHeight: 72,
+    backgroundColor: tokens.color.surface.elevated,
+    borderRadius: tokens.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: tokens.color.line.hairline,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   rowPressed: {
-    opacity: 0.5,
+    transform: [{ translateY: 1 }],
+    opacity: 0.96,
   },
   rowIndex: {
     fontFamily: tokens.font.mono,
@@ -322,7 +316,11 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: tokens.color.ink.tertiary,
     minWidth: 24,
+    minHeight: 24,
     paddingTop: 2,
+    paddingHorizontal: 5,
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.color.surface.sunken,
     fontVariant: ["tabular-nums"],
   },
   rowBody: {
@@ -423,22 +421,34 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: tokens.space[2],
     paddingVertical: tokens.space[4],
+    paddingHorizontal: tokens.space[5],
+    marginHorizontal: tokens.space[5],
+    borderRadius: tokens.radius.pill,
+    backgroundColor: tokens.color.accent.soft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: tokens.color.accent.default,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   footerButtonPressed: {
-    opacity: 0.5,
+    transform: [{ translateY: 1 }, { scale: 0.99 }],
+    opacity: 0.96,
   },
   footerPlus: {
     fontFamily: tokens.font.mono,
     fontSize: 18,
     fontWeight: "300",
-    color: tokens.color.ink.primary,
+    color: tokens.color.accent.default,
   },
   footerLabel: {
     fontFamily: tokens.font.mono,
     fontSize: 12,
     fontWeight: "600",
     letterSpacing: 1,
-    color: tokens.color.ink.primary,
+    color: tokens.color.accent.default,
     textTransform: "uppercase",
   },
 });

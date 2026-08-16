@@ -737,6 +737,20 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
   const isLocked = activeDoc?.status === "issued";
   const draftingSuspended =
     isLocked || ghostReviewOpen || formatReviewOpen;
+  const deckSummary = activeDoc
+    ? [
+        { label: "Pages", value: String(activeDoc.pages.length) },
+        {
+          label: "Panels",
+          value: String(activeDoc.pages.reduce((sum, page) => sum + page.panels.length, 0)),
+        },
+        { label: "Template", value: TEMPLATE_LABELS[activeDoc.template_id] },
+        {
+          label: "Theme",
+          value: `${PALETTE_LABELS[activeDoc.theme.palette]} · ${FONT_LABELS[activeDoc.theme.font]}`,
+        },
+      ]
+    : [];
   const widgetEstimate =
     isLocked && activeDoc?.estimate_snapshot
       ? {
@@ -771,6 +785,15 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
         >
           {surfaceCopy}
         </p>
+
+        <div className={css.sidebarStats} aria-label="Deck summary">
+          {deckSummary.map((item) => (
+            <div key={item.label} className={css.statCard}>
+              <span className={css.statLabel}>{item.label}</span>
+              <span className={css.statValue}>{item.value}</span>
+            </div>
+          ))}
+        </div>
 
         <KitButton
           variant="default"

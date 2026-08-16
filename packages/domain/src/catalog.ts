@@ -1,7 +1,6 @@
 import type { CatalogSymbol } from "@workstream/contracts";
 import { CURTIS_DESIGN_ASSETS } from "./catalog-assets";
 import { CURTIS_GARDEN_LADDER_ASSETS } from "./garden-size-ladder";
-import { OPEN_CROP_SYMBOLS } from "./open-crop-symbols";
 import { OSMIC_LANDSCAPE_SYMBOLS } from "./osmic-landscape-symbols";
 import { PLANZV_DESIGN_SYMBOLS } from "./planzv-design-symbols";
 import { TEMAKI_PLANT_SYMBOLS } from "./temaki-plant-symbols";
@@ -10,9 +9,8 @@ import { WIKIMEDIA_TREE_SYMBOLS } from "./wikimedia-tree-symbols";
 
 /**
  * Curtis size ladder + Curtis library + Temaki plants/site + PlanZV + Osmic +
- * Wikimedia trees + Open Crop. Design / planting / hardscape packs listed
- * before edible crops; the size ladder leads because its rungs carry the
- * mature heights every elevation surface reads.
+ * Wikimedia trees. The default studio catalog stays ornamental; edible-crop
+ * glyphs remain exported separately for explicit use only.
  */
 export const CURTIS_CATALOG_SYMBOLS: CatalogSymbol[] = [
   ...CURTIS_GARDEN_LADDER_ASSETS,
@@ -22,7 +20,6 @@ export const CURTIS_CATALOG_SYMBOLS: CatalogSymbol[] = [
   ...PLANZV_DESIGN_SYMBOLS,
   ...OSMIC_LANDSCAPE_SYMBOLS,
   ...WIKIMEDIA_TREE_SYMBOLS,
-  ...OPEN_CROP_SYMBOLS,
 ];
 
 export function getCatalogSymbol(id: string): CatalogSymbol | undefined {

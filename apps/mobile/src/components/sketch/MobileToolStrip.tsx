@@ -29,14 +29,19 @@ export function MobileToolStrip({
 }: Props) {
   return (
     <View style={styles.wrap} accessibilityRole="toolbar" accessibilityLabel="Sketch tools">
+      <View style={styles.kickerRow}>
+        <Text style={styles.kicker}>Tools</Text>
+        <Text style={styles.helper}>Minimal sketch rail</Text>
+      </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {TOOLS.map((t) => (
           <Pressable
             key={t.id}
-            style={[
+            style={({ pressed }) => [
               styles.pill,
               active === t.id && styles.pillActive,
               !t.enabled && styles.pillDisabled,
+              pressed && styles.pillPressed,
             ]}
             disabled={!t.enabled}
             onPress={() => t.enabled && onTool(t.id)}
@@ -86,42 +91,76 @@ export function MobileToolStrip({
 
 const styles = StyleSheet.create({
   wrap: {
-    height: 52,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: tokens.color.line.hairline,
-    backgroundColor: tokens.color.surface.elevated,
+    paddingTop: 8,
+    marginHorizontal: 12,
+    marginBottom: 10,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(90, 102, 122, 0.14)",
+    backgroundColor: "rgba(245, 244, 239, 0.92)",
+    shadowColor: "#26303d",
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  },
+  kickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingBottom: 6,
+  },
+  kicker: {
+    fontSize: 9,
+    fontFamily: "monospace",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+    color: "#6f7e96",
+  },
+  helper: {
+    fontSize: 9,
+    fontFamily: "monospace",
+    color: "#7a8598",
   },
   row: {
     alignItems: "center",
-    paddingHorizontal: 8,
-    gap: 4,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    gap: 6,
     flexDirection: "row",
   },
   pill: {
-    minWidth: 52,
-    minHeight: 44,
-    borderRadius: tokens.radius.canvas,
-    paddingHorizontal: tokens.space[3],
+    minWidth: 60,
+    minHeight: 38,
+    borderRadius: 12,
+    paddingHorizontal: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: tokens.color.surface.sunken,
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(88, 99, 119, 0.12)",
   },
   pillActive: {
-    borderWidth: 1,
-    borderColor: tokens.color.accent.default,
+    borderColor: "rgba(70, 104, 216, 0.28)",
+    backgroundColor: "rgba(70, 104, 216, 0.08)",
   },
-  pillDisabled: { opacity: 0.4 },
+  pillDisabled: { opacity: 0.38 },
+  pillPressed: {
+    transform: [{ translateY: 1 }, { scale: 0.98 }],
+  },
   label: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: "monospace",
-    color: tokens.color.ink.tertiary,
+    letterSpacing: 0.6,
+    color: "#2a3745",
   },
-  labelActive: { color: tokens.color.accent.default },
-  labelDisabled: { color: tokens.color.ink.tertiary },
+  labelActive: { color: "#4668d8" },
+  labelDisabled: { color: "#7d8798" },
   divider: {
     width: 1,
-    height: 28,
-    backgroundColor: tokens.color.line.hairline,
+    height: 22,
+    backgroundColor: "rgba(88, 99, 119, 0.20)",
     marginHorizontal: 4,
   },
 });
