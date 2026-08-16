@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import Svg, { Circle, Line, Path } from "react-native-svg";
+import Svg, { Circle, Defs, Line, Path, Pattern, Rect } from "react-native-svg";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -472,7 +472,8 @@ export default function DesignStudioScreen() {
           </Text>
         ) : null}
         {Platform.OS === "web" ? (
-        {!presentation && pendingPlacement ? (() => {
+          <>
+            {!presentation && pendingPlacement ? (() => {
           const ghostSymbol = symbolById.get(pendingPlacement.symbolId);
           const aiOptimized = ghostNear(
             pendingPlacement.xPct,
@@ -514,7 +515,6 @@ export default function DesignStudioScreen() {
             </Animated.View>
           );
         })() : null}
-        <GestureDetector gesture={drawGesture}>
           <Pressable
             style={styles.canvasFlex}
             onLayout={(e) => {
@@ -716,6 +716,7 @@ export default function DesignStudioScreen() {
               );
             })() : null}
           </Pressable>
+          </>
         ) : (
           <GestureDetector gesture={drawGesture}>
             <Pressable

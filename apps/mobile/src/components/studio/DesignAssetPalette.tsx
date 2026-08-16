@@ -101,33 +101,6 @@ export function DesignAssetPalette({
         })}
       </ScrollView>
 
-      <View style={styles.grid}>
-        {filtered.map((sym) => {
-          const active = selectedId === sym.id;
-          return (
-            <Pressable
-              key={sym.id}
-            style={({ pressed }) => [
-                styles.card,
-                { backgroundColor: sym.asset?.preview_bg ?? tokens.color.surface.sunken },
-                active && styles.cardActive,
-              pressed && styles.cardPressed,
-            ]}
-            onPress={() => onSelect(sym.id)}
-            disabled={disabled}
-            accessibilityRole="button"
-              accessibilityLabel={sym.label}
-              accessibilityHint="Select this symbol, then tap the plan to place it"
-              accessibilityState={{ selected: active, disabled }}
-            >
-              <DesignAssetGlyph symbol={sym} size="lg" />
-              <Text style={styles.cardLabel} numberOfLines={2}>
-                {sym.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
       {/*
        * Discovery HUD — fan-out carousel, not a static grid. Cards stagger
        * in on first render/filter change (Apple-dock "fan-out" from the
@@ -206,38 +179,6 @@ const styles = StyleSheet.create({
   carousel: {
     flexDirection: "row",
     gap: 10,
-  },
-  card: {
-    width: "48%",
-    minHeight: 126,
-    padding: 12,
-    borderRadius: tokens.radius.lg,
-    borderWidth: 1,
-    borderColor: "transparent",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
-  },
-  cardActive: {
-    borderColor: tokens.color.accent.default,
-    shadowOpacity: 0.12,
-  },
-  cardPressed: {
-    transform: [{ translateY: 1 }, { scale: 0.98 }],
-  },
-  cardLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-    textAlign: "center",
-    letterSpacing: 0.2,
-    color: tokens.color.ink.primary,
-    paddingVertical: 4,
-    paddingRight: 8,
   },
 });
 
