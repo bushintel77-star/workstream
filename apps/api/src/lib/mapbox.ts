@@ -252,7 +252,7 @@ export function aerialImageUrlForRing(
   const zoomY = Math.log2(
     usableHeight / Math.max(Math.abs(southMax - northMin), 0.00001),
   );
-  const zoom = Math.max(16, Math.min(21, Math.floor(Math.min(zoomX, zoomY))));
+  const zoom = Math.max(16, Math.min(21, Math.round(Math.min(zoomX, zoomY))));
   return aerialImageUrl(centreLat, centreLng, width, height, zoom, opts);
 }
 

@@ -10,8 +10,8 @@
  */
 .panel {
   --calm-border: rgb(255 255 255 / 8%);
-  --calm-surface: rgb(18 18 18);
-  --calm-hover: rgb(26 26 26);
+  --calm-surface: var(--gs-surface-fill);
+  --calm-hover: var(--gs-sunken);
   --accent-muted: rgb(208 208 208);
   --ink: var(--ws-frame-ink);
   --ink-soft: var(--ws-frame-ink-dim);
@@ -82,7 +82,7 @@
 
 .kicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: var(--text-femto);
   font-weight: 650;
   letter-spacing: 0.14em;
@@ -124,7 +124,7 @@
 }
 
 .swatch:hover {
-  background: rgb(18 18 18 / 90%);
+  background: color-mix(in srgb, var(--gs-panel) 90%, transparent);
   border-color: rgb(255 255 255 / 80%);
   color: var(--ink);
 }
@@ -145,7 +145,7 @@
 
 .swatchOn,
 .swatchOn:hover {
-  background: rgb(18 18 18 / 90%);
+  background: color-mix(in srgb, var(--gs-panel) 90%, transparent);
   border-left: 1px solid rgb(255 255 255 / 40%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
   color: var(--ink);
@@ -441,7 +441,7 @@
 
 .placingKicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: var(--text-nano);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -487,7 +487,7 @@
 }
 
 .filterMeta {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: var(--text-nano);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -508,7 +508,7 @@
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ws-frame-ink) 5%, transparent);
   background: transparent;
   color: var(--ink-soft);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -572,7 +572,7 @@
 
 .pinnedLabel {
   margin: 0 0 4px;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: var(--text-nano);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -633,7 +633,7 @@
   color: var(--ink-faint);
   font-size: var(--hc-fs-1);
   font-weight: 600;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   text-align: center;
 }
 
@@ -719,7 +719,7 @@
   display: flex;
   justify-content: space-between;
   color: rgb(255 255 255 / 42%);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: 8px;
   letter-spacing: 0.12em;
   pointer-events: none;
@@ -792,7 +792,7 @@
   bottom: 14px;
   z-index: var(--ws-z-annotate);
   color: rgb(255 255 255 / 28%);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: 7px;
   letter-spacing: 0.1em;
   pointer-events: none;
@@ -820,6 +820,13 @@
     transform 220ms var(--ease);
   will-change: transform, opacity;
   pointer-events: none;
+}
+
+/* Only the front card is clickable — back/side slots stay pass-through so
+ * viewport drags keep rotating the ring (the tiles are real buttons; mouse
+ * clicks died here when every slot was pointer-events: none). */
+.carouselSlot[data-active="true"] {
+  pointer-events: auto;
 }
 
 .carouselSlot[data-active="true"] .carouselCard {
@@ -900,7 +907,7 @@
   top: 12px;
   right: 14px;
   color: rgb(255 255 255 / 40%);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: 10px;
   letter-spacing: 0.1em;
 }
@@ -1039,7 +1046,7 @@
   text-align: left;
   padding: 12px 14px;
   border-radius: var(--r-sm);
-  background: rgb(20 20 20);
+  background: var(--gs-surface-fill);
 }
 
 .tileTopRow {
@@ -1055,7 +1062,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ink);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1065,7 +1072,7 @@
 .tileCode {
   flex: 0 0 auto;
   color: var(--ink-faint);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: 10px;
   letter-spacing: 0.08em;
 }
@@ -1076,7 +1083,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ink-soft);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: 10px;
   letter-spacing: 0.04em;
 }
@@ -1095,7 +1102,7 @@
 }
 
 .tileBotanical {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: 7.5px;
   font-weight: 500;
   line-height: 1.2;
@@ -1172,7 +1179,7 @@
   border: 1px solid var(--hc-line-soft);
   background: transparent;
   color: var(--ink-soft);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-tech), "Space Grotesk", monospace;
   font-size: var(--text-micro);
   cursor: pointer;
   transition:
@@ -1245,7 +1252,7 @@
 }
 
 :global(.rootPrecision) .body {
-  background: rgb(18 18 18 / 90%);
+  background: color-mix(in srgb, var(--gs-panel) 90%, transparent);
   box-shadow: 0 12px 32px rgb(0 0 0 / 80%);
 }
 

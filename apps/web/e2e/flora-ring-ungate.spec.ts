@@ -14,7 +14,7 @@ test.describe("Flora Ring un-gate", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expectToolDock(page);
 
@@ -22,7 +22,13 @@ test.describe("Flora Ring un-gate", () => {
     await expect(page.getByTestId("asset-panel-expanded")).toBeVisible({
       timeout: 8_000,
     });
-    await page.getByTestId("paint-swatch-canopy").click();
+    // Only the front carousel card accepts clicks — pick the rail swatch
+    // first so the carousel rotates hedge to the front, then arm it.
+    await page.getByTestId("swatch-hedge").click();
+    await expect(page.getByTestId("paint-swatch-hedge")).toBeVisible({
+      timeout: 5_000,
+    });
+    await page.getByTestId("paint-swatch-hedge").click();
 
     const board = page.getByTestId("cad-plan-board");
     const box = await board.boundingBox();

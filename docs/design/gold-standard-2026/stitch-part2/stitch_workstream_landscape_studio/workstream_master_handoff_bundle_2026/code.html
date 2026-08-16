@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Master Handoff Bundle - Gold Standard 2026</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;600;700&amp;family=Inter:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "gold-highlight": "#FBBF24",
+                        "on-background": "#e0e3e8",
+                        "background": "#101418",
+                        "surface": "#101418",
+                        "surface-dim": "#1E2329",
+                        "surface-variant": "#31353a",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-container": "#34daff",
+                        "surface-container-highest": "#31353a",
+                        "on-tertiary-container": "#005c6e",
+                        "on-secondary-fixed-variant": "#002eca",
+                        "on-primary-fixed-variant": "#5c4300",
+                        "primary-container": "#fbbf24",
+                        "surface-bright": "#2A3037",
+                        "on-primary-fixed": "#261a00",
+                        "on-primary-container": "#6c4f00",
+                        "outline": "#9c8f79",
+                        "on-secondary-fixed": "#00105b",
+                        "secondary-fixed-dim": "#bac3ff",
+                        "surface-container-low": "#181c20",
+                        "on-secondary-container": "#a8b4ff",
+                        "tertiary-fixed-dim": "#30d8fd",
+                        "secondary-fixed": "#dee0ff",
+                        "surface-container-lowest": "#0b0f12",
+                        "error": "#ffb4ab",
+                        "secondary-container": "#0130cf",
+                        "tertiary": "#b6edff",
+                        "surface-container": "#1c2024",
+                        "on-error": "#690005",
+                        "on-surface": "#e0e3e8",
+                        "signal-blue": "#0030CF",
+                        "on-surface-variant": "#d3c5ac",
+                        "inverse-surface": "#e0e3e8",
+                        "on-tertiary": "#003641",
+                        "inverse-on-surface": "#2d3135",
+                        "cloud-mist": "#D7E1EC",
+                        "tertiary-fixed": "#afecff",
+                        "primary-fixed-dim": "#f9bd22",
+                        "on-primary": "#402d00",
+                        "outline-variant": "#4f4633",
+                        "surface-container-high": "#262a2f",
+                        "primary": "#ffe1a7",
+                        "on-secondary": "#001f90",
+                        "surface-tint": "#f9bd22",
+                        "on-tertiary-fixed": "#001f27",
+                        "primary-fixed": "#ffdf9f",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#795900",
+                        "on-tertiary-fixed-variant": "#004e5d",
+                        "secondary": "#bac3ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "toolbar-width": "56px",
+                        "margin-safe": "32px",
+                        "gutter": "16px",
+                        "unit": "4px",
+                        "sidebar-width": "280px"
+                    },
+                    "fontFamily": {
+                        "technical-data": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "display-lg": ["Space Grotesk"],
+                        "headline-lg": ["Space Grotesk"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "technical-data": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            background-image: 
+                linear-gradient(to right, theme('colors.surface-variant') 1px, transparent 1px),
+                linear-gradient(to bottom, theme('colors.surface-variant') 1px, transparent 1px);
+            background-size: 32px 32px;
+            background-position: center;
+        }
+        .hud-glass {
+            background: rgba(30, 35, 41, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 227, 232, 0.1);
+        }
+        .signal-glow {
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+        }
+    </style>
+</head>
+<body class="text-on-surface min-h-screen p-margin-safe overflow-x-hidden">
+<!-- Top App Bar - Extracted from Shared Components -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter h-toolbar-width bg-surface-dim/70 backdrop-blur-md border-b border-on-surface/10">
+<div class="flex items-center gap-4">
+<span class="font-display-lg text-headline-lg text-on-surface tracking-tight">CAD Operator Studio</span>
+<span class="font-label-caps text-label-caps text-gold-highlight px-2 py-1 bg-gold-highlight/10 rounded-full border border-gold-highlight/20 ml-4">MASTER BUNDLE</span>
+</div>
+<div class="flex gap-4 items-center">
+<span class="font-technical-data text-technical-data text-on-surface-variant flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-signal-blue animate-pulse"></span>
+                SYSTEM ONLINE
+            </span>
+<button class="hover:bg-on-surface/5 p-2 rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+<button class="hover:bg-on-surface/5 p-2 rounded-full transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+</div>
+</header>
+<!-- Side Nav Bar - Extracted from Shared Components -->
+<nav class="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-4 bg-surface-dim/70 backdrop-blur-md rounded-full w-14 py-4 border border-on-surface/10">
+<div class="flex flex-col items-center mb-4">
+<span class="font-label-caps text-label-caps text-on-surface rotate-[-90deg] whitespace-nowrap mb-6 mt-4 tracking-widest text-[8px] opacity-70">TOOLSET</span>
+</div>
+<button class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all" title="Select">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">near_me</span>
+</button>
+<button class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all" title="Draw">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">edit</span>
+</button>
+<button class="bg-gold-highlight text-on-primary-fixed rounded-full p-2 scale-110 shadow-[0_0_10px_rgba(251,191,36,0.5)] transition-all duration-150" title="Geometry">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">category</span>
+</button>
+<button class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all" title="Analyze">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">troubleshoot</span>
+</button>
+<button class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all" title="System">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width mt-toolbar-width pt-12 pb-24 max-w-7xl mx-auto">
+<!-- Header Section -->
+<div class="mb-12 flex justify-between items-end border-b border-on-surface/10 pb-6">
+<div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-2">Production Handoff</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+                    Consolidated view of the 6 definitive 'Gold Standard 2026' modules ready for VS Code implementation. All assets verified for production.
+                </p>
+</div>
+<div class="text-right flex flex-col items-end gap-2">
+<div class="hud-glass px-4 py-2 rounded-DEFAULT flex flex-col items-end">
+<span class="font-label-caps text-label-caps text-on-surface-variant">EXPORT STATUS</span>
+<span class="font-technical-data text-technical-data text-gold-highlight">ALL SYSTEMS GO</span>
+</div>
+<div class="font-technical-data text-[10px] text-on-surface-variant opacity-50 tracking-widest">
+                    SYS.VER: 2.0.4.88 // BUNDLE: G-26
+                </div>
+</div>
+</div>
+<!-- 2x3 Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1: Step 0 -->
+<div class="hud-glass rounded-xl overflow-hidden group hover:border-gold-highlight/50 transition-all duration-300 flex flex-col h-full">
+<div class="relative h-48 w-full bg-surface-container-highest overflow-hidden border-b border-on-surface/10">
+<img alt="Preview" class="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105" data-alt="A highly detailed architectural site plan rendering in dark mode, showing a top-down view of a modern estate. The background is a deep, rich dark slate grid. Overlaid are glowing blue and amber technical lines delineating property boundaries and topography contours. Small floating HUD panels display precise surveying coordinates and material data in sharp, monospaced typography, creating a hyper-functional, surgical aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBr5FDhkR7s-JhoEt2_r50S8_pIWUAWhUnkjtm4pVMyxWYu3VIqZMScpouw1dVq64Cc-on-IpT_Vyj7a4wNDpk1VyGDwn4428_LYuUcESWkSQTBPHlRqay3dNSNfZUmdN52qjRRh4YTLKEWVrlf-MhNCb7o1nPDXX5WVGjb2DwOL5_Btf_zpOXiPrekxaTF0ufSk8WkJoBK1BcHqkn_GGOO0Uf6tlNSnijFt8qPKmYkbrPxWJxkGwv_9A"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/90 to-transparent"></div>
+<div class="absolute bottom-3 left-4 flex gap-2">
+<span class="bg-gold-highlight text-on-primary-fixed font-label-caps text-label-caps px-2 py-1 rounded-DEFAULT signal-glow">PRODUCTION FINAL</span>
+</div>
+</div>
+<div class="p-5 flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-[20px] font-semibold text-on-surface">Step 0: Site Truth</h3>
+<span class="font-technical-data text-technical-data text-on-surface-variant bg-surface-container-high px-2 py-1 rounded-DEFAULT">ID: 107</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4 flex-grow">
+                        Landing module establishing the baseline architectural reality. High-precision topographic mapping and boundary definitions.
+                    </p>
+<div class="flex justify-between items-center border-t border-on-surface/10 pt-4 mt-auto">
+<span class="font-technical-data text-[11px] text-on-surface/50">MODULE_READY</span>
+<button class="text-gold-highlight hover:text-primary transition-colors flex items-center gap-1">
+<span class="font-label-caps text-label-caps">VIEW SOURCE</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2: Phase 1 -->
+<div class="hud-glass rounded-xl overflow-hidden group hover:border-gold-highlight/50 transition-all duration-300 flex flex-col h-full">
+<div class="relative h-48 w-full bg-surface-container-highest overflow-hidden border-b border-on-surface/10">
+<img alt="Preview" class="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105" data-alt="A dark mode digital sketchbook interface for landscape architecture. The canvas features a subtle 4px grid. Hand-drawn style lines in stark white and pale blue sketch out a terraced garden concept. Semi-transparent glass panels hover above the sketch, containing technical constraints and planting schedules in crisp sans-serif fonts. The mood is creative yet constrained by engineering precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbxosRAOZXRnPj4HBCr2t9Riht5upXTiWS-Tr9h34P30rpG3LpvZnVQq3QXM-N4V1JPCvNPYJ8X1ZE6UEz9UmDsFLvVqde1ypqhTxvDql76TAdkMjpXC1XKR0YS8D_EyuQrkOcTx6breG_XdIsG37CP3juddu7nQ1AAVgEhB6TPZCApi7nucojFA3T4E-91RFZWa5IiUfFDykM3Y62hJphnHwTFQnAXu-tASN3qvElHWfKt-RpqP1ZXQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/90 to-transparent"></div>
+<div class="absolute bottom-3 left-4 flex gap-2">
+<span class="bg-gold-highlight text-on-primary-fixed font-label-caps text-label-caps px-2 py-1 rounded-DEFAULT signal-glow">PRODUCTION FINAL</span>
+</div>
+</div>
+<div class="p-5 flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-[20px] font-semibold text-on-surface">Phase 1: Sketch Studio</h3>
+<span class="font-technical-data text-technical-data text-on-surface-variant bg-surface-container-high px-2 py-1 rounded-DEFAULT">ID: 097</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4 flex-grow">
+                        Creative exploration environment. Fluid geometry sketching tools overlaying the locked site truth parameters.
+                    </p>
+<div class="flex justify-between items-center border-t border-on-surface/10 pt-4 mt-auto">
+<span class="font-technical-data text-[11px] text-on-surface/50">MODULE_READY</span>
+<button class="text-gold-highlight hover:text-primary transition-colors flex items-center gap-1">
+<span class="font-label-caps text-label-caps">VIEW SOURCE</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3: Phase 2 -->
+<div class="hud-glass rounded-xl overflow-hidden group hover:border-gold-highlight/50 transition-all duration-300 flex flex-col h-full">
+<div class="relative h-48 w-full bg-surface-container-highest overflow-hidden border-b border-on-surface/10">
+<img alt="Preview" class="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105" data-alt="A highly complex CAD interface in dark mode showcasing a structural wireframe of a multi-level building. The geometry is rendered in bright, sharp cyan and gold lines against a near-black void. Dense data lanes flank the screen, packed with monospaced readouts, node coordinates, and material stress tests. The layout is rigid, pinned to the edges, emphasizing extreme technical authority." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC76fMxMoB32sZpeC7wXkBktSnfVie2jHkMX4Sn0lRosc-baFbjst0ctNDjALyRxZeVDQEDxojrlJ6aEntQGaEMHwvdWG6C1CUnYsfbeqA3ZQBcDrX2zWQOXxVrHRtUFcgx00yo5dsGgX1hn8MTXeXATveXPMr9ZR2m7ILBRv2v9si-DTEAwL5kSJrt0Z_o_lKSAU4rHwuMF69tZoQWukdxpgkefE85CSDCv4AgGLNXgfBXBOnkYjIVPQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/90 to-transparent"></div>
+<div class="absolute bottom-3 left-4 flex gap-2">
+<span class="bg-gold-highlight text-on-primary-fixed font-label-caps text-label-caps px-2 py-1 rounded-DEFAULT signal-glow">PRODUCTION FINAL</span>
+</div>
+</div>
+<div class="p-5 flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-[20px] font-semibold text-on-surface">Phase 2: CAD Studio</h3>
+<span class="font-technical-data text-technical-data text-on-surface-variant bg-surface-container-high px-2 py-1 rounded-DEFAULT">ID: 102</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4 flex-grow">
+                        Hardline technical drafting module. Translates fluid sketches into constructible, engineered vector geometry.
+                    </p>
+<div class="flex justify-between items-center border-t border-on-surface/10 pt-4 mt-auto">
+<span class="font-technical-data text-[11px] text-on-surface/50">MODULE_READY</span>
+<button class="text-gold-highlight hover:text-primary transition-colors flex items-center gap-1">
+<span class="font-label-caps text-label-caps">VIEW SOURCE</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 4: Phase 3 -->
+<div class="hud-glass rounded-xl overflow-hidden group hover:border-gold-highlight/50 transition-all duration-300 flex flex-col h-full">
+<div class="relative h-48 w-full bg-surface-container-highest overflow-hidden border-b border-on-surface/10">
+<img alt="Preview" class="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105" data-alt="A sleek client presentation dashboard in dark mode. A photorealistic 3D render of a modern home exterior sits in the center, subtly illuminated. Surrounding it are elegant, glassmorphism cards detailing budget breakdowns, timeline milestones, and premium material swatches. The typography is a refined mix of Space Grotesk headers and highly readable Inter body text." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmmMbBEDo4L2uX1sd0OxiWIgpx05gkt00jUg9fm805Z-B5FyYPPWPQiTxds_IqCwJ4b-nzqJ4tADQNSyWDt30VQ_9XfrHMNz3kb_jtB89kdfo2oaqFlGCPu47F-xlFAdnaqOignZ1vKaUcM35KNx_wa8KLs514t7FOew9sUCetS7aUMIPi0gcu_yd0IsPDoRhk8uN98fWL0o9iLyuZvXQW54V31BbR6DKTyPTgCW8toKu0ySeUpqO3Jw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/90 to-transparent"></div>
+<div class="absolute bottom-3 left-4 flex gap-2">
+<span class="bg-gold-highlight text-on-primary-fixed font-label-caps text-label-caps px-2 py-1 rounded-DEFAULT signal-glow">PRODUCTION FINAL</span>
+</div>
+</div>
+<div class="p-5 flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-[20px] font-semibold text-on-surface">Phase 3: Client Proposal</h3>
+<span class="font-technical-data text-technical-data text-on-surface-variant bg-surface-container-high px-2 py-1 rounded-DEFAULT">ID: 121</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4 flex-grow">
+                        Presentation layer abstracting technical complexity into digestible financial and aesthetic decisions for client sign-off.
+                    </p>
+<div class="flex justify-between items-center border-t border-on-surface/10 pt-4 mt-auto">
+<span class="font-technical-data text-[11px] text-on-surface/50">MODULE_READY</span>
+<button class="text-gold-highlight hover:text-primary transition-colors flex items-center gap-1">
+<span class="font-label-caps text-label-caps">VIEW SOURCE</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 5: Phase 4 -->
+<div class="hud-glass rounded-xl overflow-hidden group hover:border-gold-highlight/50 transition-all duration-300 flex flex-col h-full">
+<div class="relative h-48 w-full bg-surface-container-highest overflow-hidden border-b border-on-surface/10">
+<img alt="Preview" class="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105" data-alt="A dense, utilitarian export interface in a studio dark theme. The layout resembles a complex flight dashboard, with numerous toggles, progress bars, and terminal-style logs showing the compilation of architectural plans. A large central preview window displays a 2D blueprint being processed. The primary action button is a solid, authoritative gold highlight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQEqY70j9W7e-iTzZaPJoDOB9JZV_AHRXpTnpKVG_brbVh8Hz6YVYKbZoNjZkZE0BNChf5GG7fAU5Sd3_5TufKakU9mv_BGrWFJpwfq9gk1i8voJnJQF3bqOLvv1aRGkSvHFzNYSTtVuX-k85ePZYPVKLSLfgj9H1FR-x3dY8CZVaZOJA20-c9uuWyNc7Yi-4sZddJfjdRToRxdzcNgOR73sA4eaQiClnawN3qkZVbsW2Pmp9WwUfuJw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/90 to-transparent"></div>
+<div class="absolute bottom-3 left-4 flex gap-2">
+<span class="bg-gold-highlight text-on-primary-fixed font-label-caps text-label-caps px-2 py-1 rounded-DEFAULT signal-glow">PRODUCTION FINAL</span>
+</div>
+</div>
+<div class="p-5 flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-[20px] font-semibold text-on-surface">Phase 4: Build Pack Export</h3>
+<span class="font-technical-data text-technical-data text-on-surface-variant bg-surface-container-high px-2 py-1 rounded-DEFAULT">ID: 125</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4 flex-grow">
+                        Compilation and formatting engine. Generates permitted construction document sets, material schedules, and contractor specs.
+                    </p>
+<div class="flex justify-between items-center border-t border-on-surface/10 pt-4 mt-auto">
+<span class="font-technical-data text-[11px] text-on-surface/50">MODULE_READY</span>
+<button class="text-gold-highlight hover:text-primary transition-colors flex items-center gap-1">
+<span class="font-label-caps text-label-caps">VIEW SOURCE</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 6: Mobile -->
+<div class="hud-glass rounded-xl overflow-hidden group hover:border-gold-highlight/50 transition-all duration-300 flex flex-col h-full">
+<div class="relative h-48 w-full bg-surface-container-highest overflow-hidden border-b border-on-surface/10">
+<img alt="Preview" class="w-full h-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105" data-alt="A mobile app interface displaying an Augmented Reality view of a construction site. The camera feed shows a grassy yard, overlaid with glowing 3D cylindrical pipes representing underground utilities. Hexagonal data chips float above the pipes, displaying GPS coordinates and caution warnings in crisp, dark-mode styling with amber and blue highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7DilLfN1lVvfGc98jomzolbdidcEo0C1tCiR5gkAv07Rt--Jx53QMb2yvw6ZvQ6xFoqKuwxhQ9-J6tZ11SXjQayOspumtJ1jhTYrOrFshdkMsP4H1DW9fn8fgt_APz5KYimQL1PH3rbNDuhKkiYM2p1WKcU5D7tQ4oUHsS1bgSwXAprsvc6FeWiWDCVAocT7rR5TwLSigy0nbVvgURmfzL7RTFTMmS-TakN6iq6AvXp3_Hbr88tsqbw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/90 to-transparent"></div>
+<div class="absolute bottom-3 left-4 flex gap-2">
+<span class="bg-gold-highlight text-on-primary-fixed font-label-caps text-label-caps px-2 py-1 rounded-DEFAULT signal-glow">PRODUCTION FINAL</span>
+</div>
+</div>
+<div class="p-5 flex flex-col flex-grow">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-[20px] font-semibold text-on-surface">Mobile Field Bridge</h3>
+<span class="font-technical-data text-technical-data text-on-surface-variant bg-surface-container-high px-2 py-1 rounded-DEFAULT">ID: 096</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4 flex-grow">
+                        On-site AR visualization and measurement tool. Connects the studio CAD environment directly to the physical job site via mobile hardware.
+                    </p>
+<div class="flex justify-between items-center border-t border-on-surface/10 pt-4 mt-auto">
+<span class="font-technical-data text-[11px] text-on-surface/50">MODULE_READY</span>
+<button class="text-gold-highlight hover:text-primary transition-colors flex items-center gap-1">
+<span class="font-label-caps text-label-caps">VIEW SOURCE</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

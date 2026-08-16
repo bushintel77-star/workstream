@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Animated, { FadeInRight } from "react-native-reanimated";
 import {
   CATALOG_CATEGORY_LABELS,
   type CatalogCategory,
@@ -17,7 +18,7 @@ import {
   filterCatalogSymbols,
 } from "@workstream/domain";
 import { tokens } from "@workstream/ui";
-import { DesignAssetGlyph } from "./DesignAssetGlyph";
+import { DiscoveryAssetCard } from "./DiscoveryAssetCard";
 
 type CategoryFilter = CatalogCategory | "all";
 
@@ -27,6 +28,10 @@ type Props = {
   disabled?: boolean;
   onSelect: (id: string) => void;
 };
+
+/** Cards beyond this index render without the staggered fan-in delay. */
+const FAN_STAGGER_COUNT = 10;
+const FAN_STAGGER_MS = 28;
 
 export function DesignAssetPalette({
   symbols,
@@ -44,7 +49,7 @@ export function DesignAssetPalette({
 
   return (
     <View style={[styles.wrap, disabled && styles.wrapDisabled]}>
-      <Text style={styles.title}>Asset library</Text>
+      <Text style={styles.title}>Discovery</Text>
       <Text style={styles.subtitle}>Plants, hardscape, structures</Text>
 
       <TextInput
@@ -123,6 +128,32 @@ export function DesignAssetPalette({
           );
         })}
       </View>
+      {/*
+       * Discovery HUD — fan-out carousel, not a static grid. Cards stagger
+       * in on first render/filter change (Apple-dock "fan-out" from the
+       * intelligent-canvas brief); each card itself reveals real botanical
+       * metadata on press via DiscoveryAssetCard.
+       */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.carousel}
+        key={`${category}-${query}`}
+      >
+        {filtered.map((sym, i) => (
+          <Animated.View
+            key={sym.id}
+            entering={FadeInRight.delay(Math.min(i, FAN_STAGGER_COUNT) * FAN_STAGGER_MS).springify().damping(16)}
+          >
+            <DiscoveryAssetCard
+              symbol={sym}
+              active={selectedId === sym.id}
+              disabled={disabled}
+              onSelect={onSelect}
+            />
+          </Animated.View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -172,9 +203,8 @@ const styles = StyleSheet.create({
   },
   tabText: { fontSize: 12, fontWeight: "600", color: tokens.color.ink.secondary },
   tabTextActive: { color: tokens.color.accent.default },
-  grid: {
+  carousel: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: 10,
   },
   card: {
@@ -206,5 +236,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 0.2,
     color: tokens.color.ink.primary,
+    paddingVertical: 4,
+    paddingRight: 8,
   },
 });
+

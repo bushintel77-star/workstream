@@ -11,7 +11,7 @@ test.describe("Canvas chrome outside camera", () => {
   }) => {
     const { projectId } = await createSurveyProject(request);
 
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("sketch-board")).toBeVisible({
       timeout: 30_000,

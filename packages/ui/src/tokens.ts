@@ -44,6 +44,22 @@ export const tokens = {
       block: "#C4463B",
       info: "#6E93E0",
     },
+    /**
+     * Gold Standard Studio accents — same hex values as apps/web's
+     * `--gold-standard` / `--signal-blue` / `--gs-conflict` tokens
+     * (goldStandardStudio.module.css). Used sparingly for the plant
+     * discovery/placement interaction language (AI-optimized highlight,
+     * site-truth anchor, conflict state) — not a full re-theme of the
+     * mobile studio surfaces.
+     */
+    studio: {
+      gold: "#FBBF24",
+      goldInk: "#402D00",
+      signalBlue: "#0030CF",
+      signalBlueInk: "#A8B4FF",
+      conflict: "#EF4444",
+      conflictSoft: "rgba(239, 68, 68, 0.16)",
+    },
   },
 
   font: {

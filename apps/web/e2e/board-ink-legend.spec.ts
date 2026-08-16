@@ -7,7 +7,7 @@ test.describe("Board ink legend", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     await page.getByTestId("header-view-menu").click();
@@ -26,7 +26,7 @@ test.describe("Board ink legend", () => {
 
   test("command palette can open ink legend", async ({ page, request }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });

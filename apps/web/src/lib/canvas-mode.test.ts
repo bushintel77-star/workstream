@@ -4,6 +4,7 @@ import {
   resolveCanvasMode,
   suggestedMode,
   unlockedModes,
+  webglStudioSupportsMode,
 } from "./canvas-mode";
 
 describe("canvas progressive disclosure", () => {
@@ -113,4 +114,21 @@ describe("canvas progressive disclosure", () => {
     expect(modeForLegacyPath("/projects/x/processing")).toBe("sketch");
   });
 
+});
+
+describe("webgl studio mode routing", () => {
+  it("every mode mounts natively in the WebGL studio", () => {
+    for (const mode of [
+      "survey",
+      "sketch",
+      "cad",
+      "elevation",
+      "garden",
+      "quote",
+      "present",
+      "share",
+    ] as const) {
+      expect(webglStudioSupportsMode(mode)).toBe(true);
+    }
+  });
 });

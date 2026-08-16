@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Mobile Sketch Studio - Workstream</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#181c20",
+                        "surface-container-high": "#2A3037",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#434655",
+                        "background": "#101418",
+                        "on-tertiary-fixed-variant": "#c2ffca",
+                        "surface-dim": "#1E2329",
+                        "tertiary-fixed-dim": "#8bd79b",
+                        "on-secondary-fixed-variant": "#ffb4ab",
+                        "tertiary": "#307b47",
+                        "outline": "#737686",
+                        "on-tertiary-fixed": "#a6f4b5",
+                        "tertiary-fixed": "#a6f4b5",
+                        "surface-container-highest": "#2A3037",
+                        "primary-container": "#004ac6",
+                        "on-surface-variant": "#c3c6d7",
+                        "inverse-surface": "#eaf1ff",
+                        "on-secondary-container": "#ffdad6",
+                        "primary": "#2563eb",
+                        "surface-variant": "#2A3037",
+                        "on-error-container": "#ffdad6",
+                        "secondary": "#e02928",
+                        "inverse-primary": "#004ac6",
+                        "secondary-fixed": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#bb0112",
+                        "inverse-on-surface": "#0b1c30",
+                        "error": "#ffdad6",
+                        "surface": "#101418",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-container": "#c2ffca",
+                        "surface-bright": "#2A3037",
+                        "surface-container-lowest": "#0b0f12",
+                        "on-secondary-fixed": "#410002",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#dbe1ff",
+                        "on-primary-fixed": "#b4c5ff",
+                        "tertiary-container": "#116231",
+                        "on-background": "#ffffff",
+                        "error-container": "#ba1a1a",
+                        "on-primary-container": "#dbe1ff",
+                        "secondary-fixed-dim": "#ffb4ab",
+                        "on-surface": "#ffffff",
+                        "surface-container": "#1E2329",
+                        "surface-tint": "#2563eb",
+                        "on-primary-fixed-variant": "#b4c5ff",
+                        "gold-standard": "#fbbf24"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "panel-width": "280px",
+                        "gutter": "12px",
+                        "toolbar-height": "48px",
+                        "margin": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "tech": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "tech-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "tech-md": ["14px", { "lineHeight": "20px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Blueprint grid background */
+        .blueprint-grid {
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface h-full flex flex-col overflow-hidden font-body-md select-none touch-none dark">
+<!-- Main Workspace (Full Bleed) -->
+<main class="flex-1 absolute inset-0 overflow-hidden flex">
+<!-- Canvas Area -->
+<div class="flex-1 relative bg-[#101418] blueprint-grid overflow-hidden cursor-crosshair">
+<!-- Canvas Content (Simulated SVG/Drawings) -->
+<div class="absolute inset-0 flex items-center justify-center transform scale-[1.2] origin-center opacity-80">
+<svg class="w-full h-full" height="600" viewbox="0 0 800 600" width="800">
+<!-- Existing Elements (Crimson #bb0112) -->
+<path class="opacity-50" d="M 100 100 L 700 100 L 700 500 L 100 500 Z" fill="none" stroke="#bb0112" stroke-dasharray="10 5" stroke-width="2"></path>
+<rect fill="none" height="120" stroke="#bb0112" stroke-width="3" width="150" x="200" y="150"></rect>
+<text class="font-tech text-tech-sm opacity-75" fill="#f8f9ff" x="210" y="170">EXISTING_DWL</text>
+<path class="opacity-40" d="M 500 200 C 600 250, 650 350, 550 450" fill="none" stroke="#bb0112" stroke-dasharray="4 4" stroke-width="1.5"></path>
+<!-- Proposed Massing (Cobalt/Primary #2563eb / #004ac6) -->
+<path class="opacity-80" d="M 200 350 Q 300 300, 400 400 T 600 350" fill="none" stroke="#2563eb" stroke-linecap="round" stroke-width="12"></path>
+<path class="opacity-50" d="M 220 370 Q 300 320, 390 420 T 580 370" fill="none" stroke="#004ac6" stroke-width="2"></path>
+<circle class="opacity-40" cx="280" cy="420" fill="#2563eb" r="30"></circle>
+<circle class="opacity-30" cx="330" cy="450" fill="#2563eb" r="40"></circle>
+<circle class="opacity-50" cx="250" cy="470" fill="#2563eb" r="25"></circle>
+<text class="font-tech text-tech-sm font-bold" fill="#f8f9ff" x="350" y="380">PROP_PATH_01</text>
+<!-- AI Ghost Suggestion -->
+<g class="animate-pulse">
+<circle class="opacity-60" cx="500" cy="300" fill="none" r="45" stroke="#307b47" stroke-dasharray="6 4" stroke-width="2"></circle>
+<circle class="opacity-60" cx="540" cy="330" fill="none" r="35" stroke="#307b47" stroke-dasharray="6 4" stroke-width="2"></circle>
+<text class="font-tech text-[10px] opacity-80" fill="#f8f9ff" x="470" y="280">AI_PLANT_CLUSTER</text>
+</g>
+</svg>
+</div>
+<!-- AI Suggestion Accept/Reject Floating UI -->
+<div class="absolute top-[40%] left-[60%] transform -translate-x-1/2 -translate-y-1/2 flex gap-1 bg-surface-dim/70 rounded-full p-1 shadow-lg border border-outline-variant/30 z-10 backdrop-blur-md">
+<button class="w-8 h-8 rounded-full bg-surface flex items-center justify-center text-error hover:bg-error-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+</div>
+<!-- Strike Alert Spatial Annotation -->
+<div class="absolute top-[25%] left-[65%] transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 bg-gold-standard/90 backdrop-blur-md rounded-full px-3 py-1.5 shadow-lg border border-gold-standard z-20">
+<span class="material-symbols-outlined text-[16px] text-black">warning</span>
+<span class="font-tech text-[11px] text-black font-bold tracking-widest">UTILITY CONFLICT</span>
+</div>
+<!-- Staking Chip Spatial Annotation -->
+<div class="absolute top-[65%] left-[30%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 z-20">
+<div class="bg-gold-standard text-black rounded-full px-2 py-0.5 shadow-md border border-black/10 font-tech text-[10px] font-bold">STK-01</div>
+<div class="w-1 h-6 bg-gold-standard"></div>
+<div class="w-2 h-2 rounded-full bg-gold-standard border-2 border-white"></div>
+</div>
+<!-- Staking Chip Spatial Annotation 2 -->
+<div class="absolute top-[55%] left-[75%] transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 z-20">
+<div class="bg-gold-standard text-black rounded-full px-2 py-0.5 shadow-md border border-black/10 font-tech text-[10px] font-bold">STK-02</div>
+<div class="w-1 h-6 bg-gold-standard"></div>
+<div class="w-2 h-2 rounded-full bg-gold-standard border-2 border-white"></div>
+</div>
+<!-- Floating Top Glass Header Context Overlay -->
+<div class="absolute top-margin left-1/2 transform -translate-x-1/2 w-max bg-surface-dim/70 backdrop-blur-md rounded-full px-5 py-2 border border-outline-variant/30 shadow-md z-30 flex gap-4 items-center">
+<div class="flex flex-col">
+<div class="font-label-caps text-[9px] text-on-surface-variant opacity-70 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-gold-standard"></span>
+PROJECT
+</div>
+<div class="font-body-sm font-bold text-on-surface text-base">Oak Ridge Estate</div>
+</div>
+<div class="w-px h-6 bg-outline-variant/30"></div>
+<div class="flex flex-col items-end">
+<div class="font-tech text-[11px] font-bold text-gold-standard">SCALE 1:100</div>
+<div class="font-tech text-[9px] text-[#f8f9ff]/70">42.3601° N, 71.0589° W</div>
+</div>
+<div class="w-px h-6 bg-outline-variant/30"></div>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="absolute top-20 left-1/2 transform -translate-x-1/2 w-max flex items-center gap-2 bg-gold-standard text-black rounded-full px-3 py-1 shadow-xl border border-black/20 z-30 animate-pulse">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span class="font-tech text-[10px] font-bold tracking-widest">FINAL PRODUCTION: MOBILE FIELD BRIDGE</span>
+</div></div>
+<!-- Floating Tool Dock (Right Side) -->
+<div class="absolute right-margin top-1/2 transform -translate-y-1/2 rounded-full flex flex-col gap-2 p-2 z-40 bg-surface-dim/70 backdrop-blur-md border border-outline-variant/30 shadow-lg">
+<button class="w-10 h-10 rounded-full bg-gold-standard/20 flex items-center justify-center text-gold-standard transition-colors shadow-sm" title="Ink">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">draw</span>
+</button>
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant transition-colors" title="Erase">
+<span class="material-symbols-outlined">ink_eraser</span>
+</button>
+<div class="w-6 h-[1px] bg-outline-variant/50 mx-auto my-0.5"></div>
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant transition-colors" title="Trace">
+<span class="material-symbols-outlined">layers</span>
+</button>
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant transition-colors" title="Measure">
+<span class="material-symbols-outlined">straighten</span>
+</button>
+<div class="w-6 h-[1px] bg-outline-variant/50 mx-auto my-0.5"></div>
+<button class="w-10 h-10 rounded-full hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant transition-colors" title="Add Asset">
+<span class="material-symbols-outlined">potted_plant</span>
+</button>
+</div>
+</main>
+<!-- Bottom Action Ribbon (Floating individual buttons) -->
+<div class="absolute bottom-margin left-1/2 transform -translate-x-1/2 flex items-center gap-3 z-50 pointer-events-none">
+<button class="pointer-events-auto w-12 h-12 bg-surface-dim/70 backdrop-blur-md border border-outline-variant/30 shadow-lg rounded-full flex flex-col items-center justify-center text-on-surface-variant hover:text-gold-standard transition-all hover:bg-surface-container-highest" title="Capture">
+<span class="material-symbols-outlined">photo_camera</span>
+</button>
+<button class="pointer-events-auto w-12 h-12 bg-surface-dim/70 backdrop-blur-md border border-outline-variant/30 shadow-lg rounded-full flex flex-col items-center justify-center text-on-surface-variant hover:text-gold-standard transition-all hover:bg-surface-container-highest" title="Measure">
+<span class="material-symbols-outlined">straighten</span>
+</button>
+<button class="pointer-events-auto w-16 h-16 bg-gold-standard text-black rounded-full flex items-center justify-center transition-transform active:scale-90 shadow-xl border-2 border-[#101418]" title="Sketch">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">edit_note</span>
+</button>
+<button class="pointer-events-auto w-12 h-12 bg-surface-dim/70 backdrop-blur-md border border-outline-variant/30 shadow-lg rounded-full flex flex-col items-center justify-center text-on-surface-variant hover:text-gold-standard transition-all hover:bg-surface-container-highest" title="Assets">
+<span class="material-symbols-outlined">potted_plant</span>
+</button>
+<div class="pointer-events-auto flex flex-col items-center justify-center px-3 py-1 bg-surface-dim/70 backdrop-blur-md border border-outline-variant/30 shadow-lg rounded-full min-w-[3rem]">
+<span class="font-label-caps text-[8px] text-[#f8f9ff]/70 font-tech">EST</span>
+<span class="font-tech text-[12px] font-bold text-gold-standard">$12.4k</span>
+</div>
+</div>
+</body></html>

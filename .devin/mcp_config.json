@@ -6,7 +6,7 @@
       "env": {
         "FIGMA_ACCESS_TOKEN": "${FIGMA_ACCESS_TOKEN}"
       },
-      "disabled": true
+      "disabled": false
     },
     "fal-ai": {
       "command": "npx",
@@ -31,6 +31,20 @@
         "NOTION_API_KEY": "${NOTION_API_KEY}"
       },
       "disabled": true
+    },
+    "sketch": {
+      "url": "http://localhost:31126/mcp",
+      "type": "http",
+      "disabled": true
+    },
+    "stitch": {
+      "command": "npx",
+      "args": ["-y", "stitch-mcp"],
+      "env": {
+        "GOOGLE_CLOUD_PROJECT": "${GOOGLE_CLOUD_PROJECT}",
+        "STITCH_API_KEY": "${STITCH_API_KEY}"
+      },
+      "disabled": false
     },
     "vercel": {
       "command": "npx",

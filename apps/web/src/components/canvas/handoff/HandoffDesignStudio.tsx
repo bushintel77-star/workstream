@@ -91,6 +91,7 @@ import {
   needsPathGrammar,
   openLeftAssetExclusive,
   resolveLeftSafeInsetPx,
+  shouldAutoCollapseLeftAsset,
   toggleRightDataPanelExclusive,
   withRightDataPanel,
 } from "./features/assetPanel/leftAssetPanel";
@@ -873,8 +874,11 @@ export function HandoffDesignStudio({
 
   /** Keeps the drag-start base fresh without re-subscribing gesture listeners. */
   useEffect(() => {
-    panBaseRef.current = { x: ui.panX, y: ui.panY };
-  }, [ui.panX, ui.panY]);
+    // Only update base when not actively panning to prevent mid-drag jumps
+    if (!isPanningActive) {
+      panBaseRef.current = { x: ui.panX, y: ui.panY };
+    }
+  }, [ui.panX, ui.panY, isPanningActive]);
 
   useEffect(() => {
     zoomRef.current = clampZoom(ui.zoom);
@@ -2127,6 +2131,15 @@ export function HandoffDesignStudio({
     ui.shadeOn ||
     ui.growth !== "mature" ||
     Object.values(ui.layerOpacity).some((opacity) => opacity < 0.95);
+  // The palette commands that set councilTip also open the measures lane
+  // (rightLaneBusy → bottomChromeSuppressed) in the same state write, so the
+  // tip must bypass that suppression or it never surfaces.
+  const councilTipVisible =
+    planOn &&
+    !ui.focusOn &&
+    !ui.clientView &&
+    !ui.frameOn &&
+    Boolean(ui.councilTip);
   /**
    * Canvas-first mandate: idle parchment is tool-free.
    * Summon via header Instruments / margin / Q; stay up while a craft tool is armed.
@@ -3016,7 +3029,10 @@ export function HandoffDesignStudio({
       });
       return;
     }
-    // Command-first: arm without forcing the library open.
+    // Command-first: arm without forcing the library open. Arming finishes
+    // the library's job (same auto-collapse law as place / canvas interact —
+    // an expanded panel left open blankets the board's left band, killing
+    // buildable-cursor tracking and hover affordances under it).
     studio.setUi({
       armed: t,
       armedSymbolId: null,
@@ -3024,6 +3040,12 @@ export function HandoffDesignStudio({
       addOpen: true,
       cmdOpen: false,
       rightDataPanel: null,
+      ...(shouldAutoCollapseLeftAsset({
+        panel: ui.leftAssetPanel,
+        pinned: ui.leftAssetPinned,
+      })
+        ? { leftAssetPanel: null, leftAssetRestore: null }
+        : {}),
     });
   };
 
@@ -3540,9 +3562,9 @@ export function HandoffDesignStudio({
               * forced open by default (§6 item 7).
               */}
             {ui.mode === "survey" &&
-            !ui.focusOn &&
-            !ui.clientView &&
-            !bottomChromeSuppressed ? (
+              !ui.focusOn &&
+              !ui.clientView &&
+              !bottomChromeSuppressed ? (
               <button
                 type="button"
                 className={`${css.surveyProgress}${surveyProgress.complete ? ` ${css.surveyProgressDone}` : ""}${checklistOpen ? ` ${css.surveyProgressActive}` : ""}`}
@@ -5008,8 +5030,8 @@ export function HandoffDesignStudio({
         ) : null}
 
         {contextualStripVisible &&
-        instrumentsVisible &&
-        !bottomChromeSuppressed ? (
+          instrumentsVisible &&
+          !bottomChromeSuppressed ? (
           <ContextualToolStrip
             tool={ui.tool}
             mode={ui.mode}
@@ -5046,10 +5068,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn &&
-        !ui.frameOn &&
-        !ui.clientView &&
-        contextBreadcrumbActive &&
-        !bottomChromeSuppressed ? (
+          !ui.frameOn &&
+          !ui.clientView &&
+          (contextBreadcrumbActive || councilTipVisible) &&
+          (!bottomChromeSuppressed || councilTipVisible) ? (
           <CanvasContextCard active>
             <StudioContextBreadcrumb
               mode={ui.mode}
@@ -5067,6 +5089,11 @@ export function HandoffDesignStudio({
               onResetGrowth={() => studio.setUi({ growth: "mature" })}
               onResetLayer={(layer) => studio.setLayerOpacity(layer, 1)}
             />
+            {councilTipVisible ? (
+              <p className={css.headerCouncilTip} data-testid="council-setback-tip">
+                {ui.councilTip}
+              </p>
+            ) : null}
           </CanvasContextCard>
         ) : null}
 
@@ -5404,6 +5431,7 @@ export function HandoffDesignStudio({
               openBoardFindings.filter((f) => f.kind === "canopy_conflict")
                 .length
             }
+            projectId={projectId}
             onSunMin={(sunMin) => studio.setUi({ sunMin })}
             onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}
             onGrowth={(growth) => studio.setUi({ growth })}
@@ -5444,6 +5472,7 @@ export function HandoffDesignStudio({
               );
             }}
             onClose={() => studio.setUi({ lightingWorkspaceOn: false })}
+            projectId={projectId}
           />
         ) : null}
 
@@ -5745,6 +5774,7 @@ export function HandoffDesignStudio({
               playing={ui.sunPlay}
               shadeOn={ui.shadeOn}
               streetChips={streetContextChips}
+              projectId={projectId}
               onClose={() => studio.setUi({ rightDataPanel: null })}
               onSunMin={(sunMin) => studio.setUi({ sunMin })}
               onDatePreset={(sunDatePreset) => studio.setUi({ sunDatePreset })}

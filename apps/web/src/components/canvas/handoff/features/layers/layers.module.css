@@ -39,7 +39,7 @@
   border: 1px solid color-mix(in srgb, var(--hc-ink) 14%, transparent);
   background: color-mix(in srgb, var(--hc-paper) 55%, transparent);
   text-align: left;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   line-height: 1.35;
   color: var(--hc-ink-muted);
@@ -57,7 +57,7 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .close {
@@ -104,7 +104,7 @@
 .count {
   font-size: var(--text-micro);
   font-weight: 500;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   color: var(--hc-ink-faint);
 }
 
@@ -128,7 +128,7 @@
 .frozenOpacity {
   justify-self: end;
   font-size: var(--text-micro);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   color: var(--hc-ink-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -142,7 +142,7 @@
 
 .pct {
   font-size: var(--text-micro);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   color: var(--hc-ink-muted);
   font-variant-numeric: tabular-nums;
 }

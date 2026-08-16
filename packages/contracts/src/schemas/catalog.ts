@@ -78,6 +78,9 @@ export const CatalogPlacementSchema = z.object({
   rotation_deg: z.number().min(0).max(360).default(0),
   scale: z.number().positive().default(1),
   label: z.string().optional(),
+  /** Measured/source-provided dimensions. Never infer these from the marker label. */
+  height_m: z.number().positive().optional(),
+  canopy_radius_m: z.number().positive().optional(),
   /**
    * Existing-tree provenance — survives acceptance so every render surface
    * (plan, elevation, fit sheet, share) can distinguish a Vicmap urban tree
@@ -109,6 +112,12 @@ export const CanvasStrokeSchema = z.object({
   shape_tool: z.enum(["line", "rect", "circle"]).optional(),
   shape_start: CanvasStrokePointSchema.optional(),
   shape_end: CanvasStrokePointSchema.optional(),
+  /**
+   * Extrusion height (metres) — set when a closed stroke footprint is extruded
+   * into a 3D mass via the FusedSketchLayer drag-up gesture. Absent on flat
+   * ink strokes. Optional / no migration.
+   */
+  extrude_height_m: z.number().positive().optional(),
 });
 export type CanvasStroke = z.infer<typeof CanvasStrokeSchema>;
 
@@ -146,6 +155,9 @@ export const IrrigationZoneSchema = z.object({
   points: z.array(CanvasPointPctSchema).min(2),
   emitter_spacing_cm: z.number().positive().default(30),
   emitter_flow_lph: z.number().positive().default(2),
+  /** Verified/as-designed hydraulic inputs. Omit rather than infer. */
+  pipe_diameter_mm: z.number().positive().optional(),
+  hazen_williams_c: z.number().positive().optional(),
   /** Lighting / spray — fixture or head spacing along path (m). */
   fixture_spacing_m: z.number().positive().default(2.5).optional(),
   /** Lighting circuit — LV cable gauge (session default 12/2). */
@@ -511,6 +523,9 @@ export const DesignBydaAssetSchema = z.object({
   kind: BydaAssetKindSchema,
   ring: z.array(DesignSiteFramePointSchema).min(2),
   source: z.enum(["byda", "traced", "assumed"]).default("traced"),
+  /** Only populated from surveyed/as-built data; BYDA linework is often 2D. */
+  depth_m: z.number().positive().optional(),
+  tolerance_m: z.number().positive().optional(),
 });
 export type DesignBydaAsset = z.infer<typeof DesignBydaAssetSchema>;
 

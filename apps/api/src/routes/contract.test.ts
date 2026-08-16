@@ -586,6 +586,34 @@ describe("API contract — projects", () => {
       });
       expect(ok.statusCode).toBe(200);
       expect(ok.headers["content-type"]).toBe("audio/mpeg");
+      /* Body must actually arrive — a stream sent as a statement inside an
+       * async handler once resolved empty (200, content-length 0), which
+       * surfaced as blank client-facing output pages. */
+      expect(ok.body.length).toBeGreaterThan(0);
+      expect(ok.body).toContain("contract audio");
+
+      /* Branded HTML outputs ride the same stream path — pin bytes on disk.
+       * The output record's id must be the filename (asset resolution
+       * matches on it). */
+      const output = await store.upsertOutput("dev-user", projectId, "quote", {
+        uri: `/outputs/pending.html`,
+        generated_at: new Date().toISOString(),
+      });
+      expect(output).not.toBeNull();
+      const outputsDir = path.join(process.cwd(), "data", "outputs");
+      await mkdir(outputsDir, { recursive: true });
+      await writeFile(
+        path.join(outputsDir, `${output.id}.html`),
+        "<!doctype html><title>Quote</title><p>contract quote body</p>",
+        "utf8",
+      );
+      const html = await app.inject({
+        method: "GET",
+        url: `/outputs/${output.id}.html?token=${quoteToken}`,
+      });
+      expect(html.statusCode).toBe(200);
+      expect(html.headers["content-type"]).toBe("text/html; charset=utf-8");
+      expect(html.body).toContain("contract quote body");
 
       const deleted = await app.inject({
         method: "DELETE",

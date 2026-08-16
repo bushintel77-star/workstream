@@ -5,8 +5,10 @@ import { useCallback, useMemo } from "react";
  * Production builds and EXPO_PUBLIC_AUTH_REQUIRED require Clerk. Local dev
  * without keys still uses dev-user (matches API when AUTH_REQUIRED is unset).
  */
+const isWebPreview = process.env.EXPO_PUBLIC_WEB_PREVIEW === "true";
+
 export const isAuthRequired =
-  !__DEV__ || process.env.EXPO_PUBLIC_AUTH_REQUIRED === "true";
+  process.env.EXPO_PUBLIC_AUTH_REQUIRED === "true" || (!__DEV__ && !isWebPreview);
 
 export const isAuthEnabled = !!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 

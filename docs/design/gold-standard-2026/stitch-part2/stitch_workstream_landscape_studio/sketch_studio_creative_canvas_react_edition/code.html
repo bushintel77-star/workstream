@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CAD Operator Studio - Draw</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error": "#ffb4ab",
+                      "tertiary-fixed": "#afecff",
+                      "on-secondary-fixed": "#00105b",
+                      "on-error-container": "#ffdad6",
+                      "cloud-mist": "#D7E1EC",
+                      "signal-blue": "#0030CF",
+                      "primary-container": "#fbbf24",
+                      "surface-variant": "#31353a",
+                      "gold-highlight": "#FBBF24",
+                      "on-secondary-container": "#a8b4ff",
+                      "surface-container-lowest": "#0b0f12",
+                      "on-tertiary": "#003641",
+                      "on-primary-fixed-variant": "#5c4300",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "primary-fixed-dim": "#f9bd22",
+                      "inverse-primary": "#795900",
+                      "tertiary-fixed-dim": "#30d8fd",
+                      "on-primary-fixed": "#261a00",
+                      "on-primary-container": "#6c4f00",
+                      "on-error": "#690005",
+                      "surface-bright": "#363a3e",
+                      "surface-container": "#1c2024",
+                      "surface": "#101418",
+                      "outline": "#9c8f79",
+                      "surface-container-low": "#181c20",
+                      "on-tertiary-fixed": "#001f27",
+                      "surface-container-highest": "#31353a",
+                      "tertiary-container": "#34daff",
+                      "on-primary": "#402d00",
+                      "inverse-on-surface": "#2d3135",
+                      "inverse-surface": "#e0e3e8",
+                      "on-tertiary-container": "#005c6e",
+                      "surface-dim": "#101418",
+                      "outline-variant": "#4f4633",
+                      "primary-fixed": "#ffdf9f",
+                      "surface-container-high": "#262a2f",
+                      "on-background": "#e0e3e8",
+                      "on-secondary-fixed-variant": "#002eca",
+                      "error-container": "#93000a",
+                      "surface-tint": "#f9bd22",
+                      "primary": "#ffe1a7",
+                      "background": "#101418",
+                      "secondary-container": "#0130cf",
+                      "on-surface-variant": "#d3c5ac",
+                      "tertiary": "#b6edff",
+                      "on-surface": "#e0e3e8",
+                      "secondary-fixed-dim": "#bac3ff",
+                      "secondary-fixed": "#dee0ff",
+                      "on-secondary": "#001f90",
+                      "secondary": "#bac3ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-safe": "32px",
+                      "toolbar-width": "56px",
+                      "sidebar-width": "280px",
+                      "gutter": "16px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Space Grotesk"
+                      ],
+                      "headline-lg-mobile": [
+                              "Space Grotesk"
+                      ],
+                      "headline-lg": [
+                              "Space Grotesk"
+                      ],
+                      "technical-data": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "52px",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "technical-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #101418;
+            color: #e0e3e8;
+            overflow: hidden; /* Prevent scrolling for canvas apps */
+        }
+        
+        /* Grid pattern for the infinite canvas */
+        .grid-pattern {
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        /* Glassmorphism utility */
+        .glass-panel {
+            background: rgba(16, 20, 24, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 227, 232, 0.1);
+        }
+
+        /* Connecting lines for chips */
+        .chip-line {
+            position: absolute;
+            height: 1px;
+            background-color: #FBBF24;
+            transform-origin: left center;
+        }
+        .chip-dot {
+            width: 4px;
+            height: 4px;
+            background-color: #FBBF24;
+            border-radius: 50%;
+            position: absolute;
+        }
+    </style>
+</head>
+<body class="antialiased w-screen h-screen relative grid-pattern">
+<!-- CANVAS BACKGROUND LAYER (Placeholder for Three.js/WebGL) -->
+<div class="absolute inset-0 w-full h-full z-0 flex items-center justify-center opacity-70" data-alt="A highly detailed isometric wireframe render of a modern wooden deck structure with planters, steps, and surrounding landscape elements. The scene is rendered in stark black and white with high-precision technical aesthetics, glowing slightly against a deep charcoal infinite background. A sophisticated light-table virtual drafting environment." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCG4jDfi13nXIJz7vf0VtUFifQOrnic-nFrsiH875mbDEagiSou9gW33Mqt4cioni0jNWD6mYXPAI0iN7TJpHWyO22cwnAZpMgSVMl5keZ4FHcGuYSsY6QedJChm4CyFPkHZ7EQks3cwjBudzLUwhTelz6KIgUfs2-b52g9HXnTXe0igv13kH0yynOnuI-YxWdy2yM4CRgMLe-V7L7hcfdOmK1K8CGX7fu4SFgZJEwisWqMaIY9aA-UQA')">
+<img class="max-w-[80%] max-h-[80%] object-contain mix-blend-screen opacity-80" data-alt="A highly detailed isometric wireframe render of a modern wooden deck structure with planters, steps, and surrounding landscape elements. The scene is rendered in stark black and white with high-precision technical aesthetics, glowing slightly against a deep charcoal infinite background. A sophisticated light-table virtual drafting environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeZ2kHEPxAIvglaS6XpEbWEAw8MMJJu6dKIESzMjms3B5wWxlWSu9LXRzm2tj5Wg4CZe9pIxdJFTlFbdgh7b4lU9G81WlFtAxQzbA8G0VvtWXgRPXdH5pbMb0H2FbzSqw9G9tIOTloIG-PeKmi4LQ2nrDAxf08NsnZ0bG_7_mPq_1ExWY2FJlJNJQZEwGw2WrILG8fYnk_6fzoJE3GbknDINhltN5o24-IEz7VR5NIdUjMIYkf5UZ6UA"/>
+</div>
+<!-- HUD LAYER -->
+<div class="absolute inset-0 z-10 pointer-events-none">
+<!-- TopAppBar (Hidden on mobile for this specific CAD view, shown on desktop) -->
+<header class="hidden md:flex fixed top-0 left-0 w-full z-50 justify-between items-center px-gutter h-toolbar-width bg-surface-dim/70 backdrop-blur-md border-b border-on-surface/10 pointer-events-auto">
+<div class="flex items-center gap-4">
+<span class="font-display-lg text-headline-lg text-on-surface tracking-tight font-bold">CAD Operator Studio</span>
+</div>
+<div class="flex items-center gap-6">
+<!-- Navigation -->
+<nav class="flex gap-6 font-technical-data text-technical-data">
+<a class="text-on-surface-variant hover:text-gold-highlight transition-colors flex items-center gap-2" href="#">
+<span>Workspace</span>
+</a>
+<a class="text-gold-highlight border-b-2 border-gold-highlight pb-1 flex items-center gap-2" href="#">
+<span>Draw</span>
+</a>
+<a class="text-on-surface-variant hover:text-gold-highlight transition-colors flex items-center gap-2" href="#">
+<span>Analyze</span>
+</a>
+</nav>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="hover:bg-on-surface/5 p-2 rounded transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+<button class="hover:bg-on-surface/5 p-2 rounded transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-4 bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 rounded-full w-14 py-4 pointer-events-auto">
+<!-- Header title omitted due to extreme minimalist space constraints on the vertical bar, keeping just icons for primary actions -->
+<!-- Tab: Select -->
+<button aria-label="Select" class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="near_me">near_me</span>
+</button>
+<!-- Tab: Draw (Active) -->
+<button aria-label="Draw" class="bg-gold-highlight text-on-primary-fixed rounded-full p-2 scale-110 flex items-center justify-center opacity-80 transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="edit" style="font-variation-settings: 'FILL' 1;">edit</span>
+</button>
+<!-- Tab: Geometry -->
+<button aria-label="Geometry" class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="category">category</span>
+</button>
+<!-- Tab: Analyze -->
+<button aria-label="Analyze" class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="troubleshoot">troubleshoot</span>
+</button>
+<!-- Tab: System -->
+<button aria-label="System" class="text-on-surface-variant p-2 hover:text-gold-highlight transition-all flex items-center justify-center mt-8 border-t border-on-surface/10 pt-4">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</nav>
+<!-- Contextual Meta Chips (Absolute Positioning for Mockup purposes) -->
+<!-- These would normally be positioned by 3D logic -->
+<!-- Chip 1: Timber -->
+<div class="absolute top-[25%] left-[20%] pointer-events-auto group">
+<div class="glass-panel rounded-lg p-3 w-48 shadow-lg transition-transform hover:-translate-y-1">
+<div class="flex justify-between items-start mb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">MATERIAL:</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-gold-highlight transition-colors" data-icon="architecture">architecture</span>
+</div>
+<div class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2 tracking-tight">Timber - Ironbark</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant">
+                    Depth: <span class="text-gold-highlight">0.025m</span>
+</div>
+</div>
+<!-- Mock connection line -->
+<div class="chip-line w-24 top-full left-[80%] rotate-45"></div>
+<div class="chip-dot top-[calc(100%+66px)] left-[calc(80%+66px)]"></div>
+</div>
+<!-- Chip 2: Botanical 1 -->
+<div class="absolute top-[15%] right-[25%] pointer-events-auto group">
+<div class="glass-panel rounded-lg p-3 w-56 shadow-lg transition-transform hover:-translate-y-1">
+<div class="mb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">BOTANICAL:</span>
+</div>
+<div class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2 tracking-tight leading-tight">Eucalyptus camaldulensis</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant">
+                    TYPE: <span class="text-gold-highlight">Tree</span>
+</div>
+</div>
+</div>
+<!-- Chip 3: Element -->
+<div class="absolute top-[35%] right-[15%] pointer-events-auto group">
+<div class="glass-panel rounded-lg p-3 w-40 shadow-lg transition-transform hover:-translate-y-1">
+<div class="mb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">ELEMENT:</span> <span class="font-body-md text-on-surface ml-1">Railing</span>
+</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant">
+                    Height: <span class="text-gold-highlight">1.1m</span>
+</div>
+</div>
+</div>
+<!-- Chip 4: Sandstone -->
+<div class="absolute bottom-[20%] right-[25%] pointer-events-auto group">
+<div class="glass-panel rounded-lg p-3 w-48 shadow-lg transition-transform hover:-translate-y-1">
+<div class="mb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">MATERIAL:</span> <span class="font-body-md text-on-surface ml-1">Sandstone</span>
+</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant">
+                    Dimensions: <span class="text-gold-highlight">VARIES</span>
+</div>
+</div>
+</div>
+<!-- Status Rail (Bottom Edge) -->
+<div class="fixed bottom-0 left-0 w-full h-8 bg-surface-container-lowest border-t border-on-surface/10 flex items-center justify-between px-4 font-technical-data text-technical-data text-on-surface-variant pointer-events-auto">
+<div class="flex gap-6">
+<span>X: <span class="text-on-surface">14.523</span></span>
+<span>Y: <span class="text-on-surface">-4.210</span></span>
+<span>Z: <span class="text-on-surface">0.000</span></span>
+</div>
+<div class="flex gap-4">
+<span>GRID: <span class="text-on-surface">0.5m</span></span>
+<span>SNAP: <span class="text-gold-highlight">ON</span></span>
+</div>
+</div>
+</div>
+<script>
+        // Simple script to handle navigation active states for mockup interactivity
+        document.querySelectorAll('nav.flex-col button').forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active classes from all
+                document.querySelectorAll('nav.flex-col button').forEach(b => {
+                    b.classList.remove('bg-gold-highlight', 'text-on-primary-fixed', 'scale-110', 'opacity-80');
+                    b.classList.add('text-on-surface-variant');
+                    const icon = b.querySelector('.material-symbols-outlined');
+                    if(icon) icon.style.fontVariationSettings = "'FILL' 0";
+                });
+                
+                // Add active classes to clicked
+                this.classList.remove('text-on-surface-variant');
+                this.classList.add('bg-gold-highlight', 'text-on-primary-fixed', 'scale-110', 'opacity-80');
+                const icon = this.querySelector('.material-symbols-outlined');
+                if(icon) icon.style.fontVariationSettings = "'FILL' 1";
+            });
+        });
+    </script>
+</body></html>

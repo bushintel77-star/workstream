@@ -35,7 +35,7 @@ test.describe("AS 4970 NRZ/SRZ rings", () => {
     );
     expect(seed.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     const nrz = page.getByTestId("exist-tpz-ring").first();

@@ -8,21 +8,25 @@ import {
 describe("buildToolChips", () => {
   it("includes primary tools and grid trail", () => {
     const chips = buildToolChips(false);
+    // buildToolChips(false) → mode "sketch", no survey extras.
+    // Sketch mode allows: select, add, paint, path, zone, measure, grid.
     expect(chips.map((c) => c.id)).toEqual([
-      "trace",
       "select",
       "add",
       "paint",
       "zone",
+      "path",
       "measure",
-      "lock",
       "grid",
     ]);
     expect(chips.at(-1)?.trail).toBe(true);
   });
 
   it("appends survey service tools when authoring", () => {
-    const chips = buildToolChips(true);
+    // buildToolChips(true) → surveyServicesAuthoring=true, mode defaults to "sketch".
+    // Survey extras (calib/level/service) are only appended in survey mode, so
+    // test with explicit survey mode + authoring flag.
+    const chips = buildToolChips("survey", true);
     expect(chips.some((c) => c.id === "service")).toBe(true);
   });
 });

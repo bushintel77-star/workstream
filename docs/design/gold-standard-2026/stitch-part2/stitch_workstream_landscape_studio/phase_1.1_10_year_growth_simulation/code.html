@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sketch Studio: 10-Year Growth Lens</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "signal-blue": "#0030CF",
+                      "secondary": "#bac3ff",
+                      "surface": "#101418",
+                      "outline-variant": "#4f4633",
+                      "surface-dim": "#1E2329",
+                      "inverse-surface": "#e0e3e8",
+                      "gold-highlight": "#FBBF24",
+                      "surface-container-highest": "#31353a",
+                      "on-secondary": "#001f90",
+                      "surface-variant": "#31353a",
+                      "on-primary-container": "#6c4f00",
+                      "surface-container": "#1c2024",
+                      "tertiary-container": "#34daff",
+                      "on-error": "#690005",
+                      "on-primary-fixed": "#261a00",
+                      "secondary-fixed": "#dee0ff",
+                      "on-tertiary": "#003641",
+                      "primary": "#ffe1a7",
+                      "tertiary-fixed": "#afecff",
+                      "on-error-container": "#ffdad6",
+                      "on-surface-variant": "#d3c5ac",
+                      "surface-bright": "#363a3e",
+                      "inverse-primary": "#795900",
+                      "surface-container-high": "#262a2f",
+                      "surface-tint": "#f9bd22",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "on-secondary-fixed-variant": "#002eca",
+                      "background": "#101418",
+                      "on-surface": "#e0e3e8",
+                      "secondary-fixed-dim": "#bac3ff",
+                      "primary-fixed-dim": "#f9bd22",
+                      "outline": "#9c8f79",
+                      "surface-container-lowest": "#0b0f12",
+                      "error-container": "#93000a",
+                      "on-secondary-fixed": "#00105b",
+                      "tertiary": "#b6edff",
+                      "primary-fixed": "#ffdf9f",
+                      "error": "#ffb4ab",
+                      "on-background": "#e0e3e8",
+                      "on-tertiary-fixed": "#001f27",
+                      "on-tertiary-container": "#005c6e",
+                      "secondary-container": "#0130cf",
+                      "surface-container-low": "#181c20",
+                      "on-primary": "#402d00",
+                      "on-secondary-container": "#a8b4ff",
+                      "cloud-mist": "#D7E1EC",
+                      "inverse-on-surface": "#2d3135",
+                      "primary-container": "#fbbf24",
+                      "tertiary-fixed-dim": "#30d8fd",
+                      "on-primary-fixed-variant": "#5c4300"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "margin-safe": "32px",
+                      "sidebar-width": "280px",
+                      "gutter": "16px",
+                      "toolbar-width": "56px"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": [
+                              "Space Grotesk"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Space Grotesk"
+                      ],
+                      "technical-data": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg": [
+                              "Space Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "52px",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "technical-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;600&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #13171B;
+            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 32px 32px;
+            overflow: hidden;
+        }
+        
+        /* Glassmorphism utility */
+        .glass-panel {
+            background: rgba(30, 35, 41, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 227, 232, 0.1);
+        }
+
+        /* 3D Simulation Overlay - simulated with CSS for visual depth */
+        .specimen-volume {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 48, 207, 0.3); /* Signal Blue translucent */
+            background: radial-gradient(circle, rgba(0,48,207,0.05) 0%, rgba(0,48,207,0.15) 100%);
+            transform: translate(-50%, -50%) rotateX(60deg);
+            pointer-events: none;
+        }
+        
+        .root-volume {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px dashed rgba(251, 191, 36, 0.4); /* Gold translucent */
+            background: radial-gradient(circle, rgba(251,191,36,0.02) 0%, rgba(251,191,36,0.08) 100%);
+            transform: translate(-50%, -50%) rotateX(60deg);
+            pointer-events: none;
+        }
+        
+        .center-mark {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #FBBF24;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body class="text-on-surface antialiased h-screen w-screen relative">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full flex justify-between items-center h-[48px] px-margin w-full z-50 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline transition-colors duration-200">
+<div class="flex items-center gap-unit">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" style="font-variation-settings: 'FILL' 0;">architecture</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed-dim">Workstream</span>
+</div>
+<div class="flex gap-4">
+<!-- Simulated Nav for spacing, hiding on this specific view as per mandate to focus on canvas, but keeping header anchor -->
+</div>
+</header>
+<!-- SideNav (NavigationDrawer) - Rendered as per mandate for desktop, hidden on mobile -->
+<nav class="hidden md:flex fixed left-0 top-0 h-full w-[280px] bg-surface-container dark:bg-surface-container-low border-r border-outline-variant dark:border-outline flex-col py-margin gap-unit z-40 pt-[64px]">
+<div class="px-margin mb-4">
+<h2 class="font-headline-sm text-headline-sm text-primary">Workstream Studio</h2>
+</div>
+<a class="flex items-center gap-3 px-margin py-2 text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-high transition-all scale-95 active:scale-90 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">grid_on</span>
+<span>Survey</span>
+</a>
+<!-- ACTIVE STATE: Sketch -->
+<a class="flex items-center gap-3 px-margin py-2 bg-primary-container text-on-primary-container rounded-lg font-bold hover:bg-surface-container-high transition-all scale-95 active:scale-90 mx-2 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">edit_note</span>
+<span>Sketch</span>
+</a>
+<a class="flex items-center gap-3 px-margin py-2 text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-high transition-all scale-95 active:scale-90 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">polyline</span>
+<span>CAD</span>
+</a>
+<a class="flex items-center gap-3 px-margin py-2 text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-high transition-all scale-95 active:scale-90 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">layers</span>
+<span>Elevation</span>
+</a>
+<a class="flex items-center gap-3 px-margin py-2 text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-high transition-all scale-95 active:scale-90 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">request_quote</span>
+<span>Quote</span>
+</a>
+<a class="flex items-center gap-3 px-margin py-2 text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-high transition-all scale-95 active:scale-90 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">ios_share</span>
+<span>Share</span>
+</a>
+</nav>
+<!-- Infinite Canvas Area (Zero-Chrome) -->
+<main class="absolute inset-0 pt-[48px] md:pl-[280px] w-full h-full overflow-hidden z-0">
+<!-- Specimen 1: Quercus agrifolia (Coast Live Oak) -->
+<div class="absolute top-[40%] left-[30%]">
+<!-- Root Volume (Yellow dashed) -->
+<div class="root-volume w-[600px] h-[600px]"></div>
+<!-- Canopy Volume (Blue solid) -->
+<div class="specimen-volume w-[450px] h-[450px]"></div>
+<div class="center-mark"></div>
+<!-- Tag -->
+<div class="absolute top-[-30px] left-[20px] font-technical-data text-technical-data text-inverse-surface bg-surface-dim/80 px-2 py-1 border border-outline-variant/30 rounded">
+                SP-01: Q. agrifolia
+            </div>
+</div>
+<!-- Specimen 2: Platanus racemosa (California Sycamore) -->
+<div class="absolute top-[60%] left-[60%]">
+<div class="root-volume w-[400px] h-[400px]"></div>
+<div class="specimen-volume w-[300px] h-[300px]"></div>
+<div class="center-mark"></div>
+<div class="absolute top-[-30px] left-[20px] font-technical-data text-technical-data text-inverse-surface bg-surface-dim/80 px-2 py-1 border border-outline-variant/30 rounded">
+                SP-02: P. racemosa
+            </div>
+</div>
+<!-- Image Context Placeholder within canvas -->
+<div class="absolute top-[20%] right-[30%] opacity-20 pointer-events-none mix-blend-screen w-[400px] h-[400px] rounded-full overflow-hidden">
+<img class="w-full h-full object-cover grayscale" data-alt="A highly detailed architectural sketch of a high-end residential landscape in Los Angeles, viewed from top-down. The aesthetic is CAD-like, precise, monochromatic dark mode with subtle glowing accents. Minimalist and technical." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCh45ETLcowV4QHbyrlSynlPrUuhUMu6IsE9TUBcwqLBWVTzRjkN_wvYUUg_44N8JYfb0RdMW28Yn1mwCGAE9tzkS87GNMKSonZmPehOc2jFgmFWWDuLm-fWtTQvuprqumAg8uulA8uY2poPI3GuNgJ56V1EGd-AIuIWw4oruVExTdeIGtvJkHiIpX8KJ198Y7PXGJH7UAcqs9tia6FGLp9G-f7bCVDMOnVxvYhn4jVoWiEzQdEJXpCNw"/>
+</div>
+</main>
+<!-- Floating 'Growth Pulse' HUD (Right) -->
+<aside class="fixed right-margin top-[100px] w-[320px] glass-panel rounded-lg p-4 z-20 flex flex-col gap-4">
+<div class="flex justify-between items-center border-b border-outline-variant/30 pb-2">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-inverse-surface">Growth Pulse</span>
+<span class="material-symbols-outlined text-signal-blue">analytics</span>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-baseline">
+<span class="font-body-md text-body-md text-on-surface-variant">Simulated Year</span>
+<span class="font-technical-data text-technical-data text-gold-highlight">YR 10 (2036)</span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-xs text-on-surface-variant font-technical-data">
+<span>Canopy Coverage</span>
+<span>68%</span>
+</div>
+<div class="w-full bg-surface-container h-1 rounded-full overflow-hidden">
+<div class="bg-signal-blue h-full w-[68%]"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-xs text-on-surface-variant font-technical-data">
+<span>Root Overlap Conflict</span>
+<span class="text-error">12%</span>
+</div>
+<div class="w-full bg-surface-container h-1 rounded-full overflow-hidden">
+<div class="bg-error h-full w-[12%]"></div>
+</div>
+</div>
+</div>
+<div class="mt-2 pt-3 border-t border-outline-variant/30">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-2">ACTIVE SPECIMENS</div>
+<div class="flex flex-wrap gap-2">
+<span class="font-technical-data text-[11px] bg-surface-container text-inverse-surface px-2 py-1 rounded border border-outline-variant/50">Q. agrifolia (3)</span>
+<span class="font-technical-data text-[11px] bg-surface-container text-inverse-surface px-2 py-1 rounded border border-outline-variant/50">P. racemosa (1)</span>
+<span class="font-technical-data text-[11px] bg-surface-container text-inverse-surface px-2 py-1 rounded border border-outline-variant/50">C. linearis (12)</span>
+</div>
+</div>
+</aside>
+<!-- Floating Horizontal 'Temporal Scrubber' Glass Card (Bottom) -->
+<div class="fixed bottom-[80px] md:bottom-margin left-1/2 transform -translate-x-1/2 md:translate-x-0 md:left-[calc(280px+32px)] w-[90%] md:w-[600px] glass-panel rounded-xl p-4 z-20 flex flex-col gap-3">
+<div class="flex justify-between items-center px-1">
+<span class="font-technical-data text-technical-data text-on-surface-variant">Install</span>
+<span class="font-technical-data text-technical-data text-gold-highlight">Year 10</span>
+<span class="font-technical-data text-technical-data text-on-surface-variant">Year 20</span>
+</div>
+<!-- Scrubber Track -->
+<div class="relative h-8 flex items-center">
+<!-- Base Line -->
+<div class="absolute w-full h-[2px] bg-surface-container-highest"></div>
+<!-- Progress Line -->
+<div class="absolute h-[2px] bg-gold-highlight w-1/2"></div>
+<!-- Ticks -->
+<div class="absolute w-full flex justify-between px-1">
+<div class="w-[2px] h-[6px] bg-surface-container-highest"></div>
+<div class="w-[2px] h-[6px] bg-surface-container-highest"></div>
+<div class="w-[2px] h-[6px] bg-surface-container-highest"></div>
+<div class="w-[2px] h-[6px] bg-surface-container-highest"></div>
+<div class="w-[2px] h-[6px] bg-surface-container-highest"></div>
+</div>
+<!-- Scrubber Thumb -->
+<div class="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-gold-highlight rounded-full cursor-pointer shadow-[0_0_10px_rgba(251,191,36,0.5)]"></div>
+</div>
+<div class="flex justify-between mt-1">
+<button class="bg-transparent border border-outline-variant/50 text-inverse-surface px-4 py-1.5 rounded font-body-md text-[13px] hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px] align-middle mr-1">play_arrow</span> Animate
+            </button>
+<button class="bg-gold-highlight text-[#000000] px-4 py-1.5 rounded font-body-md font-medium text-[13px] hover:bg-yellow-300 transition-colors">
+                Apply Snapshot
+            </button>
+</div>
+</div>
+<!-- BottomNavBar (Mobile Only) - Hidden on md and up -->
+<nav class="md:hidden fixed bottom-0 w-full rounded-t-xl z-50 flex justify-around items-center px-4 py-2 bg-surface-container-highest dark:bg-surface-dim border-t border-outline-variant dark:border-outline shadow-md transition-transform duration-150 ease-in-out">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary" href="#">
+<span class="material-symbols-outlined">photo_camera</span>
+<span class="font-label-caps text-label-caps">Capture</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary" href="#">
+<span class="material-symbols-outlined">straighten</span>
+<span class="font-label-caps text-label-caps">Measure</span>
+</a>
+<!-- ACTIVE STATE: Trace/Sketch semantic match -->
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-full p-2 hover:text-primary" href="#">
+<span class="material-symbols-outlined">draw</span>
+<span class="font-label-caps text-label-caps">Trace</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary" href="#">
+<span class="material-symbols-outlined">potted_plant</span>
+<span class="font-label-caps text-label-caps">Assets</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-caps text-label-caps">Cost</span>
+</a>
+</nav>
+<!-- Status Rail -->
+<div class="hidden md:flex fixed bottom-0 left-[280px] w-[calc(100%-280px)] h-8 bg-surface border-t border-outline-variant/30 z-30 px-4 items-center justify-between font-technical-data text-[11px] text-on-surface-variant">
+<div class="flex gap-4">
+<span>COORD: 34.0522° N, 118.2437° W</span>
+<span>GRID: 4px BASE</span>
+</div>
+<div class="flex gap-4 text-signal-blue">
+<span>VOL: 12,450 CF</span>
+<span>EST MAT: $45,200</span>
+</div>
+</div>
+</body></html>

@@ -1,23 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { getWeatherAction } from "../app/actions";
-import type { WeatherForecast } from "../lib/api";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  createTaskAction,
+  getWeatherAction,
+  listProjectTasksAction,
+  updateTaskStatusAction,
+} from "../app/actions";
+import type { Task, WeatherForecast } from "../lib/api";
 import type { DashboardProject } from "./DashboardProjects";
 import home from "../app/home.module.css";
 
 type Props = {
   projects: DashboardProject[];
 };
-
-type Todo = {
-  id: string;
-  text: string;
-  done: boolean;
-  createdAt: number;
-};
-
-const TODO_KEY = "ws-home-todos";
 
 const SEASONS = [
   { key: "summer", label: "Summer", months: "Dec — Feb" },
@@ -90,8 +86,8 @@ function monthGrid(year: number, month: number): (Date | null)[] {
 export function HomePlanner({ projects }: Props) {
   const [now, setNow] = useState(() => new Date());
   const [weather, setWeather] = useState<WeatherForecast | null>(null);
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [todoInput, setTodoInput] = useState("");
+  const [taskInput, setTaskInput] = useState("");
+  const [savingTask, setSavingTask] = useState(false);
 
   // Tick every minute
   useEffect(() => {
@@ -99,30 +95,17 @@ export function HomePlanner({ projects }: Props) {
     return () => window.clearInterval(id);
   }, []);
 
-  // Persist todos
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(TODO_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate client-only localStorage after SSR.
-      if (raw) setTodos(JSON.parse(raw) as Todo[]);
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(TODO_KEY, JSON.stringify(todos));
-    } catch {
-      // ignore
-    }
-  }, [todos]);
-
   // Fetch weather for the most recent active project (or first project)
   const weatherProjectId = useMemo(() => {
     const active = projects.find((p) => p.status === "active");
     return active?.id ?? projects[0]?.id ?? null;
   }, [projects]);
+
+  const reminderProject = useMemo(() => {
+    const active = projects.find((p) => p.status === "active");
+    return active ?? projects[0] ?? null;
+  }, [projects]);
+  const reminderProjectId = reminderProject?.id ?? null;
 
   useEffect(() => {
     if (!weatherProjectId) return;
@@ -134,6 +117,51 @@ export function HomePlanner({ projects }: Props) {
       cancelled = true;
     };
   }, [weatherProjectId]);
+
+  // Reset the reminders state during render when the project changes — this is
+  // the React-19 idiom for "reset state when a prop/dependency changes" (see
+  // https://react.dev/reference/react/useState#storing-information-from-previous-renders).
+  // Doing it here avoids the set-state-in-effect anti-pattern: the effect below
+  // is a pure fetch that only mutates state from async callbacks, never
+  // synchronously in its body.
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskError, setTaskError] = useState<string | null>(null);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+  const prevReminderProjectIdRef = useRef<string | null>(reminderProjectId);
+  if (prevReminderProjectIdRef.current !== reminderProjectId) {
+    prevReminderProjectIdRef.current = reminderProjectId;
+    // Project changed (or cleared) → reset reminders to the new project's
+    // pre-fetch state. Done during render (the React-19 idiom) so the effect
+    // below is a pure fetch that only mutates state from async callbacks.
+    setTasks([]);
+    setTaskError(null);
+    // A new (non-null) project means a fetch is pending; a null project means
+    // nothing is loading. Set this here, not in the effect, to keep the effect
+    // side-effect-free at sync time.
+    setLoadingTasks(reminderProjectId !== null);
+  }
+
+  useEffect(() => {
+    if (!reminderProjectId) return;
+    let cancelled = false;
+    void listProjectTasksAction(reminderProjectId)
+      .then((list) => {
+        if (!cancelled) setTasks(list);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setTasks([]);
+        setTaskError(
+          err instanceof Error ? err.message : "Could not load reminders",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingTasks(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reminderProjectId]);
 
   const season = seasonForMonth(now.getMonth());
   const seasonInfo = SEASONS.find((s) => s.key === season)!;
@@ -147,33 +175,60 @@ export function HomePlanner({ projects }: Props) {
   const draftProjects = projects.filter((p) => p.status === "draft");
   const totalValue = projects.reduce((sum, p) => sum + (p.costTotal ?? 0), 0);
 
-  const openTodos = todos.filter((t) => !t.done);
-  const doneTodos = todos.filter((t) => t.done);
+  const openTasks = tasks.filter(
+    (task) => task.status !== "done" && task.status !== "cancelled",
+  );
+  const doneTasks = tasks.filter((task) => task.status === "done");
 
-  function addTodo(e: React.FormEvent) {
+  function refreshTasks(projectId: string) {
+    return listProjectTasksAction(projectId).then((list) => {
+      setTasks(list);
+      return list;
+    });
+  }
+
+  function addTask(e: React.FormEvent) {
     e.preventDefault();
-    const text = todoInput.trim();
-    if (!text) return;
-    setTodos((current) => [
-      {
-        id: `${Date.now()}`,
-        text,
-        done: false,
-        createdAt: Date.now(),
-      },
-      ...current,
-    ]);
-    setTodoInput("");
+    const title = taskInput.trim();
+    if (!title || !reminderProjectId) return;
+    const fd = new FormData();
+    fd.set("projectId", reminderProjectId);
+    fd.set("title", title);
+    fd.set("priority", "medium");
+    fd.set("source", "manual");
+    setSavingTask(true);
+    setTaskError(null);
+    void createTaskAction(fd)
+      .then(() => refreshTasks(reminderProjectId))
+      .then(() => setTaskInput(""))
+      .catch((err) => {
+        setTaskError(
+          err instanceof Error ? err.message : "Could not create reminder",
+        );
+      })
+      .finally(() => {
+        setSavingTask(false);
+      });
   }
 
-  function toggleTodo(id: string) {
-    setTodos((current) =>
-      current.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
-    );
-  }
-
-  function deleteTodo(id: string) {
-    setTodos((current) => current.filter((t) => t.id !== id));
+  function markTaskStatus(taskId: string, status: "done" | "cancelled") {
+    if (!reminderProjectId) return;
+    const fd = new FormData();
+    fd.set("projectId", reminderProjectId);
+    fd.set("taskId", taskId);
+    fd.set("status", status);
+    setSavingTask(true);
+    setTaskError(null);
+    void updateTaskStatusAction(fd)
+      .then(() => refreshTasks(reminderProjectId))
+      .catch((err) => {
+        setTaskError(
+          err instanceof Error ? err.message : "Could not update reminder",
+        );
+      })
+      .finally(() => {
+        setSavingTask(false);
+      });
   }
 
   const todayWeather = weather?.days?.[0];
@@ -239,26 +294,26 @@ export function HomePlanner({ projects }: Props) {
       {/* --- Reminders (review + draft) --- */}
       <section className={home.widget} data-accent="yellow">
         <p className={home.widgetLabel}>Reminders</p>
+        <p className={home.focusEmpty}>
+          {reminderProject
+            ? `Synced to ${reminderProject.projectName}`
+            : "No project available."}
+        </p>
+        {taskError ? <p className={home.focusEmpty}>{taskError}</p> : null}
+        {loadingTasks ? (
+          <p className={home.focusEmpty}>Loading reminders…</p>
+        ) : null}
         <ul className={home.reminderList}>
-          {reviewProjects.slice(0, 2).map((p) => (
-            <li key={p.id} className={home.reminderRow} data-kind="review">
-              <span className={home.reminderDot} aria-hidden />
-              <span className={home.reminderText}>
-                {p.projectName} — quote review
-              </span>
-            </li>
-          ))}
-          {draftProjects.slice(0, 2).map((p) => (
-            <li key={p.id} className={home.reminderRow} data-kind="draft">
-              <span className={home.reminderDot} aria-hidden />
-              <span className={home.reminderText}>
-                {p.projectName} — survey pending
-              </span>
-            </li>
-          ))}
-          {reviewProjects.length === 0 && draftProjects.length === 0 ? (
-            <li className={home.focusEmpty}>Nothing overdue.</li>
-          ) : null}
+          {openTasks.length > 0 ? (
+            openTasks.slice(0, 3).map((task) => (
+              <li key={task.id} className={home.reminderRow}>
+                <span className={home.reminderDot} aria-hidden />
+                <span className={home.reminderText}>{task.title}</span>
+              </li>
+            ))
+          ) : (
+            <li className={home.focusEmpty}>Nothing open right now.</li>
+          )}
         </ul>
       </section>
 
@@ -305,37 +360,45 @@ export function HomePlanner({ projects }: Props) {
       {/* --- To-do --- */}
       <section className={home.widget} data-accent="red">
         <p className={home.widgetLabel}>
-          To-do · {openTodos.length} open
+          To-do · {openTasks.length} open
         </p>
-        <form className={home.todoForm} onSubmit={addTodo}>
+        <form className={home.todoForm} onSubmit={addTask}>
           <input
             className={home.todoInput}
-            value={todoInput}
-            onChange={(e) => setTodoInput(e.target.value)}
+            value={taskInput}
+            onChange={(e) => setTaskInput(e.target.value)}
             placeholder="Add a task"
             aria-label="Add a task"
             maxLength={120}
+            disabled={!reminderProjectId || savingTask}
           />
-          <button type="submit" className={home.todoAdd} aria-label="Add task">
+          <button
+            type="submit"
+            className={home.todoAdd}
+            aria-label="Add task"
+            disabled={!reminderProjectId || savingTask}
+          >
             +
           </button>
         </form>
-        {openTodos.length > 0 ? (
+        {openTasks.length > 0 ? (
           <ul className={home.todoList}>
-            {openTodos.slice(0, 6).map((t) => (
-              <li key={t.id} className={home.todoRow}>
+            {openTasks.slice(0, 6).map((task) => (
+              <li key={task.id} className={home.todoRow}>
                 <button
                   type="button"
                   className={home.todoCheck}
-                  onClick={() => toggleTodo(t.id)}
-                  aria-label={`Mark ${t.text} done`}
+                  onClick={() => markTaskStatus(task.id, "done")}
+                  disabled={savingTask}
+                  aria-label={`Mark ${task.title} done`}
                 />
-                <span className={home.todoText}>{t.text}</span>
+                <span className={home.todoText}>{task.title}</span>
                 <button
                   type="button"
                   className={home.todoDelete}
-                  onClick={() => deleteTodo(t.id)}
-                  aria-label={`Delete ${t.text}`}
+                  onClick={() => markTaskStatus(task.id, "cancelled")}
+                  disabled={savingTask}
+                  aria-label={`Cancel ${task.title}`}
                 >
                   ×
                 </button>
@@ -345,8 +408,8 @@ export function HomePlanner({ projects }: Props) {
         ) : (
           <p className={home.focusEmpty}>No open tasks.</p>
         )}
-        {doneTodos.length > 0 ? (
-          <p className={home.todoDoneCount}>{doneTodos.length} done</p>
+        {doneTasks.length > 0 ? (
+          <p className={home.todoDoneCount}>{doneTasks.length} done</p>
         ) : null}
       </section>
 
@@ -356,7 +419,7 @@ export function HomePlanner({ projects }: Props) {
         <p className={home.statsBig}>{pad2(projects.length)}</p>
         <p className={home.statsMeta}>
           {activeProjects.length} active · {reviewProjects.length} review ·{" "}
-          {draftProjects.length} draft
+          {draftProjects.length} draft · {tasks.length} reminders
         </p>
         {totalValue > 0 ? (
           <p className={home.statsValue}>

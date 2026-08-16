@@ -18,7 +18,7 @@ test.describe("Tilt lens", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("zoom-world")).toBeVisible({
       timeout: 15_000,
@@ -148,7 +148,7 @@ test.describe("Tilt lens", () => {
     );
     expect(canvas.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("zoom-world")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId("building-footprint")).toBeVisible({
@@ -220,7 +220,7 @@ test.describe("Tilt lens", () => {
   }) => {
     const { projectId } = await createSurveyProject(request);
     // Survey (not only CAD) — yaw must apply while the garden axon is on.
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("zoom-world")).toBeVisible({
       timeout: 15_000,

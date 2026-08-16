@@ -1,18 +1,15 @@
 import { expect, test } from "@playwright/test";
-import {
-  clickHeaderViewItem,
-  createSurveyProject,
-  handoffStudio,
-  takeScreenshot,
-} from "./helpers";
+import { createSurveyProject, handoffStudio, takeScreenshot } from "./helpers";
 
 test.describe("Sketch surfaces reconciliation", () => {
-  test("plastic tray + dock undo; night dolphin; chrome gate", async ({
+  test("plastic tray + dock undo; pen pill token gate; chrome gate", async ({
     page,
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    // The SVG board is the ?svg=1 deep fallback (WebGL is the primary front
+    // end) — route straight to it.
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("sketch-board")).toBeVisible({
       timeout: 15_000,
@@ -40,13 +37,8 @@ test.describe("Sketch surfaces reconciliation", () => {
         .count(),
     ).toBe(0);
 
-    // Night — dolphin tokens, not hardcoded dark pills
-    await clickHeaderViewItem(page, "dark-canvas-top");
-    await expect(page.getByTestId("header-view-menu")).toHaveClass(
-      /triggerActive|Active/,
-      { timeout: 5_000 },
-    );
-
+    // Pen pill — Studio Paper tokens, never the retired blush literals
+    // (the dark "night dolphin" lens is retired; single theme since 2026-08).
     const penBg = await page.getByTestId("sketch-pen").evaluate((el) => {
       const cs = getComputedStyle(el);
       return { bg: cs.backgroundColor, color: cs.color };
@@ -55,7 +47,7 @@ test.describe("Sketch surfaces reconciliation", () => {
     expect(penBg.bg).not.toMatch(/rgba?\(36,\s*19,\s*24/);
     expect(penBg.bg).not.toMatch(/rgba?\(28,\s*25,\s*23/);
 
-    await takeScreenshot(page, "night-sketch");
+    await takeScreenshot(page, "paper-sketch");
   });
 
   test("sketch enters on Select — drag grabs, Pen chip re-arms ink", async ({
@@ -63,7 +55,7 @@ test.describe("Sketch surfaces reconciliation", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     const pad = page.getByTestId("sketch-board");
     await expect(pad).toBeVisible({ timeout: 15_000 });

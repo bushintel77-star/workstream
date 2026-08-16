@@ -140,7 +140,10 @@ const BOARD_SPANNING_ALLOWED = new Set([
  * vic-gov chips (0.5%).
  */
 const COVERAGE_BASELINE: Record<string, number> = {
-  survey: 4.1,
+  // 0.6 — idle survey is essentially pure drawing since mode routing sends
+  // ?mode=survey back to the classic studio (checklist is summon-only);
+  // measured 0.53% (was 4.1 in the all-SVG-mount era).
+  survey: 0.6,
   // 4.4 — Instant Planner assist/structured tools are summon-only; idle sketch
   // no longer parks a sticky HUD over the drawing (was 7.9). SketchDock still
   // contributes ~2.4% when the mode mounts; CI sometimes measures ~2.5% when
@@ -259,7 +262,7 @@ async function openIdleCad(
   request: import("@playwright/test").APIRequestContext,
 ) {
   const { projectId } = await createSurveyProject(request);
-  await page.goto(`/projects/${projectId}?mode=cad`);
+  await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
   await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId("cad-plan-board")).toBeVisible({
     timeout: 20_000,
@@ -313,7 +316,9 @@ test.describe("STUDIO-STYLING-AND-UX §6 — idle canvas", () => {
       request,
     }) => {
       const { projectId } = await createSurveyProject(request);
-      await page.goto(`/projects/${projectId}?mode=${mode}`);
+      // This checklist audits the classic studio's chrome — force it (the
+      // default mount owns sketch natively; survey/cad/elevation route here).
+      await page.goto(`/projects/${projectId}?svg=1&mode=${mode}`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
       // No pointer input — "idle" means nothing has been touched yet.
       await page.waitForTimeout(4_000);
@@ -356,7 +361,7 @@ test.describe("STUDIO-STYLING-AND-UX §6 — idle canvas", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     // No pointer input — "idle" means nothing has been touched yet.
     await page.waitForTimeout(4_000);

@@ -46,7 +46,7 @@ async function seedDesignCanvas(request: APIRequestContext, projectId: string) {
 }
 
 async function openQuote(page: Page, projectId: string) {
-  await page.goto(`/projects/${projectId}?mode=cad`);
+  await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
   await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
   await clickHeaderViewItem(page, "live-cost-top");
   await expect(page.getByTestId("live-cost-rail")).toBeVisible({

@@ -36,12 +36,12 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--hc-ink-faint);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .note {
   margin: 0 0 var(--s-2);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   line-height: 1.35;
   color: var(--hc-ink-muted);
@@ -97,5 +97,5 @@
 .meta {
   font-size: var(--text-micro);
   color: var(--hc-ink-muted);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }

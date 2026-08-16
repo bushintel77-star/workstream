@@ -21,7 +21,28 @@ function getDesktopSnapshot() {
  * current viewport. Desktop gets the right-edge RailDrawer, mobile gets the
  * bottom-edge BottomDock. Only one is mounted at a time — no duplicated
  * content, no duplicated API calls.
+ *
+ * useSyncExternalStore subscribes to the viewport media query without a
+ * setState-in-effect. The server snapshot is `true` (desktop) so SSR renders
+ * RailDrawer; the client snapshot reads the real matchMedia after hydration
+ * and React re-renders if they disagree — no hydration mismatch warning.
  */
+const DESKTOP_QUERY = "(min-width: 769px)";
+
+function subscribeDesktop(callback: () => void): () => void {
+  const mq = window.matchMedia(DESKTOP_QUERY);
+  mq.addEventListener("change", callback);
+  return () => mq.removeEventListener("change", callback);
+}
+
+function getDesktopSnapshot(): boolean {
+  return window.matchMedia(DESKTOP_QUERY).matches;
+}
+
+function getDesktopServerSnapshot(): boolean {
+  return true;
+}
+
 export function PlannerDock({
   children,
   label = "Planner",
@@ -35,6 +56,9 @@ export function PlannerDock({
     subscribeToViewport,
     getDesktopSnapshot,
     () => true,
+    subscribeDesktop,
+    getDesktopSnapshot,
+    getDesktopServerSnapshot,
   );
 
   if (isDesktop) {

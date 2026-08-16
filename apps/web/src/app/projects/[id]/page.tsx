@@ -8,19 +8,37 @@ import {
 } from "@workstream/domain";
 import { HandoffDesignStudio } from "../../../components/canvas/handoff/HandoffDesignStudio";
 import { StudioSkeleton } from "../../../components/canvas/handoff/StudioSkeleton";
+import { WebGLStudioPreview } from "../../../components/canvas/webgl/WebGLStudioPreview";
+import type { PctPoint } from "../../../components/canvas/webgl/coordTransform";
 import {
   getCadastralTitle,
+  getAudit,
   getDesignCanvas,
+  getDesign,
+  getCadDocumentApi,
   getProject,
   getSurvey,
+  listCostings,
   listOutputs,
 } from "../../../lib/api";
 import { requireSignedIn } from "../../../lib/auth";
 import {
   resolveCanvasMode,
+  webglStudioSupportsMode,
   type CanvasProgress,
 } from "../../../lib/canvas-mode";
+import { resolveProjectNextAction } from "../../../lib/project-next-action";
 import type { StudioMode } from "../../../components/canvas/handoff/studioCatalog";
+import {
+  runAuditAction,
+  runCostingAction,
+  runDesignAction,
+  runOutputAction,
+  runSurveyAction,
+} from "../../../app/actions";
+import { SubmitButton } from "../../../components/SubmitButton";
+import { KitButton } from "../../../components/ui/kit";
+import styles from "./project.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +73,12 @@ export default async function ProjectCanvasPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ mode?: string }>;
+  searchParams: Promise<{
+    mode?: string;
+    webgl?: string;
+    svg?: string;
+    tool?: string;
+  }>;
 }) {
   await requireSignedIn();
   const { id } = await params;
@@ -72,6 +95,12 @@ export default async function ProjectCanvasPage({
     listOutputs(id).catch(() => []),
     getCadastralTitle(id).catch(() => null),
   ]);
+  const [design, costings, audit] = await Promise.all([
+    getDesign(id).catch(() => null),
+    listCostings(id).catch(() => []),
+    getAudit(id).catch(() => null),
+  ]);
+  const cad = await getCadDocumentApi(id).catch(() => null);
 
   const quoteOut = outputs.find((o) => o.kind === "quote") ?? null;
   const progress: CanvasProgress = {
@@ -84,9 +113,137 @@ export default async function ProjectCanvasPage({
   };
   /** Clamp locked deep-links before first paint — avoids cad→survey flash. */
   const initialMode = resolveCanvasMode(sp.mode, progress) as StudioMode;
+  const nextAction = resolveProjectNextAction({
+    survey,
+    design,
+    costings,
+    audit,
+    outputs,
+    runSurveyAction,
+    runDesignAction,
+    runCostingAction,
+    runAuditAction,
+    runOutputAction,
+  });
+
+  /** WebGL studio is the default mount for the modes it implements.
+   * Modes only the legacy SVG studio renders (survey checklist, CAD board,
+   * elevation, garden, share) fall back to it — otherwise the ?mode= query
+   * silently does nothing on the WebGL mount. ?webgl=1 forces the WebGL
+   * studio (the e2e mount contract); ?svg=1 forces the legacy studio;
+   * ?tool=sketch arms the WebGL sketch surface directly. */
+  const webglPreview =
+    sp.svg !== "1" &&
+    (sp.webgl === "1" ||
+      webglStudioSupportsMode(initialMode) ||
+      sp.tool === "sketch");
+  const frame = canvas?.site_frame ?? null;
+  const webglScaleM = frame?.board_width_m ?? 110;
+  const webglBoardAspect =
+    frame && frame.boundary && frame.boundary.length > 0
+      ? (() => {
+          const ys = frame.boundary!.map((p) => p.y_pct);
+          const xs = frame.boundary!.map((p) => p.x_pct);
+          const w = Math.max(...xs) - Math.min(...xs) || 100;
+          const h = Math.max(...ys) - Math.min(...ys) || 100;
+          return h / w;
+        })()
+      : 1;
+
+  if (webglPreview) {
+    return (
+      <main aria-label="Design canvas" style={{ position: "fixed", inset: 0 }}>
+        <WebGLStudioPreview
+          projectId={id}
+          initialSketchMode={sp.tool === "sketch"}
+          initialMode={
+            webglStudioSupportsMode(initialMode) ? initialMode : "sketch"
+          }
+          progress={progress}
+          scaleM={webglScaleM}
+          boardAspect={webglBoardAspect}
+          boundaryPct={
+            (frame?.boundary?.map((p) => ({ x: p.x_pct, y: p.y_pct })) as
+              | PctPoint[]
+              | undefined) ?? []
+          }
+          buildingPct={
+            frame?.building
+              ? (frame.building.map((p) => ({ x: p.x_pct, y: p.y_pct })) as PctPoint[])
+              : undefined
+          }
+          easementsPct={
+            frame?.easements?.map((ring) =>
+              ring.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+            )
+          }
+          lat={project.lat ?? undefined}
+          lng={project.lng ?? undefined}
+          projectAddress={project.address}
+          initialStrokes={canvas?.strokes ?? []}
+          placements={canvas?.placements ?? []}
+          bydaAssets={frame?.byda_assets ?? []}
+          constructionTrenches={canvas?.construction_trenches ?? []}
+          irrigationZones={canvas?.irrigation_zones ?? []}
+          levels={frame?.levels ?? []}
+          keylessOverlays={frame?.keyless_overlays ?? []}
+          neighbourBuildings={frame?.neighbour_buildings ?? []}
+          aerialUri={survey?.aerial_uri ?? null}
+          outdoorM2={
+            resolveAreaM2({
+              titleLotM2: titleBlock?.lotAreaM2,
+              titleHouseM2: titleBlock?.houseAreaM2,
+              survey,
+              canvas,
+            }) ?? 0
+          }
+          hasQuote={Boolean(quoteOut)}
+          quotePortalUri={quoteOut?.uri ?? null}
+          initialCadGhostCount={cad?.ghost_count ?? null}
+        />
+      </main>
+    );
+  }
 
   return (
     <main aria-label="Design canvas">
+      <section className={styles.pipelineBanner} aria-label="Pipeline status">
+        <div className={styles.pipelineBannerCopy}>
+          <p className={styles.pipelineKicker}>Backend pipeline</p>
+          <h1 className={styles.pipelineTitle}>
+            {nextAction ? nextAction.label : "Pipeline complete"}
+          </h1>
+          <p className={styles.pipelineBody}>
+            {nextAction
+              ? "This step is driven by the current survey, design, costing, audit, and output state."
+              : "The current project has moved through the visible backend stages. Open outputs to review the generated deliverables."}
+          </p>
+        </div>
+        {nextAction ? (
+          <form action={nextAction.action} className={styles.pipelineActions}>
+            <input type="hidden" name="projectId" value={id} />
+            {nextAction.kind ? (
+              <input type="hidden" name="kind" value={nextAction.kind} />
+            ) : null}
+            <SubmitButton
+              pendingLabel={nextAction.pending}
+              className={styles.pipelineButton}
+            >
+              {nextAction.label}
+            </SubmitButton>
+          </form>
+        ) : (
+          <KitButton
+            as="a"
+            href={`/projects/${id}/outputs`}
+            variant="secondary"
+            size="md"
+            className={styles.pipelineButton}
+          >
+            Open outputs
+          </KitButton>
+        )}
+      </section>
       <Suspense fallback={<StudioSkeleton />}>
         <HandoffDesignStudio
           projectId={id}

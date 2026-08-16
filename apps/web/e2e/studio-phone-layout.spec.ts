@@ -17,7 +17,7 @@ test.describe("Studio phone adaptive layout", () => {
   }) => {
     const { projectId } = await createSurveyProject(request);
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(handoffStudio(page)).toHaveAttribute("data-layout", "desktop");
     await expectToolDock(page);
@@ -35,7 +35,7 @@ test.describe("Studio phone adaptive layout", () => {
   }) => {
     const { projectId } = await createSurveyProject(request);
     await page.setViewportSize(PHONE_STUDIO_VIEWPORT);
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     // Layout arms from matchMedia after mount — poll until phone chrome sticks.
     await expect

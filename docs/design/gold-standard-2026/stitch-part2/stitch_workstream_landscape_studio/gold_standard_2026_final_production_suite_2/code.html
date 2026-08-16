@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Workstream Gold Standard 2026</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "tertiary-container": "#34daff",
+                "on-primary-container": "#6c4f00",
+                "on-secondary-fixed-variant": "#002eca",
+                "background": "#101418",
+                "surface-dim": "#101418",
+                "surface-variant": "#31353a",
+                "on-error": "#690005",
+                "surface-bright": "#2A3037",
+                "surface-container-lowest": "#0b0f12",
+                "secondary": "#bac3ff",
+                "on-secondary-fixed": "#00105b",
+                "on-background": "#e0e3e8",
+                "surface-container-high": "#262a2f",
+                "surface-container": "#1c2024",
+                "signal-blue": "#0030CF",
+                "on-tertiary-fixed-variant": "#004e5d",
+                "on-secondary-container": "#a8b4ff",
+                "inverse-on-surface": "#2d3135",
+                "cloud-mist": "#D7E1EC",
+                "on-surface-variant": "#d3c5ac",
+                "on-primary": "#402d00",
+                "primary-container": "#fbbf24",
+                "outline": "#9c8f79",
+                "tertiary-fixed": "#afecff",
+                "secondary-fixed-dim": "#bac3ff",
+                "primary-fixed": "#ffdf9f",
+                "tertiary-fixed-dim": "#30d8fd",
+                "on-primary-fixed-variant": "#5c4300",
+                "surface-container-highest": "#31353a",
+                "error-container": "#93000a",
+                "surface-tint": "#f9bd22",
+                "surface-container-low": "#181c20",
+                "gold-highlight": "#FBBF24",
+                "surface": "#101418",
+                "on-error-container": "#ffdad6",
+                "primary-fixed-dim": "#f9bd22",
+                "on-tertiary": "#003641",
+                "on-secondary": "#001f90",
+                "on-tertiary-container": "#005c6e",
+                "tertiary": "#b6edff",
+                "inverse-primary": "#795900",
+                "on-primary-fixed": "#261a00",
+                "inverse-surface": "#e0e3e8",
+                "error": "#ffb4ab",
+                "primary": "#ffe1a7",
+                "on-surface": "#e0e3e8",
+                "on-tertiary-fixed": "#001f27",
+                "secondary-fixed": "#dee0ff",
+                "secondary-container": "#0130cf",
+                "outline-variant": "#4f4633"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "gutter": "16px",
+                "sidebar-width": "280px",
+                "unit": "4px",
+                "margin-safe": "32px",
+                "toolbar-width": "56px"
+        },
+        "fontFamily": {
+                "body-md": [
+                        "Inter"
+                ],
+                "display-lg": [
+                        "Space Grotesk"
+                ],
+                "label-caps": [
+                        "JetBrains Mono"
+                ],
+                "technical-data": [
+                        "JetBrains Mono"
+                ],
+                "headline-lg": [
+                        "Space Grotesk"
+                ],
+                "headline-lg-mobile": [
+                        "Space Grotesk"
+                ]
+        },
+        "fontSize": {
+                "body-md": [
+                        "15px",
+                        {
+                                "lineHeight": "24px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "52px",
+                                "letterSpacing": "-0.03em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "label-caps": [
+                        "11px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.08em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "technical-data": [
+                        "13px",
+                        {
+                                "lineHeight": "18px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "36px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "24px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        body {
+            background-color: #101418;
+        }
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        .iframe-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 200%;
+            border: 0;
+            transform: scale(0.5);
+            transform-origin: top left;
+            pointer-events: none;
+        }
+        .hud-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background-color: rgba(30, 35, 41, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+            padding: 4px 8px;
+            border-radius: 4px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="text-on-surface min-h-screen p-8 flex flex-col items-center">
+<div class="w-full max-w-[1600px] flex flex-col gap-12">
+<!-- Header -->
+<header class="flex justify-between items-end pb-6 w-full mt-8">
+<div>
+<p class="font-technical-data text-technical-data text-gold-highlight mb-2 uppercase tracking-widest">Master Production Directory</p>
+<h1 class="font-display-lg text-display-lg text-on-surface uppercase">WORKSTREAM GOLD STANDARD 2026:<br/>VISUAL LAW</h1>
+</div>
+<div class="text-right">
+<p class="font-technical-data text-technical-data text-on-surface-variant">System Status: <span class="text-signal-blue">ONLINE</span></p>
+<p class="font-technical-data text-technical-data text-on-surface-variant">Last Compiled: <span class="text-on-surface">SYS_DATE</span></p>
+</div>
+</header>
+<!-- Gallery Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full pb-24">
+<!-- Step 0 -->
+<div class="flex flex-col gap-4 group">
+<div class="flex items-center justify-between pb-2">
+<h3 class="font-headline-lg text-headline-lg-mobile text-on-surface">Step 0: Site Truth</h3>
+</div>
+<div class="iframe-container aspect-video rounded-lg ring-1 ring-outline-variant/30 group-hover:ring-gold-highlight/50 transition-all duration-300">
+<div class="hud-badge font-technical-data text-[10px] uppercase tracking-widest">Acquisition</div>
+<iframe src="{{DATA:SCREEN:SCREEN_165}}"></iframe>
+</div>
+</div>
+<!-- Phase 1 -->
+<div class="flex flex-col gap-4 group">
+<div class="flex items-center justify-between pb-2">
+<h3 class="font-headline-lg text-headline-lg-mobile text-on-surface">Phase 1: Sketch Studio</h3>
+</div>
+<div class="iframe-container aspect-video rounded-lg ring-1 ring-outline-variant/30 group-hover:ring-gold-highlight/50 transition-all duration-300">
+<div class="hud-badge font-technical-data text-[10px] uppercase tracking-widest">Creative</div>
+<iframe src="{{DATA:SCREEN:SCREEN_191}}"></iframe>
+</div>
+</div>
+<!-- Phase 2 -->
+<div class="flex flex-col gap-4 group">
+<div class="flex items-center justify-between pb-2">
+<h3 class="font-headline-lg text-headline-lg-mobile text-on-surface">Phase 2: CAD Operator</h3>
+</div>
+<div class="iframe-container aspect-video rounded-lg ring-1 ring-outline-variant/30 group-hover:ring-gold-highlight/50 transition-all duration-300">
+<div class="hud-badge font-technical-data text-[10px] uppercase tracking-widest">Technical</div>
+<iframe src="{{DATA:SCREEN:SCREEN_160}}"></iframe>
+</div>
+</div>
+<!-- Phase 3 -->
+<div class="flex flex-col gap-4 group">
+<div class="flex items-center justify-between pb-2">
+<h3 class="font-headline-lg text-headline-lg-mobile text-on-surface">Phase 3: Client Proposal</h3>
+</div>
+<div class="iframe-container aspect-video rounded-lg ring-1 ring-outline-variant/30 group-hover:ring-gold-highlight/50 transition-all duration-300">
+<div class="hud-badge font-technical-data text-[10px] uppercase tracking-widest">Fit-Sheet</div>
+<iframe src="{{DATA:SCREEN:SCREEN_181}}"></iframe>
+</div>
+</div>
+<!-- Phase 4 -->
+<div class="flex flex-col gap-4 group">
+<div class="flex items-center justify-between pb-2">
+<h3 class="font-headline-lg text-headline-lg-mobile text-on-surface">Phase 4: Build Pack</h3>
+</div>
+<div class="iframe-container aspect-video rounded-lg ring-1 ring-outline-variant/30 group-hover:ring-gold-highlight/50 transition-all duration-300">
+<div class="hud-badge font-technical-data text-[10px] uppercase tracking-widest">Handoff</div>
+<iframe src="{{DATA:SCREEN:SCREEN_182}}"></iframe>
+</div>
+</div>
+<!-- Mobile AR -->
+<div class="flex flex-col gap-4 group">
+<div class="flex items-center justify-between pb-2">
+<h3 class="font-headline-lg text-headline-lg-mobile text-on-surface">Mobile Field Bridge</h3>
+</div>
+<div class="iframe-container aspect-video rounded-lg ring-1 ring-outline-variant/30 group-hover:ring-gold-highlight/50 transition-all duration-300 bg-surface flex justify-center items-center">
+<div class="hud-badge font-technical-data text-[10px] uppercase tracking-widest">AR Staking</div>
+<div class="h-full aspect-[9/16] relative overflow-hidden bg-black">
+<iframe class="w-full h-full border-0 origin-top-left scale-[0.5] pointer-events-none absolute top-0 left-0" src="{{DATA:SCREEN:SCREEN_177}}" style="width: 200%; height: 200%;"></iframe>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Info -->
+<footer class="fixed bottom-0 left-0 w-full bg-surface-dim/90 backdrop-blur-md border-t border-outline-variant/30 py-4 px-8 z-50">
+<div class="max-w-[1600px] mx-auto flex justify-between items-center w-full">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-signal-blue text-[20px]">verified</span>
+<p class="font-technical-data text-technical-data text-signal-blue tracking-widest uppercase">Spatial Truth Secured</p>
+</div>
+<button class="font-technical-data text-technical-data bg-gold-highlight text-on-primary px-8 py-3 rounded uppercase tracking-wider hover:bg-primary-container transition-colors font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                Export Master Build Pack
+            </button>
+</div>
+</footer>
+</div>
+</body></html>

@@ -8,6 +8,7 @@ import {
 } from "../sunGrowth/sunDatePreset";
 import type { EnvLiveMeta } from "./envLiveMeta";
 import { WeatherIcon } from "./WeatherIcon";
+import { SiteContextBadges } from "../../../../SiteContextBadges";
 import metaCss from "./metaPanel.module.css";
 import css from "./environmentPanel.module.css";
 
@@ -21,6 +22,8 @@ type Props = {
   shadeOn: boolean;
   /** KEYLESS street / planning meta chips (not dig truth). */
   streetChips?: string[];
+  /** When set, fetches council planning badges + season (GET /site-context). */
+  projectId?: string;
   onClose: () => void;
   onSunMin: (min: number) => void;
   onDatePreset: (preset: SunDatePreset) => void;
@@ -45,6 +48,7 @@ export function EnvironmentPanel({
   playing,
   shadeOn,
   streetChips = [],
+  projectId,
   onClose,
   onSunMin,
   onDatePreset,
@@ -98,6 +102,13 @@ export function EnvironmentPanel({
               {c}
             </span>
           ))}
+        </div>
+      ) : null}
+
+      {projectId ? (
+        <div className={css.block} data-testid="planning-context-block">
+          <p className={css.blockLabel}>Planning context</p>
+          <SiteContextBadges projectId={projectId} />
         </div>
       ) : null}
 

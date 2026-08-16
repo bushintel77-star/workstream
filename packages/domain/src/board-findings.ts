@@ -159,7 +159,8 @@ function segmentsCross(
   return o1 !== o2 && o3 !== o4;
 }
 
-function pathsCross(a: BoardPoint[], b: BoardPoint[]): boolean {
+/** Segment-intersection crossing test — shared by dig-conflict findings and any other view that needs to know whether two board polylines cross. */
+export function pathsCross(a: BoardPoint[], b: BoardPoint[]): boolean {
   for (let i = 0; i + 1 < a.length; i++) {
     for (let j = 0; j + 1 < b.length; j++) {
       if (segmentsCross(a[i]!, a[i + 1]!, b[j]!, b[j + 1]!)) return true;

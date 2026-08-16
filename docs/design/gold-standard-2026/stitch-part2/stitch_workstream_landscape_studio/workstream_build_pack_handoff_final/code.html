@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Build Pack &amp; Handoff</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@500;600&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#e0e3e8",
+                        "primary-container": "#fbbf24",
+                        "on-tertiary-container": "#005c6e",
+                        "on-primary-fixed": "#261a00",
+                        "surface-dim": "#101418",
+                        "primary": "#ffe1a7",
+                        "outline": "#9c8f79",
+                        "inverse-on-surface": "#2d3135",
+                        "background": "#101418",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#bac3ff",
+                        "secondary-container": "#0130cf",
+                        "tertiary": "#b6edff",
+                        "on-surface": "#e0e3e8",
+                        "surface-bright": "#2A3037",
+                        "tertiary-fixed": "#afecff",
+                        "surface-tint": "#f9bd22",
+                        "on-primary-container": "#6c4f00",
+                        "on-primary-fixed-variant": "#5c4300",
+                        "tertiary-container": "#34daff",
+                        "on-tertiary": "#003641",
+                        "inverse-surface": "#e0e3e8",
+                        "on-tertiary-fixed": "#001f27",
+                        "surface-container-highest": "#31353a",
+                        "surface-variant": "#31353a",
+                        "tertiary-fixed-dim": "#30d8fd",
+                        "outline-variant": "#4f4633",
+                        "on-surface-variant": "#d3c5ac",
+                        "on-error": "#690005",
+                        "primary-fixed-dim": "#f9bd22",
+                        "on-secondary-fixed-variant": "#002eca",
+                        "secondary": "#bac3ff",
+                        "surface-container": "#1c2024",
+                        "on-primary": "#402d00",
+                        "error-container": "#93000a",
+                        "secondary-fixed": "#dee0ff",
+                        "error": "#ffb4ab",
+                        "surface": "#101418",
+                        "inverse-primary": "#795900",
+                        "surface-container-lowest": "#0b0f12",
+                        "on-secondary-fixed": "#00105b",
+                        "gold-highlight": "#FBBF24",
+                        "on-secondary-container": "#a8b4ff",
+                        "signal-blue": "#0030CF",
+                        "surface-container-low": "#181c20",
+                        "cloud-mist": "#D7E1EC",
+                        "surface-container-high": "#262a2f",
+                        "on-tertiary-fixed-variant": "#004e5d",
+                        "on-secondary": "#001f90",
+                        "primary-fixed": "#ffdf9f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-safe": "32px",
+                        "gutter": "16px",
+                        "unit": "4px",
+                        "sidebar-width": "280px",
+                        "toolbar-width": "56px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "label-caps": ["JetBrains Mono"],
+                        "display-lg": ["Space Grotesk"],
+                        "technical-data": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "technical-data": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .grid-pattern {
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+        .sub-grid-pattern {
+             background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 8px 8px;
+        }
+        .glass-panel {
+            @apply bg-surface-dim/80 backdrop-blur-md border border-on-surface/10 rounded-xl;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .glass-panel-inner {
+             @apply bg-surface/50 border border-on-surface/5 rounded-lg;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-background min-h-screen overflow-hidden antialiased selection:bg-gold-highlight selection:text-black">
+<!-- Infinite Canvas Background -->
+<div class="fixed inset-0 grid-pattern z-0 pointer-events-none"></div>
+<div class="fixed inset-0 sub-grid-pattern z-0 pointer-events-none"></div>
+<!-- Background Image / Map Data -->
+<div class="fixed inset-0 z-[-1]" data-alt="A highly detailed, top-down view of an architectural site plan or landscape design draft on a digital drafting table. The scene uses a sophisticated dark-mode aesthetic with precise, high-contrast geometric lines over a dark background. Subtle topographic contours and planting zones are visible, illuminated by a cool, clinical light to emphasize a modern, professional CAD environment." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDqDZYvaq8j-k-O7HFLIrKGXum0k7AjazElxuOnMF45TO7OVTGIS-V2fSnM4PwVOxbc0eeaToCy4TTCgqlrKOCbXpmglRhuwqXulgVhuiImQ8VWIEIaMJLYowOLp-HfaqI_MHxP6791rxM0sb0Vf7hg5WFdqYtqUahKEACWDp9ssD1GbVWQrBzRwyU2w8tPFiiUZK0PnX_kkvxcowmtc4IB9dA1ExoxGWWCvR26HxQ7Z_9bVAww7NKjZw')"></div>
+<!-- TopNavBar from Shared Components -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-safe h-toolbar-width bg-surface-dim/70 backdrop-blur-md border-b border-on-surface/10">
+<div class="flex items-center gap-6">
+<span class="font-display-lg text-[24px] text-gold-highlight tracking-tighter leading-none">STUDIO_CANVAS_v2.0</span>
+<div class="hidden md:flex gap-4">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-technical-data text-technical-data" href="#">Draft</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-technical-data text-technical-data" href="#">Analyze</a>
+<a class="text-gold-highlight border-b-2 border-gold-highlight pb-1 font-technical-data text-technical-data scale-95 duration-100" href="#">Simulate</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-gold-highlight text-black px-4 py-1.5 rounded font-technical-data text-technical-data hover:bg-primary transition-colors">Export</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden border border-on-surface/20">
+<img alt="Architect Profile" class="w-full h-full object-cover" data-alt="A small, professional headshot of an architect in a dark studio setting. The lighting is dramatic, highlighting their focused expression. The style is modern, hyper-realistic, and fits seamlessly into a high-end digital tool interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYj2Wym21E_fjQOXjzds2UWziiepCwVYAlWC3Q7YZYhR5w_OcunRMpEI6jn-_D-JVrZJbzyX-JoggYy2-NZT6oK4dEvwh2lRiOsD-pwAPM-mURkcxh6XAZrQR1FpBQfruRXwkOkIIpFAF1UoYsmgZ_tML6tcAmFtBb1KQChviXVYoaFBUPoEC-mLKO8sx1SLLT6l24KyBcEDObgaD9dHqSM0yYPMfAX38LB2j2gvWdYznQfti7bOVV_Q"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar from Shared Components -->
+<aside class="fixed left-gutter top-1/2 -translate-y-1/2 flex flex-col items-center py-6 gap-4 z-50 bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 rounded-full w-[72px]">
+<div class="flex flex-col items-center gap-1 mb-4">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center border border-on-surface/20">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">architecture</span>
+</div>
+<span class="font-label-caps text-[8px] text-on-surface">TOOLS</span>
+</div>
+<div class="flex flex-col gap-3">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors group relative">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="timeline">timeline</span>
+<span class="absolute left-full ml-2 px-2 py-1 bg-surface-container text-on-surface font-label-caps text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap">Line</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors group relative">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="gesture">gesture</span>
+<span class="absolute left-full ml-2 px-2 py-1 bg-surface-container text-on-surface font-label-caps text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap">Curve</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-gold-highlight text-surface shadow-[0_0_15px_rgba(251,191,36,0.4)] transition-all duration-200 ease-out group relative">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+<span class="absolute left-full ml-2 px-2 py-1 bg-surface-container text-on-surface font-label-caps text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap">Area</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors group relative">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="eco">eco</span>
+<span class="absolute left-full ml-2 px-2 py-1 bg-surface-container text-on-surface font-label-caps text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap">Planting</span>
+</button>
+</div>
+<div class="mt-4 pt-4 border-t border-on-surface/10 w-full flex justify-center">
+<button class="text-gold-highlight font-label-caps text-label-caps hover:text-primary">Layer +</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="relative z-10 w-full h-full pt-[96px] pb-[80px] px-margin-safe flex items-center justify-center">
+<!-- Center Floating Modal - Build Pack -->
+<div class="glass-panel w-full max-w-4xl p-6 flex flex-col gap-6">
+<!-- Header -->
+<div class="flex justify-between items-start border-b border-on-surface/10 pb-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-1">Project Export &amp; Build Pack Generation</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Compile technical lenses, specifications, and compliance audits for handoff.</p>
+</div>
+<button class="text-on-surface-variant hover:text-white transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Content Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Left Column: Settings -->
+<div class="flex flex-col gap-6">
+<div>
+<h2 class="font-technical-data text-technical-data text-gold-highlight mb-4 uppercase">Bundle Contents</h2>
+<div class="space-y-4">
+<label class="flex items-center justify-between group cursor-pointer">
+<span class="font-body-md text-body-md text-on-surface group-hover:text-white transition-colors">Planting Schedule &amp; Lens</span>
+<div class="relative inline-flex h-5 w-9 items-center rounded-full bg-signal-blue transition-colors">
+<span class="translate-x-5 inline-block h-3 w-3 transform rounded-full bg-white transition-transform"></span>
+</div>
+</label>
+<label class="flex items-center justify-between group cursor-pointer">
+<span class="font-body-md text-body-md text-on-surface group-hover:text-white transition-colors">Hardscape Specifications</span>
+<div class="relative inline-flex h-5 w-9 items-center rounded-full bg-signal-blue transition-colors">
+<span class="translate-x-5 inline-block h-3 w-3 transform rounded-full bg-white transition-transform"></span>
+</div>
+</label>
+<label class="flex items-center justify-between group cursor-pointer">
+<span class="font-body-md text-body-md text-on-surface group-hover:text-white transition-colors">Irrigation &amp; Drainage Plan</span>
+<div class="relative inline-flex h-5 w-9 items-center rounded-full bg-signal-blue transition-colors">
+<span class="translate-x-5 inline-block h-3 w-3 transform rounded-full bg-white transition-transform"></span>
+</div>
+</label>
+<label class="flex items-center justify-between group cursor-pointer">
+<span class="font-body-md text-body-md text-on-surface-variant group-hover:text-on-surface transition-colors">Compliance Audit (Beta)</span>
+<div class="relative inline-flex h-5 w-9 items-center rounded-full bg-surface-container-highest transition-colors">
+<span class="translate-x-1 inline-block h-3 w-3 transform rounded-full bg-on-surface-variant transition-transform"></span>
+</div>
+</label>
+</div>
+</div>
+<div class="glass-panel-inner p-4">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-2 uppercase">Contractor Handoff</h3>
+<div class="flex gap-2">
+<input class="bg-surface text-on-surface border border-on-surface/20 rounded px-3 py-1.5 font-technical-data text-technical-data w-full focus:outline-none focus:border-signal-blue focus:ring-1 focus:ring-signal-blue transition-all" readonly="" type="text" value="bidding@contractor.ext"/>
+<button class="bg-surface-variant hover:bg-surface-bright text-on-surface px-3 py-1.5 rounded font-label-caps text-label-caps transition-colors border border-on-surface/10">Invite</button>
+</div>
+</div>
+</div>
+<!-- Right Column: Preview & Status -->
+<div class="flex flex-col gap-4">
+<h2 class="font-technical-data text-technical-data text-on-surface mb-2 uppercase">Build Pack Preview</h2>
+<!-- Document Preview Area -->
+<div class="glass-panel-inner h-48 relative overflow-hidden flex flex-col">
+<!-- Simulated Doc Header -->
+<div class="bg-white p-3 flex justify-between items-center border-b border-gray-200">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 bg-green-600 rounded-sm"></div>
+<span class="text-black font-bold text-xs uppercase tracking-tight">Green Horizons<br/><span class="font-normal text-[8px]">Architecture</span></span>
+</div>
+<div class="text-right">
+<div class="text-gray-500 font-label-caps text-[8px]">PROJECT</div>
+<div class="text-black font-bold text-xs uppercase">Riverfront Estate - Phase 2</div>
+</div>
+</div>
+<!-- Simulated Doc Body -->
+<div class="flex-1 bg-surface-container p-3 flex flex-col gap-2 overflow-hidden opacity-80">
+<div class="h-2 w-1/3 bg-on-surface/20 rounded"></div>
+<div class="h-1 w-full bg-on-surface/10 rounded"></div>
+<div class="h-1 w-5/6 bg-on-surface/10 rounded"></div>
+<div class="h-1 w-full bg-on-surface/10 rounded"></div>
+<div class="h-2 w-1/4 bg-on-surface/20 rounded mt-2"></div>
+<div class="h-1 w-full bg-on-surface/10 rounded"></div>
+<div class="h-1 w-2/3 bg-on-surface/10 rounded"></div>
+</div>
+<!-- Overlay Gradient -->
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/90 via-transparent to-transparent pointer-events-none"></div>
+</div>
+<!-- Status Module -->
+<div class="glass-panel-inner p-3 flex items-center justify-between border-l-4 border-l-signal-blue">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-signal-blue">verified</span>
+<span class="font-technical-data text-technical-data text-on-surface">All Spatial Truth Verified</span>
+</div>
+<span class="font-technical-data text-technical-data text-on-surface-variant">4 Docs</span>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="mt-4 pt-4 border-t border-on-surface/10 flex justify-end gap-4">
+<button class="px-6 py-2 rounded font-technical-data text-technical-data text-on-surface hover:bg-surface-variant transition-colors border border-transparent hover:border-on-surface/10">Cancel</button>
+<button class="bg-on-surface text-surface px-8 py-2 rounded font-technical-data text-technical-data hover:bg-white transition-colors shadow-lg flex items-center gap-2">
+                    Generate Build Pack
+                    <span class="material-symbols-outlined text-[16px]">download</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Footer from Shared Components -->
+<footer class="fixed bottom-0 w-full z-40 flex justify-between items-center px-margin-safe py-2 bg-surface-container-lowest/80 border-t border-on-surface/10 backdrop-blur-sm">
+<span class="font-label-caps text-label-caps text-on-surface-variant">SPATIAL TRUTH // PROJECT COORDS: 34.0522° N, 118.2437° W</span>
+<div class="flex gap-4">
+<a class="font-technical-data text-technical-data text-signal-blue font-bold opacity-80" href="#">Telemetry</a>
+<a class="font-technical-data text-technical-data text-on-surface-variant hover:text-white" href="#">Financials</a>
+<a class="font-technical-data text-technical-data text-on-surface-variant hover:text-white" href="#">Grid Settings</a>
+</div>
+</footer>
+</body></html>

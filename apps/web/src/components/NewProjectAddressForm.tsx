@@ -15,8 +15,6 @@ type Suggestion = {
   lng: number;
 };
 
-const MELBOURNE_FALLBACK = { lat: -37.8136, lng: 144.9631 };
-
 function labelFor(item: Suggestion): string {
   // Nominatim often sets text to house number only — prefer a readable street line.
   const first = item.place_name.split(",").slice(0, 3).join(",").trim();
@@ -65,13 +63,13 @@ export function NewProjectAddressForm() {
           setSuggestions(results);
           setHint(
             results.length === 0
-              ? "No matches — continue still locates the typed address."
+              ? "No verified match. Refine the street address before continuing."
               : "Tap a match to locate the property.",
           );
         } catch {
           if (requestId !== requestIdRef.current) return;
           setSuggestions([]);
-          setHint("Search failed — continue still locates the typed address.");
+          setHint("Address search is unavailable. Try again before continuing.");
         } finally {
           if (requestId === requestIdRef.current) setSearching(false);
         }
@@ -101,7 +99,7 @@ export function NewProjectAddressForm() {
     goLocate(item.place_name, item.lat, item.lng);
   }
 
-  function goOpen() {
+  async function goOpen() {
     const trimmed = query.trim();
     if (trimmed.length < 5) return;
 
@@ -110,12 +108,30 @@ export function NewProjectAddressForm() {
       return;
     }
 
-    const fallback = suggestions[0];
-    goLocate(
-      trimmed,
-      fallback?.lat ?? MELBOURNE_FALLBACK.lat,
-      fallback?.lng ?? MELBOURNE_FALLBACK.lng,
-    );
+    if (suggestions[0]) {
+      pickSuggestion(suggestions[0]);
+      return;
+    }
+
+    setSearching(true);
+    setHint(null);
+    try {
+      const results = await geocodeSearchAction(trimmed);
+      setSuggestions(results);
+      if (results[0]) {
+        pickSuggestion(results[0]);
+      } else {
+        setHint("No verified match. Refine the street address before continuing.");
+      }
+    } catch (error) {
+      setHint(
+        error instanceof Error
+          ? error.message
+          : "Address search is unavailable. Try again before continuing.",
+      );
+    } finally {
+      setSearching(false);
+    }
   }
 
   const canContinue = query.trim().length >= 5;
@@ -138,7 +154,7 @@ export function NewProjectAddressForm() {
                 pickSuggestion(suggestions[0]);
                 return;
               }
-              goOpen();
+              void goOpen();
             }
           }}
           placeholder="Start typing — e.g. 6 Beatty Ave, Armadale"
@@ -183,8 +199,8 @@ export function NewProjectAddressForm() {
       <KitButton
         type="button"
         variant="default"
-        disabled={!canContinue}
-        onClick={goOpen}
+        disabled={!canContinue || searching}
+        onClick={() => void goOpen()}
       >
         Locate property →
       </KitButton>

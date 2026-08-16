@@ -4,6 +4,13 @@ import { handoffStudio, pipelineShell } from "./helpers";
 const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 test.describe("One canvas modes", () => {
+  // Operator viewport — the header (brand + phase + 8 mode tabs + actions)
+  // is designed for ≥1600px; the Playwright default 1280 crams it off-screen.
+  // Sub-1280 header layout is a tracked product issue, not this spec's law.
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 950 });
+  });
+
   let projectId: string;
 
   test.beforeAll(async ({ request }) => {
@@ -23,7 +30,7 @@ test.describe("One canvas modes", () => {
   });
 
   test("project root is handoff studio with mode strip", async ({ page }) => {
-    await page.goto(`/projects/${projectId}`);
+    await page.goto(`/projects/${projectId}?svg=1`);
     await expect(handoffStudio(page)).toBeVisible({
       timeout: 30_000,
     });
@@ -33,7 +40,7 @@ test.describe("One canvas modes", () => {
 
   test("mode strip switches Survey → Sketch → CAD", async ({ page }) => {
     // After survey job, empty `?mode=` suggests CAD — pin Survey first.
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(page.getByTestId("canvas-mode-strip")).toBeVisible({
       timeout: 30_000,
     });
@@ -69,7 +76,9 @@ test.describe("One canvas modes", () => {
     await expect(page).toHaveURL(
       new RegExp(`/projects/${projectId}\\?mode=sketch`),
     );
-    await expect(handoffStudio(page)).toBeVisible({
+    // The redirect lands on the WebGL studio (the ?svg=1 board is the
+    // explicit deep fallback) — same contract as design-studio.spec.ts.
+    await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
       timeout: 30_000,
     });
   });

@@ -52,7 +52,7 @@
 
 .label {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -172,7 +172,7 @@
 }
 
 .headerLabel {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -182,6 +182,15 @@
 
 .headerValue {
   font-weight: 700;
+}
+
+/* Sub-1280 header density — the trigger drops its "Lifecycle" label and
+   shows just the phase value so it stops crowding the mode strip (part of
+   the Tier1TopBar responsive pass). */
+@media (max-width: 1279.98px) {
+  .headerLabel {
+    display: none;
+  }
 }
 
 /* Portaled dropdown — same dark translucent language as HeaderViewMenu. */

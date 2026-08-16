@@ -80,7 +80,7 @@ test.describe("Instant Planner handoff", () => {
     });
     expect(leftover.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("instant-planner-chrome")).toBeVisible({
       timeout: 20_000,

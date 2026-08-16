@@ -61,7 +61,7 @@ test.describe("Canvas sketch AI", () => {
   }) => {
     const { projectId } = await createSurveyProject(request);
 
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(page.getByTestId("sketch-board")).toBeVisible({
       timeout: 30_000,
     });
@@ -78,7 +78,7 @@ test.describe("Canvas sketch AI", () => {
   }) => {
     const { projectId } = await createSurveyProject(request);
 
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(page.getByTestId("sketch-board")).toBeVisible({
       timeout: 30_000,
     });
@@ -93,7 +93,7 @@ test.describe("Canvas sketch AI", () => {
   test("command palette arms symbol from search", async ({ page, request }) => {
     const { projectId } = await createSurveyProject(request);
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });
@@ -112,7 +112,7 @@ test.describe("Canvas sketch AI", () => {
     const { projectId } = await createSurveyProject(request);
     await seedLotFrameForScan(request, projectId);
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });
@@ -147,7 +147,7 @@ test.describe("Canvas sketch AI", () => {
     });
     expect(put.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });
@@ -183,7 +183,7 @@ test.describe("Canvas sketch AI", () => {
     const { projectId } = await createSurveyProject(request);
     await seedLotFrameForScan(request, projectId);
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });

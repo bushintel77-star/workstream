@@ -53,18 +53,18 @@ test.describe("Design studio (sketch mode)", () => {
     await page.setViewportSize(LEGACY_STUDIO_VIEWPORT);
   });
 
-  test("loads sketch mode on one canvas without pipeline chrome", async ({
+  test("loads sketch mode on the WebGL studio with mode tabs, no pipeline chrome", async ({
     page,
   }) => {
     await page.goto(`/projects/${projectId}?mode=sketch`);
     await expect(pipelineShell(page)).toHaveCount(0);
-    await expect(handoffStudio(page)).toBeVisible({
+    await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.getByTestId("canvas-mode-strip")).toBeVisible();
-    await expect(page.getByTestId("sketch-board")).toBeVisible({
-      timeout: 15_000,
-    });
+    // The preserved 8-mode system renders as tabs on the default mount —
+    // sketch is native to the WebGL studio.
+    await expect(page.getByTestId("studio-mode-tabs")).toBeVisible();
+    await expect(page.getByTestId("mode-tab-sketch")).toBeVisible();
   });
 
   test("legacy /design redirects into sketch mode", async ({ page }) => {
@@ -72,13 +72,13 @@ test.describe("Design studio (sketch mode)", () => {
     await expect(page).toHaveURL(
       new RegExp(`/projects/${projectId}\\?mode=sketch`),
     );
-    await expect(page.getByTestId("sketch-board")).toBeVisible({
+    await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
       timeout: 30_000,
     });
   });
 
   test("seeded placement visible in CAD", async ({ page }) => {
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`); // classic vector board
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });
@@ -88,7 +88,7 @@ test.describe("Design studio (sketch mode)", () => {
   });
 
   test("selecting a placed item shows a live shape readout", async ({ page }) => {
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`); // classic vector board
     const item = page.getByTestId("studio-item").first();
     await expect(item).toBeVisible({ timeout: 30_000 });
     await item.click();
@@ -98,7 +98,7 @@ test.describe("Design studio (sketch mode)", () => {
   });
 
   test("arms symbol from command palette search", async ({ page }) => {
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`); // classic vector board
     await expect(page.getByTestId("studio-item")).toHaveCount(1, {
       timeout: 30_000,
     });

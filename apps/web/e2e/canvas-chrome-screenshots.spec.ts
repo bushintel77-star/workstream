@@ -36,7 +36,7 @@ test.describe("Camera chrome screenshot pack", () => {
     const { projectId } = await createSurveyProject(request);
 
     // Sketch
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("sketch-convert-bar")).toBeVisible({
       timeout: 15_000,
@@ -49,7 +49,7 @@ test.describe("Camera chrome screenshot pack", () => {
     ).toBe(0);
 
     // CAD
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 15_000,
     });
@@ -62,7 +62,7 @@ test.describe("Camera chrome screenshot pack", () => {
     ).toBe(0);
 
     // Survey
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(page.getByTestId("zoom-world")).toBeVisible({ timeout: 15_000 });
     await zoomIn(page, 2);
     await takeScreenshot(page, "survey-zoom-near");
@@ -70,7 +70,7 @@ test.describe("Camera chrome screenshot pack", () => {
     await takeScreenshot(page, "survey-zoom-far");
 
     // Fit sheet
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await clickHeaderViewItem(page, "fit-sheet-top");
     await expect(page.getByTestId("fit-sheet-layer")).toBeVisible({
       timeout: 15_000,
@@ -80,7 +80,7 @@ test.describe("Camera chrome screenshot pack", () => {
     await takeScreenshot(page, "fit-zoom-b");
 
     // Elevation (no zoomWorld)
-    await page.goto(`/projects/${projectId}?mode=elevation`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=elevation`);
     await expect(page.getByTestId("elevation-profile")).toBeVisible({
       timeout: 15_000,
     });

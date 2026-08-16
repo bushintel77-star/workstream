@@ -1,0 +1,288 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Sketch Studio: Studio Dark Production Final</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&amp;family=Inter:wght@400&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface-variant": "#d3c5ac",
+                      "on-surface": "#e0e3e8",
+                      "tertiary-fixed": "#afecff",
+                      "secondary": "#bac3ff",
+                      "primary": "#ffe1a7",
+                      "tertiary-container": "#34daff",
+                      "on-tertiary": "#003641",
+                      "secondary-fixed-dim": "#bac3ff",
+                      "on-error-container": "#ffdad6",
+                      "cloud-mist": "#D7E1EC",
+                      "primary-fixed-dim": "#f9bd22",
+                      "surface-dim": "#1E2329",
+                      "on-secondary-container": "#a8b4ff",
+                      "on-tertiary-fixed": "#001f27",
+                      "inverse-surface": "#e0e3e8",
+                      "surface-variant": "#31353a",
+                      "surface-tint": "#f9bd22",
+                      "signal-blue": "#0030CF",
+                      "inverse-on-surface": "#2d3135",
+                      "outline-variant": "#4f4633",
+                      "surface-bright": "#2A3037",
+                      "tertiary-fixed-dim": "#30d8fd",
+                      "on-primary-fixed-variant": "#5c4300",
+                      "primary-container": "#fbbf24",
+                      "secondary-fixed": "#dee0ff",
+                      "on-primary": "#402d00",
+                      "secondary-container": "#0130cf",
+                      "surface": "#101418",
+                      "surface-container-low": "#181c20",
+                      "error-container": "#93000a",
+                      "on-background": "#e0e3e8",
+                      "on-primary-container": "#6c4f00",
+                      "on-primary-fixed": "#261a00",
+                      "gold-highlight": "#FBBF24",
+                      "outline": "#9c8f79",
+                      "on-error": "#690005",
+                      "surface-container": "#1c2024",
+                      "on-tertiary-container": "#005c6e",
+                      "on-secondary-fixed-variant": "#002eca",
+                      "surface-container-high": "#262a2f",
+                      "background": "#101418",
+                      "inverse-primary": "#795900",
+                      "on-secondary": "#001f90",
+                      "surface-container-lowest": "#0b0f12",
+                      "primary-fixed": "#ffdf9f",
+                      "error": "#ffb4ab",
+                      "tertiary": "#b6edff",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "surface-container-highest": "#31353a",
+                      "on-secondary-fixed": "#00105b"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "toolbar-width": "56px",
+                      "margin-safe": "32px",
+                      "unit": "4px",
+                      "gutter": "16px",
+                      "sidebar-width": "280px"
+              },
+              "fontFamily": {
+                      "technical-data": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Space Grotesk"
+                      ],
+                      "headline-lg": [
+                              "Space Grotesk"
+                      ],
+                      "display-lg": [
+                              "Space Grotesk"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "technical-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "52px",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        /* Infinite Canvas Grid */
+        .bg-grid-dots {
+            background-image: radial-gradient(rgba(224, 227, 232, 0.15) 1px, transparent 1px);
+            background-size: 32px 32px;
+            background-position: -16px -16px;
+        }
+        
+        /* Spatial Truth Lines */
+        .boundary-line {
+            stroke: #e0e3e8;
+            stroke-width: 2;
+            stroke-dasharray: 8 4;
+            fill: none;
+        }
+        .house-structure {
+            fill: rgba(30, 35, 41, 0.5);
+            stroke: #e0e3e8;
+            stroke-width: 1;
+        }
+        .proposed-path {
+            stroke: #0030CF;
+            stroke-width: 4;
+            stroke-linecap: round;
+            fill: none;
+        }
+        .planting-cluster {
+            fill: rgba(168, 255, 180, 0.2);
+            stroke: rgba(168, 255, 180, 0.8);
+            stroke-width: 2;
+        }
+        .service-line {
+            stroke: #FBBF24;
+            stroke-width: 2;
+            stroke-dasharray: 4 2;
+            fill: none;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface overflow-hidden min-h-screen relative font-body-md text-body-md">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-safe h-toolbar-width bg-surface-dim/70 backdrop-blur-md border-b border-on-surface/10">
+<div class="font-display-lg text-display-lg text-gold-highlight tracking-tighter">STUDIO_CANVAS_v2.0</div>
+<nav class="hidden md:flex gap-8">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-technical-data text-technical-data" href="#">Draft</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-technical-data text-technical-data" href="#">Analyze</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-technical-data text-technical-data" href="#">Simulate</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 px-4 py-1 rounded text-white font-headline-lg-mobile text-headline-lg-mobile hover:bg-surface-variant/50 transition-colors">Export</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="history">history</span></button>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-on-surface/10">
+<img alt="Architect Profile" class="w-full h-full object-cover" data-alt="A highly detailed close-up portrait of a professional architect in a modern, dark-themed studio setting. The lighting is cinematic with subtle blue and gold edge highlights. The mood is focused and authoritative. The background is slightly blurred showing technical screens." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5ZEAwIyOLjtbhLreBrEU2KaoALBzvGhFmP-c08en_2qPCoyNvv0HNkVIv58zZR1Oqxenu6MiWGzdvciJxDYDRmWYRUbfgecixQebIbmNb5hToWjQyr1fj6ffWLGxlNyfKPpiZITHD1RDSrvBk6NV5lpvup8t-Cs5ZWOqfyvXRfmjeT8BjBXtJLbkNMtg4UESTUJUUEbfkJEfqwY7upAIytuUsYYG9jEgIhSfDe671sL2UurAw6GpOiA">
+</div>
+</div>
+</header>
+<!-- Main Canvas Area -->
+<main class="absolute inset-0 bg-grid-dots z-0"><div class="absolute top-24 left-gutter z-40">
+  <div class="bg-gold-highlight text-surface px-4 py-2 rounded shadow-[0_0_15px_rgba(251,191,36,0.4)] flex items-center gap-2">
+    <span class="material-symbols-outlined text-[18px]">verified</span>
+    <span class="font-label-caps text-label-caps font-bold tracking-widest">FINAL PRODUCTION: PHASE 2 - CAD STUDIO</span>
+  </div>
+</div>
+<!-- SVG Canvas for Geometry -->
+<svg class="w-full h-full absolute inset-0" xmlns="http://www.w3.org/2000/svg">
+<!-- Boundary -->
+<polygon class="boundary-line" points="200,150 800,100 900,600 150,700"></polygon>
+<!-- Existing House -->
+<rect class="house-structure" height="180" width="250" x="350" y="250"></rect>
+<rect class="house-structure" height="50" width="100" x="400" y="430"></rect>
+<!-- Proposed Path -->
+<path class="proposed-path" d="M450,480 Q450,600 300,650 T150,700"></path>
+<!-- Planting Clusters -->
+<circle class="planting-cluster" cx="250" cy="300" r="40"></circle>
+<circle class="planting-cluster" cx="280" cy="340" r="30"></circle>
+<circle class="planting-cluster" cx="220" cy="360" r="35"></circle>
+<!-- Service Line (Gas) -->
+<line class="service-line" x1="700" x2="600" y1="200" y2="400"></line>
+<!-- Contextual Meta Chip Anchor point -->
+<circle cx="650" cy="300" fill="#FBBF24" r="4"></circle>
+</svg>
+<!-- Floating Meta Chip -->
+<div class="absolute" style="top: 280px; left: 670px;">
+<div class="bg-surface-dim/70 backdrop-blur-md border border-gold-highlight rounded p-2 flex flex-col gap-1 shadow-[0_0_15px_rgba(251,191,36,0.2)]">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-gold-highlight"></span>
+<span class="font-technical-data text-technical-data text-gold-highlight">Service: Gas</span>
+</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant pl-4">Depth: -600mm</div>
+</div>
+</div>
+</main>
+<!-- SideNavBar (Tools Ribbon) -->
+<aside class="fixed left-gutter top-1/2 -translate-y-1/2 flex flex-col items-center py-6 gap-4 z-50 bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 rounded-full w-sidebar-width" style="width: 64px;">
+<div class="flex flex-col items-center gap-1 mb-4">
+<span class="font-label-caps text-label-caps text-on-surface">TOOLS</span>
+<span class="font-technical-data text-technical-data text-on-surface-variant text-[9px]">Precision</span>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-gold-highlight text-surface shadow-[0_0_15px_rgba(251,191,36,0.4)] transition-all duration-200 ease-out" title="Line">
+<span class="material-symbols-outlined" data-icon="timeline">timeline</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors" title="Curve">
+<span class="material-symbols-outlined" data-icon="gesture">gesture</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors" title="Area">
+<span class="material-symbols-outlined" data-icon="layers">layers</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors" title="Planting">
+<span class="material-symbols-outlined" data-icon="eco">eco</span>
+</button>
+<div class="mt-4 border-t border-on-surface/10 pt-4 w-full flex justify-center">
+<button class="text-gold-highlight font-label-caps text-label-caps hover:text-primary transition-colors">Layer +</button>
+</div>
+</aside>
+<!-- Lens Dial (Bottom Right HUD) -->
+<div class="fixed bottom-margin-safe right-margin-safe z-50">
+<div class="bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 rounded-full p-2 flex items-center gap-2">
+<button class="px-4 py-2 rounded-full text-on-surface-variant font-technical-data text-technical-data hover:text-white transition-colors">Survey</button>
+<button class="px-4 py-2 rounded-full bg-surface-variant text-gold-highlight font-technical-data text-technical-data border border-gold-highlight/30">Sketch</button>
+<button class="px-4 py-2 rounded-full text-on-surface-variant font-technical-data text-technical-data hover:text-white transition-colors">CAD</button>
+</div>
+</div>
+<!-- Footer (Status Rail) -->
+<footer class="fixed bottom-0 w-full z-40 flex justify-between items-center px-margin-safe py-2 bg-surface-container-lowest/80 border-t border-on-surface/10 backdrop-blur-sm">
+<div class="font-technical-data text-technical-data text-signal-blue font-bold">
+            SPATIAL TRUTH // PROJECT COORDS: 34.0522° N, 118.2437° W
+        </div>
+<div class="flex gap-6 font-label-caps text-label-caps text-on-surface-variant">
+<a class="hover:text-white transition-colors" href="#">Telemetry</a>
+<a class="hover:text-white transition-colors" href="#">Financials</a>
+<a class="hover:text-white transition-colors" href="#">Grid Settings</a>
+</div>
+</footer>
+
+
+</body></html>

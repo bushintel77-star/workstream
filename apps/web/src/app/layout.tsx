@@ -2,38 +2,58 @@ import type { Metadata, Viewport } from "next";
 import {
   Architects_Daughter,
   Fraunces,
-  IBM_Plex_Mono,
-  IBM_Plex_Sans,
-  IBM_Plex_Serif,
   Inter,
-  Sora,
+  JetBrains_Mono,
+  Space_Grotesk,
 } from "next/font/google";
 import "../styles/globals.css";
 import { ToastHost } from "../components/ToastHost";
 import { clerkEnabled } from "../lib/auth";
 import { ClerkProvider } from "@clerk/nextjs";
 
-const fontBody = IBM_Plex_Sans({
+/**
+ * Gold Standard 2026 typography (docs/GOLD-STANDARD-2026-TOKENS.md §2).
+ *
+ * - Inter: UI labels, buttons, inputs, chrome text (--font-body + --font-ui)
+ * - Space Grotesk: technical, numeric, coordinate data (--font-tech + --font-mono)
+ * - Fraunces: display / presentation deck composition (--font-display + --font-serif)
+ * - Architects Daughter: hand-lettered plan annotations (--font-hand)
+ * - JetBrains Mono: technical mono (--font-technical-mono, main branch addition)
+ * - Sora: legacy UI font variable (--font-inter, kept for compat with main's surfaces)
+ */
+const fontBody = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-body",
   display: "swap",
 });
-const fontDisplay = Fraunces({
+const fontUi = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-display",
+  variable: "--font-ui",
   display: "swap",
 });
-const fontMono = IBM_Plex_Mono({
+const fontTech = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-tech",
+  display: "swap",
+});
+const fontMono = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-mono",
   display: "swap",
 });
-const fontSerif = IBM_Plex_Serif({
+const fontDisplay = Fraunces({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+const fontSerif = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "700"],
   variable: "--font-serif",
   display: "swap",
 });
@@ -43,16 +63,16 @@ const fontHand = Architects_Daughter({
   variable: "--font-hand",
   display: "swap",
 });
-const fontUi = Sora({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-ui",
-  display: "swap",
-});
 const fontInter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-inter",
+  display: "swap",
+});
+const fontTechnicalMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-technical-mono",
   display: "swap",
 });
 
@@ -102,7 +122,7 @@ export default function RootLayout({
   return (
     <html lang="en-AU">
       <body
-        className={`${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable} ${fontSerif.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable}`}
+        className={`${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable} ${fontSerif.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable} ${fontTech.variable} ${fontTechnicalMono.variable}`}
         data-build={
           process.env.NEXT_PUBLIC_BUILD_SHA ??
           process.env.RAILWAY_GIT_COMMIT_SHA ??

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CAD Operator Studio - Phase 4 Build Pack Export</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "primary-fixed": "#e1e2e8",
+                "primary-fixed-dim": "#c5c6cc",
+                "error": "#ffb4ab",
+                "error-container": "#93000a",
+                "secondary-container": "#3a4a5f",
+                "secondary-fixed": "#d3e4fe",
+                "tertiary-fixed": "#e7e2d6",
+                "on-tertiary-container": "#67645a",
+                "inverse-on-surface": "#313030",
+                "on-error-container": "#ffdad6",
+                "secondary": "#b7c8e1",
+                "background": "#131314",
+                "surface-container-high": "#2a2a2a",
+                "surface-variant": "#353435",
+                "tertiary-fixed-dim": "#cac6ba",
+                "tertiary": "#ffffff",
+                "on-surface": "#e5e2e2",
+                "outline": "#8f9095",
+                "selection-white": "#ffffff",
+                "on-error": "#690005",
+                "surface-container-low": "#1c1b1c",
+                "surface-container-lowest": "#0e0e0e",
+                "primary-container": "#e1e2e8",
+                "on-tertiary-fixed": "#1d1c14",
+                "on-primary-fixed": "#191c20",
+                "on-primary": "#2e3135",
+                "secondary-fixed-dim": "#b7c8e1",
+                "surface-bright": "#3a3939",
+                "on-tertiary-fixed-variant": "#49473e",
+                "on-secondary": "#213145",
+                "on-secondary-container": "#a9bad3",
+                "on-primary-container": "#626469",
+                "on-tertiary": "#323128",
+                "inverse-primary": "#5c5e63",
+                "on-surface-variant": "#c6c6cb",
+                "on-secondary-fixed-variant": "#38485d",
+                "surface": "#101418",
+                "primary": "#ffffff",
+                "surface-tint": "#c5c6cc",
+                "tertiary-container": "#e7e2d6",
+                "on-background": "#e5e2e2",
+                "strike-red": "#ef4444",
+                "inverse-surface": "#e5e2e2",
+                "glass-border": "rgba(255, 255, 255, 0.05)",
+                "outline-variant": "#45474a",
+                "on-primary-fixed-variant": "#44474c",
+                "on-secondary-fixed": "#0b1c30",
+                "surface-container-highest": "#353435",
+                "surface-dim": "#131314",
+                "surface-container": "#201f20"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "viewport-margin": "2rem",
+                "chip-gap": "0.5rem",
+                "stack-gap": "1rem",
+                "hud-padding": "1.25rem"
+        },
+        "fontFamily": {
+                "ui-label-lg": [
+                        "Inter"
+                ],
+                "data-display-mobile": [
+                        "Space Grotesk"
+                ],
+                "data-display-md": [
+                        "Space Grotesk"
+                ],
+                "ui-label-sm": [
+                        "Inter"
+                ],
+                "technical-metadata": [
+                        "Space Grotesk"
+                ],
+                "data-display-lg": [
+                        "Space Grotesk"
+                ]
+        },
+        "fontSize": {
+                "ui-label-lg": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "data-display-mobile": [
+                        "20px",
+                        {
+                                "lineHeight": "1.2",
+                                "fontWeight": "600"
+                        }
+                ],
+                "data-display-md": [
+                        "24px",
+                        {
+                                "lineHeight": "1.2",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "ui-label-sm": [
+                        "11px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.08em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "technical-metadata": [
+                        "13px",
+                        {
+                                "lineHeight": "18px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "data-display-lg": [
+                        "40px",
+                        {
+                                "lineHeight": "1.1",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "600"
+                        }
+                ]
+        },
+        "backgroundImage": {
+            "canvas-grid": "linear-gradient(to right, rgba(224, 227, 232, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(224, 227, 232, 0.05) 1px, transparent 1px)",
+            "canvas-grid-nested": "linear-gradient(to right, rgba(224, 227, 232, 0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(224, 227, 232, 0.02) 1px, transparent 1px)"
+        },
+        "backgroundSize": {
+            "canvas": "32px 32px",
+            "canvas-nested": "8px 8px"
+        }
+    },
+  }
+}
+</script>
+<style>
+        .hud-glass {
+            @apply bg-surface-dim/70 backdrop-blur-md border border-glass-border;
+        }
+        .signal-glow {
+            box-shadow: 0 0 12px #fbbf24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-screen overflow-hidden relative antialiased selection:bg-[#fbbf24] selection:text-surface-dim">
+<!-- Fluid Canvas Background -->
+<div class="absolute inset-0 w-full h-full bg-canvas-grid bg-canvas z-0 pointer-events-none">
+<div class="absolute inset-0 w-full h-full bg-canvas-grid-nested bg-canvas-nested mix-blend-screen opacity-50"></div>
+</div>
+<!-- Central Construction Drawing Preview (Full Bleed) -->
+<div class="absolute inset-0 z-0 flex items-center justify-center p-4 opacity-80" data-alt="A highly precise, minimalist CAD architectural drawing of a modern, multi-story structure viewed from a dynamic isometric angle. The blueprint lines are sharp and clinical, rendered in a crisp technical style against a deep, dark 'Studio Dark' drafting environment. Subtle high-tech data overlays and dimensional markers in bright signal blue and gold highlight the structural integrity. The mood is authoritative and hyper-functional." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAUGkt1JITwiVtgbfMDpGrxICoKwgdpfn509sfHDD76HGUTXa4dusqlpd8F4UJ_6SMSafsYvD-tLoT0LmeP3TMiOhBwksaQAOogolTqopLRl49FWtXG2fVDsFicVDfTBVeRjF5QCDAitTI6JBHkakk4TAETbYRY4cAs1IjmNXfx7XmUPrFr5TznJ9mOlODeRCXwwox7_dq0CaXY4231bwc5a3jpvbpQyUZHoutj2IOICCT6bRdUyiIG-g')">
+<!-- Overlay gradient to anchor edges -->
+<div class="absolute inset-0 bg-gradient-to-r from-surface-dim/40 via-transparent to-surface-dim/40"></div>
+</div>
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-14 bg-surface-dim/70 backdrop-blur-md border-b border-glass-border rounded-b-xl">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#fbbf24] text-2xl" style="font-variation-settings: 'FILL' 1;">architecture</span>
+<h1 class="font-data-display-md text-data-display-md text-on-surface tracking-tight">CAD Operator Studio</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4">
+<button class="text-on-surface-variant hover:bg-on-surface/5 transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+<div class="flex gap-4 border-l border-glass-border pl-6">
+<button class="text-on-surface-variant hover:bg-on-surface/5 transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+<button class="text-on-surface-variant hover:bg-on-surface/5 transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-4 bg-surface-dim/70 backdrop-blur-md border border-glass-border rounded-full w-14 py-4">
+<div class="mb-4 text-center">
+<div class="font-ui-label-sm text-ui-label-sm text-on-surface writing-vertical-rl rotate-180 mb-2 uppercase">TOOLSET</div>
+</div>
+<div class="flex flex-col gap-4">
+<button aria-label="Select" class="text-on-surface-variant p-2 hover:text-[#fbbf24] transition-all">
+<span class="material-symbols-outlined">near_me</span>
+</button>
+<button aria-label="Draw" class="text-on-surface-variant p-2 hover:text-[#fbbf24] transition-all">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button aria-label="Geometry" class="text-on-surface-variant p-2 hover:text-[#fbbf24] transition-all">
+<span class="material-symbols-outlined">category</span>
+</button>
+<button aria-label="Analyze" class="text-on-surface-variant p-2 hover:text-[#fbbf24] transition-all">
+<span class="material-symbols-outlined">troubleshoot</span>
+</button>
+<button aria-label="System" class="bg-[#fbbf24] text-surface-dim rounded-full p-2 scale-110 shadow-lg shadow-[#fbbf24]/20 transition-all duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span>
+</button>
+</div>
+</nav>
+<!-- Right HUD: Export & Compliance -->
+<aside class="fixed right-4 top-24 bottom-safe w-[340px] flex flex-col gap-4 z-40 pointer-events-none">
+<!-- Status & Progress HUD -->
+<div class="hud-glass p-4 rounded-xl flex flex-col gap-4 pointer-events-auto">
+<div class="flex justify-between items-center border-b border-glass-border pb-3">
+<h2 class="font-ui-label-lg text-ui-label-lg text-on-surface uppercase tracking-wider">Phase 4 Export</h2>
+<div class="px-2 py-1 bg-secondary-fixed/20 text-secondary-fixed font-ui-label-sm text-ui-label-sm rounded border border-secondary-fixed/30 uppercase">ACTIVE</div>
+</div>
+<!-- Progress Bar -->
+<div class="space-y-2">
+<div class="flex justify-between font-ui-label-sm text-ui-label-sm text-on-surface-variant">
+<span>Rendering Package</span>
+<span class="text-[#fbbf24]">78%</span>
+</div>
+<div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-[#fbbf24] w-[78%] signal-glow"></div>
+</div>
+</div>
+<!-- Compliance Checklist -->
+<div class="space-y-3 mt-2">
+<h3 class="font-ui-label-sm text-ui-label-sm text-on-surface-variant uppercase">COMPLIANCE AUDIT</h3>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#fbbf24] text-[18px]">check_circle</span>
+<span class="font-ui-label-lg text-ui-label-lg text-on-surface">Structural Integrity</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#fbbf24] text-[18px]">check_circle</span>
+<span class="font-ui-label-lg text-ui-label-lg text-on-surface">Zoning Envelopes</span>
+</div>
+<div class="flex items-center gap-3 opacity-60">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">pending</span>
+<span class="font-ui-label-lg text-ui-label-lg text-on-surface-variant">MEP Clash Detection</span>
+</div>
+</div>
+</div>
+<!-- Scheduling HUD -->
+<div class="hud-glass p-4 rounded-xl flex flex-col gap-4 pointer-events-auto">
+<div class="flex justify-between items-center border-b border-glass-border pb-3">
+<h2 class="font-ui-label-lg text-ui-label-lg text-on-surface uppercase tracking-wider">Deployment</h2>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block font-ui-label-sm text-ui-label-sm text-on-surface-variant mb-1 uppercase">CONTRACTOR ID</label>
+<input class="w-full bg-surface-container border-b border-glass-border text-on-surface font-ui-label-lg text-ui-label-lg px-2 py-1 focus:outline-none focus:border-[#fbbf24] focus:bg-surface-container-high transition-colors" readonly="" type="text" value="SYS-BLD-094"/>
+</div>
+<div>
+<label class="block font-ui-label-sm text-ui-label-sm text-on-surface-variant mb-1 uppercase">TARGET START DATE</label>
+<div class="flex items-center gap-2 border-b border-glass-border py-1 px-2 group hover:border-[#fbbf24] transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-[#fbbf24] text-[18px]">calendar_month</span>
+<input class="bg-transparent border-none text-on-surface font-ui-label-lg text-ui-label-lg focus:outline-none w-full p-0" type="text" value="2026.04.15"/>
+</div>
+</div>
+<button class="w-full mt-2 bg-[#fbbf24] hover:bg-primary-fixed-dim text-surface-dim font-ui-label-lg text-ui-label-lg uppercase py-3 rounded transition-colors flex justify-center items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+                    INITIATE HANDOFF
+                </button>
+</div>
+</div>
+<!-- PDF Preview Snippet -->
+<div class="hud-glass rounded-xl overflow-hidden flex-1 flex flex-col pointer-events-auto min-h-[200px]">
+<div class="px-4 py-2 border-b border-glass-border bg-surface-dim/90 flex justify-between items-center">
+<span class="font-ui-label-sm text-ui-label-sm text-on-surface uppercase">BUILD_PACK_v2.pdf</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[16px] cursor-pointer hover:text-white">open_in_new</span>
+</div>
+<div class="flex-1 bg-surface-container-lowest p-2 relative">
+<!-- Thumbnail Placeholder -->
+<div class="w-full h-full bg-surface-container border border-glass-border rounded flex items-center justify-center overflow-hidden relative">
+<div class="absolute inset-0" data-alt="A macro close-up view of a dense, highly detailed architectural floor plan printed on technical grid paper. The linework is extremely precise, showcasing complex geometry, wall thicknesses, and spatial annotations in a monochromatic 'Studio Dark' style. The lighting highlights the crispness of the drafted lines against the deep black background, emphasizing high-end CAD execution." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDqIUU40ya3Tx5uUL0y3AeDTlzr04iR4S2MDvxLI9YQyFAsOQwX0CCY7qRPBySlqsEAeR5HKy3_D1wsOkL5eaG-3OjXWYI_9nAIn12Fe9pPAf8T8VmqgmxO_To27WlghdQ4mxEb3IbH11L5G-GVBlcgVg1lekDBfmp-fMMDXw_L7EXtS5vtpabHyLyDxiBp18YoQalma5HSzXgCG8pK_2X35-njALaUsWNzJvQI2IHDfotF8QlGqfrsgQ')"></div>
+<span class="material-symbols-outlined text-on-surface/30 text-4xl relative z-10 drop-shadow-md">picture_as_pdf</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Bottom Status Rail -->
+<footer class="fixed bottom-0 left-0 w-full h-8 bg-surface-container-lowest border-t border-glass-border z-50 flex items-center justify-between px-4 font-technical-metadata text-technical-metadata text-on-surface-variant uppercase">
+<div class="flex gap-6">
+<span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary-fixed animate-pulse"></span> SYSTEM: ONLINE</span>
+<span>MEM: 12.4GB / 32GB</span>
+<span class="font-technical-metadata">VER: 2.0.4-bld</span>
+</div>
+<div class="flex gap-6 text-on-surface">
+<span class="text-[#fbbf24] font-technical-metadata">X: 144.209  Y: -89.442  Z: 12.000</span>
+<span>GRID: 4MM</span>
+<span>UNIT: METRIC</span>
+</div>
+</footer>
+</body></html>

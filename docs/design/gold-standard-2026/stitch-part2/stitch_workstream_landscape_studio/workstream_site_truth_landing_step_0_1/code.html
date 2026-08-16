@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Step 0: Site Truth - Workstream</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-container": "#fbbf24",
+                      "surface-container-low": "#181c20",
+                      "surface": "#101418",
+                      "on-surface-variant": "#d3c5ac",
+                      "primary-fixed-dim": "#f9bd22",
+                      "outline": "#9c8f79",
+                      "surface-bright": "#363a3e",
+                      "on-secondary-container": "#a8b4ff",
+                      "tertiary": "#b6edff",
+                      "surface-container-highest": "#31353a",
+                      "background": "#101418",
+                      "on-background": "#e0e3e8",
+                      "on-secondary-fixed": "#00105b",
+                      "on-primary-fixed": "#261a00",
+                      "cloud-mist": "#D7E1EC",
+                      "surface-container-lowest": "#0b0f12",
+                      "surface-dim": "#1E2329",
+                      "secondary": "#bac3ff",
+                      "on-error-container": "#ffdad6",
+                      "on-tertiary": "#003641",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "on-secondary-fixed-variant": "#002eca",
+                      "outline-variant": "#4f4633",
+                      "tertiary-container": "#34daff",
+                      "on-primary": "#402d00",
+                      "primary": "#ffe1a7",
+                      "on-tertiary-container": "#005c6e",
+                      "signal-blue": "#0030CF",
+                      "on-primary-fixed-variant": "#5c4300",
+                      "secondary-fixed-dim": "#bac3ff",
+                      "inverse-primary": "#795900",
+                      "inverse-surface": "#e0e3e8",
+                      "secondary-fixed": "#dee0ff",
+                      "on-error": "#690005",
+                      "tertiary-fixed": "#afecff",
+                      "gold-highlight": "#FBBF24",
+                      "surface-container": "#1c2024",
+                      "primary-fixed": "#ffdf9f",
+                      "tertiary-fixed-dim": "#30d8fd",
+                      "inverse-on-surface": "#2d3135",
+                      "on-tertiary-fixed": "#001f27",
+                      "secondary-container": "#0130cf",
+                      "error-container": "#93000a",
+                      "on-surface": "#e0e3e8",
+                      "surface-tint": "#f9bd22",
+                      "on-secondary": "#001f90",
+                      "error": "#ffb4ab",
+                      "surface-container-high": "#262a2f",
+                      "surface-variant": "#31353a",
+                      "on-primary-container": "#6c4f00"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-safe": "32px",
+                      "sidebar-width": "280px",
+                      "gutter": "16px",
+                      "toolbar-width": "56px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Space Grotesk"
+                      ],
+                      "display-lg": [
+                              "Space Grotesk"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "technical-data": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg-mobile": [
+                              "Space Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "52px",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "technical-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background-color: rgba(30, 35, 41, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 227, 232, 0.1);
+        }
+        .data-chip {
+            background-color: rgba(30, 35, 41, 0.85);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        
+        /* Grid overlay */
+        .bg-grid-pattern {
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        /* Pulse animation for capture frame */
+        @keyframes pulse-border {
+            0% { border-color: rgba(251, 191, 36, 0.4); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.2); }
+            50% { border-color: rgba(251, 191, 36, 1); box-shadow: 0 0 20px 0 rgba(251, 191, 36, 0.4); }
+            100% { border-color: rgba(251, 191, 36, 0.4); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+        .animate-capture {
+            animation: pulse-border 3s infinite;
+        }
+        
+        /* Material Symbols setup */
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+          font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-screen overflow-hidden antialiased selection:bg-gold-highlight selection:text-background flex flex-col">
+<!-- Shared Component: TopNavBar (Contextual suppression applied - hiding standard nav items for a focused 'Acquisition' flow, but keeping brand anchor) -->
+<nav class="fixed top-0 w-full bg-surface-dim/70 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-margin-safe h-toolbar-width z-50">
+<div class="flex items-center gap-4">
+<span class="font-display-lg text-gold-highlight tracking-tighter text-[24px] leading-none">TERRAFORM_OS</span>
+<div class="h-4 w-px bg-outline-variant/50 ml-2"></div>
+<span class="font-technical-data text-technical-data text-on-surface-variant">STEP 0: ACQUISITION</span>
+</div>
+<div class="flex items-center gap-4 text-primary-fixed-dim">
+<button class="hover:text-primary transition-colors duration-200 cursor-crosshair active:scale-95" title="Settings">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="bg-gold-highlight text-background font-technical-data text-technical-data px-4 py-1.5 rounded-DEFAULT hover:bg-primary transition-colors duration-200">
+                Sign In
+            </button>
+</div>
+</nav>
+<!-- Main Canvas Area -->
+<main class="relative w-full h-full flex-grow mt-toolbar-width z-0">
+<!-- Full-bleed Background Map (Simulated Satellite View) -->
+<div class="absolute inset-0 w-full h-full bg-cover bg-center" data-alt="A high-resolution, top-down satellite view of a modern urban landscape in Los Angeles. The scene is rendered with a dark, moody architectural style, deeply shadowed streets, and highly detailed rooftops. The overall color palette leans heavily into deep blacks, charcoal grays, and muted earth tones, typical of a professional CAD software base map. The lighting is harsh and directional, emphasizing the 3D geometry of the buildings against the flat terrain." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD2I3sCAuC7o7kb7Ja3zTWy9xN73M021VWD6kn9auwYDbRqYyui4-VGd-CvQWsiibAZkLH9OGwc8PN8KG2t7zVl4sbVIfrFbN9aY48m0EaXvmAjq6favOK8_uGXJcC96WmwwTkKy_OtHpbOliaTzADU0BjznMct1T6fhaFfLLZaQL845YqNDC8zL6Z6eWw22VaF7qqXCSCgayMXR8GLSDtfDuWBpVcOhUSE030zJHRlWSLwftExDTJ-6g')"></div>
+<!-- Fluid Grid Overlay for CAD feel -->
+<div class="absolute inset-0 bg-grid-pattern pointer-events-none opacity-50"></div>
+<div class="absolute inset-0 bg-gradient-to-b from-background via-transparent to-surface-container-lowest opacity-60 pointer-events-none"></div>
+<!-- Central Search HUD -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+<div class="glass-panel p-8 rounded-xl w-[600px] pointer-events-auto transform -translate-y-12">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Acquire Site Truth</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">Enter global coordinates or address to initiate automated data capture pipeline.</p>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container/50 border border-outline-variant/50 rounded-lg py-4 pl-12 pr-32 font-technical-data text-technical-data text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-signal-blue focus:ring-1 focus:ring-signal-blue transition-all" placeholder="e.g., 37.8136° S, 144.9631° E or 123 Main St..." type="text"/>
+<button class="absolute right-2 top-2 bottom-2 bg-gold-highlight text-background font-technical-data text-technical-data px-4 rounded hover:bg-primary transition-colors flex items-center gap-2">
+<span>INITIATE</span>
+<span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Visualized Capture State (Background interaction element) -->
+<div class="absolute top-1/2 left-[20%] transform -translate-y-1/2 w-[400px] h-[400px] pointer-events-none z-10 hidden md:block">
+<!-- Simulated property boundary -->
+<div class="absolute inset-0 border-2 border-gold-highlight/60 animate-capture bg-surface-dim/20 backdrop-blur-[2px]">
+<!-- Survey lines -->
+<svg class="absolute inset-0 w-full h-full opacity-70" viewbox="0 0 100 100">
+<line stroke="#FBBF24" stroke-dasharray="2,2" stroke-width="0.5" x1="10" x2="90" y1="10" y2="20"></line>
+<line stroke="#FBBF24" stroke-dasharray="2,2" stroke-width="0.5" x1="90" x2="85" y1="20" y2="90"></line>
+<line stroke="#FBBF24" stroke-dasharray="2,2" stroke-width="0.5" x1="85" x2="15" y1="90" y2="85"></line>
+<line stroke="#FBBF24" stroke-dasharray="2,2" stroke-width="0.5" x1="15" x2="10" y1="85" y2="10"></line>
+<!-- Reticle -->
+<circle cx="50" cy="50" fill="#FBBF24" r="2"></circle>
+<line stroke="#FBBF24" stroke-width="1" x1="45" x2="55" y1="50" y2="50"></line>
+<line stroke="#FBBF24" stroke-width="1" x1="50" x2="50" y1="45" y2="55"></line>
+</svg>
+</div>
+<!-- Meta Chips -->
+<div class="absolute -top-10 -left-10 flex flex-col gap-2">
+<div class="data-chip px-3 py-1.5 rounded flex items-center gap-2 font-technical-data text-[11px] text-gold-highlight tracking-wider">
+<span class="material-symbols-outlined text-[14px]">my_location</span>
+                    37.8136° S, 144.9631° E
+                </div>
+<div class="data-chip px-3 py-1.5 rounded flex items-center gap-2 font-technical-data text-[11px] text-on-surface tracking-wider">
+<span class="material-symbols-outlined text-[14px] text-signal-blue">api</span>
+                    SURVEY TRUTH: ACTIVE
+                </div>
+<div class="data-chip px-3 py-1.5 rounded flex items-center gap-2 font-technical-data text-[11px] text-on-surface tracking-wider">
+<span class="material-symbols-outlined text-[14px]">explore</span>
+                    ASPECT: NORTH-FACING
+                </div>
+</div>
+</div>
+<!-- Glass Card Progress HUD -->
+<div class="absolute bottom-margin-safe right-margin-safe z-30 hidden md:block w-[320px]">
+<div class="glass-panel rounded-lg p-5">
+<div class="flex justify-between items-center mb-4 border-b border-outline-variant/30 pb-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant">PIPELINE STATUS</span>
+<span class="font-technical-data text-technical-data text-signal-blue animate-pulse">RUNNING...</span>
+</div>
+<ul class="space-y-3 font-technical-data text-technical-data">
+<li class="flex items-center gap-3 text-gold-highlight">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>Geo-location Anchored</span>
+</li>
+<li class="flex items-center gap-3 text-on-surface">
+<span class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+<span>Title Photo Capture</span>
+</li>
+<li class="flex items-center gap-3 text-on-surface-variant/50">
+<span class="material-symbols-outlined text-[16px]">pending</span>
+<span>Utility Survey Fetch</span>
+</li>
+</ul>
+</div>
+</div>
+</main>
+<!-- Shared Component: Footer -->
+<footer class="fixed bottom-0 w-full h-8 bg-surface-container-lowest/90 border-t border-outline-variant/20 flex justify-between items-center px-gutter z-50">
+<span class="font-technical-data text-technical-data text-on-surface-variant/60">
+            © 2026 TERRAFORM_OS | HIGH-PRECISION GEOMETRY
+        </span>
+<div class="flex gap-4">
+<a class="font-technical-data text-technical-data text-on-surface-variant/60 hover:text-gold-highlight transition-opacity" href="#">Legal</a>
+<a class="font-technical-data text-technical-data text-on-surface-variant/60 hover:text-gold-highlight transition-opacity" href="#">API</a>
+<a class="font-technical-data text-technical-data text-on-surface-variant/60 hover:text-gold-highlight transition-opacity" href="#">Status</a>
+</div>
+</footer>
+</body></html>

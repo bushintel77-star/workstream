@@ -25,7 +25,7 @@
 
 .kicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -70,9 +70,11 @@
 }
 
 .primary {
-  border: 1px solid var(--hc-ink);
-  background: var(--hc-ink);
-  color: var(--canvas);
+  /* --hc-* lives in the classic studio scope; the global fallbacks keep the
+   * button correct on the WebGL mount (dark-on-light inversion either way). */
+  border: 1px solid var(--hc-ink, var(--ink-primary));
+  background: var(--hc-ink, var(--ink-primary));
+  color: var(--canvas, var(--gs-canvas));
 }
 
 .primary:disabled {
@@ -81,15 +83,15 @@
 }
 
 .secondary {
-  border: 1px solid var(--hc-line);
+  border: 1px solid var(--hc-line, var(--line-strong));
   background: transparent;
-  color: var(--hc-ink);
+  color: var(--hc-ink, var(--ink-primary));
 }
 
 .ghost {
   border: none;
   background: transparent;
-  color: var(--hc-ink-muted);
+  color: var(--hc-ink-muted, var(--ink-secondary));
   align-self: flex-start;
   padding-left: 0;
 }
@@ -102,7 +104,7 @@
 
 .defer {
   margin: 4px 0 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   line-height: 1.35;
   color: var(--hc-ink-faint);

@@ -124,7 +124,7 @@ test.describe("Design branch VCS", () => {
     );
     expect(abandon.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     await openCommandPalette(page);

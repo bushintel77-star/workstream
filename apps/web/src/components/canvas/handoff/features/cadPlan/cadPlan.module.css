@@ -205,7 +205,7 @@
 
 /* Off-drawing dims — readable floor for live plan work (not print-only 8px). */
 .dimLabel {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-dim, 11px);
   font-weight: 550;
   font-variant-numeric: tabular-nums;
@@ -254,7 +254,7 @@
   flex-direction: row;
   align-items: baseline;
   gap: var(--s-1);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-dim, 11px);
   font-weight: 550;
   font-variant-numeric: tabular-nums;
@@ -329,7 +329,7 @@
 }
 
 .cadAreaValue {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-hud, 11px);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
@@ -341,7 +341,7 @@
 }
 
 .cadAreaKey {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-kicker, 8px);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -370,7 +370,7 @@
   z-index: var(--ws-z-annotate);
   margin: 0;
   padding: 2px var(--s-1);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-kicker, 8px);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -392,7 +392,7 @@
   z-index: var(--ws-z-dock);
   margin: 0;
   padding: 0;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-kicker, 8px);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -410,7 +410,7 @@
 }
 
 .fitDimLabel {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -503,7 +503,7 @@
   border: 1px solid color-mix(in srgb, var(--planting-retain-stroke) 28%, var(--canvas));
   background: var(--panel);
   color: var(--text-primary);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -515,7 +515,7 @@
 
 .tpzTag {
   position: relative;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-pico);
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -539,7 +539,7 @@
   max-width: min(420px, calc(100% - 480px));
   background: color-mix(in srgb, var(--hc-ink) 90%, transparent);
   color: var(--hc-invert, var(--canvas));
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   padding: var(--s-2) var(--s-3);
   border-radius: 0;
@@ -614,7 +614,7 @@
   background: transparent;
   box-shadow: none;
   pointer-events: none;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -662,7 +662,7 @@
    * transparent background, mono.
    */
   color: var(--hc-ink);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -742,7 +742,7 @@ button.missingBuildingCue:focus-visible {
   border-radius: 0;
   background: color-mix(in srgb, var(--hc-ink) 90%, transparent);
   color: var(--canvas);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -758,7 +758,7 @@ button.missingBuildingCue:focus-visible {
   border-radius: 0;
   background: var(--hc-ink);
   color: var(--canvas);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 7.5px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -796,7 +796,7 @@ button.missingBuildingCue:focus-visible {
   font-size: var(--hc-fs-2);
   font-weight: 600;
   cursor: pointer;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .rejectBtn {
@@ -821,7 +821,7 @@ button.missingBuildingCue:focus-visible {
   font-size: var(--hc-fs-2);
   font-weight: 600;
   cursor: pointer;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   white-space: nowrap;
   box-shadow: none;
 }
@@ -921,7 +921,7 @@ button.missingBuildingCue:focus-visible {
 
 .cursorTool,
 .cursorMetric {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1080,7 +1080,7 @@ button.missingBuildingCue:focus-visible {
 }
 
 .selectedReadoutTag {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--ws-type-kicker, 8px);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1089,7 +1089,7 @@ button.missingBuildingCue:focus-visible {
 }
 
 .selectedReadoutValue {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
@@ -1157,7 +1157,7 @@ button.missingBuildingCue:focus-visible {
   background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   letter-spacing: 0.02em;
   line-height: 1.35;

@@ -139,6 +139,9 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
         ]);
 
         if (alive) {
+          if (created.surveyWarning) {
+            toast.show(created.surveyWarning, "info", 6000);
+          }
           if (created.aerialUri) setLotUri(created.aerialUri);
           if (created.titleRing) {
             setTitleRing(created.titleRing);

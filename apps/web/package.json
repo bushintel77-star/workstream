@@ -12,24 +12,30 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",
-    "@types/three": "^0.185.1",
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
+    "@react-three/postprocessing": "^3.0.5",
+    "@types/three": "^0.185.4",
     "@workstream/contracts": "workspace:*",
     "@workstream/domain": "workspace:*",
-    "next": "^16.2.12",
+    "next": "^16.3.0",
     "pdfjs-dist": "4.10.38",
     "perfect-freehand": "1.2.3",
+    "postprocessing": "^6.39.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "roughjs": "^4.6.6",
     "suncalc": "^2.0.1",
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",
-    "@types/node": "^26.1.1",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/suncalc": "^1.9.2",
+    "axe-core": "^4.13.0",
     "typescript": "^5.7.0"
   }
 }

@@ -26,7 +26,7 @@ test.describe("Neighbour lot skin", () => {
     const survey = await request.post(`${API}/projects/${projectId}/survey`);
     expect(survey.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 20_000,

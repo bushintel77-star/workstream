@@ -1,38 +1,23 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("Workstream landing", () => {
-  test("minimal hero brands Workstream and enters the studio", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+/**
+ * Root entry — the marketing landing ("Acquire Site Truth") was removed
+ * (it presented mock telemetry as live data). `/` now enters the operator
+ * dashboard directly, where the address composer + site-truth pipeline run
+ * against real API data.
+ */
+test.describe("Root entry", () => {
+  test("/ redirects into the operator dashboard", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("workstream-landing")).toBeVisible({
+    await expect(page).toHaveURL(/\/home/, { timeout: 30_000 });
+    // The real capture surface lives on the dashboard: the address composer.
+    await expect(page.locator("#new-project")).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.getByText("Workstream", { exact: true })).toBeVisible();
+    // Zero-mock-data law: the fabricated landing chrome is gone.
+    await expect(page.getByTestId("workstream-landing")).toHaveCount(0);
     await expect(
-      page.getByRole("heading", {
-        name: "Garden design that starts on the site.",
-      }),
-    ).toBeVisible();
-
-    await page.getByTestId("landing-enter-studio").click();
-    await expect(page).toHaveURL(/\/home/);
-    // Operator dashboard is Workstream-branded; Curtis & Co is portal/quote-only
-    // (docs/EXTERNAL-DESIGNER-BRIEF.md §2 — do not mix brands).
-    await expect(page.getByText("Workstream", { exact: true }).first()).toBeVisible({
-      timeout: 30_000,
-    });
-  });
-
-  test("desktop viewport keeps one-composition landing", async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto("/");
-    await expect(page.getByTestId("workstream-landing")).toBeVisible({
-      timeout: 30_000,
-    });
-    await expect(page.getByTestId("landing-enter-studio")).toBeVisible();
-    // No project register chrome on the marketing face.
-    await expect(page.locator("#new-project")).toHaveCount(0);
+      page.getByRole("heading", { name: "Acquire Site Truth" }),
+    ).toHaveCount(0);
   });
 });

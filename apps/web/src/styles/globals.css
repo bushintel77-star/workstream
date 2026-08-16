@@ -1,21 +1,35 @@
 /* Workstream — Design Studio v4
- * Curtis & Co operator chrome — dark grey gallery frame, cream plan is the subject.
+ * Curtis & Co operator chrome — Studio Paper: high-key neutral workspace,
+ * white floating panels lifted by neutral shadow tiers, charcoal ink.
  * Unified with @workstream/ui tokens (packages/ui/src/tokens.ts).
  * Plan/CAD colour system: color-tokens.css (v2 semantic tokens). */
 
 @import "./color-tokens.css";
 
 :root {
-  /* surfaces — dark grey gallery mount; chrome recedes so colour belongs to the plan */
-  --surface-base: #14171C;
-  --surface-elevated: #1B1E24;
-  --surface-sunken: #0F1115;
-  --surface-inverted: #E8E9EC;
-  --surface-overlay: #20242B;
-  --surface-inset: #0F1115;
-  --surface-panel: #1B1E24;
+  /* Gold Standard Studio Paper — the v4 bridge. Every mirror resolves to the
+   * authoritative --gs-* namespace (color-tokens.css), so all operator chrome
+   * speaks the same palette as the WebGL studio. Crimson is the app accent. */
+  --canvas-base: var(--gs-canvas);
+  --canvas-base-high: var(--gs-glass-sunken);
+  --canvas-base-low: var(--gs-frame);
+  --gold-standard: var(--gs-primary);
+  --gold-standard-bright: var(--gs-primary-hover);
+  --gold-standard-ink: var(--gs-ink);
+  --gold-standard-ink-bright: var(--gs-panel);
+  --signal-blue: var(--gs-truth);
+  --signal-blue-ink: var(--gs-truth-ink);
+  --conflict-ink: var(--gs-conflict-soft);
+  /* surfaces — gallery mount on the GS glass ramp */
+  --surface-base: var(--gs-glass-sunken);
+  --surface-elevated: var(--gs-glass);
+  --surface-sunken: var(--gs-frame);
+  --surface-inverted: var(--gs-ink);
+  --surface-overlay: var(--gs-glass-strong);
+  --surface-inset: var(--gs-frame);
+  --surface-panel: var(--gs-glass);
   /* deep — same as base now; kept for portal/hero gradient compat */
-  --surface-deep: #14171C;
+  --surface-deep: var(--gs-canvas);
 
   /* Client-presentation dark chrome (portal/quote/confirm-pin/share) — one
      identity, aliased to the same brand tokens used everywhere else. No
@@ -30,9 +44,9 @@
   --portal-hairline: color-mix(in srgb, var(--ink-inverted) 16%, transparent);
   --portal-accent: var(--accent-bright);
   --portal-accent-bright: var(--accent-bright);
-  /* Portal sheet stays light — it's the client document on dark chrome */
-  --portal-sheet: #FAFAF8;
-  --portal-sheet-ink: #1B1E23;
+  /* Portal sheet is the client document on paper — same ramp as the studio */
+  --portal-sheet: var(--gs-panel);
+  --portal-sheet-ink: var(--gs-ink);
   /* Client-twin viewer chrome (light frosted panel — same ink/accent as the
      rest of the app, not a separate sub-brand). */
   --portal-ink-muted: var(--ink-secondary);
@@ -40,44 +54,45 @@
   --portal-accent-muted: var(--accent);
 
   /* ink — light text on dark surfaces */
-  --ink-primary: #E8E9EC;
-  --ink-secondary: #9AA0AC;
-  --ink-tertiary: #7A8088;
-  --ink-inverted: #1B1E23;
+  --ink-primary: var(--gs-ink);
+  --ink-secondary: var(--gs-ink-secondary);
+  --ink-tertiary: var(--gs-ink-muted);
+  --ink-inverted: var(--gs-ink);
 
   /* lines — dark grey hairlines on dark surfaces */
-  --line-hairline: rgba(232, 233, 236, 0.10);
-  --line-subtle: rgba(232, 233, 236, 0.05);
-  --line-strong: rgba(232, 233, 236, 0.18);
-  --line-ink: #E8E9EC;
+  --line-hairline: color-mix(in srgb, var(--gs-line) 55%, transparent);
+  --line-subtle: color-mix(in srgb, var(--gs-line-soft) 70%, transparent);
+  --line-strong: var(--gs-line);
+  --line-ink: var(--gs-ink);
 
-  /* accent — muted blueprint slate.
-     Kept distinct from canvas cobalt (#2450c7 proposed) + easement slate
-     (#5b7fbf) so chrome never reads as plan geometry. */
-  --accent: #5A789B;
-  --accent-soft: #1E2A38;
-  --accent-ink: #8BA4C4;
-  --accent-bright: #7B9BC4;
-  --accent-water: #8a94a0;
+  /* accent — Gold Standard crimson. One accent identity app-wide: the studio's
+     crimson is the operator chrome's crimson (canvas geometry keeps its own
+     cobalt/crimson drawing tokens, which chrome never borrows). */
+  --accent: var(--gs-primary);
+  --accent-soft: color-mix(in srgb, var(--gs-primary) 14%, transparent);
+  /* accent-ink = accent as TEXT on paper surfaces (AA crimson) */
+  --accent-ink: var(--gs-primary-ink);
+  --accent-bright: var(--gs-primary-hover);
+  --accent-water: var(--gs-ink-secondary);
 
-  /* signal — the single technical-annotation spark ("issued for permitting"
-     orange). One hero element per surface, never on the canvas
-     (canvas keeps crimson=existing / cobalt=proposed / amber=warning). */
-  --signal: #e65416;
-  --signal-ink: #231206;
-  --signal-soft: color-mix(in srgb, #e65416 16%, transparent);
+  /* signal — the single critical/hero spark ("issued for permitting").
+     One hero element per surface, never on the canvas
+     (canvas keeps crimson=existing / cobalt=proposed). */
+  --signal: var(--gs-primary);
+  --signal-ink: var(--gs-panel);
+  --signal-soft: color-mix(in srgb, var(--gs-primary) 16%, transparent);
 
-  /* semantic — brightened for dark surface contrast */
-  --ok: #4C9662;
-  --warn: #D4A017;
-  --block: #C4463B;
-  --info: #6E93E0;
+  /* semantic — the GS status set (ink + iconography; crimson = critical) */
+  --ok: var(--gs-success);
+  --warn: var(--gs-warning);
+  --block: var(--gs-conflict);
+  --info: var(--gs-ink-secondary);
 
   /* type — Aegis professional-services families */
-  --font-display: "IBM Plex Mono", monospace;
-  --font-body: "IBM Plex Sans", sans-serif;
-  --font-serif: "IBM Plex Serif", serif;
-  --font-mono: "IBM Plex Mono", monospace;
+  --font-display: var(--font-tech), "Space Grotesk", sans-serif;
+  --font-body: var(--font-ui), "Inter", sans-serif;
+  --font-serif: var(--font-ui), "Inter", sans-serif;
+  --font-mono: var(--font-technical-mono), "JetBrains Mono", monospace;
   --font-hand: "Architects Daughter", cursive;
 
   /* type scale — 1.125 ratio, all components reference these.
@@ -149,14 +164,14 @@
   --radius-md: var(--r-md);
   --radius-lg: var(--r-lg);
 
-  /* depth — dark surface glass lift */
+  /* depth — Studio Paper shadow lift (neutral tiers from color-tokens.css) */
   --elev-0: none;
-  --elev-1: 0 8px 28px rgba(0, 0, 0, 0.28);
-  --elev-2: 0 14px 44px rgba(0, 0, 0, 0.36);
+  --elev-1: var(--gs-shadow-2);
+  --elev-2: var(--gs-shadow-3);
   --elev-inset: none;
   --elev-rim: none;
-  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.24);
-  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.32);
+  --shadow-sm: var(--gs-shadow-1);
+  --shadow-md: var(--gs-shadow-2);
 
   --border-default: var(--line-hairline);
   --surface-raised: var(--surface-elevated);
@@ -210,7 +225,7 @@
   --control-h: 44px;
   --tap-min: 48px;
   --border-weight: 1.5px;
-  --line-hairline: rgba(27, 28, 30, 0.2);
+  --line-hairline: color-mix(in srgb, var(--gs-ink) 24%, transparent);
 }
 
 @media (hover: none) and (pointer: coarse) {
@@ -218,7 +233,7 @@
     --control-h: 44px;
     --tap-min: 48px;
     --border-weight: 1.5px;
-    --line-hairline: rgba(27, 28, 30, 0.2);
+    --line-hairline: color-mix(in srgb, var(--gs-ink) 24%, transparent);
   }
 }
 
@@ -232,20 +247,23 @@ html {
 }
 
 html,
-body {
+body,
+#root,
+main {
   margin: 0;
   padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden !important;
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: 1.5;
   color: var(--ink-primary);
-  background: var(--surface-base);
+  background: var(--canvas-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -254,7 +272,7 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
-  background-color: var(--surface-base);
+  background-color: var(--canvas-base);
   background-image: none;
 }
 
@@ -271,6 +289,22 @@ select {
 }
 
 @media (hover: none) and (pointer: coarse) {
+  [data-webgl-chrome] button,
+  [data-webgl-chrome] a,
+  [data-webgl-chrome] input:not([type="range"]) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  [data-webgl-chrome] input[type="range"] {
+    min-height: 44px;
+  }
+
+  [data-webgl-chrome] input,
+  [data-webgl-chrome] textarea,
+  [data-webgl-chrome] select {
+    font-size: 16px !important;
+  }
 
   button:active,
   [role="button"]:active,

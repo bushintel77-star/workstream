@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sketch Studio</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#e0e3e8",
+                    "primary-container": "#fbbf24",
+                    "on-tertiary-container": "#005c6e",
+                    "on-primary-fixed": "#261a00",
+                    "surface-dim": "#101418",
+                    "primary": "#ffe1a7",
+                    "outline": "#9c8f79",
+                    "inverse-on-surface": "#2d3135",
+                    "background": "#101418",
+                    "on-error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#bac3ff",
+                    "secondary-container": "#0130cf",
+                    "tertiary": "#b6edff",
+                    "on-surface": "#e0e3e8",
+                    "surface-bright": "#2A3037",
+                    "tertiary-fixed": "#afecff",
+                    "surface-tint": "#f9bd22",
+                    "on-primary-container": "#6c4f00",
+                    "on-primary-fixed-variant": "#5c4300",
+                    "tertiary-container": "#34daff",
+                    "on-tertiary": "#003641",
+                    "inverse-surface": "#e0e3e8",
+                    "on-tertiary-fixed": "#001f27",
+                    "surface-container-highest": "#31353a",
+                    "surface-variant": "#31353a",
+                    "tertiary-fixed-dim": "#30d8fd",
+                    "outline-variant": "#4f4633",
+                    "on-surface-variant": "#d3c5ac",
+                    "on-error": "#690005",
+                    "primary-fixed-dim": "#f9bd22",
+                    "on-secondary-fixed-variant": "#002eca",
+                    "secondary": "#bac3ff",
+                    "surface-container": "#1c2024",
+                    "on-primary": "#402d00",
+                    "error-container": "#93000a",
+                    "secondary-fixed": "#dee0ff",
+                    "error": "#ffb4ab",
+                    "surface": "#101418",
+                    "inverse-primary": "#795900",
+                    "surface-container-lowest": "#0b0f12",
+                    "on-secondary-fixed": "#00105b",
+                    "gold-highlight": "#FBBF24",
+                    "on-secondary-container": "#a8b4ff",
+                    "signal-blue": "#0030CF",
+                    "surface-container-low": "#181c20",
+                    "cloud-mist": "#D7E1EC",
+                    "surface-container-high": "#262a2f",
+                    "on-tertiary-fixed-variant": "#004e5d",
+                    "on-secondary": "#001f90",
+                    "primary-fixed": "#ffdf9f"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin-safe": "32px",
+                    "gutter": "16px",
+                    "unit": "4px",
+                    "sidebar-width": "64px",
+                    "toolbar-width": "56px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": [
+                            "Space Grotesk"
+                    ],
+                    "label-caps": [
+                            "JetBrains Mono"
+                    ],
+                    "display-lg": [
+                            "Space Grotesk"
+                    ],
+                    "technical-data": [
+                            "JetBrains Mono"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "headline-lg": [
+                            "Space Grotesk"
+                    ]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": [
+                            "24px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-caps": [
+                            "11px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.08em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "52px",
+                                    "letterSpacing": "-0.03em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "technical-data": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-md": [
+                            "15px",
+                            {
+                                    "lineHeight": "24px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "36px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #101418;
+            background-image: radial-gradient(#31353a 1px, transparent 1px);
+            background-size: 32px 32px;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .hud-glass {
+            background-color: rgba(16, 20, 24, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 227, 232, 0.1);
+        }
+        
+        .meta-chip {
+            position: absolute;
+            pointer-events: none;
+        }
+        
+        .connector-line {
+            position: absolute;
+            background-color: #FBBF24;
+            transform-origin: top left;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        .connector-dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: #FBBF24;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.8);
+            pointer-events: none;
+        }
+
+        /* Perspective Canvas */
+        .perspective-container {
+            perspective: 1200px;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .canvas-3d {
+            transform: rotateX(60deg) rotateZ(45deg);
+            transform-style: preserve-3d;
+            width: 800px;
+            height: 800px;
+            position: relative;
+        }
+        
+        .wireframe-cube {
+            position: absolute;
+            border: 1px solid rgba(251, 191, 36, 0.6);
+            background: rgba(251, 191, 36, 0.05);
+            transform-style: preserve-3d;
+        }
+        
+        .wireframe-cube::before, .wireframe-cube::after {
+            content: '';
+            position: absolute;
+            border: 1px solid rgba(251, 191, 36, 0.6);
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body class="text-on-background h-screen w-screen overflow-hidden select-none">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-safe h-toolbar-width bg-surface-dim/70 backdrop-blur-md border-b border-on-surface/10">
+<div class="flex items-center gap-6">
+<div class="font-display-lg text-[24px] font-bold text-gold-highlight tracking-tighter leading-none">STUDIO_CANVAS_v2.0</div>
+<div class="hidden md:flex gap-6 font-technical-data text-technical-data text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">Draft</a>
+<a class="text-gold-highlight border-b-2 border-gold-highlight pb-1 transition-colors" href="#">Analyze</a>
+<a class="hover:text-primary transition-colors" href="#">Simulate</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="font-technical-data text-technical-data bg-gold-highlight text-surface px-4 py-1.5 rounded hover:bg-primary transition-colors">Export</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history</span>
+</button>
+</div>
+</nav>
+<!-- Side Navigation Bar -->
+<nav class="fixed left-gutter top-1/2 -translate-y-1/2 flex flex-col items-center py-4 gap-4 z-50 w-[56px] rounded-full hud-glass shadow-lg">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">near_me</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-gold-highlight text-surface shadow-[0_0_15px_rgba(251,191,36,0.4)] transition-all duration-200 ease-out">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">draw</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">view_in_ar</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">search</span>
+</button>
+<div class="w-6 h-[1px] bg-on-surface/20 my-2"></div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">tune</span>
+</button>
+</nav>
+<!-- Main Canvas Area -->
+<main class="w-full h-full relative overflow-hidden">
+<div class="perspective-container">
+<div class="canvas-3d" id="mainCanvas">
+<!-- Desaturated Background Image -->
+<div class="absolute inset-0 opacity-40 grayscale" data-alt="A highly detailed, top-down desaturated aerial photograph of a modern landscape architecture project featuring a wooden deck, stone pathways, and structured planters. High contrast, technical studio lighting, architectural visualization style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCUCAivAyMMox4kHtZSA5jpXTvhUXxUw1okTiXfXV0-dpsI2_dtnFRGLJja09cvFcashDIt3tovgdz9lR4GVvdDECPL-oiWMzlfNAeWw5O1NXUfCZCwL5q47OA1ETPnpb3Mh6V0XB6mTK_5rG0T3FRoosr3qn9VvEvIVBGjthCuuRfeKFqk69xr2vzXN-6315Rs2I22afSX3R-eKCmwzGm0pdQ6wQ_jKD5A_P_qDEOPPOMVrvcW-3GRwA')"></div>
+<!-- 3D Wireframe Geometry (Abstracted Representation) -->
+<!-- Main Deck -->
+<div class="wireframe-cube" style="width: 400px; height: 300px; transform: translateZ(20px); left: 100px; top: 200px;"></div>
+<!-- Planter Box 1 -->
+<div class="wireframe-cube" style="width: 80px; height: 200px; transform: translateZ(60px); left: 20px; top: 200px;"></div>
+<!-- Steps -->
+<div class="wireframe-cube" style="width: 120px; height: 40px; transform: translateZ(10px); left: 380px; top: 460px;"></div>
+<div class="wireframe-cube" style="width: 120px; height: 40px; transform: translateZ(5px); left: 380px; top: 500px;"></div>
+<!-- Railing lines (simulated) -->
+<div class="absolute bg-gold-highlight/60 h-[1px] w-[300px]" style="transform: translateZ(80px) rotateY(90deg); left: 100px; top: 200px;"></div>
+</div>
+</div>
+<!-- HUD Metadata Chips (Billboarded) -->
+<!-- Timber Chip -->
+<div class="meta-chip hud-glass rounded-lg p-3 w-[200px]" style="top: 25%; left: 15%;">
+<div class="flex justify-between items-start mb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">MATERIAL:</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">texture</span>
+</div>
+<div class="font-headline-lg-mobile text-[16px] text-on-surface leading-tight mb-2">Timber - Ironbark</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant">Depth: <span class="text-gold-highlight">0.025m</span></div>
+<!-- Connection point for line -->
+<div class="absolute right-[-10px] top-[50%] w-0 h-0" id="anchor-timber"></div>
+</div>
+<!-- Botanical Chip (Top Right) -->
+<div class="meta-chip hud-glass rounded-lg p-3 w-[220px]" style="top: 15%; right: 20%;">
+<div class="mb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">BOTANICAL:</span>
+</div>
+<div class="font-headline-lg-mobile text-[16px] text-on-surface leading-tight mb-2">Eucalyptus camaldulensis</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant">TYPE: <span class="text-gold-highlight">Tree</span></div>
+</div>
+<!-- Element Chip -->
+<div class="meta-chip hud-glass rounded-lg p-3 w-[180px]" style="top: 30%; right: 10%;">
+<div class="flex justify-between items-start mb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">ELEMENT:</span>
+<span class="font-body-md text-on-surface text-[14px]">Railing</span>
+</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant">Height: <span class="text-gold-highlight">1.1m</span></div>
+</div>
+<!-- Material Chip (Bottom Right) -->
+<div class="meta-chip hud-glass rounded-lg p-3 w-[180px]" style="bottom: 25%; right: 25%;">
+<div class="mb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">MATERIAL:</span>
+<span class="font-body-md text-on-surface text-[14px] ml-1">Sandstone</span>
+</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant mt-1">Dimensions: <span class="text-gold-highlight">VARIES</span></div>
+</div>
+<!-- Botanical Chip (Bottom Left) -->
+<div class="meta-chip hud-glass rounded-lg p-3 w-[260px]" style="bottom: 20%; left: 20%;">
+<div class="flex items-center gap-2 mb-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">BOTANICAL:</span>
+<span class="font-body-md text-on-surface text-[14px]">Eucalyptus camaldulensis</span>
+</div>
+<div class="font-technical-data text-technical-data text-on-surface-variant">TYPE: <span class="text-gold-highlight">Tree</span></div>
+</div>
+<!-- Simulated SVG connecting lines to maintain layout without complex JS for this demo -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-10" style="opacity: 0.6;">
+<!-- Timber line -->
+<path d="M 330 310 L 370 310 L 400 450" fill="none" stroke="#FBBF24" stroke-width="1.5"></path>
+<circle cx="400" cy="450" fill="#FBBF24" r="3"></circle>
+<!-- Botanical Top Right -->
+<path d="M 1200 200 L 1150 200 L 1050 280" fill="none" stroke="#FBBF24" stroke-width="1.5"></path>
+<circle cx="1050" cy="280" fill="#FBBF24" r="3"></circle>
+<!-- Railing -->
+<path d="M 1250 350 L 1180 350 L 1120 400" fill="none" stroke="#FBBF24" stroke-width="1.5"></path>
+<circle cx="1120" cy="400" fill="#FBBF24" r="3"></circle>
+<!-- Sandstone -->
+<path d="M 1000 700 L 950 700 L 950 620" fill="none" stroke="#FBBF24" stroke-width="1.5"></path>
+<circle cx="950" cy="620" fill="#FBBF24" r="3"></circle>
+<!-- Botanical Bottom Left -->
+<path d="M 640 730 L 700 730 L 750 670" fill="none" stroke="#FBBF24" stroke-width="1.5"></path>
+<circle cx="750" cy="670" fill="#FBBF24" r="3"></circle>
+</svg>
+</main>
+<!-- Footer Status Rail -->
+<footer class="fixed bottom-0 w-full z-40 flex justify-between items-center px-margin-safe py-2 bg-surface-container-lowest/80 border-t border-on-surface/10 backdrop-blur-sm">
+<div class="font-label-caps text-label-caps text-on-surface-variant">
+            SPATIAL TRUTH // PROJECT COORDS: 34.0522° N, 118.2437° W
+        </div>
+<div class="hidden md:flex gap-6 font-technical-data text-technical-data text-on-surface-variant">
+<a class="hover:text-white transition-colors" href="#">Telemetry</a>
+<a class="hover:text-white transition-colors" href="#">Financials</a>
+<a class="hover:text-white transition-colors" href="#">Grid Settings</a>
+</div>
+</footer>
+<!-- Minimal script for subtle canvas movement -->
+<script>
+        document.addEventListener('mousemove', (e) => {
+            const canvas = document.getElementById('mainCanvas');
+            if(!canvas) return;
+            
+            const x = (e.clientX / window.innerWidth - 0.5) * 10;
+            const y = (e.clientY / window.innerHeight - 0.5) * 10;
+            
+            canvas.style.transform = `rotateX(${60 + y}deg) rotateZ(${45 + x}deg)`;
+        });
+    </script>
+</body></html>

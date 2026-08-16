@@ -2,7 +2,7 @@
   position: absolute;
   pointer-events: none;
   z-index: var(--ws-z-annotate);
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   font-weight: 500;
   letter-spacing: 0.02em;

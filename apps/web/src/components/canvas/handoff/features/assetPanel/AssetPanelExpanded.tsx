@@ -81,9 +81,12 @@ function pinnedTypes(mode: StudioMode): StudioItemType[] {
 function AssetCarousel({
   children,
   count,
+  focusIndex,
 }: {
   children: ReactNode[];
   count: number;
+  /** Rotate the ring so this child sits at the front card. */
+  focusIndex?: number;
 }) {
   const [theta, setTheta] = useState(0);
   const thetaRef = useRef(0);
@@ -106,6 +109,20 @@ function AssetCarousel({
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, []);
+
+  // Bring the focused card to the front along the shortest arc — picking a
+  // Fill rail swatch must present that card for the click that arms it.
+  useEffect(() => {
+    if (focusIndex == null || focusIndex < 0 || count === 0) return;
+    const step = 360 / count;
+    const target = -focusIndex * step;
+    const current = thetaRef.current;
+    const k = Math.round((current - target) / 360);
+    const dest = target + k * 360;
+    thetaRef.current = dest;
+    velocityRef.current = 0;
+    setTheta(dest);
+  }, [focusIndex, count]);
 
   const step = count > 0 ? 360 / count : 360;
   const activeIndex =
@@ -141,6 +158,10 @@ function AssetCarousel({
       className={css.carouselViewport}
       data-testid="asset-carousel"
       onPointerDown={(event) => {
+        // Tiles are buttons — capturing here would retarget their pointerup
+        // to the viewport and the tile's click would never fire. Only take
+        // the pointer for genuine rotation drags on the viewport itself.
+        if ((event.target as HTMLElement).closest("button")) return;
         event.currentTarget.setPointerCapture(event.pointerId);
         dragRef.current = { x: event.clientX, theta: thetaRef.current };
       }}
@@ -473,7 +494,10 @@ export function AssetPanelExpanded({
               aria-label="Pinned"
               data-testid="asset-carousel-pinned"
             >
-              <AssetCarousel count={pinned.length}>
+              <AssetCarousel
+                count={pinned.length}
+                focusIndex={pinned.indexOf(paintSwatch ?? armed)}
+              >
                 {pinned.map((t) => {
                   const on = activeMaterial === t;
                   return (

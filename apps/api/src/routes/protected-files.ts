@@ -106,18 +106,22 @@ export default async function protectedFileRoutes(
     request: FastifyRequest,
     reply: FastifyReply,
     kind: AssetKind,
-  ): Promise<void> {
+  ): Promise<FastifyReply | void> {
     const { filename } = request.params as { filename: string };
     const parsed = parseFilename(filename);
     if (!parsed) {
-      reply.code(400).send({ error: "Invalid filename" });
-      return;
+      return reply.code(400).send({ error: "Invalid filename" });
     }
 
     const auth = await authorizeAsset(request, reply, kind, parsed.assetId);
     if (!auth) return;
 
-    sendAssetFile(reply, kind, filename, parsed.ext);
+    /* Return the reply: in an async handler, a stream sent as a bare
+     * statement after an await makes the handler resolve with undefined as
+     * the payload — Fastify then closes the reply as an empty 200 and the
+     * stream is never piped (reproduced: /outputs/*.html served 0 bytes).
+     * Returning the reply hands the stream back to the framework. */
+    return sendAssetFile(reply, kind, filename, parsed.ext);
   }
 
   for (const kind of [

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Armadale Residential Project - 10-Year Growth Simulation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#e0e3e8",
+                      "tertiary-fixed": "#afecff",
+                      "on-error-container": "#ffdad6",
+                      "on-tertiary-fixed": "#001f27",
+                      "primary": "#ffe1a7",
+                      "on-primary-container": "#6c4f00",
+                      "secondary-container": "#0130cf",
+                      "surface-container-lowest": "#0b0f12",
+                      "background": "#101418",
+                      "on-tertiary-fixed-variant": "#004e5d",
+                      "surface-variant": "#31353a",
+                      "surface-container-high": "#262a2f",
+                      "on-secondary-container": "#a8b4ff",
+                      "surface": "#101418",
+                      "primary-fixed-dim": "#f9bd22",
+                      "error-container": "#93000a",
+                      "primary-fixed": "#ffdf9f",
+                      "surface-bright": "#363a3e",
+                      "secondary": "#bac3ff",
+                      "cloud-mist": "#D7E1EC",
+                      "on-error": "#690005",
+                      "on-primary-fixed-variant": "#5c4300",
+                      "on-primary": "#402d00",
+                      "surface-container-highest": "#31353a",
+                      "on-tertiary": "#003641",
+                      "secondary-fixed-dim": "#bac3ff",
+                      "surface-container-low": "#181c20",
+                      "on-secondary-fixed-variant": "#002eca",
+                      "inverse-primary": "#795900",
+                      "on-secondary-fixed": "#00105b",
+                      "outline": "#9c8f79",
+                      "inverse-on-surface": "#2d3135",
+                      "tertiary-container": "#34daff",
+                      "primary-container": "#fbbf24",
+                      "surface-dim": "#1E2329",
+                      "on-tertiary-container": "#005c6e",
+                      "surface-container": "#1c2024",
+                      "tertiary": "#b6edff",
+                      "tertiary-fixed-dim": "#30d8fd",
+                      "on-surface": "#e0e3e8",
+                      "surface-tint": "#f9bd22",
+                      "on-primary-fixed": "#261a00",
+                      "outline-variant": "#4f4633",
+                      "secondary-fixed": "#dee0ff",
+                      "on-secondary": "#001f90",
+                      "error": "#ffb4ab",
+                      "on-surface-variant": "#d3c5ac",
+                      "signal-blue": "#0030CF",
+                      "inverse-surface": "#e0e3e8",
+                      "gold-highlight": "#FBBF24"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-safe": "32px",
+                      "unit": "4px",
+                      "toolbar-width": "56px",
+                      "gutter": "16px",
+                      "sidebar-width": "280px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Space Grotesk"
+                      ],
+                      "display-lg": [
+                              "Space Grotesk"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "technical-data": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Space Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "52px",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "technical-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background-color: rgba(30, 35, 41, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(224, 227, 232, 0.1);
+        }
+        
+        /* Range slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 4px;
+            background: #FBBF24;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(224, 227, 232, 0.2);
+        }
+        
+        .bg-grid-pattern {
+            background-size: 32px 32px;
+            background-image: 
+                linear-gradient(to right, rgba(224, 227, 232, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(224, 227, 232, 0.03) 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background h-screen w-screen overflow-hidden flex flex-col font-body-md antialiased selection:bg-gold-highlight selection:text-black">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-safe h-toolbar-width bg-surface-dim/70 backdrop-blur-md border-b border-on-surface/10">
+<div class="flex items-center gap-6">
+<div class="font-display-lg text-display-lg text-gold-highlight tracking-tighter">STUDIO_CANVAS_v2.0</div>
+<div class="hidden md:flex items-center gap-4 ml-8 h-full">
+<button class="font-technical-data text-technical-data text-on-surface-variant hover:text-primary transition-colors h-full px-2 flex flex-col justify-center">Draft</button>
+<button class="font-technical-data text-technical-data text-on-surface-variant hover:text-primary transition-colors h-full px-2 flex flex-col justify-center">Analyze</button>
+<button class="font-technical-data text-technical-data text-gold-highlight border-b-2 border-gold-highlight pb-1 h-full px-2 flex flex-col justify-center">Simulate</button>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center gap-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-variant/50">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-variant/50">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history</span>
+</button>
+</div>
+<button class="bg-gold-highlight text-black font-technical-data text-technical-data px-4 py-1.5 rounded-sm hover:opacity-90 transition-opacity">
+                Export
+            </button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-on-surface/20 ml-2">
+<img alt="Architect Profile" class="w-full h-full object-cover" data-alt="A futuristic minimalist avatar placeholder featuring abstract geometric shapes in high contrast black and gold, sleek metallic textures, clean vector art style, dark mode UI context, sharp edges." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbHaKug6UEGuIXAH7jFzP4BaoDzAQGexlBqzKpI_BpwJMtoIJPkj29_jqn3JwvqxQl05C2eu5knXX0Qc_PYUOU4ua23x-FDyvv6EdpM7HBO8wJZrOixPh3YQ_f6ald5XLpqWzW52soH35BTAUi9nQT2UvfIfta-9cR7s21fC-DcSAqSCWPDAj0hlTVOozqfcAaYGItspXVZ3zwJM1nKdlXwBkmVXYGyaeiByy7ODS3gn9xoE5Ma4S7Rg"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="hidden md:flex fixed left-gutter top-1/2 -translate-y-1/2 flex-col items-center py-6 gap-4 z-50 bg-surface-dim/70 backdrop-blur-md border border-on-surface/10 rounded-full w-sidebar-width" style="width: 64px;">
+<div class="mb-4 text-center">
+<div class="w-10 h-10 rounded-full mx-auto bg-surface-container-high flex items-center justify-center border border-on-surface/10 mb-2">
+<span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">architecture</span>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors group relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">timeline</span>
+<span class="absolute left-14 bg-surface-container-high text-on-surface font-label-caps text-label-caps px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">Line</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors group relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">gesture</span>
+<span class="absolute left-14 bg-surface-container-high text-on-surface font-label-caps text-label-caps px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">Curve</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors group relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">layers</span>
+<span class="absolute left-14 bg-surface-container-high text-on-surface font-label-caps text-label-caps px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">Area</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-gold-highlight text-surface shadow-[0_0_15px_rgba(251,191,36,0.4)] group relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">eco</span>
+<span class="absolute left-14 bg-surface-container-high text-on-surface font-label-caps text-label-caps px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap">Planting</span>
+</button>
+<div class="mt-4 pt-4 border-t border-on-surface/10 w-full flex justify-center">
+<button class="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center border border-on-surface/20 hover:bg-surface-variant transition-colors" title="Layer +">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">add</span>
+</button>
+</div>
+</aside>
+<!-- Main Canvas Area -->
+<main class="flex-1 relative w-full h-full bg-grid-pattern pt-toolbar-width pb-10">
+<!-- 3D Canvas Placeholder Background -->
+<div class="absolute inset-0 z-0 bg-cover bg-center pt-toolbar-width" data-alt="A highly detailed architectural 3D rendering in an isometric tilted view of a luxury residential property with a pool and terrace. It features a lush, mature green oak tree casting significant, realistic shadows over the sleek, minimalist concrete terrace and bright blue pool water. The environment is rendered in a sophisticated dark mode CAD aesthetic, with subtle grid lines on the ground plane. Lighting is dramatic and precise, emphasizing depth and maturity. High-end, hyper-realistic, architectural visualization." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuARngGFklkbMKqzYItgI81DE8vxUDvqFqNlZAwSSpJ_HRyJ-hv3og2X5mF0zlntshSf1GHniEDmIkrEyBX2YFRiiEC4jc75b0h0kf_jF77BDx4J3ee-sCyV6k2SM0Aysw127AFFqFG9jJ_D5khlwzUKjNkwqolj5nqceqhkMGrxVmLG9pDS0Ux4PKILCptCzuQruFeSyxWGhJ1_prG7niKNpE1_7QPu2MhDAYgPm642Ku8YfAt3k4QtWw')">
+<!-- Simulated gradient overlay for depth -->
+<div class="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"></div>
+</div>
+<!-- Floating Meta Chips HUD -->
+<div class="absolute top-24 right-16 z-20 flex flex-col gap-3">
+<div class="glass-panel px-4 py-2 rounded-full flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-gold-highlight shadow-[0_0_8px_rgba(251,191,36,0.8)]"></div>
+<span class="font-technical-data text-technical-data text-on-surface">Maturity: 100%</span>
+</div>
+<div class="glass-panel px-4 py-2 rounded-full flex items-center gap-3">
+<span class="material-symbols-outlined text-gold-highlight text-sm" style="font-variation-settings: 'FILL' 0;">straighten</span>
+<span class="font-technical-data text-technical-data text-on-surface">Canopy Radius: 8.5m</span>
+</div>
+<div class="glass-panel px-4 py-3 rounded-xl mt-4 w-64">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-2">ENVIRONMENTAL IMPACT</div>
+<div class="flex justify-between items-center mb-1">
+<span class="font-technical-data text-technical-data text-on-surface text-xs">Shade Coverage</span>
+<span class="font-technical-data text-technical-data text-gold-highlight text-xs">+42%</span>
+</div>
+<div class="w-full bg-surface-container-high h-1 mb-3">
+<div class="bg-gold-highlight h-1 w-[42%]"></div>
+</div>
+<div class="flex justify-between items-center mb-1">
+<span class="font-technical-data text-technical-data text-on-surface text-xs">Thermal Reduction</span>
+<span class="font-technical-data text-technical-data text-signal-blue text-xs">-3.2°C</span>
+</div>
+<div class="w-full bg-surface-container-high h-1">
+<div class="bg-signal-blue h-1 w-[60%]"></div>
+</div>
+</div>
+</div>
+<!-- Site Origin Marker -->
+<div class="absolute top-1/2 left-1/3 z-10 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+<div class="relative">
+<div class="w-4 h-4 rounded-full bg-signal-blue absolute top-0 left-0 animate-ping opacity-75"></div>
+<div class="w-4 h-4 rounded-full border-2 border-signal-blue relative flex items-center justify-center">
+<div class="w-1 h-1 bg-signal-blue rounded-full"></div>
+</div>
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 glass-panel px-2 py-1 rounded">
+<span class="font-technical-data text-technical-data text-xs text-signal-blue">ORIGIN</span>
+</div>
+</div>
+</div>
+<!-- Temporal Scrubber HUD -->
+<div class="absolute bottom-20 left-1/2 -translate-x-1/2 z-30 w-full max-w-2xl px-6">
+<div class="glass-panel p-6 rounded-xl flex flex-col gap-4">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-1">Temporal Simulation</h2>
+<div class="font-technical-data text-technical-data text-on-surface-variant">Armadale Residence // Flora Progression</div>
+</div>
+<div class="text-right">
+<div class="font-display-lg text-display-lg text-gold-highlight leading-none">Yr 10</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1">MATURITY STEP</div>
+</div>
+</div>
+<div class="relative mt-4 pt-2">
+<!-- Custom markers -->
+<div class="absolute w-full flex justify-between top-0 px-1 pointer-events-none">
+<div class="w-[1px] h-2 bg-on-surface-variant/50"></div>
+<div class="w-[1px] h-2 bg-on-surface-variant/30"></div>
+<div class="w-[1px] h-2 bg-on-surface-variant/30"></div>
+<div class="w-[1px] h-2 bg-on-surface-variant/30"></div>
+<div class="w-[1px] h-2 bg-on-surface-variant/30"></div>
+<div class="w-[1px] h-2 bg-on-surface-variant/50"></div>
+<div class="w-[1px] h-2 bg-on-surface-variant/30"></div>
+<div class="w-[1px] h-2 bg-on-surface-variant/30"></div>
+<div class="w-[1px] h-2 bg-on-surface-variant/30"></div>
+<div class="w-[1px] h-2 bg-on-surface-variant/30"></div>
+<div class="w-[1px] h-2 bg-gold-highlight"></div>
+</div>
+<input aria-label="Year Scrubber" class="w-full" max="10" min="0" type="range" value="10"/>
+<div class="flex justify-between mt-2 font-technical-data text-technical-data text-xs text-on-surface-variant">
+<span>Step 0 (Install)</span>
+<span>Step 5 (Establish)</span>
+<span class="text-gold-highlight">Step 10 (Mature)</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Status Rail -->
+<footer class="fixed bottom-0 w-full z-40 flex justify-between items-center px-margin-safe py-2 bg-surface-container-lowest/80 border-t border-on-surface/10 backdrop-blur-sm">
+<div class="font-technical-data text-technical-data text-on-surface-variant opacity-80 flex items-center gap-4">
+<span class="text-signal-blue font-bold">SPATIAL TRUTH // PROJECT COORDS: 34.0522° N, 118.2437° W</span>
+</div>
+<div class="hidden md:flex gap-6">
+<button class="font-technical-data text-technical-data text-on-surface-variant hover:text-white transition-colors">Telemetry</button>
+<button class="font-technical-data text-technical-data text-on-surface-variant hover:text-white transition-colors">Financials</button>
+<button class="font-technical-data text-technical-data text-on-surface-variant hover:text-white transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 0;">grid_on</span>
+                Grid Settings
+            </button>
+</div>
+</footer>
+</body></html>

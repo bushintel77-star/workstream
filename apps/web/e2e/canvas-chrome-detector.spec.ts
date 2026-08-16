@@ -16,7 +16,9 @@ test.describe("Camera chrome detector (gate C)", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=sketch`);
+    // Gate C audits the classic studio's camera transform — force it
+    // explicitly (the default mount for ?mode=sketch is the WebGL studio).
+    await page.goto(`/projects/${projectId}?svg=1&mode=sketch`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("zoom-world")).toBeVisible({ timeout: 15_000 });
 
@@ -90,7 +92,7 @@ test.describe("Camera chrome detector (gate C)", () => {
     const { projectId } = await createSurveyProject(request);
 
     for (const mode of ["survey", "cad"] as const) {
-      await page.goto(`/projects/${projectId}?mode=${mode}`);
+      await page.goto(`/projects/${projectId}?svg=1&mode=${mode}`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
       await expect(page.getByTestId("zoom-world")).toBeVisible({ timeout: 15_000 });
       const board = page.getByTestId("studio-board");

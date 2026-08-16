@@ -16,7 +16,7 @@ test.describe("Vic-gov status chips", () => {
     request,
   }) => {
     const { projectId } = await createSurveyProject(request);
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expectToolDock(page);
 
@@ -70,7 +70,7 @@ test.describe("Vic-gov status chips", () => {
     }) => {
       await page.setViewportSize({ width, height });
       const { projectId } = await createSurveyProject(request);
-      await page.goto(`/projects/${projectId}?mode=survey`);
+      await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
       await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
       await page.waitForTimeout(4_000);
 

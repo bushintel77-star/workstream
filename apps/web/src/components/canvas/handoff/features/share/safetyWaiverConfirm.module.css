@@ -23,7 +23,7 @@
   border: 1px solid color-mix(in srgb, var(--hc-warning) 55%, transparent);
   background: var(--hc-glass);
   box-shadow: 0 18px 52px var(--hc-neu-shadow);
-  font-family: var(--font-body, "Sora", system-ui, sans-serif);
+  font-family: var(--font-body, "Inter", system-ui, sans-serif);
   color: var(--hc-ink);
   display: flex;
   flex-direction: column;
@@ -32,7 +32,7 @@
 
 .kicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.14em;
   text-transform: uppercase;

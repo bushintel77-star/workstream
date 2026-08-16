@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+<!-- STITCH_THREEJS_START:ANIMATION_133 class="fixed inset-0 w-full h-full bg-transparent" -->
+<div class="fixed inset-0 w-full h-full bg-transparent" style="display:block;">
+<script src="https://ajax.googleapis.com/ajax/libs/threejs/r125/three.min.js"></script>
+<div id="threejs-container-ANIMATION_133" style="width:100%;height:100%"></div>
+<script>
+(function() {
+  const container = document.getElementById('threejs-container-ANIMATION_133');
+  const devicePixelRatio = window.devicePixelRatio || 1;
+  
+// Hydraulic Pulse Simulation
+// Visualizes flow velocity and catchment pressure within 3D pipe geometry
+
+const width = container.clientWidth || window.innerWidth;
+const height = container.clientHeight || window.innerHeight;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(width, height);
+container.appendChild(renderer.domElement);
+
+// Gold Standard Palette
+const GOLD_STANDARD = new THREE.Color(0xfbbf24);
+const SIGNAL_BLUE = new THREE.Color(0x0030cf);
+const SURFACE_DIM = new THREE.Color(0x1e2329);
+
+// Custom Shader for the "Hydraulic Pulse"
+const pulseVertexShader = `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const pulseFragmentShader = `
+  uniform float u_time;
+  uniform float u_flowSpeed;
+  uniform vec3 u_color;
+  varying vec2 vUv;
+
+  void main() {
+    // Creating the "pulse" along the length of the pipe (vUv.x)
+    float pulse = sin(vUv.x * 20.0 - u_time * u_flowSpeed * 5.0) * 0.5 + 0.5;
+    
+    // Sharpening the pulse for a technical look
+    pulse = pow(pulse, 8.0);
+    
+    vec3 color = mix(u_color * 0.2, u_color, pulse);
+    float alpha = mix(0.3, 0.9, pulse);
+    
+    gl_FragColor = vec4(color, alpha);
+  }
+`;
+
+// Create a series of "Pipes" (Service Lines)
+const pipes = [];
+const createPipe = (points, speed, color) => {
+  const curve = new THREE.CatmullRomCurve3(points);
+  const geometry = new THREE.TubeGeometry(curve, 64, 0.05, 8, false);
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      u_time: { value: 0 },
+      u_flowSpeed: { value: speed },
+      u_color: { value: color }
+    },
+    vertexShader: pulseVertexShader,
+    fragmentShader: pulseFragmentShader,
+    transparent: true
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+  pipes.push(mesh);
+};
+
+// Mock layout: Drainage and Irrigation lines
+createPipe([
+  new THREE.Vector3(-2, 0, 0),
+  new THREE.Vector3(0, 0.2, 0.5),
+  new THREE.Vector3(2, -0.1, 1)
+], 2.5, SIGNAL_BLUE); // Main Drainage
+
+createPipe([
+  new THREE.Vector3(-1.5, 0.5, -1),
+  new THREE.Vector3(0, 0.3, -0.5),
+  new THREE.Vector3(1.5, 0.1, 0)
+], 1.2, GOLD_STANDARD); // Irrigation Line A
+
+createPipe([
+  new THREE.Vector3(-1.5, -0.5, -1),
+  new THREE.Vector3(0, -0.3, -0.5),
+  new THREE.Vector3(1.5, -0.1, 0)
+], 1.8, GOLD_STANDARD); // Irrigation Line B
+
+camera.position.z = 3;
+camera.position.y = 1;
+camera.lookAt(0, 0, 0);
+
+// Animation Loop
+const animate = (time) => {
+  requestAnimationFrame(animate);
+  
+  pipes.forEach(pipe => {
+    pipe.material.uniforms.u_time.value = time * 0.001;
+  });
+  
+  renderer.render(scene, camera);
+};
+
+requestAnimationFrame(animate);
+
+// Resize handling
+window.addEventListener('resize', () => {
+  const w = container.clientWidth || window.innerWidth;
+  const h = container.clientHeight || window.innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+});
+
+})();
+</script>
+</div>
+<!-- STITCH_THREEJS_END:ANIMATION_133 -->
+</body>
+</html>

@@ -758,6 +758,12 @@ export type AutoTraceBoundaryResult = {
     label?: string | null;
   }>;
   urban_trees_source: "vicmap" | null;
+  /** Vicmap neighbouring footprints for real overshadowing context. */
+  neighbour_buildings_canvas: Array<{
+    ring: Array<{ x: number; y: number }>;
+    height_m?: number | null;
+  }>;
+  neighbour_buildings_source: "vicmap" | null;
 };
 
 export async function autoTraceBoundaryApi(
@@ -777,6 +783,8 @@ export async function autoTraceBoundaryApi(
     easement_source: raw.easement_source ?? null,
     urban_trees_canvas: raw.urban_trees_canvas ?? [],
     urban_trees_source: raw.urban_trees_source ?? null,
+    neighbour_buildings_canvas: raw.neighbour_buildings_canvas ?? [],
+    neighbour_buildings_source: raw.neighbour_buildings_source ?? null,
   };
 }
 
@@ -1265,15 +1273,11 @@ export type SiteContext = {
 
 export async function getSiteContext(
   projectId: string,
-): Promise<SiteContext | null> {
-  try {
-    const body = await apiGet<{ context: SiteContext }>(
-      `/projects/${projectId}/site-context`,
-    );
-    return body.context;
-  } catch {
-    return null;
-  }
+): Promise<SiteContext> {
+  const body = await apiGet<{ context: SiteContext }>(
+    `/projects/${projectId}/site-context`,
+  );
+  return body.context;
 }
 
 /** Architectural title block · Vicmap cadastral for selected address. */

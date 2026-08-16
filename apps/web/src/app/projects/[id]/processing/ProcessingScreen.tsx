@@ -17,6 +17,16 @@ type Stage = {
   description: string;
 };
 
+type PipelineProgress = {
+  status: ProjectStatus;
+  hasTranscript: boolean;
+  hasSurvey: boolean;
+  hasDesign: boolean;
+  hasCosting: boolean;
+  hasAudit: boolean;
+  ready: boolean;
+} | null;
+
 const STAGES: Stage[] = [
   {
     key: "transcribe",
@@ -55,43 +65,55 @@ function completedCountFor(status: ProjectStatus): number {
   return 0;
 }
 
-function activeIndexFor(status: ProjectStatus): number {
+function stageFlagsFromStatus(status: ProjectStatus): boolean[] {
   const count = completedCountFor(status);
-  if (count >= STAGES.length) return -1;
-  if (status === "recording" || status === "processing") return Math.max(count, 0);
-  return 0;
+  return STAGES.map((_, index) => index < count);
 }
 
 type Props = {
   projectId: string;
   address: string;
   status: ProjectStatus;
+  progress: PipelineProgress;
 };
 
-export function ProcessingScreen({ projectId, address, status }: Props) {
+export function ProcessingScreen({ projectId, address, status, progress }: Props) {
   const router = useRouter();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [pollCount, setPollCount] = useState(0);
-  const completeCount = completedCountFor(status);
-  const activeIndex = activeIndexFor(status);
-  const complete = completeCount >= STAGES.length;
+  const stageFlags = useMemo(
+    () =>
+      progress
+        ? [
+            progress.hasTranscript,
+            progress.hasSurvey,
+            progress.hasDesign,
+            progress.hasCosting,
+            progress.hasAudit,
+          ]
+        : stageFlagsFromStatus(status),
+    [progress, status],
+  );
+  const completeCount = stageFlags.filter(Boolean).length;
+  const activeIndex = stageFlags.findIndex((flag) => !flag);
+  const complete = progress ? progress.ready : completeCount >= STAGES.length;
   const timedOut = !complete && pollCount >= 30;
 
   const stageStates = useMemo(
-    () =>
-      STAGES.map((stage, index) => ({
-        ...stage,
-        complete: index < completeCount,
-        active: !timedOut && index === activeIndex,
-        error: timedOut && index === activeIndex,
-      })),
-    [activeIndex, completeCount, timedOut],
+   () =>
+     STAGES.map((stage, index) => ({
+       ...stage,
+       complete: stageFlags[index],
+       active: !timedOut && index === (activeIndex >= 0 ? activeIndex : STAGES.length - 1),
+       error: timedOut && index === (activeIndex >= 0 ? activeIndex : STAGES.length - 1),
+     })),
+   [activeIndex, stageFlags, timedOut],
   );
 
   useEffect(() => {
-    if (complete) {
-      router.replace(`/projects/${projectId}?mode=sketch`);
+   if (complete) {
+     router.replace(`/projects/${projectId}?mode=sketch`);
       return;
     }
     if (timedOut) return;
@@ -129,6 +151,25 @@ export function ProcessingScreen({ projectId, address, status }: Props) {
           sketch guidance, quote data, and audit checks. This page refreshes
           automatically and will stop with a retry action if processing stalls.
         </p>
+        {progress ? (
+          <div className={styles.processingSignals} aria-label="Backend progress">
+            <span className={`${styles.processingSignal} ${progress.hasTranscript ? styles.processingSignalDone : ""}`}>
+              Transcript
+            </span>
+            <span className={`${styles.processingSignal} ${progress.hasSurvey ? styles.processingSignalDone : ""}`}>
+              Survey
+            </span>
+            <span className={`${styles.processingSignal} ${progress.hasDesign ? styles.processingSignalDone : ""}`}>
+              Design
+            </span>
+            <span className={`${styles.processingSignal} ${progress.hasCosting ? styles.processingSignalDone : ""}`}>
+              Costing
+            </span>
+            <span className={`${styles.processingSignal} ${progress.hasAudit ? styles.processingSignalDone : ""}`}>
+              Audit
+            </span>
+          </div>
+        ) : null}
       </section>
 
       <section className={styles.processingStages} aria-label="Pipeline stages">
@@ -171,7 +212,11 @@ export function ProcessingScreen({ projectId, address, status }: Props) {
         </section>
       ) : (
         <p className={styles.processingHint} aria-live="polite">
-          {complete ? "Complete — opening the studio." : "Polling every 2 seconds."}
+          {complete
+            ? "Complete — opening the studio."
+            : progress
+              ? "Polling the backend progress state every 2 seconds."
+              : "Polling every 2 seconds."}
         </p>
       )}
     </main>

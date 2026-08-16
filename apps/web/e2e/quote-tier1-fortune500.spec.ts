@@ -14,7 +14,7 @@ const API = process.env.API_URL ?? "http://127.0.0.1:3001";
  * full QuoteBuilder so the Tier-1 ledger and target are rendered.
  */
 async function openQuoteBuilder(page: Page, projectId: string) {
-  await page.goto(`/projects/${projectId}?mode=cad`);
+  await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
   await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
   await clickHeaderViewItem(page, "live-cost-top");
   await expect(page.getByTestId("live-cost-rail")).toBeVisible({

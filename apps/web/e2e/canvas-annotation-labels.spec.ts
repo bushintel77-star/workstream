@@ -122,7 +122,7 @@ test.describe("Annotation labels are viewport instruments", () => {
   }) => {
     const { projectId } = await seedBoundary(request);
     // Survey mode renders the dim ring (showDims includes mode === "survey").
-    await page.goto(`/projects/${projectId}?mode=survey`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=survey`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId("zoom-world")).toBeVisible({ timeout: 15_000 });
     await expect

@@ -6,6 +6,7 @@ import {
   quoteDocToShareLines,
 } from "@workstream/domain";
 import { useQuoteDoc } from "./useQuoteDoc";
+import { EnvelopeBand } from "./EnvelopeBand";
 import { QuoteBuilder } from "./QuoteBuilder";
 import css from "./liveCostRail.module.css";
 
@@ -232,6 +233,11 @@ export function LiveCostRail({
             </span>
           </div>
         </div>
+
+        <EnvelopeBand
+          projectId={projectId}
+          totalInclGst={resolved.totalInclGst}
+        />
 
         {topItems.length > 0 ? (
           <div className={css.topItems} data-testid="live-cost-rail-top-items">

@@ -55,7 +55,7 @@ test.describe("Quote live-cost rail", () => {
     );
     expect(seed.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(handoffStudio(page)).toBeVisible({ timeout: 30_000 });
 
     const quoteTab = page.getByTestId("canvas-mode-quote");
@@ -107,7 +107,7 @@ test.describe("Quote live-cost rail", () => {
     );
     expect(seed.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`);
+    await page.goto(`/projects/${projectId}?svg=1&mode=cad`);
     await expect(page.getByTestId("cad-plan-board")).toBeVisible({
       timeout: 30_000,
     });

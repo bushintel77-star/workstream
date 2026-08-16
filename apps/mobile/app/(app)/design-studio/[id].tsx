@@ -8,7 +8,8 @@ import {
   Text,
   View,
 } from "react-native";
-import Svg, { Circle, Defs, Line, Path, Pattern, Rect } from "react-native-svg";
+import Svg, { Circle, Line, Path } from "react-native-svg";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -18,9 +19,10 @@ import type {
   CatalogSymbol,
   Survey,
 } from "@workstream/contracts";
-import type { GhostPlacementSuggestion } from "@workstream/domain";
+import type { GhostPlacementSuggestion, GrowthTemporalRing } from "@workstream/domain";
 import {
   buildGhostPlacementSuggestions,
+  buildGrowthTemporalRings,
   canvasStrokeToPathD,
   isTier1WrightsTerrace,
   polylineLengthFromCanvasPercent,
@@ -38,6 +40,7 @@ import {
 import { MobileSketchStatusBar } from "../../../src/components/sketch/MobileSketchStatusBar";
 import { MobileSketchBottomSheet } from "../../../src/components/sketch/MobileSketchBottomSheet";
 import { MobileSketchIntentRail } from "../../../src/components/sketch/MobileSketchIntentRail";
+import { PlantMetaChip } from "../../../src/components/studio/PlantMetaChip";
 import { useOfflineQueue } from "../../../src/hooks/useOfflineQueue";
 
 const gestureHandler = Platform.OS === "web" ? null : require("react-native-gesture-handler");
@@ -55,6 +58,29 @@ function newId(): string {
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
+}
+
+/** Snap grid for the "Ghost & Snap" placement interaction (board percent). */
+const SNAP_STEP_PCT = 2;
+function snapPct(v: number): number {
+  return Math.min(100, Math.max(0, Math.round(v / SNAP_STEP_PCT) * SNAP_STEP_PCT));
+}
+
+/** A tapped point counts as "AI optimized" when this close to a pending ghost hint. */
+const GHOST_SNAP_TOLERANCE_PCT = 5;
+
+/**
+ * Coarse ring-math bucket for `buildGrowthTemporalRings` — mirrors
+ * apps/web's growthStudioData classifier so both surfaces read the exact
+ * same real crowding math off a locally duplicated (7-line) classification
+ * helper rather than a cross-app import.
+ */
+function classifyRingBucket(symbol: CatalogSymbol): string {
+  const kw = symbol.keywords ?? [];
+  if (kw.includes("hedge") || kw.includes("screen")) return "hedge";
+  if (kw.includes("grass") || kw.includes("understorey") || kw.includes("mass")) return "bed";
+  if ((symbol.mature_height_m ?? 0) >= 2) return "canopy";
+  return "feature";
 }
 
 export default function DesignStudioScreen() {
@@ -83,6 +109,11 @@ export default function DesignStudioScreen() {
   const [aiScanning, setAiScanning] = useState(false);
   const [measureDraft, setMeasureDraft] = useState<StrokePointPct | null>(null);
   const [measureLabel, setMeasureLabel] = useState<string | null>(null);
+  const [pendingPlacement, setPendingPlacement] = useState<{
+    xPct: number;
+    yPct: number;
+    symbolId: string;
+  } | null>(null);
   const offline = useOfflineQueue(id ?? "");
 
   const groundScale = useMemo(
@@ -93,6 +124,41 @@ export default function DesignStudioScreen() {
       canvasHeightPx: canvasSize.height,
     }),
     [canvasSize.height, canvasSize.width],
+  );
+
+  /** Board width in real metres — same convention as growthStudioData's scaleM. */
+  const boardWidthM = groundScale.metresPerXPx * canvasSize.width;
+
+  /**
+   * Real-time root/canopy crowding at maturity — the exact same
+   * `buildGrowthTemporalRings` math Growth Studio and the 2D board findings
+   * use, just recomputed live as the operator places symbols on the phone.
+   * Progressive disclosure: this never renders on its own, only feeds the
+   * meta chip when a placement is selected.
+   */
+  const conflictRings = useMemo<GrowthTemporalRing[]>(() => {
+    const symbolById = new Map(symbols.map((s) => [s.id, s]));
+    const items = placements
+      .map((p) => {
+        const sym = symbolById.get(p.symbol_id);
+        if (!sym || sym.category !== "planting") return null;
+        const matureSpreadM = sym.default_width_m ?? sym.mature_height_m;
+        if (!matureSpreadM) return null;
+        return {
+          id: p.id,
+          type: classifyRingBucket(sym),
+          x: p.x_pct,
+          y: p.y_pct,
+          mature_spread_m: matureSpreadM,
+          existing: false,
+        };
+      })
+      .filter((it): it is NonNullable<typeof it> => it != null);
+    return buildGrowthTemporalRings({ items, growth: "mature", scaleM: boardWidthM });
+  }, [placements, symbols, boardWidthM]);
+  const conflictedPlacementIds = useMemo(
+    () => new Set(conflictRings.filter((r) => r.crowded).map((r) => r.id)),
+    [conflictRings],
   );
 
   const canvasA11yLabel = useMemo(() => {
@@ -170,6 +236,15 @@ export default function DesignStudioScreen() {
   const tier1 = isTier1WrightsTerrace(projectAddress);
   const mobileTool: MobileTool = mode;
 
+  // A pending ghost preview belongs to Place mode only — clear it if the
+  // operator switches tools or picks a different symbol mid-preview.
+  useEffect(() => {
+    if (mode !== "place") setPendingPlacement(null);
+  }, [mode]);
+  useEffect(() => {
+    setPendingPlacement(null);
+  }, [selectedId]);
+
   function canvasPoint(e: { locationX: number; locationY: number }): StrokePointPct {
     return {
       x_pct: (e.locationX / canvasSize.width) * 100,
@@ -177,13 +252,14 @@ export default function DesignStudioScreen() {
     };
   }
 
-  function placeAt(xPct: number, yPct: number) {
-    if (!selectedId || mode !== "place") return;
+  function placeAt(xPct: number, yPct: number, symbolId?: string) {
+    const resolvedSymbolId = symbolId ?? selectedId;
+    if (!resolvedSymbolId || mode !== "place") return;
     setPlacements((prev) => [
       ...prev,
       {
         id: newId(),
-        symbol_id: selectedId,
+        symbol_id: resolvedSymbolId,
         x_pct: xPct,
         y_pct: yPct,
         rotation_deg: 0,
@@ -191,6 +267,25 @@ export default function DesignStudioScreen() {
       },
     ]);
     setRedoStrokes([]);
+  }
+
+  /** Does this snapped point land within tolerance of a pending AI ghost hint? */
+  function ghostNear(xPct: number, yPct: number, symbolId: string): boolean {
+    return ghosts.some(
+      (g) =>
+        g.symbol_id === symbolId &&
+        Math.hypot(g.x_pct - xPct, g.y_pct - yPct) <= GHOST_SNAP_TOLERANCE_PCT,
+    );
+  }
+
+  function confirmPending() {
+    if (!pendingPlacement) return;
+    placeAt(pendingPlacement.xPct, pendingPlacement.yPct, pendingPlacement.symbolId);
+    setPendingPlacement(null);
+  }
+
+  function cancelPending() {
+    setPendingPlacement(null);
   }
 
   function commitDraft() {
@@ -377,6 +472,49 @@ export default function DesignStudioScreen() {
           </Text>
         ) : null}
         {Platform.OS === "web" ? (
+        {!presentation && pendingPlacement ? (() => {
+          const ghostSymbol = symbolById.get(pendingPlacement.symbolId);
+          const aiOptimized = ghostNear(
+            pendingPlacement.xPct,
+            pendingPlacement.yPct,
+            pendingPlacement.symbolId,
+          );
+          return (
+            <Animated.View
+              entering={FadeIn.duration(140)}
+              exiting={FadeOut.duration(100)}
+              style={styles.confirmBar}
+            >
+              <View style={styles.confirmInfo}>
+                <Text style={styles.confirmLabel} numberOfLines={1}>
+                  Place {ghostSymbol?.label ?? "symbol"}?
+                </Text>
+                {aiOptimized ? (
+                  <Text style={styles.confirmAiHint}>AI optimized position</Text>
+                ) : null}
+              </View>
+              <Pressable
+                style={styles.confirmCancelBtn}
+                onPress={cancelPending}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel placement"
+                accessibilityHint="Discard the ghost preview without placing the symbol"
+              >
+                <Text style={styles.confirmCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={styles.confirmAcceptBtn}
+                onPress={confirmPending}
+                accessibilityRole="button"
+                accessibilityLabel="Confirm placement"
+                accessibilityHint="Place the symbol at the ghost-previewed position"
+              >
+                <Text style={styles.confirmAcceptText}>Confirm</Text>
+              </Pressable>
+            </Animated.View>
+          );
+        })() : null}
+        <GestureDetector gesture={drawGesture}>
           <Pressable
             style={styles.canvasFlex}
             onLayout={(e) => {
@@ -386,7 +524,12 @@ export default function DesignStudioScreen() {
             onPress={(e) => {
               const pt = canvasPoint(e.nativeEvent);
               if (mode === "place") {
-                placeAt(pt.x_pct, pt.y_pct);
+                if (!selectedId) return;
+                setPendingPlacement({
+                  xPct: snapPct(pt.x_pct),
+                  yPct: snapPct(pt.y_pct),
+                  symbolId: selectedId,
+                });
                 return;
               }
               if (mode === "select") {
@@ -406,7 +549,7 @@ export default function DesignStudioScreen() {
             }}
             accessibilityRole="image"
             accessibilityLabel={canvasA11yLabel}
-            accessibilityHint="Tap to place the selected symbol in Place mode, select a symbol in Select mode, or measure a distance in Measure mode."
+            accessibilityHint="Tap to ghost-preview the selected symbol in Place mode, select a symbol in Select mode, or measure a distance in Measure mode."
           >
             <Image
               source={{ uri: survey.aerial_uri }}
@@ -470,12 +613,61 @@ export default function DesignStudioScreen() {
                   strokeDasharray="4 3"
                 />
               ) : null}
+              {pendingPlacement ? (() => {
+                const ghostSymbol = symbolById.get(pendingPlacement.symbolId);
+                const matureSpreadM = ghostSymbol?.default_width_m ?? ghostSymbol?.mature_height_m ?? 1;
+                const radiusPx = boardWidthM > 0
+                  ? ((matureSpreadM / 2) / boardWidthM) * canvasSize.width
+                  : 18;
+                const cx = (pendingPlacement.xPct / 100) * canvasSize.width;
+                const cy = (pendingPlacement.yPct / 100) * canvasSize.height;
+                const aiOptimized = ghostNear(
+                  pendingPlacement.xPct,
+                  pendingPlacement.yPct,
+                  pendingPlacement.symbolId,
+                );
+                const ghostColor = aiOptimized
+                  ? tokens.color.studio.gold
+                  : tokens.color.studio.signalBlue;
+                return (
+                  <>
+                    {/* Ghost volume — real mature-spread footprint, dashed until confirmed. */}
+                    <Circle
+                      cx={cx}
+                      cy={cy}
+                      r={Math.max(radiusPx, 10)}
+                      fill={aiOptimized ? "rgba(251, 191, 36, 0.12)" : "rgba(0, 48, 207, 0.12)"}
+                      stroke={ghostColor}
+                      strokeWidth={1.5}
+                      strokeDasharray="4 3"
+                    />
+                    {/* Signal Blue anchor crosshair — absolute coordinate lock. */}
+                    <Line
+                      x1={cx - 7}
+                      y1={cy}
+                      x2={cx + 7}
+                      y2={cy}
+                      stroke={tokens.color.studio.signalBlue}
+                      strokeWidth={1.5}
+                    />
+                    <Line
+                      x1={cx}
+                      y1={cy - 7}
+                      x2={cx}
+                      y2={cy + 7}
+                      stroke={tokens.color.studio.signalBlue}
+                      strokeWidth={1.5}
+                    />
+                  </>
+                );
+              })() : null}
             </Svg>
             <View style={styles.canvasVeil} pointerEvents="none" />
             {placements.map((p) => {
               const sym = symbolById.get(p.symbol_id);
               if (!sym) return null;
               const selected = selectedPlacementId === p.id;
+              const conflicted = conflictedPlacementIds.has(p.id);
               return (
                 <Pressable
                   key={p.id}
@@ -483,13 +675,14 @@ export default function DesignStudioScreen() {
                     styles.placed,
                     { left: `${p.x_pct}%`, top: `${p.y_pct}%` },
                     selected && styles.placedSelected,
+                    conflicted && styles.placedConflicted,
                   ]}
                   onPress={() => {
                     if (mode === "select") setSelectedPlacementId(p.id);
                   }}
                   disabled={mode !== "select"}
                   accessibilityRole="button"
-                  accessibilityLabel={`${sym.label}${selected ? ", selected" : ""}`}
+                  accessibilityLabel={`${sym.label}${selected ? ", selected" : ""}${conflicted ? ", root conflict at maturity" : ""}`}
                   accessibilityHint="Double tap in Select mode to select this symbol on the plan."
                   accessibilityState={{ selected, disabled: mode !== "select" }}
                 >
@@ -497,6 +690,31 @@ export default function DesignStudioScreen() {
                 </Pressable>
               );
             })}
+            {mode === "select" && selectedPlacementId ? (() => {
+              const sel = placements.find((p) => p.id === selectedPlacementId);
+              const sym = sel ? symbolById.get(sel.symbol_id) : undefined;
+              if (!sel || !sym) return null;
+              return (
+                <Animated.View
+                  entering={FadeIn.duration(160)}
+                  exiting={FadeOut.duration(120)}
+                  pointerEvents="none"
+                  style={[
+                    styles.metaChipAnchor,
+                    { left: `${sel.x_pct}%`, top: `${sel.y_pct}%` },
+                  ]}
+                >
+                  <PlantMetaChip
+                    label={sym.label}
+                    botanicalName={sym.botanical_name}
+                    matureHeightM={sym.mature_height_m}
+                    matureSpreadM={sym.default_width_m}
+                    conflict={conflictedPlacementIds.has(sel.id)}
+                    tone="gold"
+                  />
+                </Animated.View>
+              );
+            })() : null}
           </Pressable>
         ) : (
           <GestureDetector gesture={drawGesture}>
@@ -775,6 +993,70 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 0 },
+  },
+  placedConflicted: {
+    borderWidth: 2,
+    borderColor: tokens.color.studio.conflict,
+    borderRadius: 22,
+  },
+  metaChipAnchor: {
+    position: "absolute",
+    marginLeft: 20,
+    marginTop: -14,
+    zIndex: 15,
+  },
+  confirmBar: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 10,
+    borderRadius: tokens.radius.md,
+    borderWidth: 1,
+    borderColor: "rgba(232, 233, 236, 0.12)",
+    backgroundColor: "rgba(15, 17, 21, 0.92)",
+  },
+  confirmInfo: { flex: 1, gap: 2 },
+  confirmLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: tokens.color.ink.primary,
+  },
+  confirmAiHint: {
+    fontSize: 10,
+    fontFamily: "monospace",
+    color: tokens.color.studio.gold,
+    textTransform: "uppercase",
+  },
+  confirmCancelBtn: {
+    minHeight: 44,
+    minWidth: 44,
+    paddingHorizontal: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: tokens.radius.sm,
+    borderWidth: 1,
+    borderColor: tokens.color.line.strong,
+  },
+  confirmCancelText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: tokens.color.ink.secondary,
+  },
+  confirmAcceptBtn: {
+    minHeight: 44,
+    minWidth: 44,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: tokens.radius.sm,
+    backgroundColor: tokens.color.studio.gold,
+  },
+  confirmAcceptText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: tokens.color.studio.goldInk,
   },
   presentationExit: {
     position: "absolute",

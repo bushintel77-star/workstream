@@ -1,0 +1,564 @@
+/*
+ * Subsurface Studio — "Gold Standard Studio Dark" surface.
+ *
+ * Composes the shared Gold Standard token set. Signal blue reads as the
+ * "site truth" utility colour here (water/easements — immutable, located
+ * data), gold stays the active-instrument accent (lighting circuits,
+ * reveal scrubber), strike red flags real dig conflicts.
+ */
+
+.root {
+  composes: goldStandardRoot from "../goldStandardStudio.module.css";
+}
+
+.canvasHost {
+  position: absolute;
+  inset: 0;
+}
+
+.canvasHost canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% 12%, transparent 55%, rgba(17, 17, 17, 0.20) 100%),
+    linear-gradient(180deg, rgba(17, 17, 17, 0.10) 0%, transparent 16%, transparent 78%, rgba(17, 17, 17, 0.20) 100%);
+  z-index: var(--gs-z-vignette);
+}
+
+/* ---------- Top bar ---------- */
+
+.topBar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: var(--gs-z-hud);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.brandCard {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: var(--gs-radius-panel);
+  border: 1px solid var(--gs-line);
+  background: var(--gs-glass);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
+  box-shadow: var(--gs-shadow-2);
+}
+
+.brandKicker {
+  margin: 0;
+  font-family: var(--gs-font-tech);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gs-ink-faint);
+}
+
+.brandTitle {
+  margin: 0;
+  font-family: var(--gs-font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gs-gold);
+  letter-spacing: -0.01em;
+}
+
+.brandSub {
+  margin: 0;
+  font-family: var(--gs-font-tech);
+  font-size: 11px;
+  color: var(--gs-ink-muted);
+}
+
+.backLink {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  min-height: 40px;
+  border-radius: var(--gs-radius-panel);
+  border: 1px solid var(--gs-line);
+  background: var(--gs-glass);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
+  color: var(--gs-ink-muted);
+  font-family: var(--gs-font-tech);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--gs-shadow-2);
+}
+
+.backLink:hover {
+  color: var(--gs-ink);
+  border-color: var(--gs-line-strong);
+}
+
+/* ---------- Right icon rail ---------- */
+
+.rail {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  z-index: var(--gs-z-hud);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border-radius: var(--gs-radius-pill);
+  border: 1px solid var(--gs-line);
+  background: var(--gs-glass);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
+  box-shadow: var(--gs-shadow-2);
+}
+
+.railBtn {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--gs-radius-pill);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--gs-ink-muted);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.railBtn:hover {
+  background: color-mix(in srgb, var(--gs-ink) 6%, transparent);
+  color: var(--gs-ink);
+}
+
+.railBtn[data-active="true"] {
+  background: var(--gs-gold);
+  color: var(--gs-gold-ink);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--gs-primary) 40%, transparent);
+}
+
+/* ---------- System HUD cards (hydrological + lighting) ---------- */
+
+.systemsLayer {
+  position: absolute;
+  top: 96px;
+  left: 14px;
+  z-index: var(--gs-z-hud);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 220px;
+}
+
+.systemCard {
+  padding: 12px 14px;
+  border-radius: var(--gs-radius-panel);
+  border: 1px solid var(--gs-line);
+  background: var(--gs-glass-strong);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
+  box-shadow: var(--gs-shadow-2);
+}
+
+.systemKicker {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--gs-font-tech);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gs-ink-faint);
+}
+
+.systemDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--gs-signal-blue);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--gs-truth) 80%, transparent);
+}
+
+.systemCard[data-system="lighting"] .systemDot {
+  background: var(--gs-gold);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--gs-primary) 80%, transparent);
+}
+
+.systemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.systemRow:last-child {
+  margin-bottom: 0;
+}
+
+.systemLabel {
+  font-family: var(--gs-font-tech);
+  font-size: 10px;
+  color: var(--gs-ink);
+}
+
+.systemValue {
+  font-family: var(--gs-font-tech);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gs-signal-blue-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.systemCard[data-system="lighting"] .systemValue {
+  color: var(--gs-gold);
+}
+
+.systemValue[data-tone="conflict"] {
+  color: var(--gs-conflict);
+}
+
+.systemNote {
+  margin: 8px 0 0;
+  font-family: var(--gs-font-tech);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--gs-ink-muted);
+}
+
+/* ---------- Floating trench / critical-zone chips ---------- */
+
+.markerLayer {
+  position: absolute;
+  inset: 0;
+  z-index: var(--gs-z-scene-labels);
+  pointer-events: none;
+}
+
+.trenchChip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 9px;
+  border-radius: var(--gs-radius-chip);
+  border: 1px solid var(--gs-line);
+  background: var(--gs-glass-strong);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
+  box-shadow: var(--gs-shadow-2);
+  white-space: nowrap;
+  will-change: left, top, opacity;
+  visibility: hidden;
+}
+
+.trenchChip[data-conflict="true"] {
+  border-color: color-mix(in srgb, var(--gs-conflict) 55%, var(--gs-line));
+}
+
+.trenchHead {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.trenchDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--gs-signal-blue);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--gs-truth) 80%, transparent);
+  flex-shrink: 0;
+}
+
+.trenchChip[data-conflict="true"] .trenchDot {
+  background: var(--gs-conflict);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--gs-conflict) 80%, transparent);
+}
+
+.trenchName {
+  margin: 0;
+  font-family: var(--gs-font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gs-ink);
+}
+
+.trenchMeta {
+  margin: 0;
+  font-family: var(--gs-font-tech);
+  font-size: 10px;
+  color: var(--gs-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.conflictBadge {
+  margin-top: 1px;
+  align-self: flex-start;
+  padding: 2px 6px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--gs-conflict-soft);
+  color: var(--gs-conflict-ink);
+  font-family: var(--gs-font-tech);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------- Bottom depth-reveal dock ---------- */
+
+.dock {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  z-index: var(--gs-z-controls);
+  width: min(560px, calc(100vw - 28px));
+  padding: 14px 18px 12px;
+  border-radius: var(--gs-radius-panel);
+  border: 1px solid var(--gs-line);
+  background: var(--gs-glass-strong);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
+  box-shadow: var(--gs-shadow-3);
+}
+
+.dockHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.dockKicker {
+  margin: 0 0 2px;
+  font-family: var(--gs-font-tech);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gs-ink-faint);
+}
+
+.dockTitle {
+  margin: 0;
+  font-family: var(--gs-font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gs-ink);
+}
+
+.dockReadout {
+  margin: 0;
+  font-family: var(--gs-font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gs-gold);
+  line-height: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dockReadoutSub {
+  margin: 2px 0 0;
+  font-family: var(--gs-font-tech);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: right;
+  color: var(--gs-ink-faint);
+}
+
+.scrubTrack {
+  width: 100%;
+  min-height: 34px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.scrubTrack::-webkit-slider-runnable-track {
+  height: 4px;
+  background: color-mix(in srgb, var(--gs-ink) 20%, transparent);
+}
+
+.scrubTrack::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 16px;
+  width: 4px;
+  margin-top: -6px;
+  background: var(--gs-gold);
+  cursor: pointer;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--gs-primary) 60%, transparent);
+}
+
+.scrubTrack::-moz-range-track {
+  height: 4px;
+  background: color-mix(in srgb, var(--gs-ink) 20%, transparent);
+}
+
+.scrubTrack::-moz-range-thumb {
+  height: 16px;
+  width: 4px;
+  border: none;
+  border-radius: 0;
+  background: var(--gs-gold);
+  cursor: pointer;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--gs-primary) 60%, transparent);
+}
+
+.foot {
+  margin: 0;
+  font-family: var(--gs-font-tech);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--gs-ink-muted);
+}
+
+.conflictFoot {
+  margin: 0;
+  font-family: var(--gs-font-tech);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--gs-conflict);
+}
+
+/* ---------- Status rail ---------- */
+
+.statusRail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--gs-z-controls);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 16px;
+  background: color-mix(in srgb, var(--gs-panel) 92%, transparent);
+  border-top: 1px solid var(--gs-line);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
+}
+
+.statusCoords {
+  margin: 0;
+  font-family: var(--gs-font-tech);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--gs-signal-blue-ink);
+}
+
+.statusNote {
+  margin: 0;
+  font-family: var(--gs-font-tech);
+  font-size: 10px;
+  color: var(--gs-ink-faint);
+}
+
+/* ---------- Empty state ---------- */
+
+.emptyState {
+  position: absolute;
+  inset: 0;
+  z-index: var(--gs-z-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.emptyCard {
+  max-width: 380px;
+  padding: 24px;
+  border-radius: var(--gs-radius-panel);
+  border: 1px solid var(--gs-line);
+  background: var(--gs-glass-strong);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
+}
+
+.emptyTitle {
+  margin: 0 0 6px;
+  font-family: var(--gs-font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gs-ink);
+}
+
+.emptyBody {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gs-ink-muted);
+}
+
+.emptyCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--gs-radius-control);
+  border: 1px solid var(--gs-gold);
+  background: var(--gs-gold);
+  color: var(--gs-gold-ink);
+  font-family: var(--gs-font-tech);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .rail {
+    top: auto;
+    bottom: 230px;
+    right: 10px;
+    transform: none;
+    flex-direction: row;
+  }
+
+  .systemsLayer {
+    display: none;
+  }
+
+  .dock {
+    width: calc(100vw - 20px);
+    padding: 12px 14px 10px;
+  }
+
+  .statusRail {
+    padding: 6px 10px;
+  }
+
+  .statusNote {
+    display: none;
+  }
+}

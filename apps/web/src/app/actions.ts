@@ -74,8 +74,8 @@ export async function listProjectsAction() {
 export async function geocodeSearchAction(query: string) {
   try {
     return await geocodeSearchApi(query);
-  } catch {
-    return [];
+  } catch (err) {
+    throw wrapApiError(err, "Address search is unavailable");
   }
 }
 
@@ -111,8 +111,14 @@ export async function createProjectWithSurveyAction(formData: FormData) {
     throw new Error("Enter a valid street address");
   }
   const { lat, lng } = parseProjectCoords(formData);
+  let project: Awaited<ReturnType<typeof createProjectApi>>;
   try {
-    const project = await createProjectApi({ address, lat, lng });
+    project = await createProjectApi({ address, lat, lng });
+  } catch (err) {
+    throw wrapApiError(err, "Could not create project");
+  }
+
+  try {
     const survey = await runSurvey(project.id);
     revalidatePath("/");
     revalidatePath(`/projects/${project.id}`);
@@ -125,9 +131,21 @@ export async function createProjectWithSurveyAction(formData: FormData) {
       aerialUri: survey.aerial_uri,
       titleRing: ring && ring.length >= 4 ? ring : null,
       lotAreaM2: survey.lot_area_m2 ?? null,
+      surveyWarning: null,
     };
   } catch (err) {
-    throw wrapApiError(err, "Could not create project");
+    revalidatePath("/");
+    revalidatePath(`/projects/${project.id}`);
+    return {
+      projectId: project.id,
+      aerialUri: null,
+      titleRing: null,
+      lotAreaM2: null,
+      surveyWarning: wrapApiError(
+        err,
+        "The site was created, but site-truth capture needs to be retried",
+      ).message,
+    };
   }
 }
 
@@ -376,6 +394,94 @@ export async function getWeatherAction(projectId: string) {
     return await getWeather(projectId);
   } catch {
     return null;
+  }
+}
+
+/** Site context — season, sun summary, and council planning badges. */
+export async function getSiteContextAction(projectId: string) {
+  if (!projectId.trim()) throw new Error("Missing project");
+  const { getSiteContext } = await import("../lib/api");
+  try {
+    return await getSiteContext(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not load site context");
+  }
+}
+
+/** Budget envelope brief from the survey (±15/20% bands + planning flags). */
+export async function getEnvelopeBriefAction(projectId: string) {
+  if (!projectId.trim()) return null;
+  const { getEnvelopeBrief } = await import("../lib/api");
+  try {
+    return await getEnvelopeBrief(projectId);
+  } catch {
+    return null;
+  }
+}
+
+/** Vision photo-measurement history for the measurements surface. */
+export async function listPhotoMeasurementsAction(projectId: string) {
+  if (!projectId.trim()) return [];
+  const { listPhotoMeasurements } = await import("../lib/api");
+  try {
+    return await listPhotoMeasurements(projectId);
+  } catch {
+    return [];
+  }
+}
+
+/** Project activity audit trail (deletions, restores, integration changes). */
+export async function listProjectActivityAction(projectId: string) {
+  if (!projectId.trim()) return [];
+  const { listProjectActivity } = await import("../lib/api");
+  try {
+    return await listProjectActivity(projectId);
+  } catch {
+    return [];
+  }
+}
+
+/* -- Workspace license / billing ---------------------------------------- */
+
+/** Workspace license + price configuration (license page). */
+export async function getWorkspaceLicenseAction() {
+  const { getWorkspaceLicenseApi } = await import("../lib/api");
+  try {
+    return await getWorkspaceLicenseApi();
+  } catch {
+    return null;
+  }
+}
+
+/** Stripe studio-plan checkout — returns the hosted checkout URL. */
+export async function startStudioCheckoutAction() {
+  const { startStudioCheckoutApi } = await import("../lib/api");
+  return startStudioCheckoutApi();
+}
+
+/** Stripe extra-seat checkout — returns the hosted checkout URL. */
+export async function startSeatCheckoutAction(extraSeats = 1) {
+  const { startSeatCheckoutApi } = await import("../lib/api");
+  return startSeatCheckoutApi(extraSeats);
+}
+
+/** Add a member to the workspace seat license. */
+export async function inviteWorkspaceMemberAction(userId: string) {
+  const { inviteWorkspaceMemberApi } = await import("../lib/api");
+  try {
+    return await inviteWorkspaceMemberApi(userId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not add member");
+  }
+}
+
+/** Remove a member from the workspace seat license. */
+export async function removeWorkspaceMemberAction(userId: string) {
+  const { removeWorkspaceMemberApi } = await import("../lib/api");
+  try {
+    return await removeWorkspaceMemberApi(userId);
+  } catch (err) {
+    throw wrapApiError(err, "Could not remove member");
   }
 }
 
@@ -819,6 +925,21 @@ export async function runSketchCostingAction(formData: FormData) {
   revalidatePath(`/projects/${projectId}/design/develop`);
 }
 
+/**
+ * Sketch-costing payload for the WebGL fit-sheet — the backend instant
+ * estimate (POST /costing/sketch) beside the client-side parametric total,
+ * so drift between the two pricing paths is visible on the card.
+ */
+export async function fetchSketchEstimateAction(projectId: string) {
+  if (!projectId.trim()) return null;
+  const { runSketchCosting } = await import("../lib/api");
+  try {
+    return await runSketchCosting(projectId);
+  } catch {
+    return null;
+  }
+}
+
 export async function runDevelopFromSketchAction(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
   if (!projectId) throw new Error("Missing project");
@@ -1152,5 +1273,25 @@ export async function upsertQuoteDocAction(
     return saved;
   } catch (err) {
     throw wrapApiError(err, "Could not save quote");
+  }
+}
+
+/** Vicmap auto-trace payload for the WebGL site-truth import. */
+export async function autoTraceBoundaryDataAction(projectId: string) {
+  const { autoTraceBoundaryApi } = await import("../lib/api");
+  try {
+    return await autoTraceBoundaryApi(projectId, true);
+  } catch (err) {
+    throw wrapApiError(err, "Auto-trace failed");
+  }
+}
+
+/** Keyless overlay hydration payload for the site-truth import. */
+export async function hydrateKeylessDataAction(projectId: string) {
+  const { hydrateKeylessApi } = await import("../lib/api");
+  try {
+    return await hydrateKeylessApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Overlay hydration failed");
   }
 }

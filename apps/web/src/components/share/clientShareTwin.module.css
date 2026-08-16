@@ -41,7 +41,7 @@
 
 .label {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -54,7 +54,7 @@
 }
 
 .mono {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   color: var(--portal-ink-strong);
@@ -84,7 +84,7 @@
 .hint {
   font-size: var(--text-micro);
   color: var(--portal-accent-muted);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
 }
 
 .swatches {

@@ -1,52 +1,11 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { PlanHeroVisual } from "../components/landing/PlanHeroVisual";
-import { KitButton } from "../components/ui/kit";
-import css from "./landing.module.css";
-
-export const metadata: Metadata = {
-  title: "Workstream",
-  description:
-    "Landscape design studio. Survey, sketch, CAD, and quote on one board.",
-  robots: { index: true, follow: true },
-};
+import { redirect } from "next/navigation";
 
 /**
- * Public landing — brand-first, one composition. Operator register lives at /home.
+ * The marketing landing ("Acquire Site Truth") was removed — it presented
+ * hardcoded telemetry and pipeline mock data as if live (zero-mock-data law).
+ * The app entry is the operator dashboard; the address composer + site-truth
+ * pipeline live there against real data.
  */
-export default function LandingPage() {
-  return (
-    <main className={css.page} data-testid="workstream-landing">
-      <div className={css.stage}>
-        <PlanHeroVisual />
-      </div>
-
-      <div className={css.copy}>
-        <p className={css.brand}>Workstream</p>
-        <h1 className={css.headline}>Garden design that starts on the site.</h1>
-        <p className={css.lede}>
-          Survey, sketch, CAD, and quote — one board.
-        </p>
-        <div className={css.cta}>
-          <KitButton
-            as="a"
-            href="/home"
-            variant="secondary"
-            size="lg"
-            data-testid="landing-enter-studio"
-          >
-            Enter studio
-          </KitButton>
-          <KitButton as="a" href="/home#new-project" variant="outline" size="lg">
-            New address
-          </KitButton>
-        </div>
-      </div>
-
-      <footer className={css.foot}>
-        <span>Workstream · Melbourne</span>
-        <Link href="/legal/privacy">Privacy</Link>
-      </footer>
-    </main>
-  );
+export default function RootPage() {
+  redirect("/home");
 }

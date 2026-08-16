@@ -18,7 +18,7 @@
 
 .kicker {
   margin: 0;
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -26,7 +26,7 @@
 }
 
 .countPill {
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-nano);
   font-weight: 700;
   padding: 2px 8px;
@@ -98,7 +98,7 @@
 
 .requiredTag {
   margin-left: var(--s-1);
-  font-family: "IBM Plex Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--hc-fs-1);
   font-weight: 700;
   letter-spacing: 0.1em;
