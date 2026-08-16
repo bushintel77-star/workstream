@@ -2128,6 +2128,15 @@ export function HandoffDesignStudio({
     ui.shadeOn ||
     ui.growth !== "mature" ||
     Object.values(ui.layerOpacity).some((opacity) => opacity < 0.95);
+  // The palette commands that set councilTip also open the measures lane
+  // (rightLaneBusy → bottomChromeSuppressed) in the same state write, so the
+  // tip must bypass that suppression or it never surfaces.
+  const councilTipVisible =
+    planOn &&
+    !ui.focusOn &&
+    !ui.clientView &&
+    !ui.frameOn &&
+    Boolean(ui.councilTip);
   /**
    * Canvas-first mandate: idle parchment is tool-free.
    * Summon via header Instruments / margin / Q; stay up while a craft tool is armed.
@@ -5058,8 +5067,8 @@ export function HandoffDesignStudio({
         {planOn &&
         !ui.frameOn &&
         !ui.clientView &&
-        contextBreadcrumbActive &&
-        !bottomChromeSuppressed ? (
+        (contextBreadcrumbActive || councilTipVisible) &&
+        (!bottomChromeSuppressed || councilTipVisible) ? (
           <CanvasContextCard active>
             <StudioContextBreadcrumb
               mode={ui.mode}
@@ -5077,6 +5086,11 @@ export function HandoffDesignStudio({
               onResetGrowth={() => studio.setUi({ growth: "mature" })}
               onResetLayer={(layer) => studio.setLayerOpacity(layer, 1)}
             />
+            {councilTipVisible ? (
+              <p className={css.headerCouncilTip} data-testid="council-setback-tip">
+                {ui.councilTip}
+              </p>
+            ) : null}
           </CanvasContextCard>
         ) : null}
 
