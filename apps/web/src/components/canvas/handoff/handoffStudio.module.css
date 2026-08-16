@@ -581,6 +581,13 @@
   border-radius: var(--hc-r-pill);
   padding: var(--s-1);
   flex: none;
+  /* Centering via auto margins, NOT the zone's justify-content: center —
+     a centered flex child that overflows its scroll container spills past
+     the start edge where overflow scrolling can never reach it (the mode
+     tabs collided with the phase widget below 1280px). Auto margins
+     collapse to zero under pressure, so the strip start-aligns and stays
+     fully scrollable. */
+  margin-inline: auto;
   /* Recessed segmented-control track so the active mode reads as raised. */
   box-shadow: var(--hc-neu-in,
       inset 2px 2px 5px var(--hc-neu-shadow),
@@ -1189,6 +1196,16 @@
 
 [data-frame-rail] .modeBtn:hover {
   color: var(--ws-frame-ink);
+}
+
+/* Sub-1280 density pass — tighter tab internals so the eight-mode strip
+   keeps fitting beside the phase widget; the strip scrolls (start-aligned)
+   rather than colliding when it can't. Must stay after the frame-rail
+   button rules — equal specificity, cascade order decides. */
+@media (max-width: 1279.98px) {
+  [data-frame-rail] .modeBtn {
+    padding: 0 var(--s-2);
+  }
 }
 
 /* Active mode — a lit raised key with a top-catch, like a pressed hardware button. */
