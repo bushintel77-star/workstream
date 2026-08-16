@@ -79,38 +79,60 @@ export function StudioControls({
     moved: false,
   });
 
-  /** Wheel zoom — anchored at the pointer position. */
+  /** Wheel zoom — anchored at the pointer.
+   * Throttle rapid wheel events via requestAnimationFrame and clamp the
+   * computed pan shift so a single wheel delta cannot produce an enormous
+   * world offset (which previously caused the canvas/UI to fling).
+   */
+  const wheelPendingRef = useRef(false);
   const onWheel = useCallback(
     (e: ThreeEvent<WheelEvent>) => {
       e.stopPropagation();
       if (tiltLocked) return; // zoom frozen under tilt (matches old behaviour)
 
+      // Capture the event data synchronously and schedule a single update
+      // per frame to avoid queuing multiple camera updates.
       const delta = e.nativeEvent.deltaY;
-      const factor = delta > 0 ? 0.9 : 1.1;
-      const newZoom = Math.min(Math.max(rig.zoom * factor, 0.1), 50);
-
-      // Anchor zoom at the pointer: shift focus towards where the wheel
-      // happened so the point under the cursor stays fixed.
       const rect = gl.domElement.getBoundingClientRect();
       const px = e.nativeEvent.clientX - rect.left;
       const py = e.nativeEvent.clientY - rect.top;
-      // Normalised to [-1, 1]
-      const nx = (px / rect.width) * 2 - 1;
-      const ny = -(py / rect.height) * 2 + 1;
 
-      // Shift pan towards the pointer proportional to the zoom delta
-      const zoomRatio = 1 - newZoom / rig.zoom;
-      const panShiftX = nx * 5 * zoomRatio;
-      const panShiftY = -ny * 5 * zoomRatio;
+      if (wheelPendingRef.current) {
+        // Already scheduled for this frame — drop intermediate events.
+        return;
+      }
+      wheelPendingRef.current = true;
 
-      onRigChange({
-        ...rig,
-        zoom: newZoom,
-        panX: rig.panX + panShiftX,
-        panY: rig.panY + panShiftY,
+      requestAnimationFrame(() => {
+        wheelPendingRef.current = false;
+
+        const factor = delta > 0 ? 0.9 : 1.1;
+        const newZoom = Math.min(Math.max(rig.zoom * factor, 0.1), 50);
+
+        // Normalised to [-1, 1]
+        const nx = (px / rect.width) * 2 - 1;
+        const ny = -(py / rect.height) * 2 + 1;
+
+        // Shift pan towards the pointer proportional to the zoom delta
+        const zoomRatio = 1 - newZoom / Math.max(1e-6, rig.zoom);
+        let panShiftX = nx * 5 * zoomRatio;
+        let panShiftY = -ny * 5 * zoomRatio;
+
+        // Clamp pan shifts to a fraction of the lot scale to avoid wild jumps.
+        // Use scaleM from props as a safe world-size reference.
+        const maxShift = Math.max(1, scaleM * 0.5);
+        panShiftX = Math.max(-maxShift, Math.min(maxShift, panShiftX));
+        panShiftY = Math.max(-maxShift, Math.min(maxShift, panShiftY));
+
+        onRigChange({
+          ...rig,
+          zoom: newZoom,
+          panX: rig.panX + panShiftX,
+          panY: rig.panY + panShiftY,
+        });
       });
     },
-    [rig, onRigChange, gl, tiltLocked],
+    [rig, onRigChange, gl, tiltLocked, scaleM],
   );
 
   /** Pointer down — start tracking a potential drag. Yields the gesture when
