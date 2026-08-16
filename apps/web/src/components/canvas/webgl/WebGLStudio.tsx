@@ -168,6 +168,11 @@ export function WebGLStudio({
       "webglcontextlost",
       (event) => {
         event.preventDefault();
+        // R3F forces a context loss during its own teardown (split-view swap,
+        // navigation) — by then the canvas is already detached from the DOM.
+        // Only a loss on a live canvas is fatal; a detached target is the
+        // planned disposal of a surface we are leaving anyway.
+        if (!gl.domElement.isConnected) return;
         onContextLost?.();
       },
       { once: true },
