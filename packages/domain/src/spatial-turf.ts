@@ -57,7 +57,7 @@ export function designableCanvas(
   let result: Feature<Polygon | MultiPolygon> | null = parcel;
   for (const b of subtractors) {
     if (!result) break;
-    const next = difference(featureCollection([result, b]));
+    const next: Feature<Polygon | MultiPolygon> | null = difference(featureCollection([result, b]));
     result = next;
   }
 
