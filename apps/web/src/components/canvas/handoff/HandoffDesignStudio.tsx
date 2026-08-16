@@ -874,8 +874,11 @@ export function HandoffDesignStudio({
 
   /** Keeps the drag-start base fresh without re-subscribing gesture listeners. */
   useEffect(() => {
-    panBaseRef.current = { x: ui.panX, y: ui.panY };
-  }, [ui.panX, ui.panY]);
+    // Only update base when not actively panning to prevent mid-drag jumps
+    if (!isPanningActive) {
+      panBaseRef.current = { x: ui.panX, y: ui.panY };
+    }
+  }, [ui.panX, ui.panY, isPanningActive]);
 
   useEffect(() => {
     zoomRef.current = clampZoom(ui.zoom);
@@ -3559,9 +3562,9 @@ export function HandoffDesignStudio({
               * forced open by default (§6 item 7).
               */}
             {ui.mode === "survey" &&
-            !ui.focusOn &&
-            !ui.clientView &&
-            !bottomChromeSuppressed ? (
+              !ui.focusOn &&
+              !ui.clientView &&
+              !bottomChromeSuppressed ? (
               <button
                 type="button"
                 className={`${css.surveyProgress}${surveyProgress.complete ? ` ${css.surveyProgressDone}` : ""}${checklistOpen ? ` ${css.surveyProgressActive}` : ""}`}
@@ -5027,8 +5030,8 @@ export function HandoffDesignStudio({
         ) : null}
 
         {contextualStripVisible &&
-        instrumentsVisible &&
-        !bottomChromeSuppressed ? (
+          instrumentsVisible &&
+          !bottomChromeSuppressed ? (
           <ContextualToolStrip
             tool={ui.tool}
             mode={ui.mode}
@@ -5065,10 +5068,10 @@ export function HandoffDesignStudio({
         ) : null}
 
         {planOn &&
-        !ui.frameOn &&
-        !ui.clientView &&
-        (contextBreadcrumbActive || councilTipVisible) &&
-        (!bottomChromeSuppressed || councilTipVisible) ? (
+          !ui.frameOn &&
+          !ui.clientView &&
+          (contextBreadcrumbActive || councilTipVisible) &&
+          (!bottomChromeSuppressed || councilTipVisible) ? (
           <CanvasContextCard active>
             <StudioContextBreadcrumb
               mode={ui.mode}
