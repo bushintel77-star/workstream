@@ -67,6 +67,7 @@ import { GardenViewpointStrip } from "../handoff/features/viewpoint/GardenViewpo
 import { viewpointYawDeg, type GardenViewpointLook } from "../handoff/features/tilt/tiltMath";
 import { SurveyChecklist } from "../handoff/features/survey/SurveyChecklist";
 import { ShareSurface } from "../handoff/features/share/ShareSurface";
+import { PresentSurface } from "../handoff/features/present/PresentSurface";
 
 /** Day arc bounds — same as the 2D SunGrowthDock (~06:20 → ~19:40). */
 const DAY_START = 6 * 60 + 20;
@@ -383,6 +384,40 @@ export function WebGLStudioPreview({
   const studioItems = useMemo(
     () => placementsToItems(storePlacements),
     [storePlacements],
+  );
+
+  // Plan snapshot for the present deck's plan-crop panels — the same bridge
+  // the SVG studio feeds PresentSurface, drawn from the WebGL store's live
+  // placements/strokes and the server-rendered site frame.
+  const presentPlanSnapshot = useMemo(
+    () => ({
+      boundary: boundaryPct.map((p) => ({ x: p.x, y: p.y })),
+      building: (buildingPct ?? []).map((p) => ({ x: p.x, y: p.y })),
+      items: studioItems.map((i) => ({
+        id: i.id,
+        t: i.t,
+        x: i.x,
+        y: i.y,
+        outlinePct: i.outlinePct?.map((p) => ({ x: p.x, y: p.y })),
+      })),
+      strokes: strokes.map((s) => ({
+        id: s.id,
+        points: s.points.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+        widthPx: s.width_px,
+        color: s.color,
+        ...(s.kind ? { kind: s.kind } : {}),
+        ...(s.shape_tool ? { shapeTool: s.shape_tool } : {}),
+        ...(s.shape_start
+          ? { shapeStart: { x: s.shape_start.x_pct, y: s.shape_start.y_pct } }
+          : {}),
+        ...(s.shape_end
+          ? { shapeEnd: { x: s.shape_end.x_pct, y: s.shape_end.y_pct } }
+          : {}),
+      })),
+      // Canvas revision — moves whenever the placements/strokes deps do.
+      revision: Date.now(),
+    }),
+    [boundaryPct, buildingPct, studioItems, strokes],
   );
 
   // Progress re-derives live from the store — placing the first asset or
@@ -1347,6 +1382,30 @@ export function WebGLStudioPreview({
           />
         )}
       </div>
+
+      {/* Native present — the classic PresentSurface deck as full-bleed
+          chrome over the presentation lens (ARCHITECTURE §5: the feature
+          module consumes the new shell). Last chrome child so the paper
+          deck owns the surface while presenting; Back exits to CAD. */}
+      {presentationMode && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "auto",
+            zIndex: 8,
+          }}
+        >
+          <PresentSurface
+            projectId={projectId}
+            imageLayers={[]}
+            planSnapshot={presentPlanSnapshot}
+            estimate={null}
+            materials={[]}
+            onBack={() => onNativeMode("cad")}
+          />
+        </div>
+      )}
       </div>
     </div>
   );

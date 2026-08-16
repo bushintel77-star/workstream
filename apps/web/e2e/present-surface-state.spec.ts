@@ -46,7 +46,7 @@ test.describe("Present surface states", () => {
     );
     expect(seed.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?svg=1&mode=present`);
+    await page.goto(`/projects/${projectId}?mode=present`);
     const surface = page.getByTestId("present-surface");
     await expect(surface).toBeVisible({ timeout: 30_000 });
     await expect(surface).toHaveAttribute("data-surface-state", "empty");
@@ -111,7 +111,7 @@ test.describe("Present surface states", () => {
     );
     expect(issue.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?svg=1&mode=present`);
+    await page.goto(`/projects/${projectId}?mode=present`);
     await expect(page.getByTestId("present-surface")).toBeVisible({
       timeout: 20_000,
     });
@@ -179,7 +179,7 @@ test.describe("Present surface states", () => {
     );
     expect(create.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?svg=1&mode=present`);
+    await page.goto(`/projects/${projectId}?mode=present`);
     await expect(page.getByTestId("present-surface")).toBeVisible({
       timeout: 20_000,
     });
