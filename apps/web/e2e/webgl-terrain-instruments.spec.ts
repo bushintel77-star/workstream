@@ -106,15 +106,22 @@ test.describe("WebGL terrain instruments (drainage + earthworks)", () => {
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "▾ Earth" })).toBeVisible();
 
-    // Earthworks card is live by default (earthworksView defaults on).
+    // Earthworks instrument renders as a collapsed chip (InstrumentCard's
+    // "metadata at the border, detail on demand" idiom) — expand it.
+    await expect(
+      page.getByRole("button", { name: "Expand Earth" }),
+    ).toBeVisible({ timeout: 5_000 });
+    await page.getByRole("button", { name: "Expand Earth" }).click();
     const earthworks = page.locator('[data-testid="earthworks-card"]');
     await expect(earthworks).toBeVisible({ timeout: 5_000 });
     // The seeded pad contributes a cut/fill row with real volume figures.
     await expect(earthworks).toContainText("Cut / Fill total");
     await expect(earthworks).toContainText("Pad 1");
 
-    // Toggle Flow → the drainage telemetry card mounts.
+    // Toggle Flow → the drainage telemetry card mounts (as a collapsed
+    // chip — expand it for the readouts).
     await flowChip.click();
+    await page.getByRole("button", { name: "Expand Flow" }).click();
     const drainage = page.locator('[data-testid="drainage-flow-card"]');
     await expect(drainage).toBeVisible({ timeout: 5_000 });
     await expect(drainage).toContainText("Stream paths");
