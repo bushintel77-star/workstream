@@ -464,7 +464,7 @@ export function AssetPanelExpanded({
             >
               <AssetCarousel
                 count={pinned.length}
-                focusIndex={pinned.indexOf(activeMaterial)}
+                focusIndex={pinned.indexOf(paintSwatch ?? armed)}
               >
                 {pinned.map((t) => {
                   const on = activeMaterial === t;

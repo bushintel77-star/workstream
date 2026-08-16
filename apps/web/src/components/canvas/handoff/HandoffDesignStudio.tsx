@@ -91,6 +91,7 @@ import {
   needsPathGrammar,
   openLeftAssetExclusive,
   resolveLeftSafeInsetPx,
+  shouldAutoCollapseLeftAsset,
   toggleRightDataPanelExclusive,
   withRightDataPanel,
 } from "./features/assetPanel/leftAssetPanel";
@@ -3016,7 +3017,10 @@ export function HandoffDesignStudio({
       });
       return;
     }
-    // Command-first: arm without forcing the library open.
+    // Command-first: arm without forcing the library open. Arming finishes
+    // the library's job (same auto-collapse law as place / canvas interact —
+    // an expanded panel left open blankets the board's left band, killing
+    // buildable-cursor tracking and hover affordances under it).
     studio.setUi({
       armed: t,
       armedSymbolId: null,
@@ -3024,6 +3028,12 @@ export function HandoffDesignStudio({
       addOpen: true,
       cmdOpen: false,
       rightDataPanel: null,
+      ...(shouldAutoCollapseLeftAsset({
+        panel: ui.leftAssetPanel,
+        pinned: ui.leftAssetPinned,
+      })
+        ? { leftAssetPanel: null, leftAssetRestore: null }
+        : {}),
     });
   };
 
