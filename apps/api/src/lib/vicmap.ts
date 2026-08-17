@@ -200,9 +200,9 @@ export function scoreEasementLayerName(typeName: string): number {
 export function scorePlanningLayerName(typeName: string): number {
   return scoreNamed(
     typeName,
-    [/planning.?zone/, /zone.?polygon/, /\bpg_/, /land.?use.?zone/],
+    [/plan.?zone/, /zone.?polygon/, /\bpg_/, /land.?use.?zone/],
     [/annotation/, /label/, /address/],
-    { planning_zone: 100, v_zone_polygon: 90 },
+    { plan_zone: 100, planning_zone: 95, v_zone_polygon: 90 },
   );
 }
 
@@ -229,16 +229,26 @@ export function scoreContourLayerName(typeName: string): number {
     typeName,
     [/contour/, /hypsometric/, /elevation.?line/],
     [/spot.?height/, /annotation/],
-    { contour: 90, contours_1m: 100, contours_5m: 85 },
+    {
+      contour: 90,
+      contours_1m: 100,
+      contours_5m: 85,
+      el_contour: 95,
+      el_contour_1to5m: 92,
+    },
   );
 }
 
 export function scoreFloodLayerName(typeName: string): number {
   return scoreNamed(
     typeName,
-    [/flood/, /lsio/, /inundation/, /overlay.?flood/],
+    [/flood/, /lsio/, /inundation/, /overlay.?flood/, /special.?building/],
     [/annotation/, /label/],
-    { flood_extent: 90, lsio: 95 },
+    {
+      plan_overlay: 90,
+      lsio: 95,
+      flood_extent: 90,
+    },
   );
 }
 
@@ -247,7 +257,7 @@ export function scoreHeritageLayerName(typeName: string): number {
     typeName,
     [/heritage/, /\bho\b/, /heritage.?overlay/],
     [/annotation/, /label/],
-    { heritage_overlay: 100, heritage: 80 },
+    { plan_overlay: 90, heritage_overlay: 100, heritage: 80 },
   );
 }
 
@@ -287,32 +297,80 @@ export function scoreWetlandLayerName(typeName: string): number {
   );
 }
 
+/**
+ * KEYLESS layer spec — how to discover + query each overlay kind.
+ *
+ * `scorer` picks the layer from GetCapabilities. `cql` is an extra attribute
+ * predicate ANDed onto the spatial filter (e.g. heritage overlays live inside
+ * the shared `plan_overlay` layer under `zone_code LIKE 'HO%'`). `bbox` marks
+ * line layers (contours) — a point INTERSECTS never matches a line, so those
+ * query a window around the pin instead.
+ */
+export type KeylessLayerSpec = {
+  scorer: (name: string) => number;
+  /** Extra CQL predicate ANDed onto the spatial filter. */
+  cql?: string;
+  /** Line layer: query a BBOX around the pin instead of INTERSECTS(point). */
+  bbox?: boolean;
+};
+
+export const VICMAP_KEYLESS_SPECS: Record<VicmapKeylessKind, KeylessLayerSpec> =
+  {
+    easement: { scorer: scoreEasementLayerName },
+    planning: { scorer: scorePlanningLayerName },
+    bushfire: { scorer: scoreBushfireLayerName },
+    urban_tree: { scorer: scoreUrbanTreeLayerName },
+    contour: { scorer: scoreContourLayerName, bbox: true },
+    flood: {
+      scorer: scoreFloodLayerName,
+      cql: "(zone_code LIKE 'LSIO%' OR zone_code LIKE 'SBO%' OR zone_code LIKE 'FLO%')",
+    },
+    heritage: {
+      scorer: scoreHeritageLayerName,
+      cql: "zone_code LIKE 'HO%'",
+    },
+    water_corp: { scorer: scoreWaterCorpLayerName },
+    road_casement: { scorer: scoreRoadCasementLayerName },
+    acid_sulfate: { scorer: scoreAcidSulfateLayerName },
+    wetland: { scorer: scoreWetlandLayerName },
+  };
+
+/** @deprecated Use VICMAP_KEYLESS_SPECS — kept for tests and tooling. */
 export const VICMAP_KEYLESS_SCORERS: Record<
   VicmapKeylessKind,
   (typeName: string) => number
-> = {
-  easement: scoreEasementLayerName,
-  planning: scorePlanningLayerName,
-  bushfire: scoreBushfireLayerName,
-  urban_tree: scoreUrbanTreeLayerName,
-  contour: scoreContourLayerName,
-  flood: scoreFloodLayerName,
-  heritage: scoreHeritageLayerName,
-  water_corp: scoreWaterCorpLayerName,
-  road_casement: scoreRoadCasementLayerName,
-  acid_sulfate: scoreAcidSulfateLayerName,
-  wetland: scoreWetlandLayerName,
-};
+> = Object.fromEntries(
+  Object.entries(VICMAP_KEYLESS_SPECS).map(([k, v]) => [k, v.scorer]),
+) as Record<VicmapKeylessKind, (typeName: string) => number>;
+
+/**
+ * Build the CQL filter for a KEYLESS kind.
+ * Line layers (contours) query a BBOX window — a single point never
+ * intersects a line. Polygon kinds use INTERSECTS(point) plus the spec's
+ * attribute filter (e.g. heritage overlays inside `plan_overlay`).
+ */
+export function buildKeylessCql(
+  spec: KeylessLayerSpec,
+  geomField: string,
+  lat: number,
+  lng: number,
+): string {
+  // ~0.008° ≈ 800 m each way — enough to catch nearby contour lines.
+  const cql = spec.bbox
+    ? `BBOX(${geomField}, ${lng - 0.008}, ${lat - 0.008}, ${lng + 0.008}, ${lat + 0.008}, 'EPSG:4326')`
+    : `INTERSECTS(${geomField}, SRID=4326;POINT(${lng} ${lat}))`;
+  return spec.cql ? `${cql} AND ${spec.cql}` : cql;
+}
 
 /** Pick best KEYLESS layer names from a capabilities list (discovery only). */
 export function discoverKeylessLayerNames(
   typeNames: string[],
 ): Partial<Record<VicmapKeylessKind, string>> {
   const out: Partial<Record<VicmapKeylessKind, string>> = {};
-  for (const [kind, scoreFn] of Object.entries(VICMAP_KEYLESS_SCORERS) as Array<
-    [VicmapKeylessKind, (n: string) => number]
+  for (const [kind, spec] of Object.entries(VICMAP_KEYLESS_SPECS) as Array<
+    [VicmapKeylessKind, KeylessLayerSpec]
   >) {
-    const best = pickBestLayerName(typeNames, scoreFn);
+    const best = pickBestLayerName(typeNames, spec.scorer);
     if (best) out[kind] = best;
   }
   return out;
@@ -1061,8 +1119,8 @@ export async function discoverKeylessLayer(
   const hit = keylessLayerCache.get(kind);
   if (hit) return hit;
   const names = await fetchCapabilitiesTypeNames();
-  const scoreFn = VICMAP_KEYLESS_SCORERS[kind];
-  const typeName = pickBestLayerName(names, scoreFn);
+  const spec = VICMAP_KEYLESS_SPECS[kind];
+  const typeName = pickBestLayerName(names, spec.scorer);
   if (!typeName) return null;
   const geomField = await describeGeometryField(typeName);
   const discovered = { typeName, geomField };
@@ -1095,8 +1153,10 @@ export async function fetchKeylessRings(
 ): Promise<KeylessFetchResult | null> {
   const layer = await discoverKeylessLayer(kind);
   if (!layer) return null;
-  const cql = `INTERSECTS(${layer.geomField}, SRID=4326;POINT(${lng} ${lat}))`;
-  const url = buildUrl(layer.typeName, cql);
+  const url = buildUrl(
+    layer.typeName,
+    buildKeylessCql(VICMAP_KEYLESS_SPECS[kind], layer.geomField, lat, lng),
+  );
   const fc = await wfsFetch(url);
   if (fc.features.length === 0) return null;
 

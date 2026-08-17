@@ -21,6 +21,8 @@ import {
   bufferedTitleBboxRing,
   selectNeighbourRings,
   NEIGHBOUR_BUILDING_CAP,
+  buildKeylessCql,
+  VICMAP_KEYLESS_SPECS,
 } from "./vicmap";
 
 describe("extractPoints", () => {
@@ -234,6 +236,61 @@ describe("layer discovery scoring", () => {
     expect(scoreFloodLayerName("open-data-platform:lsio")).toBeGreaterThan(0);
     expect(scoreHeritageLayerName("open-data-platform:heritage_overlay")).toBeGreaterThan(
       0,
+    );
+  });
+
+  it("discovers KEYLESS layers from the real Vicmap names (regression)", () => {
+    // The live WFS names — plan_zone / plan_overlay / el_contour — not the
+    // synthetic planning_zone / lsio / heritage_overlay the old test assumed.
+    const names = [
+      "open-data-platform:easement",
+      "open-data-platform:bushfire_prone_area",
+      "open-data-platform:tree_urban",
+      "open-data-platform:plan_zone",
+      "open-data-platform:plan_overlay",
+      "open-data-platform:plm25_overlays",
+      "open-data-platform:el_contour",
+      "open-data-platform:el_contour_1to5m",
+      "open-data-platform:water_corp",
+      "open-data-platform:road_casement_polygon",
+      "open-data-platform:heritage_inventory",
+      "open-data-platform:vic_flood_history_public",
+    ];
+    const found = discoverKeylessLayerNames(names);
+    expect(found.planning).toBe("open-data-platform:plan_zone");
+    expect(found.heritage).toBe("open-data-platform:plan_overlay");
+    expect(found.flood).toBe("open-data-platform:plan_overlay");
+    expect(found.contour).toBe("open-data-platform:el_contour");
+    expect(found.bushfire).toBe("open-data-platform:bushfire_prone_area");
+    expect(found.water_corp).toBe("open-data-platform:water_corp");
+    expect(found.road_casement).toBe("open-data-platform:road_casement_polygon");
+    // heritage_inventory / flood history must NOT win over plan_overlay.
+    expect(found.heritage).not.toBe("open-data-platform:heritage_inventory");
+    expect(found.flood).not.toBe("open-data-platform:vic_flood_history_public");
+  });
+
+  it("builds KEYLESS CQL — BBOX for lines, attribute filter for overlays", () => {
+    const g = "geom";
+    const lat = -37.8289;
+    const lng = 145.0456;
+    // Contour: line layer → BBOX window, no point-intersect.
+    expect(buildKeylessCql(VICMAP_KEYLESS_SPECS.contour, g, lat, lng)).toContain(
+      "BBOX(geom,",
+    );
+    expect(
+      buildKeylessCql(VICMAP_KEYLESS_SPECS.contour, g, lat, lng),
+    ).not.toContain("INTERSECTS");
+    // Heritage: point-intersect AND zone_code LIKE 'HO%'.
+    expect(buildKeylessCql(VICMAP_KEYLESS_SPECS.heritage, g, lat, lng)).toBe(
+      `INTERSECTS(geom, SRID=4326;POINT(${lng} ${lat})) AND zone_code LIKE 'HO%'`,
+    );
+    // Flood: LSIO / SBO / FLO overlay codes.
+    expect(buildKeylessCql(VICMAP_KEYLESS_SPECS.flood, g, lat, lng)).toContain(
+      "zone_code LIKE 'LSIO%'",
+    );
+    // Plain polygon kind: bare INTERSECTS.
+    expect(buildKeylessCql(VICMAP_KEYLESS_SPECS.bushfire, g, lat, lng)).toBe(
+      `INTERSECTS(geom, SRID=4326;POINT(${lng} ${lat}))`,
     );
   });
 
