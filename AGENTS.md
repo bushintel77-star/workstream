@@ -52,15 +52,15 @@ A hung e2e or skipped live probe is a blocker. Binding detail: `.cursor/rules/en
 **Gold Standard 2026** is the supreme binding regime. The operator canvas is
 being rebuilt as a **Zero-Chrome WebGL studio** (Three.js / React Three Fiber)
 per the master brief. The old SVG `%`-coord parchment board + `HandoffDesignStudio`
-is being replaced by `WebGLStudio` (R3F `<Canvas>` + DOM Glass Card overlay).
+is being replaced by `WebGLStudio` (R3F `<Canvas>` + DOM Paper Card overlay).
 
 - Home: `/` redirects to `/home` — operator dashboard (address composer + sites list). The old marketing landing with mock telemetry was removed (zero-mock-data law; `docs/UI-PARITY-AUDIT-2026.md` §4)
 - Operator canvas: `/projects/[id]?mode=survey|sketch|cad|elevation|quote|present|share|garden`
 
 **Binding docs (read before touching canvas/chrome/rendering):**
 
-- **[`docs/GOLD-STANDARD-2026.md`](docs/GOLD-STANDARD-2026.md)** — SUPREME. The master architectural brief. "The drawing is the product." Zero-Chrome, WebGL primary surface, Glass Cards (`#1E2329/70`, `backdrop-blur-md`, `rounded-2xl`), Studio Dark tokens. If a change contradicts this doc, this doc wins.
-- **[`docs/GOLD-STANDARD-2026-TOKENS.md`](docs/GOLD-STANDARD-2026-TOKENS.md)** — Studio Dark palette (`#101418` canvas, `#fbbf24` Primary/Gold, `#0030CF` Truth Anchor/Signal Blue, `#ef4444` Conflict/Strike). Fonts: Space Grotesk (technical/numeric), Inter (UI). Raw `#hex` in handoff modules is CI-gated against the `--gs-*` allowlist.
+- **[`docs/GOLD-STANDARD-2026.md`](docs/GOLD-STANDARD-2026.md)** — SUPREME. The master architectural brief. "The drawing is the product." Zero-Chrome, WebGL primary surface, Paper Cards (`--gs-panel-grad` white gradient-lit panels, `--gs-panel-frost` + blur on HUD chrome, `--gs-shadow-1..4` neutral shadow tiers), Studio Paper tokens. If a change contradicts this doc, this doc wins.
+- **[`docs/GOLD-STANDARD-2026-TOKENS.md`](docs/GOLD-STANDARD-2026-TOKENS.md)** — Studio Paper palette (`#F4F4F4` canvas, `#3D5AFE` Primary Signal Blue accent, `#0030CF` Truth Anchor data stroke, `#C41E1E` Conflict/Strike crimson — conflict-only, never CTA). Fonts: Space Grotesk (technical/numeric), Inter (UI). Raw `#hex` in handoff modules is CI-gated against the `--gs-*` allowlist.
 - **[`docs/GOLD-STANDARD-2026-ARCHITECTURE.md`](docs/GOLD-STANDARD-2026-ARCHITECTURE.md)** — WebGL scene-graph, `SpatialObject` as universal node, camera/chrome layering, metre-space origin `(0,0,0)` peg, hydraulic isolation, billboarding, mobile AR bridge.
 
 **Archived (pre-Gold-Standard, do not follow):** `docs/archive/pre-gold-standard-2026/` — contains the retired `STUDIO-STYLING-AND-UX.md`, `CAD-AI-2026-UX.md`, `OPERATOR-STUDIO-GOLD-WALKTHROUGH.md`, `ENV-AND-SITE-META-STICKY.md`, and `CANVAS-FIRST-*.md` SDS docs. Retained for historical reference only.

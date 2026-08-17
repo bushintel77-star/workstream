@@ -35,10 +35,10 @@ Workstream is an AI-native, professional workspace for landscape architects. The
   - `Inter`: Mandatory for UI labels, buttons, and inputs.
 - **Tokens (Studio Paper — 2026 pivot, see GOLD-STANDARD-2026-TOKENS.md)**:
   - **Canvas Base**: `#F4F4F4` (high-key drafting paper — the drawing is the most saturated thing on screen).
-  - **Primary (Crimson)**: `#C41E1E` (Reserved exclusively for primary CTA, active tool state, focus rings, critical indicators).
-  - **Selection (Charcoal)**: `#1A1A1A` chips with white ink (active tools / "you are here" states — keeps crimson rare).
+  - **Primary (Signal Blue)**: `#3D5AFE` (hover `#4D6BFE`, pressed `#2946C8`) — reserved for primary CTA, active tool state, focus rings. DeepSeek-family blue, the 2026-08-17 accent pivot.
+  - **Selection (Charcoal)**: `#1A1A1A` chips with white ink (active tools / "you are here" states — charcoal, never accent).
   - **Truth Anchor (Cobalt — drawing data)**: `#0030CF` (Boundaries, (0,0,0) origin, easements. 8.2:1 on paper; the dark-era 2:1 failure is cured).
-  - **Conflict (Strike Alert)**: `#C41E1E` (unified with primary — utility and root zone collisions).
+  - **Conflict (Strike Alert)**: `#C41E1E` crimson (conflict-only — utility and root zone collisions, critical warnings; never primary CTA).
 
 ---
 
@@ -85,7 +85,7 @@ Workstream is an AI-native, professional workspace for landscape architects. The
 ## 4. MOBILE FIELD BRIDGE (On-Site Execution)
 
 - **Environment**: 100% Camera feed with high-precision AR overlay.
-- **Staking Logic**: Digital "Staking Chips" (`--gs-primary`, crimson `#C41E1E`) anchored to physical GPS/RTK ground coordinates.
+- **Staking Logic**: Digital "Staking Chips" (`--gs-primary`, signal blue `#3D5AFE`) anchored to physical GPS/RTK ground coordinates.
 - **Subsurface Ghosting**: Visualise underground utilities as translucent 3D volumes in the camera feed.
 - **Strike Alerts**: High-contrast Red alerts for site workers when digging near verified utilities.
 

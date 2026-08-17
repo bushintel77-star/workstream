@@ -35,25 +35,27 @@ and neutral shadow tiers. Never darkness.
 | `--gs-line-strong` | `#8C8C8C` | Interactive boundaries (3.36:1 on panel) |
 | `--gs-disabled` | `#A3A3A3` | Disabled text/glyphs (AA-exempt) |
 
-### 1.2 Semantic signal tokens — Crimson is the ONLY chromatic UI accent
+### 1.2 Semantic signal tokens — Signal Blue is the sole UI accent; crimson is conflict-only
 
-Reserved exclusively for: primary CTA, active tool state, focus rings, and
-critical/strike indicators. Gold is retired from chrome (the murky dim gold
-`#9c7416` and the gold/warning amber collision are dead). Cobalt survives as
-**drawing data only** — where `#0030CF` finally works (8.2:1 on paper; it was
-2:1 on the dark canvas and failed SC 1.4.11).
+Reserved exclusively for: primary CTA, active tool state, focus rings.
+Crimson is demoted to **conflict/strike only** (the 2026-08-17 DeepSeek-blue
+accent pivot): utility and root zone collisions, critical warnings — never
+primary CTA. Gold is retired from chrome (the murky dim gold `#9c7416` and
+the gold/warning amber collision are dead). Cobalt survives as **drawing data
+only** — where `#0030CF` finally works (8.2:1 on paper; it was 2:1 on the
+dark canvas and failed SC 1.4.11).
 
 | Token | Value | Role |
 |-------|-------|------|
-| `--gs-primary` | `#C41E1E` | **Crimson base** — CTA fill, focus ring (white-on-it 5.91:1) |
-| `--gs-primary-hover` | `#DC2626` | Crimson hover (white-on-it 4.83:1) |
-| `--gs-primary-pressed` | `#A51818` | Crimson pressed (white-on-it 7.65:1) |
-| `--gs-primary-ink` | `#B91C1C` | Crimson as text on paper (6.47:1) |
-| `--gs-primary-quiet` | `#E8C7C7` | Resting crimson borders / veil endpoint |
+| `--gs-primary` | `#3D5AFE` | **Signal Blue base** — CTA fill, focus ring (white-on-it 5.14:1) |
+| `--gs-primary-hover` | `#4D6BFE` | Blue hover — DeepSeek brand blue (white-on-it 4.32:1) |
+| `--gs-primary-pressed` | `#2946C8` | Blue pressed (white-on-it 7.47:1) |
+| `--gs-primary-ink` | `#2340C8` | Blue as text on paper (7.97:1) |
+| `--gs-primary-quiet` | `#D9E0FC` | Resting blue borders / veil endpoint |
 | `--gs-truth` | `#0030CF` | **Cobalt data stroke** — proposed geometry, easements, title (8.22:1 on canvas) |
 | `--gs-truth-soft` | `#2450C7` | Cobalt hover/secondary |
 | `--gs-truth-ink` | `#2450C7` | Cobalt label text on paper (6.89:1) |
-| `--gs-conflict` | `#C41E1E` | **Strike Alert** — unified with primary crimson |
+| `--gs-conflict` | `#C41E1E` | **Strike Alert crimson** — conflict/strike only since the blue pivot |
 | `--gs-conflict-soft` | `#B91C1C` | Strike text on paper (AA) |
 | `--gs-success` | `#525252` | Status is ink + iconography; colour reserved for critical |
 | `--gs-warning` | `#525252` | Status is ink + iconography; colour reserved for critical |
@@ -72,7 +74,8 @@ critical/strike indicators. Gold is retired from chrome (the murky dim gold
 
 **Selection vocabulary:** `--gs-chip-active: #1A1A1A` / `--gs-chip-active-ink:
 #FFFFFF` (15.83:1). Active tools, selected modes, and "you are here" states
-are charcoal-filled chips — NOT crimson. Crimson stays rare so it stays sharp.
+are charcoal-filled chips — NOT accent-hued. The accent stays rare so it
+stays sharp.
 
 ### 1.4 Panel depth law (replaces the glass density law)
 
@@ -160,7 +163,7 @@ All fonts load via `next/font/google` in `apps/web/src/app/layout.tsx` with
 | `--gs-canvas` (`#101418`) | `--gs-canvas` (`#F4F4F4`) | Canvas flips dark → paper; WebGL clear follows |
 | `--gs-glass` (`#1E2329`) | `--gs-panel` (`#FFFFFF`) | Solid white panels; frost variant for HUD |
 | `--gs-glass-veil` (38% dark) | `--gs-panel-frost` (86% white) | One translucent layer, same law |
-| `--gs-primary` (`#fbbf24` gold) | `--gs-primary` (`#C41E1E` crimson) | Gold retired from chrome; murky `#9c7416` deleted |
+| `--gs-primary` (`#fbbf24` gold) | `--gs-primary` (`#3D5AFE` blue) | Gold retired from chrome; murky `#9c7416` deleted. The paper pivot briefly used crimson as primary; the 2026-08-17 DeepSeek pivot moved primary to Signal Blue with crimson demoted to conflict-only |
 | `--gs-truth` (`#0030CF`, 2:1 on dark) | `--gs-truth` (`#0030CF`) | Same hex — now 8.2:1 on paper; data-only |
 | `--gs-truth-ink` (`#6B8EEA`) | `--gs-truth-ink` (`#2450C7`) | Dark-era lifted stop retired |
 | `--gs-conflict` (`#ef4444`) | `--gs-conflict` (`#C41E1E`) | Unified with primary crimson |
@@ -186,8 +189,9 @@ sunken `#EBEBEB` / pressed `#E4E4E4`):
 - `--gs-ink-secondary` (`#525252`): **7.82 / 7.11 / 6.56 / 6.15** ✅
 - `--gs-ink-muted` (`#636363`): **6.00 / 5.46 / 5.04 / 4.72** ✅ on every surface
 - white on `--gs-chip-active` (`#1A1A1A`): **15.83** ✅
-- white on `--gs-primary` (`#C41E1E`): **5.91**; hover `#DC2626`: **4.83**; pressed `#A51818`: **7.65** ✅
-- `--gs-primary-ink` (`#B91C1C`) as text: **6.47 / 5.83 / 5.37 / 5.03** ✅
+- white on `--gs-primary` (`#3D5AFE`): **5.14**; hover `#4D6BFE`: **4.32** (large text / 3:1 UI only); pressed `#2946C8`: **7.47** ✅
+- `--gs-primary-ink` (`#2340C8`) as text on panel: **7.97** ✅
+- white on `--gs-conflict` (`#C41E1E`): **5.91** ✅ (conflict/strike only since the blue pivot)
 - `--gs-truth` (`#0030CF`) stroke on canvas: **8.22** ✅ (was 2.1 on dark — the pivot fixes Signal Blue)
 - `--gs-truth-ink` (`#2450C7`) on panel: **6.89** ✅
 - `--gs-line-strong` (`#8C8C8C`) boundary on panel: **3.36** ✅ non-text
