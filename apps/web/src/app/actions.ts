@@ -806,6 +806,29 @@ export async function autoTraceBoundaryAction(projectId: string) {
   }
 }
 
+export async function getSignoffAction(projectId: string) {
+  const { getSignoffApi } = await import("../lib/api");
+  try {
+    return await getSignoffApi(projectId);
+  } catch (err) {
+    throw wrapApiError(err, "Signoff lookup failed");
+  }
+}
+
+export async function signOffAction(
+  projectId: string,
+  input: import("../lib/api").SignoffInput,
+) {
+  const { putSignoffApi } = await import("../lib/api");
+  try {
+    const result = await putSignoffApi(projectId, input);
+    revalidatePath(`/projects/${projectId}`);
+    return result;
+  } catch (err) {
+    throw wrapApiError(err, "Signoff failed");
+  }
+}
+
 export async function hydrateKeylessAction(
   projectId: string,
   kinds?: Array<

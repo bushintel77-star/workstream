@@ -205,6 +205,7 @@ import { PreemptiveHorizon } from "./features/horizon/PreemptiveHorizon";
 import { BoardFindings } from "./features/horizon/BoardFindings";
 import { HorizonMarkers } from "./features/horizon/HorizonMarkers";
 import { ShareSurface } from "./features/share/ShareSurface";
+import { SignoffCard } from "./features/signoff/SignoffCard";
 import { PresentSurface } from "./features/present/PresentSurface";
 import { Tier1TopBar } from "./features/tier1TopBar/Tier1TopBar";
 import { UnifiedSaveStatus } from "./features/tier1TopBar/UnifiedSaveStatus";
@@ -3917,6 +3918,17 @@ export function HandoffDesignStudio({
               requestMode("cad");
             }}
           />
+        ) : null}
+
+        {ui.mode === "share" && projectId ? (
+          <div className={css.signoffFloat}>
+            <SignoffCard
+              projectId={projectId}
+              disclaimers={boardDisclaimers}
+              quoteTotalInclGst={estimate.totalInclGst}
+              revision={String(ui.saveRevision)}
+            />
+          </div>
         ) : null}
 
         {ui.mode === "present" ? (

@@ -98,6 +98,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _orchestrationOverlays: import("@workstream/contracts").OrchestrationOverlayRecord[] =
     [];
   const _siteBoundaries: import("@workstream/contracts").SiteBoundary[] = [];
+  const _signoffs: import("@workstream/contracts").ProjectSignoff[] = [];
   const _catalogCustom: Array<
     import("@workstream/contracts").CatalogSymbol & { owner_id: string }
   > = [];
@@ -166,6 +167,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _cadDocuments,
     _orchestrationOverlays,
     _siteBoundaries,
+    _signoffs,
     _catalogCustom,
     _activityEvents,
     _shareRevisions,
@@ -1968,6 +1970,49 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _siteBoundaries.splice(idx, 1);
       flush();
       return true;
+    },
+
+    async getSignoff(ownerId, projectId) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) return null;
+      const doc = _signoffs.find((s) => s.project_id === projectId);
+      return doc ? structuredClone(doc) : null;
+    },
+
+    async upsertSignoff(ownerId, projectId, input) {
+      const project = _projects.find(
+        (p) => p.id === projectId && p.owner_id === ownerId,
+      );
+      if (!project) throw new Error(`Project not found: ${projectId}`);
+      const now = new Date().toISOString();
+      const existing = _signoffs.find((s) => s.project_id === projectId);
+      if (existing) {
+        existing.status = input.status;
+        existing.revision = input.revision;
+        existing.accepted_notice_ids = input.accepted_notice_ids;
+        existing.quote_total_incl_gst = input.quote_total_incl_gst;
+        existing.signed_at = input.signed_at;
+        existing.signed_by = input.signed_by;
+        existing.updated_at = now;
+        flush();
+        return structuredClone(existing);
+      }
+      const doc: import("@workstream/contracts").ProjectSignoff = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        status: input.status,
+        revision: input.revision,
+        accepted_notice_ids: input.accepted_notice_ids,
+        quote_total_incl_gst: input.quote_total_incl_gst,
+        signed_at: input.signed_at,
+        signed_by: input.signed_by,
+        updated_at: now,
+      };
+      _signoffs.push(doc);
+      flush();
+      return structuredClone(doc);
     },
 
     async deleteCrewMember(ownerId, id) {

@@ -15,6 +15,7 @@ import type {
   LeftoverStock,
   ListLeftoversResponse,
   ProjectOrchestrationWorld,
+  ProjectSignoff,
   RegisterLeftoverInput,
   SketchToCadRequest,
   SketchToCadResponse,
@@ -765,6 +766,41 @@ export type AutoTraceBoundaryResult = {
   }>;
   neighbour_buildings_source: "vicmap" | null;
 };
+
+export type SignoffInput = {
+  revision: string;
+  quote_total_incl_gst: number;
+  accepted_notice_ids: string[];
+  disclaimers: Array<{
+    id: string;
+    kind: string;
+    title: string;
+    statement: string;
+    trigger: string;
+    required: boolean;
+    cites: string[];
+    basis: string;
+  }>;
+  acknowledged: Record<string, boolean>;
+};
+
+export async function getSignoffApi(
+  projectId: string,
+): Promise<{ signoff: ProjectSignoff | null }> {
+  return apiGet<{ signoff: ProjectSignoff | null }>(
+    `/projects/${projectId}/signoff`,
+  );
+}
+
+export async function putSignoffApi(
+  projectId: string,
+  input: SignoffInput,
+): Promise<{ signoff: ProjectSignoff }> {
+  return apiPut<{ signoff: ProjectSignoff }>(
+    `/projects/${projectId}/signoff`,
+    input,
+  );
+}
 
 export async function autoTraceBoundaryApi(
   projectId: string,

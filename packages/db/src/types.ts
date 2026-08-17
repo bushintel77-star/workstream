@@ -32,6 +32,8 @@ import type {
   UpsertCadDocumentInput,
   SiteBoundary,
   UpsertSiteBoundaryInput,
+  ProjectSignoff,
+  UpsertProjectSignoffInput,
   CatalogSymbol,
   CreateCatalogSymbolInput,
   WorkspaceBilling,
@@ -104,6 +106,8 @@ export type {
   UpsertCadDocumentInput,
   SiteBoundary,
   UpsertSiteBoundaryInput,
+  ProjectSignoff,
+  UpsertProjectSignoffInput,
   CatalogSymbol,
   CreateCatalogSymbolInput,
   WorkspaceBilling,
@@ -473,6 +477,15 @@ export interface Store {
     input: UpsertSiteBoundaryInput,
   ): Promise<SiteBoundary>;
   deleteSiteBoundary(ownerId: string, projectId: string): Promise<boolean>;
+  getSignoff(
+    ownerId: string,
+    projectId: string,
+  ): Promise<ProjectSignoff | null>;
+  upsertSignoff(
+    ownerId: string,
+    projectId: string,
+    input: UpsertProjectSignoffInput,
+  ): Promise<ProjectSignoff>;
   listCatalogSymbols(ownerId: string): Promise<CatalogSymbol[]>;
   createCustomCatalogSymbol(
     ownerId: string,

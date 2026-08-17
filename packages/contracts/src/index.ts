@@ -7,6 +7,7 @@ export * from "./schemas/catalog";
 export * from "./schemas/verification";
 export * from "./schemas/cad";
 export * from "./schemas/site-boundary";
+export * from "./schemas/signoff";
 export * from "./schemas/catalog-admin";
 export * from "./schemas/costing";
 export * from "./schemas/quote-doc";

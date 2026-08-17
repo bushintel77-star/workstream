@@ -53,6 +53,7 @@ import designBoardReportRoutes from './routes/design-board-report';
 import designTelemetryRoutes from './routes/design-telemetry';
 import cadRoutes from './routes/cad';
 import boundaryRoutes from './routes/boundary';
+import signoffRoutes from './routes/signoff';
 import keylessRoutes from './routes/keyless';
 import orchestrationRoutes from './routes/orchestration';
 import resourcePoolRoutes from './routes/resource-pool';
@@ -192,6 +193,7 @@ async function start() {
   await server.register(designTelemetryRoutes, { prefix: '/projects' });
   await server.register(cadRoutes, { prefix: '/projects' });
   await server.register(boundaryRoutes, { prefix: '/projects' });
+  await server.register(signoffRoutes, { prefix: '/projects' });
   await server.register(keylessRoutes, { prefix: '/projects' });
   await server.register(orchestrationRoutes, { prefix: '/projects' });
   await server.register(projectFileRoutes, { prefix: '/projects' });

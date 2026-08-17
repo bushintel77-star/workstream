@@ -38,6 +38,7 @@ import designBoardReportRoutes from "../routes/design-board-report";
 import designTelemetryRoutes from "../routes/design-telemetry";
 import cadRoutes from "../routes/cad";
 import boundaryRoutes from "../routes/boundary";
+import signoffRoutes from "../routes/signoff";
 import keylessRoutes from "../routes/keyless";
 import orchestrationRoutes from "../routes/orchestration";
 import projectFileRoutes from "../routes/project-files";
@@ -100,6 +101,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(designTelemetryRoutes, { prefix: "/projects" });
   await app.register(cadRoutes, { prefix: "/projects" });
   await app.register(boundaryRoutes, { prefix: "/projects" });
+  await app.register(signoffRoutes, { prefix: "/projects" });
   await app.register(keylessRoutes, { prefix: "/projects" });
   await app.register(orchestrationRoutes, { prefix: "/projects" });
   await app.register(projectFileRoutes, { prefix: "/projects" });
