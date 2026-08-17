@@ -30,6 +30,8 @@ import type {
   CatalogPlacement,
   ConstructionTrench,
   ConstructionTrenchKind,
+  IrrigationZone,
+  IrrigationZoneKind,
 } from "@workstream/contracts";
 import {
   melbourneSeason,
@@ -48,6 +50,7 @@ import {
   type StudioCameraRig,
 } from "./cameraRig";
 import type { TrenchPointPct } from "./trenchPath";
+import type { ZonePointPct } from "./irrigationZonePath";
 
 /* -------------------------------------------------------------------------- */
 /* Save status types (ported from useStudioState.ts Ui slice)                 */
@@ -284,6 +287,17 @@ export interface StudioStoreState {
   /** Committed trenches (traced runs + accepted auto proposals). */
   constructionTrenches: ConstructionTrench[];
 
+  // --- Irrigation zones (traced + proposed) ---
+  /** Armed zone kind — pointer drags become a zone trace; null = off. */
+  zoneTool: IrrigationZoneKind | null;
+  /** Live zone draft (kind + ring points in board-%); null = not drawing. */
+  zoneDraft: {
+    kind: IrrigationZoneKind;
+    points: ZonePointPct[];
+  } | null;
+  /** Committed zones (traced rings + accepted proposals). */
+  irrigationZones: IrrigationZone[];
+
   // --- Project context (for persistence + aerial + flora ranking) ---
   projectId: string;
   aerialUri: string | null;
@@ -379,6 +393,17 @@ export interface StudioStoreState {
   /** Commit a completed traced run (clears the draft; tool stays armed). */
   addConstructionTrench: (trench: ConstructionTrench) => void;
 
+  /** Arm/disarm the zone tool (mutually exclusive with sketch/measure/asset/trench). */
+  setZoneTool: (kind: IrrigationZoneKind | null) => void;
+  /** Start/replace/clear the live zone draft. */
+  setZoneDraft: (
+    draft: { kind: IrrigationZoneKind; points: ZonePointPct[] } | null,
+  ) => void;
+  /** Replace all committed zones (hydrate / accept-all / undo). */
+  setIrrigationZones: (zones: IrrigationZone[]) => void;
+  /** Commit a completed traced zone (clears the draft; tool stays armed). */
+  addIrrigationZone: (zone: IrrigationZone) => void;
+
   setProjectContext: (
     projectId: string,
     aerialUri: string | null,
@@ -448,6 +473,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   trenchDraft: null,
   constructionTrenches: [],
 
+  // Irrigation zones
+  zoneTool: null,
+  zoneDraft: null,
+  irrigationZones: [],
+
   // Context
   projectId: "",
   aerialUri: null,
@@ -472,7 +502,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     })),
   setSubsurfaceView: (subsurfaceView) => set({ subsurfaceView }),
   setSketchMode: (sketchMode) =>
-    set(sketchMode ? { sketchMode: true, trenchTool: null } : { sketchMode: false }),
+    set(
+      sketchMode
+        ? { sketchMode: true, trenchTool: null, zoneTool: null }
+        : { sketchMode: false },
+    ),
   setViewBlendTarget: (viewBlendTarget) =>
     set({ viewBlendTarget: Math.max(0, Math.min(1, viewBlendTarget)) }),
   setPitchDeg: (deg) =>
@@ -503,7 +537,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setMeasureActive: (measureActive) =>
     set(
       measureActive
-        ? { measureActive: true, sketchMode: false, trenchTool: null }
+        ? { measureActive: true, sketchMode: false, trenchTool: null, zoneTool: null }
         : { measureActive: false },
     ),
   setMeasureTape: (a, b) =>
@@ -519,7 +553,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setArmedSymbolId: (armedSymbolId) =>
     set(
       armedSymbolId
-        ? { armedSymbolId, sketchMode: false, measureActive: false, trenchTool: null }
+        ? { armedSymbolId, sketchMode: false, measureActive: false, trenchTool: null, zoneTool: null }
         : { armedSymbolId: null },
     ),
   setPlacements: (placements) => set({ placements }),
@@ -611,7 +645,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setTrenchTool: (trenchTool) =>
     set(
       trenchTool
-        ? { trenchTool, sketchMode: false, measureActive: false, armedSymbolId: null }
+        ? {
+            trenchTool,
+            sketchMode: false,
+            measureActive: false,
+            armedSymbolId: null,
+            zoneTool: null,
+          }
         : { trenchTool: null },
     ),
   setTrenchDraft: (trenchDraft) => set({ trenchDraft }),
@@ -620,6 +660,26 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set((s) => ({
       constructionTrenches: [...s.constructionTrenches, trench],
       trenchDraft: null,
+    })),
+
+  setZoneTool: (zoneTool) =>
+    set(
+      zoneTool
+        ? {
+            zoneTool,
+            sketchMode: false,
+            measureActive: false,
+            armedSymbolId: null,
+            trenchTool: null,
+          }
+        : { zoneTool: null },
+    ),
+  setZoneDraft: (zoneDraft) => set({ zoneDraft }),
+  setIrrigationZones: (irrigationZones) => set({ irrigationZones }),
+  addIrrigationZone: (zone) =>
+    set((s) => ({
+      irrigationZones: [...s.irrigationZones, zone],
+      zoneDraft: null,
     })),
 
   setProjectContext: (projectId, aerialUri, projectAddress) =>

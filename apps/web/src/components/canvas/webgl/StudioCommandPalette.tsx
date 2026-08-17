@@ -141,6 +141,18 @@ export function StudioCommandPalette({
         run: () => store.setTrenchTool("lighting_conduit"),
       },
       {
+        id: "zone-drip",
+        label: "Trace zone — drip",
+        group: "Tool",
+        run: () => store.setZoneTool("drip"),
+      },
+      {
+        id: "zone-spray",
+        label: "Trace zone — spray",
+        group: "Tool",
+        run: () => store.setZoneTool("spray"),
+      },
+      {
         id: "view-plan",
         label: "Plan view (orthographic)",
         group: "View",

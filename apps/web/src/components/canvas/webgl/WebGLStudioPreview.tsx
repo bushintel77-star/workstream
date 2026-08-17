@@ -293,9 +293,10 @@ export function WebGLStudioPreview({
     store.setSketchStrokes(initialStrokes ?? []);
     store.setPlacements(initialPlacements);
     store.setConstructionTrenches(constructionTrenches);
+    store.setIrrigationZones(irrigationZones);
     store.setProjectContext(projectId, aerialUri, projectAddress);
     if (initialSketchMode) store.setSketchMode(true);
-  }, [initialStrokes, initialPlacements, constructionTrenches, projectId, aerialUri, projectAddress, initialSketchMode, hydratedRef]);
+  }, [initialStrokes, initialPlacements, constructionTrenches, irrigationZones, projectId, aerialUri, projectAddress, initialSketchMode, hydratedRef]);
 
   // Placements live in the store after hydration — the live source for both
   // the 3D items and the autosave doc. Pure client-side bridge (proven in
@@ -490,13 +491,15 @@ export function WebGLStudioPreview({
 
   // --- Autosave (debounced + retry + backoff) ---
   const storeTrenches = useStudioStore((s) => s.constructionTrenches);
+  const storeZones = useStudioStore((s) => s.irrigationZones);
   const autosaveDoc = useMemo(
     () => ({
       placements: storePlacements,
       strokes,
       constructionTrenches: storeTrenches,
+      irrigationZones: storeZones,
     }),
-    [storePlacements, strokes, storeTrenches],
+    [storePlacements, strokes, storeTrenches, storeZones],
   );
   useStudioAutosave(projectId, autosaveDoc);
   useBeforeUnloadGuard();

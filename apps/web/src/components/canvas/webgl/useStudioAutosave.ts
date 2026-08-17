@@ -30,6 +30,7 @@ import type {
   CatalogPlacement,
   CanvasStroke,
   ConstructionTrench,
+  IrrigationZone,
 } from "@workstream/contracts";
 import {
   saveDesignCanvasClient,
@@ -48,6 +49,8 @@ export interface StudioAutosaveDoc {
   strokes: CanvasStroke[];
   /** Construction trench runs (traced + accepted auto proposals). */
   constructionTrenches?: ConstructionTrench[];
+  /** Irrigation zones (traced rings + accepted proposals). */
+  irrigationZones?: IrrigationZone[];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -88,10 +91,19 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
           .join("|")
       }`,
   );
+  const zoneParts = (doc.irrigationZones ?? []).map(
+    (z) =>
+      `${z.id}:${z.kind}:${z.emitter_spacing_cm}:${z.emitter_flow_lph}:${
+        z.points
+          .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
+          .join("|")
+      }`,
+  );
   return [
     `s${doc.strokes.length}:${strokeParts.join("~")}`,
     `p${doc.placements.length}:${placementParts.join("~")}`,
     `t${(doc.constructionTrenches ?? []).length}:${trenchParts.join("~")}`,
+    `z${(doc.irrigationZones ?? []).length}:${zoneParts.join("~")}`,
   ].join("§");
 }
 
@@ -170,6 +182,7 @@ export function useStudioAutosave(
         placements: current.placements,
         strokes: current.strokes,
         construction_trenches: current.constructionTrenches,
+        irrigation_zones: current.irrigationZones,
       });
       });
     saveQueueRef.current = queuedSave.catch(() => undefined);

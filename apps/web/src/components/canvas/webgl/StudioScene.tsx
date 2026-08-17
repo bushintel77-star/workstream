@@ -49,6 +49,7 @@ import { EarthworksLayer } from "./EarthworksLayer";
 import { DimensionLayer } from "./DimensionLayer";
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { TrenchLayer } from "./TrenchLayer";
+import { IrrigationZoneLayer } from "./IrrigationZoneLayer";
 import { AssetPlaceLayer } from "./AssetPlaceLayer";
 import { FloraRingLayer } from "./FloraRingLayer";
 import { type PresentationLensFilter } from "./PresentationLens";
@@ -824,6 +825,9 @@ export function StudioScene({
         heightmapPoints={heightmapPoints}
         noDigRingsPct={easementsPct}
       />
+      {/* Irrigation zones — armed tool; a drag closes a ring that commits as
+          an IrrigationZone with live area + flow readout. */}
+      <IrrigationZoneLayer scaleM={scaleM} boardAspect={boardAspect} />
       {/* Asset placement — armed fan-out symbol, self-gates on armedSymbolId. */}
       <AssetPlaceLayer scaleM={scaleM} boardAspect={boardAspect} />
       {/* Flora ring — ranked suggestions at a click (self-gates on the

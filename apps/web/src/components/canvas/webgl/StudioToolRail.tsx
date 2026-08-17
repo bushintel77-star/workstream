@@ -68,6 +68,8 @@ export function StudioToolRail({
   const setSplitView = useStudioStore((s) => s.setSplitView);
   const trenchTool = useStudioStore((s) => s.trenchTool);
   const setTrenchTool = useStudioStore((s) => s.setTrenchTool);
+  const zoneTool = useStudioStore((s) => s.zoneTool);
+  const setZoneTool = useStudioStore((s) => s.setZoneTool);
 
   const tools: RailTool[] = [
     {
@@ -112,6 +114,15 @@ export function StudioToolRail({
       onToggle: () => setTrenchTool(trenchTool ? null : "drainage"),
       accent: "var(--gs-ink-truth)",
       title: "Trace construction trench (drainage default; palette picks the kind)",
+    },
+    {
+      id: "zones",
+      glyph: "◎",
+      label: "Zones",
+      active: zoneTool != null,
+      onToggle: () => setZoneTool(zoneTool ? null : "drip"),
+      accent: "var(--gs-ink-truth)",
+      title: "Trace irrigation zone (drip default; palette picks spray)",
     },
     {
       id: "assets",
