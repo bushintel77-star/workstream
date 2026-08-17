@@ -50,6 +50,12 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       + [`docs/LITESTREAM-SETUP.md`](docs/LITESTREAM-SETUP.md).
       **Human:** bucket credentials + sidecar after the SQLite migration.
 - [x] **CI deploy job** — Railway auto-deploy on push to `main` is wired.
+  **2026-08-17 freeze note:** while the GitHub account is frozen, git-linked
+  Railway builds stop right after "scheduling build on Metal builder" with
+  `FAILED`/`deploymentStopped` and no build logs (every main push since
+  14:01Z — #190/#191/#193 all failed; #194 web is deployed via manual
+  `railway up` instead, which still works). Re-verify git deploys after the
+  card clears.
 - [x] **Dependabot** — enabled for pnpm + GitHub Actions.
 - [ ] **Branch protection on `main`** — requires **GitHub Pro** on private repo (403
       from API). Enable manually: Settings → Branches → require CI green.
