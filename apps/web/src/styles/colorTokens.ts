@@ -32,7 +32,7 @@ export const PALETTE = {
   grayD500: "#9AA0AC",
   grayD800: "#D5D7DB",
   grayD900: "#E8E9EC",
-  // Crimson — the only chromatic UI accent (mirrors --gs-primary-*)
+  // Crimson — conflict/strike + existing-structure family (mirrors --crimson-*)
   crimsonL600: "#B91C1C",
   crimsonD500: "#C41E1E",
   crimsonD400: "#DC2626",
@@ -81,8 +81,8 @@ export const PALETTE = {
   gsChipActiveInk: "#FFFFFF", // ink on charcoal chips (--gs-chip-active-ink)
   gsConflict: "#C41E1E", // strike alert / critical crimson (--gs-conflict)
   gsConflictInk: "#B91C1C", // crimson as text (--gs-primary-ink)
-  gsPrimary: "#C41E1E", // Primary Crimson — CTA/focus/active (--gs-primary)
-  gsPrimaryInk: "#B91C1C", // crimson text on paper (--gs-primary-ink)
+  gsPrimary: "#3D5AFE", // Primary Blue — CTA/focus/active (--gs-primary)
+  gsPrimaryInk: "#2340C8", // blue text on paper (--gs-primary-ink)
   gsEarthworksFill: "#C9A84C", // earthworks fill data pair (--gs-earthworks-fill)
   // WebGL render values — physical light/shadow (mirrors color-tokens.css --gs-* render tokens)
   sunWarm: "#FFF1D6",

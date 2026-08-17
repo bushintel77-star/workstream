@@ -47,6 +47,7 @@ import {
   type SpringState,
 } from "./cameraAnimation";
 import { useStudioStore } from "./studioStore";
+import { blendTargetForPitch, isElevationRig, pitchRadians } from "./cameraRig";
 import { useReducedMotion } from "./useReducedMotion";
 
 export interface FusedCameraProps {
@@ -81,6 +82,9 @@ export function FusedCamera({
   // Starts at rest at position 0 (plan view).
   const springRef = useRef<SpringState>({ position: 0, velocity: 0 });
 
+  // Second, dedicated spring for the persp → orthographic-elevation crossfade.
+  const elevationSpringRef = useRef<SpringState>({ position: 0, velocity: 0 });
+
   // Pre-allocated scratch context — created ONCE, reused every frame.
   // This is the 60FPS optimization: zero allocations in the hot loop.
   const scratch = useMemo(() => new FusedCameraScratch(), []);
@@ -89,6 +93,8 @@ export function FusedCamera({
   const orthoMatrixRef = useRef(new THREE.Matrix4());
   const perspMatrixRef = useRef(new THREE.Matrix4());
   const tempMatrixRef = useRef(new THREE.Matrix4());
+  const elevationMatrixRef = useRef(new THREE.Matrix4());
+  const projectionRef = useRef(new THREE.Matrix4());
   const currentLookAtRef = useRef(new THREE.Vector3(0, 0, 0));
 
   useFrame((_, delta) => {
@@ -97,10 +103,15 @@ export function FusedCamera({
     // prop was removed: the store is the single source of truth for the camera.
     const rig = useStudioStore.getState().liveRig;
 
-    // Locked instances (split view's pinned half) spring toward their pin
-    // and leave the store's viewBlend to the free instance.
+    // Locked instances (split view's pinned half) spring toward their pin and
+    // leave the store's viewBlend to the free instance. Otherwise the spring
+    // target is DERIVED from the live pitch every frame — pitch is the single
+    // camera axis, so orbit gestures (which write only liveRig, zero React
+    // writes per move) drive the ortho↔persp crossfade directly.
     const target =
-      viewBlendLocked != null ? viewBlendLocked : useStudioStore.getState().viewBlendTarget;
+      viewBlendLocked != null
+        ? viewBlendLocked
+        : blendTargetForPitch(rig.tiltDeg);
 
     // Spring physics — the camera has physical weight. When the user toggles
     // mid-transition, the spring's velocity carries into the new direction
@@ -111,6 +122,26 @@ export function FusedCamera({
     if (reducedMotion) {
       springRef.current.position = target;
       springRef.current.velocity = 0;
+    }
+
+    // Elevation crossfade — when the live rig sits at the exact φ=90° +
+    // facade-normal snap, spring a second weight that crossfades the fused
+    // projection into the orthographic facade frustum. Driven per-frame from
+    // the live rig, so it needs no React writes and no store round-trip.
+    // Locked split-view halves (viewBlendLocked) never enter elevation —
+    // their camera stays overhead, where a facade frustum would be garbage.
+    const elevationOn = viewBlendLocked == null && isElevationRig(rig);
+    const elevationBlend = reducedMotion
+      ? (elevationOn ? 1 : 0)
+      : springStep(
+          elevationSpringRef.current,
+          elevationOn ? 1 : 0,
+          CAMERA_SPRING,
+          delta,
+        );
+    if (reducedMotion) {
+      elevationSpringRef.current.position = elevationOn ? 1 : 0;
+      elevationSpringRef.current.velocity = 0;
     }
 
     // Publish the animated blend so in-lockstep consumers (stroke drape) can
@@ -125,8 +156,9 @@ export function FusedCamera({
     // View size — the world-space extent visible at zoom=1.
     const viewSize = Math.max(scaleM, scaleM * boardAspect) * VIEW_PADDING;
 
-    // Tilt from the rig (degrees → radians). Max 55° = natural architectural.
-    const tiltRad = Math.min((rig.tiltDeg * Math.PI) / 180, (55 * Math.PI) / 180);
+    // Pitch from the rig (degrees → radians). Full orbit: 0° = overhead plan,
+    // 90° = ground-level horizon (elevation when azimuth snaps to a facade).
+    const tiltRad = pitchRadians(rig.tiltDeg);
 
     // Build both projection matrices IN-PLACE (zero allocation).
     scratch.updateOrtho(
@@ -153,10 +185,31 @@ export function FusedCamera({
       blend,
     );
 
+    // In the elevation state, crossfade the fused projection into the
+    // orthographic facade frustum (the same matrix builder — the horizontal
+    // camera orientation is what turns it into an elevation projection).
+    if (elevationBlend > 0.001) {
+      scratch.updateOrtho(
+        elevationMatrixRef.current,
+        rig.zoom,
+        viewportAspect,
+        boardAspect,
+        viewSize,
+      );
+      scratch.lerpProjection(
+        projectionRef.current,
+        tempMatrixRef.current,
+        elevationMatrixRef.current,
+        elevationBlend,
+      );
+    } else {
+      projectionRef.current.copy(tempMatrixRef.current);
+    }
+
     // Apply the fused projection matrix to the camera.
-    camera.projectionMatrix.copy(tempMatrixRef.current);
+    camera.projectionMatrix.copy(projectionRef.current);
     // Also update the inverse (needed for raycasting / unprojection).
-    camera.projectionMatrixInverse.copy(tempMatrixRef.current).invert();
+    camera.projectionMatrixInverse.copy(projectionRef.current).invert();
 
     // Compute camera position along the arc (in-place, zero allocation).
     const rotateRad = (rig.rotateDeg * Math.PI) / 180;

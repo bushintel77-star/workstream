@@ -10,7 +10,7 @@
  *   - The COMMIT (React state sync) happens exactly once per gesture, on
  *     pointer-up, via `onRigChange(liveRig)`.
  */
-import type { StudioCameraRig } from "./cameraRig";
+import { clampPitchDeg, type StudioCameraRig } from "./cameraRig";
 
 export interface PanDragState {
   active: boolean;
@@ -106,5 +106,82 @@ export function zoomRigAt(
     zoom: newZoom,
     panX: rig.panX + panShiftX,
     panY: rig.panY + panShiftY,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Modifier orbit — the single continuous camera gesture                      */
+/* -------------------------------------------------------------------------- */
+
+export interface OrbitDragState {
+  active: boolean;
+  startX: number;
+  startY: number;
+  startTilt: number;
+  startAzimuth: number;
+  moved: boolean;
+}
+
+/** Degrees of pitch per px of vertical drag (full 0→90° in ~260 px). */
+export const ORBIT_TILT_SENSITIVITY = 0.35;
+
+/** Degrees of azimuth per px of horizontal drag (full turn in ~900 px). */
+export const ORBIT_AZIMUTH_SENSITIVITY = 0.4;
+
+/** Wrap a heading into [0, 360). */
+function wrap360(deg: number): number {
+  const w = deg % 360;
+  return w < 0 ? w + 360 : w;
+}
+
+/**
+ * Open a Cmd/Ctrl-drag orbit at a pointer origin, anchored to the current
+ * (live) rig's pitch and azimuth.
+ */
+export function beginOrbitDrag(
+  rig: StudioCameraRig,
+  x: number,
+  y: number,
+): OrbitDragState {
+  return {
+    active: true,
+    startX: x,
+    startY: y,
+    startTilt: clampPitchDeg(rig.tiltDeg),
+    startAzimuth: rig.rotateDeg,
+    moved: false,
+  };
+}
+
+export interface OrbitDragMoveResult {
+  /** Whether the drag has crossed the 3px threshold (orbit is live). */
+  isOrbiting: boolean;
+  /** The next live rig — equals the input rig below the threshold. */
+  nextRig: StudioCameraRig;
+}
+
+/**
+ * Advance an orbit drag. Vertical delta drives PITCH (drag down = steeper,
+ * the same sign as the shipped SVG tilt), horizontal delta drives AZIMUTH
+ * (drag right = rotate clockwise). Pure — returns the next rig without
+ * writing any state, so the per-move path stays free of React writes.
+ */
+export function orbitDragMove(
+  drag: OrbitDragState,
+  rig: StudioCameraRig,
+  x: number,
+  y: number,
+): OrbitDragMoveResult {
+  const dx = x - drag.startX;
+  const dy = y - drag.startY;
+  const isOrbiting = drag.moved || Math.abs(dx) > 3 || Math.abs(dy) > 3;
+  if (!isOrbiting) return { isOrbiting: false, nextRig: rig };
+  return {
+    isOrbiting: true,
+    nextRig: {
+      ...rig,
+      tiltDeg: clampPitchDeg(drag.startTilt + dy * ORBIT_TILT_SENSITIVITY),
+      rotateDeg: wrap360(drag.startAzimuth + dx * ORBIT_AZIMUTH_SENSITIVITY),
+    },
   };
 }

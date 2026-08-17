@@ -8,8 +8,9 @@
  *
  * Raw palette (§1) — never paint components from these directly.
  * Semantic tokens (§2–4) — what components use.
- * The --gs-* namespace is the Gold Standard palette. Crimson is the only
- * chromatic UI accent; charcoal carries selection; cobalt is drawing data.
+ * The --gs-* namespace is the Gold Standard palette. Blue is the UI accent
+ * (DeepSeek-family); crimson is reserved for conflict/strike; charcoal
+ * carries selection; cobalt is drawing data.
  * Contrast pairs verified WCAG 2.2 AA — see GOLD-STANDARD-2026-TOKENS.md §4.
  */
 
@@ -50,14 +51,14 @@
   --gs-radius-chip: 6px;
   --gs-radius-pill: 999px;
 
-  /* Semantic signal tokens — Crimson is the ONLY chromatic UI accent.
-   * Reserved: primary CTA, active tool state, focus rings, critical. */
-  --gs-primary: #c41e1e;         /* Crimson base — CTA fill, focus ring (white-on-it 5.91:1) */
-  --gs-primary-hover: #dc2626;   /* Crimson hover (white-on-it 4.83:1) */
-  --gs-primary-pressed: #a51818; /* Crimson pressed (white-on-it 7.65:1) */
-  --gs-primary-ink: #b91c1c;     /* Crimson as text on paper — 6.47:1 */
-  --gs-primary-quiet: #e8c7c7;   /* Resting crimson borders / veil endpoint */
-  --gs-primary-dim: #e8c7c7;     /* Legacy alias of primary-quiet */
+  /* Semantic signal tokens — Blue is the UI accent (DeepSeek-family);
+   * crimson is reserved for conflict/strike only. */
+  --gs-primary: #3d5afe;         /* Blue base — CTA fill, focus ring (white-on-it 5.14:1) */
+  --gs-primary-hover: #4d6bfe;   /* Blue hover — DeepSeek brand blue (white-on-it 4.32:1) */
+  --gs-primary-pressed: #2946c8; /* Blue pressed (white-on-it 7.47:1) */
+  --gs-primary-ink: #2340c8;     /* Blue as text on paper — 7.97:1 */
+  --gs-primary-quiet: #d9e0fc;   /* Resting blue borders / veil endpoint */
+  --gs-primary-dim: #d9e0fc;     /* Legacy alias of primary-quiet */
   --gs-primary-veil: color-mix(in srgb, var(--gs-primary) 8%, #ffffff);
   --gs-truth: #0030cf;           /* Cobalt — proposed geometry, easements, title (8.22:1 on canvas) */
   --gs-truth-soft: #2450c7;      /* Cobalt hover/secondary */

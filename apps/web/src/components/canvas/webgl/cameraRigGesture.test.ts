@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CAMERA_RIG } from "./cameraRig";
 import {
+  beginOrbitDrag,
   beginPanDrag,
+  orbitDragMove,
   panDragMove,
   zoomRigAt,
+  ORBIT_AZIMUTH_SENSITIVITY,
+  ORBIT_TILT_SENSITIVITY,
   type PanDragState,
 } from "./cameraRigGesture";
 
@@ -90,5 +94,63 @@ describe("zoomRigAt", () => {
     const r = zoomRigAt(RIG, -100, 800, 300, rect, 0.5);
     const maxShift = Math.max(1, 0.5 * 0.5);
     expect(Math.abs(r.panX - RIG.panX)).toBeLessThanOrEqual(maxShift + 1e-9);
+  });
+});
+
+describe("beginOrbitDrag", () => {
+  it("anchors the orbit to the current rig's pitch and azimuth", () => {
+    const rig = { ...RIG, tiltDeg: 30, rotateDeg: 90 };
+    const d = beginOrbitDrag(rig, 200, 100);
+    expect(d).toMatchObject({
+      active: true,
+      startX: 200,
+      startY: 100,
+      startTilt: 30,
+      startAzimuth: 90,
+      moved: false,
+    });
+  });
+});
+
+describe("orbitDragMove", () => {
+  it("does not orbit below the 3px threshold", () => {
+    const rig = { ...RIG, tiltDeg: 40, rotateDeg: 0 };
+    const d = beginOrbitDrag(rig, 200, 100);
+    const r = orbitDragMove(d, rig, 202, 102);
+    expect(r.isOrbiting).toBe(false);
+    expect(r.nextRig).toBe(rig);
+  });
+
+  it("drives pitch from the vertical delta (drag down = steeper)", () => {
+    const rig = { ...RIG, tiltDeg: 10, rotateDeg: 0 };
+    const d = beginOrbitDrag(rig, 200, 100);
+    const r = orbitDragMove(d, rig, 200, 200); // +100 px down
+    expect(r.isOrbiting).toBe(true);
+    expect(r.nextRig.tiltDeg).toBeCloseTo(
+      10 + 100 * ORBIT_TILT_SENSITIVITY,
+      6,
+    );
+    expect(r.nextRig.rotateDeg).toBe(0);
+  });
+
+  it("clamps pitch into the 0…90° orbit", () => {
+    const rig = { ...RIG, tiltDeg: 5, rotateDeg: 0 };
+    const d = beginOrbitDrag(rig, 0, 0);
+    const up = orbitDragMove(d, rig, 0, -1000); // far up → plan
+    expect(up.nextRig.tiltDeg).toBe(0);
+    const down = orbitDragMove(d, rig, 0, 1000); // far down → horizon
+    expect(down.nextRig.tiltDeg).toBe(90);
+  });
+
+  it("drives azimuth from the horizontal delta and wraps at 360°", () => {
+    const rig = { ...RIG, tiltDeg: 55, rotateDeg: 359 };
+    const d = beginOrbitDrag(rig, 0, 0);
+    const r = orbitDragMove(d, rig, 50, 0); // +50 px right
+    expect(r.isOrbiting).toBe(true);
+    expect(r.nextRig.rotateDeg).toBeCloseTo(
+      (359 + 50 * ORBIT_AZIMUTH_SENSITIVITY) % 360,
+      6,
+    );
+    expect(r.nextRig.tiltDeg).toBe(55);
   });
 });

@@ -48,6 +48,7 @@ import { DrainageFlowLayer } from "./DrainageFlowLayer";
 import { EarthworksLayer } from "./EarthworksLayer";
 import { DimensionLayer } from "./DimensionLayer";
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
+import { TrenchLayer } from "./TrenchLayer";
 import { AssetPlaceLayer } from "./AssetPlaceLayer";
 import { FloraRingLayer } from "./FloraRingLayer";
 import { type PresentationLensFilter } from "./PresentationLens";
@@ -716,8 +717,10 @@ export function StudioScene({
     draftingSurface: false,
   };
   // Subscribe to the view blend target — drives the editing-lock for controls
-  // (editing is disabled when the camera is in 3D perspective mode).
+  // (editing is disabled when the camera is in 3D perspective mode, and
+  // re-enabled only at the exact elevation snap: φ=90° + facade normal).
   const viewBlendTarget = useSeasonalStore((s) => s.viewBlendTarget);
+  const elevationActive = useSeasonalStore((s) => s.elevationActive);
 
   // THE terrain field — one sampler, every spatial layer samples it (mesh,
   // semantic lines, aerial). Null on flat projects (no levels).
@@ -756,13 +759,14 @@ export function StudioScene({
       />
 
       {/* Input capture — invisible ground plane for raycasting.
-          Editing is locked when the camera is in 3D mode (viewBlend > 0.5). */}
+          Editing is locked in 3D (viewBlend > 0.5) and re-enabled only at
+          the exact orthographic elevation snap (φ=90° + facade normal). */}
       <StudioControls
         scaleM={scaleM}
         boardAspect={boardAspect}
         onGroundClick={onGroundClick}
         onCursorMove={onCursorMove}
-        tiltLocked={viewBlendTarget > 0.5}
+        tiltLocked={viewBlendTarget > 0.5 && !elevationActive}
       />
 
       {/* Ground — real terrain mesh when spot levels exist, flat plane otherwise. */}
@@ -811,6 +815,14 @@ export function StudioScene({
         scaleM={scaleM}
         boardAspect={boardAspect}
         heightmapPoints={heightmapPoints}
+      />
+      {/* Trench trace — armed tool; a drag traces a run that commits as a
+          ConstructionTrench (source: traced). Easements are no-dig rings. */}
+      <TrenchLayer
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        heightmapPoints={heightmapPoints}
+        noDigRingsPct={easementsPct}
       />
       {/* Asset placement — armed fan-out symbol, self-gates on armedSymbolId. */}
       <AssetPlaceLayer scaleM={scaleM} boardAspect={boardAspect} />

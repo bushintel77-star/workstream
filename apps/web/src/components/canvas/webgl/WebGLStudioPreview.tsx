@@ -228,7 +228,9 @@ export function WebGLStudioPreview({
   const [gardenLook, setGardenLook] = useState<GardenViewpointLook>("S");
   const applyGardenLook = (look: GardenViewpointLook) => {
     setGardenLook(look);
-    setViewBlendTarget(1);
+    // Pitch is the single camera axis — raise to a garden eye-level 76° and
+    // let setPitchDeg commit the derived 3D blend target in the same write.
+    useStudioStore.getState().setPitchDeg(76);
     writeLiveRig({
       ...DEFAULT_CAMERA_RIG,
       tiltDeg: 76,
@@ -251,7 +253,7 @@ export function WebGLStudioPreview({
       applyGardenLook(gardenLook);
     } else if (mode === "cad") {
       // CAD style = technical 2D: locked plan view with working-drawing dims.
-      store.setViewBlendTarget(0);
+      store.setPitchDeg(0);
       if (boundaryPct.length >= 3) store.setDimsView(true);
     } else if (mode === "present") {
       setPresentationMode(true);
@@ -273,7 +275,7 @@ export function WebGLStudioPreview({
     [sunDatePreset, sunMin],
   );
   const viewBlendTarget = useStudioStore((s) => s.viewBlendTarget);
-  const setViewBlendTarget = useStudioStore((s) => s.setViewBlendTarget);
+  const setPitchDeg = useStudioStore((s) => s.setPitchDeg);
   const canUndo = useStudioStore((s) => s.historyPast.length > 0);
   const canRedo = useStudioStore((s) => s.historyFuture.length > 0);
   const subsurfaceView = useStudioStore((s) => s.subsurfaceView);
@@ -290,9 +292,10 @@ export function WebGLStudioPreview({
     const store = useStudioStore.getState();
     store.setSketchStrokes(initialStrokes ?? []);
     store.setPlacements(initialPlacements);
+    store.setConstructionTrenches(constructionTrenches);
     store.setProjectContext(projectId, aerialUri, projectAddress);
     if (initialSketchMode) store.setSketchMode(true);
-  }, [initialStrokes, initialPlacements, projectId, aerialUri, projectAddress, initialSketchMode, hydratedRef]);
+  }, [initialStrokes, initialPlacements, constructionTrenches, projectId, aerialUri, projectAddress, initialSketchMode, hydratedRef]);
 
   // Placements live in the store after hydration — the live source for both
   // the 3D items and the autosave doc. Pure client-side bridge (proven in
@@ -486,9 +489,14 @@ export function WebGLStudioPreview({
   );
 
   // --- Autosave (debounced + retry + backoff) ---
+  const storeTrenches = useStudioStore((s) => s.constructionTrenches);
   const autosaveDoc = useMemo(
-    () => ({ placements: storePlacements, strokes }),
-    [storePlacements, strokes],
+    () => ({
+      placements: storePlacements,
+      strokes,
+      constructionTrenches: storeTrenches,
+    }),
+    [storePlacements, strokes, storeTrenches],
   );
   useStudioAutosave(projectId, autosaveDoc);
   useBeforeUnloadGuard();
@@ -891,7 +899,7 @@ export function WebGLStudioPreview({
             <button
               type="button"
               aria-pressed={!is3D}
-              onClick={() => setViewBlendTarget(0)}
+              onClick={() => setPitchDeg(0)}
               style={{
                 flex: 1,
                 padding: "2px 10px",
@@ -912,7 +920,7 @@ export function WebGLStudioPreview({
             <button
               type="button"
               aria-pressed={is3D}
-              onClick={() => setViewBlendTarget(1)}
+              onClick={() => setPitchDeg(DEFAULT_CAMERA_RIG.tiltDeg)}
               style={{
                 flex: 1,
                 padding: "2px 10px",

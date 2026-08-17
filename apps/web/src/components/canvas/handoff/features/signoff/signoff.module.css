@@ -1,5 +1,5 @@
 .card {
-  background: var(--gs-panel-grad, linear-gradient(180deg, #ffffff, #f4f4f4));
+  background: var(--gs-panel-grad, linear-gradient(180deg, var(--gs-panel), var(--gs-canvas)));
   border: 1px solid var(--line-hairline, rgba(0, 0, 0, 0.12));
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -14,7 +14,7 @@
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-secondary, #555);
+  color: var(--ink-secondary, var(--gs-ink-secondary));
 }
 
 .title {
@@ -27,7 +27,7 @@
   margin: 0 0 12px;
   font-size: 13px;
   line-height: 1.45;
-  color: var(--ink-secondary, #444);
+  color: var(--ink-secondary, var(--gs-ink-secondary));
 }
 
 .notices {
@@ -50,17 +50,17 @@
   gap: 2px;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--ink-secondary, #444);
+  color: var(--ink-secondary, var(--gs-ink-secondary));
 }
 
 .noticeText strong {
-  color: var(--ink-primary, #111);
+  color: var(--ink-primary, var(--gs-ink-strong));
 }
 
 .error {
   margin: 0 0 12px;
   font-size: 12px;
-  color: var(--block, #c41e1e);
+  color: var(--block, var(--gs-conflict));
 }
 
 .primary {
@@ -68,8 +68,8 @@
   padding: 10px 14px;
   border: none;
   border-radius: 8px;
-  background: var(--accent, #1a1a1a);
-  color: #fff;
+  background: var(--accent, var(--gs-chip-active));
+  color: var(--gs-chip-active-ink);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -93,7 +93,7 @@
 }
 
 .meta dt {
-  color: var(--ink-secondary, #555);
+  color: var(--ink-secondary, var(--gs-ink-secondary));
 }
 
 .meta dd {

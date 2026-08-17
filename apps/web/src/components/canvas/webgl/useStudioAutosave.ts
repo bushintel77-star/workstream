@@ -26,7 +26,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CatalogPlacement, CanvasStroke } from "@workstream/contracts";
+import type {
+  CatalogPlacement,
+  CanvasStroke,
+  ConstructionTrench,
+} from "@workstream/contracts";
 import {
   saveDesignCanvasClient,
   classifySaveError,
@@ -42,6 +46,8 @@ export interface StudioAutosaveDoc {
   placements: CatalogPlacement[];
   /** Sketch strokes in board-% space. */
   strokes: CanvasStroke[];
+  /** Construction trench runs (traced + accepted auto proposals). */
+  constructionTrenches?: ConstructionTrench[];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -74,9 +80,18 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
         p.scale.toFixed(2)
       }:${p.rotation_deg}`,
   );
+  const trenchParts = (doc.constructionTrenches ?? []).map(
+    (t) =>
+      `${t.id}:${t.kind}:${t.depth_mm}:${
+        t.points
+          .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
+          .join("|")
+      }`,
+  );
   return [
     `s${doc.strokes.length}:${strokeParts.join("~")}`,
     `p${doc.placements.length}:${placementParts.join("~")}`,
+    `t${(doc.constructionTrenches ?? []).length}:${trenchParts.join("~")}`,
   ].join("§");
 }
 
@@ -154,6 +169,7 @@ export function useStudioAutosave(
       await saveDesignCanvasClient(pid, {
         placements: current.placements,
         strokes: current.strokes,
+        construction_trenches: current.constructionTrenches,
       });
       });
     saveQueueRef.current = queuedSave.catch(() => undefined);

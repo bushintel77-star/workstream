@@ -66,15 +66,15 @@ describe("colorTokens — Studio Paper", () => {
     }
   });
 
-  it("meets AA for crimson roles: white-on-fill, crimson-as-text", () => {
-    // Primary CTA + hover + pressed must carry white text
+  it("meets AA for blue primary + crimson conflict roles", () => {
+    // Primary CTA must carry white text (DeepSeek-family blue)
     expect(contrast("#FFFFFF", PALETTE.gsPrimary)).toBeGreaterThan(4.5);
-    expect(contrast("#FFFFFF", PALETTE.crimsonD400)).toBeGreaterThan(4.5);
-    expect(contrast("#FFFFFF", "#A51818")).toBeGreaterThan(4.5);
-    // Crimson as text on every paper surface
+    // Primary blue as text on every paper surface
     for (const surface of [PANEL, CANVAS, SUNKEN, PRESSED]) {
       expect(contrast(PALETTE.gsPrimaryInk, surface)).toBeGreaterThan(4.5);
     }
+    // Conflict/strike fill must carry white text (crimson, conflict-only)
+    expect(contrast("#FFFFFF", PALETTE.gsConflict)).toBeGreaterThan(4.5);
   });
 
   it("meets AA for charcoal selection chips (15.8:1 class)", () => {

@@ -13,15 +13,26 @@
  * camera math.
  */
 
-import { useRef, useCallback, type RefObject } from "react";
+import { useCallback, useEffect, useRef, type RefObject } from "react";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import {
+  beginOrbitDrag,
   beginPanDrag,
+  orbitDragMove,
   panDragMove,
   zoomRigAt,
+  type OrbitDragState,
   type PanDragState,
 } from "./cameraRigGesture";
+import { blendTargetForPitch, isElevationRig, settleOrbitRig } from "./cameraRig";
+import {
+  beginTouchOrbit,
+  isTwoFingerDoubleTap,
+  touchOrbitMove,
+  type TouchOrbitState,
+  type TouchPoint,
+} from "./touchOrbit";
 import { worldToPct, type PctPoint } from "./coordTransform";
 import { useSeasonalStore } from "./seasonalStore";
 import { useStudioStore } from "./studioStore";
@@ -96,6 +107,111 @@ export function StudioControls({
     startPanY: 0,
     moved: false,
   });
+  const orbitState = useRef<OrbitDragState>({
+    active: false,
+    startX: 0,
+    startY: 0,
+    startTilt: 0,
+    startAzimuth: 0,
+    moved: false,
+  });
+  /** True while a two-finger touch gesture owns the camera (suppresses the
+   *  pointer pan path so the extra fingers never pan the rig mid-orbit). */
+  const twoFingerRef = useRef(false);
+
+  /**
+   * Native two-finger camera gestures — pinch zoom, twist azimuth, vertical
+   * pitch. Single-finger touch rides the existing pointer path; the moment a
+   * second finger lands we take over, and when the gesture ends we settle +
+   * commit exactly once (the same contract as the desktop orbit release).
+   */
+  useEffect(() => {
+    const el = gl.domElement;
+    const touches = new Map<number, TouchPoint>();
+    let orbitTouch: TouchOrbitState | null = null;
+    let lastTwoFingerStart: number | null = null;
+
+    const sync = (list: TouchList) => {
+      const activeIds = new Set<number>();
+      for (let i = 0; i < list.length; i++) {
+        const t = list[i]!;
+        activeIds.add(t.identifier);
+        touches.set(t.identifier, { x: t.clientX, y: t.clientY });
+      }
+      for (const id of [...touches.keys()]) {
+        if (!activeIds.has(id)) touches.delete(id);
+      }
+    };
+
+    const advance = () => {
+      const pts = [...touches.values()];
+      if (pts.length < 2) return;
+      if (!orbitTouch) {
+        orbitTouch = beginTouchOrbit(
+          useStudioStore.getState().liveRig,
+          pts[0]!,
+          pts[1]!,
+        );
+        twoFingerRef.current = true;
+      }
+      const moved = touchOrbitMove(
+        orbitTouch,
+        useStudioStore.getState().liveRig,
+        pts[0]!,
+        pts[1]!,
+      );
+      useStudioStore.getState().setLiveRig(moved.nextRig);
+    };
+
+    const endGesture = () => {
+      if (!orbitTouch) return;
+      const live = useStudioStore.getState().liveRig;
+      const settled = settleOrbitRig(live);
+      useStudioStore.getState().setLiveRig(settled);
+      useStudioStore.getState().setViewBlendTarget(
+        blendTargetForPitch(settled.tiltDeg),
+      );
+      useStudioStore.getState().setElevationActive(isElevationRig(settled));
+      orbitTouch = null;
+      twoFingerRef.current = false;
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length >= 2) {
+        e.preventDefault(); // stop browser pinch/scroll on the canvas
+        const now = Date.now();
+        // Return to plan — two quick two-finger taps flatten the camera.
+        if (isTwoFingerDoubleTap(lastTwoFingerStart, now)) {
+          useStudioStore.getState().setPitchDeg(0);
+          lastTwoFingerStart = null;
+          return;
+        }
+        lastTwoFingerStart = now;
+        sync(e.touches);
+        advance();
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length >= 2) e.preventDefault();
+      sync(e.touches);
+      advance();
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      sync(e.touches);
+      if (e.touches.length < 2) endGesture();
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: false });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    el.addEventListener("touchcancel", onTouchEnd);
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [gl]);
 
   /** Wheel zoom — anchored at the pointer.
    * Throttle rapid wheel events via requestAnimationFrame and clamp the
@@ -142,10 +258,23 @@ export function StudioControls({
    *  first in the scene) eats the pointerdown before those layers see it. */
   const onPointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
+      if (twoFingerRef.current) return; // two-finger touch owns the camera
       const { sketchMode: inkArmed, measureActive: tapeArmed, armedSymbolId: assetArmed } =
         useSeasonalStore.getState();
       if (inkArmed || tapeArmed || assetArmed != null) return; // capture layer wins
       e.stopPropagation();
+
+      // Cmd/Ctrl+drag orbits — pitch on the vertical axis, azimuth on the
+      // horizontal. The single continuous camera gesture; plain drag pans.
+      if (e.nativeEvent.metaKey || e.nativeEvent.ctrlKey) {
+        orbitState.current = beginOrbitDrag(
+          useStudioStore.getState().liveRig,
+          e.nativeEvent.clientX,
+          e.nativeEvent.clientY,
+        );
+        return;
+      }
+
       dragState.current = beginPanDrag(
         useStudioStore.getState().liveRig,
         e.nativeEvent.clientX,
@@ -159,6 +288,24 @@ export function StudioControls({
    *  drags are strokes, not camera moves). Always report cursor position. */
   const onPointerMove = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
+      if (twoFingerRef.current) return; // two-finger touch owns the camera
+      // Modifier orbit — drives pitch + azimuth straight into the transient
+      // live rig (zero React writes per move; FusedCamera derives the blend
+      // from the live pitch each frame).
+      if (orbitState.current.active) {
+        const live = useStudioStore.getState().liveRig;
+        const orbit = orbitDragMove(
+          orbitState.current,
+          live,
+          e.nativeEvent.clientX,
+          e.nativeEvent.clientY,
+        );
+        if (orbit.isOrbiting) {
+          orbitState.current.moved = true;
+          useStudioStore.getState().setLiveRig(orbit.nextRig);
+        }
+      }
+
       // When sketchMode is active, suppress camera pan so the drag becomes a
       // stroke captured by FusedSketchLayer's own raycast plane.
       const sketchActive = useSeasonalStore.getState().sketchMode;
@@ -200,6 +347,27 @@ export function StudioControls({
    *  drag never touched React state. */
   const onPointerUp = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
+      if (twoFingerRef.current) return; // two-finger touch owns the camera
+      if (orbitState.current.active) {
+        if (orbitState.current.moved) {
+          // Settle the release: snap to the EXACT elevation state when the
+          // drag ended near φ=90° + a facade normal. Commit the derived
+          // plan/3D state and the elevation flag exactly once per gesture —
+          // the camera axis itself stays in liveRig (the single source).
+          const live = useStudioStore.getState().liveRig;
+          const settled = settleOrbitRig(live);
+          useStudioStore.getState().setLiveRig(settled);
+          useStudioStore.getState().setViewBlendTarget(
+            blendTargetForPitch(settled.tiltDeg),
+          );
+          useStudioStore.getState().setElevationActive(
+            isElevationRig(settled),
+          );
+        }
+        orbitState.current.active = false;
+        orbitState.current.moved = false;
+        return; // an orbit never fires a ground click
+      }
       if (dragState.current.active && !dragState.current.moved && onGroundClick) {
         const world = raycastGround(e, groundRef);
         if (world && !tiltLocked) {
@@ -230,6 +398,7 @@ export function StudioControls({
         onPointerUp={onPointerUp}
         onPointerLeave={() => {
           dragState.current.active = false;
+          orbitState.current.active = false;
           onCursorMove?.(null);
         }}
       >

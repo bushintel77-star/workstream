@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 import { useStudioStore } from "./studioStore";
+import { DEFAULT_CAMERA_RIG } from "./cameraRig";
 import type { CanvasMode } from "../../../lib/canvas-mode";
 
 type PaletteAction = {
@@ -116,16 +117,40 @@ export function StudioCommandPalette({
         store.setFitSheetOpen(!useStudioStore.getState().fitSheetOpen),
       ),
       {
+        id: "trench-drainage",
+        label: "Trace trench — drainage",
+        group: "Tool",
+        run: () => store.setTrenchTool("drainage"),
+      },
+      {
+        id: "trench-irrig-main",
+        label: "Trace trench — irrigation main",
+        group: "Tool",
+        run: () => store.setTrenchTool("irrig_main"),
+      },
+      {
+        id: "trench-irrig-lateral",
+        label: "Trace trench — irrigation lateral",
+        group: "Tool",
+        run: () => store.setTrenchTool("irrig_lateral"),
+      },
+      {
+        id: "trench-lighting",
+        label: "Trace trench — lighting conduit",
+        group: "Tool",
+        run: () => store.setTrenchTool("lighting_conduit"),
+      },
+      {
         id: "view-plan",
         label: "Plan view (orthographic)",
         group: "View",
-        run: () => store.setViewBlendTarget(0),
+        run: () => store.setPitchDeg(0),
       },
       {
         id: "view-3d",
         label: "3D view (perspective)",
         group: "View",
-        run: () => store.setViewBlendTarget(1),
+        run: () => store.setPitchDeg(DEFAULT_CAMERA_RIG.tiltDeg),
       },
       {
         id: "view-zoom-in",

@@ -66,6 +66,8 @@ export function StudioToolRail({
   const setFitSheetOpen = useStudioStore((s) => s.setFitSheetOpen);
   const splitView = useStudioStore((s) => s.splitView);
   const setSplitView = useStudioStore((s) => s.setSplitView);
+  const trenchTool = useStudioStore((s) => s.trenchTool);
+  const setTrenchTool = useStudioStore((s) => s.setTrenchTool);
 
   const tools: RailTool[] = [
     {
@@ -101,6 +103,15 @@ export function StudioToolRail({
       onToggle: () => setMeasureActive(!measureActive),
       accent: "var(--gs-ink-truth)",
       title: "Two-point tape",
+    },
+    {
+      id: "trench",
+      glyph: "≋",
+      label: "Trench",
+      active: trenchTool != null,
+      onToggle: () => setTrenchTool(trenchTool ? null : "drainage"),
+      accent: "var(--gs-ink-truth)",
+      title: "Trace construction trench (drainage default; palette picks the kind)",
     },
     {
       id: "assets",

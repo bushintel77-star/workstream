@@ -25,7 +25,12 @@
  */
 
 import { create } from "zustand";
-import type { CanvasStroke, CatalogPlacement } from "@workstream/contracts";
+import type {
+  CanvasStroke,
+  CatalogPlacement,
+  ConstructionTrench,
+  ConstructionTrenchKind,
+} from "@workstream/contracts";
 import {
   melbourneSeason,
   type FloraStudioForm,
@@ -36,7 +41,13 @@ import {
   type SunDatePreset,
 } from "../handoff/features/sunGrowth/sunDatePreset";
 import type { PctPoint } from "./coordTransform";
-import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
+import {
+  blendTargetForPitch,
+  clampPitchDeg,
+  DEFAULT_CAMERA_RIG,
+  type StudioCameraRig,
+} from "./cameraRig";
+import type { TrenchPointPct } from "./trenchPath";
 
 /* -------------------------------------------------------------------------- */
 /* Save status types (ported from useStudioState.ts Ui slice)                 */
@@ -252,9 +263,26 @@ export interface StudioStoreState {
    */
   liveRig: StudioCameraRig;
 
+  /**
+   * Committed elevation flag (φ=90° + facade normal) — DOM-facing mirror of
+   * the live rig's elevation state, synced once per gesture end.
+   */
+  elevationActive: boolean;
+
   // --- Shared ink layer ---
   /** All sketch strokes in board-% space (the CanvasStroke contract schema). */
   sketchStrokes: CanvasStroke[];
+
+  // --- Construction trench runs (traced + accepted auto) ---
+  /** Armed trench kind — pointer drags become a trench trace; null = off. */
+  trenchTool: ConstructionTrenchKind | null;
+  /** Live trace draft (kind + points in board-%); null = not drawing. */
+  trenchDraft: {
+    kind: ConstructionTrenchKind;
+    points: TrenchPointPct[];
+  } | null;
+  /** Committed trenches (traced runs + accepted auto proposals). */
+  constructionTrenches: ConstructionTrench[];
 
   // --- Project context (for persistence + aerial + flora ranking) ---
   projectId: string;
@@ -277,6 +305,17 @@ export interface StudioStoreState {
   setSubsurfaceView: (v: boolean) => void;
   setSketchMode: (v: boolean) => void;
   setViewBlendTarget: (v: number) => void;
+  /**
+   * The single orbit axis (pitch 0–90°). One write commits both the live rig
+   * tiltDeg and the derived plan/3D blend target — the collapse that makes
+   * pitch the only camera parameter UI and gestures need to touch.
+   */
+  setPitchDeg: (deg: number) => void;
+  /**
+   * Write the committed elevation flag — see the `elevationActive` state
+   * field. Set once per gesture end together with the blend target.
+   */
+  setElevationActive: (v: boolean) => void;
   /** Write the animated blend — called per-frame by FusedCamera (transient). */
   setViewBlend: (v: number) => void;
   /** Write the live rig — called per-frame during pan/zoom (transient). */
@@ -329,6 +368,17 @@ export interface StudioStoreState {
   /** Update a single stroke (e.g., extrude height metadata). */
   updateSketchStroke: (id: string, patch: Partial<CanvasStroke>) => void;
 
+  /** Arm/disarm the trench tool (mutually exclusive with sketch/measure/asset). */
+  setTrenchTool: (kind: ConstructionTrenchKind | null) => void;
+  /** Start/replace/clear the live trace draft. */
+  setTrenchDraft: (
+    draft: { kind: ConstructionTrenchKind; points: TrenchPointPct[] } | null,
+  ) => void;
+  /** Replace all committed trenches (hydrate / accept-all / undo). */
+  setConstructionTrenches: (trenches: ConstructionTrench[]) => void;
+  /** Commit a completed traced run (clears the draft; tool stays armed). */
+  addConstructionTrench: (trench: ConstructionTrench) => void;
+
   setProjectContext: (
     projectId: string,
     aerialUri: string | null,
@@ -354,6 +404,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   viewBlendTarget: 0, // start in plan view (ortho, CAD-accurate)
   viewBlend: 0, // animated value — FusedCamera writes this each frame
   liveRig: DEFAULT_CAMERA_RIG, // transient — StudioControls writes during a gesture
+  elevationActive: false, // committed — StudioControls writes once on gesture end
 
   // Elevation Slice defaults
   sliceActive: false,
@@ -392,6 +443,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Ink
   sketchStrokes: [],
 
+  // Construction trenches
+  trenchTool: null,
+  trenchDraft: null,
+  constructionTrenches: [],
+
   // Context
   projectId: "",
   aerialUri: null,
@@ -415,9 +471,20 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       seasonProgress: seasonProgressFromSun(sunDatePreset, s.sunMin),
     })),
   setSubsurfaceView: (subsurfaceView) => set({ subsurfaceView }),
-  setSketchMode: (sketchMode) => set({ sketchMode }),
+  setSketchMode: (sketchMode) =>
+    set(sketchMode ? { sketchMode: true, trenchTool: null } : { sketchMode: false }),
   setViewBlendTarget: (viewBlendTarget) =>
     set({ viewBlendTarget: Math.max(0, Math.min(1, viewBlendTarget)) }),
+  setPitchDeg: (deg) =>
+    set((s) => {
+      const pitch = clampPitchDeg(deg);
+      return {
+        liveRig: { ...s.liveRig, tiltDeg: pitch },
+        viewBlendTarget: blendTargetForPitch(pitch),
+        elevationActive: false, // pitch alone never carries the facade snap
+      };
+    }),
+  setElevationActive: (elevationActive) => set({ elevationActive }),
   // Transient per-frame write — no DOM consumer should subscribe to viewBlend
   // directly (it changes every frame). Use viewBlendTarget for UI. Consumers
   // that must track the camera (stroke drape) read via getState() in useFrame.
@@ -434,7 +501,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setDimsView: (dimsView) => set({ dimsView }),
   // Mutual exclusion with sketch mode — both capture ground pointer events.
   setMeasureActive: (measureActive) =>
-    set(measureActive ? { measureActive: true, sketchMode: false } : { measureActive: false }),
+    set(
+      measureActive
+        ? { measureActive: true, sketchMode: false, trenchTool: null }
+        : { measureActive: false },
+    ),
   setMeasureTape: (a, b) =>
     set({ measureTape: a && b ? { a, b } : null }),
 
@@ -448,7 +519,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setArmedSymbolId: (armedSymbolId) =>
     set(
       armedSymbolId
-        ? { armedSymbolId, sketchMode: false, measureActive: false }
+        ? { armedSymbolId, sketchMode: false, measureActive: false, trenchTool: null }
         : { armedSymbolId: null },
     ),
   setPlacements: (placements) => set({ placements }),
@@ -535,6 +606,20 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       sketchStrokes: s.sketchStrokes.map((st) =>
         st.id === id ? { ...st, ...patch } : st,
       ),
+    })),
+
+  setTrenchTool: (trenchTool) =>
+    set(
+      trenchTool
+        ? { trenchTool, sketchMode: false, measureActive: false, armedSymbolId: null }
+        : { trenchTool: null },
+    ),
+  setTrenchDraft: (trenchDraft) => set({ trenchDraft }),
+  setConstructionTrenches: (constructionTrenches) => set({ constructionTrenches }),
+  addConstructionTrench: (trench) =>
+    set((s) => ({
+      constructionTrenches: [...s.constructionTrenches, trench],
+      trenchDraft: null,
     })),
 
   setProjectContext: (projectId, aerialUri, projectAddress) =>
