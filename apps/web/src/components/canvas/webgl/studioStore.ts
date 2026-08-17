@@ -28,6 +28,7 @@ import { create } from "zustand";
 import type { CanvasStroke, CatalogPlacement } from "@workstream/contracts";
 import type { FloraStudioForm } from "@workstream/domain";
 import type { PctPoint } from "./coordTransform";
+import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
 
 /* -------------------------------------------------------------------------- */
 /* Save status types (ported from useStudioState.ts Ui slice)                 */
@@ -190,6 +191,14 @@ export interface StudioStoreState {
    * the stroke-drape Y lerp). NOT for DOM subscription — it changes every frame.
    */
   viewBlend: number;
+  /**
+   * The LIVE camera rig — the transient value StudioControls writes during a
+   * pan/zoom gesture (per pointer-move, per wheel). FusedCamera reads it via
+   * getState() every frame. NOT for DOM subscription (it changes per frame
+   * during a drag). React state holds the COMMITTED rig, synced once on
+   * gesture end — so a pan never triggers a React re-render mid-drag.
+   */
+  liveRig: StudioCameraRig;
 
   // --- Shared ink layer ---
   /** All sketch strokes in board-% space (the CanvasStroke contract schema). */
@@ -218,6 +227,8 @@ export interface StudioStoreState {
   setViewBlendTarget: (v: number) => void;
   /** Write the animated blend — called per-frame by FusedCamera (transient). */
   setViewBlend: (v: number) => void;
+  /** Write the live rig — called per-frame during pan/zoom (transient). */
+  setLiveRig: (r: StudioCameraRig) => void;
 
   setSliceActive: (v: boolean) => void;
   setSliceAxis: (a: "x" | "z") => void;
@@ -289,6 +300,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   sketchMode: false,
   viewBlendTarget: 0, // start in plan view (ortho, CAD-accurate)
   viewBlend: 0, // animated value — FusedCamera writes this each frame
+  liveRig: DEFAULT_CAMERA_RIG, // transient — StudioControls writes during a gesture
 
   // Elevation Slice defaults
   sliceActive: false,
@@ -349,6 +361,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // directly (it changes every frame). Use viewBlendTarget for UI. Consumers
   // that must track the camera (stroke drape) read via getState() in useFrame.
   setViewBlend: (viewBlend) => set({ viewBlend }),
+  setLiveRig: (liveRig) => set({ liveRig }),
 
   setSliceActive: (sliceActive) => set({ sliceActive }),
   setSliceAxis: (sliceAxis) => set({ sliceAxis }),

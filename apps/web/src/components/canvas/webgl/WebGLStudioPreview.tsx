@@ -160,7 +160,26 @@ export function WebGLStudioPreview({
   quotePortalUri = null,
   initialCadGhostCount = null,
 }: WebGLStudioPreviewProps) {
-  const [rig, setRig] = useState<StudioCameraRig>(DEFAULT_CAMERA_RIG);
+  /**
+   * Discrete camera write (garden look / zoom buttons / palette) — straight
+   * to the transient store, the single source of truth for the camera. There
+   * is NO React rig mirror: per-frame pan/zoom (StudioControls) and these
+   * discrete writes all land in liveRig, read by FusedCamera via getState().
+   */
+  const writeLiveRig = useCallback((next: StudioCameraRig) => {
+    useStudioStore.getState().setLiveRig(next);
+  }, []);
+
+  /** Discrete zoom step (buttons / command palette). */
+  const zoomBy = useCallback(
+    (dir: 1 | -1) => {
+      const live = useStudioStore.getState().liveRig;
+      const factor = dir === 1 ? 1.25 : 1 / 1.25;
+      writeLiveRig({ ...live, zoom: Math.min(Math.max(live.zoom * factor, 0.1), 50) });
+    },
+    [writeLiveRig],
+  );
+
   const [presentationMode, setPresentationMode] = useState(false);
   const [activeMode, setActiveMode] = useState<CanvasMode>(initialMode);
   const [cadGhostCount, setCadGhostCount] = useState<number | null>(
@@ -207,7 +226,7 @@ export function WebGLStudioPreview({
   const applyGardenLook = (look: GardenViewpointLook) => {
     setGardenLook(look);
     setViewBlendTarget(1);
-    setRig({
+    writeLiveRig({
       ...DEFAULT_CAMERA_RIG,
       tiltDeg: 76,
       zoom: 1.45,
@@ -476,9 +495,8 @@ export function WebGLStudioPreview({
       utilities: liveData.subsurfaceUtilities.length,
       strikes: liveData.strikeAlerts.length,
       scaleM,
-      tilt: rig.tiltDeg,
     }),
-    [boundaryPct, buildingPct, easementsPct, items, strokes, liveData, scaleM, rig.tiltDeg],
+    [boundaryPct, buildingPct, easementsPct, items, strokes, liveData, scaleM],
   );
 
   const is3D = viewBlendTarget > 0.5;
@@ -600,9 +618,9 @@ export function WebGLStudioPreview({
           live 3D, linked cameras). The DOM chrome overlays whichever is
           mounted — one chrome, two viewports. */}
       {splitView ? (
-        <SplitViewLens sceneProps={sceneProps} rig={rig} onRigChange={setRig} />
+        <SplitViewLens sceneProps={sceneProps} />
       ) : (
-        <WebGLStudio {...sceneProps} cameraRig={rig} onRigChange={setRig} />
+        <WebGLStudio {...sceneProps} />
       )}
 
       {/* ---- The chrome overlay (pointer-transparent; children opt in) ---- */}
@@ -634,12 +652,7 @@ export function WebGLStudioPreview({
         projectId={projectId}
         unlocked={unlocked}
         onMode={(m) => onNativeMode(m as Parameters<typeof onNativeMode>[0])}
-        onZoom={(dir) =>
-          setRig((r) => ({
-            ...r,
-            zoom: Math.min(Math.max(r.zoom * (dir === 1 ? 1.25 : 1 / 1.25), 0.1), 50),
-          }))
-        }
+        onZoom={(dir) => zoomBy(dir === 1 ? 1 : -1)}
       />
 
       {/* First-run controls hint — dismissed for the session once seen. */}
@@ -911,8 +924,8 @@ export function WebGLStudioPreview({
           >
             {(
               [
-                ["−", "Zoom out", () => setRig((r) => ({ ...r, zoom: Math.max(r.zoom / 1.25, 0.1) }))],
-                ["+", "Zoom in", () => setRig((r) => ({ ...r, zoom: Math.min(r.zoom * 1.25, 50) }))],
+                ["−", "Zoom out", () => zoomBy(-1)],
+                ["+", "Zoom in", () => zoomBy(1)],
                 ["↶", "Undo (Ctrl+Z)", () => useStudioStore.getState().undo()],
                 ["↷", "Redo (Ctrl+Shift+Z)", () => useStudioStore.getState().redo()],
               ] as Array<[string, string, () => void]>

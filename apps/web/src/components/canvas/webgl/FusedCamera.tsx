@@ -40,7 +40,6 @@
 import { useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import type { StudioCameraRig } from "./cameraRig";
 import {
   FusedCameraScratch,
   springStep,
@@ -51,7 +50,6 @@ import { useStudioStore } from "./studioStore";
 import { useReducedMotion } from "./useReducedMotion";
 
 export interface FusedCameraProps {
-  rig: StudioCameraRig;
   scaleM: number;
   boardAspect: number;
   /**
@@ -70,7 +68,6 @@ export interface FusedCameraProps {
 const VIEW_PADDING = 1.3;
 
 export function FusedCamera({
-  rig,
   scaleM,
   boardAspect,
   viewBlendLocked,
@@ -95,6 +92,11 @@ export function FusedCamera({
   const currentLookAtRef = useRef(new THREE.Vector3(0, 0, 0));
 
   useFrame((_, delta) => {
+    // Read the LIVE rig from the store each frame (transient — StudioControls
+    // writes it during a pan/zoom drag with zero React re-renders). The rig
+    // prop was removed: the store is the single source of truth for the camera.
+    const rig = useStudioStore.getState().liveRig;
+
     // Locked instances (split view's pinned half) spring toward their pin
     // and leave the store's viewBlend to the free instance.
     const target =

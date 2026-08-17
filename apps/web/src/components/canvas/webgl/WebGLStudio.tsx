@@ -41,7 +41,6 @@ import type {
 } from "@workstream/contracts";
 import { PALETTE } from "../../../styles/colorTokens";
 import { StudioScene } from "./StudioScene";
-import type { StudioCameraRig } from "./cameraRig";
 import type { PctPoint, HeightmapPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
 import type { SubsurfaceUtility, StrikeAlertData } from "./features/SubsurfaceEngine";
@@ -56,10 +55,8 @@ export interface WebGLStudioProps {
   servicesPct?: PctPoint[][];
   items?: RenderItem[];
   buildingOpacity?: number;
-  cameraRig: StudioCameraRig;
   /** Pin the camera blend (split view's locked half). See FusedCamera. */
   viewBlendLocked?: number;
-  onRigChange?: (rig: StudioCameraRig) => void;
   onGroundClick?: (pct: PctPoint) => void;
   onCursorMove?: (pct: PctPoint | null) => void;
   subsurfaceUtilities?: SubsurfaceUtility[];
@@ -128,9 +125,7 @@ export function WebGLStudio({
   servicesPct,
   items,
   buildingOpacity,
-  cameraRig,
   viewBlendLocked,
-  onRigChange,
   onGroundClick,
   onCursorMove,
   subsurfaceUtilities,
@@ -210,9 +205,7 @@ export function WebGLStudio({
           servicesPct={servicesPct}
           items={items}
           buildingOpacity={buildingOpacity}
-          cameraRig={cameraRig}
           viewBlendLocked={viewBlendLocked}
-          onRigChange={onRigChange}
           onGroundClick={onGroundClick}
           onCursorMove={onCursorMove}
           subsurfaceUtilities={subsurfaceUtilities}

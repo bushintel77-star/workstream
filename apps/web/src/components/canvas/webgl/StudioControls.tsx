@@ -16,15 +16,19 @@
 import { useRef, useCallback, type RefObject } from "react";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import type { StudioCameraRig } from "./cameraRig";
+import {
+  beginPanDrag,
+  panDragMove,
+  zoomRigAt,
+  type PanDragState,
+} from "./cameraRigGesture";
 import { worldToPct, type PctPoint } from "./coordTransform";
 import { useSeasonalStore } from "./seasonalStore";
+import { useStudioStore } from "./studioStore";
 
 export interface StudioControlsProps {
   scaleM: number;
   boardAspect: number;
-  rig: StudioCameraRig;
-  onRigChange: (rig: StudioCameraRig) => void;
   /** Fired when the user clicks empty ground (not dragging). */
   onGroundClick?: (pct: PctPoint) => void;
   /** Fired on every pointer move with the current board-% position. */
@@ -53,23 +57,13 @@ function raycastGround(
 export function StudioControls({
   scaleM,
   boardAspect,
-  rig,
-  onRigChange,
   onGroundClick,
   onCursorMove,
   tiltLocked,
 }: StudioControlsProps) {
   const { gl } = useThree();
   const groundRef = useRef<THREE.Mesh>(null);
-  const dragState = useRef<{
-    active: boolean;
-    isPan: boolean;
-    startX: number;
-    startY: number;
-    startPanX: number;
-    startPanY: number;
-    moved: boolean;
-  }>({
+  const dragState = useRef<PanDragState>({
     active: false,
     isPan: false,
     startX: 0,
@@ -106,33 +100,16 @@ export function StudioControls({
       requestAnimationFrame(() => {
         wheelPendingRef.current = false;
 
-        const factor = delta > 0 ? 0.9 : 1.1;
-        const newZoom = Math.min(Math.max(rig.zoom * factor, 0.1), 50);
-
-        // Normalised to [-1, 1]
-        const nx = (px / rect.width) * 2 - 1;
-        const ny = -(py / rect.height) * 2 + 1;
-
-        // Shift pan towards the pointer proportional to the zoom delta
-        const zoomRatio = 1 - newZoom / Math.max(1e-6, rig.zoom);
-        let panShiftX = nx * 5 * zoomRatio;
-        let panShiftY = -ny * 5 * zoomRatio;
-
-        // Clamp pan shifts to a fraction of the lot scale to avoid wild jumps.
-        // Use scaleM from props as a safe world-size reference.
-        const maxShift = Math.max(1, scaleM * 0.5);
-        panShiftX = Math.max(-maxShift, Math.min(maxShift, panShiftX));
-        panShiftY = Math.max(-maxShift, Math.min(maxShift, panShiftY));
-
-        onRigChange({
-          ...rig,
-          zoom: newZoom,
-          panX: rig.panX + panShiftX,
-          panY: rig.panY + panShiftY,
-        });
+        // Read the LIVE rig from the store, write the next rig back — the
+        // store is the single source of truth for the camera (FusedCamera
+        // reads it via getState() each frame). Wheel is discrete and
+        // rAF-throttled, so this is one store write per frame at most.
+        const live = useStudioStore.getState().liveRig;
+        const next = zoomRigAt(live, delta, px, py, rect, scaleM);
+        useStudioStore.getState().setLiveRig(next);
       });
     },
-    [rig, onRigChange, gl, tiltLocked, scaleM],
+    [gl, tiltLocked, scaleM],
   );
 
   /** Pointer down — start tracking a potential drag. Yields the gesture when
@@ -145,17 +122,13 @@ export function StudioControls({
         useSeasonalStore.getState();
       if (inkArmed || tapeArmed || assetArmed != null) return; // capture layer wins
       e.stopPropagation();
-      dragState.current = {
-        active: true,
-        isPan: false,
-        startX: e.nativeEvent.clientX,
-        startY: e.nativeEvent.clientY,
-        startPanX: rig.panX,
-        startPanY: rig.panY,
-        moved: false,
-      };
+      dragState.current = beginPanDrag(
+        useStudioStore.getState().liveRig,
+        e.nativeEvent.clientX,
+        e.nativeEvent.clientY,
+      );
     },
-    [rig.panX, rig.panY],
+    [],
   );
 
   /** Pointer move — pan if dragging (unless sketchMode is on, in which case
@@ -166,21 +139,20 @@ export function StudioControls({
       // stroke captured by FusedSketchLayer's own raycast plane.
       const sketchActive = useSeasonalStore.getState().sketchMode;
       if (dragState.current.active && !sketchActive) {
-        const dx = e.nativeEvent.clientX - dragState.current.startX;
-        const dy = e.nativeEvent.clientY - dragState.current.startY;
-        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        // Read the LIVE rig each move; write the next rig to the transient
+        // store. NO React state write here — the frame loop reads it via
+        // getState(), so a pan drag never triggers a React re-render.
+        const live = useStudioStore.getState().liveRig;
+        const { isPan, nextRig } = panDragMove(
+          dragState.current,
+          live,
+          e.nativeEvent.clientX,
+          e.nativeEvent.clientY,
+        );
+        if (isPan) {
           dragState.current.moved = true;
           dragState.current.isPan = true;
-        }
-        if (dragState.current.isPan) {
-          // Convert screen px delta to world units (inverted for natural drag)
-          const worldDx = -dx / (rig.zoom * 8);
-          const worldDy = dy / (rig.zoom * 8);
-          onRigChange({
-            ...rig,
-            panX: dragState.current.startPanX + worldDx,
-            panY: dragState.current.startPanY + worldDy,
-          });
+          useStudioStore.getState().setLiveRig(nextRig);
         }
       }
 
@@ -194,10 +166,12 @@ export function StudioControls({
         }
       }
     },
-    [rig, onRigChange, onCursorMove, scaleM, boardAspect],
+    [onCursorMove, scaleM, boardAspect],
   );
 
-  /** Pointer up — fire click if it wasn't a drag. */
+  /** Pointer up — fire click if it wasn't a drag. The live rig stays in the
+   *  store (single source of truth); no React commit is needed — the whole
+   *  drag never touched React state. */
   const onPointerUp = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       if (dragState.current.active && !dragState.current.moved && onGroundClick) {

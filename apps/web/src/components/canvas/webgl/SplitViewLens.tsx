@@ -18,9 +18,8 @@
  * the Plan/3D toggle drives the sketch side only.
  */
 
-import { useCallback, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import dynamic from "next/dynamic";
-import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
 import type { WebGLStudioProps } from "./WebGLStudio";
 
 const WebGLStudio = dynamic(() => import("./WebGLStudio").then((m) => m.WebGLStudio), {
@@ -31,13 +30,11 @@ const WebGLStudio = dynamic(() => import("./WebGLStudio").then((m) => m.WebGLStu
 /** The scene props both halves share (everything but the camera plumbing). */
 export type SplitSceneProps = Omit<
   WebGLStudioProps,
-  "cameraRig" | "viewBlendLocked" | "onRigChange" | "children" | "style"
+  "viewBlendLocked" | "children" | "style"
 >;
 
 export interface SplitViewLensProps {
   sceneProps: SplitSceneProps;
-  rig: StudioCameraRig;
-  onRigChange: (rig: StudioCameraRig) => void;
 }
 
 const halfStyle: CSSProperties = {
@@ -67,14 +64,9 @@ const labelChip: CSSProperties = {
   pointerEvents: "none",
 };
 
-export function SplitViewLens({ sceneProps, rig, onRigChange }: SplitViewLensProps) {
-  // Linked cameras: both halves share the rig state (pan/zoom on either
-  // drives both — the whole point of the dual-screen workflow).
-  const handleRigChange = useCallback(
-    (newRig: StudioCameraRig) => onRigChange(newRig),
-    [onRigChange],
-  );
-
+export function SplitViewLens({ sceneProps }: SplitViewLensProps) {
+  // Linked cameras: both halves share the store's live rig (pan/zoom on
+  // either drives both — the whole point of the dual-screen workflow).
   return (
     <div
       data-testid="split-view-lens"
@@ -84,9 +76,7 @@ export function SplitViewLens({ sceneProps, rig, onRigChange }: SplitViewLensPro
       <div style={{ ...halfStyle, left: 0, borderRight: "1px solid var(--gs-line)" }}>
         <WebGLStudio
           {...sceneProps}
-          cameraRig={rig ?? DEFAULT_CAMERA_RIG}
           viewBlendLocked={0}
-          onRigChange={handleRigChange}
         >
           <div
             data-testid="split-label-plan"
@@ -99,11 +89,7 @@ export function SplitViewLens({ sceneProps, rig, onRigChange }: SplitViewLensPro
 
       {/* Right half — the sketch side: live perspective. */}
       <div style={{ ...halfStyle, right: 0 }}>
-        <WebGLStudio
-          {...sceneProps}
-          cameraRig={rig ?? DEFAULT_CAMERA_RIG}
-          onRigChange={handleRigChange}
-        >
+        <WebGLStudio {...sceneProps}>
           <div
             data-testid="split-label-sketch"
             style={{ ...labelChip, left: 12, color: "var(--gs-primary)" }}

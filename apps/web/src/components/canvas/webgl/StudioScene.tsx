@@ -35,7 +35,6 @@ import type { CanvasLayerPolicy } from "./layerPolicy";
 import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore } from "./seasonalStore";
-import type { StudioCameraRig } from "./cameraRig";
 import { pctToWorld, type PctPoint, type HeightmapPoint } from "./coordTransform";
 import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
@@ -93,10 +92,8 @@ export interface StudioSceneProps {
   servicesPct?: PctPoint[][];
   items?: RenderItem[];
   buildingOpacity?: number;
-  cameraRig: StudioCameraRig;
   /** Pin the camera blend (split view's locked half). See FusedCamera. */
   viewBlendLocked?: number;
-  onRigChange?: (rig: StudioCameraRig) => void;
   onGroundClick?: (pct: PctPoint) => void;
   onCursorMove?: (pct: PctPoint | null) => void;
   /** Subsurface utilities to render (Phase 2 Subsurface Engine). */
@@ -719,9 +716,7 @@ export function StudioScene({
   servicesPct = [],
   items = [],
   buildingOpacity = 1,
-  cameraRig,
   viewBlendLocked,
-  onRigChange,
   onGroundClick,
   onCursorMove,
   subsurfaceUtilities,
@@ -783,7 +778,6 @@ export function StudioScene({
         </>
       )}
       <FusedCamera
-        rig={cameraRig}
         scaleM={scaleM}
         boardAspect={boardAspect}
         viewBlendLocked={viewBlendLocked}
@@ -791,17 +785,13 @@ export function StudioScene({
 
       {/* Input capture — invisible ground plane for raycasting.
           Editing is locked when the camera is in 3D mode (viewBlend > 0.5). */}
-      {onRigChange && (
-        <StudioControls
-          scaleM={scaleM}
-          boardAspect={boardAspect}
-          rig={cameraRig}
-          onRigChange={onRigChange}
-          onGroundClick={onGroundClick}
-          onCursorMove={onCursorMove}
-          tiltLocked={viewBlendTarget > 0.5}
-        />
-      )}
+      <StudioControls
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        onGroundClick={onGroundClick}
+        onCursorMove={onCursorMove}
+        tiltLocked={viewBlendTarget > 0.5}
+      />
 
       {/* Ground — real terrain mesh when spot levels exist, flat plane otherwise. */}
       {heightmapPoints.length > 0 ? (
