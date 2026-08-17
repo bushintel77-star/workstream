@@ -68,6 +68,28 @@ describe("springStep", () => {
     expect(Number.isFinite(state.velocity)).toBe(true);
   });
 
+  it("ignores poison deltas (negative / NaN) and recovers corrupted state", () => {
+    // Regression: a negative frame delta (system clock adjustment) once sent
+    // the integrator runaway to 1e41, parking the camera at a garbage pitch
+    // where every canvas raycast missed — the drawing stopped responding.
+    const state: SpringState = { position: 0, velocity: 0 };
+    springStep(state, 1, CAMERA_SPRING, 1 / 60);
+    const before = state.position;
+
+    springStep(state, 1, CAMERA_SPRING, -0.016);
+    expect(state.position).toBe(before);
+
+    springStep(state, 1, CAMERA_SPRING, Number.NaN);
+    expect(state.position).toBe(before);
+
+    // A corrupted (non-finite) state resets to the target instead of diverging.
+    state.position = Number.POSITIVE_INFINITY;
+    state.velocity = Number.POSITIVE_INFINITY;
+    springStep(state, 1, CAMERA_SPRING, 1 / 60);
+    expect(state.position).toBe(1);
+    expect(state.velocity).toBe(0);
+  });
+
   it("starts at rest and does nothing if already at target", () => {
     const state: SpringState = { position: 0.5, velocity: 0 };
     springStep(state, 0.5, CAMERA_SPRING, 1 / 60);

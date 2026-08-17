@@ -97,6 +97,20 @@ export function springStep(
 ): number {
   const { stiffness, damping, mass } = config;
 
+  // Poison-delta guard: a negative, NaN, or infinite frame delta (system
+  // clock adjustment, tab restore, headless timing hiccups) sends the
+  // semi-implicit integrator runaway — in the field the blend spring
+  // exploded to 1e41 and parked the camera at a garbage pitch, silently
+  // killing every canvas raycast (the drawing stopped responding). A
+  // non-positive delta is a no-op; large positive deltas are already
+  // handled by the sub-stepping below.
+  if (!Number.isFinite(delta) || delta <= 0) return state.position;
+  if (!Number.isFinite(state.position) || !Number.isFinite(state.velocity)) {
+    state.position = target;
+    state.velocity = 0;
+    return state.position;
+  }
+
   // Sub-stepping: if delta is too large, the integration can blow up.
   // Max stable step ≈ 2 / ω where ω = sqrt(k/m). We use a safety factor.
   const omega = Math.sqrt(stiffness / mass);

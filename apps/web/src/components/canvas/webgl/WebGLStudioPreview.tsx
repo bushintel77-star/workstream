@@ -768,14 +768,14 @@ export function WebGLStudioPreview({
                   whiteSpace: "nowrap",
                 }}
               >
-                B&thinsp;{stats.boundaryPoints} · I&thinsp;{stats.items} · S&thinsp;{stats.strokes}
+                B{stats.boundaryPoints} · I{stats.items} · S{stats.strokes}
                 {stats.strikes > 0 && (
                   <span style={{ color: "var(--gs-ink-conflict)" }}>
                     {" "}
-                    · ⚠&thinsp;{stats.strikes}
+                    · ⚠{stats.strikes}
                   </span>
                 )}
-                {" "}| {stats.scaleM.toFixed(0)}&thinsp;m
+                {" "}| {stats.scaleM.toFixed(0)}m
               </span>
               <SaveStatusChip />
               <MeasureReadoutChip scaleM={scaleM} boardAspect={boardAspect} />

@@ -8,18 +8,17 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 ## P0 — Blocks first paying customer
 
-- [ ] **WebGL canvas pointer interactions dead (pre-existing, 2026-08-17)** —
-      measure-tape drags, asset placement clicks, flora-ring, and plain
-      ground clicks all fail on the WebGL studio while the scene renders
-      (dims labels live, rail/store state fine). A/B-proven against the
-      pre-chrome-restructure HEAD, so it predates the perimeter-tab work —
-      likely #187's camera/pointer rewrite, masked until now by the
-      HDR 429 crash (#194). Evidence: `e2e` specs
-      `webgl-asset-fanout`, `webgl-flora-ring`, `webgl-cad-annotations`
-      fail with no console/page errors and the canvas provably receives
-      the pointer events (`elementFromPoint` = canvas). Needs scene-level
-      raycast triage (StudioControls/MeasureTapeLayer/AssetPlaceLayer
-      handlers never fire).
+- [x] **WebGL canvas pointer interactions dead (fixed 2026-08-18)** —
+      measure tape, asset placement, flora ring, and pan all failed while
+      the scene rendered. Root cause: a poison frame delta (negative/NaN
+      clock hiccup) blew the FusedCamera blend spring up to 1e41, parking
+      the camera at a garbage pitch where every canvas raycast missed;
+      the plan-view `lookAt` up-vector degeneracy added random azimuth.
+      Fixed: `springStep` guards non-finite/non-positive deltas and
+      corrupted state, FusedCamera clamps the blend to [0,1] and uses a
+      deterministic arc-tangent up. Proven by
+      `webgl-asset-fanout` / `webgl-flora-ring` /
+      `webgl-cad-annotations` all green + a new unit test.
 - [x] **Persistence on Railway** — volume `api-volume` mounts at
       `/repo/apps/api/data`. Configured in the Railway dashboard.
 - [x] **SQLite write-through journal** — `packages/db/src/sqlite-persist.ts`

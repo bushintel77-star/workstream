@@ -46,7 +46,7 @@ import {
   CAMERA_SPRING,
   type SpringState,
 } from "./cameraAnimation";
-import { useStudioStore } from "./studioStore";
+import { easeInOutCubic, useStudioStore } from "./studioStore";
 import { blendTargetForPitch, isElevationRig, pitchRadians } from "./cameraRig";
 import { useReducedMotion } from "./useReducedMotion";
 
@@ -116,9 +116,14 @@ export function FusedCamera({
     // Spring physics — the camera has physical weight. When the user toggles
     // mid-transition, the spring's velocity carries into the new direction
     // seamlessly (no snap, no reset). Semi-implicit Euler with sub-stepping.
+    // Clamped to [0,1]: a blend outside the segment is meaningless and a
+    // stray overshoot once parked the camera at a garbage pitch.
     const blend = reducedMotion
       ? target
-      : springStep(springRef.current, target, CAMERA_SPRING, delta);
+      : Math.min(
+          1,
+          Math.max(0, springStep(springRef.current, target, CAMERA_SPRING, delta)),
+        );
     if (reducedMotion) {
       springRef.current.position = target;
       springRef.current.velocity = 0;
@@ -133,11 +138,17 @@ export function FusedCamera({
     const elevationOn = viewBlendLocked == null && isElevationRig(rig);
     const elevationBlend = reducedMotion
       ? (elevationOn ? 1 : 0)
-      : springStep(
-          elevationSpringRef.current,
-          elevationOn ? 1 : 0,
-          CAMERA_SPRING,
-          delta,
+      : Math.min(
+          1,
+          Math.max(
+            0,
+            springStep(
+              elevationSpringRef.current,
+              elevationOn ? 1 : 0,
+              CAMERA_SPRING,
+              delta,
+            ),
+          ),
         );
     if (reducedMotion) {
       elevationSpringRef.current.position = elevationOn ? 1 : 0;
@@ -241,6 +252,18 @@ export function FusedCamera({
     } else {
       currentLookAtRef.current.lerp(scratch.tempLook, Math.min(1, delta * 10));
     }
+    // Deterministic orbit frame: lookAt's fixed (0,1,0) up is degenerate at
+    // the plan view (view axis parallel to up), so the azimuth became
+    // arbitrary numeric noise and the drawing rotated run-to-run. The
+    // arc-tangent up is non-degenerate at every pitch, continuous through
+    // the overhead pass, and matches the (0,1,0) convention at oblique
+    // angles (camera X = -world X) — no visual flip for existing views.
+    const effTilt = tiltRad * easeInOutCubic(blend);
+    camera.up.set(
+      -Math.cos(effTilt) * Math.sin(rotateRad),
+      Math.sin(effTilt),
+      -Math.cos(effTilt) * Math.cos(rotateRad),
+    );
     camera.lookAt(currentLookAtRef.current);
 
     camera.updateMatrixWorld(true);
