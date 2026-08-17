@@ -201,6 +201,9 @@ export default function DesignStudioScreen() {
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load studio");
+      void import("../../../src/lib/sentry").then(({ captureMobileError }) =>
+        captureMobileError(e, { boundary: "mobile-design-studio-load", id }),
+      );
     } finally {
       setLoading(false);
     }
@@ -384,6 +387,9 @@ export default function DesignStudioScreen() {
       router.back();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
+      void import("../../../src/lib/sentry").then(({ captureMobileError }) =>
+        captureMobileError(e, { boundary: "mobile-design-studio-save", id }),
+      );
     } finally {
       setSaving(false);
     }

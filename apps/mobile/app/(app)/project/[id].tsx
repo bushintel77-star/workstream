@@ -268,6 +268,9 @@ export default function ProjectDetailScreen() {
       api.getEnvelopeBrief(id).then(setEnvelope).catch(() => setEnvelope(null));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load project");
+      void import("../../../src/lib/sentry").then(({ captureMobileError }) =>
+        captureMobileError(e, { boundary: "mobile-project-load", id }),
+      );
     } finally {
       setLoading(false);
     }
@@ -282,6 +285,9 @@ export default function ProjectDetailScreen() {
         setProject(p);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not advance project");
+        void import("../../../src/lib/sentry").then(({ captureMobileError }) =>
+          captureMobileError(e, { boundary: "mobile-project-advance", id }),
+        );
       }
     },
     [api, id],
@@ -305,6 +311,9 @@ export default function ProjectDetailScreen() {
       setProject(p);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Survey failed");
+      void import("../../../src/lib/sentry").then(({ captureMobileError }) =>
+        captureMobileError(e, { boundary: "mobile-project-survey", id }),
+      );
     } finally {
       setSurveyRunning(false);
     }

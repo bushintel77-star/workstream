@@ -90,6 +90,12 @@ export default function ConfirmPinScreen() {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : "Failed to create project");
         setPhase("error");
+        void import("../../src/lib/sentry").then(({ captureMobileError }) =>
+          captureMobileError(e, {
+            boundary: "mobile-create-project",
+            address,
+          }),
+        );
       }
     })();
 

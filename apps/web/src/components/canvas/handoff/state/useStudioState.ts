@@ -3830,6 +3830,14 @@ export function useStudioState(opts: UseStudioStateOpts) {
     } catch (err) {
       const kind = classifySaveError(err);
       console.error("saveNow failed", err);
+      // Studio error path — a failed autosave is a persistence failure.
+      void import("../../../../lib/sentry").then(({ captureWebError }) =>
+        captureWebError(err, {
+          boundary: "studio-save",
+          projectId: projectIdRef.current,
+          kind,
+        }),
+      );
       setUi({
         saveStatus: "error",
         saveErrorKind: kind,

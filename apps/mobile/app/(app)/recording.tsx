@@ -282,6 +282,9 @@ export default function RecordingScreen() {
         "Recording failed",
         e instanceof Error ? e.message : "Unknown error",
       );
+      void import("../../src/lib/sentry").then(({ captureMobileError }) =>
+        captureMobileError(e, { boundary: "mobile-recording-start", projectId }),
+      );
     } finally {
       setActivating(false);
     }
@@ -334,6 +337,9 @@ export default function RecordingScreen() {
       Alert.alert(
         "Upload failed",
         e instanceof Error ? e.message : "Could not upload recording",
+      );
+      void import("../../src/lib/sentry").then(({ captureMobileError }) =>
+        captureMobileError(e, { boundary: "mobile-recording-upload", projectId }),
       );
     } finally {
       setUploading(false);

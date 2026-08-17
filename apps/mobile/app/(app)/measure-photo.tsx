@@ -143,6 +143,9 @@ export default function MeasurePhotoScreen() {
         () => {},
       );
       setError(e instanceof Error ? e.message : "Measurement failed");
+      void import("../../src/lib/sentry").then(({ captureMobileError }) =>
+        captureMobileError(e, { boundary: "mobile-measure-photo", projectId }),
+      );
     } finally {
       setRunning(false);
     }

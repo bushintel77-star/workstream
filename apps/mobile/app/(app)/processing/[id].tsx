@@ -73,6 +73,9 @@ export default function ProcessingScreen() {
       if (pollRef.current) clearInterval(pollRef.current);
       if (slowRef.current) clearTimeout(slowRef.current);
       setError(e instanceof Error ? e.message : "Processing failed");
+      void import("../../../src/lib/sentry").then(({ captureMobileError }) =>
+        captureMobileError(e, { boundary: "mobile-processing-poll", id }),
+      );
     }
   }, [api, id, router]);
 
@@ -176,6 +179,9 @@ export default function ProcessingScreen() {
                   await tick();
                 } catch (e) {
                   setError(e instanceof Error ? e.message : "Retry failed");
+                  void import("../../../src/lib/sentry").then(({ captureMobileError }) =>
+                    captureMobileError(e, { boundary: "mobile-processing-retry", id }),
+                  );
                 } finally {
                   setRetrying(false);
                 }

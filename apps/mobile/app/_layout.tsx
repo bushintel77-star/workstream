@@ -5,10 +5,14 @@ import { StyleSheet, Text, View } from "react-native";
 import { tokens } from "@workstream/ui";
 import { tokenCache } from "../src/lib/clerk";
 import { isAuthEnabled, isAuthMisconfigured } from "../src/lib/auth";
+import { initSentry } from "../src/lib/sentry";
 import { WebPreviewHome } from "../src/components/WebPreviewHome";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
 const isWebPreview = process.env.EXPO_PUBLIC_WEB_PREVIEW === "true";
+
+// Boot error monitoring — no-op unless EXPO_PUBLIC_SENTRY_DSN is set.
+initSentry();
 
 function StackRoot() {
   return (

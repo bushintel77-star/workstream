@@ -542,7 +542,16 @@ export function WebGLStudioPreview({
     neighbourBuildings: visibleLayers.siteTruth ? neighbourBuildings : [],
     showSketch: visibleLayers.sketch,
     layerPolicy: policy,
-    onContextLost: () => setWebglLost(true),
+    onContextLost: () => {
+      setWebglLost(true);
+      // Studio error path — a lost WebGL context is a real device/GPU failure.
+      void import("../../../lib/sentry").then(({ captureWebError }) =>
+        captureWebError(new Error("WebGL context lost"), {
+          boundary: "webgl",
+          projectId,
+        }),
+      );
+    },
   } as const;
 
   if (webglAvailable === false || webglLost) {

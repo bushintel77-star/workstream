@@ -48,7 +48,13 @@ export function estimateStudioInWorker(
     const onError = (err: ErrorEvent) => {
       w.removeEventListener("message", onMessage);
       w.removeEventListener("error", onError);
-      reject(err.error ?? new Error(err.message || "Studio estimate worker failed"));
+      const workerErr =
+        err.error ?? new Error(err.message || "Studio estimate worker failed");
+      // Studio error path — the live-BOM worker crashed.
+      void import("./sentry").then(({ captureWebError }) =>
+        captureWebError(workerErr, { boundary: "estimate-worker", requestId }),
+      );
+      reject(workerErr);
     };
     w.addEventListener("message", onMessage);
     w.addEventListener("error", onError);

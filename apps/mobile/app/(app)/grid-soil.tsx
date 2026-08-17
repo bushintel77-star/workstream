@@ -97,6 +97,9 @@ export default function GridSoilScreen() {
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : "Failed to load project");
+          void import("../../src/lib/sentry").then(({ captureMobileError }) =>
+            captureMobileError(e, { boundary: "mobile-grid-soil-load", projectId }),
+          );
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -241,6 +244,9 @@ export default function GridSoilScreen() {
         () => {},
       );
       setError(e instanceof Error ? e.message : "Dictation failed");
+      void import("../../src/lib/sentry").then(({ captureMobileError }) =>
+        captureMobileError(e, { boundary: "mobile-grid-soil-dictation", projectId }),
+      );
     } finally {
       setAmbient("idle");
     }

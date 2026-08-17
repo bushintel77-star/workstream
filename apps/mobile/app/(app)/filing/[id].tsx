@@ -36,6 +36,10 @@ export default function FilingScreen() {
           uri: i.uri,
         })),
       );
+    } catch (e) {
+      void import("../../../src/lib/sentry").then(({ captureMobileError }) =>
+        captureMobileError(e, { boundary: "mobile-filing-load", id }),
+      );
     } finally {
       setLoading(false);
     }
