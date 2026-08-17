@@ -6,21 +6,22 @@
  * scene props, so mode switching only changes props/opacity targets —
  * nothing remounts, the WebGL instance persists across all modes.
  *
- * Law (operator directive, 2026-08-15):
- *   SKETCH  — trace-friendly: aerial/photo base visible under the ink.
- *   CAD     — photo-referenced drafting: aerial remains visible below accepted
- *             geometry and dimensions; subsurface remains explicitly opt-in.
+ * Law (operator directive, 2026-08-18 — aerial retired):
+ *   The canvas foundation is the authoritative Vicmap boundary + building
+ *   envelope on Studio Paper — no photo underlay. The drawing IS the
+ *   surface: ink, CAD geometry, and data layers sit directly on paper.
+ *   SKETCH  — clean paper trace surface; ink is the only texture.
+ *   CAD     — clean drafting: paper, accepted geometry, dims; subsurface
+ *             remains explicitly opt-in.
  *   SURVEY  — owns the subsurface works: blueprint ground, BYDA utilities,
  *             easements, services rendered distinct (dashed/coloured).
- *   GARDEN/QUOTE/PRESENT — presentation contexts: aerial per view blend,
- *             subsurface available via the Underground tool but not forced.
+ *   GARDEN/QUOTE/PRESENT — presentation contexts; subsurface available via
+ *             the Underground tool but not forced.
  */
 
 import type { CanvasMode } from "../../../lib/canvas-mode";
 
 export type CanvasLayerPolicy = {
-  /** Aerial/photo underlay opacity target (0 = hidden, 0.85 = full trace). */
-  aerialOpacity: number;
   /** Force the subsurface blueprint ground (vellum + utilities). */
   subsurface: boolean;
   /** BYDA utility runs + services corridors render. */
@@ -35,7 +36,6 @@ export function canvasLayerPolicy(mode: CanvasMode): CanvasLayerPolicy {
   switch (mode) {
     case "sketch":
       return {
-        aerialOpacity: 0.85,
         subsurface: false,
         utilities: false,
         easements: true,
@@ -43,7 +43,6 @@ export function canvasLayerPolicy(mode: CanvasMode): CanvasLayerPolicy {
       };
     case "cad":
       return {
-        aerialOpacity: 0.42,
         subsurface: false,
         utilities: false,
         easements: true,
@@ -51,7 +50,6 @@ export function canvasLayerPolicy(mode: CanvasMode): CanvasLayerPolicy {
       };
     case "survey":
       return {
-        aerialOpacity: 0.5,
         subsurface: true,
         utilities: true,
         easements: true,
@@ -59,7 +57,6 @@ export function canvasLayerPolicy(mode: CanvasMode): CanvasLayerPolicy {
       };
     case "elevation":
       return {
-        aerialOpacity: 0.3,
         subsurface: false,
         utilities: false,
         easements: true,
@@ -68,7 +65,6 @@ export function canvasLayerPolicy(mode: CanvasMode): CanvasLayerPolicy {
     default:
       // garden | quote | present | share — presentation contexts.
       return {
-        aerialOpacity: 0.85,
         subsurface: false,
         utilities: true,
         easements: true,

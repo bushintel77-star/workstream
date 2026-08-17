@@ -6,7 +6,9 @@
  * The primary operator surface. Mounts the WebGLStudio with ALL canvas data
  * wired: boundary, building, easements, items, strokes, subsurface utilities
  * (from BYDA assets), strike alerts (from trench×utility intersection),
- * terrain heightmap (from spot levels), and the aerial underlay.
+ * and the terrain heightmap (from spot levels). The canvas foundation is
+ * the authoritative Vicmap boundary + building envelope on Studio Paper —
+ * the aerial photo underlay was retired (2026-08-18 directive).
  *
  * This is no longer a "dev-only preview" — it is the default mount. The legacy
  * SVG studio (HandoffDesignStudio) is the ?svg=1 fallback.
@@ -29,6 +31,7 @@ import {
   type ReactNode,
 } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import type {
   CanvasStroke,
   CatalogPlacement,
@@ -121,8 +124,6 @@ export interface WebGLStudioPreviewProps {
   neighbourBuildings?: DesignNeighbourBuilding[];
   /** Outdoor area m² (page-computed from survey/title/site_frame) → fit-sheet. */
   outdoorM2?: number;
-  /** Aerial photo URI (for the ground underlay texture). */
-  aerialUri?: string | null;
   /** Activate sketch mode on mount (from ?tool=sketch deep link). */
   initialSketchMode?: boolean;
   /** Resolved canvas mode for the mode tabs (page clamps to a WebGL-native
@@ -156,7 +157,6 @@ export function WebGLStudioPreview({
   keylessOverlays = [],
   neighbourBuildings = [],
   outdoorM2 = 0,
-  aerialUri = null,
   initialSketchMode = false,
   initialMode = "sketch",
   progress = {
@@ -194,6 +194,7 @@ export function WebGLStudioPreview({
   /** Open meta surface panel (null = none). Mode surfaces open by mode. */
   const [metaTab, setMetaTab] = useState<MetaTabId | null>(null);
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
+  const router = useRouter();
 
   // Escape closes the open surface panel (browser-tab behaviour).
   useEffect(() => {
@@ -209,7 +210,6 @@ export function WebGLStudioPreview({
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
   const [visibleLayers, setVisibleLayers] = useState({
-    aerial: true,
     sketch: true,
     siteTruth: true,
     design: true,
@@ -313,9 +313,34 @@ export function WebGLStudioPreview({
     store.setPlacements(initialPlacements);
     store.setConstructionTrenches(constructionTrenches);
     store.setIrrigationZones(irrigationZones);
-    store.setProjectContext(projectId, aerialUri, projectAddress);
+    store.setProjectContext(projectId, null, projectAddress);
     if (initialSketchMode) store.setSketchMode(true);
-  }, [initialStrokes, initialPlacements, constructionTrenches, irrigationZones, projectId, aerialUri, projectAddress, initialSketchMode, hydratedRef]);
+  }, [initialStrokes, initialPlacements, constructionTrenches, irrigationZones, projectId, projectAddress, initialSketchMode, hydratedRef]);
+
+  // Quiet site-truth bootstrap — the canvas foundation is the authoritative
+  // Vicmap boundary + building envelope, not an aerial photo. When a
+  // geocoded project opens with no boundary yet, trace it once per session
+  // (same flow as the explicit Import button) and reload into the vectors.
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_E2E === "1") return; // e2e seeds its own state
+    if (boundaryPct.length >= 3 || lat == null || lng == null) return;
+    const key = `gs-truth-autotrace-${projectId}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    void (async () => {
+      try {
+        const canvasRes = await fetch(`/api/projects/${projectId}/design-canvas`);
+        if (!canvasRes.ok) return;
+        const canvasJson = (await canvasRes.json()) as {
+          canvas: import("@workstream/contracts").DesignCanvas | null;
+        };
+        const r = await importSiteTruth(projectId, canvasJson.canvas ?? null);
+        if ((r.boundaryPts ?? 0) > 0) router.refresh();
+      } catch {
+        // Quiet by design — the explicit Import button reports errors.
+      }
+    })();
+  }, [projectId, boundaryPct, lat, lng, router]);
 
   // Placements live in the store after hydration — the live source for both
   // the 3D items and the autosave doc. Pure client-side bridge (proven in
@@ -475,13 +500,13 @@ export function WebGLStudioPreview({
   // (the server-rendered snapshot only seeds the initial state).
   const liveProgress = useMemo<CanvasProgress>(
     () => ({
-      hasAerial: progress.hasAerial || Boolean(aerialUri),
+      hasAerial: progress.hasAerial,
       hasSketch: progress.hasSketch || strokes.length > 0,
       hasCad:
         progress.hasCad || storePlacements.length > 0 || boundaryPct.length > 0,
       hasQuote: progress.hasQuote,
     }),
-    [progress, aerialUri, strokes, storePlacements, boundaryPct],
+    [progress, strokes, storePlacements, boundaryPct],
   );
   const unlocked = useMemo(() => unlockedModes(liveProgress), [liveProgress]);
   // Mode-driven layer law — flows into the scene as props (no remounts).
@@ -566,7 +591,6 @@ export function WebGLStudioPreview({
     lat,
     lng,
     sunMin,
-    aerialUri: visibleLayers.aerial ? aerialUri : null,
     heightmapPoints: liveData.heightmapPoints,
     keylessOverlays: visibleLayers.siteTruth ? keylessOverlays : [],
     neighbourBuildings: visibleLayers.siteTruth ? neighbourBuildings : [],
@@ -1215,7 +1239,6 @@ export function WebGLStudioPreview({
               >
                 {(
                   [
-                    ["aerial", "Photo"],
                     ["sketch", "Ink"],
                     ["siteTruth", "Site truth"],
                     ["design", "Design"],

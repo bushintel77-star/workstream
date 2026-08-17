@@ -188,7 +188,6 @@ export default async function ProjectCanvasPage({
           levels={frame?.levels ?? []}
           keylessOverlays={frame?.keyless_overlays ?? []}
           neighbourBuildings={frame?.neighbour_buildings ?? []}
-          aerialUri={survey?.aerial_uri ?? null}
           outdoorM2={
             resolveAreaM2({
               titleLotM2: titleBlock?.lotAreaM2,

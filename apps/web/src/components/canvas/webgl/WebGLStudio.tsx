@@ -100,8 +100,6 @@ export interface WebGLStudioProps {
   lng?: number;
   /** Minutes past Melbourne midnight — time-of-day for the sun sample. */
   sunMin?: number;
-  /** Aerial photo URI — rendered as a ground underlay texture (fades in 3D). */
-  aerialUri?: string | null;
   /** Spot level sample points for the terrain heightmap (world space). */
   heightmapPoints?: HeightmapPoint[];
   keylessOverlays?: DesignKeylessOverlay[];
@@ -165,7 +163,6 @@ export function WebGLStudio({
   lat,
   lng,
   sunMin,
-  aerialUri,
   heightmapPoints,
   keylessOverlays,
   neighbourBuildings,
@@ -257,7 +254,6 @@ export function WebGLStudio({
           lat={lat}
           lng={lng}
           sunMin={sunMin}
-          aerialUri={aerialUri}
           heightmapPoints={heightmapPoints}
           keylessOverlays={keylessOverlays}
           neighbourBuildings={neighbourBuildings}

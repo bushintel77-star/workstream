@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Platform,
   Pressable,
   StyleSheet,
@@ -557,11 +556,6 @@ export default function DesignStudioScreen() {
             accessibilityLabel={canvasA11yLabel}
             accessibilityHint="Tap to ghost-preview the selected symbol in Place mode, select a symbol in Select mode, or measure a distance in Measure mode."
           >
-            <Image
-              source={{ uri: survey.aerial_uri }}
-              style={styles.aerial}
-              resizeMode="cover"
-            />
             <Svg
               style={StyleSheet.absoluteFill}
               width={canvasSize.width}
@@ -756,11 +750,6 @@ export default function DesignStudioScreen() {
               accessibilityLabel={canvasA11yLabel}
               accessibilityHint="Tap to place the selected symbol in Place mode, select a symbol in Select mode, or measure a distance in Measure mode."
             >
-              <Image
-                source={{ uri: survey.aerial_uri }}
-                style={styles.aerial}
-                resizeMode="cover"
-              />
               <Svg
                 style={StyleSheet.absoluteFill}
                 width={canvasSize.width}
@@ -972,12 +961,6 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: "hidden",
     backgroundColor: tokens.color.surface.base,
-  },
-  aerial: {
-    ...StyleSheet.absoluteFillObject,
-    width: "100%",
-    height: "100%",
-    opacity: 0.52,
   },
   canvasVeil: {
     ...StyleSheet.absoluteFillObject,

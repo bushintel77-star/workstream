@@ -41,20 +41,21 @@ test.describe("WebGL photo to hand-sketch flow", () => {
       timeout: 30_000,
     });
 
-    // Layers are a surface tab in the fresh chrome.
+    // Layers are a surface tab in the fresh chrome. The aerial/photo
+    // underlay is retired — the paper canvas carries ink, site truth and
+    // design layers only.
     await page.getByTestId("meta-tab-layers").click();
     const controls = page.getByRole("group", { name: "Canvas layers" });
-    const photoLayer = controls.getByRole("button", { name: "Photo" });
     const inkLayer = controls.getByRole("button", { name: "Ink" });
     const truthLayer = controls.getByRole("button", { name: "Site truth" });
     const designLayer = controls.getByRole("button", { name: "Design" });
-    await expect(photoLayer).toHaveAttribute("aria-pressed", "true");
+    await expect(controls.getByRole("button", { name: "Photo" })).toHaveCount(0);
     await expect(inkLayer).toHaveAttribute("aria-pressed", "true");
     await expect(truthLayer).toHaveAttribute("aria-pressed", "true");
     await expect(designLayer).toHaveAttribute("aria-pressed", "true");
-    await photoLayer.click();
-    await expect(photoLayer).toHaveAttribute("aria-pressed", "false");
-    await photoLayer.click();
+    await inkLayer.click();
+    await expect(inkLayer).toHaveAttribute("aria-pressed", "false");
+    await inkLayer.click();
 
     await page.getByTestId("rail-sketch").click();
     const canvas = page.getByTestId("webgl-canvas");

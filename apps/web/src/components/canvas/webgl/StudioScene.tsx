@@ -29,11 +29,9 @@ import {
   drapeRingToSurface,
   GROUND_CONTEXT_EXTENT,
 } from "./terrainMath";
-import { buildTerrainGeometry } from "./TerrainMesh";
 import { SPATIAL_LAYER } from "./layerContract";
 import type { CanvasLayerPolicy } from "./layerPolicy";
 import { resolveSunLightPosition } from "./sunLight";
-import { widerMapboxStaticAerial } from "../../../lib/mapView";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore } from "./seasonalStore";
 import { pctToWorld, type PctPoint, type HeightmapPoint } from "./coordTransform";
@@ -81,8 +79,6 @@ export interface StudioSceneProps {
   lng?: number;
   /** Minutes past Melbourne midnight — the time-of-day the sun is sampled at. */
   sunMin?: number;
-  /** Aerial photo URI — rendered as a ground underlay texture (fades in 3D). */
-  aerialUri?: string | null;
   /** Mode-driven layer policy — backgrounds + data layer visibility. */
   layerPolicy?: CanvasLayerPolicy;
   /** Spot level sample points for the terrain heightmap (world space). */
@@ -593,94 +589,6 @@ function GroundPlane({
   );
 }
 
-/**
- * Aerial underlay — the site photo rendered as a texture on a plane just above
- * the ground. In plan view (blend≈0) it's fully opaque (the photo reads as the
- * drawing surface, like the old sketch pad). As the camera transitions to 3D
- * (blend→1), the aerial fades out so the 3D geometry/textures take over.
- *
- * Rendered as a real scene-graph texture — no DOM layer to swap, no hard cut.
- */
-function AerialUnderlay({
-  aerialUri,
-  scaleM,
-  boardAspect,
-  heightmapPoints,
-  opacityTarget,
-}: {
-  aerialUri: string | null;
-  scaleM: number;
-  boardAspect: number;
-  heightmapPoints: HeightmapPoint[];
-  /** Mode policy target — CAD = 0 (clean drafting), sketch = full trace. */
-  opacityTarget: number;
-}) {
-  const matRef = useRef<THREE.MeshBasicMaterial>(null);
-  // Widen the capture client-side: the ground spans GROUND_CONTEXT_EXTENT× the
-  // board, so the board-sized aerial would smear/end at the tile edge. Rebuild
-  // the Mapbox static URL at a lower zoom (same token, same pixel budget) to
-  // cover the full ground, and size the plane to match it.
-  const planeSpan = useMemo(
-    () => ({
-      widthM: scaleM * GROUND_CONTEXT_EXTENT,
-      heightM: scaleM * boardAspect * GROUND_CONTEXT_EXTENT,
-    }),
-    [scaleM, boardAspect],
-  );
-  const texture = useMemo(() => {
-    if (!aerialUri) return null;
-    const loader = new THREE.TextureLoader();
-    const tex = loader.load(widerMapboxStaticAerial(aerialUri, planeSpan));
-    tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  }, [aerialUri, planeSpan]);
-  // Draped: on terrain projects the photo rides the SAME displaced geometry
-  // as the ground (shared builder) instead of sinking under raised ground.
-  const flatGeometry = useMemo(
-    () =>
-      new THREE.PlaneGeometry(planeSpan.widthM, planeSpan.heightM),
-    [planeSpan],
-  );
-  const geometry = useMemo(
-    () =>
-      buildTerrainGeometry(scaleM, boardAspect, heightmapPoints) ??
-      flatGeometry,
-    [flatGeometry, scaleM, boardAspect, heightmapPoints],
-  );
-
-  useFrame((_, delta) => {
-    const mat = matRef.current;
-    if (!mat) return;
-    // Mode policy × view blend: the photo fades out as the camera moves to
-    // 3D (geometry takes over) AND follows the mode target — CAD hides it
-    // entirely for the clean drafting surface. Lerp only — no remounts.
-    const { viewBlendTarget } = useSeasonalStore.getState();
-    const targetOpacity = opacityTarget * (1 - viewBlendTarget * 0.25);
-    const k = Math.min(1, delta * 4);
-    mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, k);
-    mat.visible = mat.opacity > 0.01;
-  });
-
-  if (!texture) return null;
-  return (
-    <mesh
-      geometry={geometry}
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, SPATIAL_LAYER.draped.offsetM, 0]}
-      renderOrder={SPATIAL_LAYER.draped.renderOrder}
-    >
-      <meshBasicMaterial
-        ref={matRef}
-        map={texture}
-        transparent
-        opacity={0.85}
-        depthWrite={false}
-        toneMapped={false}
-      />
-    </mesh>
-  );
-}
-
 export function StudioScene({
   scaleM,
   boardAspect,
@@ -702,7 +610,6 @@ export function StudioScene({
   // sunMin is read from the store by SunRig (not used directly here), but kept
   // in the props for API completeness / future direct-pass use.
   sunMin: _sunMin = 12 * 60,
-  aerialUri = null,
   layerPolicy,
   heightmapPoints = [],
   keylessOverlays = [],
@@ -711,7 +618,6 @@ export function StudioScene({
 }: StudioSceneProps) {
   // Default policy keeps every mode's legacy behaviour when unset.
   const policy: CanvasLayerPolicy = layerPolicy ?? {
-    aerialOpacity: 0.85,
     subsurface: false,
     utilities: true,
     easements: true,
@@ -840,8 +746,6 @@ export function StudioScene({
           lng={lng}
         />
       ) : null}
-      {/* Aerial photo underlay — opaque in plan view, fades in 3D. */}
-      <AerialUnderlay aerialUri={aerialUri} scaleM={scaleM} boardAspect={boardAspect} heightmapPoints={heightmapPoints} opacityTarget={policy.aerialOpacity} />
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the
           drawing surface, complementing the directional sun shadows. */}
       <GroundContactShadows scaleM={scaleM} boardAspect={boardAspect} />

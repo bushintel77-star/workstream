@@ -59,6 +59,9 @@ export default defineConfig({
             AUTH_REQUIRED: "false",
             API_URL,
             NEXT_PUBLIC_API_URL: API_URL,
+            // Skip the studio's quiet Vicmap auto-trace — specs seed their own
+            // state and the live WFS round-trips would blow test budgets.
+            NEXT_PUBLIC_E2E: "1",
           },
         },
       ],
