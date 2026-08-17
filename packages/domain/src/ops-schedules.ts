@@ -47,6 +47,8 @@ export type PlantingScheduleRow = {
   count: number;
   pot_form: string;
   spacing_m: number | null;
+  /** Nursery container size (L) from the palette — null when unknown. */
+  pot_size_l: number | null;
   rate_card_sku: string | null;
 };
 
@@ -123,17 +125,45 @@ const SPACING_BY_FORM: Record<string, number> = {
   lawn: 0,
 };
 
+/** Count of leading words two strings share (e.g. "lomandra longifolia" vs
+ *  "lomandra" → 1; "lomandra longifolia 'tanika'" vs "lomandra longifolia" → 2). */
+function sharedWordPrefixLen(a: string, b: string): number {
+  const wa = a.split(/\s+/);
+  const wb = b.split(/\s+/);
+  let n = 0;
+  while (n < wa.length && n < wb.length && wa[n] === wb[n]) n += 1;
+  return n;
+}
+
 function matchPalette(botanical: string | undefined, label: string) {
   const bot = (botanical ?? "").toLowerCase();
   const lab = label.toLowerCase();
-  return (
-    plantPalette.find(
-      (p) =>
-        p.species.toLowerCase().includes(bot.split("'")[0]!.trim()) ||
-        p.common_name.toLowerCase() === lab ||
-        lab.includes(p.common_name.toLowerCase().slice(0, 12)),
-    ) ?? null
+  const direct = plantPalette.find(
+    (p) =>
+      p.species.toLowerCase().includes(bot.split("'")[0]!.trim()) ||
+      p.common_name.toLowerCase() === lab ||
+      lab.includes(p.common_name.toLowerCase().slice(0, 12)),
   );
+  if (direct) return direct;
+
+  // Genus fallback — the catalog botanical may add a species epithet the
+  // palette omits (e.g. catalog "Lomandra longifolia 'Tanika'" vs palette
+  // "Lomandra 'Tanika'"). Match the palette species sharing the most leading
+  // words, so a cultivar resolves to its own entry rather than a bare genus.
+  const genus = bot.split(/\s+/)[0];
+  if (!genus || genus.length < 3) return null;
+  let best: (typeof plantPalette)[number] | null = null;
+  let bestLen = 0;
+  for (const p of plantPalette) {
+    const ps = p.species.toLowerCase();
+    if (!ps.startsWith(genus)) continue;
+    const shared = sharedWordPrefixLen(ps, bot);
+    if (shared > bestLen) {
+      best = p;
+      bestLen = shared;
+    }
+  }
+  return best;
 }
 
 /** Aggregate planting placements × Curtis catalog / palette → nursery order rows. */
@@ -176,7 +206,10 @@ export function buildPlantingSchedule(
       common_name: pal?.common_name ?? sym.label,
       count: list.length,
       pot_form: form,
-      spacing_m: SPACING_BY_FORM[studioForm] ?? 0.5,
+      // Palette spacing/pot size win over form-based defaults when the
+      // species record carries them (open-source-enriched seed library).
+      spacing_m: pal?.spacing_m ?? SPACING_BY_FORM[studioForm] ?? 0.5,
+      pot_size_l: pal?.pot_size_l ?? null,
       rate_card_sku: sym.rate_card_sku ?? null,
     });
   }
@@ -461,12 +494,13 @@ export function scheduleToCsv(
 
 export function plantingScheduleCsv(sched: PlantingSchedule): string {
   return scheduleToCsv(
-    ["species", "common_name", "count", "pot_form", "spacing_m", "rate_card_sku"],
+    ["species", "common_name", "count", "pot_form", "pot_size_l", "spacing_m", "rate_card_sku"],
     sched.rows.map((r) => ({
       species: r.species,
       common_name: r.common_name,
       count: r.count,
       pot_form: r.pot_form,
+      pot_size_l: r.pot_size_l,
       spacing_m: r.spacing_m,
       rate_card_sku: r.rate_card_sku,
     })),

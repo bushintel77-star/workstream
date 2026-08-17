@@ -10,7 +10,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 4,
+    "pot_size_l": 75,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Pyrus calleryana 'Capital'",
@@ -23,7 +33,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 3,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Quercus palustris 'Green Pillar'",
@@ -36,7 +56,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 4,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Tilia cordata 'Greenspire'",
@@ -49,7 +79,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 5,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Ulmus parvifolia 'Murray Cane'",
@@ -62,7 +102,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 4,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "fast",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "autumn",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Photinia robusta",
@@ -74,7 +124,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 1.2,
+    "pot_size_l": 10,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Murraya paniculata",
@@ -86,7 +146,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 1,
+    "pot_size_l": 10,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "light frost"
   },
   {
     "species": "Camellia sasanqua 'Setsugekka'",
@@ -98,7 +168,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 1.2,
+    "pot_size_l": 10,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "autumn",
+    "hardiness": "light frost"
   },
   {
     "species": "Westringia 'Wynyabbie Gem'",
@@ -110,7 +190,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 1,
+    "pot_size_l": 5,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Pittosporum tenuifolium 'Silver Sheen'",
@@ -122,7 +212,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 1.5,
+    "pot_size_l": 10,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Viburnum tinus",
@@ -134,7 +234,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 1.2,
+    "pot_size_l": 10,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "winter",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Magnolia grandiflora 'Little Gem'",
@@ -146,7 +256,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 3,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "slow",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "light frost"
   },
   {
     "species": "Magnolia grandiflora 'Kay Parris'",
@@ -158,7 +278,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 3,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "slow",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "light frost"
   },
   {
     "species": "Acer palmatum 'Sango Kaku'",
@@ -170,7 +300,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 3,
+    "pot_size_l": 45,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "slow",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "spring",
+    "hardiness": "light frost"
   },
   {
     "species": "Olea europaea 'Tolley's Upright'",
@@ -182,7 +322,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 3,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "light frost"
   },
   {
     "species": "Lagerstroemia indica 'Tuscarora'",
@@ -194,7 +344,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 3,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "summer",
+    "hardiness": "light frost"
   },
   {
     "species": "Cercis canadensis 'Forest Pansy'",
@@ -206,7 +366,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 4,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Buxus sempervirens",
@@ -218,7 +388,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.3,
+    "pot_size_l": 2,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "slow",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Buxus microphylla 'Faulkner'",
@@ -230,7 +410,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.3,
+    "pot_size_l": 2,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "slow",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Westringia 'Grey Box'",
@@ -242,7 +432,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.6,
+    "pot_size_l": 2,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Camellia japonica",
@@ -254,7 +454,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 1.5,
+    "pot_size_l": 10,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "slow",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "winter",
+    "hardiness": "light frost"
   },
   {
     "species": "Agonis flexuosa 'Burgundy'",
@@ -266,7 +476,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 4,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "light frost"
   },
   {
     "species": "Liriope muscari 'Just Right'",
@@ -278,7 +498,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.3,
+    "pot_size_l": 1,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "summer",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Lomandra 'Tanika'",
@@ -290,7 +520,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.4,
+    "pot_size_l": 1,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Lomandra 'Lime Tuff'",
@@ -302,7 +542,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.35,
+    "pot_size_l": 1,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Dianella 'Little Jess'",
@@ -314,7 +564,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.35,
+    "pot_size_l": 1,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Miscanthus sinensis 'Adagio'",
@@ -326,7 +586,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.8,
+    "pot_size_l": 5,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "autumn",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Pennisetum alopecuroides 'Nafray'",
@@ -338,7 +608,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.6,
+    "pot_size_l": 5,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "summer",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Calamagrostis x acutiflora 'Karl Foerster'",
@@ -350,7 +630,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.6,
+    "pot_size_l": 5,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Dichondra repens",
@@ -362,7 +652,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.2,
+    "pot_size_l": 1,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": false,
+    "flowering": "spring",
+    "hardiness": "light frost"
   },
   {
     "species": "Trachelospermum jasminoides",
@@ -374,7 +674,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.5,
+    "pot_size_l": 1,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "summer",
+    "hardiness": "light frost"
   },
   {
     "species": "Myoporum parvifolium",
@@ -386,7 +696,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.5,
+    "pot_size_l": 1,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "fast",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Trachelospermum jasminoides",
@@ -398,7 +718,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.5,
+    "pot_size_l": 1,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "summer",
+    "hardiness": "light frost"
   },
   {
     "species": "Parthenocissus tricuspidata 'Veitchii'",
@@ -410,7 +740,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 1,
+    "pot_size_l": 5,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Ficus pumila",
@@ -422,7 +762,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.5,
+    "pot_size_l": 5,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "light frost"
   },
   {
     "species": "Stenotaphrum secundatum 'Sir Walter'",
@@ -434,7 +784,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0,
+    "pot_size_l": 0,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "summer",
+    "hardiness": "light frost"
   },
   {
     "species": "Festuca arundinacea",
@@ -446,7 +806,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0,
+    "pot_size_l": 0,
+    "sun_exposure": "full_sun",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Cycas revoluta",
@@ -459,7 +829,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 1.5,
+    "pot_size_l": 25,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "slow",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "summer",
+    "hardiness": "light frost"
   },
   {
     "species": "Ligularia reniformis",
@@ -472,7 +852,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.5,
+    "pot_size_l": 1,
+    "sun_exposure": "part_shade",
+    "water_needs": "high",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "light frost"
   },
   {
     "species": "Buxus microphylla",
@@ -485,7 +875,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.3,
+    "pot_size_l": 2,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "slow",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "spring",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Ophiopogon japonicus 'Nana'",
@@ -498,7 +898,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.2,
+    "pot_size_l": 1,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "slow",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": true,
+    "flowering": "summer",
+    "hardiness": "frost hardy"
   },
   {
     "species": "Philodendron 'Rojo Congo'",
@@ -511,7 +921,17 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 0.8,
+    "pot_size_l": 5,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "not frost hardy"
   },
   {
     "species": "Parthenocissus tricuspidata",
@@ -524,6 +944,246 @@
     "climate_zones": [
       "temperate"
     ],
-    "curtis_approved": true
+    "curtis_approved": true,
+    "spacing_m": 1,
+    "pot_size_l": 5,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": false,
+    "native": false,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "frost hardy"
+  },
+  {
+    "species": "Eucalyptus scoparia",
+    "common_name": "Wallangarra White Gum",
+    "category": "feature_tree",
+    "form": "Tree",
+    "mature_h_m": 15,
+    "mature_w_m": 8,
+    "use_description": "Tall clean-trunked native, elegant canopy",
+    "climate_zones": [
+      "temperate"
+    ],
+    "curtis_approved": true,
+    "spacing_m": 6,
+    "pot_size_l": 45,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "fast",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "winter",
+    "hardiness": "frost hardy"
+  },
+  {
+    "species": "Hakea laurina",
+    "common_name": "Pincushion Hakea",
+    "category": "feature_tree",
+    "form": "Small tree",
+    "mature_h_m": 5,
+    "mature_w_m": 4,
+    "use_description": "Sculptural native, winter bloom",
+    "climate_zones": [
+      "temperate"
+    ],
+    "curtis_approved": true,
+    "spacing_m": 3,
+    "pot_size_l": 25,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "winter",
+    "hardiness": "light frost"
+  },
+  {
+    "species": "Callistemon 'Kings Park Special'",
+    "common_name": "Bottlebrush",
+    "category": "feature_tree",
+    "form": "Small tree",
+    "mature_h_m": 6,
+    "mature_w_m": 4,
+    "use_description": "Bird-attracting native, red brushes",
+    "climate_zones": [
+      "temperate"
+    ],
+    "curtis_approved": true,
+    "spacing_m": 3,
+    "pot_size_l": 25,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "light frost"
+  },
+  {
+    "species": "Grevillea 'Robyn Gordon'",
+    "common_name": "Robyn Gordon Grevillea",
+    "category": "structural_shrub",
+    "form": "Shrub",
+    "mature_h_m": 1.5,
+    "mature_w_m": 2,
+    "use_description": "Long-flowering native mass",
+    "climate_zones": [
+      "temperate"
+    ],
+    "curtis_approved": true,
+    "spacing_m": 1,
+    "pot_size_l": 5,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "year-round",
+    "hardiness": "light frost"
+  },
+  {
+    "species": "Correa 'Dusky Bells'",
+    "common_name": "Native Fuchsia",
+    "category": "structural_shrub",
+    "form": "Shrub",
+    "mature_h_m": 1,
+    "mature_w_m": 1.5,
+    "use_description": "Shade-tolerant native, tubular flowers",
+    "climate_zones": [
+      "temperate"
+    ],
+    "curtis_approved": true,
+    "spacing_m": 0.8,
+    "pot_size_l": 5,
+    "sun_exposure": "part_shade",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "autumn",
+    "hardiness": "frost hardy"
+  },
+  {
+    "species": "Anigozanthos 'Bush Gold'",
+    "common_name": "Kangaroo Paw",
+    "category": "mass_understory",
+    "form": "Clumping",
+    "mature_h_m": 1,
+    "mature_w_m": 0.8,
+    "use_description": "Native accent mass, architectural flower",
+    "climate_zones": [
+      "temperate"
+    ],
+    "curtis_approved": true,
+    "spacing_m": 0.5,
+    "pot_size_l": 2,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "spring",
+    "hardiness": "light frost"
+  },
+  {
+    "species": "Poa labillardierei",
+    "common_name": "Common Tussock Grass",
+    "category": "ornamental_grass",
+    "form": "Tussock",
+    "mature_h_m": 1,
+    "mature_w_m": 1,
+    "use_description": "Native tussock mass, soft movement",
+    "climate_zones": [
+      "temperate"
+    ],
+    "curtis_approved": true,
+    "spacing_m": 0.6,
+    "pot_size_l": 2,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "summer",
+    "hardiness": "frost hardy"
+  },
+  {
+    "species": "Themeda triandra",
+    "common_name": "Kangaroo Grass",
+    "category": "ornamental_grass",
+    "form": "Tussock",
+    "mature_h_m": 0.8,
+    "mature_w_m": 0.8,
+    "use_description": "Native grassland, seasonal colour",
+    "climate_zones": [
+      "temperate"
+    ],
+    "curtis_approved": true,
+    "spacing_m": 0.5,
+    "pot_size_l": 2,
+    "sun_exposure": "full_sun",
+    "water_needs": "low",
+    "growth_rate": "moderate",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": true,
+    "flowering": "summer",
+    "hardiness": "frost hardy"
+  },
+  {
+    "species": "Viola hederacea",
+    "common_name": "Native Violet",
+    "category": "groundcover",
+    "form": "Groundcover",
+    "mature_h_m": 0.1,
+    "mature_w_m": 0.5,
+    "use_description": "Shade groundcover under trees",
+    "climate_zones": [
+      "temperate"
+    ],
+    "curtis_approved": true,
+    "spacing_m": 0.3,
+    "pot_size_l": 1,
+    "sun_exposure": "part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": false,
+    "flowering": "spring",
+    "hardiness": "light frost"
+  },
+  {
+    "species": "Pandorea jasminoides",
+    "common_name": "Bower Vine",
+    "category": "climber",
+    "form": "Climber",
+    "mature_h_m": 5,
+    "mature_w_m": 3,
+    "use_description": "Evergreen native climber, pink trumpets",
+    "climate_zones": [
+      "temperate"
+    ],
+    "curtis_approved": true,
+    "spacing_m": 1,
+    "pot_size_l": 5,
+    "sun_exposure": "full_sun_part_shade",
+    "water_needs": "moderate",
+    "growth_rate": "fast",
+    "evergreen": true,
+    "native": true,
+    "drought_tolerant": false,
+    "flowering": "summer",
+    "hardiness": "light frost"
   }
 ]

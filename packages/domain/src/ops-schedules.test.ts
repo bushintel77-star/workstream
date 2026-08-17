@@ -45,6 +45,39 @@ describe("ops schedules", () => {
     expect(plantingScheduleCsv(sched)).toContain("Pleached");
   });
 
+  it("uses palette spacing + pot size over form defaults when matched", () => {
+    const sched = buildPlantingSchedule({
+      placements: [
+        {
+          id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          symbol_id: "hornbeam-pleached",
+          x_pct: 10,
+          y_pct: 10,
+          rotation_deg: 0,
+          scale: 1,
+        },
+        {
+          id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          symbol_id: "lomandra-mass",
+          x_pct: 20,
+          y_pct: 20,
+          rotation_deg: 0,
+          scale: 1,
+        },
+      ],
+    });
+    // Carpinus betulus 'Frans Fontaine' → spacing 4 m, pot 75 L.
+    const hornbeam = sched.rows.find((r) => r.symbol_id === "hornbeam-pleached");
+    expect(hornbeam?.spacing_m).toBe(4);
+    expect(hornbeam?.pot_size_l).toBe(75);
+    // Lomandra 'Tanika' → spacing 0.4 m, pot 1 L.
+    const lomandra = sched.rows.find((r) => r.symbol_id === "lomandra-mass");
+    expect(lomandra?.spacing_m).toBe(0.4);
+    expect(lomandra?.pot_size_l).toBe(1);
+    // CSV carries the pot column.
+    expect(plantingScheduleCsv(sched)).toContain("pot_size_l");
+  });
+
   it("builds trench dig schedule excluding ghosts", () => {
     const sched = buildTrenchSchedule(
       {
