@@ -32,7 +32,12 @@ import {
   SMAA,
 } from "@react-three/postprocessing";
 import { BlendFunction, KernelSize } from "postprocessing";
-import { useCallback, type CSSProperties, type ReactNode } from "react";
+import {
+  Component,
+  useCallback,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import * as THREE from "three";
 import type { WebGLRenderer } from "three";
 import type {
@@ -45,6 +50,31 @@ import type { PctPoint, HeightmapPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
 import type { SubsurfaceUtility, StrikeAlertData } from "./features/SubsurfaceEngine";
 import type { PresentationLensFilter } from "./PresentationLens";
+
+/**
+ * Image-based lighting must never take the drawing down: a failed
+ * environment load (network hiccup, rate limit, missing asset) renders
+ * nothing here and the scene falls back to its direct lights instead of
+ * tripping the route error boundary.
+ */
+class StudioEnvironmentBoundary extends Component<
+  { children?: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.warn("[webgl] environment lighting unavailable", error);
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 export interface WebGLStudioProps {
   scaleM: number;
@@ -193,8 +223,20 @@ export function WebGLStudio({
          * sky/bounce reflections to every PBR material. background={false} is
          * critical: the IBL lights the scene but the canvas keeps clearing to
          * Studio Paper #F4F4F4 (doc §1.1 binding).
+         *
+         * Vendored locally (public/hdri, CC0 from Poly Haven): the previous
+         * preset fetched raw.githubusercontent.com at runtime, and a GitHub
+         * 429 killed the whole canvas into the studio error boundary.
+         * StudioEnvironmentBoundary degrades to direct lights if this ever
+         * fails to load again.
          */}
-        <Environment preset="park" background={false} environmentIntensity={0.55} />
+        <StudioEnvironmentBoundary>
+          <Environment
+            files="/hdri/rooitou_park_1k.hdr"
+            background={false}
+            environmentIntensity={0.55}
+          />
+        </StudioEnvironmentBoundary>
 
         <StudioScene
           scaleM={scaleM}
