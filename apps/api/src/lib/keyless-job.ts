@@ -25,6 +25,8 @@ const DEFAULT_KINDS: VicmapKeylessKind[] = [
   "contour",
   "flood",
   "heritage",
+  // Native vegetation (EVC) — NatureKit's modelled Ecological Vegetation
+  // Classes hydrate from the same open DELWP GeoServer (nv2005_evcbcs).
   "native_vegetation",
   "water_corp",
   "road_casement",

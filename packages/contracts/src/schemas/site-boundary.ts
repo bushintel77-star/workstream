@@ -213,6 +213,7 @@ export const KeylessHydrateRequestSchema = z.object({
         "road_casement",
         "acid_sulfate",
         "wetland",
+        "native_vegetation",
       ]),
     )
     .default([
@@ -221,6 +222,7 @@ export const KeylessHydrateRequestSchema = z.object({
       "contour",
       "flood",
       "heritage",
+      "native_vegetation",
       "water_corp",
       "road_casement",
     ]),
