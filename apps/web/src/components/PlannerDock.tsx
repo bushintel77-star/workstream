@@ -27,9 +27,7 @@ function subscribeDesktop(callback: () => void): () => void {
     mq.addEventListener("change", callback);
     return () => mq.removeEventListener("change", callback);
   }
-  // @ts-ignore - legacy fallback
   mq.addListener(callback);
-  // @ts-ignore
   return () => mq.removeListener(callback);
 }
 

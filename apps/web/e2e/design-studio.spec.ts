@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 import {
-  handoffStudio,
   LEGACY_STUDIO_VIEWPORT,
   openCommandPalette,
   pipelineShell,

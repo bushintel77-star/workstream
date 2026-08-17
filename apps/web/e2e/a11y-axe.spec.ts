@@ -4,8 +4,6 @@ import { createAddressProject } from "./helpers";
 
 const axeSource = axePkg as { source: string };
 
-const PID = "projects/580e";
-
 /**
  * Accessibility gate — axe-core (WCAG 2.0/2.1 A + AA) across the operator
  * surfaces. The canvas chrome is DOM (Gold Standard layer 3), so it is fully
