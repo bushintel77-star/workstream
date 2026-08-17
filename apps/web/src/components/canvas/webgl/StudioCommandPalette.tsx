@@ -153,6 +153,12 @@ export function StudioCommandPalette({
         run: () => store.setZoneTool("spray"),
       },
       {
+        id: "zone-lighting",
+        label: "Trace lighting run",
+        group: "Tool",
+        run: () => store.setZoneTool("lighting"),
+      },
+      {
         id: "view-plan",
         label: "Plan view (orthographic)",
         group: "View",

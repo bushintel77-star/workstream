@@ -9,6 +9,11 @@
  * Committed zones render as filled, draped rings with a per-kind stroke; the
  * live draft shows its area (m²) and estimated flow (L/h).
  *
+ * Kind `lighting` is the lighting-runs tool: the same capture but an OPEN
+ * path (a run, not a ring) that commits with `fixture_spacing_m` + `wire_gauge`
+ * and renders with fixture dots; the draft shows run length (m) + fixture
+ * count instead of area/flow.
+ *
  * Mutual exclusion: arming the zone tool disarms sketch/measure/asset/trench
  * (store-enforced both ways). Esc disarms + clears the draft.
  */
@@ -33,6 +38,15 @@ import {
   zoneAreaM2,
   type ZonePointPct,
 } from "./irrigationZonePath";
+import {
+  buildTracedLightingRun,
+  DEFAULT_LIGHTING_FIXTURE_SPACING_M,
+  fixtureCountForRun,
+  fixturePositionsWorld,
+  lightingRunLengthM,
+  shouldAppendLightingPoint,
+  type LightingPointPct,
+} from "./lightingPath";
 
 /** Per-kind stroke — mirrors the handoff irrigation zone vocabulary. */
 const ZONE_COLOR: Record<IrrigationZoneKind, string> = {
@@ -78,6 +92,18 @@ function ringWorld(
 ): Array<[number, number, number]> {
   const closed = closeZonePolygon(pts);
   return closed.map((p) => {
+    const [wx, wz] = pctToWorld(p, scaleM, boardAspect);
+    return [wx, ZONE_Y_OFFSET, wz];
+  });
+}
+
+/** Flat world-space polyline for an OPEN run (lighting — never closed). */
+function openWorld(
+  pts: LightingPointPct[],
+  scaleM: number,
+  boardAspect: number,
+): Array<[number, number, number]> {
+  return pts.map((p) => {
     const [wx, wz] = pctToWorld(p, scaleM, boardAspect);
     return [wx, ZONE_Y_OFFSET, wz];
   });
@@ -157,8 +183,13 @@ export function IrrigationZoneLayer({
     const p = toPct(e);
     if (!p) return;
     const last = pointsRef.current[pointsRef.current.length - 1];
-    if (last && shouldAppendZonePoint(last, { x: p.x, y: p.y })) {
-      pointsRef.current = [...pointsRef.current, { x: p.x, y: p.y }];
+    const next = { x: p.x, y: p.y };
+    const appendable =
+      zoneTool === "lighting"
+        ? last && shouldAppendLightingPoint(last, next)
+        : last && shouldAppendZonePoint(last, next);
+    if (appendable) {
+      pointsRef.current = [...pointsRef.current, next];
       setZoneDraft({ kind: zoneTool, points: pointsRef.current });
     }
   };
@@ -169,20 +200,32 @@ export function IrrigationZoneLayer({
     (e.target as Element)?.releasePointerCapture?.(e.pointerId);
     const points = pointsRef.current;
     pointsRef.current = [];
-    if (!zoneTool || points.length < 3) {
+    const minPoints = zoneTool === "lighting" ? 2 : 3;
+    if (!zoneTool || points.length < minPoints) {
       setZoneDraft(null); // abandon a stray tap or an open line
       return;
     }
-    addIrrigationZone(
-      buildTracedZone({
-        id: makeZoneId(),
-        name: zoneTool === "spray" ? "Spray zone" : "Drip zone",
-        kind: zoneTool,
-        points,
-      }),
-    );
+    if (zoneTool === "lighting") {
+      addIrrigationZone(
+        buildTracedLightingRun({
+          id: makeZoneId(),
+          name: "Lighting run",
+          points,
+        }),
+      );
+    } else {
+      addIrrigationZone(
+        buildTracedZone({
+          id: makeZoneId(),
+          name: zoneTool === "spray" ? "Spray zone" : "Drip zone",
+          kind: zoneTool,
+          points,
+        }),
+      );
+    }
   };
 
+  const isLightingDraft = zoneDraft?.kind === "lighting";
   const draftAreaM2 =
     zoneDraft && zoneDraft.points.length >= 3
       ? zoneAreaM2(zoneDraft.points, scaleM, boardAspect)
@@ -191,20 +234,58 @@ export function IrrigationZoneLayer({
     zoneDraft && zoneDraft.points.length >= 3
       ? estimateZoneFlowLph(zoneDraft.points, 30, 2, scaleM, boardAspect)
       : 0;
+  const draftLightingLengthM =
+    isLightingDraft && zoneDraft && zoneDraft.points.length >= 2
+      ? lightingRunLengthM(zoneDraft.points, scaleM, boardAspect)
+      : 0;
+  const draftFixtures =
+    isLightingDraft && zoneDraft
+      ? fixtureCountForRun(draftLightingLengthM, DEFAULT_LIGHTING_FIXTURE_SPACING_M)
+      : 0;
   const draftWorld = zoneDraft
-    ? ringWorld(zoneDraft.points, scaleM, boardAspect)
+    ? isLightingDraft
+      ? openWorld(zoneDraft.points, scaleM, boardAspect)
+      : ringWorld(zoneDraft.points, scaleM, boardAspect)
     : null;
   const draftShape =
-    zoneDraft && zoneDraft.points.length >= 3
+    !isLightingDraft && zoneDraft && zoneDraft.points.length >= 3
       ? ringShape(zoneDraft.points, scaleM, boardAspect)
       : null;
   const draftLast = draftWorld ? draftWorld[draftWorld.length - 1] : null;
 
   return (
     <group>
-      {/* Committed zones — flat filled rings + per-kind strokes. */}
+      {/* Committed zones — lighting runs as open paths + fixture dots; the
+          rest as flat filled rings + per-kind strokes. */}
       {irrigationZones.map((z) => {
         const pts = z.points.map((p) => ({ x: p.x_pct, y: p.y_pct }));
+        if (z.kind === "lighting") {
+          return (
+            <group key={z.id}>
+              <Line
+                points={openWorld(pts, scaleM, boardAspect)}
+                color={ZONE_COLOR.lighting}
+                lineWidth={1.6}
+                dashed
+                dashSize={0.5}
+                gapSize={0.35}
+                transparent
+                opacity={0.9}
+              />
+              {fixturePositionsWorld(
+                pts,
+                z.fixture_spacing_m ?? DEFAULT_LIGHTING_FIXTURE_SPACING_M,
+                scaleM,
+                boardAspect,
+              ).map(([fx, fz], i) => (
+                <mesh key={i} position={[fx, ZONE_Y_OFFSET + 0.02, fz]}>
+                  <sphereGeometry args={[0.14, 12, 12]} />
+                  <meshBasicMaterial color={PALETTE.windowGlow} />
+                </mesh>
+              ))}
+            </group>
+          );
+        }
         const shape = ringShape(pts, scaleM, boardAspect);
         if (!shape) return null;
         return (
@@ -246,17 +327,19 @@ export function IrrigationZoneLayer({
             <meshBasicMaterial transparent opacity={0} depthWrite={false} />
           </mesh>
 
-          {zoneDraft && draftWorld && draftShape && draftWorld.length >= 3 && (
+          {zoneDraft && draftWorld && (isLightingDraft ? draftWorld.length >= 2 : draftShape != null) && (
             <group>
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, ZONE_Y_OFFSET - 0.01, 0]}>
-                <shapeGeometry args={[draftShape]} />
-                <meshBasicMaterial
-                  color={ZONE_COLOR[zoneDraft.kind]}
-                  transparent
-                  opacity={0.2}
-                  depthWrite={false}
-                />
-              </mesh>
+              {draftShape && (
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, ZONE_Y_OFFSET - 0.01, 0]}>
+                  <shapeGeometry args={[draftShape]} />
+                  <meshBasicMaterial
+                    color={ZONE_COLOR[zoneDraft.kind]}
+                    transparent
+                    opacity={0.2}
+                    depthWrite={false}
+                  />
+                </mesh>
+              )}
               <Line
                 points={draftWorld}
                 color={ZONE_COLOR[zoneDraft.kind]}
@@ -275,7 +358,9 @@ export function IrrigationZoneLayer({
                   style={{ pointerEvents: "none" }}
                 >
                   <span data-testid="zone-draft-label" style={zoneLabelStyle}>
-                    {zoneDraft.kind} · {draftAreaM2.toFixed(1)} m² · {draftFlowLph.toFixed(0)} L/h
+                    {isLightingDraft
+                      ? `lighting · ${draftLightingLengthM.toFixed(1)} m · ${draftFixtures} fixture${draftFixtures === 1 ? "" : "s"}`
+                      : `${zoneDraft.kind} · ${draftAreaM2.toFixed(1)} m² · ${draftFlowLph.toFixed(0)} L/h`}
                   </span>
                 </Html>
               )}
