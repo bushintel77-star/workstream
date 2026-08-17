@@ -32,35 +32,42 @@ async function chromeRects(page: Page): Promise<Rect[]> {
     const els = document.querySelectorAll<HTMLElement>(
       "[data-gs-glass-card], [data-testid='asset-dock'], [data-testid='studio-tool-rail']",
     );
-    return Array.from(els).map((el, i) => {
-      const r = el.getBoundingClientRect();
-      let inScroller = false;
-      for (
-        let a = el.parentElement;
-        a && a instanceof HTMLElement;
-        a = a.parentElement
-      ) {
-        const oy = getComputedStyle(a).overflowY;
-        if (
-          (oy === "auto" || oy === "scroll") &&
-          a.scrollHeight > a.clientHeight
+    return Array.from(els)
+      .map((el, i) => {
+        const r = el.getBoundingClientRect();
+        let inScroller = false;
+        let clipped = false;
+        for (
+          let a = el.parentElement;
+          a && a instanceof HTMLElement;
+          a = a.parentElement
         ) {
-          inScroller = true;
-          break;
+          const oy = getComputedStyle(a).overflowY;
+          if (
+            (oy === "auto" || oy === "scroll") &&
+            a.scrollHeight > a.clientHeight
+          ) {
+            inScroller = true;
+            // The scroller's own rect is the visible surface; a clipped
+            // descendant's full layout rect extends past it invisibly.
+            if (a !== el && a.scrollHeight - a.clientHeight > 2) clipped = true;
+            break;
+          }
         }
-      }
-      return {
-        id:
-          el.getAttribute("data-testid") ??
-          el.querySelector("[data-testid]")?.getAttribute("data-testid") ??
-          `glass-card-${i}`,
-        x: r.x,
-        y: r.y,
-        w: r.width,
-        h: r.height,
-        inScroller,
-      };
-    });
+        return {
+          id:
+            el.getAttribute("data-testid") ??
+            el.querySelector("[data-testid]")?.getAttribute("data-testid") ??
+            `glass-card-${i}`,
+          x: r.x,
+          y: r.y,
+          w: r.width,
+          h: r.height,
+          inScroller,
+          clipped,
+        };
+      })
+      .filter((r) => !r.clipped) as Rect[];
   });
 }
 
@@ -215,32 +222,38 @@ test.describe("WebGL chrome collision", () => {
         const els = document.querySelectorAll<HTMLElement>(
           "[data-gs-glass-card], [data-testid='asset-dock'], [data-testid='studio-tool-rail'], [data-testid='split-label-plan'], [data-testid='split-label-sketch']",
         );
-        return Array.from(els).map((el) => {
-          const r = el.getBoundingClientRect();
-          let inScroller = false;
-          for (
-            let a = el.parentElement;
-            a && a instanceof HTMLElement;
-            a = a.parentElement
-          ) {
-            const oy = getComputedStyle(a).overflowY;
-            if (
-              (oy === "auto" || oy === "scroll") &&
-              a.scrollHeight > a.clientHeight
+        return Array.from(els)
+          .map((el) => {
+            const r = el.getBoundingClientRect();
+            let inScroller = false;
+            let clipped = false;
+            for (
+              let a = el.parentElement;
+              a && a instanceof HTMLElement;
+              a = a.parentElement
             ) {
-              inScroller = true;
-              break;
+              const oy = getComputedStyle(a).overflowY;
+              if (
+                (oy === "auto" || oy === "scroll") &&
+                a.scrollHeight > a.clientHeight
+              ) {
+                inScroller = true;
+                if (a !== el && a.scrollHeight - a.clientHeight > 2)
+                  clipped = true;
+                break;
+              }
             }
-          }
-          return {
-            id: el.getAttribute("data-testid") ?? "card",
-            x: r.x,
-            y: r.y,
-            w: r.width,
-            h: r.height,
-            inScroller,
-          };
-        });
+            return {
+              id: el.getAttribute("data-testid") ?? "card",
+              x: r.x,
+              y: r.y,
+              w: r.width,
+              h: r.height,
+              inScroller,
+              clipped,
+            };
+          })
+          .filter((r) => !r.clipped);
       });
       expectNoCollisions(splitRects, vw, vh, `split ${vw}x${vh}`);
       await page.getByTestId("rail-split").evaluate((button: HTMLButtonElement) => {

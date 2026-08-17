@@ -240,6 +240,11 @@ export function StudioToolRail({
         gap: 2,
         pointerEvents: "auto",
         zIndex: 5,
+        // Short viewports: the rail scrolls internally instead of escaping
+        // the canvas edge (webgl-chrome-collision gate).
+        maxHeight: "calc(100dvh - 170px)",
+        overflowY: "auto",
+        scrollbarWidth: "none",
       }}
     >
       {tools.map((t) => {

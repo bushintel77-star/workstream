@@ -108,6 +108,8 @@ test.describe("WebGL terrain instruments (drainage + earthworks)", () => {
 
     // Earthworks instrument renders as a collapsed chip (InstrumentCard's
     // "metadata at the border, detail on demand" idiom) — expand it.
+    // Fresh chrome: terrain readouts live in the Terrain surface tab.
+    await page.getByTestId("meta-tab-terrain").click();
     await expect(
       page.getByRole("button", { name: "Expand Earth" }),
     ).toBeVisible({ timeout: 5_000 });

@@ -8,6 +8,18 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 
 ## P0 — Blocks first paying customer
 
+- [ ] **WebGL canvas pointer interactions dead (pre-existing, 2026-08-17)** —
+      measure-tape drags, asset placement clicks, flora-ring, and plain
+      ground clicks all fail on the WebGL studio while the scene renders
+      (dims labels live, rail/store state fine). A/B-proven against the
+      pre-chrome-restructure HEAD, so it predates the perimeter-tab work —
+      likely #187's camera/pointer rewrite, masked until now by the
+      HDR 429 crash (#194). Evidence: `e2e` specs
+      `webgl-asset-fanout`, `webgl-flora-ring`, `webgl-cad-annotations`
+      fail with no console/page errors and the canvas provably receives
+      the pointer events (`elementFromPoint` = canvas). Needs scene-level
+      raycast triage (StudioControls/MeasureTapeLayer/AssetPlaceLayer
+      handlers never fire).
 - [x] **Persistence on Railway** — volume `api-volume` mounts at
       `/repo/apps/api/data`. Configured in the Railway dashboard.
 - [x] **SQLite write-through journal** — `packages/db/src/sqlite-persist.ts`

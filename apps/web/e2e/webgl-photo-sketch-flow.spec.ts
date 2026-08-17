@@ -22,6 +22,8 @@ test.describe("WebGL photo to hand-sketch flow", () => {
       timeout: 30_000,
     });
 
+    // Fresh chrome: the photo action lives in the Studio surface tab.
+    await page.getByTestId("meta-tab-studio").click();
     const uploadResponse = page.waitForResponse(
       (response) =>
         response.url().includes(`/api/projects/${projectId}/aerial`) &&
@@ -39,6 +41,8 @@ test.describe("WebGL photo to hand-sketch flow", () => {
       timeout: 30_000,
     });
 
+    // Layers are a surface tab in the fresh chrome.
+    await page.getByTestId("meta-tab-layers").click();
     const controls = page.getByRole("group", { name: "Canvas layers" });
     const photoLayer = controls.getByRole("button", { name: "Photo" });
     const inkLayer = controls.getByRole("button", { name: "Ink" });

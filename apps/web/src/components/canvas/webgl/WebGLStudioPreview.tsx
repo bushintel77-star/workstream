@@ -20,7 +20,14 @@
  *   - Live data: sample utilities replaced by real BYDA/trench/level data.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import dynamic from "next/dynamic";
 import type {
   CanvasStroke,
@@ -32,7 +39,6 @@ import type {
   DesignSiteFrameLevel,
   IrrigationZone,
 } from "@workstream/contracts";
-import { GlassCard } from "./GlassCard";
 import { VignetteOverlay } from "./VignetteOverlay";
 import { SaveStatusChip } from "./SaveStatusChip";
 import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
@@ -55,7 +61,7 @@ import { EarthworksCard } from "./EarthworksCard";
 import { FitSheetCard } from "./FitSheetCard";
 import { AssetFanOutDock } from "./AssetFanOutDock";
 import { StudioToolRail } from "./StudioToolRail";
-import { StudioModeTabs } from "./StudioModeTabs";
+import { PerimeterTabStrip, type MetaTabId } from "./PerimeterTabStrip";
 import { canvasLayerPolicy } from "./layerPolicy";
 import { importSiteTruth } from "./siteTruthImport";
 import { StudioCommandPalette } from "./StudioCommandPalette";
@@ -185,6 +191,18 @@ export function WebGLStudioPreview({
 
   const [presentationMode, setPresentationMode] = useState(false);
   const [activeMode, setActiveMode] = useState<CanvasMode>(initialMode);
+  /** Open meta surface panel (null = none). Mode surfaces open by mode. */
+  const [metaTab, setMetaTab] = useState<MetaTabId | null>(null);
+  const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
+
+  // Escape closes the open surface panel (browser-tab behaviour).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && metaTab) setMetaTab(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [metaTab]);
   const [cadGhostCount, setCadGhostCount] = useState<number | null>(
     initialCadGhostCount,
   );
@@ -241,6 +259,7 @@ export function WebGLStudioPreview({
 
   const onNativeMode = (mode: CanvasMode) => {
     setActiveMode(mode);
+    setMetaTab(null);
     if (mode !== "present") setPresentationMode(false);
     const store = useStudioStore.getState();
     if (mode === "sketch") {
@@ -658,6 +677,846 @@ export function WebGLStudioPreview({
       >
       {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
       <VignetteOverlay />
+      <style>{`@keyframes wsPanelIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }`}</style>
+
+      {/* ---- Perimeter tab strip — the single chrome anchor. One
+          browser-tab chip strip hugs the top edge; modes on the left,
+          meta surfaces on the right, live stats as the trailing status
+          cell. Exactly one frosted panel opens beneath it. ---- */}
+      <div
+        style={{
+          position: "absolute",
+          top: 12,
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 6,
+          pointerEvents: "none",
+          zIndex: 6,
+          maxWidth: "calc(100% - 120px)",
+        }}
+      >
+        <PerimeterTabStrip
+          projectId={projectId}
+          activeMode={activeMode}
+          unlocked={unlocked}
+          onNativeMode={onNativeMode}
+          metaTabs={[
+            {
+              id: "studio",
+              label: "Studio",
+              active: metaTab === "studio",
+              onToggle: () => setMetaTab(metaTab === "studio" ? null : "studio"),
+            },
+            {
+              id: "sun",
+              label: "Sun",
+              active: metaTab === "sun",
+              onToggle: () => setMetaTab(metaTab === "sun" ? null : "sun"),
+            },
+            {
+              id: "growth",
+              label: "Growth",
+              active: metaTab === "growth",
+              onToggle: () => setMetaTab(metaTab === "growth" ? null : "growth"),
+            },
+            {
+              id: "layers",
+              label: "Layers",
+              active: metaTab === "layers",
+              onToggle: () => setMetaTab(metaTab === "layers" ? null : "layers"),
+            },
+            {
+              id: "site",
+              label: "Site",
+              active: metaTab === "site",
+              onToggle: () => setMetaTab(metaTab === "site" ? null : "site"),
+            },
+            {
+              id: "fit",
+              label: "Fit",
+              active: fitSheetOpen,
+              onToggle: () =>
+                useStudioStore.getState().setFitSheetOpen(!fitSheetOpen),
+            },
+            ...(liveData.heightmapPoints.length > 0
+              ? [
+                  {
+                    id: "terrain" as MetaTabId,
+                    label: "Terrain",
+                    active: metaTab === "terrain",
+                    onToggle: () =>
+                      setMetaTab(metaTab === "terrain" ? null : "terrain"),
+                  },
+                ]
+              : []),
+          ]}
+          trailing={
+            <>
+              <span
+                data-testid="strip-stats"
+                aria-label={`Canvas summary: ${stats.boundaryPoints} boundary points, ${stats.items} items, ${stats.strokes} strokes`}
+                style={{
+                  fontFamily: "var(--font-tech)",
+                  fontSize: 10.5,
+                  fontWeight: 500,
+                  letterSpacing: "0.02em",
+                  fontVariantNumeric: "tabular-nums",
+                  color: "var(--gs-ink-secondary)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                B&thinsp;{stats.boundaryPoints} · I&thinsp;{stats.items} · S&thinsp;{stats.strokes}
+                {stats.strikes > 0 && (
+                  <span style={{ color: "var(--gs-ink-conflict)" }}>
+                    {" "}
+                    · ⚠&thinsp;{stats.strikes}
+                  </span>
+                )}
+                {" "}| {stats.scaleM.toFixed(0)}&thinsp;m
+              </span>
+              <SaveStatusChip />
+              <MeasureReadoutChip scaleM={scaleM} boardAspect={boardAspect} />
+            </>
+          }
+        />
+
+        {(() => {
+          let body: ReactNode | null = null;
+          let dismiss: (() => void) | null = null;
+          let bare = false;
+
+          if (activeMode === "survey") {
+            body = (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                  }}
+                >
+                  <button
+                    type="button"
+                    data-testid="import-site-truth"
+                    disabled={truthBusy}
+                    onClick={() => void runSiteTruthImport()}
+                    style={{
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: "6px 10px",
+                      borderRadius: "var(--gs-radius-chip)",
+                      border: "1px solid var(--gs-primary)",
+                      background: "var(--gs-primary)",
+                      color: "var(--gs-panel)",
+                      cursor: truthBusy ? "wait" : "pointer",
+                    }}
+                  >
+                    {truthBusy ? "Tracing Vicmap…" : "Import site truth (Vicmap)"}
+                  </button>
+                  {truthMsg ? (
+                    <p
+                      role="status"
+                      data-testid="site-truth-result"
+                      style={{
+                        margin: 0,
+                        fontSize: 10.5,
+                        color: "var(--gs-ink-secondary)",
+                      }}
+                    >
+                      {truthMsg}
+                    </p>
+                  ) : null}
+                </div>
+                <SurveyChecklist
+                  boundary={boundaryPct}
+                  building={buildingPct ?? []}
+                  items={studioItems}
+                  levels={levels.map((l) => ({
+                    x: l.x_pct,
+                    y: l.y_pct,
+                    z: l.z_m,
+                    provenance:
+                      l.source === "vicmap_contour" ? "vicmap_contour" : "authored",
+                  }))}
+                  services={bydaAssets.map((a) =>
+                    a.ring.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+                  )}
+                  easements={(easementsPct ?? []).map((ring) =>
+                    ring.map((p) => ({ x: p.x, y: p.y })),
+                  )}
+                  onClose={() => setActiveMode("sketch")}
+                />
+              </div>
+            );
+          } else if (activeMode === "elevation") {
+            body = (
+              <StudioElevationCard
+                boundaryPct={boundaryPct}
+                buildingPct={buildingPct}
+                items={studioItems}
+                scaleM={scaleM}
+                onTraceInPlan={() => setActiveMode("sketch")}
+                onClose={() => setActiveMode("sketch")}
+              />
+            );
+          } else if (activeMode === "garden") {
+            body = (
+              <GardenViewpointStrip
+                activeLook={gardenLook}
+                elevLook={null}
+                mode="plan"
+                onSelect={applyGardenLook}
+              />
+            );
+          } else if (activeMode === "cad") {
+            body = (
+              <StudioCadCard
+                projectId={projectId}
+                onCadResult={(result) => setCadGhostCount(result.ghost_count)}
+              />
+            );
+          } else if (metaTab === "studio") {
+            dismiss = () => setMetaTab(null);
+            body = (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-tech)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: "0.06em",
+                      color: "var(--gs-ink)",
+                    }}
+                  >
+                    STUDIO
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-tech)",
+                      fontSize: 10.5,
+                      color: "var(--gs-ink-secondary)",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    B {stats.boundaryPoints} · I {stats.items} · S {stats.strokes}
+                    {stats.strikes > 0 && (
+                      <span style={{ color: "var(--gs-ink-conflict)" }}>
+                        {" "}
+                        · ⚠ {stats.strikes}
+                      </span>
+                    )}{" "}
+                    | {stats.scaleM.toFixed(0)} m
+                  </span>
+                </div>
+                <SaveStatusChip />
+                <nav
+                  aria-label="Project destinations"
+                  style={{ display: "flex", gap: 10 }}
+                >
+                  <a
+                    href="/home"
+                    style={{ color: "var(--gs-ink-secondary)", fontSize: 10.5 }}
+                  >
+                    Sites
+                  </a>
+                  <a
+                    href={`/projects/${projectId}/outputs`}
+                    style={{ color: "var(--gs-primary)", fontSize: 10.5 }}
+                  >
+                    Outputs
+                  </a>
+                </nav>
+                <div
+                  style={{
+                    display: "flex",
+                    borderRadius: 6,
+                    border: "1px solid var(--gs-line)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <button
+                    type="button"
+                    aria-pressed={!is3D}
+                    onClick={() => setPitchDeg(0)}
+                    style={{
+                      flex: 1,
+                      padding: "2px 10px",
+                      border: "none",
+                      background: !is3D ? "var(--gs-chip-active)" : "transparent",
+                      color: !is3D
+                        ? "var(--gs-chip-active-ink)"
+                        : "var(--gs-ink-secondary)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Plan
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={is3D}
+                    onClick={() => setPitchDeg(DEFAULT_CAMERA_RIG.tiltDeg)}
+                    style={{
+                      flex: 1,
+                      padding: "2px 10px",
+                      border: "none",
+                      background: is3D ? "var(--gs-chip-active)" : "transparent",
+                      color: is3D
+                        ? "var(--gs-chip-active-ink)"
+                        : "var(--gs-ink-secondary)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    3D
+                  </button>
+                </div>
+                <div
+                  style={{ display: "flex", gap: 4 }}
+                  role="group"
+                  aria-label="Camera and history"
+                >
+                  {(
+                    [
+                      ["−", "Zoom out", () => zoomBy(-1)],
+                      ["+", "Zoom in", () => zoomBy(1)],
+                      ["↶", "Undo (Ctrl+Z)", () => useStudioStore.getState().undo()],
+                      ["↷", "Redo (Ctrl+Shift+Z)", () => useStudioStore.getState().redo()],
+                    ] as Array<[string, string, () => void]>
+                  ).map(([glyph, label, fn]) => {
+                    const disabled = label.startsWith("Undo")
+                      ? !canUndo
+                      : label.startsWith("Redo")
+                        ? !canRedo
+                        : false;
+                    return (
+                      <button
+                        key={label}
+                        type="button"
+                        aria-label={label}
+                        data-testid={
+                          label.startsWith("Zoom out")
+                            ? "zoom-out"
+                            : label.startsWith("Zoom in")
+                              ? "zoom-in"
+                              : label.startsWith("Undo")
+                                ? "undo-btn"
+                                : "redo-btn"
+                        }
+                        disabled={disabled}
+                        onClick={fn}
+                        style={{
+                          flex: 1,
+                          padding: "2px 0",
+                          border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+                          borderRadius: "var(--gs-radius-chip)",
+                          background: "transparent",
+                          color: disabled ? "var(--gs-ink-muted)" : "var(--gs-ink-secondary)",
+                          fontFamily: "var(--font-tech)",
+                          fontSize: 12,
+                          cursor: disabled ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {glyph}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  data-testid="sketch-photo-upload"
+                  disabled={photoBusy}
+                  onClick={() => photoInputRef.current?.click()}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    padding: "5px 10px",
+                    borderRadius: "var(--gs-radius-pill)",
+                    background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--gs-primary) 40%, transparent)",
+                    color: "var(--gs-primary)",
+                    fontFamily: "var(--font-ui)",
+                    fontSize: 10.5,
+                    cursor: photoBusy ? "wait" : "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {photoBusy ? "Uploading…" : "Trace a site photo"}
+                </button>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  disabled={photoBusy}
+                  hidden
+                  aria-label="Choose a site photo to trace"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void uploadSitePhoto(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+                {photoError ? (
+                  <p
+                    role="alert"
+                    style={{ margin: 0, color: "var(--gs-ink-conflict)", fontSize: 11 }}
+                  >
+                    {photoError}
+                  </p>
+                ) : null}
+              </div>
+            );
+          } else if (metaTab === "sun") {
+            dismiss = () => setMetaTab(null);
+            body = (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 4,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <MetaChip label="Season" value={seasonMeta.label} />
+                  <MetaChip
+                    label="Leaf"
+                    value={leafStatus(seasonProgress, year)}
+                    accent
+                  />
+                  <MetaChip label="Sun" value={`${sunMin}m`} />
+                </div>
+                <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "baseline",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <span style={scrubberLabelStyle}>Sun</span>
+                    <span style={{ ...scrubberValueStyle, fontSize: 14 }}>
+                      {String(Math.floor(sunMin / 60)).padStart(2, "0")}:
+                      {String(sunMin % 60).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <ScrubberTrack
+                    value={(sunMin - DAY_START) / (DAY_END - DAY_START)}
+                    min={DAY_START}
+                    max={DAY_END}
+                    step={5}
+                    onChange={setSunMin}
+                    ariaLabel="Time of day"
+                    labels={["06:20", "13:00", "19:40"]}
+                  />
+                </div>
+                <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "baseline",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <span style={scrubberLabelStyle}>Season · {seasonMeta.label}</span>
+                    <span style={{ ...scrubberValueStyle, fontSize: 14 }}>
+                      {seasonMeta.month}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+                    {SUN_DATE_PRESETS.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        aria-pressed={sunDatePreset === p}
+                        onClick={() => setSunDatePreset(p)}
+                        style={{
+                          padding: "2px 6px",
+                          borderRadius: "var(--gs-radius-chip)",
+                          border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
+                          background:
+                            sunDatePreset === p
+                              ? "var(--gs-chip-active)"
+                              : "transparent",
+                          color:
+                            sunDatePreset === p
+                              ? "var(--gs-chip-active-ink)"
+                              : "var(--gs-ink-secondary)",
+                          fontFamily: "var(--font-ui)",
+                          fontSize: 10,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {sunDatePresetLabel(p)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          } else if (metaTab === "growth") {
+            dismiss = () => setMetaTab(null);
+            body = (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                  }}
+                >
+                  <span style={scrubberLabelStyle}>Growth Simulation</span>
+                  <span style={scrubberValueStyle}>Year {year}</span>
+                </div>
+                <ScrubberTrack
+                  value={growthFactor}
+                  min={0}
+                  max={10}
+                  step={1}
+                  onChange={setYear}
+                  ariaLabel="Growth simulation year"
+                  labels={["Year 0", "Year 5", "Year 10"]}
+                  highlightValues={[0, 5, 10]}
+                  currentHighlight={year}
+                />
+              </div>
+            );
+          } else if (metaTab === "layers") {
+            dismiss = () => setMetaTab(null);
+            body = (
+              <div
+                role="group"
+                aria-label="Canvas layers"
+                style={{ display: "flex", gap: 4, flexWrap: "wrap" }}
+              >
+                {(
+                  [
+                    ["aerial", "Photo"],
+                    ["sketch", "Ink"],
+                    ["siteTruth", "Site truth"],
+                    ["design", "Design"],
+                  ] as const
+                ).map(([layer, label]) => (
+                  <button
+                    key={layer}
+                    type="button"
+                    aria-pressed={visibleLayers[layer]}
+                    onClick={() =>
+                      setVisibleLayers((current) => ({
+                        ...current,
+                        [layer]: !current[layer],
+                      }))
+                    }
+                    style={{
+                      padding: "3px 8px",
+                      borderRadius: "var(--gs-radius-chip)",
+                      border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
+                      background: visibleLayers[layer]
+                        ? "var(--gs-chip-active)"
+                        : "transparent",
+                      color: visibleLayers[layer]
+                        ? "var(--gs-chip-active-ink)"
+                        : "var(--gs-ink-secondary)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 10.5,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            );
+          } else if (metaTab === "site") {
+            dismiss = () => setMetaTab(null);
+            body = (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <SiteContextBadges
+                  projectId={projectId}
+                  variant="glass"
+                  showSeason={false}
+                />
+                {keylessOverlays.length > 0 ? (
+                  <div
+                    data-testid="government-overlay-legend"
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 4,
+                      padding: "5px 7px",
+                      borderRadius: "var(--gs-radius-chip)",
+                      background: "var(--gs-surface-fill)",
+                      border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
+                      color: "var(--gs-ink-secondary)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 10.5,
+                    }}
+                  >
+                    <strong style={{ color: "var(--gs-ink)" }}>
+                      Government layers
+                    </strong>
+                    {[...new Set(keylessOverlays.map((overlay) => overlay.kind))].map(
+                      (kind) => (
+                        <span key={kind}>{kind.replaceAll("_", " ")}</span>
+                      ),
+                    )}
+                    <a
+                      href="https://mapshare.vic.gov.au/vicplan/"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--gs-primary)" }}
+                    >
+                      Open VicPlan
+                    </a>
+                    <a
+                      href="https://www.vic.gov.au/find-my-local-council"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--gs-primary)" }}
+                    >
+                      Council tools
+                    </a>
+                  </div>
+                ) : null}
+                {(easementsPct?.length ?? 0) > 0 || subsurfaceView ? (
+                  <div
+                    role="note"
+                    data-testid="site-truth-honesty"
+                    style={{
+                      padding: "6px 9px",
+                      borderRadius: "var(--gs-radius-chip)",
+                      background: "var(--gs-surface-fill)",
+                      border: "1px solid color-mix(in srgb, var(--gs-warning) 45%, transparent)",
+                      color: "var(--gs-ink)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 11,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    Easements are legal title constraints, not underground assets.
+                    {subsurfaceView
+                      ? " Utility depths and strike checks are indicative until surveyed."
+                      : null}{" "}
+                    <a
+                      href="https://www.byda.com.au/"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--gs-primary)" }}
+                    >
+                      Request BYDA
+                    </a>
+                  </div>
+                ) : null}
+                {lat == null || lng == null ? (
+                  <div
+                    role="status"
+                    style={{
+                      padding: "5px 8px",
+                      borderRadius: "var(--gs-radius-chip)",
+                      background: "var(--gs-surface-fill)",
+                      color: "var(--gs-ink-secondary)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 11,
+                    }}
+                  >
+                    Solar analysis unavailable until the property pin is verified.
+                  </div>
+                ) : null}
+                {subsurfaceView ? (
+                  <a
+                    href={`/subsurface-studio/${projectId}`}
+                    data-testid="open-subsurface-studio"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "4px 8px",
+                      borderRadius: "var(--gs-radius-pill)",
+                      background: "color-mix(in srgb, var(--gs-truth-ink) 12%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--gs-truth-ink) 40%, transparent)",
+                      color: "var(--gs-ink-truth)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 10.5,
+                      textDecoration: "none",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Open full subsurface studio →
+                  </a>
+                ) : null}
+              </div>
+            );
+          } else if (metaTab === "terrain") {
+            dismiss = () => setMetaTab(null);
+            body = (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <SliceProfileCard
+                  scaleM={scaleM}
+                  boardAspect={boardAspect}
+                  heightmapPoints={liveData.heightmapPoints}
+                />
+                <DrainageFlowCard
+                  scaleM={scaleM}
+                  boardAspect={boardAspect}
+                  heightmapPoints={liveData.heightmapPoints}
+                  hydraulicResults={liveData.hydraulicResults}
+                />
+                <EarthworksCard
+                  scaleM={scaleM}
+                  boardAspect={boardAspect}
+                  heightmapPoints={liveData.heightmapPoints}
+                />
+              </div>
+            );
+          } else if (!splitView && fitSheetOpen && (items?.length ?? 0) > 0) {
+            bare = true;
+            body = (
+              <FitSheetCard
+                projectId={projectId}
+                items={items ?? []}
+                boundaryPct={boundaryPct}
+                constructionTrenches={constructionTrenches}
+                irrigationZones={irrigationZones}
+                scaleM={scaleM}
+                outdoorM2={outdoorM2}
+              />
+            );
+          } else if (activeMode === "quote" && (items?.length ?? 0) === 0) {
+            dismiss = () => onNativeMode("cad");
+            body = (
+              <div
+                data-testid="quote-empty-state"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  color: "var(--gs-ink)",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: 11,
+                  lineHeight: 1.45,
+                }}
+              >
+                <strong>Build the concept before pricing</strong>
+                <span style={{ color: "var(--gs-ink-secondary)" }}>
+                  Add accepted planting or hardscape items to create a live fit-sheet.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onNativeMode("cad")}
+                  style={{
+                    minHeight: 32,
+                    borderRadius: "var(--gs-radius-chip)",
+                    border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
+                    background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
+                    color: "var(--gs-primary)",
+                    fontFamily: "var(--font-ui)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Open CAD drafter
+                </button>
+              </div>
+            );
+          }
+
+          if (!body) return null;
+          if (bare)
+            return (
+              <div
+                data-gs-glass-card
+                data-testid="perimeter-panel"
+                style={{
+                  pointerEvents: "auto",
+                  maxHeight: "min(420px, calc(100dvh - 240px))",
+                  overflowY: "auto",
+                  scrollbarWidth: "thin",
+                }}
+              >
+                {body}
+              </div>
+            );
+
+          return (
+            <div
+              data-gs-glass-card
+              data-testid="perimeter-panel"
+              role="dialog"
+              aria-label="Canvas surface panel"
+              style={{
+                position: "relative",
+                pointerEvents: "auto",
+                width: "min(340px, calc(100vw - 32px))",
+                maxHeight: "min(420px, calc(100dvh - 240px))",
+                overflowY: "auto",
+                scrollbarWidth: "thin",
+                borderRadius: "var(--gs-radius-panel)",
+                background: "var(--gs-panel-grad)",
+                border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+                boxShadow: "var(--gs-shadow-2)",
+                padding: "12px 14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                animation: "wsPanelIn 160ms ease-out",
+              }}
+            >
+              {dismiss ? (
+                <button
+                  type="button"
+                  aria-label="Close panel"
+                  onClick={dismiss}
+                  style={{
+                    position: "absolute",
+                    top: 6,
+                    right: 6,
+                    width: 24,
+                    height: 24,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "var(--gs-radius-pill)",
+                    border: "1px solid transparent",
+                    background: "transparent",
+                    color: "var(--gs-ink-secondary)",
+                    fontSize: 14,
+                    lineHeight: 1,
+                    cursor: "pointer",
+                  }}
+                >
+                  ×
+                </button>
+              ) : null}
+              {body}
+            </div>
+          );
+        })()}
+      </div>
+
+
 
       {/* Left slim tool icons — bare (no container), border chrome per the
           Stitch reference; the drawing owns the middle. */}
@@ -685,131 +1544,6 @@ export function WebGLStudioPreview({
 
       {/* First-run controls hint — dismissed for the session once seen. */}
       <FirstRunHint />
-
-      {/* Mode tabs — the preserved 8-mode system (GOLD-STANDARD-2026
-          ARCHITECTURE §6). Native modes switch in place; classic-board modes
-          navigate to ?svg=1&mode=… so nothing dead-ends. */}
-      <StudioModeTabs
-        projectId={projectId}
-        activeMode={activeMode}
-        unlocked={unlocked}
-        onNativeMode={onNativeMode}
-      />
-
-      {/* Native elevation — the classic ElevationBoard as a glass sheet
-          (ARCHITECTURE §5: the feature module consumes the new shell). */}
-      {activeMode === "elevation" && (
-        <StudioElevationCard
-          boundaryPct={boundaryPct}
-          buildingPct={buildingPct}
-          items={studioItems}
-          scaleM={scaleM}
-          onTraceInPlan={() => setActiveMode("sketch")}
-          onClose={() => setActiveMode("sketch")}
-        />
-      )}
-
-      {/* Native garden — eye-level viewpoints over the live 3D. */}
-      {activeMode === "garden" && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 18,
-            left: "50%",
-            transform: "translateX(-50%)",
-            pointerEvents: "auto",
-            zIndex: 5,
-          }}
-        >
-          <GardenViewpointStrip
-            activeLook={gardenLook}
-            elevLook={null}
-            mode="plan"
-            onSelect={applyGardenLook}
-          />
-        </div>
-      )}
-
-      {/* Native CAD — the AI drafter hub mounts in the right lane (plan
-          locks to technical 2D with working-drawing dims — "CAD style 2D"). */}
-
-      {/* Native survey — the completeness checklist as lane glass (the five
-          site-truth items; onTraceBuilding stays a classic-board flow). */}
-      {activeMode === "survey" && (
-        <div
-          data-testid="studio-survey-card"
-          style={{
-            position: "absolute",
-            top: 118,
-            right: 12,
-            width: 292,
-            pointerEvents: "auto",
-            zIndex: 5,
-            borderRadius: "var(--gs-radius-panel)",
-            background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-            backdropFilter: "blur(var(--gs-blur))",
-            WebkitBackdropFilter: "blur(var(--gs-blur))",
-            border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
-            padding: 10,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-              marginBottom: 8,
-            }}
-          >
-            <button
-              type="button"
-              data-testid="import-site-truth"
-              disabled={truthBusy}
-              onClick={() => void runSiteTruthImport()}
-              style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: 11,
-                fontWeight: 600,
-                padding: "6px 10px",
-                borderRadius: "var(--gs-radius-chip)",
-                border: "1px solid var(--gs-primary)",
-                background: "var(--gs-primary)",
-                color: "var(--gs-panel)",
-                cursor: truthBusy ? "wait" : "pointer",
-              }}
-            >
-              {truthBusy ? "Tracing Vicmap…" : "Import site truth (Vicmap)"}
-            </button>
-            {truthMsg ? (
-              <p
-                role="status"
-                data-testid="site-truth-result"
-                style={{ margin: 0, fontSize: 10.5, color: "var(--gs-ink-secondary)" }}
-              >
-                {truthMsg}
-              </p>
-            ) : null}
-          </div>
-          <SurveyChecklist
-            boundary={boundaryPct}
-            building={buildingPct ?? []}
-            items={studioItems}
-            levels={levels.map((l) => ({
-              x: l.x_pct,
-              y: l.y_pct,
-              z: l.z_m,
-              provenance: l.source === "vicmap_contour" ? "vicmap_contour" : "authored",
-            }))}
-            services={bydaAssets.map((a) =>
-              a.ring.map((p) => ({ x: p.x_pct, y: p.y_pct })),
-            )}
-            easements={(easementsPct ?? []).map((ring) =>
-              ring.map((p) => ({ x: p.x, y: p.y })),
-            )}
-            onClose={() => setActiveMode("sketch")}
-          />
-        </div>
-      )}
 
       {/* Native share — client portal promotion, centered glass. */}
       {activeMode === "share" && (
@@ -843,612 +1577,6 @@ export function WebGLStudioPreview({
           </div>
         </div>
       )}
-
-      {/* ---- Top-left: compact studio meta + view toggle ---- */}
-      <GlassCard position="top-left" style={{ padding: "8px 10px" }}>
-        <div style={{ fontFamily: "var(--font-tech)", fontSize: 11, color: "var(--gs-ink)" }}>
-          <div
-            role="group"
-            aria-label="Canvas view"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              gap: 12,
-              marginBottom: 4,
-            }}
-          >
-            <span style={{ fontWeight: 600, letterSpacing: "0.06em" }}>STUDIO</span>
-            {/* Canvas meta as one dense chip line — the drawing IS the hero */}
-            <span style={{ color: "var(--gs-ink-secondary)", fontSize: 10.5 }}>
-              B{stats.boundaryPoints} · I{stats.items} · S{stats.strokes}
-              {stats.strikes > 0 && (
-                <span style={{ color: "var(--gs-ink-conflict)" }}> · ⚠{stats.strikes}</span>
-              )}
-              {" "}| {stats.scaleM.toFixed(0)}m
-            </span>
-          </div>
-          {/* Save status chip — zero layout shift, fixed-width reserved space */}
-          <div style={{ marginBottom: 4 }}>
-            <SaveStatusChip />
-          </div>
-          <nav
-            aria-label="Project destinations"
-            style={{ display: "flex", gap: 8, marginBottom: 6 }}
-          >
-            <a
-              href="/home"
-              style={{ color: "var(--gs-ink-secondary)", fontSize: 10.5 }}
-            >
-              Sites
-            </a>
-            <a
-              href={`/projects/${projectId}/outputs`}
-              style={{ color: "var(--gs-primary)", fontSize: 10.5 }}
-            >
-              Outputs
-            </a>
-          </nav>
-
-          {/* View toggle — Plan ↔ 3D (drives the fused camera) */}
-          <div
-            style={{
-              display: "flex",
-              borderRadius: 6,
-              border: "1px solid var(--gs-line)",
-              overflow: "hidden",
-            }}
-          >
-            <button
-              type="button"
-              aria-pressed={!is3D}
-              onClick={() => setPitchDeg(0)}
-              style={{
-                flex: 1,
-                padding: "2px 10px",
-                border: "none",
-                background: !is3D ? "var(--gs-chip-active)" : "transparent",
-                color: !is3D
-                  ? "var(--gs-chip-active-ink)"
-                  : "var(--gs-ink-secondary)",
-                fontFamily: "var(--font-ui)",
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "background 0.2s, color 0.2s",
-              }}
-            >
-              Plan
-            </button>
-            <button
-              type="button"
-              aria-pressed={is3D}
-              onClick={() => setPitchDeg(DEFAULT_CAMERA_RIG.tiltDeg)}
-              style={{
-                flex: 1,
-                padding: "2px 10px",
-                border: "none",
-                background: is3D ? "var(--gs-chip-active)" : "transparent",
-                color: is3D
-                  ? "var(--gs-chip-active-ink)"
-                  : "var(--gs-ink-secondary)",
-                fontFamily: "var(--font-ui)",
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "background 0.2s, color 0.2s",
-              }}
-            >
-              3D
-            </button>
-          </div>
-
-          {/* Camera + history affordances — zoom is wheel-first; the buttons
-              make it discoverable and touch-usable. Undo/redo mirror Cmd+Z. */}
-          <div
-            style={{ display: "flex", gap: 4, marginTop: 6 }}
-            role="group"
-            aria-label="Camera and history"
-          >
-            {(
-              [
-                ["−", "Zoom out", () => zoomBy(-1)],
-                ["+", "Zoom in", () => zoomBy(1)],
-                ["↶", "Undo (Ctrl+Z)", () => useStudioStore.getState().undo()],
-                ["↷", "Redo (Ctrl+Shift+Z)", () => useStudioStore.getState().redo()],
-              ] as Array<[string, string, () => void]>
-            ).map(([glyph, label, fn]) => {
-              const disabled = label.startsWith("Undo") ? !canUndo : label.startsWith("Redo") ? !canRedo : false;
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  aria-label={label}
-                  data-testid={label.startsWith("Zoom out") ? "zoom-out" : label.startsWith("Zoom in") ? "zoom-in" : label.startsWith("Undo") ? "undo-btn" : "redo-btn"}
-                  disabled={disabled}
-                  onClick={fn}
-                  style={{
-                    flex: 1,
-                    padding: "2px 0",
-                    border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-                    borderRadius: "var(--gs-radius-chip)",
-                    background: "transparent",
-                    color: disabled ? "var(--gs-ink-muted)" : "var(--gs-ink-secondary)",
-                    fontFamily: "var(--font-tech)",
-                    fontSize: 12,
-                    cursor: disabled ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {glyph}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Measure readout — DOM twin of the in-canvas tape label. A11y +
-              e2e surface; subscribes independently so only the chip re-renders. */}
-          <MeasureReadoutChip scaleM={scaleM} boardAspect={boardAspect} />
-        </div>
-      </GlassCard>
-
-      {/* ---- Bottom-center: growth timeline scrubber (compact) ---- */}
-      <GlassCard
-        position={{
-          bottom: 16,
-          // Safe-zone centre (clear of the tool rail + right column).
-          left: "calc(50% - 85px)",
-          transform: "translateX(-50%)",
-        }}
-        style={{
-          width: "min(30rem, calc(100vw - 620px))",
-          padding: "8px 12px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline",
-            marginBottom: 12,
-          }}
-        >
-          <span style={scrubberLabelStyle}>Growth Simulation</span>
-          <span style={scrubberValueStyle}>Year {year}</span>
-        </div>
-        <ScrubberTrack
-          value={growthFactor}
-          min={0}
-          max={10}
-          step={1}
-          onChange={setYear}
-          ariaLabel="Growth simulation year"
-          labels={["Year 0", "Year 5", "Year 10"]}
-          highlightValues={[0, 5, 10]}
-          currentHighlight={year}
-        />
-      </GlassCard>
-
-      {/* ---- Top-center: sun + season scrubbers (compact twin row) ---- */}
-      <div
-        style={{
-          position: "absolute",
-          top: 12,
-          // Safe-zone centre (clear of the tool rail + right column).
-          left: "calc(50% - 85px)",
-          transform: "translateX(-50%)",
-          display: "flex",
-          gap: 8,
-          alignItems: "flex-start",
-          pointerEvents: "none",
-        }}
-      >
-        <GlassCard position={{ position: "relative" }} style={{ width: 224, padding: "6px 10px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              marginBottom: 6,
-            }}
-          >
-            <span style={scrubberLabelStyle}>Sun</span>
-            <span style={{ ...scrubberValueStyle, fontSize: 14 }}>
-              {String(Math.floor(sunMin / 60)).padStart(2, "0")}:
-              {String(sunMin % 60).padStart(2, "0")}
-            </span>
-          </div>
-          <ScrubberTrack
-            value={(sunMin - DAY_START) / (DAY_END - DAY_START)}
-            min={DAY_START}
-            max={DAY_END}
-            step={5}
-            onChange={setSunMin}
-            ariaLabel="Time of day"
-            labels={["06:20", "13:00", "19:40"]}
-          />
-        </GlassCard>
-        <GlassCard position={{ position: "relative" }} style={{ width: 224, padding: "6px 10px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              marginBottom: 6,
-            }}
-          >
-            <span style={scrubberLabelStyle}>Season · {seasonMeta.label}</span>
-            <span style={{ ...scrubberValueStyle, fontSize: 14 }}>{seasonMeta.month}</span>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              gap: 3,
-              flexWrap: "wrap",
-              pointerEvents: "auto",
-            }}
-          >
-            {SUN_DATE_PRESETS.map((p) => (
-              <button
-                key={p}
-                type="button"
-                aria-pressed={sunDatePreset === p}
-                onClick={() => setSunDatePreset(p)}
-                style={{
-                  padding: "2px 6px",
-                  borderRadius: "var(--gs-radius-chip)",
-                  border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
-                  background:
-                    sunDatePreset === p
-                      ? "var(--gs-chip-active)"
-                      : "transparent",
-                  color:
-                    sunDatePreset === p
-                      ? "var(--gs-chip-active-ink)"
-                      : "var(--gs-ink-secondary)",
-                  fontFamily: "var(--font-ui)",
-                  fontSize: 10,
-                  cursor: "pointer",
-                }}
-              >
-                {sunDatePresetLabel(p)}
-              </button>
-            ))}
-          </div>
-        </GlassCard>
-      </div>
-
-      {/* ---- THE right-hand chrome column — one column, flex-laid-out.
-          Two independently anchored stacks on the same edge collided when
-          the fit-sheet grew (caught by webgl-chrome-collision.spec); a single
-          flex column cannot self-intersect, and scrolls internally in the
-          everything-on state. Fit-content width keeps the strip narrow. */}
-      <div
-        data-testid="right-chrome-column"
-        style={{
-          position: "absolute",
-          top: 12,
-          right: 12,
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          alignItems: "flex-end",
-          maxHeight: "calc(100dvh - 24px)",
-          overflowY: "auto",
-          pointerEvents: "auto",
-          width: "fit-content",
-          scrollbarWidth: "thin",
-        }}
-      >
-        {/* Live conditions as a meta chip set — not a card block */}
-        <div
-          data-gs-glass-card
-          style={{
-            display: "flex",
-            gap: 4,
-            padding: "4px 6px",
-            borderRadius: 10,
-            background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-            backdropFilter: "blur(var(--gs-blur))",
-            WebkitBackdropFilter: "blur(var(--gs-blur))",
-            border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
-            pointerEvents: "auto",
-          }}
-        >
-          <MetaChip label="Season" value={seasonMeta.label} />
-          <MetaChip label="Leaf" value={leafStatus(seasonProgress, year)} accent />
-          <MetaChip label="Sun" value={`${sunMin}m`} />
-        </div>
-        <div
-          data-gs-glass-card
-          data-testid="canvas-layer-controls"
-          role="group"
-          aria-label="Canvas layers"
-          style={{
-            display: "flex",
-            gap: 4,
-            padding: "4px 6px",
-            borderRadius: "var(--gs-radius-panel)",
-            background: "var(--gs-glass-veil)",
-            border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
-          }}
-        >
-          {(
-            [
-              ["aerial", "Photo"],
-              ["sketch", "Ink"],
-              ["siteTruth", "Site truth"],
-              ["design", "Design"],
-            ] as const
-          ).map(([layer, label]) => (
-            <button
-              key={layer}
-              type="button"
-              aria-pressed={visibleLayers[layer]}
-              onClick={() =>
-                setVisibleLayers((current) => ({
-                  ...current,
-                  [layer]: !current[layer],
-                }))
-              }
-              style={{
-                padding: "3px 7px",
-                borderRadius: "var(--gs-radius-chip)",
-                border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
-                background: visibleLayers[layer]
-                  ? "var(--gs-chip-active)"
-                  : "transparent",
-                color: visibleLayers[layer]
-                  ? "var(--gs-chip-active-ink)"
-                  : "var(--gs-ink-secondary)",
-                fontFamily: "var(--font-ui)",
-                fontSize: 10.5,
-                cursor: "pointer",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        {/* Council planning badges + season (GET /site-context) */}
-        <SiteContextBadges projectId={projectId} variant="glass" showSeason={false} />
-        {keylessOverlays.length > 0 ? (
-          <div
-            data-testid="government-overlay-legend"
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "flex-end",
-              gap: 4,
-              maxWidth: 300,
-              padding: "5px 7px",
-              borderRadius: "var(--gs-radius-chip)",
-              background: "var(--gs-glass-veil)",
-              border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
-              color: "var(--gs-ink-secondary)",
-              fontFamily: "var(--font-ui)",
-              fontSize: 10.5,
-            }}
-          >
-            <strong style={{ color: "var(--gs-ink)" }}>Government layers</strong>
-            {[...new Set(keylessOverlays.map((overlay) => overlay.kind))].map(
-              (kind) => (
-                <span key={kind}>{kind.replaceAll("_", " ")}</span>
-              ),
-            )}
-            <a
-              href="https://mapshare.vic.gov.au/vicplan/"
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: "var(--gs-primary)" }}
-            >
-              Open VicPlan
-            </a>
-            <a
-              href="https://www.vic.gov.au/find-my-local-council"
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: "var(--gs-primary)" }}
-            >
-              Council tools
-            </a>
-          </div>
-        ) : null}
-        {(easementsPct?.length ?? 0) > 0 || subsurfaceView ? (
-          <div
-            role="note"
-            data-testid="site-truth-honesty"
-            style={{
-              maxWidth: 300,
-              padding: "6px 9px",
-              borderRadius: "var(--gs-radius-chip)",
-              background: "var(--gs-glass-veil)",
-              border: "1px solid color-mix(in srgb, var(--gs-warning) 45%, transparent)",
-              color: "var(--gs-ink)",
-              fontFamily: "var(--font-ui)",
-              fontSize: 11,
-              lineHeight: 1.4,
-            }}
-          >
-            Easements are legal title constraints, not underground assets.
-            {subsurfaceView
-              ? " Utility depths and strike checks are indicative until surveyed."
-              : null}{" "}
-            <a
-              href="https://www.byda.com.au/"
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: "var(--gs-primary)" }}
-            >
-              Request BYDA
-            </a>
-          </div>
-        ) : null}
-        {lat == null || lng == null ? (
-          <div
-            role="status"
-            style={{
-              maxWidth: 280,
-              padding: "5px 8px",
-              borderRadius: "var(--gs-radius-chip)",
-              background: "var(--gs-glass-veil)",
-              color: "var(--gs-ink-secondary)",
-              fontFamily: "var(--font-ui)",
-              fontSize: 11,
-            }}
-          >
-            Solar analysis unavailable until the property pin is verified.
-          </div>
-        ) : null}
-        {activeMode === "sketch" && (
-          <>
-            <button
-              type="button"
-              data-testid="sketch-photo-upload"
-              disabled={photoBusy}
-              onClick={() => photoInputRef.current?.click()}
-              style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "5px 10px",
-              borderRadius: "var(--gs-radius-pill)",
-              background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
-              border: "1px solid color-mix(in srgb, var(--gs-primary) 40%, transparent)",
-              color: "var(--gs-primary)",
-              fontFamily: "var(--font-ui)",
-              fontSize: 10.5,
-              cursor: photoBusy ? "wait" : "pointer",
-              whiteSpace: "nowrap",
-              }}
-            >
-              {photoBusy ? "Uploading…" : "Trace a site photo"}
-            </button>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/jpeg,image/png"
-              disabled={photoBusy}
-              hidden
-              aria-label="Choose a site photo to trace"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void uploadSitePhoto(f);
-                e.currentTarget.value = "";
-              }}
-            />
-            {photoError ? (
-              <p role="alert" style={{ margin: 0, color: "var(--gs-ink-conflict)", fontSize: 11 }}>
-                {photoError}
-              </p>
-            ) : null}
-          </>
-        )}
-        {/* In-context deep link while the subsurface blueprint is open. */}
-        {subsurfaceView && (
-          <a
-            href={`/subsurface-studio/${projectId}`}
-            data-testid="open-subsurface-studio"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "4px 8px",
-              borderRadius: "var(--gs-radius-pill)",
-              background: "color-mix(in srgb, var(--gs-truth-ink) 12%, transparent)",
-              border: "1px solid color-mix(in srgb, var(--gs-truth-ink) 40%, transparent)",
-              color: "var(--gs-ink-truth)",
-              fontFamily: "var(--font-ui)",
-              fontSize: 10.5,
-              textDecoration: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            Open full subsurface studio →
-          </a>
-        )}
-        {activeMode === "cad" && (
-          <StudioCadCard
-            projectId={projectId}
-            onCadResult={(result) => setCadGhostCount(result.ghost_count)}
-          />
-        )}
-        {(items?.length ?? 0) > 0 &&
-          (activeMode === "sketch" ||
-            activeMode === "cad" ||
-            activeMode === "quote" ||
-            activeMode === "garden") && (
-          <FitSheetCard
-            projectId={projectId}
-            items={items ?? []}
-            boundaryPct={boundaryPct}
-            constructionTrenches={constructionTrenches}
-            irrigationZones={irrigationZones}
-            scaleM={scaleM}
-            outdoorM2={outdoorM2}
-          />
-        )}
-        {activeMode === "quote" && (items?.length ?? 0) === 0 ? (
-          <GlassCard
-            position={{ position: "relative" }}
-            style={{ width: 280, padding: "10px 12px" }}
-          >
-            <div
-              data-testid="quote-empty-state"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-                color: "var(--gs-ink)",
-                fontFamily: "var(--font-ui)",
-                fontSize: 11,
-                lineHeight: 1.45,
-              }}
-            >
-              <strong>Build the concept before pricing</strong>
-              <span style={{ color: "var(--gs-ink-secondary)" }}>
-                Add accepted planting or hardscape items to create a live fit-sheet.
-              </span>
-              <button
-                type="button"
-                onClick={() => onNativeMode("cad")}
-                style={{
-                  minHeight: 32,
-                  borderRadius: "var(--gs-radius-chip)",
-                  border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
-                  background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
-                  color: "var(--gs-primary)",
-                  fontFamily: "var(--font-ui)",
-                  cursor: "pointer",
-                }}
-              >
-                Open CAD drafter
-              </button>
-            </div>
-          </GlassCard>
-        ) : null}
-        {liveData.heightmapPoints.length > 0 && (
-          <SliceProfileCard
-            scaleM={scaleM}
-            boardAspect={boardAspect}
-            heightmapPoints={liveData.heightmapPoints}
-          />
-        )}
-        {liveData.heightmapPoints.length > 0 && (
-          <DrainageFlowCard
-            scaleM={scaleM}
-            boardAspect={boardAspect}
-            heightmapPoints={liveData.heightmapPoints}
-            hydraulicResults={liveData.hydraulicResults}
-          />
-        )}
-        {liveData.heightmapPoints.length > 0 && (
-          <EarthworksCard
-            scaleM={scaleM}
-            boardAspect={boardAspect}
-            heightmapPoints={liveData.heightmapPoints}
-          />
-        )}
-      </div>
 
       {/* Native present — the classic PresentSurface deck as full-bleed
           chrome over the presentation lens (ARCHITECTURE §5: the feature
@@ -1495,7 +1623,7 @@ function FirstRunHint() {
       data-testid="controls-hint"
       style={{
         position: "absolute",
-        bottom: 86,
+        bottom: 160,
         left: "50%",
         transform: "translateX(-50%)",
         display: "flex",
@@ -1514,7 +1642,7 @@ function FirstRunHint() {
         color: "var(--gs-ink-secondary)",
       }}
     >
-      <span>Wheel = zoom · Drag = pan · Plan/3D top-left · Ctrl+K = commands</span>
+      <span>Wheel = zoom · Drag = pan · Tabs = surfaces · Ctrl+K = commands</span>
       <button
         type="button"
         aria-label="Dismiss controls hint"

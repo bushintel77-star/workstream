@@ -172,7 +172,7 @@ export function AssetFanOutDock() {
         data-testid="asset-dock"
         style={{
           position: "absolute",
-          bottom: 96,
+          bottom: 12,
           // Centre in the safe zone (between the tool rail and the right
           // chrome column), not the raw viewport — collision-spec guaranteed.
           left: "calc(50% - 85px)",
@@ -199,7 +199,7 @@ export function AssetFanOutDock() {
       data-testid="asset-dock"
       style={{
         position: "absolute",
-        bottom: 96, // stacked above the growth scrubber card
+        bottom: 12, // the growth scrubber moved into the Growth surface tab
         // Centred in the safe zone between the tool rail and the right
         // chrome column; width capped to the same zone so the fan never
         // swings into the instrument cards (collision-spec guaranteed).
