@@ -53,6 +53,9 @@ jobs:
 
       - run: pnpm web:check-bundle-size
 
+      # Ground-truth gate — fails if any BOM/quote figure lacks a source.
+      - run: pnpm check:traceability
+
       - run: pnpm typecheck
 
       - run: pnpm lint

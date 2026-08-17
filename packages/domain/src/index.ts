@@ -179,3 +179,4 @@ export * from './structured-stroke-conflict';
 export * from './structured-stroke-cost';
 export * from './hydrology';
 export * from './strikeAlert';
+export * from './traceability';
