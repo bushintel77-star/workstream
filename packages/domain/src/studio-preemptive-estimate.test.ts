@@ -226,4 +226,82 @@ describe("estimateStudioDrawing", () => {
     expect(trench!.qty).toBeCloseTo(20, 0);
     expect(report.lines.some((l) => l.id === "sec-trench-drainage")).toBe(false);
   });
+
+  it("traces boundary ring area + perimeter to the ground-truth source", () => {
+    const report = estimateStudioDrawing({
+      outdoorM2: 230,
+      boundary,
+      boundaryAreaM2: 512,
+      boundaryPerimeterM: 96.4,
+      items: [],
+    });
+    const area = report.trace.find((t) => t.label === "Site area (boundary ring)");
+    expect(area).toBeTruthy();
+    expect(area!.qty).toBeCloseTo(512, 5);
+    expect(area!.unit).toBe("m²");
+    expect(area!.source).toBe("boundary");
+    const perim = report.trace.find((t) => t.label === "Boundary perimeter");
+    expect(perim?.qty).toBeCloseTo(96.4, 5);
+    expect(perim?.source).toBe("boundary");
+  });
+
+  it("labels the site area indicative when the boundary ring is not closed", () => {
+    const report = estimateStudioDrawing({
+      outdoorM2: 0,
+      boundary,
+      boundaryAreaM2: null,
+      items: [],
+    });
+    const area = report.trace.find((t) => t.label === "Site area (boundary ring)");
+    expect(area?.source).toBe("indicative");
+    expect(area?.qty).toBe(0);
+  });
+
+  it("traces asset counts to the placed item ids", () => {
+    const report = estimateStudioDrawing({
+      outdoorM2: 230,
+      boundary,
+      items: [
+        { id: "tree1", t: "canopy", x: 30, y: 30, scale: 1 },
+        { id: "tree2", t: "feature", x: 60, y: 30, scale: 1 },
+        { id: "bed1", t: "bed", x: 40, y: 60, scale: 1 },
+        // Ghost items must not count.
+        { id: "ghost1", t: "canopy", x: 80, y: 80, scale: 1, ghost: true },
+      ],
+    });
+    const trees = report.trace.find((t) => t.label === "Trees");
+    expect(trees?.qty).toBe(2);
+    expect(trees?.source).toBe("item");
+    expect(trees?.sourceIds.sort()).toEqual(["tree1", "tree2"]);
+    const beds = report.trace.find((t) => t.label === "Planting beds");
+    expect(beds?.qty).toBe(1);
+    expect(beds?.sourceIds).toEqual(["bed1"]);
+  });
+
+  it("traces material volumes to cad quantities when hardscape is placed", () => {
+    const report = estimateStudioDrawing({
+      outdoorM2: 230,
+      boundary,
+      boundaryAreaM2: 512,
+      items: [
+        {
+          id: "p1",
+          t: "paving",
+          x: 50,
+          y: 50,
+          scale: 1.2,
+          areaKind: "rect",
+          wPx: 110,
+          hPx: 80,
+        },
+      ],
+    });
+    const hard = report.trace.find((t) => t.label === "Hardscape area");
+    expect(hard?.source).toBe("cad_qty");
+    expect(hard!.qty).toBeGreaterThan(0);
+    expect(hard?.sourceIds).toContain("p1");
+    const dig = report.trace.find((t) => t.label === "Excavation volume");
+    expect(dig?.source).toBe("cad_qty");
+    expect(dig!.qty).toBeGreaterThan(0);
+  });
 });

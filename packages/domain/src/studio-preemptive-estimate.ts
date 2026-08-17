@@ -15,6 +15,7 @@ import { itemFootprintMetres } from "./hybrid-plane";
 import {
   evaluateStudioCompliance,
   type StudioComplianceItem,
+  type StudioComplianceItemType,
   type StudioComplianceReport,
 } from "./studio-preemptive-compliance";
 import { emitterCountForLine } from "./irrigation";
@@ -109,6 +110,30 @@ export type StudioHorizonCard = {
   sourceIds: string[];
 };
 
+/**
+ * Ground-truth origin of a BOM figure. The honesty rule: every figure must
+ * point at its source measurement; anything that can't is labelled
+ * `indicative` and never passed off as fact.
+ */
+export type StudioTraceSource =
+  | "boundary" // closed boundary ring (shoelace area / perimeter)
+  | "cad_qty" // derived from placed CAD quantities (volumes, hardscape m²)
+  | "item" // counted directly from placed items (sourceIds set)
+  | "survey" // from survey measurements
+  | "indicative"; // no ground-truth source — honestly labelled
+
+/** A single traceable BOM figure (area / volume / count / length). */
+export type StudioTraceFigure = {
+  label: string;
+  unit: "m²" | "m³" | "ea" | "m" | "t";
+  qty: number;
+  source: StudioTraceSource;
+  /** The placed item ids that produced this figure (empty = not item-traced). */
+  sourceIds: string[];
+  /** Human explanation of the ground-truth origin (tooltip). */
+  note: string;
+};
+
 export type StudioEstimateReport = {
   lines: StudioEstimateLine[];
   materialsExGst: number;
@@ -120,6 +145,8 @@ export type StudioEstimateReport = {
   tipperLoads: number;
   horizon: StudioHorizonCard[];
   compliance: StudioComplianceReport;
+  /** Traceable figures — each points at its ground-truth source. */
+  trace: StudioTraceFigure[];
 };
 
 type ItemMeta = {
@@ -225,6 +252,10 @@ const DEFAULT_META: Record<string, ItemMeta> = {
 export function estimateStudioDrawing(args: {
   outdoorM2: number;
   boundary: Array<{ x: number; y: number }>;
+  /** Closed boundary ring area (m²) — ground truth from the site schedule. */
+  boundaryAreaM2?: number | null;
+  /** Closed boundary ring perimeter (m) — ground truth from the site schedule. */
+  boundaryPerimeterM?: number | null;
   items: StudioComplianceItem[];
   metaByType?: Partial<Record<string, ItemMeta>>;
   /** Constrained access bumps labour / tipper count. */
@@ -819,6 +850,16 @@ export function estimateStudioDrawing(args: {
   const gst = round2(calculateGST(materialsExGst));
   const totalInclGst = round2(materialsExGst + gst);
 
+  const trace = buildTraceFigures({
+    boundaryAreaM2: args.boundaryAreaM2,
+    boundaryPerimeterM: args.boundaryPerimeterM,
+    outdoorM2: args.outdoorM2,
+    hardscapeM2,
+    excavateM3,
+    spoilTonnes,
+    items: live,
+  });
+
   return {
     lines: lines.sort((a, b) => a.tier.localeCompare(b.tier)),
     materialsExGst,
@@ -833,7 +874,142 @@ export function estimateStudioDrawing(args: {
         : 0,
     horizon: horizon.slice(0, 8),
     compliance,
+    trace,
   };
+}
+
+/**
+ * Build the traceable-figure strip. Ground-truth rule: boundary ring area /
+ * perimeter come from the closed site schedule; volumes derive from placed
+ * CAD quantities; counts are direct from placed items. Anything that can't
+ * point at a source is labelled `indicative`.
+ */
+function buildTraceFigures(args: {
+  boundaryAreaM2?: number | null;
+  boundaryPerimeterM?: number | null;
+  outdoorM2: number;
+  hardscapeM2: number;
+  excavateM3: number;
+  spoilTonnes: number;
+  items: StudioComplianceItem[];
+}): StudioTraceFigure[] {
+  const trace: StudioTraceFigure[] = [];
+
+  // Boundary ring — the ground-truth anchor.
+  if (args.boundaryAreaM2 != null && args.boundaryAreaM2 > 0) {
+    trace.push({
+      label: "Site area (boundary ring)",
+      unit: "m²",
+      qty: round2(args.boundaryAreaM2),
+      source: "boundary",
+      sourceIds: [],
+      note: "Closed boundary ring — shoelace area from the title ring",
+    });
+    if (args.boundaryPerimeterM != null && args.boundaryPerimeterM > 0) {
+      trace.push({
+        label: "Boundary perimeter",
+        unit: "m",
+        qty: round2(args.boundaryPerimeterM),
+        source: "boundary",
+        sourceIds: [],
+        note: "Closed boundary ring — perimeter from the title ring",
+      });
+    }
+  } else {
+    trace.push({
+      label: "Site area (boundary ring)",
+      unit: "m²",
+      qty: 0,
+      source: "indicative",
+      sourceIds: [],
+      note: "Boundary not closed — area is indicative until the ring closes",
+    });
+  }
+
+  // Workable outdoor (lot − building − easements − services).
+  if (args.outdoorM2 > 0) {
+    trace.push({
+      label: "Workable outdoor",
+      unit: "m²",
+      qty: round2(args.outdoorM2),
+      source: "boundary",
+      sourceIds: [],
+      note: "Boundary minus building, easements and services",
+    });
+  }
+
+  // Material volumes from placed CAD quantities.
+  const hardIds = args.items
+    .filter((i) => i.t === "paving" || i.t === "deck")
+    .map((i) => i.id);
+  if (args.hardscapeM2 > 0) {
+    trace.push({
+      label: "Hardscape area",
+      unit: "m²",
+      qty: round2(args.hardscapeM2),
+      source: "cad_qty",
+      sourceIds: hardIds,
+      note: "Sum of placed paving + deck footprints",
+    });
+  }
+  if (args.excavateM3 > 0) {
+    trace.push({
+      label: "Excavation volume",
+      unit: "m³",
+      qty: round2(args.excavateM3),
+      source: "cad_qty",
+      sourceIds: hardIds,
+      note: "Dig depth × hardscape footprint",
+    });
+  }
+  if (args.spoilTonnes > 0) {
+    trace.push({
+      label: "Spoil weight",
+      unit: "t",
+      qty: round2(args.spoilTonnes),
+      source: "cad_qty",
+      sourceIds: hardIds,
+      note: "Excavated spoil at standard density",
+    });
+  }
+
+  // Asset counts — direct from placed items.
+  const countBy = (types: StudioComplianceItemType[]) =>
+    args.items.filter((i) => types.includes(i.t));
+  const treeIds = countBy(["canopy", "feature", "exist"]).map((i) => i.id);
+  if (treeIds.length > 0) {
+    trace.push({
+      label: "Trees",
+      unit: "ea",
+      qty: treeIds.length,
+      source: "item",
+      sourceIds: treeIds,
+      note: "Placed canopy / feature / existing trees",
+    });
+  }
+  const bedIds = countBy(["bed", "hedge"]).map((i) => i.id);
+  if (bedIds.length > 0) {
+    trace.push({
+      label: "Planting beds",
+      unit: "ea",
+      qty: bedIds.length,
+      source: "item",
+      sourceIds: bedIds,
+      note: "Placed mass plant beds + hedges",
+    });
+  }
+  if (hardIds.length > 0) {
+    trace.push({
+      label: "Hardscape elements",
+      unit: "ea",
+      qty: hardIds.length,
+      source: "item",
+      sourceIds: hardIds,
+      note: "Placed paving + deck elements",
+    });
+  }
+
+  return trace;
 }
 
 function labelFor(t: string): string {

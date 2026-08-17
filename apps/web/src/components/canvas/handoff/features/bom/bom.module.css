@@ -121,6 +121,44 @@
   gap: var(--s-1);
 }
 
+/* Traceable-figure strip — each figure carries its ground-truth source. */
+.trace {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--ws-frame-ink-faint, var(--hc-line));
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.traceRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.traceLabel {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  color: var(--ws-frame-ink-dim, var(--hc-ink-muted));
+}
+
+.traceSource {
+  font-family: var(--font-mono);
+  font-size: var(--text-femto, 9px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ws-frame-ink-faint, var(--hc-ink-faint));
+}
+
+.traceQty {
+  font-family: var(--font-mono);
+  font-size: var(--text-nano);
+  color: var(--ws-frame-ink, var(--hc-ink));
+  white-space: nowrap;
+}
+
 .line {
   display: flex;
   justify-content: space-between;

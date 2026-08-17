@@ -5,6 +5,7 @@ import {
   formatLabourChip,
   proposeLeftoversFromEstimateLines,
   type StudioEstimateReport,
+  type StudioTraceFigure,
   type TradeTelemetry,
 } from "@workstream/domain";
 import {
@@ -33,6 +34,21 @@ const aud = (n: number) =>
     currency: "AUD",
     maximumFractionDigits: 0,
   }).format(n);
+
+const traceSourceLabel = (s: StudioTraceFigure["source"]): string => {
+  switch (s) {
+    case "boundary":
+      return "title ring";
+    case "cad_qty":
+      return "CAD qty";
+    case "item":
+      return "placed items";
+    case "survey":
+      return "survey";
+    default:
+      return "indicative";
+  }
+};
 
 function friendlyPrimary(label: string): string {
   return label
@@ -166,6 +182,24 @@ export function LiveBomDock({
             ? `${Math.round(trade.matchRatio * 100)}% trade matched · ${aud(trade.tradeExGst)} ex GST`
             : "Trade estimate is AI-estimated"}
         </p>
+      ) : null}
+      {estimate.trace.length > 0 ? (
+        <div className={css.trace} data-testid="live-bom-trace">
+          <p className={css.shadowHead}>Ground truth</p>
+          {estimate.trace.slice(0, 8).map((f) => (
+            <div key={f.label} className={css.traceRow} title={f.note}>
+              <span className={css.traceLabel}>
+                {f.label}{" "}
+                <span className={css.traceSource}>
+                  · {traceSourceLabel(f.source)}
+                </span>
+              </span>
+              <span className={css.traceQty}>
+                {f.qty} {f.unit}
+              </span>
+            </div>
+          ))}
+        </div>
       ) : null}
       <div className={css.lines}>
         {primary.slice(0, 5).map((row) => (

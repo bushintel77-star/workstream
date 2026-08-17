@@ -119,6 +119,7 @@ function report(lines: StudioEstimateLine[]): StudioEstimateReport {
     spoilTonnes: 13.1,
     tipperLoads: 2,
     horizon: [],
+    trace: [],
     compliance: {
       outdoorM2: 0,
       permeablePct: 0,

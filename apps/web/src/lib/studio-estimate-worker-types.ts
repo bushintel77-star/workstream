@@ -7,6 +7,10 @@ import type {
 export type StudioEstimateArgs = {
   outdoorM2: number;
   boundary: Array<{ x: number; y: number }>;
+  /** Closed boundary ring area (m²) — ground truth from the site schedule. */
+  boundaryAreaM2?: number | null;
+  /** Closed boundary ring perimeter (m) — ground truth from the site schedule. */
+  boundaryPerimeterM?: number | null;
   items: StudioComplianceItem[];
   metaByType?: Record<
     string,

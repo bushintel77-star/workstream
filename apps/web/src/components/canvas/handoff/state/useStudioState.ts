@@ -4136,6 +4136,10 @@ export function useStudioState(opts: UseStudioStateOpts) {
     return {
       outdoorM2: workableOutdoorM2,
       boundary: state.doc.boundary,
+      // Ground-truth boundary figures from the live site schedule (closed ring
+      // shoelace area / perimeter — the traceability anchor for the BOM).
+      boundaryAreaM2: siteSchedule?.lotAreaM2 ?? null,
+      boundaryPerimeterM: siteSchedule?.boundaryPerimeterM ?? null,
       items: toComplianceItems(state.doc.items),
       accessConstrained: workableOutdoorM2 > 400,
       scaleM,
@@ -4171,6 +4175,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
     state.ui.boardWidthM,
     state.ui.sheetScaleDenom,
     workableOutdoorM2,
+    siteSchedule,
   ]);
 
   /**
