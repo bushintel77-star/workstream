@@ -52,3 +52,26 @@ export function nextPanOffset(
     y: clampPan(base.y + dyPx),
   };
 }
+
+/**
+ * Camera values needed to build the `.zoomWorld` transform string.
+ * `panX`/`panY` are the final plan pan (sheet base + drag offset).
+ */
+export type ZoomWorldCamera = {
+  tiltActive: boolean;
+  tiltDeg: number;
+  panX: number;
+  panY: number;
+  rotateDeg: number;
+  zoom: number;
+};
+
+/**
+ * Build the `.zoomWorld` transform — optional view-only tilt → pan → rotate →
+ * scale. Must stay byte-identical to the React inline style in
+ * HandoffDesignStudio (the pan-drag handler writes this string directly to the
+ * DOM to avoid a React commit per pointer-move).
+ */
+export function zoomWorldTransformString(cam: ZoomWorldCamera): string {
+  return `${cam.tiltActive ? `rotateX(${cam.tiltDeg}deg) ` : ""}translate(${cam.panX}px, ${cam.panY}px) rotate(${cam.rotateDeg}deg) scale(${cam.zoom})`;
+}

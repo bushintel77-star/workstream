@@ -269,7 +269,11 @@ import {
   type ViewRotationStepDeg,
 } from "./geometry/canvasViewRotation";
 import { ViewNorthControl } from "./features/viewRotate/ViewNorthControl";
-import { isPanGesture, nextPanOffset } from "./geometry/canvasPan";
+import {
+  isPanGesture,
+  nextPanOffset,
+  zoomWorldTransformString,
+} from "./geometry/canvasPan";
 import {
   isTwoFingerCameraGesture,
   panFromTouchMidpoint,
@@ -475,6 +479,36 @@ export function HandoffDesignStudio({
   const [spacePanArmed, setSpacePanArmed] = useState(false);
   const [isPanningActive, setIsPanningActive] = useState(false);
   const panBaseRef = useRef({ x: 0, y: 0 });
+  /**
+   * Live pan offset during a drag — written per pointer-move, committed to
+   * `ui.panX/panY` once on pointer-up (zero React commits during the drag).
+   */
+  const panDragRef = useRef<{ x: number; y: number } | null>(null);
+  /**
+   * Committed camera values for building the `.zoomWorld` transform while a
+   * pan drag mutates the DOM directly (kept fresh so the drag handler never
+   * reads a stale closure).
+   */
+  const zoomWorldCamRef = useRef<{
+    tiltActive: boolean;
+    tiltDeg: number;
+    sheetPanX: number;
+    sheetPanY: number;
+    rotateDeg: number;
+    zoom: number;
+  }>({ tiltActive: false, tiltDeg: 0, sheetPanX: 0, sheetPanY: 0, rotateDeg: 0, zoom: 1 });
+  /** The `.zoomWorld` element — the pan drag writes its transform directly. */
+  const zoomWorldRef = useRef<HTMLDivElement>(null);
+  /**
+   * Live camera during a wheel-zoom burst — seeded from committed `ui` on the
+   * first wheel of a burst, compounded per event, committed once on wheel-end
+   * (zero React commits during the burst). null when no burst is active.
+   */
+  const wheelCamRef = useRef<{ zoom: number; focusX: number; focusY: number } | null>(
+    null,
+  );
+  /** Wheel-end debounce — fires the single `setUi` commit after the burst. */
+  const wheelDebounceRef = useRef<number | null>(null);
   /** Live zoom for multi-touch pinch (avoids stale closures mid-gesture). */
   const zoomRef = useRef(1);
   /**
@@ -820,44 +854,96 @@ export function HandoffDesignStudio({
       }
       e.preventDefault();
       markInteracting();
-      const nextZoom = zoomFromWheel(ui.zoom, e.deltaY);
-      if (ui.frameOn) {
-        // Keep lot-centred sheet origin; zoom multiplies the paper fit.
-        studio.setUi({ zoom: nextZoom });
-        return;
+      // Live camera state — first wheel of a burst seeds from committed ui,
+      // later wheels compound on the live value (ui.zoom is stale mid-burst
+      // because we commit once at wheel-end).
+      if (!wheelCamRef.current) {
+        wheelCamRef.current = {
+          zoom: clampZoom(ui.zoom),
+          focusX: ui.focusX,
+          focusY: ui.focusY,
+        };
       }
-      /*
-       * Tilt applies rotateX that clientToBoardPct does not invert. Updating
-       * focus from the pointer under tilt makes transform-origin jump each
-       * tick → left/right zig-zag. Freeze focus; scale straight in/out.
-       */
-      if (isTiltActive(tiltDegRef.current)) {
-        studio.setUi({ zoom: nextZoom });
-        return;
+      const live = wheelCamRef.current!;
+      const nextZoom = zoomFromWheel(live.zoom, e.deltaY);
+      const cam = zoomWorldCamRef.current;
+      const zw = zoomWorldRef.current;
+      const zoomOnly = ui.frameOn || isTiltActive(tiltDegRef.current);
+      if (zoomOnly) {
+        // Sheet keeps its lot-centred origin; tilt freezes focus (rotateX is
+        // not inverted by clientToBoardPct — updating focus would zig-zag).
+        live.zoom = nextZoom;
+        if (zw) {
+          zw.style.transform = zoomWorldTransformString({
+            tiltActive: cam.tiltActive,
+            tiltDeg: cam.tiltDeg,
+            panX: cam.sheetPanX + ui.panX,
+            panY: cam.sheetPanY + ui.panY,
+            rotateDeg: cam.rotateDeg,
+            zoom: live.zoom,
+          });
+        }
+      } else {
+        // Pointer-anchored zoom: recompute focus from the live zoom + pointer,
+        // mutate transformOrigin + transform directly (zero React commits).
+        const r = el.getBoundingClientRect();
+        const rotateDeg =
+          isCadLike && !ui.clientView
+            ? normalizeViewRotationDeg(ui.viewRotationDeg)
+            : 0;
+        const focus = clientToBoardPct(e.clientX, e.clientY, r, {
+          boardW: el.clientWidth || 1,
+          boardH: el.clientHeight || 1,
+          zoom: live.zoom,
+          rotateDeg,
+          panX: ui.panX,
+          panY: ui.panY,
+          focusX: live.focusX,
+          focusY: live.focusY,
+        });
+        live.zoom = nextZoom;
+        live.focusX = focus.x;
+        live.focusY = focus.y;
+        if (zw) {
+          zw.style.transformOrigin = `${live.focusX}% ${live.focusY}%`;
+          zw.style.transform = zoomWorldTransformString({
+            tiltActive: cam.tiltActive,
+            tiltDeg: cam.tiltDeg,
+            panX: cam.sheetPanX + ui.panX,
+            panY: cam.sheetPanY + ui.panY,
+            rotateDeg: cam.rotateDeg,
+            zoom: live.zoom,
+          });
+        }
       }
-      const r = el.getBoundingClientRect();
-      const rotateDeg =
-        isCadLike && !ui.clientView
-          ? normalizeViewRotationDeg(ui.viewRotationDeg)
-          : 0;
-      const focus = clientToBoardPct(e.clientX, e.clientY, r, {
-        boardW: el.clientWidth || 1,
-        boardH: el.clientHeight || 1,
-        zoom: clampZoom(ui.zoom),
-        rotateDeg,
-        panX: ui.panX,
-        panY: ui.panY,
-        focusX: ui.focusX,
-        focusY: ui.focusY,
-      });
-      studio.setUi({
-        focusX: Number(focus.x.toFixed(2)),
-        focusY: Number(focus.y.toFixed(2)),
-        zoom: nextZoom,
-      });
+      // Debounced commit on wheel-end — the single React write for the burst.
+      if (wheelDebounceRef.current != null) {
+        window.clearTimeout(wheelDebounceRef.current);
+      }
+      wheelDebounceRef.current = window.setTimeout(() => {
+        wheelDebounceRef.current = null;
+        const final = wheelCamRef.current;
+        wheelCamRef.current = null;
+        if (!final) return;
+        if (zoomOnly) {
+          studio.setUi({ zoom: final.zoom });
+        } else {
+          studio.setUi({
+            zoom: final.zoom,
+            focusX: Number(final.focusX.toFixed(2)),
+            focusY: Number(final.focusY.toFixed(2)),
+          });
+        }
+      }, 180);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      if (wheelDebounceRef.current != null) {
+        window.clearTimeout(wheelDebounceRef.current);
+        wheelDebounceRef.current = null;
+      }
+    };
   }, [
     studio,
     markInteracting,
@@ -950,19 +1036,56 @@ export function HandoffDesignStudio({
       const startX = origin.clientX;
       const startY = origin.clientY;
       const base = panBaseRef.current;
+      // Mark interacting + arm the grab at drag START — one commit here, then
+      // the pointer-moves that follow write the transform straight to the DOM.
+      markInteracting();
       setIsPanningActive(true);
+      panDragRef.current = base;
       el.setPointerCapture?.(origin.pointerId);
+      // Apply the committed transform before the first move so there is no
+      // identity flash between pointerdown and the first pointermove.
+      const zw = zoomWorldRef.current;
+      const cam = zoomWorldCamRef.current;
+      if (zw) {
+        zw.style.transform = zoomWorldTransformString({
+          tiltActive: cam.tiltActive,
+          tiltDeg: cam.tiltDeg,
+          panX: cam.sheetPanX + base.x,
+          panY: cam.sheetPanY + base.y,
+          rotateDeg: cam.rotateDeg,
+          zoom: cam.zoom,
+        });
+      }
       const onMove = (ev: PointerEvent) => {
-        markInteracting();
         const next = nextPanOffset(
           base,
           ev.clientX - startX,
           ev.clientY - startY,
         );
-        studio.setUi({ panX: next.x, panY: next.y });
+        panDragRef.current = next;
+        // Mutate the board transform directly — ZERO React commits during a
+        // drag (the roadmap's "last per-frame React write"). The single
+        // commit happens on pointer-up in onUp.
+        const el2 = zoomWorldRef.current;
+        const cam2 = zoomWorldCamRef.current;
+        if (el2) {
+          el2.style.transform = zoomWorldTransformString({
+            tiltActive: cam2.tiltActive,
+            tiltDeg: cam2.tiltDeg,
+            panX: cam2.sheetPanX + next.x,
+            panY: cam2.sheetPanY + next.y,
+            rotateDeg: cam2.rotateDeg,
+            zoom: cam2.zoom,
+          });
+        }
       };
       const onUp = () => {
+        const finalPan = panDragRef.current ?? base;
+        panDragRef.current = null;
         setIsPanningActive(false);
+        // One React commit at interaction end — sync the committed state to
+        // the live value the drag has been writing to the DOM.
+        studio.setUi({ panX: finalPan.x, panY: finalPan.y });
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
         el.releasePointerCapture?.(origin.pointerId);
@@ -2421,6 +2544,33 @@ export function HandoffDesignStudio({
     planFocusX,
     planFocusY,
   });
+
+  /**
+   * Keeps the committed camera values fresh for the pan-drag handler, which
+   * writes the `.zoomWorld` transform directly (no React commit per move).
+   * `sheetPanX/Y` = plan pan minus the drag offset, so the live transform can
+   * be planPan = sheetBase + liveDragPan.
+   */
+  useEffect(() => {
+    zoomWorldCamRef.current = {
+      tiltActive: isTiltActive(ui.tiltDeg) || Boolean(tiltAnimKind),
+      tiltDeg: ui.tiltDeg,
+      sheetPanX: planPanX - ui.panX,
+      sheetPanY: planPanY - ui.panY,
+      rotateDeg: planRotateDeg,
+      zoom: planZoom,
+    };
+  }, [
+    ui.tiltDeg,
+    ui.panX,
+    ui.panY,
+    tiltAnimKind,
+    planPanX,
+    planPanY,
+    planRotateDeg,
+    planZoom,
+  ]);
+
   /**
    * Free-plan paper stays OUTSIDE the camera transform (flat). Scaling
    * parchment inside `.zoomWorld` made the cream board grow/shrink with the
@@ -4029,6 +4179,7 @@ export function HandoffDesignStudio({
               <div
                 className={`${css.zoomWorld}${isTiltActive(ui.tiltDeg) || tiltAnimKind ? ` ${css.zoomWorldTilted}` : ""}${tiltAnimKind === "fast" ? ` ${css.zoomWorldTiltAnim}` : ""}${tiltAnimKind === "slow" ? ` ${css.zoomWorldTiltAnimSlow}` : ""}`}
                 data-testid="zoom-world"
+                ref={zoomWorldRef}
                 data-print-keep="plan"
                 data-tilt-deg={ui.tiltDeg.toFixed(1)}
                 data-view-yaw={String(planRotateDeg)}
@@ -4047,11 +4198,18 @@ export function HandoffDesignStudio({
                    * Keep rotateX(0) in the string while the temp transition class
                    * is on so flatten animates (then strip for pixel-identical off).
                    * Tilt is never inverted in clientToBoardPct — editing locks out.
+                   * Built via zoomWorldTransformString — the pan-drag handler
+                   * writes the SAME string directly to this element during a
+                   * drag (zero React commits), so the two must stay identical.
                    */
-                  transform: `${isTiltActive(ui.tiltDeg) || tiltAnimKind
-                    ? `rotateX(${ui.tiltDeg}deg) `
-                    : ""
-                    }translate(${planPanX}px, ${planPanY}px) rotate(${planRotateDeg}deg) scale(${planZoom})`,
+                  transform: zoomWorldTransformString({
+                    tiltActive: isTiltActive(ui.tiltDeg) || Boolean(tiltAnimKind),
+                    tiltDeg: ui.tiltDeg,
+                    panX: planPanX,
+                    panY: planPanY,
+                    rotateDeg: planRotateDeg,
+                    zoom: planZoom,
+                  }),
                   cursor: effectiveCursor,
                 }}
               >
