@@ -102,7 +102,7 @@ import type { PaperSize, PctPoint } from "../geometry";
 import { classifySurveyCorridor } from "../geometry/surveyCorridor";
 import { filterKeylessRingsToBoard } from "../geometry/keylessRingClip";
 import { rejectOversizedDwelling } from "../geometry/dwellingPlausibility";
-import { pointInPolygon } from "../geometry/polygon";
+import { normalizeRing, pointInPolygon } from "../geometry/polygon";
 import {
   constrainAssetCentre,
   outdoorFocusView,
@@ -3995,7 +3995,8 @@ export function useStudioState(opts: UseStudioStateOpts) {
 
   const finishTrace = useCallback(
     (pts: PctPoint[]) => {
-      if (pts.length < 3 || state.ui.locked) {
+      const ring = normalizeRing(pts);
+      if (ring.length < 3 || state.ui.locked) {
         setUi({ drawPoly: null, drawCursor: null });
         return;
       }
@@ -4003,7 +4004,7 @@ export function useStudioState(opts: UseStudioStateOpts) {
       mutate((snap, idn) => {
         let next: StudioSnapshot = {
           ...snap,
-          [target]: pts.map((p) => ({ ...p })),
+          [target]: ring.map((p) => ({ ...p })),
         };
         let nextIdn = idn;
         if (!state.ui.foundationCleanse) {

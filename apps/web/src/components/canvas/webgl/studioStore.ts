@@ -26,7 +26,15 @@
 
 import { create } from "zustand";
 import type { CanvasStroke, CatalogPlacement } from "@workstream/contracts";
-import type { FloraStudioForm } from "@workstream/domain";
+import {
+  melbourneSeason,
+  type FloraStudioForm,
+  type MelbourneSeason,
+} from "@workstream/domain";
+import {
+  sunDateFromPreset,
+  type SunDatePreset,
+} from "../handoff/features/sunGrowth/sunDatePreset";
 import type { PctPoint } from "./coordTransform";
 import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
 
@@ -63,23 +71,61 @@ export function autumnFactor(seasonProgress: number): number {
   return Math.max(0, (Math.cos(phase) + 1) / 2);
 }
 
-/** Human-readable season label (Southern-hemisphere / Melbourne convention). */
-export function seasonLabel(seasonProgress: number): string {
-  const p = seasonProgress;
-  if (p < 0.083 || p >= 0.92) return "Summer";
-  if (p < 0.33) return "Autumn";
-  if (p < 0.58) return "Winter";
-  return "Spring";
+/**
+ * Melbourne calendar day-of-year for an instant (single normalisation point
+ * for the season axis). The label authority stays in the domain's
+ * `melbourneSeason()`; this only converts the sun date back into the 0–1
+ * progress value the material factors are expressed in.
+ */
+function melbourneDayOfYear(when: Date): { year: number; doy: number } {
+  const parts = new Intl.DateTimeFormat("en-AU", {
+    timeZone: "Australia/Melbourne",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(when);
+  const get = (type: string) =>
+    Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const year = get("year");
+  const month = get("month");
+  const day = get("day");
+  const start = Date.UTC(year, 0, 0);
+  const doy = Math.floor((Date.UTC(year, month - 1, day) - start) / 86_400_000);
+  return { year, doy };
 }
 
-/** Month name from seasonProgress (0 = Jan, 1 = Dec). */
-export function seasonMonth(seasonProgress: number): string {
-  const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-  ];
-  const idx = Math.min(11, Math.floor(seasonProgress * 12));
-  return months[idx] ?? "Jan";
+function daysInYear(year: number): number {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 366 : 365;
+}
+
+/**
+ * Derive the 0–1 season axis (0 = Jan 1 → 1 = Dec 31) from the SAME date the
+ * sun is sampled at. `seasonProgress` is no longer a free scrubber — it is a
+ * pure function of (sunDatePreset, sunMin), which is the single-source link
+ * between the rendered sun, the seasonal material factors, and the season
+ * label.
+ */
+export function seasonProgressFromSun(
+  preset: SunDatePreset,
+  sunMin: number,
+  now: Date = new Date(),
+): number {
+  const when = sunDateFromPreset(preset, sunMin, now);
+  const { year, doy } = melbourneDayOfYear(when);
+  return doy / daysInYear(year);
+}
+
+/**
+ * Season label + month for the current sun date, delegating to the domain's
+ * `melbourneSeason()` — the single authority for season naming. The old
+ * `seasonLabel` / `seasonMonth` progress-lookup tables are removed.
+ */
+export function melbourneSeasonFromSun(
+  preset: SunDatePreset,
+  sunMin: number,
+  now: Date = new Date(),
+): MelbourneSeason {
+  return melbourneSeason(sunDateFromPreset(preset, sunMin, now));
 }
 
 /**
@@ -113,10 +159,16 @@ export interface StudioStoreState {
   // --- Temporal axes (from seasonalStore) ---
   /** Macro-time: 0 = just planted, 10 = 10-year maturity. */
   growthYear: number;
-  /** Micro-time: 0 = Jan 1, 1 = Dec 31. */
+  /**
+   * Micro-time: 0 = Jan 1, 1 = Dec 31. DERIVED from (sunDatePreset, sunMin) —
+   * never set directly. Material factors read it via getState(); labels use
+   * melbourneSeasonFromSun().
+   */
   seasonProgress: number;
   /** Minutes past Melbourne midnight — drives the real sun position. */
   sunMin: number;
+  /** Calendar preset the sun + season are sampled at (the single time source). */
+  sunDatePreset: SunDatePreset;
 
   // --- View / layer toggles ---
   /** Subsurface blueprint view toggle. */
@@ -220,8 +272,8 @@ export interface StudioStoreState {
 
   // --- Setters ---
   setGrowthYear: (y: number) => void;
-  setSeasonProgress: (s: number) => void;
   setSunMin: (m: number) => void;
+  setSunDatePreset: (p: SunDatePreset) => void;
   setSubsurfaceView: (v: boolean) => void;
   setSketchMode: (v: boolean) => void;
   setViewBlendTarget: (v: number) => void;
@@ -292,8 +344,9 @@ export interface StudioStoreState {
 export const useStudioStore = create<StudioStoreState>((set) => ({
   // Temporal defaults (match the prior seasonalStore defaults)
   growthYear: 10,
-  seasonProgress: 0.25,
+  sunDatePreset: "today",
   sunMin: 12 * 60,
+  seasonProgress: seasonProgressFromSun("today", 12 * 60),
 
   // View defaults
   subsurfaceView: false,
@@ -351,8 +404,16 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   savedTick: 0,
 
   setGrowthYear: (growthYear) => set({ growthYear }),
-  setSeasonProgress: (seasonProgress) => set({ seasonProgress }),
-  setSunMin: (sunMin) => set({ sunMin }),
+  setSunMin: (sunMin) =>
+    set((s) => ({
+      sunMin,
+      seasonProgress: seasonProgressFromSun(s.sunDatePreset, sunMin),
+    })),
+  setSunDatePreset: (sunDatePreset) =>
+    set((s) => ({
+      sunDatePreset,
+      seasonProgress: seasonProgressFromSun(sunDatePreset, s.sunMin),
+    })),
   setSubsurfaceView: (subsurfaceView) => set({ subsurfaceView }),
   setSketchMode: (sketchMode) => set({ sketchMode }),
   setViewBlendTarget: (viewBlendTarget) =>

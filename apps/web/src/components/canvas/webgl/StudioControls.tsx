@@ -60,8 +60,32 @@ export function StudioControls({
   onGroundClick,
   onCursorMove,
   tiltLocked,
-}: StudioControlsProps) {
-  const { gl } = useThree();
+}: StudioControlsProps) {  const { gl } = useThree();
+
+  // Coalesce hover cursor reports to one write per animation frame — pointer
+  // events fire at hundreds of Hz and each report would otherwise re-render
+  // the DOM chrome column (mirrors the rAF cap in CadPlanBoard).
+  const onCursorMoveRef = useRef(onCursorMove);
+  onCursorMoveRef.current = onCursorMove;
+  const cursorMoveCoalesced = useRef<((pct: PctPoint | null) => void) | null>(
+    null,
+  );
+  if (!cursorMoveCoalesced.current) {
+    let pending: PctPoint | null | undefined;
+    let scheduled = false;
+    cursorMoveCoalesced.current = (pct) => {
+      pending = pct;
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(() => {
+        scheduled = false;
+        const value = pending;
+        pending = undefined;
+        if (value !== undefined) onCursorMoveRef.current?.(value);
+      });
+    };
+  }
+
   const groundRef = useRef<THREE.Mesh>(null);
   const dragState = useRef<PanDragState>({
     active: false,
@@ -156,13 +180,15 @@ export function StudioControls({
         }
       }
 
-      // Report cursor position via raycast
-      if (onCursorMove) {
+      // Report cursor position via raycast — coalesced to one write per frame
+      // so hover readouts never re-render the DOM chrome per pointer event.
+      const reportCursor = cursorMoveCoalesced.current;
+      if (onCursorMove && reportCursor) {
         const world = raycastGround(e, groundRef);
         if (world) {
-          onCursorMove(worldToPct(world[0], world[1], scaleM, boardAspect));
+          reportCursor(worldToPct(world[0], world[1], scaleM, boardAspect));
         } else {
-          onCursorMove(null);
+          reportCursor(null);
         }
       }
     },

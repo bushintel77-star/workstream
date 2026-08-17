@@ -17,7 +17,7 @@ export {
   useStudioStore as useSeasonalStore,
   winterFactor,
   autumnFactor,
-  seasonLabel,
-  seasonMonth,
   leafStatus,
+  seasonProgressFromSun,
+  melbourneSeasonFromSun,
 } from "./studioStore";

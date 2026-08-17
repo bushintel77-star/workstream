@@ -574,7 +574,7 @@ export function DemoGarden() {
       style={{ position: "fixed", inset: 0, background: "#101418" }}
     >
       <Canvas
-        shadows="soft"
+        shadows="percentage"
         dpr={[1, 2]}
         camera={{ position: [11, 4.4, 13], fov: 38, near: 0.1, far: 3000 }}
         gl={{ antialias: true }}

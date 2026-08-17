@@ -13,14 +13,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { sunPositionAt, TEMPORAL_ROOT_TO_CANOPY, growthStageSpreadFactor } from "@workstream/domain";
+import { TEMPORAL_ROOT_TO_CANOPY, growthStageSpreadFactor } from "@workstream/domain";
 import {
   GROWTH_TEMPORAL_STAGES,
   growthStageFromIndex,
   growthStageIndex,
   growthStageLabel,
 } from "../handoff/features/sunGrowth/growthTemporal";
-import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
+import { resolveSunLightPosition } from "../webgl/sunLight";
 import {
   buildGrowthConflicts,
   DEFAULT_BOARD_WIDTH_M,
@@ -221,16 +221,17 @@ export function GrowthStudioClient({
     scene.add(sunLight);
     scene.add(sunLight.target);
 
-    const when = sunDateFromPreset("today", NOON_MIN);
-    const sunPos = sunPositionAt(resolvedLat, resolvedLng, when);
-    const altRad = (Math.max(sunPos.altitude_deg, 6) * Math.PI) / 180;
-    const azRad = (sunPos.azimuth_deg * Math.PI) / 180;
-    const sunDist = scaleM * 2.2;
-    sunLight.position.set(
-      Math.cos(altRad) * Math.sin(azRad) * sunDist,
-      Math.sin(altRad) * sunDist,
-      -Math.cos(altRad) * Math.cos(azRad) * sunDist,
+    // Real sun position at solar noon, project coordinates — shared projection
+    // with the WebGL studio (6° floor, the legacy GrowthStudio clamp).
+    const sun = resolveSunLightPosition(
+      resolvedLat,
+      resolvedLng,
+      "today",
+      NOON_MIN,
+      scaleM * 2.2,
+      6,
     );
+    sunLight.position.set(sun.position[0], sun.position[1], sun.position[2]);
 
     // ---- Ground ----
     const ground = new THREE.Mesh(

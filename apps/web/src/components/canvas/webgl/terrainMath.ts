@@ -25,6 +25,13 @@ import type { HeightmapPoint } from "./coordTransform";
 // module without reaching into coordTransform.
 export type { HeightmapPoint };
 
+/**
+ * Ground / terrain extent as a multiple of the board — the site photo, flat
+ * GroundPlane and TerrainMesh all span 3× the board so panning keeps context
+ * and the aerial never smears at a board-sized tile edge.
+ */
+export const GROUND_CONTEXT_EXTENT = 3;
+
 /** Grid resolution — vertices per axis across the lot extent (TerrainMesh). */
 export const GRID_SEGMENTS = 60;
 /** Vertical exaggeration — makes subtle grade changes (0.5–2m) visible. */

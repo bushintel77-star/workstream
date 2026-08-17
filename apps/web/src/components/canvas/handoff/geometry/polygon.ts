@@ -135,6 +135,24 @@ export function closedExcludeRings(rings: PctPoint[][]): PctPoint[][] {
   return rings.filter((r) => r.length >= 3);
 }
 
+/**
+ * Guarantee a traced boundary is a valid closed ring: drop a trailing point
+ * that duplicates the first (within epsilon) and require ≥3 vertices.
+ * The trace tool closes by returning to the first vertex; this normalises
+ * any path that also pushed the closing vertex as an extra 5th point, so
+ * edgeSegments yields clean B1…B4 labels and area math never sees a
+ * degenerate near-zero edge.
+ */
+export function normalizeRing(pts: PctPoint[]): PctPoint[] {
+  if (pts.length < 4) return pts;
+  const first = pts[0]!;
+  const last = pts[pts.length - 1]!;
+  if (Math.abs(first.x - last.x) < 1e-6 && Math.abs(first.y - last.y) < 1e-6) {
+    return pts.slice(0, -1);
+  }
+  return pts;
+}
+
 /** Labelled edge table B1… / F1… for the Fit sheet dim panel. */
 export function edgeSegments(
   pts: PctPoint[],

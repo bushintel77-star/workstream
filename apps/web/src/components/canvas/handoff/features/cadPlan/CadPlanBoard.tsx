@@ -124,6 +124,7 @@ import { isTiltActive, pxPerMetre } from "../tilt/tiltMath";
 import { SelectionHandles } from "./SelectionHandles";
 import css from "./cadPlan.module.css";
 import snapVisualCss from "../../geometry/snapVisual.module.css";
+import { useRafCoalesced } from "../../hooks/useRafCoalesced";
 
 /** Area types whose sketched outline renders as a plan region polygon. */
 const REGION_TYPES: ReadonlySet<StudioItemType> = new Set([
@@ -513,18 +514,26 @@ export function CadPlanBoard({
   } | null>(null);
   const [cursorPct, setCursorPct] = useState<PctPoint | null>(null);
   const cursorPctRef = useRef<PctPoint | null>(null);
-  const updateCursorPct = useCallback((next: PctPoint) => {
-    const previous = cursorPctRef.current;
-    if (
-      previous &&
-      Math.abs(previous.x - next.x) < 0.05 &&
-      Math.abs(previous.y - next.y) < 0.05
-    ) {
-      return;
-    }
-    cursorPctRef.current = next;
-    setCursorPct(next);
-  }, []);
+  // Coalesce hover writes to one React commit per animation frame — pointer
+  // events fire at hundreds of Hz, and each state write re-renders the board
+  // AND (via the parent effect) the chrome column. rAF-capping keeps the live
+  // buildable chip but drops the per-event churn.
+  const setCursorPctCoalesced = useRafCoalesced(setCursorPct);
+  const updateCursorPct = useCallback(
+    (next: PctPoint) => {
+      const previous = cursorPctRef.current;
+      if (
+        previous &&
+        Math.abs(previous.x - next.x) < 0.05 &&
+        Math.abs(previous.y - next.y) < 0.05
+      ) {
+        return;
+      }
+      cursorPctRef.current = next;
+      setCursorPctCoalesced(next);
+    },
+    [setCursorPctCoalesced],
+  );
   /** Why the pointer snapped — surfaced as a glyph legend, not just a flash. */
   const [snapKind, setSnapKind] = useState<
     "grid" | "align" | "vertex" | "ortho" | null

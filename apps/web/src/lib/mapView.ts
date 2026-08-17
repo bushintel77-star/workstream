@@ -184,13 +184,67 @@ export function groundSpanMetres(view: StaticMapView): {
   widthM: number;
   heightM: number;
 } {
+  return groundSpanMetresAtZoom(view, view.zoom);
+}
+
+/** Same as groundSpanMetres but for an arbitrary zoom (e.g. a widened capture). */
+export function groundSpanMetresAtZoom(
+  view: Pick<StaticMapView, "lat" | "width" | "height">,
+  zoom: number,
+): { widthM: number; heightM: number } {
   const latRad = (view.lat * Math.PI) / 180;
   const metresPerWorldPx =
-    (40_075_016.686 * Math.cos(latRad)) / (MAPBOX_TILE_PX * 2 ** view.zoom);
+    (40_075_016.686 * Math.cos(latRad)) / (MAPBOX_TILE_PX * 2 ** zoom);
   return {
     widthM: view.width * metresPerWorldPx,
     heightM: view.height * metresPerWorldPx,
   };
+}
+
+/**
+ * Mapbox static URL zoom token (preserves optional pin overlay + @2x suffix).
+ * Groups: 1=prefix 2=overlay 3=lng 4=lat 5=zoom 6=width 7=height 8=@2x
+ */
+const MAPBOX_STATIC_ZOOM_RE =
+  /(\/static\/)((?:[^/]+\/)?)(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?),0\/(\d+)x(\d+)(@2x)?/;
+
+/**
+ * Zoom reduction (whole levels) so a static view covers at least `factor`× its
+ * original ground span — each level down doubles the covered span. Clamped so
+ * widened captures never drop below a site-context floor.
+ */
+export function zoomForWiderCoverage(view: StaticMapView, factor: number): number {
+  const safe = Math.max(factor, 1);
+  const reduced = view.zoom - Math.ceil(Math.log2(safe));
+  return Math.max(14, reduced);
+}
+
+/**
+ * Rebuild a Mapbox static satellite URL at a lower zoom so the same pixel
+ * budget covers a wider ground span. Used to extend the aerial past the lot
+ * so the 3D ground (3× board) doesn't smear at the tile edge. Preserves the
+ * token, optional pin overlay, size and @2x. Returns the original URI when it
+ * isn't a parseable Mapbox static URL (e.g. the dev placeholder).
+ */
+export function widerMapboxStaticAerial(
+  uri: string,
+  targetSpanM: { widthM: number; heightM: number },
+): string {
+  const view = parseMapboxStaticAerial(uri);
+  if (!view) return uri;
+  const span = groundSpanMetres(view);
+  const factor = Math.max(
+    targetSpanM.widthM / Math.max(span.widthM, 1),
+    targetSpanM.heightM / Math.max(span.heightM, 1),
+    1,
+  );
+  const zoom = zoomForWiderCoverage(view, factor);
+  if (zoom === view.zoom) return uri;
+  return uri.replace(
+    MAPBOX_STATIC_ZOOM_RE,
+    (m, p1, p2, lng, lat, _z, w, h, at2x) =>
+      `${p1}${p2}${lng},${lat},${zoom},0/${w}x${h}${at2x ?? ""}`,
+  );
 }
 
 /** Horizontal metres per canvas pixel (scale bar / indicative readouts). */

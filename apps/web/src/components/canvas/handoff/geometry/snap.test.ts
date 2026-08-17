@@ -51,6 +51,51 @@ describe("snapTracePointer", () => {
     expect(r.kind).toBe("ortho");
     expect(r.y).toBeCloseTo(20, 0);
   });
+
+  it("closes before angle snap when clicking near the first vertex", () => {
+    // B1–B4 quadrilateral traced in order. Clicking at (10.2, 10.1) is within
+    // the close radius of B1; the angle from B4 (~-87°, would snap to 45° grid)
+    // must NOT steal the close — regression for the unclosed B1–B4 ring.
+    const quad = [
+      { x: 10, y: 10 },
+      { x: 40, y: 10 },
+      { x: 40, y: 40 },
+      { x: 10, y: 40 },
+    ];
+    const r = snapTracePointer({ x: 10.2, y: 10.1 }, quad, [], board);
+    expect(r.kind).toBe("close");
+    expect(r.x).toBe(10);
+    expect(r.y).toBe(10);
+  });
+
+  it("uses a pixel close radius (14px), not a fixed percent", () => {
+    const quad = [
+      { x: 10, y: 10 },
+      { x: 40, y: 10 },
+      { x: 40, y: 40 },
+      { x: 10, y: 40 },
+    ];
+    // 1.3% of a 1000px board ≈ 13px → inside 14px → closes
+    const inside = snapTracePointer({ x: 11.3, y: 10 }, quad, [], board);
+    expect(inside.kind).toBe("close");
+    expect(inside.x).toBe(10);
+    // 1.6% ≈ 16px → outside 14px → falls through to angle/raw snap
+    const outside = snapTracePointer({ x: 11.6, y: 10 }, quad, [], board);
+    expect(outside.kind).not.toBe("close");
+  });
+
+  it("snaps the closing click exactly onto the first vertex", () => {
+    const quad = [
+      { x: 12.5, y: 8.25 },
+      { x: 40, y: 10 },
+      { x: 40, y: 40 },
+      { x: 10, y: 40 },
+    ];
+    const r = snapTracePointer({ x: 12.7, y: 8.4 }, quad, [], board);
+    expect(r.kind).toBe("close");
+    expect(r.x).toBe(12.5);
+    expect(r.y).toBe(8.25);
+  });
 });
 
 describe("snapVertexDrag", () => {

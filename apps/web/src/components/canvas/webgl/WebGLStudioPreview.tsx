@@ -40,10 +40,13 @@ import { pctToWorld, type PctPoint } from "./coordTransform";
 import { PRESENTATION_LENS, TECHNICAL_LENS } from "./PresentationLens";
 import {
   useStudioStore,
-  seasonLabel,
-  seasonMonth,
   leafStatus,
+  melbourneSeasonFromSun,
 } from "./studioStore";
+import {
+  SUN_DATE_PRESETS,
+  sunDatePresetLabel,
+} from "../handoff/features/sunGrowth/sunDatePreset";
 import { useStudioAutosave, useBeforeUnloadGuard } from "./useStudioAutosave";
 import { computeLiveStudioData } from "./canvasBridges";
 import { SliceProfileCard } from "./SliceProfileCard";
@@ -263,7 +266,12 @@ export function WebGLStudioPreview({
   const sunMin = useStudioStore((s) => s.sunMin);
   const setSunMin = useStudioStore((s) => s.setSunMin);
   const seasonProgress = useStudioStore((s) => s.seasonProgress);
-  const setSeasonProgress = useStudioStore((s) => s.setSeasonProgress);
+  const sunDatePreset = useStudioStore((s) => s.sunDatePreset);
+  const setSunDatePreset = useStudioStore((s) => s.setSunDatePreset);
+  const seasonMeta = useMemo(
+    () => melbourneSeasonFromSun(sunDatePreset, sunMin),
+    [sunDatePreset, sunMin],
+  );
   const viewBlendTarget = useStudioStore((s) => s.viewBlendTarget);
   const setViewBlendTarget = useStudioStore((s) => s.setViewBlendTarget);
   const canUndo = useStudioStore((s) => s.historyPast.length > 0);
@@ -1048,18 +1056,44 @@ export function WebGLStudioPreview({
               marginBottom: 6,
             }}
           >
-            <span style={scrubberLabelStyle}>Season · {seasonLabel(seasonProgress)}</span>
-            <span style={{ ...scrubberValueStyle, fontSize: 14 }}>{seasonMonth(seasonProgress)}</span>
+            <span style={scrubberLabelStyle}>Season · {seasonMeta.label}</span>
+            <span style={{ ...scrubberValueStyle, fontSize: 14 }}>{seasonMeta.month}</span>
           </div>
-          <ScrubberTrack
-            value={seasonProgress}
-            min={0}
-            max={1}
-            step={0.01}
-            onChange={setSeasonProgress}
-            ariaLabel="Season"
-            labels={["Jan", "Jul", "Dec"]}
-          />
+          <div
+            style={{
+              display: "flex",
+              gap: 3,
+              flexWrap: "wrap",
+              pointerEvents: "auto",
+            }}
+          >
+            {SUN_DATE_PRESETS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                aria-pressed={sunDatePreset === p}
+                onClick={() => setSunDatePreset(p)}
+                style={{
+                  padding: "2px 6px",
+                  borderRadius: "var(--gs-radius-chip)",
+                  border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
+                  background:
+                    sunDatePreset === p
+                      ? "var(--gs-chip-active)"
+                      : "transparent",
+                  color:
+                    sunDatePreset === p
+                      ? "var(--gs-chip-active-ink)"
+                      : "var(--gs-ink-secondary)",
+                  fontFamily: "var(--font-ui)",
+                  fontSize: 10,
+                  cursor: "pointer",
+                }}
+              >
+                {sunDatePresetLabel(p)}
+              </button>
+            ))}
+          </div>
         </GlassCard>
       </div>
 
@@ -1100,7 +1134,7 @@ export function WebGLStudioPreview({
             pointerEvents: "auto",
           }}
         >
-          <MetaChip label="Season" value={seasonLabel(seasonProgress)} />
+          <MetaChip label="Season" value={seasonMeta.label} />
           <MetaChip label="Leaf" value={leafStatus(seasonProgress, year)} accent />
           <MetaChip label="Sun" value={`${sunMin}m`} />
         </div>
@@ -1156,7 +1190,7 @@ export function WebGLStudioPreview({
           ))}
         </div>
         {/* Council planning badges + season (GET /site-context) */}
-        <SiteContextBadges projectId={projectId} variant="glass" />
+        <SiteContextBadges projectId={projectId} variant="glass" showSeason={false} />
         {keylessOverlays.length > 0 ? (
           <div
             data-testid="government-overlay-legend"

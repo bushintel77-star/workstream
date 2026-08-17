@@ -4574,6 +4574,11 @@ export function HandoffDesignStudio({
                   target={ui.traceTarget}
                   drawPoly={ui.drawPoly}
                   drawCursor={ui.drawCursor}
+                  anchors={
+                    ui.traceTarget === "boundary"
+                      ? studio.boundary
+                      : studio.building
+                  }
                   cam={planCam}
                   onTarget={studio.setTraceTarget}
                   onCursor={(drawCursor) => studio.setUi({ drawCursor })}

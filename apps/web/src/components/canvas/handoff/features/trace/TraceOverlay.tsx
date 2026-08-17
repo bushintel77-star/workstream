@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { inferRectangleCompletion } from "@workstream/domain";
-import { polygonAreaM2, ptsAttr, type PctPoint } from "../../geometry";
+import { polygonAreaM2, ptsAttr, snapTracePointer, type PctPoint } from "../../geometry";
 import type { BoardCamera } from "../../geometry/cameraPointer";
 import {
   formatSegmentTip,
@@ -19,6 +19,8 @@ type Props = {
   drawPoly: PctPoint[] | null;
   drawCursor: PctPoint | null;
   scaleM?: number;
+  /** Existing vertices to snap to while tracing (boundary/building). */
+  anchors?: PctPoint[];
   /**
    * Live board camera — matches `.zoomWorld`. Dynamic-input pill and the
    * autocomplete badge portal through this camera so they stay a constant
@@ -32,6 +34,11 @@ type Props = {
   onCancel: () => void;
   onPop: () => void;
 };
+
+/** Close-ring snap radius in CSS px (handoff ≈ 14, SDS §3). */
+const CLOSE_PX = 14;
+/** Vertex / cadastral snap radius in CSS px (SDS §3 = 12). */
+const VERTEX_PX = 12;
 
 function centroid(pts: PctPoint[]) {
   const n = pts.length || 1;
@@ -51,6 +58,7 @@ export function TraceOverlay({
   drawPoly,
   drawCursor,
   scaleM = 110,
+  anchors = [],
   cam,
   onTarget,
   onCursor,
@@ -190,41 +198,43 @@ export function TraceOverlay({
       data-testid="trace-overlay"
       onPointerMove={(e) => {
         if (locked) return;
-        onCursor(toPct(e.currentTarget, e.clientX, e.clientY));
+        const raw = toPct(e.currentTarget, e.clientX, e.clientY);
+        const snapped = snapTracePointer(raw, poly, anchors, {
+          boardW: e.currentTarget.clientWidth,
+          boardH: e.currentTarget.clientHeight,
+          closePx: CLOSE_PX,
+          vertexPx: VERTEX_PX,
+        });
+        // Snap the live cursor so the preview line retracts onto the first
+        // vertex (close affordance) and segments ride 45°/90°+vertex snaps.
+        onCursor({ x: snapped.x, y: snapped.y });
       }}
       onPointerLeave={() => onCursor(null)}
       onPointerDown={(e) => {
         if (locked) return;
         e.stopPropagation();
-        let p =
-          typedPoint() ?? toPct(e.currentTarget, e.clientX, e.clientY);
-        if (poly.length >= 3) {
-          const first = poly[0]!;
-          const d = Math.hypot(p.x - first.x, p.y - first.y);
-          if (d < 2.2) {
-            onFinish(poly);
-            return;
-          }
+        const typed = typedPoint();
+        const raw = typed ?? toPct(e.currentTarget, e.clientX, e.clientY);
+        const snapped = snapTracePointer(raw, poly, anchors, {
+          boardW: e.currentTarget.clientWidth,
+          boardH: e.currentTarget.clientHeight,
+          closePx: CLOSE_PX,
+          vertexPx: VERTEX_PX,
+          shift: e.shiftKey,
+        });
+        // Close takes priority over angle/vertex magnetism: clicking near the
+        // first vertex (within closePx CSS px) finishes a valid closed ring.
+        if (snapped.kind === "close") {
+          onFinish(poly);
+          return;
         }
-        // Ortho / angle snap — Shift = 90°, else soft 45° snap
-        if (poly.length > 0) {
-          const lp = poly[poly.length - 1]!;
-          const dx = p.x - lp.x;
-          const dy = p.y - lp.y;
-          const len = Math.hypot(dx, dy);
-          if (len > 0.4) {
-            const a = Math.atan2(dy, dx);
-            const step = e.shiftKey ? Math.PI / 2 : Math.PI / 4;
-            const sa = Math.round(a / step) * step;
-            if (e.shiftKey || Math.abs(a - sa) < 0.12) {
-              p = {
-                x: Math.max(0, Math.min(100, lp.x + len * Math.cos(sa))),
-                y: Math.max(0, Math.min(100, lp.y + len * Math.sin(sa))),
-              };
-            }
-          }
-        }
-        onPush(p);
+        // Exact typed input wins over angle/vertex magnetism; raw clicks use
+        // the snapped point (close → vertex → 45°/90° angle).
+        onPush(
+          typed
+            ? { x: typed.x, y: typed.y }
+            : { x: snapped.x, y: snapped.y },
+        );
         if (hasTypedInput) clearTypedInput();
       }}
       onDoubleClick={(e) => {

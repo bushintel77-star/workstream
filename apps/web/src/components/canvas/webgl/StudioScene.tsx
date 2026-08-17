@@ -20,7 +20,6 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Line, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
-import { sunPositionAt } from "@workstream/domain";
 import type {
   DesignKeylessOverlay,
   DesignNeighbourBuilding,
@@ -28,11 +27,13 @@ import type {
 import {
   createElevationSampler,
   drapeRingToSurface,
+  GROUND_CONTEXT_EXTENT,
 } from "./terrainMath";
 import { buildTerrainGeometry } from "./TerrainMesh";
 import { SPATIAL_LAYER } from "./layerContract";
 import type { CanvasLayerPolicy } from "./layerPolicy";
-import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
+import { resolveSunLightPosition } from "./sunLight";
+import { widerMapboxStaticAerial } from "../../../lib/mapView";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore } from "./seasonalStore";
 import { pctToWorld, type PctPoint, type HeightmapPoint } from "./coordTransform";
@@ -50,38 +51,6 @@ import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { AssetPlaceLayer } from "./AssetPlaceLayer";
 import { FloraRingLayer } from "./FloraRingLayer";
 import { type PresentationLensFilter } from "./PresentationLens";
-
-/**
- * Resolve a real-world sun direction (from `sunPositionAt`) into a Three.js
- * directional-light position, reusing the proven GrowthStudioClient projection.
- *
- * Convention: +X = east, +Y = up, +Z = south (azimuth 0°/north → -Z).
- * Altitude is floored at 3° (lower than GrowthStudio's 6° noon clamp) so a
- * low morning/evening sun produces the long, dramatic ground shadows the
- * domain `boardShadowCast` also models — shadow length ∝ 1/tan(altitude).
- */
-function resolveSunLightPosition(
-  lat: number,
-  lng: number,
-  sunMin: number,
-  sunDist: number,
-): { position: [number, number, number]; altitudeDeg: number; azimuthDeg: number } {
-  const when = sunDateFromPreset("today", sunMin);
-  const sun = sunPositionAt(lat, lng, when);
-  // Floor altitude at 3° — below this the sun is grazing and shadows stretch
-  // toward infinity; clamp keeps them long-but-finite and visible on the board.
-  const altRad = (Math.max(sun.altitude_deg, 3) * Math.PI) / 180;
-  const azRad = (sun.azimuth_deg * Math.PI) / 180;
-  return {
-    position: [
-      Math.cos(altRad) * Math.sin(azRad) * sunDist,
-      Math.sin(altRad) * sunDist,
-      -Math.cos(altRad) * Math.cos(azRad) * sunDist,
-    ],
-    altitudeDeg: sun.altitude_deg,
-    azimuthDeg: sun.azimuth_deg,
-  };
-}
 
 export interface StudioSceneProps {
   scaleM: number;
@@ -156,24 +125,18 @@ function OriginPeg({
 
 
 /**
- * Real-sun lighting rig — warm sun key + cool sky bounce + soft fill.
- *
- * The key light's position and intensity are driven by the real solar position
- * (`sunPositionAt`) for the project lat/lng at a given minute of the day. A low
- * morning/evening sun casts long, soft ground shadows; high noon casts short,
- * crisp ones — the same physics the domain `boardShadowCast` models on the 2D
- * board. This is the Gold Standard UX sun/shadow system, surfaced in 3D.
- *
- * Light tints resolve to render tokens, not raw hex. Convention: +X east, +Y up,
- * +Z south (north = -Z), matching GrowthStudioClient.
- */
-/**
  * Real-sun lighting rig — warm sun key + cool sky bounce + soft fill + rim.
  *
  * The key light's position + intensity are mutated every frame inside useFrame
- * (reading sunMin + seasonProgress via getState — zero React re-renders). The
- * seasonal elevation multiplier lowers the sun in winter → longer shadows that
- * interact heavily with the N8AO ambient occlusion (LA Seasonal Dynamics Rule 4).
+ * (reading sunMin + sunDatePreset via getState — zero React re-renders).
+ * Position comes from the real solar position (`sunPositionAt`) for the project
+ * lat/lng at the sampled date; a low winter sun casts the long, soft shadows
+ * the 2D `boardShadowCast` also models. The seasonal variation is REAL — the
+ * winter solstice noon altitude is naturally lower than the summer solstice —
+ * so no altitude multiplier is applied on top (see ./sunLight).
+ *
+ * Light tints resolve to render tokens, not raw hex. Convention: +X east, +Y up,
+ * +Z south (north = -Z), matching GrowthStudioClient.
  */
 function SunRig({
   scaleM,
@@ -194,21 +157,18 @@ function SunRig({
   useFrame(() => {
     const light = keyRef.current;
     if (!light) return;
-    const { sunMin } = useSeasonalStore.getState();
+    const { sunMin, sunDatePreset } = useSeasonalStore.getState();
 
-    // Real sun position for the time-of-day.
-    const sun = resolveSunLightPosition(lat, lng, sunMin, sunDist);
-    const altRad = (Math.max(sun.altitudeDeg, 3) * Math.PI) / 180;
-    const azRad = (sun.azimuthDeg * Math.PI) / 180;
-    light.position.set(
-      Math.cos(altRad) * Math.sin(azRad) * sunDist,
-      Math.sin(altRad) * sunDist,
-      -Math.cos(altRad) * Math.cos(azRad) * sunDist,
-    );
+    // Real sun position for the time-of-day + calendar preset — the SAME
+    // (sunDatePreset, sunMin) axis the season is derived from.
+    // The returned position already applies the grazing-sun floor (see ./sunLight).
+    const sun = resolveSunLightPosition(lat, lng, sunDatePreset, sunMin, sunDist);
+    light.position.set(sun.position[0], sun.position[1], sun.position[2]);
 
     // Intensity tapers near sunrise/sunset, with a legibility floor — the
     // design must stay readable in autumn/winter light; season reads through
-    // shadow length + canopy, not through murk. Winter dimming is mild (0.15).
+    // shadow length + canopy, not through murk. Winter noon is naturally
+    // dimmer because the real altitude is lower (no extra seasonal dimming).
     const altClamped = Math.max(sun.altitudeDeg, 0);
     const intensity =
       0.9 + Math.min(altClamped / 60, 1) * 1.1;
@@ -572,8 +532,8 @@ function GroundPlane({
   boardAspect: number;
   draftingSurface?: boolean;
 }) {
-  const w = scaleM * 3;
-  const h = scaleM * boardAspect * 3;
+  const w = scaleM * GROUND_CONTEXT_EXTENT;
+  const h = scaleM * boardAspect * GROUND_CONTEXT_EXTENT;
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
   const gridRef = useRef<THREE.GridHelper>(null);
 
@@ -654,18 +614,30 @@ function AerialUnderlay({
   opacityTarget: number;
 }) {
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
+  // Widen the capture client-side: the ground spans GROUND_CONTEXT_EXTENT× the
+  // board, so the board-sized aerial would smear/end at the tile edge. Rebuild
+  // the Mapbox static URL at a lower zoom (same token, same pixel budget) to
+  // cover the full ground, and size the plane to match it.
+  const planeSpan = useMemo(
+    () => ({
+      widthM: scaleM * GROUND_CONTEXT_EXTENT,
+      heightM: scaleM * boardAspect * GROUND_CONTEXT_EXTENT,
+    }),
+    [scaleM, boardAspect],
+  );
   const texture = useMemo(() => {
     if (!aerialUri) return null;
     const loader = new THREE.TextureLoader();
-    const tex = loader.load(aerialUri);
+    const tex = loader.load(widerMapboxStaticAerial(aerialUri, planeSpan));
     tex.colorSpace = THREE.SRGBColorSpace;
     return tex;
-  }, [aerialUri]);
+  }, [aerialUri, planeSpan]);
   // Draped: on terrain projects the photo rides the SAME displaced geometry
   // as the ground (shared builder) instead of sinking under raised ground.
   const flatGeometry = useMemo(
-    () => new THREE.PlaneGeometry(scaleM, scaleM * boardAspect),
-    [scaleM, boardAspect],
+    () =>
+      new THREE.PlaneGeometry(planeSpan.widthM, planeSpan.heightM),
+    [planeSpan],
   );
   const geometry = useMemo(
     () =>
@@ -762,8 +734,8 @@ export function StudioScene({
           (it expects PCF), so it is intentionally NOT used here. */}
 
       {/* Real-sun lighting rig — key light position + intensity mutated per-frame
-          via getState (sunMin + seasonProgress). Seasonal elevation lowers the
-          sun in winter for long shadows. */}
+          via getState (sunMin + sunDatePreset). Winter shadows are longer
+          because the sampled date's real declination lowers the winter sun. */}
       {lat != null && lng != null ? (
         <SunRig
           scaleM={scaleM}

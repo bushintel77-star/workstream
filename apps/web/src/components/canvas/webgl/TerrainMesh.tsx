@@ -28,7 +28,11 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { PALETTE } from "../../../styles/colorTokens";
 import type { HeightmapPoint } from "./coordTransform";
-import { GRID_SEGMENTS, createElevationSampler } from "./terrainMath";
+import {
+  GRID_SEGMENTS,
+  GROUND_CONTEXT_EXTENT,
+  createElevationSampler,
+} from "./terrainMath";
 import { createTerrainMaterial } from "./terrainMaterial";
 import { SPATIAL_LAYER } from "./layerContract";
 import { useSeasonalStore } from "./seasonalStore";
@@ -53,8 +57,8 @@ export function buildTerrainGeometry(
   heightmapPoints: HeightmapPoint[],
 ): THREE.BufferGeometry | null {
   if (heightmapPoints.length === 0) return null;
-  const w = scaleM * 3;
-  const h = scaleM * boardAspect * 3;
+  const w = scaleM * GROUND_CONTEXT_EXTENT;
+  const h = scaleM * boardAspect * GROUND_CONTEXT_EXTENT;
   const sampler = createElevationSampler(heightmapPoints, scaleM, boardAspect);
   if (!sampler) return null;
 
