@@ -2,6 +2,9 @@ import { test, expect, type ConsoleMessage, type Page } from "@playwright/test";
 import { createAddressProject } from "./helpers";
 import { randomUUID } from "node:crypto";
 
+/** Prefer 127.0.0.1 — `localhost` can resolve to ::1 while the API binds IPv4. */
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
+
 /**
  * Chrome collision spec — geometric proof that the floating chrome never
  * overlaps itself and never leaves the viewport.
@@ -135,7 +138,7 @@ test.describe("WebGL chrome collision", () => {
       scale: 1,
     });
     const seed = await request.put(
-      `http://127.0.0.1:3001/projects/${projectId}/design-canvas`,
+      `${API}/projects/${projectId}/design-canvas`,
       {
         data: {
           placements: [place("olive-standard", 40, 45), place("bluestone-paver", 60, 55)],

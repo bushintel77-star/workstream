@@ -62,7 +62,9 @@ test.describe("WebGL asset fan-out (place + persist)", () => {
     await expect(stats).toContainText(/Saved/, { timeout: 15_000 });
 
     // 4. Reload — the placement rehydrates from the persisted canvas.
-    await page.reload({ waitUntil: "networkidle" });
+    // domcontentloaded (not networkidle): production keeps background
+    // polling alive, so networkidle never settles there.
+    await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForTimeout(4000);
     await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
       timeout: 10_000,

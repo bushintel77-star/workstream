@@ -1,6 +1,9 @@
 import { test, expect, type ConsoleMessage } from "@playwright/test";
 import { createAddressProject } from "./helpers";
 
+/** Prefer 127.0.0.1 — `localhost` can resolve to ::1 while the API binds IPv4. */
+const API = process.env.API_URL ?? "http://127.0.0.1:3001";
+
 /**
  * CAD annotation instruments e2e — dimension ring + measure tape (Gap 3 port).
  *
@@ -19,6 +22,8 @@ test.describe("WebGL CAD annotations (dims + measure tape)", () => {
     page,
     request,
   }) => {
+    // Live (LIVE_E2E) runs hit production latency + a heavier page.
+    test.setTimeout(240_000);
     const errors: string[] = [];
     page.on("console", (msg: ConsoleMessage) => {
       if (msg.type() === "error") errors.push(msg.text().slice(0, 300));
@@ -34,7 +39,7 @@ test.describe("WebGL CAD annotations (dims + measure tape)", () => {
     // Rectangular boundary + building via the canvas PUT — guarantees the
     // B…/F… dimension ring has clean edges to label.
     const seed = await request.put(
-      `http://127.0.0.1:3001/projects/${projectId}/design-canvas`,
+      `${API}/projects/${projectId}/design-canvas`,
       {
         data: {
           placements: [],
@@ -64,7 +69,9 @@ test.describe("WebGL CAD annotations (dims + measure tape)", () => {
     expect(seed.ok()).toBeTruthy();
 
     await page.goto(`/projects/${projectId}?webgl=1`, {
-      waitUntil: "networkidle",
+      // domcontentloaded (not networkidle): production keeps background
+      // polling alive, so networkidle never settles there.
+      waitUntil: "domcontentloaded",
     });
     await page.waitForTimeout(4000);
 
