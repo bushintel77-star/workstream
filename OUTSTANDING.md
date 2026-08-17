@@ -659,13 +659,16 @@ Cross-check against build status below before treating any phase as shipped.
 
 ### Build status against this spec (2026-08-14)
 
-- [x] **§2 tokens** — `#101418`/`#fbbf24`/`#0030CF`/`#ef4444` are live as
-      `--canvas-base`/`--gold-standard`/`--signal-blue`/`--conflict-ink` in
-      `apps/web/src/styles/globals.css` and as `--gs-*` in
-      `goldStandardStudio.module.css`; mobile mirrors them as
-      `tokens.color.studio.{gold,signalBlue,conflict}` in `packages/ui`.
-      Space Grotesk / Inter font roles already wired (`--gs-font-display`,
-      `--gs-font-ui`).
+- [x] **§2 tokens** — the original Studio Dark values were live through
+      2026-08-17, then **superseded by the Studio Paper + Signal Blue pivot
+      (PR #189)**: `#F4F4F4` canvas, `#3D5AFE` primary accent, `#0030CF`
+      truth data stroke, `#C41E1E` crimson conflict-only
+      (`docs/GOLD-STANDARD-2026-TOKENS.md` §3 migration table). Web
+      `--gs-*` + `colorTokens.ts`/`color-tokens.css` mirrors are reconciled
+      and CI-gated. **Gap:** mobile `packages/ui/src/tokens.ts` studio
+      block is still dark-era (`gold #FBBF24`, `signalBlueInk #A8B4FF`,
+      `conflict #EF4444`, IBM Plex fonts) — see
+      `docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md`.
 - [x] **§3 Step 0 Site Truth** — landing page (`apps/web/src/app/page.tsx` +
       `landing.module.css`) has the geo search, staggered pipeline-status
       list, and a Signal Blue (0,0,0) origin crosshair. Real VicMap/title
