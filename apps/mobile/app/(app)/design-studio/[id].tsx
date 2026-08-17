@@ -578,7 +578,7 @@ export default function DesignStudioScreen() {
                   height="14"
                   patternUnits="userSpaceOnUse"
                 >
-                  <Circle cx="1.2" cy="1.2" r="0.7" fill="rgba(255,255,255,0.12)" />
+                  <Circle cx="1.2" cy="1.2" r="0.7" fill="rgba(17,17,17,0.10)" />
                 </Pattern>
                 <Pattern
                   id="sketchGlow"
@@ -588,7 +588,7 @@ export default function DesignStudioScreen() {
                   height="100"
                   patternUnits="userSpaceOnUse"
                 >
-                  <Rect width="100" height="100" fill="rgba(8, 10, 14, 0.36)" />
+                  <Rect width="100" height="100" fill="rgba(255,255,255,0.36)" />
                 </Pattern>
               </Defs>
               <Rect width={canvasSize.width} height={canvasSize.height} fill="url(#sketchGlow)" />
@@ -642,7 +642,7 @@ export default function DesignStudioScreen() {
                       cx={cx}
                       cy={cy}
                       r={Math.max(radiusPx, 10)}
-                      fill={aiOptimized ? "rgba(251, 191, 36, 0.12)" : "rgba(0, 48, 207, 0.12)"}
+                      fill={aiOptimized ? "rgba(61, 90, 254, 0.12)" : "rgba(0, 48, 207, 0.12)"}
                       stroke={ghostColor}
                       strokeWidth={1.5}
                       strokeDasharray="4 3"
@@ -777,7 +777,7 @@ export default function DesignStudioScreen() {
                     height="14"
                     patternUnits="userSpaceOnUse"
                   >
-                    <Circle cx="1.2" cy="1.2" r="0.7" fill="rgba(255,255,255,0.12)" />
+                    <Circle cx="1.2" cy="1.2" r="0.7" fill="rgba(17,17,17,0.10)" />
                   </Pattern>
                   <Pattern
                     id="sketchGlow"
@@ -787,7 +787,7 @@ export default function DesignStudioScreen() {
                     height="100"
                     patternUnits="userSpaceOnUse"
                   >
-                    <Rect width="100" height="100" fill="rgba(8, 10, 14, 0.36)" />
+                    <Rect width="100" height="100" fill="rgba(255,255,255,0.36)" />
                   </Pattern>
                 </Defs>
                 <Rect width={canvasSize.width} height={canvasSize.height} fill="url(#sketchGlow)" />
@@ -955,7 +955,7 @@ const PIN = 18;
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: "#0b0d11" },
+  container: { flex: 1, backgroundColor: tokens.color.surface.base },
   centered: {
     flex: 1,
     justifyContent: "center",
@@ -971,7 +971,7 @@ const styles = StyleSheet.create({
   canvasFlex: {
     flex: 1,
     overflow: "hidden",
-    backgroundColor: "#11151b",
+    backgroundColor: tokens.color.surface.base,
   },
   aerial: {
     ...StyleSheet.absoluteFillObject,
@@ -981,7 +981,7 @@ const styles = StyleSheet.create({
   },
   canvasVeil: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(6, 8, 12, 0.34)",
+    backgroundColor: "rgba(255, 255, 255, 0.34)",
   },
   placed: {
     position: "absolute",
@@ -1021,8 +1021,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: tokens.radius.md,
     borderWidth: 1,
-    borderColor: "rgba(232, 233, 236, 0.12)",
-    backgroundColor: "rgba(15, 17, 21, 0.92)",
+    borderColor: "rgba(17, 17, 17, 0.10)",
+    backgroundColor: "rgba(255, 255, 255, 0.86)",
   },
   confirmInfo: { flex: 1, gap: 2 },
   confirmLabel: {
@@ -1073,7 +1073,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(17, 19, 25, 0.94)",
+    backgroundColor: "rgba(255, 255, 255, 0.86)",
   },
   presentationExitText: {
     fontSize: 11,
@@ -1088,7 +1088,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: "rgba(17, 19, 25, 0.86)",
+    backgroundColor: "rgba(26, 26, 26, 0.86)",
   },
   presentationHudText: {
     fontSize: 10,
@@ -1100,14 +1100,14 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: "rgba(120, 132, 168, 0.2)",
-    backgroundColor: "rgba(17, 19, 25, 0.94)",
+    borderTopColor: "rgba(17, 17, 17, 0.10)",
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
   },
   button: {
     flex: 1,
     minHeight: 48,
     borderRadius: 10,
-    backgroundColor: tokens.color.semantic.info,
+    backgroundColor: tokens.color.accent.default,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1117,7 +1117,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: "rgba(120, 132, 168, 0.24)",
+    borderColor: "rgba(17, 17, 17, 0.14)",
   },
   buttonText: {
     color: tokens.color.ink.inverted,

@@ -544,7 +544,7 @@ export default function RecordingScreen() {
                     height: h,
                     backgroundColor: isHead
                       ? tokens.color.accent.default
-                      : tokens.color.ink.tertiary,
+                      : tokens.color.ink.invertedTertiary,
                     opacity: isRecording ? 1 : 0.3,
                   },
                 ]}
@@ -709,14 +709,14 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.color.accent.default,
   },
   liveLabel: {
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
     fontSize: tokens.type.micro.fontSize,
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
   },
   transcriptStrip: {
     marginTop: tokens.space[3],
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
     fontSize: tokens.type.bodyMono.fontSize,
     fontWeight: tokens.type.bodyMono.fontWeight,
     fontVariant: ["tabular-nums"],
@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderWidth: 1,
-    borderColor: tokens.color.ink.tertiary,
+    borderColor: tokens.color.ink.invertedTertiary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -779,7 +779,7 @@ const styles = StyleSheet.create({
   },
   consentText: {
     flex: 1,
-    color: tokens.color.ink.secondary,
+    color: tokens.color.ink.invertedSecondary,
     fontSize: tokens.type.caption.fontSize,
     lineHeight: tokens.type.caption.lineHeight,
   },
@@ -794,7 +794,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   pauseLabel: {
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
     fontSize: tokens.type.micro.fontSize,
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
@@ -849,12 +849,12 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.color.accent.default,
   },
   hint: {
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
     fontSize: tokens.type.caption.fontSize,
     fontWeight: tokens.type.caption.fontWeight,
   },
   statusLabel: {
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
     textAlign: "center",
     marginTop: tokens.space[7],
   },
@@ -869,7 +869,7 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.micro.fontSize,
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
   },
   permHeading: {
     fontSize: tokens.type.displayM.fontSize,
@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
   permBody: {
     fontSize: tokens.type.body.fontSize,
     lineHeight: tokens.type.body.lineHeight,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedSecondary,
     marginTop: tokens.space[2],
     marginBottom: tokens.space[5],
   },
@@ -901,7 +901,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   permActionGhostText: {
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
     fontSize: tokens.type.body.fontSize,
   },
 });

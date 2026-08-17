@@ -87,6 +87,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: tokens.type.body.fontSize,
     fontWeight: "600",
-    color: tokens.color.surface.base,
+    color: tokens.color.ink.inverted,
   },
 });

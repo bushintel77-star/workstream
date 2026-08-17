@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.micro.fontSize,
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
   },
   heading: {
     fontSize: tokens.type.displayM.fontSize,
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   body: {
     fontSize: tokens.type.body.fontSize,
     lineHeight: tokens.type.body.lineHeight,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedSecondary,
   },
   stages: {
     marginTop: tokens.space[4],
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   },
   stageLabel: {
     fontSize: tokens.type.body.fontSize,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
   },
   stageLabelDone: {
     color: tokens.color.ink.inverted,
@@ -297,11 +297,11 @@ const styles = StyleSheet.create({
   },
   slow: {
     fontSize: tokens.type.caption.fontSize,
-    color: tokens.color.semantic.warn,
+    color: tokens.color.ink.invertedSecondary,
     textAlign: "center",
   },
   confidence: {
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
     fontSize: tokens.type.caption.fontSize,
     textAlign: "center",
   },
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   failureText: {
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedSecondary,
     fontSize: tokens.type.caption.fontSize,
   },
   errorBox: {
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: tokens.type.caption.fontSize,
-    color: tokens.color.semantic.block,
+    color: tokens.color.ink.invertedSecondary,
     textAlign: "center",
   },
   retry: {

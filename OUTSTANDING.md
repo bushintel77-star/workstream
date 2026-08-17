@@ -665,10 +665,17 @@ Cross-check against build status below before treating any phase as shipped.
       truth data stroke, `#C41E1E` crimson conflict-only
       (`docs/GOLD-STANDARD-2026-TOKENS.md` §3 migration table). Web
       `--gs-*` + `colorTokens.ts`/`color-tokens.css` mirrors are reconciled
-      and CI-gated. **Gap:** mobile `packages/ui/src/tokens.ts` studio
-      block is still dark-era (`gold #FBBF24`, `signalBlueInk #A8B4FF`,
-      `conflict #EF4444`, IBM Plex fonts) — see
-      `docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md`.
+      and CI-gated. Mobile `packages/ui/src/tokens.ts` was reconciled in
+      the 2026-08-17 mobile-token PR: surfaces/ink flip to Paper, accent to
+      the Signal Blue ramp, `studio.gold*`/`signalBlue*` re-point exactly as
+      web's `globals.css` dialect aliases (`gold → #3D5AFE`,
+      `signalBlue → #0030CF`, `conflict → #C41E1E`), IBM Plex → Space
+      Grotesk/Inter, plus an inverted-screen ink ramp
+      (`ink.invertedSecondary/Tertiary`) for the deliberate charcoal field
+      screens (grid-soil, recording). Remaining follow-up: mobile fonts are
+      not yet bundled (expo-font + assets), and the unmounted
+      `MobileFieldBridge` AR component still carries dark-era literals —
+      both tracked below.
 - [x] **§3 Step 0 Site Truth** — landing page (`apps/web/src/app/page.tsx` +
       `landing.module.css`) has the geo search, staggered pipeline-status
       list, and a Signal Blue (0,0,0) origin crosshair. Real VicMap/title

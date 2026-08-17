@@ -110,12 +110,12 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: tokens.radius.md,
     borderWidth: 1,
-    borderColor: "rgba(232, 233, 236, 0.08)",
+    borderColor: "rgba(17, 17, 17, 0.10)",
     alignItems: "center",
     gap: 6,
-    // Glass-HUD surface: translucent dark card so the discovery carousel
-    // reads as an overlay above the plan, not an opaque sheet.
-    backgroundColor: "rgba(27, 30, 36, 0.72)",
+    // Glass-HUD surface: frost panel (--gs-panel-frost) so the discovery
+    // carousel reads as an overlay above the paper plan, not an opaque sheet.
+    backgroundColor: "rgba(255, 255, 255, 0.86)",
   },
   cardActive: { borderColor: tokens.color.studio.gold, borderWidth: 2 },
   cardDisabled: { opacity: 0.45 },

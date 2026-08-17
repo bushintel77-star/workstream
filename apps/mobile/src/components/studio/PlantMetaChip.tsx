@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.sm,
     borderWidth: 1,
     gap: 2,
-    backgroundColor: "rgba(15, 17, 21, 0.88)",
+    backgroundColor: "rgba(255, 255, 255, 0.86)",
   },
   label: {
     fontSize: 11,

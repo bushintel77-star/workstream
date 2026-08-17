@@ -190,8 +190,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   chipWarn: {
-    backgroundColor: "rgba(180,83,9,0.12)",
-    borderColor: tokens.color.semantic.warn,
+    backgroundColor: "rgba(196, 30, 30, 0.10)",
+    borderColor: tokens.color.semantic.block,
     color: tokens.color.semantic.warn,
   },
 });

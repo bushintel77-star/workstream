@@ -53,9 +53,9 @@ const MEASUREMENT_LABEL: Record<LedgerEntry["measurement_type"], string> = {
 
 const PRIORITY_TONE: Record<TaskPriority, string> = {
   critical: tokens.color.semantic.block,
-  high: tokens.color.semantic.warn,
-  medium: tokens.color.semantic.info,
-  low: tokens.color.ink.tertiary,
+  high: tokens.color.ink.inverted,
+  medium: tokens.color.ink.invertedSecondary,
+  low: tokens.color.ink.invertedTertiary,
 };
 
 function formatQuantity(n: number): string {
@@ -354,7 +354,7 @@ Whenever you're ready, I'm listening.`;
             value={transcript}
             onChangeText={setTranscript}
             placeholder="Mick to trench the western boundary 300mm deep before the rain. Paving area 6 by 6 metres, 24 lineal of Bluestone copers for the edge."
-            placeholderTextColor={tokens.color.ink.tertiary}
+            placeholderTextColor={tokens.color.ink.invertedTertiary}
             multiline
             autoCapitalize="sentences"
             editable={ambient !== "processing"}
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.micro.fontSize,
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
   },
   ambientRow: {
     flexDirection: "row",
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.micro.fontSize,
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
   },
   kickoffMetricValue: {
     fontSize: tokens.type.bodyMono.fontSize,
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.micro.fontSize,
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
   },
   priorityDot: {
     width: 8,
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   feedBody: {
     fontSize: tokens.type.body.fontSize,
     lineHeight: tokens.type.body.lineHeight,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedSecondary,
   },
   feedMetricLine: {
     fontSize: tokens.type.bodyMono.fontSize,
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
     color: tokens.color.ink.inverted,
   },
   permBody: {
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedSecondary,
     textAlign: "center",
     marginTop: tokens.space[7],
     paddingHorizontal: tokens.space[5],

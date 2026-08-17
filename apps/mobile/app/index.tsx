@@ -217,7 +217,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space[3],
     paddingVertical: tokens.space[2],
     borderRadius: tokens.radius.md,
-    backgroundColor: "rgba(16, 20, 24, 0.92)",
+    backgroundColor: tokens.color.surface.elevated,
+    borderWidth: 1,
+    borderColor: tokens.color.line.hairline,
   },
   truthLabel: {
     fontSize: tokens.type.micro.fontSize,
@@ -247,10 +249,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#ef4444",
+    backgroundColor: tokens.color.semantic.block,
   },
   alertPillText: {
-    color: "#fff",
+    color: tokens.color.ink.inverted,
     fontSize: tokens.type.body.fontSize,
     fontWeight: "700",
   },
@@ -262,7 +264,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.space[3],
     paddingVertical: tokens.space[2],
     borderRadius: tokens.radius.md,
-    backgroundColor: "rgba(251, 191, 36, 0.12)",
+    backgroundColor: "rgba(61, 90, 254, 0.08)",
   },
   growthLabel: {
     fontSize: tokens.type.body.fontSize,
@@ -283,7 +285,7 @@ const styles = StyleSheet.create({
     marginTop: tokens.space[3],
   },
   previewButtonText: {
-    color: tokens.color.surface.base,
+    color: tokens.color.ink.inverted,
     fontSize: tokens.type.body.fontSize,
     fontWeight: "600",
   },

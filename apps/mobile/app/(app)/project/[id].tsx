@@ -1209,18 +1209,18 @@ function modeToneStyle(tone: "ok" | "warn" | "info") {
   switch (tone) {
     case "ok":
       return {
-        backgroundColor: "rgba(21,128,61,0.22)",
+        backgroundColor: "rgba(17, 17, 17, 0.08)",
         borderColor: tokens.color.semantic.ok,
       };
     case "warn":
       return {
-        backgroundColor: "rgba(180,83,9,0.22)",
-        borderColor: tokens.color.semantic.warn,
+        backgroundColor: "rgba(196, 30, 30, 0.10)",
+        borderColor: tokens.color.semantic.block,
       };
     case "info":
       return {
-        backgroundColor: "rgba(29,78,216,0.22)",
-        borderColor: tokens.color.semantic.info,
+        backgroundColor: "rgba(61, 90, 254, 0.10)",
+        borderColor: tokens.color.accent.default,
       };
   }
 }
@@ -1967,7 +1967,7 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: tokens.radius.pill,
     borderWidth: 1,
-    borderColor: tokens.color.ink.tertiary,
+    borderColor: tokens.color.ink.invertedTertiary,
     backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
@@ -1989,7 +1989,7 @@ const styles = StyleSheet.create({
     fontSize: tokens.type.micro.fontSize,
     fontWeight: tokens.type.micro.fontWeight,
     letterSpacing: tokens.type.micro.letterSpacing,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedTertiary,
   },
   stageLabelActive: {
     color: tokens.color.accent.soft,
@@ -2003,7 +2003,7 @@ const styles = StyleSheet.create({
     left: "65%",
     right: "-35%",
     height: 1,
-    backgroundColor: tokens.color.ink.tertiary,
+    backgroundColor: tokens.color.ink.invertedTertiary,
     zIndex: -1,
   },
   stageConnectorDone: {
@@ -2166,7 +2166,7 @@ const styles = StyleSheet.create({
   buildModeBody: {
     fontSize: tokens.type.body.fontSize,
     lineHeight: tokens.type.body.lineHeight,
-    color: tokens.color.ink.tertiary,
+    color: tokens.color.ink.invertedSecondary,
   },
   measurePhotoButton: {
     marginHorizontal: tokens.space[4],
