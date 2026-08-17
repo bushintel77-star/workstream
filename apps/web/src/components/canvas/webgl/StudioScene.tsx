@@ -370,6 +370,7 @@ const OVERLAY_COLORS: Record<DesignKeylessOverlay["kind"], string> = {
   road_casement: PALETTE.bluestoneD300,
   acid_sulfate: PALETTE.warningD400,
   wetland: PALETTE.waterD400,
+  native_vegetation: PALETTE.sproutD400,
 };
 
 function GovernmentOverlays({

@@ -72,6 +72,7 @@ const OVERLAY_KINDS = new Set([
   "acid_sulfate",
   "wetland",
   "heritage",
+  "native_vegetation",
 ]);
 
 function shortOverlayLabel(kind: string, label?: string | null): string {
@@ -83,6 +84,7 @@ function shortOverlayLabel(kind: string, label?: string | null): string {
   if (kind === "acid_sulfate") return "ASS";
   if (kind === "wetland") return "Wetland";
   if (kind === "contour") return "Contour";
+  if (kind === "native_vegetation") return "EVC";
   return (label ?? kind).slice(0, 12);
 }
 

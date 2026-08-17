@@ -1325,6 +1325,62 @@ export function WebGLStudioPreview({
                     </a>
                   </div>
                 ) : null}
+                <div
+                  role="note"
+                  data-testid="site-truth-official-sources"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                    padding: "6px 9px",
+                    borderRadius: "var(--gs-radius-chip)",
+                    background: "var(--gs-surface-fill)",
+                    border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
+                    color: "var(--gs-ink-secondary)",
+                    fontFamily: "var(--font-ui)",
+                    fontSize: 10.5,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <span style={{ color: "var(--gs-ink)" }}>
+                    Aboriginal cultural heritage (ACHRIS) is not part of the
+                    public overlay washes — check the register before design.
+                  </span>
+                  <span style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    <a
+                      href="https://achris.vic.gov.au/"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--gs-primary)" }}
+                    >
+                      ACHRIS register
+                    </a>
+                    <a
+                      href="https://www.environment.vic.gov.au/biodiversity/naturekit"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--gs-primary)" }}
+                    >
+                      NatureKit (EVC)
+                    </a>
+                    <a
+                      href="https://elevation.fsdf.org.au/"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--gs-primary)" }}
+                    >
+                      ELVIS elevation
+                    </a>
+                    <a
+                      href="https://mapshare.vic.gov.au/vicplan/"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "var(--gs-primary)" }}
+                    >
+                      VicPlan report
+                    </a>
+                  </span>
+                </div>
                 {(easementsPct?.length ?? 0) > 0 || subsurfaceView ? (
                   <div
                     role="note"

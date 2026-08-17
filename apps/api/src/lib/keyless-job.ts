@@ -25,6 +25,7 @@ const DEFAULT_KINDS: VicmapKeylessKind[] = [
   "contour",
   "flood",
   "heritage",
+  "native_vegetation",
   "water_corp",
   "road_casement",
 ];

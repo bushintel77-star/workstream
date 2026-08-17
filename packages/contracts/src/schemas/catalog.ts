@@ -542,6 +542,7 @@ export const KeylessOverlayKindSchema = z.enum([
   "road_casement",
   "acid_sulfate",
   "wetland",
+  "native_vegetation",
 ]);
 export type KeylessOverlayKind = z.infer<typeof KeylessOverlayKindSchema>;
 

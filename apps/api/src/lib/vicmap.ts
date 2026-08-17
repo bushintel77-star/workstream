@@ -151,7 +151,8 @@ export type VicmapKeylessKind =
   | "water_corp"
   | "road_casement"
   | "acid_sulfate"
-  | "wetland";
+  | "wetland"
+  | "native_vegetation";
 
 function scoreNamed(
   typeName: string,
@@ -221,6 +222,20 @@ export function scoreUrbanTreeLayerName(typeName: string): number {
     [/tree_urban/, /urban.?tree/, /canopy/, /veg.?tree/],
     [/annotation/, /farm/, /plantation/],
     { tree_urban: 100, urban_tree: 90 },
+  );
+}
+
+/**
+ * Score native vegetation / EVC layers (NatureKit's modelled Ecological
+ * Vegetation Classes, published as open WFS on the same DELWP GeoServer).
+ * These drive Clause 52.17 native-vegetation permit considerations.
+ */
+export function scoreNativeVegetationLayerName(typeName: string): number {
+  return scoreNamed(
+    typeName,
+    [/native.?veg/, /ecological.?vegetation/, /\bevc/, /remnant.?veg/],
+    [/annotation/, /label/, /point$/, /observation/],
+    { nv2005_evcbcs: 100, native_vegetation: 95, evc: 90 },
   );
 }
 
@@ -333,6 +348,7 @@ export const VICMAP_KEYLESS_SPECS: Record<VicmapKeylessKind, KeylessLayerSpec> =
     road_casement: { scorer: scoreRoadCasementLayerName },
     acid_sulfate: { scorer: scoreAcidSulfateLayerName },
     wetland: { scorer: scoreWetlandLayerName },
+    native_vegetation: { scorer: scoreNativeVegetationLayerName },
   };
 
 /** @deprecated Use VICMAP_KEYLESS_SPECS — kept for tests and tooling. */
