@@ -14,6 +14,7 @@ import {
   CreateTaskInputSchema,
   DesignSchema,
   OutputSchema,
+  PhotoElevationSchema,
   PhotoMeasurementSchema,
   PlantPaletteSchema,
   PresentationDocumentSchema,
@@ -135,6 +136,128 @@ describe("SurveySchema", () => {
       measurements: [],
     });
     expect(ok.success).toBe(true);
+  });
+
+  it("leaves site_photos absent on pre-gallery surveys", () => {
+    const ok = SurveySchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      aerial_uri: "https://example.com/aerial.jpg",
+      title_polygon: { type: "Polygon", coordinates: [[[0, 0], [0, 1], [1, 1], [0, 0]]] },
+      house_polygon: { type: "Polygon", coordinates: [] },
+      garden_polygon: { type: "Polygon", coordinates: [[[0, 0], [0, 1], [1, 1], [0, 0]]] },
+      lot_area_m2: 600,
+      house_area_m2: 0,
+      garden_area_m2: 600,
+      measurements: [],
+    });
+    expect(ok.success).toBe(true);
+    if (ok.success) expect(ok.data.site_photos).toBeUndefined();
+  });
+
+  it("carries the site-photo gallery through", () => {
+    const ok = SurveySchema.safeParse({
+      id: UUID,
+      project_id: UUID,
+      aerial_uri: "https://example.com/aerial.jpg",
+      title_polygon: { type: "Polygon", coordinates: [] },
+      house_polygon: { type: "Polygon", coordinates: [] },
+      garden_polygon: { type: "Polygon", coordinates: [] },
+      lot_area_m2: 0,
+      house_area_m2: 0,
+      garden_area_m2: 0,
+      measurements: [],
+      site_photos: [
+        {
+          id: UUID,
+          name: "Rear fence",
+          uri: "https://example.com/photos/rear.png",
+          natural_aspect: 1.5,
+          created_at: ISO,
+        },
+      ],
+    });
+    expect(ok.success).toBe(true);
+    if (ok.success) expect(ok.data.site_photos).toHaveLength(1);
+  });
+});
+
+describe("PhotoElevationSchema", () => {
+  const canonical = {
+    id: UUID,
+    photo_id: UUID,
+    name: "Rear fence",
+    uri: "https://example.com/photos/rear.jpg",
+    natural_aspect: 1.5,
+    azimuth_deg: 180,
+    calibration: {
+      plane_width_m: 12,
+      reference_m: 1.8,
+      label: "1.8 m fence line",
+    },
+    centre_x_m: 0,
+    centre_z_m: -8,
+    ground_offset_m: 0,
+    strokes: [
+      {
+        id: UUID,
+        points: [
+          { x_m: -2, y_m: 0.2 },
+          { x_m: 1.5, y_m: 0.9 },
+        ],
+        width_px: 2,
+        color: "#0030CF",
+      },
+    ],
+    created_at: ISO,
+    updated_at: ISO,
+  };
+
+  it("accepts a calibrated photo elevation with a trace stroke", () => {
+    const ok = PhotoElevationSchema.safeParse(canonical);
+    expect(ok.success).toBe(true);
+  });
+
+  it("defaults uncalibrated with an empty stroke set", () => {
+    const ok = PhotoElevationSchema.safeParse({
+      id: UUID,
+      photo_id: UUID,
+      name: "Street frontage",
+      uri: "https://example.com/photos/front.jpg",
+      natural_aspect: 0.75,
+      created_at: ISO,
+      updated_at: ISO,
+    });
+    expect(ok.success).toBe(true);
+    if (ok.success) {
+      expect(ok.data.calibration).toBeNull();
+      expect(ok.data.strokes).toEqual([]);
+      expect(ok.data.azimuth_deg).toBe(0);
+      expect(ok.data.boundary_snap).toBeNull();
+    }
+  });
+
+  it("records a title-boundary snap when the plane is reconciled", () => {
+    const ok = PhotoElevationSchema.safeParse({
+      ...canonical,
+      boundary_snap: { edge_index: 3, snapped_at: ISO },
+    });
+    expect(ok.success).toBe(true);
+    if (ok.success) {
+      expect(ok.data.boundary_snap?.edge_index).toBe(3);
+    }
+  });
+
+  it("rejects a negative calibration reference length", () => {
+    const bad = PhotoElevationSchema.safeParse({
+      ...canonical,
+      calibration: {
+        plane_width_m: 12,
+        reference_m: -1,
+        label: "bad",
+      },
+    });
+    expect(bad.success).toBe(false);
   });
 });
 

@@ -105,13 +105,31 @@ export function facadeNormalAzimuthDeg(
  * The exact elevation state — φ = 90° with azimuth snapped to a facade
  * normal. Only this exact orthographic snap unlocks editing at the horizon;
  * any oblique near-90° pitch stays view-only (CAD convention).
+ *
+ * `facadeAzimuthDeg` generalises the snap: a pinned photo plane follows the
+ * title boundary's real bearing (rarely exactly cardinal), so its azimuth is
+ * an elevation facade in its own right. When provided, azimuth matching
+ * uses that bearing instead of the N/E/S/W cardinals.
  */
-export function isElevationRig(rig: StudioCameraRig): boolean {
-  return (
-    Math.abs(clampPitchDeg(rig.tiltDeg) - PITCH_MAX_DEG) <=
-      ELEVATION_SNAP_PITCH_DEG &&
-    facadeNormalAzimuthDeg(rig.rotateDeg) != null
-  );
+export function isElevationRig(
+  rig: StudioCameraRig,
+  facadeAzimuthDeg?: number | null,
+): boolean {
+  if (
+    Math.abs(clampPitchDeg(rig.tiltDeg) - PITCH_MAX_DEG) >
+    ELEVATION_SNAP_PITCH_DEG
+  ) {
+    return false;
+  }
+  if (facadeAzimuthDeg != null && Number.isFinite(facadeAzimuthDeg)) {
+    const w = ((rig.rotateDeg % 360) + 360) % 360;
+    const delta = Math.min(
+      Math.abs(w - facadeAzimuthDeg),
+      360 - Math.abs(w - facadeAzimuthDeg),
+    );
+    return delta <= ELEVATION_SNAP_AZIMUTH_DEG;
+  }
+  return facadeNormalAzimuthDeg(rig.rotateDeg) != null;
 }
 
 /**

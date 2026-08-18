@@ -30,6 +30,7 @@ describe("design-vcs tip resolution", () => {
       construction_trenches: [],
       annotations: [],
       image_layers: [],
+      photo_elevations: [],
       features: [],
       updated_at: "2026-08-01T00:00:00.000Z",
     };

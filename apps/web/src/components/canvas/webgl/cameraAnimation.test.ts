@@ -68,6 +68,24 @@ describe("springStep", () => {
     expect(Number.isFinite(state.velocity)).toBe(true);
   });
 
+  it("converges on the target after a throttled-rAF gap (regression: spring exploded to -3.7e44)", () => {
+    // A headless/throttled tab can pause rAF for seconds; the old sub-step
+    // cap (dt≈0.077) sat past the damped integrator's stability bound and
+    // NaN-poisoned the spring, parking the camera in plan view. A 30s gap
+    // must integrate down to the target, stay finite, and settle.
+    const state: SpringState = { position: 0, velocity: 0 };
+    springStep(state, 1, CAMERA_SPRING, 30);
+    expect(Number.isFinite(state.position)).toBe(true);
+    expect(Math.abs(state.position)).toBeLessThan(1e6);
+    expect(state.position).toBeGreaterThanOrEqual(0);
+    // Follow-up frames must keep converging.
+    for (let i = 0; i < 120; i++) {
+      springStep(state, 1, CAMERA_SPRING, 1 / 60);
+    }
+    expect(state.position).toBeCloseTo(1, 2);
+    expect(state.velocity).toBeCloseTo(0, 2);
+  });
+
   it("ignores poison deltas (negative / NaN) and recovers corrupted state", () => {
     // Regression: a negative frame delta (system clock adjustment) once sent
     // the integrator runaway to 1e41, parking the camera at a garbage pitch

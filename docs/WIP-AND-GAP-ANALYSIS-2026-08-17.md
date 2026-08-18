@@ -1,5 +1,10 @@
 # WIP and gap analysis — 2026-08-17 (evening session)
 
+> **Snapshot doc — superseded for state** by
+> `SESSION-HANDOVER-2026-08-18-CONTINUATION.md` + `OUTSTANDING.md`; the
+> ranked list below is the source of `OUTSTANDING.md`'s "Current ranked
+> priorities". `[2026-08-18]` notes mark items that moved since.
+
 Written 2026-08-17 ~23:59 local. State verified against this session's tool
 results: main at `f828800`, gates green, Railway preview live. Companion to
 `docs/SESSION-HANDOVER-2026-08-17-CONTINUATION.md`; supersedes the stale
@@ -41,7 +46,10 @@ results: main at `f828800`, gates green, Railway preview live. Companion to
 4. **Photo-trace elevation (sketch capstone).** Pin a photo as a frozen
    camera bookmark → fly/crossfade → vertical ink plane → freehand trace →
    elevation sheet. Calibration model undecided — needs a schema/UX decision
-   before build.
+   before build. **[2026-08-18] SHIPPED** — reference-line calibration,
+   boundary-snap reconciliation, per-project site-photo gallery, photo
+   elevation sheet (working-tree implementation, PR pending). See
+   `docs/CAMERA-STATE-MACHINE.md` + the `OUTSTANDING.md` P1 entry.
 5. **§4 Mobile Field Bridge AR — explicitly not built (by design).** Needs
    real RTK-GPS + camera (WebXR/native). Fabricated "RTK FIXED" telemetry
    would violate the no-mock-data law; do not build without a real data
@@ -51,7 +59,9 @@ results: main at `f828800`, gates green, Railway preview live. Companion to
    #A8B4FF` (dark-era lifted stop), `conflict #EF4444` (should be crimson
    `#C41E1E`), IBM Plex fonts (retired for Inter/Space Grotesk on web).
    Mobile UI is out of step with the shipped Paper + Signal Blue `#3D5AFE`
-   system until reconciled.
+   system until reconciled. **[2026-08-18] RESOLVED** — PR #192 reconciled
+   `packages/ui` to Studio Paper + Signal Blue; remaining follow-up is
+   mobile font bundling (system fallback at runtime).
 7. **"Murk" polish.** Light canvas vs dark-era foliage `d-*` ramp and olive
    ground-bounce (`sceneItems.tsx` FOLIAGE, `--gs-ground-bounce`). Lift
    foliage to the `l-*` ramp; neutralise the olive bounce.
@@ -73,8 +83,9 @@ results: main at `f828800`, gates green, Railway preview live. Companion to
 - **Redis worker** not enabled (`REDIS_URL` unset; pipeline runs in-process).
 - **Branch protection on main** requires GitHub Pro.
 - **EAS store credentials** (Apple/Google) for mobile distribution.
-- **Litestream bucket** — after the SQLite migration (single API replica
-  constraint applies meanwhile).
+- **Litestream bucket** — human step; the SQLite journal is the durable
+  store now, and the single-API-replica constraint applies while SQLite is
+  single-writer.
 - **GitHub Actions paused** — account frozen on payment failure; all PRs
   currently merge with local gates only.
 - **CI e2e non-blocking** by design (hosted-runner font/startup flakiness);

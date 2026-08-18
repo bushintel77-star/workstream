@@ -6,12 +6,18 @@
 > components + `lib/api.ts` + BFF proxies) and `apps/mobile`
 > (`packages/client`). Landscape UX reviewed against industry practice for
 > Melbourne/Victoria residential landscape design.
+>
+> **Updated 2026-08-18 (docs-vs-code audit):** corrections below are marked
+> **[2026-08-18]** where code has moved on since this audit (all-8-modes
+> native routing, perimeter tab chrome, photo-trace shipped, aerial underlay
+> retired, exposure retune). One open product question is flagged in §6 and
+> `ONBOARDING.md` rather than resolved here.
 
 ## 1. What this pass fixed (wire, don't delete)
 
 | Backend capability | Was | Now |
 |---|---|---|
-| 8-mode canvas system (`?mode=…`) | Default WebGL studio ignored `?mode=` — elevation/garden/share/survey/cad deep links dead-ended on a mount that never renders them | `webglStudioSupportsMode()` (`apps/web/src/lib/canvas-mode.ts`) routes SVG-only modes to the classic studio; `StudioModeTabs` glass pill row on the WebGL studio shows all 8 modes with progressive unlock, native modes switch in place, classic modes link to `?svg=1&mode=…` |
+| 8-mode canvas system (`?mode=…`) | Default WebGL studio ignored `?mode=` — elevation/garden/share/survey/cad deep links dead-ended on a mount that never renders them | `webglStudioSupportsMode()` (`apps/web/src/lib/canvas-mode.ts`) routes SVG-only modes to the classic studio; `StudioModeTabs` glass pill row on the WebGL studio shows all 8 modes with progressive unlock, native modes switch in place, classic modes link to `?svg=1&mode=…`. **[2026-08-18]** Superseded again: all 8 modes now mount natively in the WebGL studio (`WEBGL_STUDIO_MODES` contains all 8, so `webglStudioSupportsMode()` returns true for every mode), and the `StudioModeTabs` pill row was replaced by the perimeter tab strip (`PerimeterTabStrip.tsx`, PR #196). `?svg=1` is an explicit opt-in to the classic studio, not part of mode routing. |
 | `GET /site-context` (council planning badges, season, daylight) | `getSiteContext` defined, never called | `SiteContextBadges` component — WebGL right-column glass card + "Planning context" block in the SVG `EnvironmentPanel` |
 | `GET /projects/:id/envelope` (budget envelope ±15/20%) | `getEnvelopeBrief` defined, never called | `EnvelopeBand` in the `LiveCostRail` — shows the survey envelope band and in/over/under state beside the running total (`classifyEnvelope` unit-tested) |
 | `GET/POST /measurements/photo` (Claude vision quantities) | `/measurements` was a redirect into sketch mode; the surface had been removed (its CSS survived) | Real `/projects/[id]/measurements` page — drag-drop photo upload (new BFF `POST /api/projects/:id/measurements`), itemised results with value/unit/confidence/reference |
@@ -49,7 +55,9 @@ Deciduous/evergreen drives seasonal canopy (species keywords, not planting prove
 
 **Render legibility calibration (2026-08-15, operator directive "see the
 design in its best light"):** ACES tone-mapping exposure 1.05→1.4 (ACES
-compresses mid-tones; daylight gardens read dusk at 1.05); sun intensity
+compresses mid-tones; daylight gardens read dusk at 1.05); **[2026-08-18]
+retuned since: `WebGLStudio.tsx` now sets `toneMappingExposure = 1.55`**;
+sun intensity
 legibility floor (base 0.55→0.75, winter dimming 0.25→0.15 — season reads
 through shadow length and canopy, not murk); ambient/hemisphere lifted
 (0.45/0.55 → 0.5/0.65); evergreen species no longer lerp to autumn orange or
@@ -73,7 +81,17 @@ topographic articulation (terrainMaterial.ts: contour banding at the 0.5 m
 surveyor interval, slope-based albedo, noise breakup) so relief reads from
 any light angle. ARCHITECTURE doc 2.4 records the contract.
 
-### Unmasked by this audit: classic-studio contrast debt (pre-existing)
+### Unmasked by this audit: classic-studio contrast debt (pre-existing, since fixed)
+
+**[2026-08-18 status note.]** The debt described below was fixed: the
+`canvas-contrast-aa.spec.ts` gate now walks the classic surfaces via
+`?svg=1&mode=…` and holds at zero (see `OUTSTANDING.md`, "WCAG 2.2 AA text
+contrast on the canvas"). The paper→Studio-Dark conversion work described as
+an option below did not ship; the classic studio's light-paper label language
+was repaired in place instead. The second option (land the WebGL port and
+retire the paper language) is still open — see the flagged product question
+in §6.
+
 `e2e/canvas-contrast-aa.spec.ts` was silently broken since the WebGL-default
 swap (it expected the SVG studio at `?mode=…` and died before asserting).
 Forcing `?svg=1` restored its assertions and exposed ~186 real WCAG AA
@@ -97,9 +115,11 @@ retire the paper language with it.
   palette Develop-site command (20 s timeout). Previously failed earlier at
   the studio mount; mode routing now reaches the SVG studio, so the
   remaining failure is the develop pipeline / council-tip flow itself.
-- `e2e/elevation-silhouettes.spec.ts:148` — `fit-sheet-layer` does not mount
-  from the header fit-sheet control in a fresh cad session. Same story:
-  mount fixed by routing; the layer mount itself is broken on main.
+- `e2e/elevation-silhouettes.spec.ts` — `fit-sheet-layer` does not mount
+  from the header fit-sheet control in a fresh cad session (assertion now
+  at `:112–113`; the old `:148` reference predates the spec being
+  shortened). Same story: mount fixed by routing; the layer mount itself is
+  broken on main.
 
 ### Deferred roadmap (recommended order)
 1. **Plant attribute model** (~8 attrs today vs ~20 industry): structured `native`/`endemic` flags (currently prose keywords), growth rate (growth rings use universal Year-1/5/10 constants), flowering season + foliage colour (seasonal interest), toxicity/pet-safety, maintenance level, soil pH + drainage (soil is one free-text string today), spacing/density per species, declared-weed/biosecurity check (blocklist is style-based, not DEECA).
@@ -140,10 +160,11 @@ keyboard/reduced-motion checks. Locked into CI as `e2e/a11y-axe.spec.ts`
   `canvas-dialog-focus-trap.spec.ts`.
 - **Reduced motion:** global `prefers-reduced-motion` block plus per-module
   guards (skeleton pulse, scrub pulses).
-- **Excluded by design:** the classic `?svg=1` studio's paper-label
-  contrast debt (§3) is tracked by `canvas-contrast-aa.spec.ts`; the WebGL
-  scene's 3D content is a visual surface — its DOM chrome (layer 3) is what
-  axe audits.
+- **Excluded by design:** the WebGL scene's 3D content is a visual surface —
+  its DOM chrome (layer 3) is what axe audits. **[2026-08-18]** The classic
+  `?svg=1` studio's contrast debt (§3) is fixed and now gated by
+  `canvas-contrast-aa.spec.ts` (zero failures across the five classic
+  modes); the classic studio itself is still outside the axe scope.
 
 ## 6. Loading-state audit (2026-08-15)
 
@@ -160,7 +181,19 @@ Coverage is complete — no gaps found:
   (<1 s before first frame) — acceptable under the zero-chrome law; the SVG
   branch keeps its full `StudioSkeleton`.
 
-Kept deliberately: all `lib/api.ts` endpoint wrappers (§2 mobile-only list — they are the web-parity backlog, not dead weight), the legacy SVG studio (the full studio until WebGL Phase-1 completes), dormant domain modules (§2), orphaned `measurementCard` styles (reused by the restored measurements surface).
+Kept deliberately: all `lib/api.ts` endpoint wrappers (§2 mobile-only list — they are the web-parity backlog, not dead weight), the legacy SVG studio (see the flagged question below), dormant domain modules (§2), orphaned `measurementCard` styles (reused by the restored measurements surface).
+
+> **Open product decision (flagged 2026-08-18 docs audit, not resolved).**
+> This section's phrasing — "the legacy SVG studio (the full studio until
+> WebGL Phase-1 completes)" — implies the SVG studio is a transitional
+> surface on its way to full WebGL parity and eventual retirement. `AGENTS.md`
+> states the opposite intent: the SVG `HandoffDesignStudio` is a **permanent
+> `?svg=1`-only deep fallback** for vector node-editing and the long
+> feature-dock tail, "no longer part of mode routing" and not developed
+> further. Which one is true is a product decision: (a) permanent fallback
+> kept healthy but frozen, or (b) transitional until WebGL Phase 1 covers
+> everything, then retired. Both readings appear in current docs; do not
+> treat either as settled until product picks one.
 
 ## 7. Heuristic evaluation (2026-08-15, Nielsen-10 × WCAG 2.2 AA / DTA)
 
@@ -208,6 +241,21 @@ filterable, listbox semantics, axe-clean. Right column is mode-aware
 (fit-sheet renders in sketch/cad/quote/garden only). Camera + history
 affordances in the top-left card (−/+/↶/↷) plus a dismissible first-run
 controls hint (wheel/drag/Ctrl+K) — the zoom scheme is now discoverable.
-Dev register cleaned of e2e fixtures. Remaining documented reds: the classic
-studio paper-language contrast debt, develop-loop council tip, and the
+Dev register cleaned of e2e fixtures. Remaining documented reds:
+the classic studio paper-language contrast debt, develop-loop council tip, and the
 classic fit-sheet strip (all pre-existing, inventoried above).
+
+**[2026-08-18 update.]** Of those three: the contrast debt is **fixed**
+(gate at zero, §5). Still red as of the 2026-08-18 handover: the
+develop-loop council tip (`e2e/develop-loop.spec.ts` — `council-setback-tip`
+never appears after the Develop-site command) and the classic fit-sheet
+strip (`e2e/elevation-silhouettes.spec.ts` — `fit-sheet-layer` does not
+mount from the header control; the old `:148` reference is stale, the
+assertion now lives at `:112–113`), plus a routing
+defect in `quote-tier1.spec.ts` (its `?svg=1&mode=cad&svg=1` double `svg`
+param is read by `page.tsx` as an array, so `sp.svg !== "1"` and the WebGL
+studio mounts anyway). These are tracked together in `OUTSTANDING.md`
+("Classic-studio
+e2e debt"); the full classic suite has not been re-run end-to-end since the
+2026-08-18 session, so treat that list as floor-not-ceiling until someone
+runs the `?svg=1` specs and enumerates.

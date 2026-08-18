@@ -68,6 +68,9 @@ export function FusedSketchLayer({
   // sketchMode gates whether this layer captures pointer events. When off,
   // the camera controls get the events (orbit/pan).
   const sketchMode = useStudioStore((s) => s.sketchMode);
+  // A pinned photo-trace session owns pointer capture — the photo plane is
+  // the raycast target, so the ground ink layer stands down completely.
+  const photoTraceSession = useStudioStore((s) => s.photoTraceSession);
   // The committed strokes from the store — shared across plan and 3D views.
   const strokes = useStudioStore((s) => s.sketchStrokes);
   const addSketchStroke = useStudioStore((s) => s.addSketchStroke);
@@ -243,7 +246,7 @@ export function FusedSketchLayer({
   ]);
 
   // ---- Render ----
-  if (!sketchMode) return null;
+  if (!sketchMode || photoTraceSession) return null;
   return (
     <group>
       {/* Invisible raycast plane — captures pointer events for sketching */}

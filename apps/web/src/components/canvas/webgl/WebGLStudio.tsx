@@ -87,7 +87,7 @@ export interface WebGLStudioProps {
   buildingOpacity?: number;
   /** Pin the camera blend (split view's locked half). See FusedCamera. */
   viewBlendLocked?: number;
-  onGroundClick?: (pct: PctPoint) => void;
+  onGroundClick?: (pct: PctPoint, opts: { additive: boolean }) => void;
   onCursorMove?: (pct: PctPoint | null) => void;
   subsurfaceUtilities?: SubsurfaceUtility[];
   strikeAlerts?: StrikeAlertData[];

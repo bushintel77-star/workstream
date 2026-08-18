@@ -27,6 +27,7 @@ interface RailTool {
   onToggle: () => void;
   accent: string;
   title: string;
+  disabled?: boolean;
 }
 
 export function StudioToolRail({
@@ -36,6 +37,9 @@ export function StudioToolRail({
   showQuote,
   onPresentToggle,
   presentActive,
+  showTidy,
+  tidyDisabled,
+  onTidy,
 }: {
   showTerrainTools: boolean;
   showDims: boolean;
@@ -43,6 +47,11 @@ export function StudioToolRail({
   showQuote: boolean;
   onPresentToggle: () => void;
   presentActive: boolean;
+  /** Show the sketch→CAD tidy action (sketch mode or ink on the board). */
+  showTidy: boolean;
+  /** Tidy needs at least one stroke. */
+  tidyDisabled: boolean;
+  onTidy: () => void;
 }) {
   const subsurfaceView = useStudioStore((s) => s.subsurfaceView);
   const setSubsurfaceView = useStudioStore((s) => s.setSubsurfaceView);
@@ -106,6 +115,22 @@ export function StudioToolRail({
       accent: "var(--gs-ink-truth)",
       title: "Two-point tape",
     },
+    ...(showTidy
+      ? [
+          {
+            id: "tidy",
+            glyph: "◇",
+            label: "Tidy",
+            active: false,
+            onToggle: onTidy,
+            accent: "var(--gs-primary)",
+            title: tidyDisabled
+              ? "Draw ink first — strokes become CAD proposals"
+              : "Tidy strokes → confidence-scored CAD proposals (accept/reject review)",
+            disabled: tidyDisabled,
+          },
+        ]
+      : []),
     {
       id: "trench",
       glyph: "≋",
@@ -257,6 +282,7 @@ export function StudioToolRail({
             data-testid={`rail-${t.id}`}
             aria-label={name}
             title={t.title}
+            disabled={t.disabled === true}
             onClick={t.onToggle}
             style={{
               width: 42,
@@ -270,15 +296,18 @@ export function StudioToolRail({
               background: active ? "var(--gs-chip-active)" : "transparent",
               color: active
                 ? "var(--gs-chip-active-ink)"
-                : "var(--gs-ink-secondary)",
-              cursor: "pointer",
+                : t.disabled
+                  ? "var(--gs-ink-muted)"
+                  : "var(--gs-ink-secondary)",
+              cursor: t.disabled ? "not-allowed" : "pointer",
+              opacity: t.disabled ? 0.55 : 1,
               transition: "background 0.15s, color 0.15s",
             }}
             onMouseEnter={(e) => {
-              if (!active) e.currentTarget.style.color = "var(--gs-ink)";
+              if (!active && !t.disabled) e.currentTarget.style.color = "var(--gs-ink)";
             }}
             onMouseLeave={(e) => {
-              if (!active) e.currentTarget.style.color = "var(--gs-ink-secondary)";
+              if (!active && !t.disabled) e.currentTarget.style.color = "var(--gs-ink-secondary)";
             }}
           >
             <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>

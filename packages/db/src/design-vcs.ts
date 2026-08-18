@@ -24,6 +24,7 @@ function normalizeCanvas(canvas: DesignCanvas): DesignCanvas {
     construction_trenches: canvas.construction_trenches ?? [],
     annotations: canvas.annotations ?? [],
     image_layers: canvas.image_layers ?? [],
+    photo_elevations: canvas.photo_elevations ?? [],
     features: canvas.features ?? [],
   };
 }
@@ -53,6 +54,10 @@ function applyUpsert(
       input.image_layers !== undefined
         ? input.image_layers
         : (existing.image_layers ?? []),
+    photo_elevations:
+      input.photo_elevations !== undefined
+        ? input.photo_elevations
+        : (existing.photo_elevations ?? []),
     features:
       input.features !== undefined ? input.features : (existing.features ?? []),
     site_frame:
@@ -116,6 +121,7 @@ export function ensureMainBranch(
         construction_trenches: [],
         annotations: [],
         image_layers: [],
+        photo_elevations: [],
         features: [],
         updated_at: now,
       };
@@ -222,6 +228,7 @@ export function commitRevision(
         construction_trenches: [],
         annotations: [],
         image_layers: [],
+        photo_elevations: [],
         features: [],
         updated_at: now,
       };

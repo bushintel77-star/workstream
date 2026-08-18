@@ -1,5 +1,11 @@
 # Session handover — 2026-08-17 continuation (evening session)
 
+> **Superseded — historical record.** State moved on in
+> `SESSION-HANDOVER-2026-08-18-CONTINUATION.md` (PRs #192–#201 + the
+> photo-trace capstone). Live tracker: `OUTSTANDING.md`; entry doc:
+> [`ONBOARDING.md`](../ONBOARDING.md). §2 (CI diagnosis) and §3 (Railway
+> preview) remain useful reference.
+
 Written 2026-08-17 ~23:55 local, continuing from `HANDOVER-NEW-CONTEXT.md`.
 Everything below is verified state from this session's tool results.
 

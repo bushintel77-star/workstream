@@ -7,7 +7,7 @@ const PNG_1PX = Buffer.from(
 );
 
 test.describe("WebGL photo to hand-sketch flow", () => {
-  test("uploads a site image, separates layers, and saves pen input", async ({
+  test("uploads a site photo to the gallery, separates layers, and saves pen input", async ({
     page,
     request,
   }) => {
@@ -22,23 +22,23 @@ test.describe("WebGL photo to hand-sketch flow", () => {
       timeout: 30_000,
     });
 
-    // Fresh chrome: the photo action lives in the Studio surface tab.
+    // Fresh chrome: site photos live in the Studio surface tab as a gallery.
     await page.getByTestId("meta-tab-studio").click();
+    await expect(page.getByTestId("site-photo-gallery")).toBeVisible();
     const uploadResponse = page.waitForResponse(
       (response) =>
-        response.url().includes(`/api/projects/${projectId}/aerial`) &&
+        response.url().includes(`/api/projects/${projectId}/site-photos`) &&
         response.request().method() === "POST",
     );
-    await page
-      .getByLabel("Choose a site photo to trace")
-      .setInputFiles({
-        name: "site-reference.png",
-        mimeType: "image/png",
-        buffer: PNG_1PX,
-      });
+    await page.getByTestId("site-photo-upload").click();
+    await page.getByLabel("Choose a site photo").setInputFiles({
+      name: "site-reference.png",
+      mimeType: "image/png",
+      buffer: PNG_1PX,
+    });
     expect((await uploadResponse).ok()).toBe(true);
-    await expect(page.getByTestId("webgl-studio")).toBeVisible({
-      timeout: 30_000,
+    await expect(page.getByTestId("site-photo-row")).toBeVisible({
+      timeout: 15_000,
     });
 
     // Layers are a surface tab in the fresh chrome. The aerial/photo

@@ -830,6 +830,79 @@ export const ImageLayerSchema = z.object({
 export type ImageLayer = z.infer<typeof ImageLayerSchema>;
 
 /**
+ * A freehand stroke traced on a pinned site photo's vertical plane.
+ * Points are plane-space metres: x_m along the plane (right positive from
+ * centre), y_m above the plane's ground line — true metres once calibrated.
+ */
+export const PhotoTraceStrokeSchema = z.object({
+  id: z.string().uuid(),
+  points: z
+    .array(z.object({ x_m: z.number(), y_m: z.number() }))
+    .min(1)
+    .max(5000),
+  width_px: z.number().positive().default(2),
+  /** Ink color — defaults to the Truth Anchor data stroke. */
+  color: z.string().default("#0030CF"),
+});
+export type PhotoTraceStroke = z.infer<typeof PhotoTraceStrokeSchema>;
+
+/**
+ * A pinned site photo as a frozen camera frame — the photo-trace elevation
+ * capstone. The photo stands as a vertical plane in the scene's metre-space;
+ * the operator calibrates it with one reference line drawn against a known
+ * real length, then freehand ink raycasts onto the plane and persists as
+ * true-metre strokes feeding a photo elevation sheet.
+ */
+export const PhotoElevationSchema = z.object({
+  id: z.string().uuid(),
+  /** Gallery photo this elevation is traced from. */
+  photo_id: z.string().uuid(),
+  name: z.string().min(1).max(200),
+  uri: z.string().url(),
+  /** Natural aspect (width / height) of the source photo. */
+  natural_aspect: z.number().positive(),
+  /** Azimuth the plane faces (deg; 0 = north look, +90 = east look). */
+  azimuth_deg: z.number().min(0).max(360).default(0),
+  /**
+   * Reference-line calibration. Null = uncalibrated — traces and the sheet
+   * are stamped "indicative" until the operator draws one known length.
+   */
+  calibration: z
+    .object({
+      /** Photo plane width in scene metres (height derives from aspect). */
+      plane_width_m: z.number().positive(),
+      /** The known real length the reference line was drawn against. */
+      reference_m: z.number().positive(),
+      /** Honesty stamp — e.g. "1.8 m fence line". */
+      label: z.string().min(1).max(120),
+    })
+    .nullable()
+    .default(null),
+  /** Plane centre in world metres (x, z); the plane stands on ground y=0. */
+  centre_x_m: z.number().default(0),
+  centre_z_m: z.number().default(0),
+  /** Vertical footing offset (m) — lifts the plane's ground line off y=0. */
+  ground_offset_m: z.number().default(0),
+  /**
+   * Title-boundary reconciliation (gap-check rule): which boundary edge the
+   * plane's foot was snapped onto at pin time. Null = position not verified
+   * against the title polygon — surfaces must stamp that locational-
+   * indicative rather than stay silent.
+   */
+  boundary_snap: z
+    .object({
+      edge_index: z.number().int().nonnegative(),
+      snapped_at: z.string().datetime(),
+    })
+    .nullable()
+    .default(null),
+  strokes: z.array(PhotoTraceStrokeSchema).default([]),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+export type PhotoElevation = z.infer<typeof PhotoElevationSchema>;
+
+/**
  * ASLA/SILA-style design lifecycle — gates expected detail, not studio mode.
  * Distinct from ProjectStatus (pipeline) and StudioMode (survey/sketch/cad…).
  */
@@ -854,6 +927,8 @@ export const DesignCanvasSchema = z.object({
   annotations: z.array(CanvasAnnotationSchema).default([]),
   /** Imported photo / plan underlays for sketch tracing. */
   image_layers: z.array(ImageLayerSchema).default([]),
+  /** Pinned site photos as calibrated elevation-trace frames. */
+  photo_elevations: z.array(PhotoElevationSchema).default([]),
   /** Lean landscape features (beds/paths) - optional until bed paint ships. */
   features: z.array(LandscapeFeatureSchema).optional().default([]),
   /** Durable title / survey frame — boundary, building, easements, levels. */
@@ -881,6 +956,7 @@ export const UpsertDesignCanvasSchema = z.object({
   construction_trenches: z.array(ConstructionTrenchSchema).optional(),
   annotations: z.array(CanvasAnnotationSchema).optional(),
   image_layers: z.array(ImageLayerSchema).optional(),
+  photo_elevations: z.array(PhotoElevationSchema).optional(),
   features: z.array(LandscapeFeatureSchema).optional(),
   site_frame: DesignSiteFrameSchema.optional(),
   presentation_pack: PresentationPackSchema.optional(),

@@ -567,7 +567,11 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
           const row = _photoMeasurements.find((m) =>
             m.image_uri.includes(assetId),
           );
-          return row ? ownerForProject(row.project_id) : null;
+          if (row) return ownerForProject(row.project_id);
+          const sitePhoto = _surveys.find((s) =>
+            (s.site_photos ?? []).some((p) => p.uri.includes(assetId)),
+          );
+          return sitePhoto ? ownerForProject(sitePhoto.project_id) : null;
         }
         case "aerial": {
           const survey = _surveys.find((s) =>

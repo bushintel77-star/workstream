@@ -112,9 +112,14 @@ export function springStep(
   }
 
   // Sub-stepping: if delta is too large, the integration can blow up.
-  // Max stable step ≈ 2 / ω where ω = sqrt(k/m). We use a safety factor.
+  // The stability bound for this damped (ζ=0.92) semi-implicit Euler is
+  // ≈0.05s — empirically dt=0.077 goes NaN within a few thousand steps.
+  // The previous cap (2/ω)·0.5 = 0.077 sat PAST that bound, so a throttled
+  // rAF gap (headless tab idle, ~0.5s deltas) still exploded the spring to
+  // -3.7e44 and parked the camera in plan view with a NaN blend. Cap at
+  // (2/ω)·0.25 = 0.038s — comfortably inside the stable band.
   const omega = Math.sqrt(stiffness / mass);
-  const maxStep = (2 / omega) * 0.5;
+  const maxStep = (2 / omega) * 0.25;
   const steps = Math.max(1, Math.ceil(delta / maxStep));
   const dt = delta / steps;
 
@@ -124,6 +129,16 @@ export function springStep(
     const acceleration = force / mass;
     state.velocity += acceleration * dt;
     state.position += state.velocity * dt;
+    // Belt-and-braces: an integration blow-up mid-loop must never leak a
+    // non-finite value — snap to the target and stop.
+    if (
+      !Number.isFinite(state.position) ||
+      !Number.isFinite(state.velocity)
+    ) {
+      state.position = target;
+      state.velocity = 0;
+      return state.position;
+    }
   }
 
   // Snap to target when effectively at rest (prevents infinite micro-oscillation).

@@ -73,8 +73,14 @@ co-pilot for Curtis & Co (Melbourne).
 
 ## Don't
 
-- Don't introduce a global state library (Redux/Zustand/Jotai). Server
-  components + server actions are the state model.
+- Don't introduce a new global state library beyond what the canvas already
+  uses. Server components + server actions are the state model for the app
+  shell. The two canvas studios are deliberate exceptions: the classic SVG
+  studio's `useStudioState` reducer and the WebGL studio's zustand
+  `studioStore` (`webgl/studioStore.ts`, `getState()` in `useFrame` /
+  selectors in DOM — no React state shared between the two stores; they meet
+  only at the persisted `DesignCanvas` document, per
+  `docs/GOLD-STANDARD-2026-ARCHITECTURE.md` §5).
 - Don't add a CSS-in-JS library. CSS Modules + variables are intentional.
 - Don't soften deletes silently — every destructive action should warn or be
   reversible (the current dashboard delete is the exception and is on the
@@ -83,16 +89,26 @@ co-pilot for Curtis & Co (Melbourne).
 
 ## Design studio phases
 
-- **Workflow 1 (now):** Professional sketch — CAD-inspired UX, `%` canvas coords, indicative scale/overlays. See `docs/STUDIO-PRODUCT-PHASES.md`.
-- **Stage 2 (later):** True CAD — survey coordinates, named layer export, dim styles; requires new contracts schema. Do not implement Stage 2 fields on `DesignCanvas` without a schema brief.
+- **Current:** the Gold Standard 2026 WebGL studio is the primary canvas —
+  metre-space, terrain-draped, live BOM, per `docs/GOLD-STANDARD-2026*.md`
+  (read `ONBOARDING.md` first). `docs/STUDIO-PRODUCT-PHASES.md` describes the
+  retired pre-GS "Workflow 1" `%`-coord era; its Stage 2 gate still holds as
+  the product line.
+- **Stage 2 (product-gated):** True survey-grade CAD — survey coordinates,
+  named layer export (DXF/DWG), dim styles; requires new contracts schema.
+  Do not implement Stage 2 fields on `DesignCanvas` without a schema brief.
 
 ## Out-of-scope today
 
 - Real-time multi-user sync. The store is single-tenant.
-- Postgres. Stay on the JSON snapshot path until SQLite migration lands.
+- Postgres. Durability is the SQLite WAL write-through journal
+  (`packages/db/src/sqlite-persist.ts`) — the JSON snapshot is first-boot
+  import + escape hatch only.
 - The React Compiler rule set in `eslint-plugin-react-hooks` v7
   (`set-state-in-effect`, `refs`, `immutability`, `purity`,
-  `preserve-manual-memoization`) — 71 errors in the canvas components, tracked as
-  its own scoped work in `OUTSTANDING.md`. Do not widen the hooks config to
+  `preserve-manual-memoization`) is enforced at zero on non-canvas web
+  surfaces; canvas components carry a deliberate scope override in
+  `eslint.config.mjs` (their imperative camera/Three.js patterns are locked
+  by `canvas-chrome-*` specs). Do not widen the hooks config to
   `configs.flat["recommended-latest"]`; it takes the gate red on contact.
-- Stage 2 CAD export / survey-grade studio (Workflow 1 only until product opens Stage 2).
+- Stage 2 CAD export / survey-grade studio (product-gated — see above).

@@ -40,6 +40,7 @@ import cadastralTitleRoutes from './routes/cadastral-title';
 import measurementRoutes from './routes/measurements';
 import supplierRoutes from './routes/suppliers';
 import aerialRoutes from './routes/aerial';
+import sitePhotoRoutes from './routes/site-photos';
 import xeroRoutes from './routes/xero';
 import carbonRoutes from './routes/carbon';
 import catalogRoutes from './routes/catalog';
@@ -180,6 +181,7 @@ async function start() {
   await server.register(measurementRoutes, { prefix: '/projects' });
   await server.register(supplierRoutes, { prefix: '/suppliers' });
   await server.register(aerialRoutes, { prefix: '/projects' });
+  await server.register(sitePhotoRoutes, { prefix: '/projects' });
   await server.register(xeroRoutes, { prefix: '/xero' });
   await server.register(carbonRoutes, { prefix: '/projects' });
   await server.register(catalogRoutes, { prefix: '/catalog' });

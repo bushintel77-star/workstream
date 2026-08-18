@@ -1,5 +1,9 @@
 # Handover for a new context window — 2026-08-17
 
+> **Superseded — historical record.** Written mid-session 2026-08-17;
+> continued by `docs/SESSION-HANDOVER-2026-08-17-CONTINUATION.md`. Current
+> state: [`ONBOARDING.md`](ONBOARDING.md).
+
 Written 2026-08-17 ~22:51 local. Everything below is verified state from this
 session's tool results; treat it as authoritative until you re-verify.
 

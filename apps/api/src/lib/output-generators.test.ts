@@ -69,6 +69,7 @@ const baseArgs = (): GeneratorArgs => ({
     construction_trenches: [],
     annotations: [],
     image_layers: [],
+    photo_elevations: [],
     features: [],
     updated_at: new Date().toISOString(),
   },

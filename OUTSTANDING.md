@@ -2,9 +2,26 @@
 
 Living doc of work between today's state and gold-standard
 end-to-end production. Owned alongside the codebase; tick items as PRs land.
+This is the **live tracker** — the `SESSION-HANDOVER-*` files are point-in-time
+logs, and [`ONBOARDING.md`](ONBOARDING.md) is the current-state entry doc for a
+new developer. Read ONBOARDING first, this file for the queue.
 
-- [WORKSTREAM-STATUS.md](docs/WORKSTREAM-STATUS.md) — consolidated done + roadmap
-- [GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md) — detailed audit
+- [ONBOARDING.md](ONBOARDING.md) — single current-state entry doc (new-dev starting point)
+- ~~WORKSTREAM-STATUS.md~~ — historical snapshot (2026-07-21), superseded
+- ~~GAP-ANALYSIS.md~~ — historical audit; current gap picture is `docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md` + this file
+
+## Current ranked priorities (verified 2026-08-18, post photo-trace)
+
+1. CI live-verify on GitHub once the account billing hold clears (human-owned; dispatch Actions on `main`).
+2. Premium assets — species depth, thumbnails, curated palettes.
+3. Foliage "murk" polish — lift foliage to the `l-*` ramp, neutralise the olive ground-bounce on the paper canvas.
+4. Signoff record trace — verify signoff freezes the accepted quote (operator `SignoffCard` vs portal deposit must share one record).
+5. Classic-studio e2e debt — see the P3 entry below.
+6. Longer-tail stage gaps (`docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md` §3): Phase 4 Build Pack (not built), Phase 1 floating tool ribbon on the GL surface, Phase 3 Presentation Lens polish, Stage 2 CAD (product-gated), mobile offline-first sync (design only).
+
+(Photo-trace elevation capstone: shipped 2026-08-18 — implemented in the
+working tree on `main`, commit/PR pending; see the P1 entry below and
+`docs/CAMERA-STATE-MACHINE.md`.)
 
 ## P0 — Blocks first paying customer
 
@@ -27,7 +44,7 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       `exportSnapshot` escape hatch). Railway:
       `CONSTRUCT_SQLITE_PATH=/repo/apps/api/data/store.sqlite3` on `api-volume`.
 - [ ] **Single API instance** — keep one API replica on Railway while
-      the JSON snapshot store is single-writer SQLite.
+      SQLite is single-writer (the journal lives on `api-volume`).
 - [x] **Auth on (code)** — Clerk middleware + `<ClerkProvider>` + server-side
       `requireSignedIn()` gate on the dashboard. Opt-in via `CLERK_SECRET_KEY`;
       dev mode unchanged. Still needs Clerk secrets set on the web service
@@ -59,7 +76,8 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       **Human:** provision Upstash/Redis + enable the worker process.
 - [x] **Litestream -> R2/B2 (SQLite-ready documented config)** — [`docs/litestream.example.yml`](docs/litestream.example.yml)
       + [`docs/LITESTREAM-SETUP.md`](docs/LITESTREAM-SETUP.md).
-      **Human:** bucket credentials + sidecar after the SQLite migration.
+      **Human:** bucket credentials + sidecar (the SQLite journal is now the
+      durable store, so this can be wired whenever the bucket exists).
 - [x] **CI deploy job** — Railway auto-deploy on push to `main` is wired.
   **2026-08-17 freeze note:** while the GitHub account is frozen, git-linked
   Railway builds stop right after "scheduling build on Metal builder" with
@@ -83,6 +101,41 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **Visual regression (quote markdown)** — snapshot in `output-generators.test.ts`.
 - [x] **Tier-1 costing parity** — standard scenario locks to `$58,410.35` via
       `ALW-TIER1-ALIGN` in [`cost-job.ts`](apps/api/src/lib/cost-job.ts).
+- [x] **Photo-trace elevation capstone (shipped 2026-08-18)** — the sketch
+      capstone from the ranked gap list. A site photo pins as a **frozen,
+      calibrated camera frame**: the photo stands as a vertical plane in the
+      scene's metre-space, the camera flies to its facade look, and freehand
+      ink raycasts onto the plane (ground ink stands down while pinned).
+      **Calibration UX (product decision): reference-line calibration** —
+      draw one line along any feature with a known real length (presets:
+      1.8 m fence line, 2.1 m door height, 0.9 m fence pail, 2.4 m ceiling,
+      or typed) and the plane rescales so the drawn length equals the
+      reference; existing strokes rescale with it. Uncalibrated traces and
+      sheets carry an honest "indicative" stamp. **Title-boundary
+      reconciliation (gap-check rule):** at pin time the plane snaps onto
+      the boundary edge the camera faces (`snapPhotoPlaneToBoundary` — the
+      edge's real bearing becomes the plane azimuth, the foot lands on the
+      title line, recorded as `boundary_snap`), and the camera's elevation
+      snap treats that non-cardinal bearing as a facade normal
+      (`elevationFacadeAzimuth` override in the fused camera). Without a
+      boundary the HUD, gallery row, and sheet stamp
+      locational-indicative — never silent. Sources: a per-project
+      **site-photo gallery** (`survey.site_photos`,
+      `GET/POST/DELETE /projects/:id/site-photos`, served through the
+      protected-files `/photos` route with owner/portal auth) distinct from
+      the single survey aerial. Artifact: a **photo elevation sheet** in the
+      elevation-board family — the photo at true-metre scale (1 px = 1 cm
+      grid), ground line, metre ticks, trace overlay, calibration +
+      locational stamps.
+      Persistence: `DesignCanvas.photo_elevations` (contract schema +
+      design-VCS upsert + three-way merge + autosave fingerprint), undoable
+      in the unified store. Files: `apps/web/src/components/canvas/webgl/`
+      `PhotoTracePlane.tsx` / `PhotoTraceHud.tsx` / `SitePhotoGallery.tsx` /
+      `PhotoElevationSheet.tsx` / `photoTraceMath.ts` (+ `.test.ts`),
+      `apps/api/src/routes/site-photos.ts` (+ `.test.ts`). Kept probes:
+      `e2e/webgl-photo-trace-elevation.spec.ts` (pin → trace → calibrate →
+      stamped sheet → reload persistence) and the updated
+      `e2e/webgl-photo-sketch-flow.spec.ts`.
 
 ## P2 — Scale + cost
 
@@ -106,8 +159,10 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
 - [x] **OpenTelemetry tracing** API → Anthropic / OpenAI / Mapbox; route spans
       use active context, token usage is attached to provider spans, aerial
       fetches are traced, and worker shutdown flushes telemetry.
-- [x] **Real-user monitoring (web scaffold)** — [`instrumentation.ts`](apps/web/src/instrumentation.ts);
-      needs DSN + `@sentry/nextjs` package.
+- [x] **Real-user monitoring (web scaffold)** — [`instrumentation.ts`](apps/web/src/instrumentation.ts)
+      + Sentry wired into the web studio and mobile field-capture error paths
+      (PR #183); `@sentry/nextjs` is installed on web.
+      **Human:** set `SENTRY_DSN` on both Railway services.
 - [x] **Audio compression** — mobile walkthrough uses `LOW_QUALITY` recording preset.
 - [x] **Edge runtime** for `/portal/*` pages.
 - [x] **Portal hero image** — `hero_url` from survey aerial on quote portal payload.
@@ -235,13 +290,40 @@ end-to-end production. Owned alongside the codebase; tick items as PRs land.
       preconnect tags are removed, preserving the existing studio font roles
       while avoiding render-blocking third-party font requests.
 
-- [x] **`HandoffDesignStudio` keyboard-shortcut effect can go stale.** The
-      global `keydown` effect (~:1763) cannot list `planOn` or `setFitSheetOn` in
-      its dependency array because both are declared *below* it — naming them is
-      a temporal dead zone reference (TS2448). The closure is correct at call
-      time; only the dep array cannot see them, so the hook carries a documented
-      `exhaustive-deps` suppression. Fixing it properly means reordering
-      declarations in a 6,334-line component.
+- [x] **`HandoffDesignStudio` keyboard-shortcut effect can go stale — resolved.**
+      The global `keydown` effect (`:1989`) reads fit-sheet state through the
+      `fitSheetToggleRef` indirection (`fitSheetToggleRef.current = setFitSheetOn`
+      at `:2725`), so the closure cannot go stale even though `planOn` /
+      `setFitSheetOn` are declared below it (naming them directly would be a
+      temporal-dead-zone reference — TS2448; `:1312` documents the
+      constraint). Deps: `[studio, ui, isCadLike, ai, animateTiltTo,
+      annotatePhase, selectedAnnotationId, toast]`. The old "reorder a
+      6,334-line component" plan is not needed — the ref pattern is the fix.
+
+- [ ] **`webgl-asset-fanout.spec.ts` positional flake (tracked, not fixed).**
+      Passes in isolation and when first in a batch; intermittently fails its
+      post-reload persistence assertion when it runs last in a multi-spec
+      Playwright batch (state leakage between tests — timing-sensitive,
+      ~50% at batch end). Unrelated to the sketch-to-CAD/selection build
+      (reproduces with that spec excluded). Investigate as its own task:
+      suspected save-debounce vs reload race in the spec's own
+      `/Saved/`-text wait. Fix the spec or the underlying leak before
+      relying on batch CI e2e for the WebGL suite.
+
+- [ ] **Classic-studio e2e debt (tracked, lowest priority).** Known red on
+      `main`: `quote-tier1.spec.ts` passes `?svg=1&mode=cad&svg=1` — the
+      duplicated `svg` param (likely read by `page.tsx` as an array, so
+      `sp.svg !== "1"` is true) mounts the WebGL studio instead of the
+      classic board; plus the
+      develop-loop council tip (`e2e/develop-loop.spec.ts` —
+      `council-setback-tip` never appears) and the classic fit-sheet strip
+      (`e2e/elevation-silhouettes.spec.ts` — `fit-sheet-layer` does not
+      mount from the header control; assertion now at `:112–113`). The
+      classic contrast gate is **not**
+      part of this debt — `canvas-contrast-aa.spec.ts` is green (zero
+      failures across the five classic modes). The full `?svg=1` suite has
+      not been re-run end-to-end since 2026-08-18; treat this list as
+      floor-not-ceiling until someone enumerates.
 
 ## Idle chrome coverage — resolved, ratchet now holds the line
 
@@ -494,27 +576,19 @@ failures, all now fixed:
       a genuine reduction, not a gamed ratchet — see the updated
       `check-css-scales.mjs` entry above.
 
-Also found, **confirmed pre-existing on committed history and left
-unfixed** (out of scope for that session; each file's last commit predates
-any work in it — 2026-07-28 to 2026-08-12):
+**[2026-08-18 update — all three entries below were fixed later that same
+2026-08-14 session (see `HANDOVER-GS2026.md` §7 and the 2026-08-17
+handover); the full suite has been green since (1,566 → 1,818 passing).
+Verified by source inspection this pass:** `mapbox.ts` computes the aerial
+zoom with `Math.round` (so `z=20` holds for the test ring),
+`contract.test.ts` carries no 5000 ms timeout for that smoke block, and
+`toolChips.test.ts` was rewritten against the shipped
+`buildToolChips(mode, surveyServices)` signature. Kept below for history
+only.]
 
-- [ ] **`apps/api/src/lib/mapbox.test.ts`** expects `z=20` in the aerial URI;
-      current code produces `z=19`. Same mismatch recurs in
-      `apps/api/src/routes/contract.test.ts` ("covers geocode preview, search,
-      and validation contracts").
-- [ ] **`apps/api/src/routes/contract.test.ts`** — "smoke-tests project-scoped
-      read routes across survey outputs and ops tabs" times out at 5000ms.
-      May be related to the above or a separate, genuine slow-path/hang.
-- [ ] **`apps/web/.../toolDock/toolChips.test.ts`** — `buildToolChips` is
-      expected to return `trace`/`lock`/`grid`/`service` tool chips; the
-      current implementation returns a different set (`select, add, paint,
-      zone, path, measure` and no `service` chip even when authoring). Either
-      `toolChips.ts` was refactored without updating its test, or the test
-      itself is stale — needs someone who owns the tool-dock chip set to
-      adjudicate which is correct.
-
-Run `pnpm test` to reproduce; these 5 failures (3 files) are the only ones
-in the full suite as of this entry.
+- [x] ~~`apps/api/src/lib/mapbox.test.ts` expected `z=20`, code produced `z=19`~~ — fixed (`Math.floor` → `Math.round` on the zoom calc).
+- [x] ~~`apps/api/src/routes/contract.test.ts` smoke read-routes timed out at 5000 ms~~ — fixed (was a mapbox zoom dependency; passes).
+- [x] ~~`apps/web/.../toolDock/toolChips.test.ts` expected `trace`/`lock`/`grid`/`service`~~ — fixed (test updated to the shipped chip set; `grid` added to PRIMARY).
 
 ## Production placeholders — hardcoded data shipping in live paths
 
@@ -541,8 +615,10 @@ investment before scale.
       wholesale offers (Dinsan, Plantmark, Warners, Speciality Trees) with
       fixed prices and `hubKmFromPrahran` distances. Comment: "Not live
       Plantmark/Dinsan APIs (Stage 2)." The `solveLiveTradeEstimate`
-      function calculates against this catalog but the result is never
-      displayed (see `_trade` above). **Production replacement**: live
+      function calculates against this catalog and the result **is**
+      displayed — the `_trade` fix above wired it into the Live BOM HUD and
+      `FitSheetCard` shows hub match stock chips (this entry's old "never
+      displayed" note predates that fix). **Production replacement**: live
       nursery trade APIs or periodic catalog sync.
 - [ ] **Plant biogenic carbon coefficients (`carbon.ts`)** — 7 plant SKUs
       are marked `source: "stub"` — rough biogenic uptake estimates. The
@@ -795,8 +871,11 @@ Cross-check against build status below before treating any phase as shipped.
       decision, not oversight.** Needs live RTK-GPS + device camera
       (WebXR or native AR). A fake AR camera overlay with invented
       "RTK FIXED <12mm"-style precision would be dishonest telemetry —
-      see `docs/GOLD-STANDARD-STUDIO-HANDOVER.md`'s "Explicitly not built"
-      section. Do not build this without a real GPS/AR data source.
+      see the Staking/Mobile-AR note at the end of
+      `docs/GOLD-STANDARD-STUDIO-HANDOVER.md` (it is a paragraph in that
+      doc's plant-UX section, not a section titled "Explicitly not built" —
+      an earlier cross-reference mis-named it). Do not build this without a
+      real GPS/AR data source.
 - [x] **§5 Data integrity / hydraulic isolation / billboarding** — real
       `SpatialObject` schema already exists
       (`packages/contracts/src/schemas/orchestration.ts`); the (0,0,0) site

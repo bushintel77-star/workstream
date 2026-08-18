@@ -133,9 +133,16 @@ export function FusedCamera({
     // facade-normal snap, spring a second weight that crossfades the fused
     // projection into the orthographic facade frustum. Driven per-frame from
     // the live rig, so it needs no React writes and no store round-trip.
+    // A pinned photo plane's bearing (rarely cardinal) is an elevation
+    // facade in its own right — the store override widens the snap.
     // Locked split-view halves (viewBlendLocked) never enter elevation —
     // their camera stays overhead, where a facade frustum would be garbage.
-    const elevationOn = viewBlendLocked == null && isElevationRig(rig);
+    const elevationOn =
+      viewBlendLocked == null &&
+      isElevationRig(
+        rig,
+        useStudioStore.getState().elevationFacadeAzimuth,
+      );
     const elevationBlend = reducedMotion
       ? (elevationOn ? 1 : 0)
       : Math.min(

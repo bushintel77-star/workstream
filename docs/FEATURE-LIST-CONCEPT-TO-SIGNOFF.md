@@ -14,6 +14,13 @@ RainCAD).
 > built features as "not wired" — those are corrected to ✅. The genuinely
 > missing items are all P2 (construction details, council-pack export,
 > DWG/DXF, change orders).
+>
+> **[2026-08-18 update]** C2 "scribble over a site photo" is now fully
+> covered by the shipped photo-trace elevation capstone (WebGL studio,
+> working tree); C6 sketch→CAD parse is built and wired but only into the
+> classic studio + pipeline — **not yet surfaced on the WebGL studio**.
+> F3 signoff shipped (PR #175); the open item is record trace (signoff must
+> freeze the accepted quote). Current entry doc: `ONBOARDING.md`.
 
 **Legend:** ✅ built · 🟡 partial · ⬜ missing · **P0** must ship · **P1**
 should ship · **P2** later. **Ground-truth rule:** every estimate must trace to

@@ -2,6 +2,13 @@
 
 **Date:** 2026-08-17 · **Status:** Living doc — update the status table each audit session.
 
+> **Updated 2026-08-18 (docs-vs-code audit):** inline `[2026-08-18]` notes
+> correct the items that have moved since this was written — sketch→CAD
+> parse built + wired (classic stack), signoff shipped (#175), camera pan
+> per-frame React writes fixed (#178/#186), web lint gate green (#177),
+> photo-trace elevation shipped (working tree). Current entry doc:
+> `ONBOARDING.md`; live tracker: `OUTSTANDING.md`.
+
 Workstream is a **two-surface product** — desktop design studio (web) and
 handheld field companion (Expo) — running one pipeline. The product is defined
 by **four screens/stages**, and this roadmap is built around them. Each screen
@@ -107,8 +114,16 @@ or an operator-measured TPZ) — nothing invented.
 - The result is **parsed to CAD** for Screen 3.
 
 **Build state:** sketch tool (pen/eraser/line/rect/circle), freehand strokes,
-aerial upload, mobile `measure-photo` capture exist. **Missing:** AI tidy-up on
-freehand, the "scribble over site photo" export, sketch → CAD parse.
+aerial upload, mobile `measure-photo` capture exist. **[2026-08-18] The
+"Missing" list below is stale:** AI tidy-up (`sketch-tidy`) and sketch → CAD
+parse (`sketch-convert-cad` → `POST /projects/:id/sketch-cad` →
+`formalizeSketchToCad`, Claude vision + heuristic fallback) are built and
+wired into the classic studio + pipeline (see `FEATURE-LIST-CONCEPT-TO-SIGNOFF.md`
+C3/C6, which is the accurate coverage); the "scribble over site photo"
+export shipped as the photo-trace elevation capstone (WebGL studio, working
+tree 2026-08-18). Remaining Screen 2 gap: none of the sketch→CAD parse is
+surfaced **on the WebGL studio** yet — the GL freehand ink persists but does
+not convert.** Missing:** ~~AI tidy-up on freehand, the "scribble over site photo" export, sketch → CAD parse.~~
 
 **Rail:** *sketch → CAD fidelity gate* — a parsed sketch must produce closed,
 snapped geometry with no freehand artifacts.
@@ -130,7 +145,11 @@ a costable quantity.
   (see `QUOTE_WORKFLOW.md`).
 
 **Build state:** FitSheetOverlay, LiveBomDock, quote workflow doc, client portal
-exist. **Missing:** signoff flow, presentation export, quote generation from the
+exist. **[2026-08-18] Signoff shipped (PR #175 — `SignoffCard`,
+`signoffReadiness`/`createSignoffRecord`, immutable once signed off); the
+open item is the record-trace verification (signoff must freeze the accepted
+quote — `OUTSTANDING.md` priority 4).** Missing: ~~signoff flow~~,
+presentation export, quote generation from the
 closed boundary + BOM.
 
 **Rail:** *quote accuracy + traceability gate* — a quote's area/volumes must
@@ -148,9 +167,9 @@ Anything without a source is labelled *indicative*, never quoted as fact.
 | **Desktop (web)** | Next.js + R3F WebGL studio, 2D handoff CAD, demo garden, growth studio, subsurface studio, Clerk auth |
 | **Handheld (mobile)** | Expo ~57, expo-router, Clerk; screens: project list, recording (voice), processing (design/costing/audit stages), measure-photo, grid-soil, filing, confirm-pin, design-studio viewer |
 | **Pipeline** | `capture-pipeline.ts`: transcription → survey wired; design/costing/audit jobs exist but lack a stage runner (see `STAGED-AUTONOMOUS-BUILD-PLAN.md`) |
-| **CI** | 13-package typecheck green; unit suites green (754 canvas tests); web lint has pre-existing failures; GitHub Actions **blocked** (account hold) |
+| **CI** | 13-package typecheck green; unit suites green (754 canvas tests); ~~web lint has pre-existing failures~~ **[2026-08-18] lint gate green (#177)**; GitHub Actions **blocked** (account hold) |
 | **Deploy** | Railway auto-deploy web + api from `main`; Docker; api-volume attached |
-| **Known canvas gaps** | WebGL camera pan still writes React state per frame; hover HUD now rAF-throttled; environment panel season still sourced from API badge |
+| **Known canvas gaps** | ~~WebGL camera pan still writes React state per frame~~ **[2026-08-18] fixed (#178/#186 — store refs, zero-commit e2e gate)**; hover HUD now rAF-throttled; environment panel season still sourced from API badge |
 
 **Human-owned blockers** (from `WORKSTREAM-STATUS.md`): GitHub Actions billing,
 Clerk live app + Railway vars, Redis worker scale, Sentry DSNs, EAS + store

@@ -14,6 +14,17 @@ export const MeasurementSchema = z.object({
 });
 export type Measurement = z.infer<typeof MeasurementSchema>;
 
+/** An on-site photo in the survey's photo gallery (photo-trace elevation source). */
+export const SitePhotoSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(200),
+  uri: z.string().url(),
+  /** Natural aspect (width / height) — measured client-side at upload. */
+  natural_aspect: z.number().positive(),
+  created_at: z.string().datetime(),
+});
+export type SitePhoto = z.infer<typeof SitePhotoSchema>;
+
 export const SurveySchema = z.object({
   id: z.string().uuid(),
   project_id: z.string().uuid(),
@@ -28,5 +39,8 @@ export const SurveySchema = z.object({
   /** Zero means outdoor / garden area unknown — Trace the title on the aerial. */
   garden_area_m2: z.number().nonnegative(),
   measurements: z.array(MeasurementSchema),
+  /** On-site photos captured by the operator (gallery for photo-trace elevation).
+   *  Optional — surveys created before the gallery landed have no photos. */
+  site_photos: z.array(SitePhotoSchema).optional(),
 });
 export type Survey = z.infer<typeof SurveySchema>;

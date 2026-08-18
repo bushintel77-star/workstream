@@ -33,6 +33,7 @@ function canvasWithFrame(
     construction_trenches: [],
     annotations: [],
     image_layers: [],
+    photo_elevations: [],
     features: [],
     site_frame: frame,
     updated_at: new Date().toISOString(),

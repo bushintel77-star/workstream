@@ -18,11 +18,19 @@ MYOB invoice queued, Mick on his way with the trencher.
 | **Operator web** | Next.js 15 (App Router), server actions, PWA | [apps/web](apps/web/) → `web-production-3c194.up.railway.app` |
 | **Operator mobile** | Expo / React Native, expo-router | [apps/mobile](apps/mobile/) → not yet distributed |
 | **Schemas** | Zod | [packages/contracts](packages/contracts/) |
-| **Store** | In-memory with JSON snapshot flush | [packages/db](packages/db/) |
+| **Store** | In-memory + SQLite WAL journal | [packages/db](packages/db/) |
 | **Domain logic** | Costing, geometry, carbon | [packages/domain](packages/domain/) |
 
 Deployed on **Railway**. Auth optional via Clerk; without it the API
 runs as `dev-user`.
+
+## New here? Start with the docs
+
+**[ONBOARDING.md](ONBOARDING.md)** is the single current-state entry doc:
+two-studio split (WebGL default / `?svg=1` fallback), platform stages vs
+canvas modes, camera machine, and where the sketch-to-CAD parse lives.
+The binding product docs are the `docs/GOLD-STANDARD-2026*.md` set;
+`OUTSTANDING.md` is the live punch list.
 
 ## Getting started
 
@@ -56,7 +64,7 @@ apps/
   mobile/        Expo operator app (site-walk capture, dictation, kanban)
 packages/
   contracts/     Zod schemas shared by API + web + mobile
-  db/            In-memory store with JSON snapshot persistence
+  db/            In-memory store + SQLite WAL write-through journal
   domain/        Pure functions — costing scenarios, geometry, embodied carbon
   ui/            (Optional) mobile-side primitives
 ```
@@ -73,8 +81,11 @@ the **Project hub** and surfaces the single next-step CTA on mobile.
 
 ## Deploying
 
-**CI:** push to `main` runs typecheck, tests, Playwright, and Docker builds.
-Railway deploys automatically on push to `main`.
+**CI:** `pnpm run ci` is the local gate (frozen install, mobile placeholders,
+portal edge, token allowlist, reachability/CSS-scale/bundle ratchets,
+traceability, typecheck, lint, vitest). GitHub Actions runs are paused while
+the account billing hold persists. Railway deploys automatically on push to
+`main` (when GitHub webhooks are live).
 
 **Local / script:**
 
@@ -90,14 +101,17 @@ checks.
 
 ### Persistence
 
-The JSON snapshot at `apps/api/data/store.json` is the source of truth.
-The Railway volume `api-volume` mounts at `/repo/apps/api/data`; keep the API
-on one instance until the database migration lands.
+Durability is the SQLite WAL write-through journal
+(`packages/db/src/sqlite-persist.ts`): every mutation flushes synchronously
+before return. First boot imports the legacy `apps/api/data/store.json`
+snapshot, then archives it. The Railway volume `api-volume` mounts at
+`/repo/apps/api/data` (`CONSTRUCT_SQLITE_PATH=…/store.sqlite3`); keep the API
+on one instance while SQLite is single-writer.
 
 ## Outstanding
 
-See `OUTSTANDING.md` (checkbox punch list) and `docs/GAP-ANALYSIS.md`
-(build automation, production gaps, Tier-1 Wrights Terrace).
+See `OUTSTANDING.md` (the live punch list) and `ONBOARDING.md` (current-state
+entry doc). `docs/GAP-ANALYSIS.md` is historical.
 
 ## Conventions
 

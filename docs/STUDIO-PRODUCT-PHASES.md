@@ -1,5 +1,13 @@
 # Design studio — product phases (locked)
 
+> **Superseded for the "Workflow 1" framing (2026-08-18 docs pass).** The
+> `%`-coord indicative-sketch era this doc describes has been replaced by the
+> Gold Standard 2026 WebGL studio (metre-space, terrain, live BOM — see
+> `docs/GOLD-STANDARD-2026.md` + `ONBOARDING.md`). What still holds here is
+> the **Stage 2 gate**: survey-grade coordinates and DXF/DWG layer export
+> remain product-gated, not a hidden mode inside the current studio. Keep
+> this doc for that boundary, not for the Workflow 1 mechanics.
+
 **Workflow 1** ships now. **Stage 2** is a separate product scope — not a hidden mode inside Workflow 1.
 
 ---

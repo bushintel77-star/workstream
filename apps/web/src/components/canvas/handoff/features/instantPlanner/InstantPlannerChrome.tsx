@@ -130,6 +130,7 @@ export function InstantPlannerChrome({
       irrigation_zones: irrigationZones ?? [],
       annotations: annotations ?? [],
       image_layers: imageLayers ?? [],
+      photo_elevations: [],
       features: mergeCanvasFeatures(itemsToFeatures(items), planFeatures),
       construction_trenches: constructionTrenches ?? [],
       updated_at: new Date().toISOString(),

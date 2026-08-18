@@ -1,5 +1,10 @@
 # Workstream handover
 
+> **Superseded — historical record (2026-08-11).** The pipeline-dock
+> workflow and the `3383ae0` state it describes have moved on. Current
+> entry: [`ONBOARDING.md`](ONBOARDING.md); live tracker: `OUTSTANDING.md`;
+> current handover: `docs/SESSION-HANDOVER-2026-08-18-CONTINUATION.md`.
+
 Updated: 2026-08-11
 Branch: `main`
 

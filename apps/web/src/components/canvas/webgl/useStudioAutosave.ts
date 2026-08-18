@@ -31,6 +31,8 @@ import type {
   CanvasStroke,
   ConstructionTrench,
   IrrigationZone,
+  LandscapeFeature,
+  PhotoElevation,
 } from "@workstream/contracts";
 import {
   saveDesignCanvasClient,
@@ -51,6 +53,10 @@ export interface StudioAutosaveDoc {
   constructionTrenches?: ConstructionTrench[];
   /** Irrigation zones (traced rings + accepted proposals). */
   irrigationZones?: IrrigationZone[];
+  /** Pinned site photos as calibrated elevation-trace frames. */
+  photoElevations?: PhotoElevation[];
+  /** Converted CAD features (direct-converts + placement-outline mirrors). */
+  features?: LandscapeFeature[];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -99,11 +105,30 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
           .join("|")
       }`,
   );
+  const photoElevationParts = (doc.photoElevations ?? []).map((e) => {
+    const cal = e.calibration;
+    const strokes = e.strokes
+      .map((st) =>
+        st.points.map((p) => `${p.x_m.toFixed(2)},${p.y_m.toFixed(2)}`).join("|"),
+      )
+      .join("~");
+    return `${e.id}:${e.photo_id}:${e.azimuth_deg.toFixed(1)}:${
+      cal ? `${cal.plane_width_m.toFixed(2)}:${cal.reference_m.toFixed(2)}:${cal.label}` : "uncal"
+    }:${e.centre_x_m.toFixed(2)}:${e.centre_z_m.toFixed(2)}:${e.ground_offset_m.toFixed(2)}:${strokes}`;
+  });
+  const featureParts = (doc.features ?? []).map((f) => {
+    const pts = f.geometry.points
+      .map((v) => `${v.pct.x_pct.toFixed(1)},${v.pct.y_pct.toFixed(1)}`)
+      .join("|");
+    return `${f.id}:${f.geometry.type}:${f.metadata.layer}:${f.geometry.points.length}:${pts}`;
+  });
   return [
     `s${doc.strokes.length}:${strokeParts.join("~")}`,
     `p${doc.placements.length}:${placementParts.join("~")}`,
     `t${(doc.constructionTrenches ?? []).length}:${trenchParts.join("~")}`,
     `z${(doc.irrigationZones ?? []).length}:${zoneParts.join("~")}`,
+    `pe${(doc.photoElevations ?? []).length}:${photoElevationParts.join("~")}`,
+    `f${(doc.features ?? []).length}:${featureParts.join("~")}`,
   ].join("§");
 }
 
@@ -183,6 +208,8 @@ export function useStudioAutosave(
         strokes: current.strokes,
         construction_trenches: current.constructionTrenches,
         irrigation_zones: current.irrigationZones,
+        photo_elevations: current.photoElevations,
+        features: current.features,
       });
       });
     saveQueueRef.current = queuedSave.catch(() => undefined);

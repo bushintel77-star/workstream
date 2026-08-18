@@ -1,5 +1,11 @@
 # Handover: Gold Standard 2026 — Render Quality, Seasonal Dynamics, Sketch Suite
 
+> **Superseded — historical record (2026-08-14).** Superseded by the
+> `docs/SESSION-HANDOVER-*` chain (current:
+> `docs/SESSION-HANDOVER-2026-08-18-CONTINUATION.md`) and
+> [`ONBOARDING.md`](ONBOARDING.md). Its file map and gap-closure notes remain
+> a good reference for the WebGL studio's internal layout.
+
 **Date:** 2026-08-14 (end of session)
 **Branch:** `main`
 **Latest commit:** `a1a5c43`

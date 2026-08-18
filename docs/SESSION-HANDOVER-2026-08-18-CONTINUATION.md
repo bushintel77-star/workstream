@@ -1,5 +1,10 @@
 # Session handover — 2026-08-18 (continuation)
 
+> **CURRENT handover (most recent session log).** PRs #192–#201, live prod
+> state, the GitHub-freeze workarounds, and the ranked remaining-work list.
+> Live tracker: `OUTSTANDING.md` (its ranked list now reflects the shipped
+> photo-trace capstone); new-dev entry: [`ONBOARDING.md`](../ONBOARDING.md).
+
 Written end of the 2026-08-17 evening → 2026-08-18 early-morning session.
 Companion to `docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md` (superseded for
 state; `OUTSTANDING.md` remains the live tracker).

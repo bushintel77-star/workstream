@@ -1,5 +1,9 @@
 # Workstream status
 
+> **Superseded — historical snapshot (generated 2026-07-21).** Do not treat
+> as current. See [`ONBOARDING.md`](../ONBOARDING.md), `OUTSTANDING.md`, and
+> `docs/PRODUCTION-ROADMAP-2026-08-17.md`.
+
 Generated 2026-07-21T00:38:19Z for branch
 `cursor/workstream-gold-standard-rebuild-1f48` through `814a3cb`.
 

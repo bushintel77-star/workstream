@@ -40,6 +40,7 @@ import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
 import { FusedCamera } from "./FusedCamera";
 import { FusedSketchLayer } from "./FusedSketchLayer";
+import { PhotoTracePlane } from "./PhotoTracePlane";
 import { TerrainMesh } from "./TerrainMesh";
 import { ElevationSliceLine } from "./ElevationSliceLine";
 import { DrainageFlowLayer } from "./DrainageFlowLayer";
@@ -50,6 +51,8 @@ import { TrenchLayer } from "./TrenchLayer";
 import { IrrigationZoneLayer } from "./IrrigationZoneLayer";
 import { AssetPlaceLayer } from "./AssetPlaceLayer";
 import { FloraRingLayer } from "./FloraRingLayer";
+import { FeatureLayer } from "./FeatureLayer";
+import { CadProposalLayer } from "./CadProposalLayer";
 import { type PresentationLensFilter } from "./PresentationLens";
 
 export interface StudioSceneProps {
@@ -63,7 +66,8 @@ export interface StudioSceneProps {
   buildingOpacity?: number;
   /** Pin the camera blend (split view's locked half). See FusedCamera. */
   viewBlendLocked?: number;
-  onGroundClick?: (pct: PctPoint) => void;
+  /** Click on empty ground — carries the shift-key additive flag for selection. */
+  onGroundClick?: (pct: PctPoint, opts: { additive: boolean }) => void;
   onCursorMove?: (pct: PctPoint | null) => void;
   /** Subsurface utilities to render (Phase 2 Subsurface Engine). */
   subsurfaceUtilities?: SubsurfaceUtility[];
@@ -784,6 +788,16 @@ export function StudioScene({
         hideTpz={lens?.hideTpz}
         growthFactor={growthFactor}
       />
+      {/* Converted CAD linework — orphan LandscapeFeatures (ditch/path/wall/
+          direct-converted beds). Mirrored polygons render via the placement
+          meshes; this layer never double-draws. */}
+      <FeatureLayer
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        heightmapPoints={heightmapPoints}
+      />
+      {/* Sketch → CAD ghost proposals — ephemeral markers for the tidy review. */}
+      <CadProposalLayer scaleM={scaleM} boardAspect={boardAspect} />
       {subsurfaceUtilities && !lens?.hideSubsurface && (
         <SubsurfaceEngine
           utilities={subsurfaceUtilities}
@@ -801,6 +815,10 @@ export function StudioScene({
           heightmapPoints={heightmapPoints}
         />
       ) : null}
+      {/* Photo-trace elevation — the pinned site photo as a frozen camera
+          frame (self-gates on photoTraceSession). Freehand ink raycasts onto
+          the vertical plane; the camera flies to the photo's facade look. */}
+      <PhotoTracePlane scaleM={scaleM} boardAspect={boardAspect} />
     </>
   );
 }

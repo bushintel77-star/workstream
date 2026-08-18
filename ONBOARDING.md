@@ -1,0 +1,176 @@
+# Onboarding — current state of the build (2026-08-18)
+
+The single entry doc for a new developer. Everything else in the repo is
+either **binding** (normative, wins on conflict), **living** (kept current),
+or **historical** (point-in-time logs, not to be treated as current).
+If this file and a binding doc disagree, the binding doc wins — but report
+the disagreement instead of guessing.
+
+| Role | Doc |
+|---|---|
+| **Entry (this)** | `ONBOARDING.md` |
+| **Binding** | `docs/GOLD-STANDARD-2026.md` (supreme brief) · `docs/GOLD-STANDARD-2026-TOKENS.md` (tokens) · `docs/GOLD-STANDARD-2026-ARCHITECTURE.md` (WebGL architecture — corrected 2026-08-18) |
+| **Living** | `OUTSTANDING.md` (ranked punch list) · `docs/PRODUCTION-ROADMAP-2026-08-17.md` + `docs/FEATURE-LIST-CONCEPT-TO-SIGNOFF.md` (stages + feature coverage) · `docs/CAMERA-STATE-MACHINE.md` (shipped camera map) · `AGENTS.md` / `CLAUDE.md` (agent conventions) |
+| **Historical** | `SESSION-HANDOVER-*.md` (session logs), `HANDOVER*.md` at repo root, `docs/WORKSTREAM-STATUS.md` (2026-07-21), `docs/GAP-ANALYSIS*.md`, `docs/archive/pre-gold-standard-2026/` |
+
+---
+
+## 1. The two-studio situation (read this first — it is the #1 thing new devs get wrong)
+
+There are **two canvas studios** in `apps/web`, and exactly one of them is
+the product:
+
+- **WebGL studio (default, the product).** `/projects/[id]` mounts it.
+  R3F `<Canvas>` + DOM paper-card overlay, metre-space (1 unit = 1 m),
+  terrain-draped, real-sun, fused ortho↔persp camera. All new work lands
+  here. Entry: `components/canvas/webgl/WebGLStudioPreview.tsx` →
+  `WebGLStudio.tsx`.
+- **SVG studio (`?svg=1` deep fallback only).** The old `%`-coord parchment
+  board, `components/canvas/handoff/HandoffDesignStudio.tsx` (~6,570 lines).
+  Reachable only by explicit `?svg=1`; it is **no longer part of mode
+  routing** and is **not developed further** — it exists for vector
+  node-editing and the long tail of classic feature docks.
+
+Two consequences new devs trip on:
+
+1. **The stores are separate.** The SVG studio runs the `useStudioState`
+   reducer; the WebGL studio runs its own zustand store
+   (`webgl/studioStore.ts`; `seasonalStore.ts` is a compat alias). They
+   share types and the **persisted `DesignCanvas` document** — nothing else.
+   (An old draft of `GOLD-STANDARD-2026-ARCHITECTURE.md` §5 claimed they
+   share a hook; corrected 2026-08-18.)
+2. **`?mode=` does not select a studio.** All 8 modes mount natively on
+   WebGL (`lib/canvas-mode.ts`, `WEBGL_STUDIO_MODES`). `?svg=1` is the only
+   way to the classic board.
+
+> **Open product decision (flagged, not resolved).** One doc
+> (`docs/UI-PARITY-AUDIT-2026.md` §6) describes the SVG studio as "the full
+> studio until WebGL Phase-1 completes", implying a transitional surface on
+> its way to parity/retirement. `AGENTS.md` treats it as a permanent frozen
+> fallback, never developed further. Both readings coexist in the docs.
+> Product must pick: **(a) permanent frozen fallback**, or **(b) transitional
+> until WebGL Phase 1 covers the classic surfaces, then retired.** Do not
+> build SVG features or delete the SVG studio until this is decided.
+
+## 2. Platform stages vs canvas modes
+
+The product is defined by **four platform stages** (concept → signoff,
+`docs/FEATURE-LIST-CONCEPT-TO-SIGNOFF.md`; the master brief's five phases —
+Step 0 + Phases 1–4 — are the same journey). The canvas has **8 URL modes**
+(`?mode=`), of which five are the core workflow; `garden`, `present`, and
+`share` are auxiliary surfaces.
+
+| Platform stage | WebGL canvas mode(s) | What it is |
+|---|---|---|
+| 1 — Survey & site intelligence | `survey` | Vicmap title hydrate, keyless overlays (EVC/planning/bushfire/contour/water_corp), BYDA, Survey 5/5 checklist |
+| 2 — Concept sketch | `sketch` | Freehand ink on the GL surface, assets, flora ring, photo-trace elevation; parse to CAD feeds stage 3 |
+| 3 — CAD design | `cad` (+ `elevation` = the CAD vertical-truth/facade view, `garden` = 3D eye-level) | Full design authoring — planting, hardscape, irrigation, lighting, trenches, terrain, live BOM |
+| 4 — Signoff & quote | `quote` (+ `present` = client lens, `share` = portal) | Fit sheet, presentation, portal deposit; signoff record (PR #175) freezes the accepted quote |
+
+Progressive unlock lives in `lib/canvas-mode.ts` (`unlockedModes` /
+`suggestedMode`): survey always open; sketch/cad/elevation/garden open after
+aerial/title; quote/present after CAD progress; share after a costed quote.
+
+## 3. Camera state machine — shipped, not "one open item"
+
+The fused camera shipped in two waves and is complete for its current scope:
+
+- **PR #187** — single-pitch full-orbit camera: `φ` pitch 0–90° is the single
+  axis (`cameraRig.ts`), ortho plan at 0°, perspective orbit between,
+  ortho facade at ≈90° with azimuth snapped to cardinals (or to a pinned
+  photo's non-cardinal bearing via `elevationFacadeAzimuth`). Editing is
+  locked at `viewBlendTarget > 0.5 && !elevationActive`.
+- **Photo-trace elevation capstone (2026-08-18)** — the former "one open
+  item" is shipped: a site photo pins as a **frozen, calibrated camera
+  frame** (reference-line calibration), freehand trace raycasts onto the
+  vertical plane, and the plane snap-reconciles against the title boundary
+  at pin time (see §4). Artifact: a photo elevation sheet in the
+  elevation-board family, persisted in `DesignCanvas.photo_elevations`.
+
+Full map: `docs/CAMERA-STATE-MACHINE.md` (gestures, matrix math, the facade
+raycasting gotcha).
+
+**Status honesty:** as of this audit (2026-08-18, `main` @ `c5cacfa`), the
+photo-trace implementation is **uncommitted working-tree code** (new files +
+modifications on `main`, PR not yet opened) while its docs already say
+"shipped". Treat "shipped" as "implemented + locally gated, awaiting
+commit/PR".
+
+## 4. Title-boundary reconciliation — a standing rule, not a one-off
+
+Any new geometry, plane, or artifact that represents something **physically
+sited on the property** must be checked against the title boundary polygon —
+the single source of truth for site geometry (`DesignSiteFrame.boundary`, a
+board-% ring; world-space edges via `pctToWorld`, as `DimensionLayer` does).
+Either **snap to the boundary**, or **stamp the artifact
+locational-indicative** — silently ignoring the boundary is a defect. This is
+a standing gap-analysis rule (wording in `AGENTS.md`); its first application
+was the photo-trace capstone (`boundary_snap`, `snapPhotoPlaneToBoundary`).
+
+## 5. Where sketch-to-CAD parsing lives (verified 2026-08-18, WebGL now wired)
+
+- **Contracts:** `SketchToCadRequest/Response` (`packages/contracts/src/schemas/catalog.ts`).
+- **API:** `POST /projects/:id/sketch-cad` (`apps/api/src/routes/design-sketch-cad.ts`)
+  → `formalizeSketchToCad` (`apps/api/src/lib/claude.ts`): Claude vision
+  parse with a **heuristic fallback** when no vision key is set.
+- **Domain:** `sketch-to-cad.ts` (`interpretSketchStrokesToCad` — the
+  context-aware classifier: masses, hedges, frenchdrain, canopy/olive,
+  hatching/duplicate disambiguation) and `stroke-recognize.ts`
+  (`recognizeStroke` → `buildLandscapeFeatureFromStroke`).
+- **Classic SVG studio:** `SketchDock` buttons (`sketch-tidy`,
+  `sketch-convert-cad`) → `formalizeSketchToCadAction`
+  (`HandoffDesignStudio.tsx` ~:2836), `StudioAssistPanel` uses
+  `recognizeStroke`; the **pipeline** — `cad-job.ts` `importSketchToCad`.
+- **WebGL studio (shipped 2026-08-18 — the former "Part A" gap is closed):**
+  the rail **Tidy** action runs `proposeSketchCad` (the context-aware
+  classifier) into a confidence-scored ghost review (the SVG
+  `proposeFromStrokes` accept/reject pattern, `SketchCadReviewCard.tsx`);
+  accept mints a live placement + a mirrored Polygon `LandscapeFeature`
+  (id = placement id) when the proposal carried a drawn outline. The
+  one-click **Convert to CAD features** runs `recognizeStroke` into real
+  `LandscapeFeature`s persisted in `DesignCanvas.features`. Source ink is
+  kept on both paths; photo-trace strokes are stamped as scoped out
+  (elevation-space). See `AGENTS.md` ("Sketch → CAD on WebGL") and
+  `webgl/sketchCad.ts`.
+
+## 6. Current ranked work (live in `OUTSTANDING.md`)
+
+1. CI live-verify on GitHub once the account billing hold clears (human).
+2. Premium assets (species depth, thumbnails, curated palettes).
+3. Foliage "murk" polish on the paper canvas.
+4. Signoff record trace (signoff must freeze the accepted quote).
+5. Classic-studio e2e debt (tracked in `OUTSTANDING.md`).
+6. Longer tail: Phase 4 Build Pack (not built), Phase 1 floating tool ribbon
+   on GL, Phase 3 Presentation Lens polish, Stage 2 CAD (product-gated),
+   mobile offline-first sync (design only).
+
+## 7. Known stale code comments (docs-only pass — left in place deliberately)
+
+These comments drift from code; they are useful false-friend warnings, not
+bugs. Fix them when you next touch the file (out of scope for a docs pass):
+
+- `apps/web/src/app/projects/[id]/page.tsx` ~:129–134 — says SVG-only modes
+  "fall back" to the classic studio; all 8 modes are native WebGL now.
+- `components/canvas/webgl/PerimeterTabStrip.tsx` ~:13–15 and the
+  `NativeWebGLMode` subset (~:30) — say classic-board modes navigate to
+  `?svg=1`; `webglStudioSupportsMode()` returns true for all 8 modes.
+- `components/canvas/webgl/stateBridge.ts` :11 — "Binding: ARCHITECTURE §5
+  (state layer unchanged)" predates the §5 correction (two stores).
+- `components/canvas/webgl/studioStore.ts` :18 — mentions an aerial underlay
+  context; the aerial underlay was retired (PR #199).
+- `components/canvas/webgl/WebGLStudio.tsx` ~:114 — "tuned for the dark
+  Studio aesthetic" predates the Studio Paper pivot.
+- `components/canvas/webgl/cameraRig.ts` :28 — `tiltDeg` "55 = default
+  oblique" is correct for `DEFAULT_CAMERA_RIG` but the 55° cap era is gone.
+
+## 8. Handover files — which is current
+
+- **Current handover:** `docs/SESSION-HANDOVER-2026-08-18-CONTINUATION.md`
+  (written last; PRs #192–#201, live prod state, known issues).
+- Everything else is history: `docs/SESSION-HANDOVER-2026-08-17*.md`,
+  `HANDOVER-GS2026.md`, `HANDOVER-NEW-CONTEXT.md`, `HANDOVER.md`,
+  `docs/WORKSTREAM-STATUS.md`. Each carries a superseded banner.
+- **Live tracker (state over time):** `OUTSTANDING.md`.
+- The GitHub account billing freeze, Railway git-build freeze, and their
+  exact symptoms are documented in the current handover — do not re-debug
+  them as code bugs.

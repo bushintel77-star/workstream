@@ -40,8 +40,9 @@ import { useStudioStore } from "./studioStore";
 export interface StudioControlsProps {
   scaleM: number;
   boardAspect: number;
-  /** Fired when the user clicks empty ground (not dragging). */
-  onGroundClick?: (pct: PctPoint) => void;
+  /** Fired when the user clicks empty ground (not dragging). `additive`
+   *  carries the shift key — selection multi-select. */
+  onGroundClick?: (pct: PctPoint, opts: { additive: boolean }) => void;
   /** Fired on every pointer move with the current board-% position. */
   onCursorMove?: (pct: PctPoint | null) => void;
   /** Whether to lock editing under tilt (same rule as the old isTiltActive). */
@@ -371,7 +372,9 @@ export function StudioControls({
       if (dragState.current.active && !dragState.current.moved && onGroundClick) {
         const world = raycastGround(e, groundRef);
         if (world && !tiltLocked) {
-          onGroundClick(worldToPct(world[0], world[1], scaleM, boardAspect));
+          onGroundClick(worldToPct(world[0], world[1], scaleM, boardAspect), {
+            additive: e.nativeEvent.shiftKey,
+          });
         }
       }
       dragState.current.active = false;
@@ -382,6 +385,15 @@ export function StudioControls({
 
   const groundSize = scaleM * 5;
 
+  // A pinned photo-trace session owns pointer capture: at the facade the
+  // camera origin sits exactly on this ground plane, so every ray hits it at
+  // t=0 and R3F routes the event here (nearest hit) instead of to the photo
+  // plane. Park the capture plane far below ground while pinned — the photo
+  // plane's own handlers take over; wheel zoom is intentionally inert until
+  // the pin releases (the pin rig already frames the plane).
+  const photoTraceSession = useStudioStore((s) => s.photoTraceSession);
+  const capturePlaneY = photoTraceSession ? -1000 : 0;
+
   return (
     <>
       {/*
@@ -391,7 +403,7 @@ export function StudioControls({
       <mesh
         ref={groundRef}
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0, 0]}
+        position={[0, capturePlaneY, 0]}
         onWheel={onWheel}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

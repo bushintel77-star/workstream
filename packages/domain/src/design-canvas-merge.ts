@@ -215,6 +215,16 @@ export function mergeDesignCanvas(args: {
     (f) => f.metadata?.layer || f.id.slice(0, 8),
     newId,
   );
+  const photo_elevations = mergeEntityArray(
+    args.base.photo_elevations ?? [],
+    args.ours.photo_elevations ?? [],
+    args.theirs.photo_elevations ?? [],
+    resolutions,
+    conflicts,
+    "photo_elevation",
+    (e) => e.name || e.photo_id || e.id.slice(0, 8),
+    newId,
+  );
 
   if (conflicts.length > 0) {
     return { ok: false, conflicts };
@@ -230,6 +240,7 @@ export function mergeDesignCanvas(args: {
     construction_trenches,
     annotations,
     image_layers,
+    photo_elevations,
     features,
     site_frame: args.theirs.site_frame ?? args.ours.site_frame ?? args.base.site_frame,
     presentation_pack:

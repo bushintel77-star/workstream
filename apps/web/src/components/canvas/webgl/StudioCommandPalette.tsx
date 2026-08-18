@@ -38,6 +38,7 @@ export function StudioCommandPalette({
   onClose,
   onMode,
   onZoom,
+  onOpenSitePhotos,
   projectId,
   unlocked,
 }: {
@@ -45,6 +46,8 @@ export function StudioCommandPalette({
   onClose: () => void;
   onMode: (mode: CanvasMode) => void;
   onZoom: (direction: 1 | -1) => void;
+  /** Open the site-photo gallery meta tab (photo-trace elevation source). */
+  onOpenSitePhotos: () => void;
   projectId: string;
   unlocked: ReadonlySet<CanvasMode>;
 }) {
@@ -98,6 +101,12 @@ export function StudioCommandPalette({
         store.setMeasureActive(false);
         store.setSketchMode(!useStudioStore.getState().sketchMode);
       }),
+      tool("tidy", "Tidy strokes to CAD proposals", () => {
+        useStudioStore.getState().tidySketchToCad();
+      }),
+      tool("convert-cad", "Convert strokes to CAD features", () => {
+        useStudioStore.getState().convertStrokesToCadFeatures();
+      }),
       tool("measure", "Measure tape", () =>
         store.setMeasureActive(!useStudioStore.getState().measureActive),
       ),
@@ -116,6 +125,13 @@ export function StudioCommandPalette({
       tool("quote", "Fit-sheet", () =>
         store.setFitSheetOpen(!useStudioStore.getState().fitSheetOpen),
       ),
+      {
+        id: "tool-site-photos",
+        label: "Site photos — trace an elevation from a photo",
+        group: "Tool",
+        hint: "opens",
+        run: onOpenSitePhotos,
+      },
       {
         id: "trench-drainage",
         label: "Trace trench — drainage",
@@ -204,7 +220,7 @@ export function StudioCommandPalette({
         run: () => window.location.assign(`/subsurface-studio/${projectId}`),
       },
     ];
-  }, [onMode, onZoom, projectId, unlocked]);
+  }, [onMode, onOpenSitePhotos, onZoom, projectId, unlocked]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

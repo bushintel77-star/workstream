@@ -32,6 +32,9 @@ import type {
   ConstructionTrenchKind,
   IrrigationZone,
   IrrigationZoneKind,
+  LandscapeFeature,
+  PhotoElevation,
+  PhotoTraceStroke,
 } from "@workstream/contracts";
 import {
   melbourneSeason,
@@ -49,8 +52,21 @@ import {
   DEFAULT_CAMERA_RIG,
   type StudioCameraRig,
 } from "./cameraRig";
+import {
+  convertStrokesToFeatures,
+  featureForAcceptedProposal,
+  photoTraceScopeNotice,
+  proposeSketchCad,
+  type SketchCadProposal,
+} from "./sketchCad";
+import {
+  dedupeSelection,
+  pruneSelection,
+  type SelectionRef,
+} from "./selectionPick";
 import type { TrenchPointPct } from "./trenchPath";
 import type { ZonePointPct } from "./irrigationZonePath";
+import type { PlanePoint } from "./photoTraceMath";
 
 /* -------------------------------------------------------------------------- */
 /* Save status types (ported from useStudioState.ts Ui slice)                 */
@@ -224,9 +240,19 @@ export interface StudioStoreState {
   armedSymbolId: string | null;
   /** All canvas placements (CatalogPlacement contract schema). */
   placements: CatalogPlacement[];
-  /** Undo/redo doc history — snapshots of {placements, strokes} (cap 50). */
-  historyPast: Array<{ placements: CatalogPlacement[]; strokes: CanvasStroke[] }>;
-  historyFuture: Array<{ placements: CatalogPlacement[]; strokes: CanvasStroke[] }>;
+  /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features} (cap 50). */
+  historyPast: Array<{
+    placements: CatalogPlacement[];
+    strokes: CanvasStroke[];
+    photoElevations: PhotoElevation[];
+    features: LandscapeFeature[];
+  }>;
+  historyFuture: Array<{
+    placements: CatalogPlacement[];
+    strokes: CanvasStroke[];
+    photoElevations: PhotoElevation[];
+    features: LandscapeFeature[];
+  }>;
 
   // --- Flora ring (ranked planting suggestions at a click) ---
   /**
@@ -272,9 +298,38 @@ export interface StudioStoreState {
    */
   elevationActive: boolean;
 
+  /**
+   * Facade azimuth override for the elevation snap — the pinned photo
+   * plane's exact bearing. Title boundaries are rarely cardinal; the plane
+   * follows the boundary edge, and the camera treats that bearing as a
+   * facade normal while the pin is active. Null = cardinals only.
+   */
+  elevationFacadeAzimuth: number | null;
+
   // --- Shared ink layer ---
   /** All sketch strokes in board-% space (the CanvasStroke contract schema). */
   sketchStrokes: CanvasStroke[];
+
+  // --- Photo-trace elevation (sketch capstone) ---
+  /**
+   * All persisted photo elevations — pinned site photos as frozen camera
+   * frames with calibration + plane-space trace strokes (canvas records).
+   */
+  photoElevations: PhotoElevation[];
+  /**
+   * The active photo-trace session. While set, freehand ink raycasts onto
+   * the pinned photo plane (not the ground) and the camera is pinned to
+   * the photo's facade look. calibrate mode drags a reference line instead.
+   */
+  photoTraceSession: {
+    elevationId: string;
+    mode: "trace" | "calibrate";
+    /** Live reference-line draft in plane space (calibrate mode). */
+    calibrateDraft: { a: PlanePoint; b: PlanePoint } | null;
+    /** Pending reference length + stamp label for calibration. */
+    calibrateReferenceM: number | null;
+    calibrateLabel: string;
+  } | null;
 
   // --- Construction trench runs (traced + accepted auto) ---
   /** Armed trench kind — pointer drags become a trench trace; null = off. */
@@ -297,6 +352,54 @@ export interface StudioStoreState {
   } | null;
   /** Committed zones (traced rings + accepted proposals). */
   irrigationZones: IrrigationZone[];
+
+  // --- Site context (classifier + placement constraints) ---
+  /** Title boundary ring in board-% — the site truth sketch→CAD runs against. */
+  siteBoundary: PctPoint[];
+  /** Dwelling envelope ring in board-% (may be empty). */
+  siteBuilding: PctPoint[];
+  /** Set both site rings (hydrate / site-truth import). */
+  setSiteContext: (boundary: PctPoint[], building: PctPoint[]) => void;
+
+  // --- Landscape features (converted CAD entities → DesignCanvas.features) ---
+  /** Committed features — direct-converts + accepted-proposal outline mirrors. */
+  features: LandscapeFeature[];
+  /** Replace the whole feature array (hydrate / undo / redo). */
+  setFeatures: (features: LandscapeFeature[]) => void;
+  /** Append converted features (undoable). */
+  addFeatures: (features: LandscapeFeature[]) => void;
+  /** Remove features by id (undoable). */
+  removeFeatures: (ids: string[]) => void;
+
+  // --- Sketch → CAD proposals (tidy path — SVG proposeFromStrokes pattern) ---
+  /** Pending ghost proposals from the last tidy run — replaced per run. */
+  cadProposals: SketchCadProposal[];
+  /** Whether the ghost review card is open. */
+  cadReviewOpen: boolean;
+  /** Proposal the review card emphasises in-canvas (row focus). */
+  cadActiveProposalId: string | null;
+  /** Stamped reply/notice — includes the photo-trace scoping stamp. */
+  sketchCadNotice: string | null;
+  /** Classify strokes → proposals (primary path); opens the review. */
+  tidySketchToCad: () => void;
+  /** Open/close the review card (close keeps proposals pending). */
+  setCadReviewOpen: (open: boolean) => void;
+  setCadActiveProposal: (id: string | null) => void;
+  /** Accept → live placement (+ mirrored polygon feature when drawn). */
+  acceptCadProposal: (id: string) => void;
+  rejectCadProposal: (id: string) => void;
+  acceptAllCadProposals: () => void;
+  /** One-click direct convert (recognizeStroke path); returns feature count. */
+  convertStrokesToCadFeatures: () => number;
+
+  // --- Selection — ONE state across placements / features / photo strokes ---
+  selection: SelectionRef[];
+  /** Click select; `additive` keeps current refs (shift-click multi-select). */
+  selectRef: (ref: SelectionRef, opts?: { additive?: boolean }) => void;
+  /** Shift-click toggle — add when absent, remove when present. */
+  toggleSelectRef: (ref: SelectionRef) => void;
+  clearSelection: () => void;
+  setSelection: (refs: SelectionRef[]) => void;
 
   // --- Project context (for persistence + aerial + flora ranking) ---
   projectId: string;
@@ -330,6 +433,11 @@ export interface StudioStoreState {
    * field. Set once per gesture end together with the blend target.
    */
   setElevationActive: (v: boolean) => void;
+  /**
+   * Set/clear the facade azimuth override (photo pin sets its plane bearing;
+   * session exit clears it back to cardinals-only).
+   */
+  setElevationFacadeAzimuth: (deg: number | null) => void;
   /** Write the animated blend — called per-frame by FusedCamera (transient). */
   setViewBlend: (v: number) => void;
   /** Write the live rig — called per-frame during pan/zoom (transient). */
@@ -382,6 +490,36 @@ export interface StudioStoreState {
   /** Update a single stroke (e.g., extrude height metadata). */
   updateSketchStroke: (id: string, patch: Partial<CanvasStroke>) => void;
 
+  /** Replace the whole photo-elevation list (hydrate / undo / redo). */
+  setPhotoElevations: (elevations: PhotoElevation[]) => void;
+  /** Insert or replace one photo elevation record (touch updated_at). */
+  upsertPhotoElevation: (elevation: PhotoElevation) => void;
+  /** Remove a photo elevation by id. */
+  removePhotoElevation: (id: string) => void;
+  /** Patch one photo elevation record (calibration, plane placement). */
+  updatePhotoElevation: (id: string, patch: Partial<PhotoElevation>) => void;
+  /**
+   * Open/close the photo-trace session. Opening pins the camera tools:
+   * sketch mode arms (plane ink owns pointer capture) and the ground
+   * tools (measure/asset/trench/zone) stand down.
+   */
+  setPhotoTraceSession: (
+    session: {
+      elevationId: string;
+      mode: "trace" | "calibrate";
+    } | null,
+  ) => void;
+  /** Set/clear the live calibration reference-line draft. */
+  setPhotoCalibrateDraft: (
+    draft: { a: PlanePoint; b: PlanePoint } | null,
+  ) => void;
+  /** Set the pending reference length + stamp label for calibration. */
+  setPhotoCalibrateReference: (referenceM: number | null, label: string) => void;
+  /** Commit a traced stroke to a photo elevation (undoable). */
+  addPhotoTraceStroke: (elevationId: string, stroke: PhotoTraceStroke) => void;
+  /** Remove photo-trace strokes by id (undoable). */
+  removePhotoTraceStrokes: (elevationId: string, ids: string[]) => void;
+
   /** Arm/disarm the trench tool (mutually exclusive with sketch/measure/asset). */
   setTrenchTool: (kind: ConstructionTrenchKind | null) => void;
   /** Start/replace/clear the live trace draft. */
@@ -416,6 +554,21 @@ export interface StudioStoreState {
   bumpSaveRevision: () => void;
 }
 
+/** Snapshot the undoable doc slices (placements + strokes + photo elevations + features). */
+function docSnapshot(
+  s: Pick<
+    StudioStoreState,
+    "placements" | "sketchStrokes" | "photoElevations" | "features"
+  >,
+) {
+  return {
+    placements: [...s.placements],
+    strokes: [...s.sketchStrokes],
+    photoElevations: [...s.photoElevations],
+    features: [...s.features],
+  };
+}
+
 export const useStudioStore = create<StudioStoreState>((set) => ({
   // Temporal defaults (match the prior seasonalStore defaults)
   growthYear: 10,
@@ -430,6 +583,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   viewBlend: 0, // animated value — FusedCamera writes this each frame
   liveRig: DEFAULT_CAMERA_RIG, // transient — StudioControls writes during a gesture
   elevationActive: false, // committed — StudioControls writes once on gesture end
+  elevationFacadeAzimuth: null, // photo pins set the plane bearing; exit clears it
 
   // Elevation Slice defaults
   sliceActive: false,
@@ -467,6 +621,26 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
 
   // Ink
   sketchStrokes: [],
+
+  // Site context — hydrated from the server-rendered site frame.
+  siteBoundary: [],
+  siteBuilding: [],
+
+  // Landscape features — hydrated from DesignCanvas.features.
+  features: [],
+
+  // Sketch → CAD proposals — empty until the operator tidies.
+  cadProposals: [],
+  cadReviewOpen: false,
+  cadActiveProposalId: null,
+  sketchCadNotice: null,
+
+  // Selection — nothing selected until the operator picks.
+  selection: [],
+
+  // Photo-trace elevation — no pinned session; records hydrate from the server.
+  photoElevations: [],
+  photoTraceSession: null,
 
   // Construction trenches
   trenchTool: null,
@@ -519,6 +693,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       };
     }),
   setElevationActive: (elevationActive) => set({ elevationActive }),
+  setElevationFacadeAzimuth: (elevationFacadeAzimuth) =>
+    set({ elevationFacadeAzimuth }),
   // Transient per-frame write — no DOM consumer should subscribe to viewBlend
   // directly (it changes every frame). Use viewBlendTarget for UI. Consumers
   // that must track the camera (stroke drape) read via getState() in useFrame.
@@ -559,19 +735,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setPlacements: (placements) => set({ placements }),
   addPlacement: (placement) =>
     set((s) => {
-      const past = [
-        ...s.historyPast,
-        { placements: [...s.placements], strokes: [...s.sketchStrokes] },
-      ].slice(-50);
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
       return { placements: [...s.placements, placement], historyPast: past, historyFuture: [] };
     }),
 
   commitHistory: () =>
     set((s) => ({
-      historyPast: [
-        ...s.historyPast,
-        { placements: [...s.placements], strokes: [...s.sketchStrokes] },
-      ].slice(-50),
+      historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
       historyFuture: [],
     })),
   undo: () =>
@@ -581,11 +751,15 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       return {
         placements: prev.placements,
         sketchStrokes: prev.strokes,
+        photoElevations: prev.photoElevations,
+        features: prev.features,
+        selection: pruneSelection(s.selection, {
+          placements: prev.placements,
+          features: prev.features,
+          photoElevations: prev.photoElevations,
+        }),
         historyPast: s.historyPast.slice(0, -1),
-        historyFuture: [
-          ...s.historyFuture,
-          { placements: [...s.placements], strokes: [...s.sketchStrokes] },
-        ].slice(-50),
+        historyFuture: [...s.historyFuture, docSnapshot(s)].slice(-50),
       };
     }),
   redo: () =>
@@ -595,11 +769,15 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       return {
         placements: next.placements,
         sketchStrokes: next.strokes,
+        photoElevations: next.photoElevations,
+        features: next.features,
+        selection: pruneSelection(s.selection, {
+          placements: next.placements,
+          features: next.features,
+          photoElevations: next.photoElevations,
+        }),
         historyFuture: s.historyFuture.slice(0, -1),
-        historyPast: [
-          ...s.historyPast,
-          { placements: [...s.placements], strokes: [...s.sketchStrokes] },
-        ].slice(-50),
+        historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
       };
     }),
 
@@ -619,19 +797,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setSketchStrokes: (sketchStrokes) => set({ sketchStrokes }),
   addSketchStroke: (stroke) =>
     set((s) => {
-      const past = [
-        ...s.historyPast,
-        { placements: [...s.placements], strokes: [...s.sketchStrokes] },
-      ].slice(-50);
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
       return { sketchStrokes: [...s.sketchStrokes, stroke], historyPast: past, historyFuture: [] };
     }),
   removeSketchStrokes: (ids) => {
     const idSet = new Set(ids);
     set((s) => {
-      const past = [
-        ...s.historyPast,
-        { placements: [...s.placements], strokes: [...s.sketchStrokes] },
-      ].slice(-50);
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
       return { sketchStrokes: s.sketchStrokes.filter((st) => !idSet.has(st.id)), historyPast: past, historyFuture: [] };
     });
   },
@@ -641,6 +813,106 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         st.id === id ? { ...st, ...patch } : st,
       ),
     })),
+
+  setPhotoElevations: (photoElevations) => set({ photoElevations }),
+  upsertPhotoElevation: (elevation) =>
+    set((s) => {
+      const exists = s.photoElevations.some((e) => e.id === elevation.id);
+      const photoElevations = exists
+        ? s.photoElevations.map((e) => (e.id === elevation.id ? elevation : e))
+        : [...s.photoElevations, elevation];
+      return { photoElevations };
+    }),
+  removePhotoElevation: (id) =>
+    set((s) => ({
+      photoElevations: s.photoElevations.filter((e) => e.id !== id),
+      photoTraceSession:
+        s.photoTraceSession?.elevationId === id ? null : s.photoTraceSession,
+      elevationFacadeAzimuth:
+        s.photoTraceSession?.elevationId === id
+          ? null
+          : s.elevationFacadeAzimuth,
+    })),
+  updatePhotoElevation: (id, patch) =>
+    set((s) => ({
+      photoElevations: s.photoElevations.map((e) =>
+        e.id === id ? { ...e, ...patch, updated_at: new Date().toISOString() } : e,
+      ),
+    })),
+  setPhotoTraceSession: (session) =>
+    set((s) => {
+      if (!session) {
+        // Exit clears the facade-azimuth override — cardinals-only snaps
+        // resume (the pin's arbitrary boundary bearing no longer applies).
+        return { photoTraceSession: null, elevationFacadeAzimuth: null };
+      }
+      const elev = s.photoElevations.find((e) => e.id === session.elevationId);
+      if (!elev) return {};
+      return {
+        photoTraceSession: {
+          elevationId: session.elevationId,
+          mode: session.mode,
+          calibrateDraft: null,
+          calibrateReferenceM:
+            s.photoTraceSession?.elevationId === session.elevationId
+              ? s.photoTraceSession.calibrateReferenceM
+              : null,
+          calibrateLabel:
+            s.photoTraceSession?.elevationId === session.elevationId
+              ? s.photoTraceSession.calibrateLabel
+              : "",
+        },
+        // The plane owns pointer capture while pinned — ground tools stand down.
+        sketchMode: true,
+        measureActive: false,
+        armedSymbolId: null,
+        trenchTool: null,
+        zoneTool: null,
+        floraSession: null,
+      };
+    }),
+  setPhotoCalibrateDraft: (calibrateDraft) =>
+    set((s) =>
+      s.photoTraceSession
+        ? { photoTraceSession: { ...s.photoTraceSession, calibrateDraft } }
+        : {},
+    ),
+  setPhotoCalibrateReference: (calibrateReferenceM, calibrateLabel) =>
+    set((s) =>
+      s.photoTraceSession
+        ? { photoTraceSession: { ...s.photoTraceSession, calibrateReferenceM, calibrateLabel } }
+        : {},
+    ),
+  addPhotoTraceStroke: (elevationId, stroke) =>
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      const photoElevations = s.photoElevations.map((e) =>
+        e.id === elevationId
+          ? {
+              ...e,
+              strokes: [...e.strokes, stroke],
+              updated_at: new Date().toISOString(),
+            }
+          : e,
+      );
+      return { photoElevations, historyPast: past, historyFuture: [] };
+    }),
+  removePhotoTraceStrokes: (elevationId, ids) => {
+    const idSet = new Set(ids);
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      const photoElevations = s.photoElevations.map((e) =>
+        e.id === elevationId
+          ? {
+              ...e,
+              strokes: e.strokes.filter((st) => !idSet.has(st.id)),
+              updated_at: new Date().toISOString(),
+            }
+          : e,
+      );
+      return { photoElevations, historyPast: past, historyFuture: [] };
+    });
+  },
 
   setTrenchTool: (trenchTool) =>
     set(
@@ -691,4 +963,193 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set({ saveStatus: "saved", saveErrorKind: null, savedTick: Date.now() }),
   bumpSaveRevision: () =>
     set((s) => ({ saveRevision: s.saveRevision + 1, savedTick: Date.now() })),
+
+  setSiteContext: (siteBoundary, siteBuilding) =>
+    set({ siteBoundary, siteBuilding }),
+
+  setFeatures: (features) => set({ features }),
+  addFeatures: (incoming) =>
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      return {
+        features: [...s.features, ...incoming],
+        historyPast: past,
+        historyFuture: [],
+      };
+    }),
+  removeFeatures: (ids) => {
+    const idSet = new Set(ids);
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      const features = s.features.filter((f) => !idSet.has(f.id));
+      return {
+        features,
+        selection: pruneSelection(s.selection, {
+          placements: s.placements,
+          features,
+          photoElevations: s.photoElevations,
+        }),
+        historyPast: past,
+        historyFuture: [],
+      };
+    });
+  },
+
+  /**
+   * Tidy strokes → CAD proposals (primary path). Classifies the CURRENT
+   * board-% ink with the context-aware classifier, replaces the pending
+   * proposal set, and opens the ghost review. Photo-trace strokes are
+   * explicitly scoped out with a stamped notice — never silently excluded.
+   * Source ink is kept on accept (SVG parity — ink is the provenance).
+   */
+  tidySketchToCad: () =>
+    set((s) => {
+      const proposals = proposeSketchCad(s.sketchStrokes, {
+        boundary: s.siteBoundary,
+        building: s.siteBuilding,
+      });
+      const photoStrokeCount = s.photoElevations.reduce(
+        (n, e) => n + e.strokes.length,
+        0,
+      );
+      const photoNote =
+        photoStrokeCount > 0 ? ` ${photoTraceScopeNotice(photoStrokeCount)}` : "";
+      const notice =
+        proposals.length === 0
+          ? photoNote !== ""
+            ? photoNote.trim()
+            : "No convertible strokes — draw a path, bed, or canopy mark first."
+          : `Formalized ${proposals.length} stroke${proposals.length === 1 ? "" : "es"} into CAD proposals — strokes stay as reference ink; accept or reject each.${photoNote}`;
+      return {
+        cadProposals: proposals,
+        cadReviewOpen: proposals.length > 0,
+        cadActiveProposalId: proposals[0]?.id ?? null,
+        sketchCadNotice: notice,
+      };
+    }),
+  setCadReviewOpen: (cadReviewOpen) => set({ cadReviewOpen }),
+  setCadActiveProposal: (cadActiveProposalId) => set({ cadActiveProposalId }),
+
+  acceptCadProposal: (id) =>
+    set((s) => {
+      const proposal = s.cadProposals.find((p) => p.id === id);
+      if (!proposal) return {};
+      const placement: CatalogPlacement = {
+        id: crypto.randomUUID(),
+        symbol_id: proposal.symbol_id,
+        x_pct: proposal.x_pct,
+        y_pct: proposal.y_pct,
+        rotation_deg: ((proposal.rotDeg ?? 0) % 360 + 360) % 360,
+        scale: proposal.scale ?? 1,
+      };
+      const mirrored = featureForAcceptedProposal(placement.id, proposal);
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      const remaining = s.cadProposals.filter((p) => p.id !== id);
+      return {
+        placements: [...s.placements, placement],
+        features: mirrored ? [...s.features, mirrored] : s.features,
+        cadProposals: remaining,
+        cadReviewOpen: remaining.length > 0,
+        cadActiveProposalId: remaining[0]?.id ?? null,
+        historyPast: past,
+        historyFuture: [],
+      };
+    }),
+
+  rejectCadProposal: (id) =>
+    set((s) => {
+      const remaining = s.cadProposals.filter((p) => p.id !== id);
+      return {
+        cadProposals: remaining,
+        cadReviewOpen: remaining.length > 0,
+        cadActiveProposalId: remaining[0]?.id ?? null,
+      };
+    }),
+
+  acceptAllCadProposals: () =>
+    set((s) => {
+      if (s.cadProposals.length === 0) return {};
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      const placements = [...s.placements];
+      const features = [...s.features];
+      for (const proposal of s.cadProposals) {
+        const placement: CatalogPlacement = {
+          id: crypto.randomUUID(),
+          symbol_id: proposal.symbol_id,
+          x_pct: proposal.x_pct,
+          y_pct: proposal.y_pct,
+          rotation_deg: ((proposal.rotDeg ?? 0) % 360 + 360) % 360,
+          scale: proposal.scale ?? 1,
+        };
+        placements.push(placement);
+        const mirrored = featureForAcceptedProposal(placement.id, proposal);
+        if (mirrored) features.push(mirrored);
+      }
+      return {
+        placements,
+        features,
+        cadProposals: [],
+        cadReviewOpen: false,
+        cadActiveProposalId: null,
+        historyPast: past,
+        historyFuture: [],
+      };
+    }),
+
+  /**
+   * One-click direct convert (recognizeStroke path) → LandscapeFeatures.
+   * Ink is kept (SVG convertStrokes parity). Returns the converted count.
+   */
+  convertStrokesToCadFeatures: () => {
+    const current = useStudioStore.getState();
+    const { features, converted } = convertStrokesToFeatures(
+      current.sketchStrokes,
+    );
+    if (features.length === 0) {
+      set({
+        sketchCadNotice:
+          "No strokes recognised as ditch/path/wall/bed — draw a straight run or closed loop first.",
+      });
+      return 0;
+    }
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      return {
+        features: [...s.features, ...features],
+        sketchCadNotice: `Converted ${converted} stroke${converted === 1 ? "" : "s"} to CAD features — ink stays as reference.`,
+        historyPast: past,
+        historyFuture: [],
+      };
+    });
+    return converted;
+  },
+
+  selectRef: (ref, opts) =>
+    set((s) => ({
+      selection: opts?.additive
+        ? dedupeSelection([...s.selection, ref])
+        : [ref],
+    })),
+  toggleSelectRef: (ref) =>
+    set((s) => ({
+      selection: dedupeSelection(
+        s.selection.some(
+          (r) =>
+            r.kind === ref.kind &&
+            r.id === ref.id &&
+            r.elevationId === ref.elevationId,
+        )
+          ? s.selection.filter(
+              (r) =>
+                !(
+                  r.kind === ref.kind &&
+                  r.id === ref.id &&
+                  r.elevationId === ref.elevationId
+                ),
+            )
+          : [...s.selection, ref],
+      ),
+    })),
+  clearSelection: () => set({ selection: [] }),
+  setSelection: (selection) => set({ selection: dedupeSelection(selection) }),
 }));

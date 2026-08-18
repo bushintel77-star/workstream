@@ -1,5 +1,10 @@
 # Session handover — 2026-08-17
 
+> **Superseded — historical record.** The 12-PR queue below was fully merged
+> in the sessions that followed. Current state: [`ONBOARDING.md`](../ONBOARDING.md);
+> current handover: `SESSION-HANDOVER-2026-08-18-CONTINUATION.md`; live
+> tracker: `OUTSTANDING.md`. Keep this file for the merge-order reasoning only.
+
 Resume point for a fresh context window. The durable work queue is the **12
 open PRs** below (all `MERGEABLE / CLEAN` against `main`, verified
 2026-08-17). This doc adds what the PR list cannot: merge order, the

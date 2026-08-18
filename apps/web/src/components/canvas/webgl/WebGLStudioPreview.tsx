@@ -26,7 +26,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -41,6 +40,8 @@ import type {
   DesignNeighbourBuilding,
   DesignSiteFrameLevel,
   IrrigationZone,
+  LandscapeFeature,
+  PhotoElevation,
 } from "@workstream/contracts";
 import { VignetteOverlay } from "./VignetteOverlay";
 import { SaveStatusChip } from "./SaveStatusChip";
@@ -70,9 +71,17 @@ import { importSiteTruth } from "./siteTruthImport";
 import { StudioCommandPalette } from "./StudioCommandPalette";
 import { StudioElevationCard } from "./StudioElevationCard";
 import { StudioCadCard } from "./StudioCadCard";
+import { SitePhotoGallery } from "./SitePhotoGallery";
+import { PhotoTraceHud } from "./PhotoTraceHud";
+import { PhotoElevationSheet } from "./PhotoElevationSheet";
 import { SplitViewLens } from "./SplitViewLens";
-import { placementsToItems } from "../handoff/state/canvasBridge";
+import { placementsToItems, featuresOntoItems } from "../handoff/state/canvasBridge";
 import { toRenderItems } from "./stateBridge";
+import { SketchCadReviewCard } from "./SketchCadReviewCard";
+import {
+  nearestFeatureId,
+  nearestPlacementId,
+} from "./selectionPick";
 import { unlockedModes, type CanvasMode, type CanvasProgress } from "../../../lib/canvas-mode";
 import { SiteContextBadges } from "../../SiteContextBadges";
 import { GardenViewpointStrip } from "../handoff/features/viewpoint/GardenViewpointStrip";
@@ -110,6 +119,11 @@ export interface WebGLStudioPreviewProps {
   /** Persisted placements — hydrated into the store on mount; the store is
    *  the live source thereafter (items + autosave derive from it). */
   placements?: CatalogPlacement[];
+  /** Persisted LandscapeFeatures (converted CAD entities + placement-outline
+   *  mirrors) — hydrated into the store; re-attached to placements on render. */
+  initialFeatures?: LandscapeFeature[];
+  /** Pinned site photos as calibrated elevation-trace frames (canvas records). */
+  photoElevations?: PhotoElevation[];
   /** BYDA assets from site_frame → converted to subsurface utilities. */
   bydaAssets?: DesignBydaAsset[];
   /** Construction trenches → converted to excavations for strike detection. */
@@ -150,6 +164,8 @@ export function WebGLStudioPreview({
   projectAddress = "",
   initialStrokes,
   placements: initialPlacements = [],
+  initialFeatures: initialFeaturesProp = [],
+  photoElevations: initialPhotoElevations = [],
   bydaAssets = [],
   constructionTrenches = [],
   irrigationZones = [],
@@ -193,6 +209,8 @@ export function WebGLStudioPreview({
   const [activeMode, setActiveMode] = useState<CanvasMode>(initialMode);
   /** Open meta surface panel (null = none). Mode surfaces open by mode. */
   const [metaTab, setMetaTab] = useState<MetaTabId | null>(null);
+  /** The open photo elevation sheet (print artifact) — null = closed. */
+  const [photoSheetId, setPhotoSheetId] = useState<string | null>(null);
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
   const router = useRouter();
 
@@ -299,6 +317,12 @@ export function WebGLStudioPreview({
   const canRedo = useStudioStore((s) => s.historyFuture.length > 0);
   const subsurfaceView = useStudioStore((s) => s.subsurfaceView);
   const strokes = useStudioStore((s) => s.sketchStrokes);
+  const sketchModeActive = useStudioStore((s) => s.sketchMode);
+  // Sketch → CAD — the tidy proposal set + review state (Part A).
+  const cadProposals = useStudioStore((s) => s.cadProposals);
+  const cadReviewOpen = useStudioStore((s) => s.cadReviewOpen);
+  const sketchCadNotice = useStudioStore((s) => s.sketchCadNotice);
+  const setCadReviewOpen = useStudioStore((s) => s.setCadReviewOpen);
   // Save status is rendered by <SaveStatusChip /> which subscribes independently
   // (so only the chip re-renders on status change, not the whole HUD).
 
@@ -313,9 +337,14 @@ export function WebGLStudioPreview({
     store.setPlacements(initialPlacements);
     store.setConstructionTrenches(constructionTrenches);
     store.setIrrigationZones(irrigationZones);
+    store.setPhotoElevations(initialPhotoElevations);
+    store.setFeatures(initialFeaturesProp);
+    // Site context feeds the sketch→CAD classifier + placement constraints.
+    store.setSiteContext(boundaryPct, buildingPct ?? []);
+    store.setSelection([]);
     store.setProjectContext(projectId, null, projectAddress);
     if (initialSketchMode) store.setSketchMode(true);
-  }, [initialStrokes, initialPlacements, constructionTrenches, irrigationZones, projectId, projectAddress, initialSketchMode, hydratedRef]);
+  }, [initialStrokes, initialPlacements, initialFeaturesProp, constructionTrenches, irrigationZones, initialPhotoElevations, projectId, projectAddress, initialSketchMode, boundaryPct, buildingPct, hydratedRef]);
 
   // Quiet site-truth bootstrap — the canvas foundation is the authoritative
   // Vicmap boundary + building envelope, not an aerial photo. When a
@@ -345,12 +374,18 @@ export function WebGLStudioPreview({
   // Placements live in the store after hydration — the live source for both
   // the 3D items and the autosave doc. Pure client-side bridge (proven in
   // the SVG studio's client hook); unknown symbol ids degrade gracefully.
+  // Persisted feature outlines re-attach by mirrored id (featuresOntoItems —
+  // the SVG coupling), so a reloaded deck/lawn/bed keeps its drawn region.
   const storePlacements = useStudioStore((s) => s.placements);
+  const storeFeatures = useStudioStore((s) => s.features);
   const splitView = useStudioStore((s) => s.splitView);
-  const items = useMemo(
-    () => toRenderItems(placementsToItems(storePlacements)),
-    [storePlacements],
-  );
+  const items = useMemo(() => {
+    const hydrated = featuresOntoItems(
+      placementsToItems(storePlacements),
+      storeFeatures,
+    );
+    return toRenderItems(hydrated);
+  }, [storePlacements, storeFeatures]);
   // Undo / redo — Cmd/Ctrl+Z (+Shift). Skipped while typing in chrome
   // inputs so the palette/assist fields keep native text undo.
   useEffect(() => {
@@ -371,40 +406,49 @@ export function WebGLStudioPreview({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Sketch photo underlay — upload an on-site aerial/elevation photo as
-  // the tracing base (persisted server-side on the survey; refresh re-renders
-  // the server component with the new aerialUri — no remount of the scene).
-  const [photoBusy, setPhotoBusy] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const uploadSitePhoto = useCallback(
-    async (file: File) => {
-      setPhotoBusy(true);
-      setPhotoError(null);
-      try {
-        const body = new FormData();
-        body.append("aerial", file);
-        const res = await fetch(`/api/projects/${projectId}/aerial`, {
-          method: "POST",
-          body,
-        });
-        if (!res.ok) {
-          const payload = (await res.json().catch(() => null)) as
-            | { error?: string }
-            | null;
-          throw new Error(payload?.error ?? `Upload failed (${res.status})`);
-        }
-        window.location.reload();
-      } catch (error) {
-        setPhotoError(
-          error instanceof Error ? error.message : "Site photo upload failed",
-        );
-      } finally {
-        setPhotoBusy(false);
+  // --- Selection: one state, three entity families (Part B) ---
+  // Click picks the nearest feature linework, then the nearest placement
+  // glyph; shift-click adds (multi-select); empty-ground click clears.
+  // Esc clears too. The refs live in the zustand store, so selection
+  // persists across every WebGL mode switch (plan/sketch/cad/elevation/
+  // tilt) — nothing remounts on mode change. No cross-studio sync exists
+  // (AGENTS.md: the two studios share only the persisted canvas).
+  const selection = useStudioStore((s) => s.selection);
+  const handleGroundClick = useCallback(
+    (pct: PctPoint, opts: { additive: boolean }) => {
+      const store = useStudioStore.getState();
+      const featureId = nearestFeatureId(store.features, pct, scaleM);
+      if (featureId) {
+        store.selectRef({ kind: "feature", id: featureId }, opts);
+        return;
       }
+      const placementId = nearestPlacementId(store.placements, pct, scaleM);
+      if (placementId) {
+        store.selectRef({ kind: "placement", id: placementId }, opts);
+        return;
+      }
+      if (!opts.additive) store.clearSelection();
     },
-    [projectId],
+    [scaleM],
   );
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (typing || e.key !== "Escape") return;
+      useStudioStore.getState().clearSelection();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Sketch photo underlay — retired (2026-08-18). The site-photo gallery +
+  // photo-trace elevation replaced the single aerial-slot upload; the canvas
+  // foundation is Vicmap vectors, not photo underlays.
 
   // Site-truth import — the Vicmap bridge (survey mode owns it).
   const [truthBusy, setTruthBusy] = useState(false);
@@ -503,10 +547,13 @@ export function WebGLStudioPreview({
       hasAerial: progress.hasAerial,
       hasSketch: progress.hasSketch || strokes.length > 0,
       hasCad:
-        progress.hasCad || storePlacements.length > 0 || boundaryPct.length > 0,
+        progress.hasCad ||
+        storePlacements.length > 0 ||
+        storeFeatures.length > 0 ||
+        boundaryPct.length > 0,
       hasQuote: progress.hasQuote,
     }),
-    [progress, strokes, storePlacements, boundaryPct],
+    [progress, strokes, storePlacements, storeFeatures, boundaryPct],
   );
   const unlocked = useMemo(() => unlockedModes(liveProgress), [liveProgress]);
   // Mode-driven layer law — flows into the scene as props (no remounts).
@@ -536,14 +583,17 @@ export function WebGLStudioPreview({
   // --- Autosave (debounced + retry + backoff) ---
   const storeTrenches = useStudioStore((s) => s.constructionTrenches);
   const storeZones = useStudioStore((s) => s.irrigationZones);
+  const storePhotoElevations = useStudioStore((s) => s.photoElevations);
   const autosaveDoc = useMemo(
     () => ({
       placements: storePlacements,
       strokes,
       constructionTrenches: storeTrenches,
       irrigationZones: storeZones,
+      photoElevations: storePhotoElevations,
+      features: storeFeatures,
     }),
-    [storePlacements, strokes, storeTrenches, storeZones],
+    [storePlacements, strokes, storeTrenches, storeZones, storePhotoElevations, storeFeatures],
   );
   useStudioAutosave(projectId, autosaveDoc);
   useBeforeUnloadGuard();
@@ -596,6 +646,7 @@ export function WebGLStudioPreview({
     neighbourBuildings: visibleLayers.siteTruth ? neighbourBuildings : [],
     showSketch: visibleLayers.sketch,
     layerPolicy: policy,
+    onGroundClick: handleGroundClick,
     onContextLost: () => {
       setWebglLost(true);
       // Studio error path — a lost WebGL context is a real device/GPU failure.
@@ -807,6 +858,28 @@ export function WebGLStudioPreview({
           }
         />
 
+        {cadReviewOpen && cadProposals.length > 0 ? (
+          <div
+            data-gs-glass-card
+            data-testid="cad-review-panel"
+            style={{
+              pointerEvents: "auto",
+              width: "min(300px, calc(100vw - 32px))",
+              maxHeight: "min(420px, calc(100dvh - 240px))",
+              overflowY: "auto",
+              scrollbarWidth: "thin",
+              borderRadius: "var(--gs-radius-panel)",
+              background: "var(--gs-panel-grad)",
+              border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+              boxShadow: "var(--gs-shadow-2)",
+              padding: "12px 14px",
+              animation: "wsPanelIn 160ms ease-out",
+            }}
+          >
+            <SketchCadReviewCard />
+          </div>
+        ) : null}
+
         {(() => {
           let body: ReactNode | null = null;
           let dismiss: (() => void) | null = null;
@@ -902,6 +975,126 @@ export function WebGLStudioPreview({
                 projectId={projectId}
                 onCadResult={(result) => setCadGhostCount(result.ghost_count)}
               />
+            );
+          } else if (activeMode === "sketch" && metaTab == null) {
+            body = (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-tech)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: "0.06em",
+                      color: "var(--gs-ink)",
+                    }}
+                  >
+                    SKETCH
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-tech)",
+                      fontSize: 10.5,
+                      color: "var(--gs-ink-secondary)",
+                    }}
+                  >
+                    {strokes.length} stroke{strokes.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    data-testid="sketch-tidy"
+                    disabled={strokes.length === 0}
+                    onClick={() => useStudioStore.getState().tidySketchToCad()}
+                    title={
+                      strokes.length === 0
+                        ? "Draw ink first — strokes become CAD proposals"
+                        : "Classify strokes into confidence-scored CAD proposals"
+                    }
+                    style={{
+                      flex: 1,
+                      padding: "5px 8px",
+                      border: "1px solid var(--gs-primary)",
+                      borderRadius: "var(--gs-radius-chip)",
+                      background: "var(--gs-primary)",
+                      color: "var(--gs-panel)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: strokes.length === 0 ? "not-allowed" : "pointer",
+                      opacity: strokes.length === 0 ? 0.5 : 1,
+                    }}
+                  >
+                    Tidy → CAD proposals
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="sketch-convert-cad"
+                    disabled={strokes.length === 0}
+                    onClick={() =>
+                      useStudioStore.getState().convertStrokesToCadFeatures()
+                    }
+                    title="One-click convert — ditch/path/wall/bed CAD linework, ink kept as reference"
+                    style={{
+                      flex: 1,
+                      padding: "5px 8px",
+                      border: "1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)",
+                      borderRadius: "var(--gs-radius-chip)",
+                      background: "transparent",
+                      color: "var(--gs-ink-secondary)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 11,
+                      cursor: strokes.length === 0 ? "not-allowed" : "pointer",
+                      opacity: strokes.length === 0 ? 0.5 : 1,
+                    }}
+                  >
+                    Convert to CAD features
+                  </button>
+                </div>
+                {cadProposals.length > 0 && !cadReviewOpen ? (
+                  <button
+                    type="button"
+                    data-testid="cad-review-open"
+                    onClick={() => setCadReviewOpen(true)}
+                    style={{
+                      padding: "5px 8px",
+                      border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
+                      borderRadius: "var(--gs-radius-chip)",
+                      background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
+                      color: "var(--gs-primary)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 11,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Review {cadProposals.length} CAD proposal
+                    {cadProposals.length === 1 ? "" : "s"}
+                  </button>
+                ) : null}
+                {sketchCadNotice ? (
+                  <p
+                    role="status"
+                    data-testid="sketch-cad-notice"
+                    style={{
+                      margin: 0,
+                      fontSize: 10.5,
+                      lineHeight: 1.4,
+                      color: /photo-traced/.test(sketchCadNotice)
+                        ? "var(--gs-ink-conflict)"
+                        : "var(--gs-ink-secondary)",
+                    }}
+                  >
+                    {sketchCadNotice}
+                  </p>
+                ) : null}
+              </div>
             );
           } else if (metaTab === "studio") {
             dismiss = () => setMetaTab(null);
@@ -1067,50 +1260,14 @@ export function WebGLStudioPreview({
                     );
                   })}
                 </div>
-                <button
-                  type="button"
-                  data-testid="sketch-photo-upload"
-                  disabled={photoBusy}
-                  onClick={() => photoInputRef.current?.click()}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 6,
-                    padding: "5px 10px",
-                    borderRadius: "var(--gs-radius-pill)",
-                    background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
-                    border: "1px solid color-mix(in srgb, var(--gs-primary) 40%, transparent)",
-                    color: "var(--gs-primary)",
-                    fontFamily: "var(--font-ui)",
-                    fontSize: 10.5,
-                    cursor: photoBusy ? "wait" : "pointer",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {photoBusy ? "Uploading…" : "Trace a site photo"}
-                </button>
-                <input
-                  ref={photoInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  disabled={photoBusy}
-                  hidden
-                  aria-label="Choose a site photo to trace"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) void uploadSitePhoto(f);
-                    e.currentTarget.value = "";
-                  }}
+                <SitePhotoGallery
+                  projectId={projectId}
+                  boundaryPct={boundaryPct}
+                  scaleM={scaleM}
+                  boardAspect={boardAspect}
+                  onViewSheet={(elevationId) => setPhotoSheetId(elevationId)}
+                  onClose={() => setMetaTab(null)}
                 />
-                {photoError ? (
-                  <p
-                    role="alert"
-                    style={{ margin: 0, color: "var(--gs-ink-conflict)", fontSize: 11 }}
-                  >
-                    {photoError}
-                  </p>
-                ) : null}
               </div>
             );
           } else if (metaTab === "sun") {
@@ -1606,10 +1763,80 @@ export function WebGLStudioPreview({
         showQuote={(items?.length ?? 0) > 0}
         presentActive={presentationMode}
         onPresentToggle={() => setPresentationMode((p) => !p)}
+        showTidy={sketchModeActive || strokes.length > 0}
+        tidyDisabled={strokes.length === 0}
+        onTidy={() => useStudioStore.getState().tidySketchToCad()}
       />
+
+      {/* Selection chip — the ONE selection state readout (placements,
+          features, photo-trace strokes). Esc clears; survives mode switches. */}
+      {selection.length > 0 ? (
+        <div
+          data-testid="selection-chip"
+          role="status"
+          aria-live="polite"
+          style={{
+            position: "absolute",
+            left: 60,
+            bottom: 12,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            pointerEvents: "auto",
+            padding: "5px 10px",
+            borderRadius: "var(--gs-radius-pill)",
+            background: "var(--gs-chip-active)",
+            color: "var(--gs-chip-active-ink)",
+            fontFamily: "var(--font-ui)",
+            fontSize: 11,
+            boxShadow: "var(--gs-shadow-2)",
+          }}
+        >
+          <span data-testid="selection-count">
+            {selection.length} selected · Esc clears
+          </span>
+          <button
+            type="button"
+            data-testid="selection-clear"
+            aria-label="Clear selection"
+            onClick={() => useStudioStore.getState().clearSelection()}
+            style={{
+              border: "none",
+              background: "transparent",
+              color: "var(--gs-chip-active-ink)",
+              fontFamily: "var(--font-ui)",
+              fontSize: 11,
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            Clear
+          </button>
+        </div>
+      ) : null}
 
       {/* Asset discovery fan-out dock — bottom-centre, above the growth card */}
       <AssetFanOutDock />
+
+      {/* Photo-trace HUD — the only chrome while a photo is pinned. */}
+      <PhotoTraceHud />
+
+      {/* Photo elevation sheet — the trace's print artifact. */}
+      {photoSheetId ? (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "auto",
+            zIndex: 7,
+          }}
+        >
+          <PhotoElevationSheet
+            elevationId={photoSheetId}
+            onClose={() => setPhotoSheetId(null)}
+          />
+        </div>
+      ) : null}
 
       {/* Command palette — the power-operator surface (Cmd/Ctrl+K). */}
       <StudioCommandPalette
@@ -1619,6 +1846,7 @@ export function WebGLStudioPreview({
         unlocked={unlocked}
         onMode={(m) => onNativeMode(m as Parameters<typeof onNativeMode>[0])}
         onZoom={(dir) => zoomBy(dir === 1 ? 1 : -1)}
+        onOpenSitePhotos={() => setMetaTab("studio")}
       />
 
       {/* First-run controls hint — dismissed for the session once seen. */}

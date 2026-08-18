@@ -79,6 +79,27 @@ describe("elevation snap (φ=90° + facade normal)", () => {
     expect(isElevationRig({ ...RIG, tiltDeg: 55, rotateDeg: 0 })).toBe(false);
   });
 
+  it("treats a pinned photo's boundary bearing as a facade normal", () => {
+    // Title boundaries are rarely cardinal — a 15° fence line is a facade
+    // in its own right while its photo is pinned.
+    expect(
+      isElevationRig({ ...RIG, tiltDeg: 90, rotateDeg: 15 }, 15),
+    ).toBe(true);
+    expect(
+      isElevationRig({ ...RIG, tiltDeg: 90, rotateDeg: 16.5 }, 15),
+    ).toBe(true); // inside the 2° azimuth tolerance
+    expect(
+      isElevationRig({ ...RIG, tiltDeg: 90, rotateDeg: 20 }, 15),
+    ).toBe(false); // swivelled away from the bearing
+    expect(
+      isElevationRig({ ...RIG, tiltDeg: 80, rotateDeg: 15 }, 15),
+    ).toBe(false); // pitch still gates the facade
+    // Cardinal snap behaviour is unchanged when no override is set.
+    expect(isElevationRig({ ...RIG, tiltDeg: 90, rotateDeg: 15 }, null)).toBe(
+      false,
+    );
+  });
+
   it("settles a release into the exact elevation state when near the snap", () => {
     const settled = settleOrbitRig({ ...RIG, tiltDeg: 89.2, rotateDeg: 91.5 });
     expect(settled.tiltDeg).toBe(90);

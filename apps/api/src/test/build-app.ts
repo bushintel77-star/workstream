@@ -26,6 +26,7 @@ import cadastralTitleRoutes from "../routes/cadastral-title";
 import measurementRoutes from "../routes/measurements";
 import supplierRoutes from "../routes/suppliers";
 import aerialRoutes from "../routes/aerial";
+import sitePhotoRoutes from "../routes/site-photos";
 import xeroRoutes from "../routes/xero";
 import carbonRoutes from "../routes/carbon";
 import catalogRoutes from "../routes/catalog";
@@ -91,6 +92,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(cadastralTitleRoutes, { prefix: "/projects" });
   await app.register(measurementRoutes, { prefix: "/projects" });
   await app.register(aerialRoutes, { prefix: "/projects" });
+  await app.register(sitePhotoRoutes, { prefix: "/projects" });
   await app.register(carbonRoutes, { prefix: "/projects" });
   await app.register(designCanvasRoutes, { prefix: "/projects" });
   await app.register(quoteDocRoutes, { prefix: "/projects" });
