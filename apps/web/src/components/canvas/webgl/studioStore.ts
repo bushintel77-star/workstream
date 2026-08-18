@@ -530,6 +530,10 @@ export interface StudioStoreState {
   setPlacements: (placements: CatalogPlacement[]) => void;
   /** Append a single placement (a place gesture — commits undo history). */
   addPlacement: (placement: CatalogPlacement) => void;
+  /** Remove one placement by id — undoable, prunes stale selection refs. */
+  removePlacement: (id: string) => void;
+  /** Remove many placements in ONE history commit (marquee delete). */
+  removePlacements: (ids: string[]) => void;
 
   /** Push the current doc onto the undo stack (called by mutating actions). */
   commitHistory: () => void;
@@ -898,6 +902,38 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       const past = [...s.historyPast, docSnapshot(s)].slice(-50);
       return { placements: [...s.placements, placement], historyPast: past, historyFuture: [] };
     }),
+  removePlacement: (id) =>
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      const placements = s.placements.filter((p) => p.id !== id);
+      return {
+        placements,
+        selection: pruneSelection(s.selection, {
+          placements,
+          features: s.features,
+          photoElevations: s.photoElevations,
+        }),
+        historyPast: past,
+        historyFuture: [],
+      };
+    }),
+  removePlacements: (ids) => {
+    const idSet = new Set(ids);
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      const placements = s.placements.filter((p) => !idSet.has(p.id));
+      return {
+        placements,
+        selection: pruneSelection(s.selection, {
+          placements,
+          features: s.features,
+          photoElevations: s.photoElevations,
+        }),
+        historyPast: past,
+        historyFuture: [],
+      };
+    });
+  },
 
   commitHistory: () =>
     set((s) => ({

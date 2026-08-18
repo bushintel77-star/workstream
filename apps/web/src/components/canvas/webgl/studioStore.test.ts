@@ -8,6 +8,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type {
   CanvasStroke,
+  CatalogPlacement,
   PhotoElevation,
 } from "@workstream/contracts";
 import {
@@ -324,6 +325,65 @@ describe("studioStore selection slice", () => {
     store.undo(); // restores the empty snapshot — the ref must prune
     expect(useStudioStore.getState().placements).toEqual([]);
     expect(useStudioStore.getState().selection).toEqual([]);
+  });
+});
+
+describe("removePlacement / removePlacements", () => {
+  const PLACE = (id: string, x: number): CatalogPlacement => ({
+    id,
+    symbol_id: "olive-standard",
+    x_pct: x,
+    y_pct: 50,
+    rotation_deg: 0,
+    scale: 1,
+  });
+
+  afterEach(resetStore);
+
+  it("removePlacement drops the placement and is undoable", () => {
+    const store = useStudioStore.getState();
+    store.setPlacements([PLACE("p-1", 20), PLACE("p-2", 40)]);
+    store.removePlacement("p-1");
+    let s = useStudioStore.getState();
+    expect(s.placements.map((p) => p.id)).toEqual(["p-2"]);
+    s.undo();
+    s = useStudioStore.getState();
+    expect(s.placements.map((p) => p.id)).toEqual(["p-1", "p-2"]);
+  });
+
+  it("removePlacements deletes many in ONE history commit (single undo)", () => {
+    const store = useStudioStore.getState();
+    store.setPlacements([
+      PLACE("p-1", 20),
+      PLACE("p-2", 40),
+      PLACE("p-3", 60),
+    ]);
+    store.removePlacements(["p-1", "p-3"]);
+    let s = useStudioStore.getState();
+    expect(s.placements.map((p) => p.id)).toEqual(["p-2"]);
+    s.undo();
+    s = useStudioStore.getState();
+    expect(s.placements.map((p) => p.id)).toEqual(["p-1", "p-2", "p-3"]);
+  });
+
+  it("prunes selection refs pointing at removed placements", () => {
+    const store = useStudioStore.getState();
+    store.setPlacements([PLACE("p-1", 20), PLACE("p-2", 40)]);
+    store.selectRef({ kind: "placement", id: "p-1" });
+    store.selectRef({ kind: "placement", id: "p-2" }, { additive: true });
+    store.removePlacement("p-1");
+    expect(useStudioStore.getState().selection).toEqual([
+      { kind: "placement", id: "p-2" },
+    ]);
+  });
+
+  it("no-ops on an unknown id without touching other placements", () => {
+    const store = useStudioStore.getState();
+    store.setPlacements([PLACE("p-1", 20)]);
+    store.removePlacement("missing");
+    expect(useStudioStore.getState().placements.map((p) => p.id)).toEqual([
+      "p-1",
+    ]);
   });
 });
 

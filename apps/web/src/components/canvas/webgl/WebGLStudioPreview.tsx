@@ -447,6 +447,34 @@ export function WebGLStudioPreview({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Delete/Backspace — remove selected placements and features (undoable,
+  // one history commit per kind). Photo strokes stay elevation-space (no
+  // plan-view edit surface). Skipped while typing in chrome inputs.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const typing =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+      if (typing || (e.key !== "Delete" && e.key !== "Backspace")) return;
+      const store = useStudioStore.getState();
+      const placementIds = store.selection
+        .filter((r) => r.kind === "placement")
+        .map((r) => r.id);
+      const featureIds = store.selection
+        .filter((r) => r.kind === "feature")
+        .map((r) => r.id);
+      if (placementIds.length === 0 && featureIds.length === 0) return;
+      e.preventDefault();
+      if (placementIds.length > 0) store.removePlacements(placementIds);
+      if (featureIds.length > 0) store.removeFeatures(featureIds);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Sketch photo underlay — retired (2026-08-18). The site-photo gallery +
   // photo-trace elevation replaced the single aerial-slot upload; the canvas
   // foundation is Vicmap vectors, not photo underlays.
