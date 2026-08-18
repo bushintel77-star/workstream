@@ -295,6 +295,9 @@ export function StudioControls({
   const onPointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       if (twoFingerRef.current) return; // two-finger touch owns the camera
+      // The spatial gizmo owns its pointer events while a drag is in flight —
+      // the ground plane must never start a pan/orbit under the gizmo.
+      if (useStudioStore.getState().gizmoDragging) return;
       const { sketchMode: inkArmed, measureActive: tapeArmed, armedSymbolId: assetArmed } =
         useSeasonalStore.getState();
       if (inkArmed || tapeArmed || assetArmed != null) return; // capture layer wins

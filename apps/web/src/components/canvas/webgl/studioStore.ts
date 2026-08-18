@@ -536,6 +536,31 @@ export interface StudioStoreState {
   /** Remove many placements in ONE history commit (marquee delete). */
   removePlacements: (ids: string[]) => void;
 
+  // --- Spatial gizmo (TransformControls) state ---
+  /** Manipulator mode for a single selected placement (null = off). */
+  gizmoMode: "translate" | "rotate" | null;
+  setGizmoMode: (mode: "translate" | "rotate" | null) => void;
+  /** True while the gizmo drag is in flight — camera gestures stand down. */
+  gizmoDragging: boolean;
+  setGizmoDragging: (dragging: boolean) => void;
+  /**
+   * Begin a gizmo drag — pushes the pre-drag doc onto the undo stack ONCE,
+   * so the whole drag is a single undo step (called on first objectChange,
+   * not on mousedown, so a mere handle click never pollutes history).
+   */
+  beginPlacementTransform: (id: string) => void;
+  /**
+   * Per-frame transient position/rotation while dragging — clamped against
+   * the title boundary via constrainAssetCentre (the gizmo "slips" along the
+   * edge), boundary notice raised on snap, NO history writes.
+   */
+  setPlacementTransformTransient: (
+    id: string,
+    patch: { x_pct?: number; y_pct?: number; rotation_deg?: number },
+  ) => void;
+  /** End a gizmo drag (seam for future persist/merge). */
+  endPlacementTransform: () => void;
+
   /** Push the current doc onto the undo stack (called by mutating actions). */
   commitHistory: () => void;
   /** Undo / redo the last doc mutation (placements + strokes together). */
@@ -680,6 +705,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   assetsOpen: false,
   armedSymbolId: null,
   placements: [],
+  // Spatial gizmo defaults — translate armed by default (single placement
+  // selection mounts the manipulator), no drag in flight.
+  gizmoMode: "translate" as "translate" | "rotate" | null,
+  gizmoDragging: false,
   /** Undo/redo doc history — snapshots of {placements, strokes} (cap 50). */
   historyPast: [],
   historyFuture: [],
@@ -935,6 +964,43 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       };
     });
   },
+  setGizmoMode: (gizmoMode) => set({ gizmoMode }),
+  setGizmoDragging: (gizmoDragging) => set({ gizmoDragging }),
+  beginPlacementTransform: () =>
+    set((s) => ({
+      historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
+      historyFuture: [],
+    })),
+  setPlacementTransformTransient: (id, patch) =>
+    set((s) => {
+      let notice = s.boundaryNotice;
+      const placements = s.placements.map((p) => {
+        if (p.id !== id) return p;
+        const merged = { ...p, ...patch };
+        // Rotation-only patches never touch the boundary (attribute edit);
+        // position patches re-clamp per frame so the gizmo "slips" along
+        // the title edge instead of crossing it.
+        if (patch.x_pct === undefined && patch.y_pct === undefined) {
+          return merged;
+        }
+        const clamped = clampPlacementEdit(
+          merged,
+          s.siteBoundary,
+          s.siteBuilding,
+        );
+        if (clamped.snapped) {
+          notice = {
+            refId: id,
+            reason: clamped.reason ?? "Centre snapped into the outdoor area",
+            at: Date.now(),
+          };
+        }
+        return { ...merged, x_pct: clamped.x, y_pct: clamped.y };
+      });
+      return { placements, boundaryNotice: notice };
+    }),
+  endPlacementTransform: () =>
+    set(() => ({ historyFuture: [] })),
 
   commitHistory: () =>
     set((s) => ({

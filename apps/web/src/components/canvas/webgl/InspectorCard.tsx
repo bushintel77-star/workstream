@@ -153,11 +153,49 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
   const update = useStudioStore((s) => s.updatePlacementField);
   const notice = useStudioStore((s) => s.boundaryNotice);
   const dismiss = useStudioStore((s) => s.dismissBoundaryNotice);
+  const gizmoMode = useStudioStore((s) => s.gizmoMode);
+  const setGizmoMode = useStudioStore((s) => s.setGizmoMode);
   const source = placementSourceLabel(p.source);
+
+  const gizmoChip = (active: boolean): React.CSSProperties => ({
+    fontFamily: "var(--font-ui)",
+    fontSize: 10.5,
+    letterSpacing: "0.04em",
+    padding: "3px 8px",
+    borderRadius: "var(--gs-radius-pill)",
+    border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+    background: active ? "var(--gs-chip-active)" : "transparent",
+    color: active ? "var(--gs-chip-active-ink)" : "var(--gs-ink-secondary)",
+    cursor: "pointer",
+  });
 
   return (
     <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
       <div style={titleCss}>Placement</div>
+      <Field labelText="Manipulator">
+        <div style={{ display: "flex", gap: 4 }}>
+          <button
+            type="button"
+            data-testid="gizmo-move"
+            aria-pressed={gizmoMode === "translate"}
+            style={gizmoChip(gizmoMode === "translate")}
+            onClick={() =>
+              setGizmoMode(gizmoMode === "translate" ? null : "translate")
+            }
+          >
+            Move
+          </button>
+          <button
+            type="button"
+            data-testid="gizmo-rotate"
+            aria-pressed={gizmoMode === "rotate"}
+            style={gizmoChip(gizmoMode === "rotate")}
+            onClick={() => setGizmoMode(gizmoMode === "rotate" ? null : "rotate")}
+          >
+            Rotate
+          </button>
+        </div>
+      </Field>
       {notice && notice.refId === p.id ? (
         <div style={alertCss} data-testid="inspector-boundary-notice">
           <span>{notice.reason}</span>

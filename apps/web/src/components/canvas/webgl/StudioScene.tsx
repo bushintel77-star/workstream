@@ -42,6 +42,7 @@ import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "
 import { FusedCamera } from "./FusedCamera";
 import { FusedSketchLayer } from "./FusedSketchLayer";
 import { PhotoTracePlane } from "./PhotoTracePlane";
+import { PlacementGizmo } from "./PlacementGizmo";
 import { TerrainMesh } from "./TerrainMesh";
 import { ElevationSliceLine } from "./ElevationSliceLine";
 import { DrainageFlowLayer } from "./DrainageFlowLayer";
@@ -858,6 +859,14 @@ export function StudioScene({
           frame (self-gates on photoTraceSession). Freehand ink raycasts onto
           the vertical plane; the camera flies to the photo's facade look. */}
       <PhotoTracePlane scaleM={scaleM} boardAspect={boardAspect} />
+      {/* P1 spatial gizmo — TransformControls on the single selected
+          placement (translate/rotate, boundary-clamped, one undo per drag).
+          Self-gates on selection + gizmoMode. */}
+      <PlacementGizmo
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        heightmapPoints={heightmapPoints}
+      />
     </>
   );
 }

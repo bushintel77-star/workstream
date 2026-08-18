@@ -792,3 +792,14 @@ below).
   the premise was stale on main (reproduced on clean HEAD during this
   push). The spec now drives the Quote tab first; the mode-owned-panel
   behaviour is the product intent per this survey's Phase 5 direction.
+- **P1 spatial gizmo (shipped after this survey — the §2.1 parity gap).**
+  `PlacementGizmo.tsx` mounts drei `TransformControls` on the single
+  selected placement: translate (0.5 m snap) and rotate (45° snap), with
+  per-frame title-boundary clamping via `constrainAssetCentre` (the gizmo
+  "slips" along the edge; crimson notice on snap) and ONE undo step per
+  drag (`beginPlacementTransform` → transient updates → `endPlacementTransform`).
+  Move/Rotate chips live in the right-docked placement inspector; camera
+  gestures stand down while the drag is in flight. E2e probe:
+  `webgl-gizmo-move.spec.ts`. Deferred from P1: scale mode, vertex
+  editing, shift-to-boundary-vector lock, and the crimson in-scene snap
+  highlight (the notice is the current snap surface).

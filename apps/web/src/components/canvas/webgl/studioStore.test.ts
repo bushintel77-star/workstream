@@ -159,6 +159,9 @@ function resetStore() {
     selection: [],
     historyPast: [],
     historyFuture: [],
+    boundaryNotice: null,
+    gizmoMode: "translate",
+    gizmoDragging: false,
   });
 }
 
@@ -384,6 +387,70 @@ describe("removePlacement / removePlacements", () => {
     expect(useStudioStore.getState().placements.map((p) => p.id)).toEqual([
       "p-1",
     ]);
+  });
+});
+
+describe("placement transform (gizmo)", () => {
+  const PLACE = (id: string, x: number, y: number): CatalogPlacement => ({
+    id,
+    symbol_id: "olive-standard",
+    x_pct: x,
+    y_pct: y,
+    rotation_deg: 0,
+    scale: 1,
+  });
+
+  afterEach(resetStore);
+
+  it("the whole drag is ONE undo step restoring the pre-drag position", () => {
+    const store = useStudioStore.getState();
+    store.setPlacements([PLACE("p-1", 50, 50)]);
+    store.beginPlacementTransform("p-1");
+    store.setPlacementTransformTransient("p-1", { x_pct: 60, y_pct: 40 });
+    store.setPlacementTransformTransient("p-1", { x_pct: 70, y_pct: 30 });
+    store.endPlacementTransform();
+    let s = useStudioStore.getState();
+    expect(s.placements[0]).toMatchObject({ x_pct: 70, y_pct: 30 });
+    s.undo();
+    s = useStudioStore.getState();
+    expect(s.placements[0]).toMatchObject({ x_pct: 50, y_pct: 50 });
+    s.redo();
+    expect(useStudioStore.getState().placements[0]).toMatchObject({
+      x_pct: 70,
+      y_pct: 30,
+    });
+  });
+
+  it("clamps out-of-lot drags to the boundary and raises the crimson notice", () => {
+    const store = useStudioStore.getState();
+    store.setSiteContext(BOUNDARY, BUILDING);
+    store.setPlacements([PLACE("p-1", 50, 50)]);
+    store.setPlacementTransformTransient("p-1", { x_pct: 2, y_pct: 2 });
+    const s = useStudioStore.getState();
+    expect(s.placements[0]!.x_pct).toBeGreaterThanOrEqual(10);
+    expect(s.placements[0]!.y_pct).toBeGreaterThanOrEqual(10);
+    expect(s.boundaryNotice).not.toBeNull();
+    expect(s.boundaryNotice!.refId).toBe("p-1");
+  });
+
+  it("rotation transients skip the boundary clamp and round to degrees", () => {
+    const store = useStudioStore.getState();
+    store.setSiteContext(BOUNDARY, BUILDING);
+    store.setPlacements([PLACE("p-1", 50, 50)]);
+    store.setPlacementTransformTransient("p-1", { rotation_deg: 135 });
+    const s = useStudioStore.getState();
+    expect(s.placements[0]!.rotation_deg).toBe(135);
+    expect(s.placements[0]!.x_pct).toBe(50); // untouched
+    expect(s.boundaryNotice).toBeNull();
+  });
+
+  it("gizmo mode toggles between translate, rotate, and off", () => {
+    const store = useStudioStore.getState();
+    expect(store.gizmoMode).toBe("translate");
+    store.setGizmoMode("rotate");
+    expect(useStudioStore.getState().gizmoMode).toBe("rotate");
+    store.setGizmoMode(null);
+    expect(useStudioStore.getState().gizmoMode).toBeNull();
   });
 });
 
