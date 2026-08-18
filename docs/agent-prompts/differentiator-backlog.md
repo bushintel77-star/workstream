@@ -17,8 +17,11 @@ operator signs off; do not silently drop them.
    coverage) ships first with its own tests.
 2. Marquee box-select rail tool (tool-gated drag box, additive with
    shift, plain-drag pan preserved; option A — placements + features
-   only). In build: one drag lands in the inspector's read-only many-refs
-   summary.
+   only). **Shipped 2026-08** (verified in code — `marqueeSelect.ts`, the
+   `marquee` rail tool, store `marqueeSelectBox`; one drag lands in the
+   inspector's read-only many-refs summary). Remaining: bulk-edit on a
+   marquee selection, and the cad-mode chrome overlap (always-open drafter
+   panel over the board centre).
 3. Photo-trace plane-to-ground projection (camera raycast to board-%),
    shipped together with live title-boundary clamping — the facade-to-plan
    converter invents positions, so the reconciliation rule binds it.

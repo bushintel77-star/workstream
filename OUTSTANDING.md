@@ -19,9 +19,9 @@ new developer. Read ONBOARDING first, this file for the queue.
 5. Classic-studio e2e debt — see the P3 entry below.
 6. Longer-tail stage gaps (`docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md` §3): Phase 4 Build Pack (not built), Phase 1 floating tool ribbon on the GL surface, Phase 3 Presentation Lens polish, Stage 2 CAD (product-gated), mobile offline-first sync (design only).
 
-(Photo-trace elevation capstone: shipped 2026-08-18 — implemented in the
-working tree on `main`, commit/PR pending; see the P1 entry below and
-`docs/CAMERA-STATE-MACHINE.md`.)
+(Photo-trace elevation capstone: shipped 2026-08-18 — **committed on `main`
+(`0b37127`)**; earlier "working tree, PR pending" wording is stale. See the
+P1 entry below and `docs/CAMERA-STATE-MACHINE.md`.)
 
 ## P0 — Blocks first paying customer
 

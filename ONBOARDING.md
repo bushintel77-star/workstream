@@ -90,11 +90,12 @@ The fused camera shipped in two waves and is complete for its current scope:
 Full map: `docs/CAMERA-STATE-MACHINE.md` (gestures, matrix math, the facade
 raycasting gotcha).
 
-**Status honesty:** as of this audit (2026-08-18, `main` @ `c5cacfa`), the
-photo-trace implementation is **uncommitted working-tree code** (new files +
-modifications on `main`, PR not yet opened) while its docs already say
-"shipped". Treat "shipped" as "implemented + locally gated, awaiting
-commit/PR".
+**Status honesty (2026-08-18, updated in-session):** the photo-trace
+capstone is **committed on `main`** (`0b37127`) and pushed; the inspector,
+marquee, and sketch→CAD WebGL wiring are committed (`a6f6646`, `78864ae`).
+Earlier drafts of this file said "uncommitted working-tree code, PR not yet
+opened" — that was accurate at 2026-08-18 ~c5cacfa and is now stale; the
+working tree is clean of feature code.
 
 ## 4. Title-boundary reconciliation — a standing rule, not a one-off
 
@@ -144,24 +145,15 @@ was the photo-trace capstone (`boundary_snap`, `snapPhotoPlaneToBoundary`).
    on GL, Phase 3 Presentation Lens polish, Stage 2 CAD (product-gated),
    mobile offline-first sync (design only).
 
-## 7. Known stale code comments (docs-only pass — left in place deliberately)
+## 7. Known stale code comments — register
 
-These comments drift from code; they are useful false-friend warnings, not
-bugs. Fix them when you next touch the file (out of scope for a docs pass):
-
-- `apps/web/src/app/projects/[id]/page.tsx` ~:129–134 — says SVG-only modes
-  "fall back" to the classic studio; all 8 modes are native WebGL now.
-- `components/canvas/webgl/PerimeterTabStrip.tsx` ~:13–15 and the
-  `NativeWebGLMode` subset (~:30) — say classic-board modes navigate to
-  `?svg=1`; `webglStudioSupportsMode()` returns true for all 8 modes.
-- `components/canvas/webgl/stateBridge.ts` :11 — "Binding: ARCHITECTURE §5
-  (state layer unchanged)" predates the §5 correction (two stores).
-- `components/canvas/webgl/studioStore.ts` :18 — mentions an aerial underlay
-  context; the aerial underlay was retired (PR #199).
-- `components/canvas/webgl/WebGLStudio.tsx` ~:114 — "tuned for the dark
-  Studio aesthetic" predates the Studio Paper pivot.
-- `components/canvas/webgl/cameraRig.ts` :28 — `tiltDeg` "55 = default
-  oblique" is correct for `DEFAULT_CAMERA_RIG` but the 55° cap era is gone.
+All six entries previously listed here (page.tsx SVG-fallback wording,
+PerimeterTabStrip classic-board navigation + `NativeWebGLMode`, stateBridge
+§5 binding, studioStore aerial underlay, WebGLStudio dark-aesthetic, cameraRig
+55°-cap) were **resolved in-session (2026-08-18)**: the comments were
+corrected in code or the dead branch/type removed. Treat this section as an
+empty ratchet: if you find a comment that drifts from code, fix it while you
+are in the file and note it here so the register stays honest.
 
 ## 8. Handover files — which is current
 

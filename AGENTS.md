@@ -108,11 +108,16 @@ invents positions (e.g. facade→plan projection).
 
 **WebGL selection state (2026-08-18):** selection is native to the WebGL
 store (`studioStore` + `selectionPick.ts`) — ONE state across placements,
-features, and photo-trace strokes. Click selects, shift-click multi-selects
-(marquee is deliberately not used: plain drag pans and mod-drag orbits, so
-a marquee tool would need its own rail tool), Esc clears, and selection
-survives every WebGL mode switch. There is **no cross-studio selection
-sync** — the two studios share only the persisted `DesignCanvas` document
+features, and photo-trace strokes. Click selects, shift-click multi-selects,
+Esc clears, and selection survives every WebGL mode switch. A tool-gated
+**marquee rail tool is implemented** (`webgl/marqueeSelect.ts` + the
+`marquee` rail tool): while armed, drag draws the selection box (shift
+unions); unarmed, plain drag still pans and mod-drag orbits — the tool gate
+preserves the pan law. Option A scope: placements + features only (photo
+strokes are a separate entity class with no bulk surface). Bulk-editing a
+marquee selection is deferred — the inspector shows a read-only many-refs
+summary until bulk-edit lands. There is **no cross-studio selection sync** —
+the two studios share only the persisted `DesignCanvas` document
 (ARCHITECTURE §5); do not build a runtime bridge without a product decision.
 
 ### UTF-8 / Turbopack
