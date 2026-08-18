@@ -25,6 +25,7 @@ import { useMemo } from "react";
 import { Line, Html } from "@react-three/drei";
 import { useStudioStore } from "./studioStore";
 import { pctToWorld, type PctPoint } from "./coordTransform";
+import { dimDeclutterBoxForZoom } from "./dimensionLod";
 import {
   buildOutsideDims,
   declutterOutsideDims,
@@ -63,6 +64,12 @@ export function DimensionLayer({
   boardAspect,
 }: DimensionLayerProps) {
   const dimsView = useStudioStore((s) => s.dimsView);
+  // Quantised zoom (0.5 steps) — the declutter box scales with 1/zoom so
+  // labels reappear as the user zooms in (classic parity, UI survey §3.2).
+  // Quantising keeps the zero-commit pan law: liveRig is written per frame,
+  // but the selector only re-renders when the quantised zoom crosses a step.
+  const zoom = useStudioStore((s) => Math.round(s.liveRig.zoom * 2) / 2);
+  const declutterBox = useMemo(() => dimDeclutterBoxForZoom(zoom), [zoom]);
 
   // Board-% dims → visible placements (decluttered, label-collision-free).
   const placements = useMemo(() => {
@@ -72,7 +79,7 @@ export function DimensionLayer({
         edgeSegments(boundaryPct, "B", scaleM, boardAspect),
         boundaryPct,
       );
-      out.push(...declutterOutsideDims(dims));
+      out.push(...declutterOutsideDims(dims, declutterBox));
     }
     if (buildingPct && buildingPct.length >= 3) {
       // Tighter offsets inside the lot so the F-ring nests near the fabric.
@@ -87,10 +94,10 @@ export function DimensionLayer({
           overshootPct: 0.35,
         },
       );
-      out.push(...declutterOutsideDims(dims));
+      out.push(...declutterOutsideDims(dims, declutterBox));
     }
     return out.filter((d) => d.visible);
-  }, [boundaryPct, buildingPct, scaleM, boardAspect]);
+  }, [boundaryPct, buildingPct, scaleM, boardAspect, declutterBox]);
 
   // All line work flattened into disjoint pairs for ONE Line2 draw call.
   const segments = useMemo(() => {

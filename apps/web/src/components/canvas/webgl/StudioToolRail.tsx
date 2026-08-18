@@ -331,6 +331,12 @@ export function StudioToolRail({
                 fontSize: 10.5,
                 letterSpacing: "0.04em",
                 lineHeight: 1,
+                // Text contract: labels must never wrap or spill past the
+                // 42px pill — overflow clips + ellipsis (UI survey §1.2).
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                maxWidth: "100%",
               }}
             >
               {t.label}

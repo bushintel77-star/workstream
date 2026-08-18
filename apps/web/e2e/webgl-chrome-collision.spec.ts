@@ -272,4 +272,46 @@ test.describe("WebGL chrome collision", () => {
     );
     expect(fatal, `Fatal console errors:\n${fatal.join("\n")}`).toHaveLength(0);
   });
+
+  test("rail labels never wrap or widen their 42px pills", async ({
+    page,
+    request,
+  }) => {
+    // UI survey §1.2: rail labels overflow/clip for >8-char names. The pill
+    // must stay 42px (non-touch) and each label must stay on ONE line —
+    // mid-word wrap or a widened pill is a regression of the text contract.
+    const { projectId } = await createAddressProject(request, {
+      address: "2 Rail Test Street, Melbourne VIC 3000",
+    });
+    await page.goto(`/projects/${projectId}?webgl=1`, {
+      waitUntil: "networkidle",
+    });
+    await page.waitForTimeout(3000);
+    await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
+      timeout: 10_000,
+    });
+
+    const violations = await page.evaluate(() => {
+      const out: string[] = [];
+      for (const b of Array.from(
+        document.querySelectorAll<HTMLButtonElement>('[data-testid^="rail-"]'),
+      )) {
+        const r = b.getBoundingClientRect();
+        if (r.width > 43) {
+          out.push(`${b.getAttribute("data-testid")}: pill ${Math.round(r.width)}px`);
+        }
+        const label = b.querySelector("span:last-child");
+        if (label instanceof HTMLElement && label.scrollHeight > label.clientHeight + 1) {
+          out.push(
+            `${b.getAttribute("data-testid")}: label wrapped (${label.scrollHeight} > ${label.clientHeight})`,
+          );
+        }
+      }
+      return out;
+    });
+    expect(
+      violations,
+      `Rail label contract violations:\n${violations.join("\n")}`,
+    ).toHaveLength(0);
+  });
 });
