@@ -323,6 +323,8 @@ export function WebGLStudioPreview({
   const cadProposals = useStudioStore((s) => s.cadProposals);
   const cadReviewOpen = useStudioStore((s) => s.cadReviewOpen);
   const sketchCadNotice = useStudioStore((s) => s.sketchCadNotice);
+  const stitchNotice = useStudioStore((s) => s.stitchNotice);
+  const dismissStitchNotice = useStudioStore((s) => s.dismissStitchNotice);
   const setCadReviewOpen = useStudioStore((s) => s.setCadReviewOpen);
   // Save status is rendered by <SaveStatusChip /> which subscribes independently
   // (so only the chip re-renders on status change, not the whole HUD).
@@ -946,7 +948,7 @@ export function WebGLStudioPreview({
           </div>
         ) : null}
 
-        <InspectorCard />
+        <InspectorCard scaleM={scaleM} boardAspect={boardAspect} />
 
         {(() => {
           let body: ReactNode | null = null;
@@ -1113,6 +1115,32 @@ export function WebGLStudioPreview({
                   >
                     Convert to CAD features
                   </button>
+                  <button
+                    type="button"
+                    data-testid="sketch-stitch"
+                    disabled={strokes.length === 0}
+                    onClick={() =>
+                      useStudioStore
+                        .getState()
+                        .stitchSketchStrokes(scaleM, boardAspect)
+                    }
+                    title="Weld touching strokes into continuous polylines and closed polygons (0.15 m snap), ink kept as reference"
+                    style={{
+                      flex: 1,
+                      padding: "5px 8px",
+                      border: "1px solid color-mix(in srgb, var(--gs-primary) 55%, transparent)",
+                      borderRadius: "var(--gs-radius-chip)",
+                      background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
+                      color: "var(--gs-primary)",
+                      fontFamily: "var(--font-ui)",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: strokes.length === 0 ? "not-allowed" : "pointer",
+                      opacity: strokes.length === 0 ? 0.5 : 1,
+                    }}
+                  >
+                    Stitch strokes
+                  </button>
                 </div>
                 {cadProposals.length > 0 && !cadReviewOpen ? (
                   <button
@@ -1149,6 +1177,38 @@ export function WebGLStudioPreview({
                   >
                     {sketchCadNotice}
                   </p>
+                ) : null}
+                {stitchNotice ? (
+                  <div
+                    role="status"
+                    data-testid="stitch-notice"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 10.5,
+                      lineHeight: 1.4,
+                      color: "var(--gs-ink-secondary)",
+                    }}
+                  >
+                    <span style={{ flex: 1 }}>{stitchNotice}</span>
+                    <button
+                      type="button"
+                      aria-label="Dismiss stitch notice"
+                      onClick={() => dismissStitchNotice()}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "var(--gs-ink-secondary)",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        lineHeight: 1,
+                        padding: "0 2px",
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
                 ) : null}
               </div>
             );

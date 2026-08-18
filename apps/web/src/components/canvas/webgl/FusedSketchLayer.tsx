@@ -32,11 +32,17 @@
  * Binding: docs/GOLD-STANDARD-2026-ARCHITECTURE.md (Fused Rendering Context)
  */
 
-import { useCallback, useMemo, useRef, useState, type ElementRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ElementRef } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Line, Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { CanvasStroke } from "@workstream/contracts";
+import {
+  collectSnapNodes,
+  DEFAULT_STITCH_EPSILON_M,
+  type SpatialPoint,
+  type SpatialStroke,
+} from "@workstream/domain";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useStudioStore } from "./studioStore";
 import { pctToWorld, worldToPct, type PctPoint, type HeightmapPoint } from "./coordTransform";
@@ -115,6 +121,31 @@ export function FusedSketchLayer({
     [strokes, scaleM, boardAspect],
   );
 
+  // Stitch ε-snap targets — WELDED endpoint nodes in world metres (the same
+  // tolerance the stitcher fuses with). Pushed to the store so StitchSnapLayer
+  // can pulse the dots when the cursor enters the snap radius.
+  const stitchNodes = useMemo(() => {
+    const spatial: SpatialStroke[] = strokes.map((s) => ({
+      id: s.id,
+      points: (s.points ?? []).map((p) => {
+        const [x, z] = pctToWorld({ x: p.x_pct, y: p.y_pct }, scaleM, boardAspect);
+        return { x, y: z };
+      }),
+    }));
+    return collectSnapNodes(spatial, DEFAULT_STITCH_EPSILON_M);
+  }, [strokes, scaleM, boardAspect]);
+  useEffect(() => {
+    useStudioStore.getState().setStitchSnapNodes(stitchNodes);
+    return () => useStudioStore.getState().setStitchSnapNodes([]);
+    // Re-apply the ground nodes whenever a photo-trace session opens/closes
+    // (the plane owns the snap set while pinned).
+  }, [stitchNodes, photoTraceSession]);
+
+  // Live drawing cursor for the ε-snap dots (world metres).
+  const setHover = useCallback((p: SpatialPoint | null) => {
+    useStudioStore.getState().setStitchHoverPoint(p);
+  }, []);
+
   const planeSize = scaleM * 5;
 
   // ---- Stroke capture (raycast unprojection) ----
@@ -143,10 +174,11 @@ export function FusedSketchLayer({
       // the live-stroke renderer will drape it as the camera tilts.
       isDrawingRef.current = true;
       setSnapHint(null);
+      setHover(null);
       pointsRef.current = [new THREE.Vector3(pt.x, FLAT_Y, pt.z)];
       setLivePoints(pointsRef.current);
     },
-    [sketchMode, strokes, scaleM, boardAspect],
+    [sketchMode, strokes, scaleM, boardAspect, setHover],
   );
 
   const onPointerMove = useCallback(
@@ -178,12 +210,14 @@ export function FusedSketchLayer({
         vertices: snapVertices,
       });
       setSnapHint(snap.kind ? snap : null);
+      // Live ε-snap indicator — the stitcher's weld-node highlight.
+      setHover({ x: snap.x, y: snap.z });
 
       if (last && last.distanceTo(new THREE.Vector3(snap.x, FLAT_Y, snap.z)) < 0.15) return;
       pointsRef.current.push(new THREE.Vector3(snap.x, FLAT_Y, snap.z));
       setLivePoints([...pointsRef.current]);
     },
-    [sketchMode, extrudeTarget, scaleM, snapVertices],
+    [sketchMode, extrudeTarget, scaleM, snapVertices, setHover],
   );
 
   const onPointerUp = useCallback(() => {
@@ -204,6 +238,7 @@ export function FusedSketchLayer({
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
     setSnapHint(null);
+    setHover(null);
 
     const worldPts = pointsRef.current;
     if (worldPts.length < 2) {
@@ -243,6 +278,7 @@ export function FusedSketchLayer({
     addSketchStroke,
     scaleM,
     boardAspect,
+    setHover,
   ]);
 
   // ---- Render ----

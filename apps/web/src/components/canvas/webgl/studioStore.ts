@@ -45,6 +45,11 @@ import {
   type MelbourneSeason,
 } from "@workstream/domain";
 import {
+  DEFAULT_STITCH_EPSILON_M,
+  type SpatialPoint,
+  type StitchRecord,
+} from "@workstream/domain";
+import {
   sunDateFromPreset,
   type SunDatePreset,
 } from "../handoff/features/sunGrowth/sunDatePreset";
@@ -73,6 +78,10 @@ import {
   type PlacementFieldKey,
 } from "./inspectorPolicy";
 import { marqueeSelectRefs } from "./marqueeSelect";
+import {
+  stitchSketchStrokesToFeatures,
+  unstitchFeatureToSketchStrokes,
+} from "./stitchBridge";
 import type { TrenchPointPct } from "./trenchPath";
 import type { ZonePointPct } from "./irrigationZonePath";
 import type { PlanePoint } from "./photoTraceMath";
@@ -249,18 +258,20 @@ export interface StudioStoreState {
   armedSymbolId: string | null;
   /** All canvas placements (CatalogPlacement contract schema). */
   placements: CatalogPlacement[];
-  /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features} (cap 50). */
+  /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features, stitchRecords} (cap 50). */
   historyPast: Array<{
     placements: CatalogPlacement[];
     strokes: CanvasStroke[];
     photoElevations: PhotoElevation[];
     features: LandscapeFeature[];
+    stitchRecords: Record<string, StitchRecord>;
   }>;
   historyFuture: Array<{
     placements: CatalogPlacement[];
     strokes: CanvasStroke[];
     photoElevations: PhotoElevation[];
     features: LandscapeFeature[];
+    stitchRecords: Record<string, StitchRecord>;
   }>;
 
   // --- Flora ring (ranked planting suggestions at a click) ---
@@ -379,6 +390,28 @@ export interface StudioStoreState {
   addFeatures: (features: LandscapeFeature[]) => void;
   /** Remove features by id (undoable). */
   removeFeatures: (ids: string[]) => void;
+
+  // --- Stitch engine (canvasStitcher) — welded CAD geometry + live snaps ---
+  /** World-metre welded endpoint nodes — the ε-snap highlight targets. */
+  stitchSnapNodes: SpatialPoint[];
+  /** Live drawing cursor / unwarped stroke endpoint (world metres). */
+  stitchHoverPoint: SpatialPoint | null;
+  /** The ε-snap radius (m) used for weld highlights — default 0.15. */
+  stitchEpsilonM: number;
+  /** featureId → split provenance for the un-stitch primitive. */
+  stitchRecords: Record<string, StitchRecord>;
+  /** Stamped reply for the last stitch / un-stitch action. */
+  stitchNotice: string | null;
+  /** Replace the live snap-node set (drawing layers push it on stroke change). */
+  setStitchSnapNodes: (nodes: SpatialPoint[]) => void;
+  /** Update the live drawing cursor for ε-snap highlights (null = idle). */
+  setStitchHoverPoint: (point: SpatialPoint | null) => void;
+  setStitchEpsilonM: (epsilonM: number) => void;
+  /** Weld the sketch ink into stitched CAD features (undoable); returns entity count. */
+  stitchSketchStrokes: (scaleM: number, boardAspect: number) => number;
+  /** Split a stitched feature back into sketch strokes (undoable); returns stroke count. */
+  unstitchFeature: (featureId: string, scaleM: number, boardAspect: number) => number;
+  dismissStitchNotice: () => void;
 
   // --- Sketch → CAD proposals (tidy path — SVG proposeFromStrokes pattern) ---
   /** Pending ghost proposals from the last tidy run — replaced per run. */
@@ -652,11 +685,15 @@ export interface StudioStoreState {
   bumpSaveRevision: () => void;
 }
 
-/** Snapshot the undoable doc slices (placements + strokes + photo elevations + features). */
+/** Snapshot the undoable doc slices (placements + strokes + photo elevations + features + stitch records). */
 function docSnapshot(
   s: Pick<
     StudioStoreState,
-    "placements" | "sketchStrokes" | "photoElevations" | "features"
+    | "placements"
+    | "sketchStrokes"
+    | "photoElevations"
+    | "features"
+    | "stitchRecords"
   >,
 ) {
   return {
@@ -664,6 +701,7 @@ function docSnapshot(
     strokes: [...s.sketchStrokes],
     photoElevations: [...s.photoElevations],
     features: [...s.features],
+    stitchRecords: { ...s.stitchRecords },
   };
 }
 
@@ -732,6 +770,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
 
   // Landscape features — hydrated from DesignCanvas.features.
   features: [],
+
+  // Stitch engine — no live highlights or records until ink exists.
+  stitchSnapNodes: [],
+  stitchHoverPoint: null,
+  stitchEpsilonM: DEFAULT_STITCH_EPSILON_M,
+  stitchRecords: {},
+  stitchNotice: null,
 
   // Sketch → CAD proposals — empty until the operator tidies.
   cadProposals: [],
@@ -1029,6 +1074,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         sketchStrokes: prev.strokes,
         photoElevations: prev.photoElevations,
         features: prev.features,
+        stitchRecords: { ...prev.stitchRecords },
         selection: pruneSelection(s.selection, {
           placements: prev.placements,
           features: prev.features,
@@ -1047,6 +1093,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         sketchStrokes: next.strokes,
         photoElevations: next.photoElevations,
         features: next.features,
+        stitchRecords: { ...next.stitchRecords },
         selection: pruneSelection(s.selection, {
           placements: next.placements,
           features: next.features,
@@ -1400,13 +1447,83 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     return converted;
   },
 
+  // --- Stitch engine actions ---
+  setStitchSnapNodes: (nodes) => set({ stitchSnapNodes: nodes }),
+  setStitchHoverPoint: (point) => set({ stitchHoverPoint: point }),
+  setStitchEpsilonM: (epsilonM) => set({ stitchEpsilonM: epsilonM }),
+  dismissStitchNotice: () => set({ stitchNotice: null }),
+
+  /**
+   * Weld the board-% sketch ink into stitched CAD features (canvasStitcher
+   * → LandscapeFeature[]). Source ink stays as reference (SVG convert
+   * parity) and the whole action is one undo step (Ctrl+Z). Returns the
+   * number of stitched entities.
+   */
+  stitchSketchStrokes: (scaleM, boardAspect) => {
+    const current = useStudioStore.getState();
+    const { features, records, count } = stitchSketchStrokesToFeatures(
+      current.sketchStrokes,
+      scaleM,
+      boardAspect,
+      current.stitchEpsilonM,
+    );
+    if (count === 0) {
+      set({
+        stitchNotice:
+          "Nothing to stitch — strokes must meet within the 0.15 m snap tolerance to weld.",
+      });
+      return 0;
+    }
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      return {
+        features: [...s.features, ...features],
+        stitchRecords: { ...s.stitchRecords, ...records },
+        stitchNotice: `Stitched ${count} ${count === 1 ? "entity" : "entities"} — source ink stays as reference; Undo or Un-stitch to revert.`,
+        historyPast: past,
+        historyFuture: [],
+      };
+    });
+    return count;
+  },
+
+  /**
+   * Split a stitched feature back into sketch strokes — the non-destructive
+   * un-stitch primitive. Undoable (one step); returns the stroke count.
+   */
+  unstitchFeature: (featureId, scaleM, boardAspect) => {
+    const current = useStudioStore.getState();
+    const record = current.stitchRecords[featureId];
+    if (!record) return 0;
+    const strokes = unstitchFeatureToSketchStrokes(record, scaleM, boardAspect);
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      const features = s.features.filter((f) => f.id !== featureId);
+      const records = { ...s.stitchRecords };
+      delete records[featureId];
+      return {
+        features,
+        stitchRecords: records,
+        sketchStrokes: [...s.sketchStrokes, ...strokes],
+        selection: pruneSelection(s.selection, {
+          placements: s.placements,
+          features,
+          photoElevations: s.photoElevations,
+        }),
+        stitchNotice: `Un-stitched — split back into ${strokes.length} ${strokes.length === 1 ? "stroke" : "strokes"}.`,
+        historyPast: past,
+        historyFuture: [],
+      };
+    });
+    return strokes.length;
+  },
+
   selectRef: (ref, opts) =>
     set((s) => ({
       selection: opts?.additive
         ? dedupeSelection([...s.selection, ref])
         : [ref],
-    })),
-  toggleSelectRef: (ref) =>
+    })),  toggleSelectRef: (ref) =>
     set((s) => ({
       selection: dedupeSelection(
         s.selection.some(

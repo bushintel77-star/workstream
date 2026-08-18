@@ -318,8 +318,18 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
   );
 }
 
-function FeatureInspector({ f }: { f: LandscapeFeature }) {
+function FeatureInspector({
+  f,
+  scaleM,
+  boardAspect,
+}: {
+  f: LandscapeFeature;
+  scaleM: number;
+  boardAspect: number;
+}) {
   const update = useStudioStore((s) => s.updateFeatureField);
+  const stitchRecord = useStudioStore((s) => s.stitchRecords[f.id]);
+  const unstitchFeature = useStudioStore((s) => s.unstitchFeature);
   const mf = f.material_fill;
   const scatter = f.procedural_scatter_contents;
   const labor = f.labor_profile;
@@ -327,6 +337,28 @@ function FeatureInspector({ f }: { f: LandscapeFeature }) {
   return (
     <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
       <div style={titleCss}>Feature · {f.metadata.layer}</div>
+      {stitchRecord ? (
+        <button
+          type="button"
+          data-testid="feature-unstitch"
+          onClick={() => unstitchFeature(f.id, scaleM, boardAspect)}
+          title="Split the stitched geometry back into its source strokes — non-destructive, one undo step"
+          style={{
+            width: "100%",
+            padding: "5px 8px",
+            marginBottom: 8,
+            border: "1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)",
+            borderRadius: "var(--gs-radius-chip)",
+            background: "transparent",
+            color: "var(--gs-ink-secondary)",
+            fontFamily: "var(--font-ui)",
+            fontSize: 11,
+            cursor: "pointer",
+          }}
+        >
+          Un-stitch ({stitchRecord.segments.length} source runs)
+        </button>
+      ) : null}
       <Field labelText="Name">
         <input
           key={`name-${f.id}`}
@@ -480,7 +512,13 @@ function SelectionSummary() {
   );
 }
 
-export function InspectorCard() {
+export function InspectorCard({
+  scaleM,
+  boardAspect,
+}: {
+  scaleM: number;
+  boardAspect: number;
+}) {
   const selection = useStudioStore((s) => s.selection);
   const placements = useStudioStore((s) => s.placements);
   const features = useStudioStore((s) => s.features);
@@ -497,7 +535,9 @@ export function InspectorCard() {
   }
   if (ref.kind === "feature") {
     const f = features.find((x) => x.id === ref.id);
-    return f ? <FeatureInspector f={f} /> : null;
+    return f ? (
+      <FeatureInspector f={f} scaleM={scaleM} boardAspect={boardAspect} />
+    ) : null;
   }
   return <PhotoStrokeInspector ref={ref} />;
 }

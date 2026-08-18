@@ -42,6 +42,7 @@ import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
 import { FusedCamera } from "./FusedCamera";
 import { FusedSketchLayer } from "./FusedSketchLayer";
+import { StitchSnapLayer } from "./StitchSnapLayer";
 import { PhotoTracePlane } from "./PhotoTracePlane";
 import { PlacementGizmo } from "./PlacementGizmo";
 import { TerrainMesh } from "./TerrainMesh";
@@ -868,6 +869,11 @@ export function StudioScene({
           heightmapPoints={heightmapPoints}
         />
       ) : null}
+      {/* Stitch ε-snap highlights — pulsing dots at weld nodes when the
+          drawing cursor / unwarped stroke endpoint enters the snap radius.
+          Self-gates on sketch mode + proximity; the drawing layers push
+          `stitchSnapNodes` + `stitchHoverPoint` into the store. */}
+      <StitchSnapLayer />
       {/* Photo-trace elevation — the pinned site photo as a frozen camera
           frame (self-gates on photoTraceSession). Freehand ink raycasts onto
           the vertical plane; the camera flies to the photo's facade look. */}

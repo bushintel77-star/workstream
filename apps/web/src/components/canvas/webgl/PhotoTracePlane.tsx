@@ -42,6 +42,12 @@ import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import * as THREE from "three";
 import type { PhotoTraceStroke } from "@workstream/contracts";
+import {
+  collectSnapNodes,
+  DEFAULT_STITCH_EPSILON_M,
+  type SpatialPoint,
+  type SpatialStroke,
+} from "@workstream/domain";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useStudioStore } from "./studioStore";
 import { nearestPlaneStrokeId } from "./selectionPick";
@@ -108,6 +114,34 @@ export function PhotoTracePlane({
     () => (elevation ? photoPlaneFromElevation(elevation) : null),
     [elevation],
   );
+
+  // Stitch ε-snap targets — committed plane strokes' welded endpoints lifted
+  // into world metres, so the pulsing dots show exactly where a weld will
+  // land when the trace cursor enters the snap radius.
+  const stitchNodes = useMemo(() => {
+    if (!plane || !elevation) return [];
+    const spatial: SpatialStroke[] = elevation.strokes.map((s) => ({
+      id: s.id,
+      points: s.points.map((p) => {
+        const w = planeToWorld(plane, { u: p.x_m, v: p.y_m });
+        return { x: w.x, y: w.z };
+      }),
+    }));
+    return collectSnapNodes(spatial, DEFAULT_STITCH_EPSILON_M);
+  }, [elevation, plane]);
+  useEffect(() => {
+    useStudioStore.getState().setStitchSnapNodes(stitchNodes);
+    return () => {
+      // The plane owns the snap set while pinned — release it (and any
+      // stale trace hover) on unpin so the ground ink layer re-arms.
+      useStudioStore.getState().setStitchSnapNodes([]);
+      useStudioStore.getState().setStitchHoverPoint(null);
+    };
+  }, [stitchNodes]);
+  /** Live trace cursor for the ε-snap dots (world metres). */
+  const setHover = useCallback((p: SpatialPoint | null) => {
+    useStudioStore.getState().setStitchHoverPoint(p);
+  }, []);
 
   // ---- Live trace draft — refs only, rendered imperatively (no React state
   // in the drag path: a re-render here kills R3F's move delivery). ----
@@ -238,8 +272,12 @@ export function PhotoTracePlane({
         pointsRef.current.push(local);
         draftVersionRef.current++;
       }
+      // Live ε-snap indicator — the stitcher's weld-node highlight for the
+      // trace cursor (plane point lifted into world metres).
+      const w = planeToWorld(plane, local);
+      setHover({ x: w.x, y: w.z });
     },
-    [session, plane, hitFromEvent, setPhotoCalibrateDraft],
+    [session, plane, hitFromEvent, setPhotoCalibrateDraft, setHover],
   );
 
   const onPointerUp = useCallback(() => {
@@ -252,6 +290,7 @@ export function PhotoTracePlane({
     }
     if (!drawingRef.current) return;
     drawingRef.current = false;
+    setHover(null);
     const pts = pointsRef.current;
     if (pts.length < 2) {
       // A click, not a drag — selection pick (the same selection state the
@@ -279,7 +318,7 @@ export function PhotoTracePlane({
     addPhotoTraceStroke(session.elevationId, stroke);
     pointsRef.current = [];
     draftVersionRef.current++;
-  }, [session, plane, elevation, addPhotoTraceStroke, toggleSelectRef]);
+  }, [session, plane, elevation, addPhotoTraceStroke, toggleSelectRef, setHover]);
 
   /** Apply the reference-line calibration (HUD button). */
   const applyCalibration = useCallback(() => {
