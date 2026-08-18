@@ -41,13 +41,37 @@ state; `OUTSTANDING.md` remains the live tracker).
 
 ## Known issues / workarounds
 
-- **GitHub account frozen** (payment): Actions paused; all merges ride
-  on local gates. Railway **git-linked builds fail** (they stop right
-  after "scheduling build on Metal builder") — deploy via CLI instead:
-  `railway up --detach --service <web|api> --environment production -m "..."`
+### GitHub account frozen on a failed payment — DO NOT DEBUG THIS AS A CODE BUG
+
+The GitHub account had a **failed payment** (the card on file for the
+GitHub plan), and GitHub froze the account. **The operator resolves it,
+not the code** — do not spend time triaging these symptoms:
+
+- **GitHub Actions shows a bizarre `0-second startup_failure with zero
+  jobs`** — that is GitHub killing runs on a frozen account, not a
+  broken workflow. The CI code was already fixed on main (`5a5e0ee`
+  regenerated the lockfile; the osmic git-SSH clone was replaced by a
+  public HTTPS tarball).
+- **Railway git-linked builds fail silently** — they stop right after
+  "scheduling build on Metal builder" with `FAILED`/`deploymentStopped`
+  and no build logs. That is the frozen account stalling webhook
+  deliveries, not a build error.
+- **What still works while frozen:** pushes, merges, PRs, and Railway
+  CLI deploys. Use:
+  `railway up --detach --service <web|api> --environment production -m "…"`
   then poll `railway deployment list` for SUCCESS. A deploy with no
   build logs may have reused a stale image — touch a source file and
   re-up to force a fresh build.
+- **How the operator clears it:** GitHub → Settings → Billing → update
+  the payment method / settle the charge. The account unfreezes
+  automatically (usually within minutes). **When that happens:** the
+  one outstanding verification is dispatching GitHub Actions CI on
+  `main` to confirm green on GitHub's own runners — everything else
+  (typecheck, lint, vitest, e2e, live prod probes) is already verified
+  locally and live.
+
+### Other known items
+
 - **Classic `?svg=1` studio specs red** (pre-existing, tracked in
   OUTSTANDING): `quote-tier1` renders the WebGL mount despite `?svg=1`
   (page.tsx routing), plus several canvas-* classic specs. Not touched
