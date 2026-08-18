@@ -75,11 +75,21 @@ test.describe("WebGL marquee box select", () => {
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
 
+    // The mode surface panel is a 340px card pinned top-centre (x≈470-810,
+    // y≈44-460): the drag must START on clear canvas (below the panel) or
+    // the pointerdown never reaches the ground plane. Pointer capture then
+    // keeps the gesture on the canvas across the panel region, so the box
+    // still spans the board centre — where the two seed placements sit.
+    const sx = cx - 160;
+    const sy = cy + 140;
+    const ex = cx + 160;
+    const ey = cy - 140;
+
     // Drag a box around the board centre: the two centre placements fall
     // inside; the far (10,10) placement must not.
-    await page.mouse.move(cx - 100, cy - 100);
+    await page.mouse.move(sx, sy);
     await page.mouse.down();
-    await page.mouse.move(cx + 100, cy + 100, { steps: 6 });
+    await page.mouse.move(ex, ey, { steps: 8 });
     await page.mouse.up();
 
     await expect(page.getByTestId("selection-count")).toContainText(
@@ -99,9 +109,9 @@ test.describe("WebGL marquee box select", () => {
     // Second identical drag (tool still armed, camera un-panned — a pan
     // would have moved the board centre off the box): replace path selects
     // the same two placements.
-    await page.mouse.move(cx - 100, cy - 100);
+    await page.mouse.move(sx, sy);
     await page.mouse.down();
-    await page.mouse.move(cx + 100, cy + 100, { steps: 6 });
+    await page.mouse.move(ex, ey, { steps: 8 });
     await page.mouse.up();
     await expect(page.getByTestId("selection-count")).toContainText(
       "2 selected",
@@ -110,9 +120,9 @@ test.describe("WebGL marquee box select", () => {
 
     // Shift-additive over the same box: the union dedupes — still exactly 2.
     await page.keyboard.down("Shift");
-    await page.mouse.move(cx - 100, cy - 100);
+    await page.mouse.move(sx, sy);
     await page.mouse.down();
-    await page.mouse.move(cx + 100, cy + 100, { steps: 6 });
+    await page.mouse.move(ex, ey, { steps: 8 });
     await page.mouse.up();
     await page.keyboard.up("Shift");
     await expect(page.getByTestId("selection-count")).toContainText(
