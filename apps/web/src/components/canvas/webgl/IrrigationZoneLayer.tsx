@@ -23,6 +23,7 @@ import { Html, Line } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import type { IrrigationZoneKind } from "@workstream/contracts";
+import { getLayerStyle, layerYOffset, type LayerID } from "@workstream/domain";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useStudioStore } from "./studioStore";
 import {
@@ -48,17 +49,26 @@ import {
   type LightingPointPct,
 } from "./lightingPath";
 
-/** Per-kind stroke — mirrors the handoff irrigation zone vocabulary. */
-const ZONE_COLOR: Record<IrrigationZoneKind, string> = {
-  drip: PALETTE.sproutL500,
-  spray: PALETTE.waterL500,
-  lighting: PALETTE.grayL500,
-  lighting_conduit: PALETTE.grayL400,
-  agg_drain: PALETTE.waterL500,
+/**
+ * IrrigationZoneKind → Domain Layer Registry id. The registry is the style
+ * authority (color / metric dash / y-bias); drip/spray/agg-drain share the
+ * irrigation-main layer, lighting runs ride the low-voltage layer.
+ */
+const ZONE_LAYER: Record<IrrigationZoneKind, LayerID> = {
+  drip: "civil.irrigation_main",
+  spray: "civil.irrigation_main",
+  agg_drain: "civil.irrigation_main",
+  lighting: "civil.lighting_low_volt",
+  lighting_conduit: "civil.lighting_low_volt",
 };
 
-/** Zone ring hover height above the surface (above trenches + ink). */
-const ZONE_Y_OFFSET = 0.07;
+function zoneLayerId(kind: IrrigationZoneKind): LayerID {
+  return ZONE_LAYER[kind] ?? "civil.irrigation_main";
+}
+
+function zoneStyle(kind: IrrigationZoneKind) {
+  return getLayerStyle(zoneLayerId(kind));
+}
 
 const zoneLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
@@ -89,11 +99,12 @@ function ringWorld(
   pts: ZonePointPct[],
   scaleM: number,
   boardAspect: number,
+  offsetM: number,
 ): Array<[number, number, number]> {
   const closed = closeZonePolygon(pts);
   return closed.map((p) => {
     const [wx, wz] = pctToWorld(p, scaleM, boardAspect);
-    return [wx, ZONE_Y_OFFSET, wz];
+    return [wx, offsetM, wz];
   });
 }
 
@@ -102,10 +113,11 @@ function openWorld(
   pts: LightingPointPct[],
   scaleM: number,
   boardAspect: number,
+  offsetM: number,
 ): Array<[number, number, number]> {
   return pts.map((p) => {
     const [wx, wz] = pctToWorld(p, scaleM, boardAspect);
-    return [wx, ZONE_Y_OFFSET, wz];
+    return [wx, offsetM, wz];
   });
 }
 
@@ -244,8 +256,18 @@ export function IrrigationZoneLayer({
       : 0;
   const draftWorld = zoneDraft
     ? isLightingDraft
-      ? openWorld(zoneDraft.points, scaleM, boardAspect)
-      : ringWorld(zoneDraft.points, scaleM, boardAspect)
+      ? openWorld(
+          zoneDraft.points,
+          scaleM,
+          boardAspect,
+          layerYOffset(zoneLayerId(zoneDraft.kind)),
+        )
+      : ringWorld(
+          zoneDraft.points,
+          scaleM,
+          boardAspect,
+          layerYOffset(zoneLayerId(zoneDraft.kind)),
+        )
     : null;
   const draftShape =
     !isLightingDraft && zoneDraft && zoneDraft.points.length >= 3
@@ -260,17 +282,23 @@ export function IrrigationZoneLayer({
       {irrigationZones.map((z) => {
         const pts = z.points.map((p) => ({ x: p.x_pct, y: p.y_pct }));
         if (z.kind === "lighting") {
+          const style = zoneStyle(z.kind);
           return (
             <group key={z.id}>
               <Line
-                points={openWorld(pts, scaleM, boardAspect)}
-                color={ZONE_COLOR.lighting}
-                lineWidth={1.6}
+                points={openWorld(
+                  pts,
+                  scaleM,
+                  boardAspect,
+                  layerYOffset(zoneLayerId(z.kind)),
+                )}
+                color={style.color}
+                lineWidth={style.lineWidthPx}
                 dashed
-                dashSize={0.5}
-                gapSize={0.35}
+                dashSize={style.dashArray?.[0] ?? 1}
+                gapSize={style.dashArray?.[1] ?? 0.5}
                 transparent
-                opacity={0.9}
+                opacity={style.opacity}
               />
               {fixturePositionsWorld(
                 pts,
@@ -278,7 +306,10 @@ export function IrrigationZoneLayer({
                 scaleM,
                 boardAspect,
               ).map(([fx, fz], i) => (
-                <mesh key={i} position={[fx, ZONE_Y_OFFSET + 0.02, fz]}>
+                <mesh
+                  key={i}
+                  position={[fx, layerYOffset(zoneLayerId(z.kind)) + 0.02, fz]}
+                >
                   <sphereGeometry args={[0.14, 12, 12]} />
                   <meshBasicMaterial color={PALETTE.windowGlow} />
                 </mesh>
@@ -288,26 +319,35 @@ export function IrrigationZoneLayer({
         }
         const shape = ringShape(pts, scaleM, boardAspect);
         if (!shape) return null;
+        const style = zoneStyle(z.kind);
         return (
           <group key={z.id}>
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, ZONE_Y_OFFSET - 0.01, 0]}>
+            <mesh
+              rotation={[-Math.PI / 2, 0, 0]}
+              position={[0, layerYOffset(zoneLayerId(z.kind)) - 0.01, 0]}
+            >
               <shapeGeometry args={[shape]} />
               <meshBasicMaterial
-                color={ZONE_COLOR[z.kind]}
+                color={style.color}
                 transparent
                 opacity={0.14}
                 depthWrite={false}
               />
             </mesh>
             <Line
-              points={ringWorld(pts, scaleM, boardAspect)}
-              color={ZONE_COLOR[z.kind]}
-              lineWidth={1.4}
+              points={ringWorld(
+                pts,
+                scaleM,
+                boardAspect,
+                layerYOffset(zoneLayerId(z.kind)),
+              )}
+              color={style.color}
+              lineWidth={style.lineWidthPx}
               dashed
-              dashSize={0.5}
-              gapSize={0.35}
+              dashSize={style.dashArray?.[0] ?? 1}
+              gapSize={style.dashArray?.[1] ?? 0.5}
               transparent
-              opacity={0.85}
+              opacity={style.opacity}
             />
           </group>
         );
@@ -330,10 +370,17 @@ export function IrrigationZoneLayer({
           {zoneDraft && draftWorld && (isLightingDraft ? draftWorld.length >= 2 : draftShape != null) && (
             <group>
               {draftShape && (
-                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, ZONE_Y_OFFSET - 0.01, 0]}>
+                <mesh
+                  rotation={[-Math.PI / 2, 0, 0]}
+                  position={[
+                    0,
+                    layerYOffset(zoneLayerId(zoneDraft.kind)) - 0.01,
+                    0,
+                  ]}
+                >
                   <shapeGeometry args={[draftShape]} />
                   <meshBasicMaterial
-                    color={ZONE_COLOR[zoneDraft.kind]}
+                    color={zoneStyle(zoneDraft.kind).color}
                     transparent
                     opacity={0.2}
                     depthWrite={false}
@@ -342,11 +389,11 @@ export function IrrigationZoneLayer({
               )}
               <Line
                 points={draftWorld}
-                color={ZONE_COLOR[zoneDraft.kind]}
+                color={zoneStyle(zoneDraft.kind).color}
                 lineWidth={2}
                 dashed
-                dashSize={0.5}
-                gapSize={0.35}
+                dashSize={zoneStyle(zoneDraft.kind).dashArray?.[0] ?? 1}
+                gapSize={zoneStyle(zoneDraft.kind).dashArray?.[1] ?? 0.5}
                 transparent
                 opacity={0.95}
               />

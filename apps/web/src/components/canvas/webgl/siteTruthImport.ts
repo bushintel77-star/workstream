@@ -23,6 +23,7 @@
  */
 
 import type { DesignCanvas } from "@workstream/contracts";
+import { classifyVicmapFeature, type LayerID } from "@workstream/domain";
 
 /* Local shapes mirroring the API payloads (lib/api is server-only — the
  * client reaches it through the server actions below). */
@@ -72,6 +73,8 @@ export type SiteTruthImportResult = {
   overlays: number;
   trees: number;
   boardWidthM: number | null;
+  /** Classified LayerIDs of the imported Vicmap features (read-time tag). */
+  importedLayers: LayerID[];
 };
 
 /** Deterministic UUID for a Vicmap tree placement (idempotent imports). */
@@ -152,6 +155,32 @@ export async function importSiteTruth(
   const easements = (trace.easement_lines_canvas ?? []).map((line) =>
     (line.points ?? []).map(tf.toPct),
   );
+
+  // Ingestion tagging — classify every imported Vicmap feature at read time
+  // via the Spatial Classifier, so entity.layerId flows end-to-end (renders
+  // and the strike engine resolve through the Domain Layer Registry).
+  const importedLayers: LayerID[] = [
+    ...new Set([
+      ...easements.map((_, i) =>
+        classifyVicmapFeature({
+          id: `easement-import-${i}`,
+          attributes: { kind: "EASEMENT", source: "vicmap" },
+        }).layerId,
+      ),
+      ...(building.length >= 3
+        ? [
+            classifyVicmapFeature({
+              id: "building-import",
+              attributes: { kind: "BUILDING", source: "vicmap" },
+            }).layerId,
+          ]
+        : []),
+      classifyVicmapFeature({
+        id: "boundary-import",
+        attributes: { kind: "BOUNDARY", source: "vicmap" },
+      }).layerId,
+    ]),
+  ];
 
   // Urban trees → placements. Mature size comes from the Vicmap data
   // (canopy radius + height), never invented. Idempotent by id.
@@ -310,5 +339,6 @@ export async function importSiteTruth(
     overlays: overlays.length,
     trees: treePlacements.length,
     boardWidthM: tf.boardWidthM,
+    importedLayers,
   };
 }

@@ -191,8 +191,8 @@ export const LAYER_REGISTRY: Readonly<Record<LayerID, LayerDefinition>> = {
     displayName: "Construction trench",
     provenanceSource: "user_drawn",
     style: {
-      color: "#5BA874", // drafting sage — drainage family
-      dashArray: [1.2, 0.6],
+      color: "#2E86AB", // water L500 — the drainage-trench stroke identity
+      dashArray: [2.4, 0.7],
       lineWidthPx: 1.5,
       opacity: 0.9,
       yOffsetMeters: 0.05,
@@ -229,8 +229,8 @@ export const LAYER_REGISTRY: Readonly<Record<LayerID, LayerDefinition>> = {
     displayName: "Low-voltage lighting",
     provenanceSource: "user_drawn",
     style: {
-      color: "#D17A4F", // terracotta — power conduit family
-      dashArray: [0.4, 0.4],
+      color: "#9AA0AC", // gray L500 — the lighting-conduit stroke identity
+      dashArray: [1.6, 0.8],
       lineWidthPx: 1,
       opacity: 0.85,
       yOffsetMeters: 0.075,

@@ -18,8 +18,12 @@ import { useEffect, useMemo, useRef } from "react";
 import { Html, Line } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import type { ConstructionTrenchKind } from "@workstream/contracts";
-import { trenchKindLabel } from "@workstream/domain";
-import { PALETTE } from "../../../styles/colorTokens";
+import {
+  getLayerStyle,
+  layerYOffset,
+  trenchKindLabel,
+  type LayerID,
+} from "@workstream/domain";
 import {
   pctToWorld,
   worldToPct,
@@ -35,25 +39,19 @@ import {
   type TrenchPointPct,
 } from "./trenchPath";
 
-/** Per-kind stroke — mirrors the handoff TrenchOverlay STROKE mapping. */
-const TRENCH_COLOR: Record<ConstructionTrenchKind, string> = {
-  irrig_main: PALETTE.hedgeL600,
-  irrig_lateral: PALETTE.sproutL500,
-  lighting_conduit: PALETTE.grayL500,
-  drainage: PALETTE.waterL500,
+/**
+ * ConstructionTrenchKind → Domain Layer Registry id. The registry is the
+ * single style authority (color / metric dash / y-bias) — no per-kind hex.
+ * Irrig laterals share the irrigation-main layer (distribution family).
+ */
+const TRENCH_LAYER: Record<ConstructionTrenchKind, LayerID> = {
+  irrig_main: "civil.irrigation_main",
+  irrig_lateral: "civil.irrigation_main",
+  lighting_conduit: "civil.lighting_low_volt",
+  drainage: "civil.trench",
 };
 
-/** Per-kind dash signature — first pair of the handoff DASH_LIVE patterns. */
-const TRENCH_DASH: Record<ConstructionTrenchKind, { dash: number; gap: number }> = {
-  irrig_main: { dash: 3, gap: 0.8 },
-  irrig_lateral: { dash: 1.2, gap: 0.9 },
-  lighting_conduit: { dash: 1.6, gap: 0.8 },
-  drainage: { dash: 2.4, gap: 0.7 },
-};
-
-/** Hover height above the surface (above ink + dims). */
-const TRENCH_Y_OFFSET = 0.05;
-/** Strike crimson — the conflict signal on the live draft. */
+/** Strike crimson — the conflict signal on the live draft (not a layer style). */
 const CONFLICT_COLOR = "#C41E1E";
 
 function makeTrenchId(): string {
@@ -216,36 +214,46 @@ export function TrenchLayer({
     trenchDraft && trenchDraft.points.length >= 2
       ? worldLengthM(trenchDraft.points, scaleM, boardAspect)
       : 0;
-  const draftWorld = trenchDraft
-    ? drapePolyline(
-        trenchDraft.points,
-        sampler,
-        scaleM,
-        boardAspect,
-        TRENCH_Y_OFFSET + 0.02,
-      )
-    : null;
+  const draftLayer = trenchTool ? TRENCH_LAYER[trenchTool] : null;
+  const draftStyle = draftLayer ? getLayerStyle(draftLayer) : null;
+  const draftWorld =
+    trenchDraft && draftLayer
+      ? drapePolyline(
+          trenchDraft.points,
+          sampler,
+          scaleM,
+          boardAspect,
+          layerYOffset(draftLayer) + 0.02,
+        )
+      : null;
   const draftLast = draftWorld ? draftWorld[draftWorld.length - 1] : null;
 
   return (
     <group>
-      {/* Committed runs — draped, per-kind dashed lines. */}
+      {/* Committed runs — draped, registry-styled dashed lines. */}
       {constructionTrenches.map((t) => {
         const pts = t.points.map((p) => ({ x: p.x_pct, y: p.y_pct }));
-        const world = drapePolyline(pts, sampler, scaleM, boardAspect, TRENCH_Y_OFFSET);
+        const layerId = TRENCH_LAYER[t.kind];
+        const style = getLayerStyle(layerId);
+        const world = drapePolyline(
+          pts,
+          sampler,
+          scaleM,
+          boardAspect,
+          layerYOffset(layerId),
+        );
         if (world.length < 2) return null;
-        const dash = TRENCH_DASH[t.kind];
         return (
           <Line
             key={t.id}
             points={world}
-            color={TRENCH_COLOR[t.kind]}
-            lineWidth={1.6}
+            color={style.color}
+            lineWidth={style.lineWidthPx}
             dashed
-            dashSize={dash.dash}
-            gapSize={dash.gap}
+            dashSize={style.dashArray?.[0] ?? 1}
+            gapSize={style.dashArray?.[1] ?? 0.5}
             transparent
-            opacity={0.9}
+            opacity={style.opacity}
           />
         );
       })}
@@ -271,12 +279,12 @@ export function TrenchLayer({
                 color={
                   draftConflict
                     ? CONFLICT_COLOR
-                    : TRENCH_COLOR[trenchDraft.kind]
+                    : draftStyle?.color ?? CONFLICT_COLOR
                 }
                 lineWidth={2}
                 dashed
-                dashSize={TRENCH_DASH[trenchDraft.kind].dash}
-                gapSize={TRENCH_DASH[trenchDraft.kind].gap}
+                dashSize={draftStyle?.dashArray?.[0] ?? 1}
+                gapSize={draftStyle?.dashArray?.[1] ?? 0.5}
                 transparent
                 opacity={0.95}
               />
