@@ -182,3 +182,5 @@ export * from './strikeAlert';
 export * from './traceability';
 export * from './layers/layerRegistry';
 export * from './spatial/classifySpatialEntity';
+export * from './spatial/photoCalibrator';
+export * from './spatial/raycastGround';
