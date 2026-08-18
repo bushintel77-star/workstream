@@ -603,10 +603,14 @@ export function WebGLStudioPreview({
         trenches: constructionTrenches,
         irrigationZones,
         levels,
+        easements: easementsPct ?? [],
+        // The frame's APWA service lines are not yet plumbed to the WebGL
+        // mount; BYDA utilities already cover gas via the utility path.
+        services: [],
         scaleM,
         boardAspect,
       }),
-    [bydaAssets, constructionTrenches, irrigationZones, levels, scaleM, boardAspect],
+    [bydaAssets, constructionTrenches, irrigationZones, levels, easementsPct, scaleM, boardAspect],
   );
 
   // --- Autosave (debounced + retry + backoff) ---

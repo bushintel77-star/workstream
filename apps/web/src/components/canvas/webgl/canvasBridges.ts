@@ -24,16 +24,21 @@ import type {
   IrrigationZone,
 } from "@workstream/contracts";
 import {
+  classifySpatialEntity,
+  detectLayerStrikes,
   detectStrikes,
   calculateHydraulicRuns,
+  layerTriggersDigSafety,
   type DesignExcavation,
+  type DigHazardSegment,
   type HydraulicResult,
   type HydraulicRun,
+  type LayerStrikeAlert,
   type StrikeAlert,
   type UtilityLine,
   type UtilityType,
 } from "@workstream/domain";
-import { pctToWorld, type HeightmapPoint } from "./coordTransform";
+import { pctToWorld, type HeightmapPoint, type PctPoint } from "./coordTransform";
 import type { SubsurfaceUtility, StrikeAlertData } from "./features/SubsurfaceEngine";
 
 /* -------------------------------------------------------------------------- */
@@ -141,13 +146,91 @@ export function trenchesToExcavations(
 }
 
 /**
- * Detect strike alerts between committed trenches and subsurface utilities.
- * Wraps the domain detectStrikes() and maps the results to the renderer's
- * StrikeAlertData[] shape.
+ * Dig-safety clearance rule — an excavation within this plan distance of a
+ * dig-safety layer is a strike, regardless of depth (P4 UX spec: 0.9 m).
+ */
+export const DIG_SAFETY_CLEARANCE_M = 0.9;
+
+/** APWA service kinds by index — mirrors the Services render cycle. */
+const APWA_SERVICE_KINDS = [
+  "water",
+  "sewer",
+  "gas",
+  "electric",
+  "comms",
+] as const;
+
+/**
+ * Build dig-safety hazard segments from the site frame's easement rings and
+ * service lines. Every easement ring edge is a hazard on the vicmap.easement
+ * layer; service lines are classified via the Spatial Classifier and only
+ * layers flagged `triggersDigSafetyAlert` in the Domain Layer Registry
+ * become hazards (the policy gate — water/sewer/electric never alert).
+ */
+export function buildDigSafetyHazards(
+  easements: PctPoint[][],
+  services: PctPoint[][],
+  scaleM: number,
+  boardAspect: number,
+): DigHazardSegment[] {
+  const hazards: DigHazardSegment[] = [];
+
+  for (let r = 0; r < easements.length; r++) {
+    const ring = easements[r]!;
+    for (let i = 0; i < ring.length; i++) {
+      const [ax, az] = pctToWorld(ring[i]!, scaleM, boardAspect);
+      const [bx, bz] = pctToWorld(
+        ring[(i + 1) % ring.length]!,
+        scaleM,
+        boardAspect,
+      );
+      hazards.push({
+        id: `easement-${r}-${i}`,
+        layerId: "vicmap.easement",
+        start: [ax, az],
+        end: [bx, bz],
+        toleranceM: DIG_SAFETY_CLEARANCE_M,
+      });
+    }
+  }
+
+  for (let i = 0; i < services.length; i++) {
+    const line = services[i]!;
+    const classified = classifySpatialEntity({
+      id: `service-${i}`,
+      source: "vicmap",
+      attributes: {
+        service_class: APWA_SERVICE_KINDS[i % APWA_SERVICE_KINDS.length],
+      },
+    });
+    if (!layerTriggersDigSafety(classified.layerId)) continue;
+    for (let j = 0; j < line.length - 1; j++) {
+      const [ax, az] = pctToWorld(line[j]!, scaleM, boardAspect);
+      const [bx, bz] = pctToWorld(line[j + 1]!, scaleM, boardAspect);
+      hazards.push({
+        id: `service-${i}-${j}`,
+        layerId: classified.layerId,
+        start: [ax, az],
+        end: [bx, bz],
+        toleranceM: DIG_SAFETY_CLEARANCE_M,
+      });
+    }
+  }
+
+  return hazards;
+}
+
+/**
+ * Detect strike alerts between committed trenches and subsurface utilities
+ * (depth-gated) plus dig-safety layer hazards (surface-clearance rule).
+ * Wraps the domain detectors and maps the results to the renderer's
+ * StrikeAlertData[] shape — carrying hazard + excavation attribution so the
+ * operator sees WHICH layer/feature a strike is against.
  */
 export function computeStrikeAlerts(
   excavations: DesignExcavation[],
   utilities: SubsurfaceUtility[],
+  layerHazards: DigHazardSegment[] = [],
 ): StrikeAlertData[] {
   // SubsurfaceUtility and the domain UtilityLine are structurally identical
   // (same fields, same types). Cast once so the compiler validates the shape
@@ -156,16 +239,37 @@ export function computeStrikeAlerts(
   const utilityLines = utilities as unknown as UtilityLine[];
 
   const alerts: StrikeAlert[] = detectStrikes(excavations, utilityLines);
+  const layerAlerts: LayerStrikeAlert[] = detectLayerStrikes(
+    excavations,
+    layerHazards,
+  );
 
-  // Map domain StrikeAlert → renderer StrikeAlertData (drops the join IDs and
-  // distanceM the renderer doesn't consume). Explicit return type above keeps
-  // the mapping honest.
-  return alerts.map((a: StrikeAlert) => ({
+  // Map domain alerts → renderer StrikeAlertData, preserving attribution.
+  const mapped: StrikeAlertData[] = alerts.map((a: StrikeAlert) => ({
     id: a.id,
     utilityType: a.utilityType,
+    hazardId: a.utilityId,
+    excavationId: a.excavationId,
     point: a.point,
     severity: a.severity,
   }));
+  for (const a of layerAlerts) {
+    mapped.push({
+      id: a.id,
+      layerId: a.layerId,
+      hazardId: a.hazardId,
+      excavationId: a.excavationId,
+      point: a.point,
+      severity: a.severity,
+    });
+  }
+
+  // Direct-first across both families, ties broken deterministically.
+  const sevOrder = { direct: 0, near: 1, proximity: 2 } as const;
+  return mapped.sort(
+    (x, y) =>
+      sevOrder[x.severity] - sevOrder[y.severity] || x.id.localeCompare(y.id),
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -291,11 +395,23 @@ export function computeLiveStudioData(params: {
   trenches: ConstructionTrench[];
   irrigationZones: IrrigationZone[];
   levels: DesignSiteFrameLevel[];
+  /** Site-frame easement rings (board-%) — dig-safety hazard sources. */
+  easements?: PctPoint[][];
+  /** Site-frame service lines (board-%) — classified, policy-filtered. */
+  services?: PctPoint[][];
   scaleM: number;
   boardAspect: number;
 }): LiveStudioData {
-  const { bydaAssets, trenches, irrigationZones, levels, scaleM, boardAspect } =
-    params;
+  const {
+    bydaAssets,
+    trenches,
+    irrigationZones,
+    levels,
+    easements = [],
+    services = [],
+    scaleM,
+    boardAspect,
+  } = params;
 
   const subsurfaceUtilities = bydaAssetsToSubsurfaceUtilities(
     bydaAssets,
@@ -303,7 +419,17 @@ export function computeLiveStudioData(params: {
     boardAspect,
   );
   const excavations = trenchesToExcavations(trenches, scaleM, boardAspect);
-  const strikeAlerts = computeStrikeAlerts(excavations, subsurfaceUtilities);
+  const digSafetyHazards = buildDigSafetyHazards(
+    easements,
+    services,
+    scaleM,
+    boardAspect,
+  );
+  const strikeAlerts = computeStrikeAlerts(
+    excavations,
+    subsurfaceUtilities,
+    digSafetyHazards,
+  );
   const heightmapPoints = levelsToHeightmapPoints(levels, scaleM, boardAspect);
   const hydraulicResults = computeHydraulics(irrigationZones, scaleM, boardAspect);
 

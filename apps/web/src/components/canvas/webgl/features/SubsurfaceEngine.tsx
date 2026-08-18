@@ -20,7 +20,7 @@ import { useMemo, useRef, type ElementRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Line, Billboard, Text } from "@react-three/drei";
 import * as THREE from "three";
-import type { UtilityType } from "@workstream/domain";
+import type { LayerID, UtilityType } from "@workstream/domain";
 import { useReducedMotion } from "../useReducedMotion";
 import { PALETTE } from "../../../../styles/colorTokens";
 import { useSeasonalStore } from "../seasonalStore";
@@ -59,7 +59,14 @@ export interface SubsurfaceUtility {
 
 export interface StrikeAlertData {
   id: string;
-  utilityType: UtilityType;
+  /** Present for utility strikes; layer strikes carry layerId instead. */
+  utilityType?: UtilityType;
+  /** Registry layer that owns a layer strike (e.g. vicmap.easement). */
+  layerId?: LayerID;
+  /** The hazard's feature id (utility id or easement ring-edge id). */
+  hazardId?: string;
+  /** The excavation (trench) that caused the strike. */
+  excavationId?: string;
   point: [number, number, number]; // [x, y(=depth), z]
   severity: "direct" | "near" | "proximity";
 }
@@ -198,7 +205,7 @@ function StrikePulse({ alert }: { alert: StrikeAlertData }) {
           outlineWidth={0.02}
           outlineColor={PALETTE.gsCanvas}
         >
-          {`INDICATIVE CONFLICT: ${alert.utilityType.toUpperCase()}`}
+          {`INDICATIVE CONFLICT: ${(alert.layerId ?? alert.utilityType ?? "layer").toUpperCase()}`}
         </Text>
       </Billboard>
     </group>

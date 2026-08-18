@@ -1,14 +1,21 @@
 /**
  * Strike Alert Engine — collision detection between design geometry and
- * subsurface utility volumes.
+ * subsurface utility volumes + dig-safety layers.
  *
  * Binding: docs/GOLD-STANDARD-2026.md §3 Phase 2 (Strike Alert Engine)
  *
- * Detects when a design element (trench, footing, root volume) intersects
- * a subsurface utility (gas, water, sewer, electric, comms). Uses simple
- * bounding-volume intersection (AABB) for the broad phase, then 2D segment
- * distance for the narrow phase (most utilities are modelled as line+depth).
+ * Two hazard families:
+ *   - subsurface utilities (gas, water, sewer, ...) at burial depth —
+ *     detectStrikes() (depth-gated).
+ *   - dig-safety LAYERS from the Domain Layer Registry (vicmap.easement,
+ *     services.gas — any layer flagged triggersDigSafetyAlert) —
+ *     detectLayerStrikes() (surface-clearance rule, no depth gate).
+ *
+ * Both use AABB broad-phase via polyline-to-polyline distance, then 2D
+ * segment distance for the narrow phase.
  */
+
+import type { LayerID } from "./layers/layerRegistry";
 
 export type UtilityType = "gas" | "water" | "sewer" | "electric" | "comms" | "reclaimed";
 
@@ -185,6 +192,79 @@ export function detectStrikes(
         excavationId: excavation.id,
         utilityType: utility.type,
         point: [point[0], point[1], Math.min(excavation.depthM, utility.depthM)],
+        distanceM: distance,
+        severity,
+      });
+    }
+  }
+
+  return alerts.sort((a, b) => {
+    const sevOrder = { direct: 0, near: 1, proximity: 2 };
+    return sevOrder[a.severity] - sevOrder[b.severity] || a.distanceM - b.distanceM;
+  });
+}
+
+/**
+ * A dig-safety hazard segment from a registered layer (an easement ring
+ * edge, a service run). Dig hazards are surface-level: any excavation that
+ * crosses within `toleranceM` (the dig-clearance rule, 0.9 m) is a strike,
+ * regardless of depth.
+ */
+export interface DigHazardSegment {
+  id: string;
+  layerId: LayerID;
+  /** Start point [x, y] in metres. */
+  start: [number, number];
+  /** End point [x, y] in metres. */
+  end: [number, number];
+  /** Safety buffer in metres — the dig-clearance rule (default 0.9). */
+  toleranceM: number;
+}
+
+/** A strike between an excavation and a dig-safety layer. */
+export interface LayerStrikeAlert {
+  id: string;
+  /** The hazard segment's feature id (e.g. `easement-2-5` — ring+edge). */
+  hazardId: string;
+  excavationId: string;
+  /** The registry layer that owns the hazard (attribution + policy). */
+  layerId: LayerID;
+  /** Collision point [x, y, depth] in metres. */
+  point: [number, number, number];
+  distanceM: number;
+  severity: "direct" | "near" | "proximity";
+}
+
+/**
+ * Detect strikes between excavations and dig-safety layers. No depth gate —
+ * the dig-safety rule is a plan-distance clearance at any excavation depth.
+ * Returns alerts sorted direct-first.
+ */
+export function detectLayerStrikes(
+  excavations: DesignExcavation[],
+  hazards: DigHazardSegment[],
+): LayerStrikeAlert[] {
+  const alerts: LayerStrikeAlert[] = [];
+
+  for (const excavation of excavations) {
+    for (const hazard of hazards) {
+      const { distance, point } = polylineToPolylineDistance(
+        excavation.path,
+        [hazard.start, hazard.end],
+      );
+      const threshold = excavation.widthM / 2 + hazard.toleranceM;
+      if (distance > threshold) continue;
+
+      const overlap = threshold - distance;
+      const severity: LayerStrikeAlert["severity"] =
+        overlap > 0.3 ? "direct" : overlap > 0.1 ? "near" : "proximity";
+
+      alerts.push({
+        id: `strike-${excavation.id}-${hazard.id}`,
+        hazardId: hazard.id,
+        excavationId: excavation.id,
+        layerId: hazard.layerId,
+        point: [point[0], point[1], excavation.depthM],
         distanceM: distance,
         severity,
       });

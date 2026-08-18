@@ -9,6 +9,8 @@ import {
   bydaAssetsToSubsurfaceUtilities,
   trenchesToExcavations,
   computeStrikeAlerts,
+  buildDigSafetyHazards,
+  DIG_SAFETY_CLEARANCE_M,
   computeHydraulics,
   levelsToHeightmapPoints,
   computeLiveStudioData,
@@ -251,6 +253,102 @@ describe("computeStrikeAlerts", () => {
       BOARD_ASPECT,
     );
     expect(computeStrikeAlerts(excavations, [])).toEqual([]);
+  });
+});
+
+describe("buildDigSafetyHazards", () => {
+  it("turns every easement ring edge into a vicmap.easement hazard", () => {
+    const ring = [
+      { x: 40, y: 40 },
+      { x: 60, y: 40 },
+      { x: 60, y: 60 },
+      { x: 40, y: 60 },
+    ];
+    const hazards = buildDigSafetyHazards([ring], [], SCALE_M, BOARD_ASPECT);
+    expect(hazards).toHaveLength(4);
+    for (const h of hazards) {
+      expect(h.layerId).toBe("vicmap.easement");
+      expect(h.toleranceM).toBe(DIG_SAFETY_CLEARANCE_M);
+    }
+  });
+
+  it("policy-filters service lines — gas alerts, water does not", () => {
+    const line = [
+      { x: 0, y: 50 },
+      { x: 100, y: 50 },
+    ];
+    // APWA index 2 = gas → services.gas hazard; index 0 = water → skipped.
+    const hazards = buildDigSafetyHazards(
+      [],
+      [line, line, line],
+      SCALE_M,
+      BOARD_ASPECT,
+    );
+    expect(hazards).toHaveLength(1);
+    expect(hazards[0]!.layerId).toBe("services.gas");
+    expect(buildDigSafetyHazards([], [line], SCALE_M, BOARD_ASPECT)).toEqual([]);
+  });
+});
+
+describe("computeStrikeAlerts (layer hazards)", () => {
+  it("attributes a dig-safety strike to the easement hazard + trench", () => {
+    // An easement ring crossing the trench at the board centre.
+    const ring = [
+      { x: 0, y: 50 },
+      { x: 100, y: 50 },
+    ];
+    const excavations = trenchesToExcavations(
+      [
+        makeTrench(
+          [{ x_pct: 50, y_pct: 0 }, { x_pct: 50, y_pct: 100 }],
+          { depth_mm: 400 },
+        ),
+      ],
+      SCALE_M,
+      BOARD_ASPECT,
+    );
+    const hazards = buildDigSafetyHazards([ring], [], SCALE_M, BOARD_ASPECT);
+    const alerts = computeStrikeAlerts(excavations, [], hazards);
+    const layerAlert = alerts.find((a) => a.layerId === "vicmap.easement");
+    expect(layerAlert).toBeDefined();
+    expect(layerAlert!.hazardId).toMatch(/^easement-/);
+    expect(layerAlert!.excavationId).toBe(excavations[0]!.id);
+  });
+
+  it("merges utility and layer strikes with direct-first ordering", () => {
+    const utilities = bydaAssetsToSubsurfaceUtilities(
+      [makeBydaAsset("gas", [{ x_pct: 0, y_pct: 50 }, { x_pct: 100, y_pct: 50 }])],
+      SCALE_M,
+      BOARD_ASPECT,
+    );
+    utilities[0]!.depthM = 0.3;
+    utilities[0]!.toleranceM = 0.3;
+    const excavations = trenchesToExcavations(
+      [
+        makeTrench(
+          [{ x_pct: 50, y_pct: 0 }, { x_pct: 50, y_pct: 100 }],
+          { depth_mm: 400 },
+        ),
+      ],
+      SCALE_M,
+      BOARD_ASPECT,
+    );
+    const ring = [
+      { x: 0, y: 50 },
+      { x: 100, y: 50 },
+    ];
+    const hazards = buildDigSafetyHazards([ring], [], SCALE_M, BOARD_ASPECT);
+    const alerts = computeStrikeAlerts(excavations, utilities, hazards);
+    expect(alerts.length).toBeGreaterThanOrEqual(2);
+    const kinds = alerts.map((a) => a.utilityType ?? a.layerId);
+    expect(kinds).toContain("gas");
+    expect(kinds).toContain("vicmap.easement");
+    const sevOrder = { direct: 0, near: 1, proximity: 2 } as const;
+    for (let i = 1; i < alerts.length; i++) {
+      expect(sevOrder[alerts[i]!.severity]).toBeGreaterThanOrEqual(
+        sevOrder[alerts[i - 1]!.severity],
+      );
+    }
   });
 });
 
