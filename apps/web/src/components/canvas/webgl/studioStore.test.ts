@@ -5,7 +5,7 @@
  * back in and desync the toolbar from the rendered sun.
  */
 
-import { describe, expect, it, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type {
   CanvasStroke,
   PhotoElevation,
@@ -324,5 +324,166 @@ describe("studioStore selection slice", () => {
     store.undo(); // restores the empty snapshot — the ref must prune
     expect(useStudioStore.getState().placements).toEqual([]);
     expect(useStudioStore.getState().selection).toEqual([]);
+  });
+});
+
+describe("inspector edits (updatePlacementField / updateFeatureField)", () => {
+  const SQUARE = [
+    { x: 10, y: 10 },
+    { x: 90, y: 10 },
+    { x: 90, y: 90 },
+    { x: 10, y: 90 },
+  ];
+
+  beforeEach(() => {
+    useStudioStore.setState({
+      placements: [],
+      features: [],
+      siteBoundary: [],
+      siteBuilding: [],
+      boundaryNotice: null,
+      historyPast: [],
+      historyFuture: [],
+    });
+  });
+
+  it("attribute-only edits persist directly — no clamp, no notice", () => {
+    const store = useStudioStore.getState();
+    store.setSiteContext(SQUARE, []);
+    store.setPlacements([
+      {
+        id: "p-out",
+        symbol_id: "bluestone-paver",
+        x_pct: 2, // outside the ring — direct-persist fields must NOT clamp
+        y_pct: 50,
+        rotation_deg: 0,
+        scale: 1,
+      },
+    ]);
+    store.updatePlacementField("p-out", { label: "Courtyard" });
+    store.updatePlacementField("p-out", { height_m: 2.4 });
+    const p = useStudioStore.getState().placements[0]!;
+    expect(p.label).toBe("Courtyard");
+    expect(p.height_m).toBe(2.4);
+    expect(p.x_pct).toBe(2); // untouched — locked classification
+    expect(useStudioStore.getState().boundaryNotice).toBeNull();
+  });
+
+  it("geometry-affecting edits re-clamp the centre and raise a notice", () => {
+    const store = useStudioStore.getState();
+    store.setSiteContext(SQUARE, []);
+    store.setPlacements([
+      {
+        id: "p-out",
+        symbol_id: "bluestone-paver",
+        x_pct: 2,
+        y_pct: 50,
+        rotation_deg: 0,
+        scale: 1,
+      },
+    ]);
+    store.updatePlacementField("p-out", { scale: 2 });
+    const s = useStudioStore.getState();
+    const p = s.placements[0]!;
+    expect(p.scale).toBe(2);
+    expect(p.x_pct).toBeGreaterThan(2); // clamped onto the boundary
+    expect(s.boundaryNotice?.refId).toBe("p-out");
+    expect(s.boundaryNotice?.reason).toBeTruthy();
+    s.dismissBoundaryNotice();
+    expect(useStudioStore.getState().boundaryNotice).toBeNull();
+  });
+
+  it("geometry-affecting edits with no boundary pass through quietly", () => {
+    const store = useStudioStore.getState();
+    store.setPlacements([
+      {
+        id: "p-in",
+        symbol_id: "bluestone-paver",
+        x_pct: 50,
+        y_pct: 50,
+        rotation_deg: 0,
+        scale: 1,
+      },
+    ]);
+    store.updatePlacementField("p-in", { canopy_radius_m: 3.5 });
+    const p = useStudioStore.getState().placements[0]!;
+    expect(p.canopy_radius_m).toBe(3.5);
+    expect(p.x_pct).toBe(50);
+    expect(useStudioStore.getState().boundaryNotice).toBeNull();
+  });
+
+  it("feature edits merge, mark human_locked, and are undoable", () => {
+    const store = useStudioStore.getState();
+    const feature = {
+      id: "f-1",
+      type: "LandscapeFeature" as const,
+      metadata: {
+        layer: "hardscape" as const,
+        friendly_name: "Path",
+        timestamp_created: "2026-08-18T00:00:00.000Z",
+        source_attribution: "human_drawn" as const,
+        user_modification_state: "draft" as const,
+      },
+      geometry: {
+        type: "LineString" as const,
+        spatial_reference: "EPSG:3857",
+        canvas_origin_pct: { x_pct: 0, y_pct: 0 },
+        points: [
+          { id: "f-1-v0", pct: { x_pct: 10, y_pct: 20 } },
+          { id: "f-1-v1", pct: { x_pct: 30, y_pct: 40 } },
+        ],
+      },
+      material_fill: {
+        type: "surface" as const,
+        sku: "PAVE-BLUESTONE",
+        depth_m: 0.075,
+        waste_allocation_pct: 10,
+      },
+    };
+    store.setFeatures([feature]);
+    store.updateFeatureField("f-1", {
+      friendly_name: "Front path",
+      material_fill: { sku: "PAVE-GRANITE" },
+    });
+    const f = useStudioStore.getState().features[0]!;
+    expect(f.metadata.friendly_name).toBe("Front path");
+    expect(f.material_fill?.sku).toBe("PAVE-GRANITE");
+    expect(f.material_fill?.depth_m).toBe(0.075); // untouched fields survive
+    expect(f.metadata.user_modification_state).toBe("human_locked");
+    expect(useStudioStore.getState().historyPast).toHaveLength(1);
+  });
+
+  it("section patches never fabricate absent sections", () => {
+    const store = useStudioStore.getState();
+    store.setFeatures([
+      {
+        id: "f-bare",
+        type: "LandscapeFeature" as const,
+        metadata: {
+          layer: "softscape_beds" as const,
+          timestamp_created: "2026-08-18T00:00:00.000Z",
+          source_attribution: "human_drawn" as const,
+          user_modification_state: "draft" as const,
+        },
+        geometry: {
+          type: "Polygon" as const,
+          spatial_reference: "EPSG:3857",
+          canvas_origin_pct: { x_pct: 0, y_pct: 0 },
+          points: [
+            { id: "f-bare-v0", pct: { x_pct: 10, y_pct: 10 } },
+            { id: "f-bare-v1", pct: { x_pct: 20, y_pct: 10 } },
+            { id: "f-bare-v2", pct: { x_pct: 20, y_pct: 20 } },
+          ],
+        },
+      },
+    ]);
+    store.updateFeatureField("f-bare", {
+      material_fill: { sku: "X" },
+      brush_recipe_id: "Y",
+    });
+    const f = useStudioStore.getState().features[0]!;
+    expect(f.material_fill).toBeUndefined();
+    expect(f.procedural_scatter_contents).toBeUndefined();
+    expect(f.metadata.user_modification_state).toBe("human_locked");
   });
 });

@@ -71,6 +71,7 @@ import { importSiteTruth } from "./siteTruthImport";
 import { StudioCommandPalette } from "./StudioCommandPalette";
 import { StudioElevationCard } from "./StudioElevationCard";
 import { StudioCadCard } from "./StudioCadCard";
+import { InspectorCard } from "./InspectorCard";
 import { SitePhotoGallery } from "./SitePhotoGallery";
 import { PhotoTraceHud } from "./PhotoTraceHud";
 import { PhotoElevationSheet } from "./PhotoElevationSheet";
@@ -1814,6 +1815,9 @@ export function WebGLStudioPreview({
           </button>
         </div>
       ) : null}
+
+      {/* Inspector — selection-driven property panel (all modes). */}
+      <InspectorCard />
 
       {/* Asset discovery fan-out dock — bottom-centre, above the growth card */}
       <AssetFanOutDock />

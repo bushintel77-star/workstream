@@ -32,7 +32,9 @@ import type {
   ConstructionTrenchKind,
   IrrigationZone,
   IrrigationZoneKind,
+  LaborProfile,
   LandscapeFeature,
+  MaterialFill,
   PhotoElevation,
   PhotoTraceStroke,
 } from "@workstream/contracts";
@@ -64,6 +66,11 @@ import {
   pruneSelection,
   type SelectionRef,
 } from "./selectionPick";
+import {
+  clampPlacementEdit,
+  patchClamps,
+  type PlacementFieldKey,
+} from "./inspectorPolicy";
 import type { TrenchPointPct } from "./trenchPath";
 import type { ZonePointPct } from "./irrigationZonePath";
 import type { PlanePoint } from "./photoTraceMath";
@@ -401,6 +408,47 @@ export interface StudioStoreState {
   clearSelection: () => void;
   setSelection: (refs: SelectionRef[]) => void;
 
+  // --- Inspector edits (selection-driven property panel) ---
+  /**
+   * Edit a placement's inspector fields. Clamp-triggering fields
+   * (scale, canopy_radius_m) re-clamp the centre against the title
+   * boundary before the mutation lands (locked classification —
+   * inspectorPolicy.ts); attribute-only fields pass through. Undoable.
+   */
+  updatePlacementField: (
+    id: string,
+    patch: Partial<
+      Pick<
+        CatalogPlacement,
+        | "symbol_id"
+        | "scale"
+        | "rotation_deg"
+        | "label"
+        | "height_m"
+        | "canopy_radius_m"
+      >
+    >,
+  ) => void;
+  /**
+   * Edit a feature's inspector fields (attribute-only — direct persist).
+   * Marks the feature human_locked. Section patches apply only when the
+   * section already exists on the feature (the panel hides absent ones).
+   */
+  updateFeatureField: (
+    id: string,
+    patch: {
+      friendly_name?: string;
+      material_fill?: Partial<
+        Pick<MaterialFill, "type" | "sku" | "depth_m" | "waste_allocation_pct">
+      >;
+      brush_recipe_id?: string;
+      labor_tier?: LaborProfile["base_difficulty_tier"];
+    },
+  ) => void;
+  /** Latest boundary re-clamp notice (dismissible; re-arms per clamped edit). */
+  boundaryNotice: { refId: string; reason: string; at: number } | null;
+  dismissBoundaryNotice: () => void;
+
   // --- Project context (for persistence + aerial + flora ranking) ---
   projectId: string;
   aerialUri: string | null;
@@ -638,6 +686,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Selection — nothing selected until the operator picks.
   selection: [],
 
+  // Inspector — no notice until a clamped edit fires.
+  boundaryNotice: null,
+
   // Photo-trace elevation — no pinned session; records hydrate from the server.
   photoElevations: [],
   photoTraceSession: null,
@@ -733,6 +784,72 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         : { armedSymbolId: null },
     ),
   setPlacements: (placements) => set({ placements }),
+  updatePlacementField: (id, patch) =>
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      let notice = s.boundaryNotice;
+      const placements = s.placements.map((p) => {
+        if (p.id !== id) return p;
+        const merged = { ...p, ...patch };
+        if (!patchClamps(patch as Partial<Record<PlacementFieldKey, unknown>>)) {
+          return merged;
+        }
+        const clamped = clampPlacementEdit(
+          merged,
+          s.siteBoundary,
+          s.siteBuilding,
+        );
+        if (clamped.snapped) {
+          notice = {
+            refId: id,
+            reason: clamped.reason ?? "Centre snapped into the outdoor area",
+            at: Date.now(),
+          };
+        }
+        return { ...merged, x_pct: clamped.x, y_pct: clamped.y };
+      });
+      return {
+        placements,
+        boundaryNotice: notice,
+        historyPast: past,
+        historyFuture: [],
+      };
+    }),
+  updateFeatureField: (id, patch) =>
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      const features = s.features.map((f) => {
+        if (f.id !== id) return f;
+        const materialFill =
+          patch.material_fill && f.material_fill
+            ? { ...f.material_fill, ...patch.material_fill }
+            : f.material_fill;
+        const scatter =
+          patch.brush_recipe_id && f.procedural_scatter_contents
+            ? {
+                ...f.procedural_scatter_contents,
+                brush_recipe_id: patch.brush_recipe_id,
+              }
+            : f.procedural_scatter_contents;
+        const labor =
+          patch.labor_tier && f.labor_profile
+            ? { ...f.labor_profile, base_difficulty_tier: patch.labor_tier }
+            : f.labor_profile;
+        return {
+          ...f,
+          metadata: {
+            ...f.metadata,
+            friendly_name: patch.friendly_name ?? f.metadata.friendly_name,
+            user_modification_state: "human_locked" as const,
+          },
+          material_fill: materialFill,
+          procedural_scatter_contents: scatter,
+          labor_profile: labor,
+        };
+      });
+      return { features, historyPast: past, historyFuture: [] };
+    }),
+  dismissBoundaryNotice: () => set({ boundaryNotice: null }),
   addPlacement: (placement) =>
     set((s) => {
       const past = [...s.historyPast, docSnapshot(s)].slice(-50);

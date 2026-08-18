@@ -120,6 +120,51 @@ Boundary policy — decision (a), conditional:
   reconciliation rule. The alert is dismissible per-acknowledgement — the
   operator clears the flag, and it re-arms on the next geometry-affecting
   edit. Never conflate the two.
+
+### Field classification (locked — build against this, do not re-derive)
+
+Confirmed on sign-off: `height_m` is direct-persist. It changes the 3D
+mass (vertical extent) but not the plan footprint, and
+`constrainAssetCentre` is board-% plan math — a taller tree at the same
+centre cannot cross the title boundary. No clamp for height.
+
+| Entity | Field | Path |
+|--------|-------|------|
+| placement | `scale` | clamp (changes footprint) |
+| placement | `canopy_radius_m` | clamp (changes footprint) |
+| placement | `height_m` | direct persist (vertical only) |
+| placement | `rotation_deg` | direct persist (spins about a fixed centre; centre-clamp unchanged) |
+| placement | `label` | direct persist |
+| placement | `symbol_id` | direct persist (identity/material, same footprint) |
+| placement | `source` | not inspector-editable v1 (read-only provenance; fingerprint still covers it) |
+| placement | `x_pct` / `y_pct` | not editable v1 (gizmo phase; when gizmos land, position edits clamp — reconciliation rule) |
+| feature | `material_fill.type` / `sku` / `depth_m` / `waste_allocation_pct` | direct persist (`depth_m` is material thickness in z, not plan extent) |
+| feature | `friendly_name` | direct persist |
+| feature | `brush_recipe_id` | direct persist (recipe swap regenerates instances inside unchanged feature geometry) |
+| feature | `labor_profile.base_difficulty_tier` | direct persist |
+| feature | `user_modification_state` | direct persist (auto-set to `human_locked` by the edit actions, not a form field) |
+| feature | `geometry.points` | not editable v1 (vertex tweak = gizmo phase) |
+
+Known limitation (recorded, not silent): a rotated elongated placement
+could overhang the boundary while its centre stays in bounds — the
+centre-based clamp does not catch extent overflow today, same as for
+pre-existing placements. Extent-vs-boundary checking is future work, not
+v1 inspector scope.
+
+### Panel states (locked)
+
+- Zero refs: `InspectorCard` renders nothing — unmounted, zero-chrome, no
+  hint card.
+- One ref: form mode. Text fields commit on blur or Enter; numeric and
+  select fields commit on valid change. Per-field commit only — there is
+  no OK/cancel and no pending form state.
+- More than one ref: read-only summary mode — lists the selected entities
+  (kind + label), shows a single muted line "Select one entity to edit its
+  properties", no editable fields, no per-entity ambiguity. A transition
+  into this state cannot orphan edits because commits are per-field.
+- Boundary alert: renders on the card only when a `boundaryNotice` exists
+  for the selected placement; dismissible per-acknowledgement; re-arms on
+  the next clamped edit.
 - Attribute-only edits: `mutate → persist`, no clamp.
 
 Premise correction (point 3 of the brief): `strike_alert` is NOT the
@@ -144,11 +189,12 @@ the same.
   `PhotoElevation.strokes` (not top-level) — v1 shows a read-only
   provenance row when photoStroke provenance exists, and hides the row
   entirely when it does not (no empty "Provenance: none" noise).
-- States (decided, single selection only for v1): empty selection → hidden
-  or hint row; single selection → field form; more than one ref → read-only
-  summary plus a "select one to edit" hint. Bulk-apply is deferred until
-  the marquee tool (gap 3) lands — single-select inspector, then marquee,
-  then bulk-edit.
+- States (decided, single selection only for v1): empty selection → panel
+  not mounted; single selection → field form; more than one ref →
+  read-only summary plus a "select one to edit" hint. Bulk-apply is
+  deferred until the marquee tool (gap 3) lands — single-select inspector,
+  then marquee, then bulk-edit. The locked field-classification table and
+  exact panel states are in §4.
 - Proposed store actions: `updatePlacementField`,
   `updateFeatureField` (with the clamp path inside for
   geometry-affecting fields).
