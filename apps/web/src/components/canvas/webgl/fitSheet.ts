@@ -117,6 +117,35 @@ export function buildEstimateArgsFromStudio(args: {
   };
 }
 
+/** Round to cents — mirrors the engine's own total rounding. */
+const round2 = (n: number): number => Math.round(n * 100) / 100;
+
+/**
+ * Exclude estimate lines by line id AFTER the engine runs. The report's
+ * money fields are exact sums of the line totals
+ * (studio-preemptive-estimate.ts:849), so subtotal/GST/total recompute from
+ * the filtered set with the engine's own formula — exact and honest. Unknown
+ * ids are ignored (a stale exclusion never phantoms). Pure — the
+ * estimation-dock spec §4 filtering point.
+ */
+export function excludeEstimateLines(
+  estimate: StudioEstimateReport,
+  excludedIds: ReadonlySet<string>,
+): StudioEstimateReport {
+  if (excludedIds.size === 0) return estimate;
+  const lines = estimate.lines.filter((l) => !excludedIds.has(l.id));
+  if (lines.length === estimate.lines.length) return estimate;
+  const materialsExGst = round2(lines.reduce((s, l) => s + l.total, 0));
+  const gst = round2(materialsExGst * 0.1);
+  return {
+    ...estimate,
+    lines,
+    materialsExGst,
+    gst,
+    totalInclGst: round2(materialsExGst + gst),
+  };
+}
+
 /** One stock-pulse row — a trade-matched line with its hub offer status. */
 export interface StockLine {
   estimateLineId: string;

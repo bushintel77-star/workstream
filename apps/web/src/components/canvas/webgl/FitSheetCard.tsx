@@ -21,7 +21,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { solveLiveTradeEstimate } from "@workstream/domain";
+import {
+  sectionForEstimateTier,
+  solveLiveTradeEstimate,
+} from "@workstream/domain";
 import { GlassCard } from "./GlassCard";
 import { useStudioStore } from "./studioStore";
 import { useStudioEstimate } from "../../../lib/use-studio-estimate";
@@ -31,7 +34,12 @@ import type {
   ConstructionTrench,
   IrrigationZone,
 } from "@workstream/contracts";
-import { buildEstimateArgsFromStudio, summarizeFitSheet, fmtAud } from "./fitSheet";
+import {
+  buildEstimateArgsFromStudio,
+  excludeEstimateLines,
+  summarizeFitSheet,
+  fmtAud,
+} from "./fitSheet";
 
 const labelStyle: React.CSSProperties = {
   fontSize: 10.5,
@@ -55,6 +63,18 @@ const figureStyle: React.CSSProperties = {
   fontSize: 10,
   color: "var(--gs-ink)",
   whiteSpace: "nowrap",
+};
+
+/** Tiny per-line tick — checked = included in the quote. */
+const tickStyle: React.CSSProperties = {
+  all: "unset",
+  cursor: "pointer",
+  fontFamily: "var(--font-tech)",
+  fontSize: 11,
+  color: "var(--gs-ink-truth)",
+  width: 16,
+  textAlign: "center",
+  flex: "0 0 auto",
 };
 
 function StockChip({ inStock, mode }: { inStock: boolean; mode: string }) {
@@ -107,6 +127,16 @@ export function FitSheetCard({
   projectId,
 }: FitSheetCardProps) {
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
+  const excludedEstimateLineIds = useStudioStore(
+    (s) => s.excludedEstimateLineIds,
+  );
+  const toggleEstimateLineExcluded = useStudioStore(
+    (s) => s.toggleEstimateLineExcluded,
+  );
+  const excludedSet = useMemo(
+    () => new Set(excludedEstimateLineIds),
+    [excludedEstimateLineIds],
+  );
 
   const args = useMemo(
     () =>
@@ -123,11 +153,26 @@ export function FitSheetCard({
 
   const { estimate, settling } = useStudioEstimate(args);
 
+  // Unticked lines (the store's line-id set) are excluded AFTER the engine —
+  // lines, sections, and totals recompute from the included set while the
+  // design stays on canvas (estimation-dock spec §4). No worker re-settle.
+  const excludedLines = useMemo(
+    () =>
+      excludedSet.size === 0
+        ? []
+        : estimate.lines.filter((l) => excludedSet.has(l.id)),
+    [estimate, excludedSet],
+  );
+  const filteredEstimate = useMemo(
+    () => excludeEstimateLines(estimate, excludedSet),
+    [estimate, excludedSet],
+  );
+
   const summary = useMemo(() => {
-    if (estimate.lines.length === 0) return null;
-    const telemetry = solveLiveTradeEstimate({ report: estimate });
-    return summarizeFitSheet(estimate, telemetry);
-  }, [estimate]);
+    if (filteredEstimate.lines.length === 0) return null;
+    const telemetry = solveLiveTradeEstimate({ report: filteredEstimate });
+    return summarizeFitSheet(filteredEstimate, telemetry);
+  }, [filteredEstimate]);
 
   // Backend instant estimate (POST /costing/sketch) — prices the SAVED
   // canvas, fetched once when the card opens + on manual refresh. Drift vs
@@ -196,38 +241,52 @@ export function FitSheetCard({
           )}
         </div>
 
-        {/* Top itemized lines */}
+        {/* Itemized lines — every line carries a tiny tick; unticking
+            excludes it from the estimate (the design stays on canvas). */}
         <div data-testid="fit-sheet-lines">
-          {summary.topLines.map(({ line, section }) => {
-            const stock = summary.stockLines.find(
-              (s) => s.estimateLineId === line.id,
-            );
-            return (
-              <div key={line.id} style={rowStyle}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "var(--gs-ink)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                    title={line.label}
+          {[...summary.sections.flatMap((s) => s.lines)]
+            .sort((a, b) => b.total - a.total)
+            .map((line) => {
+              const stock = summary.stockLines.find(
+                (s) => s.estimateLineId === line.id,
+              );
+              const section = sectionForEstimateTier(line.tier, line.label);
+              return (
+                <div key={line.id} style={rowStyle}>
+                  <button
+                    type="button"
+                    aria-pressed="true"
+                    aria-label={`Exclude ${line.label} from quote`}
+                    data-testid={`fit-line-tick-${line.id}`}
+                    onClick={() => toggleEstimateLineExcluded(line.id)}
+                    style={tickStyle}
                   >
-                    {line.label}
+                    ✓
+                  </button>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--gs-ink)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                      title={line.label}
+                    >
+                      {line.label}
+                    </div>
+                    <div style={{ fontSize: 10, color: "var(--gs-ink-secondary)" }}>
+                      {section} · {line.qty.toFixed(1)} {line.unit} @ {fmtAud(line.rate)}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 10, color: "var(--gs-ink-secondary)" }}>
-                    {section} · {line.qty.toFixed(1)} {line.unit} @ {fmtAud(line.rate)}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {stock && <StockChip inStock={stock.inStock} mode={stock.mode} />}
+                    <span style={figureStyle}>{fmtAud(line.total)}</span>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {stock && <StockChip inStock={stock.inStock} mode={stock.mode} />}
-                  <span style={figureStyle}>{fmtAud(line.total)}</span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
 
         {/* Section subtotals */}
@@ -283,6 +342,73 @@ export function FitSheetCard({
             {fmtAud(summary.total)}
           </span>
         </div>
+
+        {/* Excluded lines — struck-through, re-tick to include (v1: quote-view
+            state; the design and the backend estimate are untouched). */}
+        {excludedLines.length > 0 && (
+          <div
+            data-testid="fit-sheet-excluded"
+            style={{
+              marginTop: 6,
+              borderTop: "1px dashed var(--gs-line)",
+              paddingTop: 4,
+            }}
+          >
+            <div style={labelStyle}>
+              Excluded from quote ({excludedLines.length})
+            </div>
+            {excludedLines.map((line) => (
+              <div
+                key={line.id}
+                data-testid={`fit-line-excluded-${line.id}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "2px 0",
+                }}
+              >
+                <button
+                  type="button"
+                  aria-pressed="false"
+                  aria-label={`Include ${line.label} in quote`}
+                  data-testid={`fit-line-tick-${line.id}`}
+                  onClick={() => toggleEstimateLineExcluded(line.id)}
+                  style={{ ...tickStyle, color: "var(--gs-ink-muted)" }}
+                >
+                  ◌
+                </button>
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    color: "var(--gs-ink-muted)",
+                    textDecoration: "line-through",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                  title={line.label}
+                >
+                  {line.label}
+                </span>
+                <span style={{ ...figureStyle, color: "var(--gs-ink-muted)" }}>
+                  {fmtAud(line.total)}
+                </span>
+                <span
+                  style={{
+                    fontSize: 9.5,
+                    color: "var(--gs-ink-muted)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  not in quote
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Backend sketch estimate — one visible source of truth (the saved
             canvas is priced server-side; refresh re-prices after autosave). */}

@@ -917,6 +917,11 @@ export function WebGLStudioPreview({
           pointerEvents: "none",
           zIndex: 10,
           maxWidth: "calc(100% - 120px)",
+          // The dock scrolls internally — the estimation companion can exceed
+          // the viewport without escaping it (chrome-collision gate).
+          maxHeight: "calc(100dvh - 170px)",
+          overflowY: "auto",
+          scrollbarWidth: "none",
         }}
       >
         {cadReviewOpen && cadProposals.length > 0 ? (
@@ -946,7 +951,6 @@ export function WebGLStudioPreview({
         {(() => {
           let body: ReactNode | null = null;
           let dismiss: (() => void) | null = null;
-          let bare = false;
 
           if (activeMode === "survey") {
             body = (
@@ -1680,19 +1684,6 @@ export function WebGLStudioPreview({
                 />
               </div>
             );
-          } else if (!splitView && fitSheetOpen && (items?.length ?? 0) > 0) {
-            bare = true;
-            body = (
-              <FitSheetCard
-                projectId={projectId}
-                items={items ?? []}
-                boundaryPct={boundaryPct}
-                constructionTrenches={constructionTrenches}
-                irrigationZones={irrigationZones}
-                scaleM={scaleM}
-                outdoorM2={outdoorM2}
-              />
-            );
           } else if (activeMode === "quote" && (items?.length ?? 0) === 0) {
             dismiss = () => onNativeMode("cad");
             body = (
@@ -1732,21 +1723,6 @@ export function WebGLStudioPreview({
           }
 
           if (!body) return null;
-          if (bare)
-            return (
-              <div
-                data-gs-glass-card
-                data-testid="perimeter-panel"
-                style={{
-                  pointerEvents: "auto",
-                  maxHeight: "min(420px, calc(100dvh - 240px))",
-                  overflowY: "auto",
-                  scrollbarWidth: "thin",
-                }}
-              >
-                {body}
-              </div>
-            );
 
           return (
             <div
@@ -1802,6 +1778,21 @@ export function WebGLStudioPreview({
             </div>
           );
         })()}
+
+        {/* Estimation companion — semi-persistent in the dock (estimation-dock
+            spec §3): renders alongside any mode surface, toggleable via the
+            Fit tab, self-gating on fitSheetOpen/items/summary. */}
+        {!splitView && fitSheetOpen ? (
+          <FitSheetCard
+            projectId={projectId}
+            items={items ?? []}
+            boundaryPct={boundaryPct}
+            constructionTrenches={constructionTrenches}
+            irrigationZones={irrigationZones}
+            scaleM={scaleM}
+            outdoorM2={outdoorM2}
+          />
+        ) : null}
       </div>
 
 
@@ -1812,7 +1803,6 @@ export function WebGLStudioPreview({
         showTerrainTools={liveData.heightmapPoints.length > 0}
         showDims={boundaryPct.length >= 3}
         showEarth={liveData.heightmapPoints.length > 0 && hasPads}
-        showQuote={(items?.length ?? 0) > 0}
         presentActive={presentationMode}
         onPresentToggle={() => setPresentationMode((p) => !p)}
         showTidy={sketchModeActive || strokes.length > 0}

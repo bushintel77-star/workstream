@@ -6,6 +6,7 @@ import type {
 } from "@workstream/domain";
 import {
   buildEstimateArgsFromStudio,
+  excludeEstimateLines,
   summarizeFitSheet,
   fmtAud,
 } from "./fitSheet";
@@ -285,5 +286,38 @@ describe("fmtAud", () => {
     expect(fmtAud(58410.35)).toBe("$58,410.35");
     expect(fmtAud(0)).toBe("$0.00");
     expect(fmtAud(999.999)).toBe("$1,000.00");
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* excludeEstimateLines                                                       */
+/* -------------------------------------------------------------------------- */
+
+describe("excludeEstimateLines", () => {
+  const REPORT: StudioEstimateReport = report([
+    line("prim-a", "Bluestone paving", 1760, "primary"),
+    line("allow-1", "Council permit allowance", 650, "secondary"),
+  ]);
+
+  it("drops excluded lines and recomputes totals with the engine formula", () => {
+    const filtered = excludeEstimateLines(REPORT, new Set(["prim-a"]));
+    expect(filtered.lines.map((l) => l.id)).toEqual(["allow-1"]);
+    // 650 ex GST, 10% GST, total = subtotal + GST (studio-preemptive-estimate
+    // formula — exact, not approximate).
+    expect(filtered.materialsExGst).toBe(650);
+    expect(filtered.gst).toBe(65);
+    expect(filtered.totalInclGst).toBe(715);
+    // Non-money fields pass through untouched.
+    expect(filtered.hardscapeM2).toBe(42.5);
+  });
+
+  it("no-ops on an empty exclusion set (same report identity)", () => {
+    expect(excludeEstimateLines(REPORT, new Set())).toBe(REPORT);
+  });
+
+  it("ignores unknown ids — a stale exclusion never phantoms", () => {
+    const filtered = excludeEstimateLines(REPORT, new Set(["deleted-line"]));
+    expect(filtered).toBe(REPORT);
+    expect(filtered.lines).toHaveLength(2);
   });
 });

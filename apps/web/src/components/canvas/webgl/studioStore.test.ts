@@ -162,6 +162,7 @@ function resetStore() {
     boundaryNotice: null,
     gizmoMode: "translate",
     gizmoDragging: false,
+    excludedEstimateLineIds: [],
   });
 }
 
@@ -451,6 +452,23 @@ describe("placement transform (gizmo)", () => {
     expect(useStudioStore.getState().gizmoMode).toBe("rotate");
     store.setGizmoMode(null);
     expect(useStudioStore.getState().gizmoMode).toBeNull();
+  });
+});
+
+describe("estimate exclusions", () => {
+  afterEach(resetStore);
+
+  it("toggles estimate line exclusions without touching canvas history", () => {
+    const store = useStudioStore.getState();
+    expect(store.excludedEstimateLineIds).toEqual([]);
+    store.toggleEstimateLineExcluded("line-1");
+    store.toggleEstimateLineExcluded("line-2");
+    let s = useStudioStore.getState();
+    expect(s.excludedEstimateLineIds).toEqual(["line-1", "line-2"]);
+    expect(s.historyPast).toHaveLength(0); // quote-view state, not a mutation
+    store.toggleEstimateLineExcluded("line-1");
+    s = useStudioStore.getState();
+    expect(s.excludedEstimateLineIds).toEqual(["line-2"]);
   });
 });
 

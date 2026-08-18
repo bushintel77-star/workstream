@@ -521,6 +521,11 @@ export interface StudioStoreState {
   setMeasureTape: (a: PctPoint | null, b: PctPoint | null) => void;
 
   setFitSheetOpen: (v: boolean) => void;
+  /** Estimate line ids unticked by the operator (quote-view state, not a
+   *  canvas mutation — excluded lines leave the estimate, the design stays).
+   *  Session-scoped; stale ids are harmless (the filter ignores unknowns). */
+  excludedEstimateLineIds: string[];
+  toggleEstimateLineExcluded: (id: string) => void;
 
   setSplitView: (v: boolean) => void;
 
@@ -697,6 +702,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Fit-sheet default ON — the live quote IS the product (the card
   // self-gates on an empty canvas).
   fitSheetOpen: true,
+  // Estimate exclusions — no lines unticked by default.
+  excludedEstimateLineIds: [],
 
   // Split view default off — an explicit two-viewport mode.
   splitView: false,
@@ -824,6 +831,12 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set({ measureTape: a && b ? { a, b } : null }),
 
   setFitSheetOpen: (fitSheetOpen) => set({ fitSheetOpen }),
+  toggleEstimateLineExcluded: (id) =>
+    set((s) => ({
+      excludedEstimateLineIds: s.excludedEstimateLineIds.includes(id)
+        ? s.excludedEstimateLineIds.filter((x) => x !== id)
+        : [...s.excludedEstimateLineIds, id],
+    })),
 
   setSplitView: (splitView) => set({ splitView }),
 

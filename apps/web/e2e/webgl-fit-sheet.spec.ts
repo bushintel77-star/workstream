@@ -89,15 +89,13 @@ test.describe("WebGL itemized fit-sheet (live quote)", () => {
       timeout: 10_000,
     });
 
-    // 1. Quote mode owns the fit sheet (mode-owned panels, UI survey §7).
-    // The studio opens in sketch mode by default, so drive the Quote tab —
-    // the old "card open by default" premise was stale on main (pre-existing
-    // spec failure, reproduced on clean main before the dock push).
-    await page.getByTestId("mode-tab-quote").click();
+    // 1. The estimation is a docked companion — visible in ANY mode
+    // (estimation-dock spec §3). The Fit tab owns the toggle; the rail
+    // quote tool is gone (one affordance per state).
     const card = page.locator('[data-testid="fit-sheet-card"]');
     await expect(card).toBeVisible({ timeout: 8_000 });
-    const quoteChip = page.getByRole("button", { name: "▾ Quote" });
-    await expect(quoteChip).toBeVisible();
+    const fitTab = page.getByTestId("meta-tab-fit");
+    await expect(fitTab).toHaveAttribute("aria-pressed", "true");
 
     // 2. Itemized rows with money figures + section chips + summary.
     const lines = page.locator('[data-testid="fit-sheet-lines"] > div');
@@ -113,13 +111,32 @@ test.describe("WebGL itemized fit-sheet (live quote)", () => {
     const stockChips = page.locator('[data-testid="fit-sheet-stock-chip"]');
     await expect(stockChips.first()).toBeVisible({ timeout: 5_000 });
 
-    // 4. Toggle off / on.
-    await quoteChip.click();
-    await expect(card).toHaveCount(0);
-    await page.getByRole("button", { name: "▸ Quote" }).click();
-    await expect(page.locator('[data-testid="fit-sheet-card"]')).toBeVisible();
+    // 4. Untick a line — the total drops, the row strikes through in the
+    // excluded block; re-tick restores (the design stays on canvas).
+    const totalFigure = (await total.innerText()).match(/\$[\d,]+\.\d{2}/)?.[0];
+    expect(totalFigure).toBeDefined();
+    const firstTick = page.locator('[data-testid^="fit-line-tick-"]').first();
+    const firstTickId = await firstTick.getAttribute("data-testid");
+    expect(firstTickId).not.toBeNull();
+    await firstTick.click();
+    await expect(page.locator('[data-testid="fit-sheet-excluded"]')).toBeVisible({
+      timeout: 8_000,
+    });
+    await expect(page.locator('[data-testid^="fit-line-excluded-"]').first()).toBeVisible();
+    await expect(total).not.toContainText(totalFigure!);
+    // Re-tick the SAME line (it now lives in the excluded block under the
+    // same testid — the report's first tick is a different line now).
+    await page.getByTestId(firstTickId!).click();
+    await expect(page.locator('[data-testid="fit-sheet-excluded"]')).toHaveCount(0);
+    await expect(total).toContainText(totalFigure!);
 
-    // 5. No fatal console errors.
+    // 5. Toggle off / on via the Fit tab.
+    await fitTab.click();
+    await expect(card).toHaveCount(0);
+    await fitTab.click();
+    await expect(card).toBeVisible();
+
+    // 6. No fatal console errors.
     const fatal = errors.filter(
       (e) =>
         e.includes("Maximum update depth") ||
