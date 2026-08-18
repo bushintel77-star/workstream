@@ -209,7 +209,7 @@ export function WebGLStudio({
       <Canvas
         shadows="variance"
         dpr={[1, 1.5]}
-        camera={{ position: [0, 100, 0.001], fov: 30, near: 0.1, far: 10000 }}
+        camera={{ position: [0, 100, 0.001], fov: 30, near: 0.1, far: 500 }}
         gl={{ antialias: true, alpha: false }}
         onCreated={onCanvasCreated}
         style={{ position: "absolute", inset: 0 }}

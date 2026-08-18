@@ -165,7 +165,7 @@ export function springStep(
  * and 30fps during rapid view toggling.
  */
 export class FusedCameraScratch {
-  readonly ortho = new THREE.OrthographicCamera(-1, 1, 1, -1, -10000, 10000);
+  readonly ortho = new THREE.OrthographicCamera(-1, 1, 1, -1, -240, 240);
   readonly persp = new THREE.PerspectiveCamera(30, 1, 0.1, 10000);
   readonly tempPos = new THREE.Vector3();
   readonly tempLook = new THREE.Vector3();
@@ -173,6 +173,13 @@ export class FusedCameraScratch {
   /**
    * Update the ortho camera's frustum and write its projection matrix into
    * `out`. Zero allocations.
+   *
+   * Depth envelope: the fixed ±10000 m span quantized the 24-bit depth
+   * buffer to ~1.19 mm per unit, so the grid's 1 mm lift above the ground
+   * z-fought across the whole board (see
+   * docs/GROUND-PLANE-ALIASING-AUDIT.md). The envelope now hugs the
+   * computed camera distance (±2×), giving ~0.04-0.08 mm per unit and no
+   * clipping at any zoom.
    */
   updateOrtho(
     out: THREE.Matrix4,
@@ -187,8 +194,9 @@ export class FusedCameraScratch {
     this.ortho.right = halfWorldW;
     this.ortho.top = halfWorldH;
     this.ortho.bottom = -halfWorldH;
-    this.ortho.near = -10000;
-    this.ortho.far = 10000;
+    const distance = cameraDistanceFor(viewSize, boardAspect, zoom);
+    this.ortho.near = -distance * 2;
+    this.ortho.far = distance * 2;
     this.ortho.updateProjectionMatrix();
     out.copy(this.ortho.projectionMatrix);
   }
@@ -205,10 +213,8 @@ export class FusedCameraScratch {
     boardAspect: number,
     viewSize: number,
   ): number {
-    const halfWorldH = (viewSize * boardAspect) / (2 * zoom);
+    const distance = cameraDistanceFor(viewSize, boardAspect, zoom);
     const fov = 30;
-    const fovRad = (fov * Math.PI) / 180;
-    const distance = Math.max(1, halfWorldH / Math.tan(fovRad / 2));
 
     this.persp.fov = fov;
     this.persp.aspect = viewportAspect;
@@ -267,4 +273,19 @@ export class FusedCameraScratch {
       e[i] = a[i]! + (b[i]! - a[i]!) * t;
     }
   }
+}
+
+/**
+ * Camera distance (m) whose 30° frustum exactly frames the view height at
+ * the given zoom — shared by the ortho depth envelope and the perspective
+ * frustum so they can never drift apart.
+ */
+export function cameraDistanceFor(
+  viewSize: number,
+  boardAspect: number,
+  zoom: number,
+): number {
+  const halfWorldH = (viewSize * boardAspect) / (2 * zoom);
+  const fovRad = (30 * Math.PI) / 180;
+  return Math.max(1, halfWorldH / Math.tan(fovRad / 2));
 }

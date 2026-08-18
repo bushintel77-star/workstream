@@ -4,6 +4,7 @@ import {
   springStep,
   CAMERA_SPRING,
   FusedCameraScratch,
+  cameraDistanceFor,
   type SpringState,
 } from "./cameraAnimation";
 
@@ -170,5 +171,32 @@ describe("FusedCameraScratch", () => {
     // At t=0.5, each diagonal element should be 1.5 (lerp between 1 and 2).
     expect(out.elements[0]).toBeCloseTo(1.5, 5);
     expect(out.elements[5]).toBeCloseTo(1.5, 5);
+  });
+
+  it("updateOrtho hugs a dynamic depth envelope around the camera distance", () => {
+    const scratch = new FusedCameraScratch();
+    const matrix = new THREE.Matrix4();
+    const viewSize = 143; // scaleM 110 × VIEW_PADDING 1.3
+    scratch.updateOrtho(matrix, 1, 1.5, 0.65, viewSize);
+    const distance = cameraDistanceFor(viewSize, 0.65, 1);
+    expect(scratch.ortho.near).toBeCloseTo(-2 * distance, 3);
+    expect(scratch.ortho.far).toBeCloseTo(2 * distance, 3);
+    // The span must stay a small fraction of the old ±10000 m disease
+    // (which quantized the depth buffer to ~1.19 mm per unit and let the
+    // 1 mm grid lift z-fight the ground plane).
+    expect(scratch.ortho.far - scratch.ortho.near).toBeLessThan(5000);
+  });
+
+  it("the ortho envelope never clips the ground at any zoom", () => {
+    const scratch = new FusedCameraScratch();
+    const matrix = new THREE.Matrix4();
+    for (const zoom of [0.25, 0.5, 1, 2, 4]) {
+      scratch.updateOrtho(matrix, zoom, 1.5, 0.65, 143);
+      const distance = cameraDistanceFor(143, 0.65, zoom);
+      // The ground plane sits at -distance in view space: it must stay
+      // inside the frustum, with margin for terrain relief and overlays.
+      expect(-scratch.ortho.near).toBeGreaterThanOrEqual(distance);
+      expect(scratch.ortho.far).toBeGreaterThanOrEqual(distance);
+    }
   });
 });

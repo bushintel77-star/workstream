@@ -625,8 +625,8 @@ function GroundPlane({
       </mesh>
       <gridHelper
         ref={gridRef}
-        args={[w, Math.round(w), "#FFFFFF", "#D4D4D4"]}
-        position={[0, 0.001, 0]}
+        args={[w, Math.round(w / 10), "#FFFFFF", "#D4D4D4"]}
+        position={[0, 0.01, 0]}
       />
     </>
   );
