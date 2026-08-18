@@ -11,8 +11,8 @@
  * overflows instead of growing; exactly one panel opens beneath it.
  *
  * The 8-mode system is preserved (GOLD-STANDARD-2026-ARCHITECTURE §6):
- * native WebGL modes switch in place; classic-board modes navigate to
- * ?svg=1&mode=… so nothing dead-ends. Progressive unlock reuses the
+ * every mode switches natively on the WebGL surface; the classic board is
+ * reachable only by explicit ?svg=1. Progressive unlock reuses the
  * canvas-mode law (unlockedModes + lockReasonForMode).
  *
  * Contrast/selection vocabulary per TOKENS.md: active chips go charcoal
@@ -22,19 +22,9 @@
 import type { CSSProperties, ReactNode } from "react";
 import {
   CANVAS_MODES,
-  webglStudioSupportsMode,
   type CanvasMode,
 } from "../../../lib/canvas-mode";
 import { lockReasonForMode } from "../../../lib/modeLockCopy";
-
-export type NativeWebGLMode = Extract<
-  CanvasMode,
-  "sketch" | "quote" | "present" | "elevation" | "garden"
->;
-
-export function isNativeWebGLMode(mode: CanvasMode): mode is NativeWebGLMode {
-  return webglStudioSupportsMode(mode);
-}
 
 /** Meta surfaces that open as tab panels (Fit rides the store instead). */
 export type MetaTabId =
@@ -67,17 +57,15 @@ const chipBase: CSSProperties = {
 };
 
 export function PerimeterTabStrip({
-  projectId,
   activeMode,
   unlocked,
   onNativeMode,
   metaTabs,
   trailing,
 }: {
-  projectId: string;
   activeMode: CanvasMode;
   unlocked: ReadonlySet<CanvasMode>;
-  onNativeMode: (mode: NativeWebGLMode) => void;
+  onNativeMode: (mode: CanvasMode) => void;
   metaTabs: MetaTabDef[];
   /** Status cell: live stats + save chip + measure readout. */
   trailing?: ReactNode;
@@ -138,48 +126,20 @@ export function PerimeterTabStrip({
             );
           }
 
-          if (isNativeWebGLMode(id)) {
-            return (
-              <button
-                key={id}
-                type="button"
-                data-testid={`mode-tab-${id}`}
-                aria-label={`Mode ${label}`}
-                onClick={() => onNativeMode(id)}
-                style={{
-                  ...chipBase,
-                  background: active ? "var(--gs-chip-active)" : "transparent",
-                  color: active
-                    ? "var(--gs-chip-active-ink)"
-                    : "var(--gs-ink-secondary)",
-                  transition: "background 0.15s, color 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.color = "var(--gs-ink)";
-                }}
-                onMouseLeave={(e) => {
-                  if (!active)
-                    e.currentTarget.style.color = "var(--gs-ink-secondary)";
-                }}
-              >
-                {label}
-              </button>
-            );
-          }
-
           return (
-            <a
+            <button
               key={id}
+              type="button"
               data-testid={`mode-tab-${id}`}
-              href={`/projects/${projectId}?svg=1&mode=${id}`}
-              title={`${label} — opens the classic board in ${label} mode`}
+              aria-label={`Mode ${label}`}
+              onClick={() => onNativeMode(id)}
               style={{
                 ...chipBase,
                 background: active ? "var(--gs-chip-active)" : "transparent",
                 color: active
                   ? "var(--gs-chip-active-ink)"
                   : "var(--gs-ink-secondary)",
-                textDecoration: "none",
+                transition: "background 0.15s, color 0.15s",
               }}
               onMouseEnter={(e) => {
                 if (!active) e.currentTarget.style.color = "var(--gs-ink)";
@@ -190,10 +150,7 @@ export function PerimeterTabStrip({
               }}
             >
               {label}
-              <span aria-hidden style={{ fontSize: 9.5, opacity: 0.7 }}>
-                ⤢
-              </span>
-            </a>
+            </button>
           );
         })}
       </nav>

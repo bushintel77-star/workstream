@@ -126,12 +126,11 @@ export default async function ProjectCanvasPage({
     runOutputAction,
   });
 
-  /** WebGL studio is the default mount for the modes it implements.
-   * Modes only the legacy SVG studio renders (survey checklist, CAD board,
-   * elevation, garden, share) fall back to it — otherwise the ?mode= query
-   * silently does nothing on the WebGL mount. ?webgl=1 forces the WebGL
-   * studio (the e2e mount contract); ?svg=1 forces the legacy studio;
-   * ?tool=sketch arms the WebGL sketch surface directly. */
+  /** WebGL studio is the default mount for every mode (all 8 render
+   * natively on the GL surface per canvas-mode.webglStudioSupportsMode).
+   * ?svg=1 forces the legacy SVG studio (deep fallback); ?webgl=1 forces
+   * the WebGL studio (the e2e mount contract); ?tool=sketch arms the WebGL
+   * sketch surface directly. */
   const webglPreview =
     sp.svg !== "1" &&
     (sp.webgl === "1" ||

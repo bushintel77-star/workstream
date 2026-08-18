@@ -25,7 +25,7 @@ export interface StudioCameraRig {
   zoom: number;
   /** Plan rotation in degrees (0 = north up). */
   rotateDeg: number;
-  /** Tilt angle in degrees (0 = top-down, 55 = default oblique, 90 = horizon). */
+  /** Tilt angle in degrees (0 = top-down, 55 = DEFAULT_CAMERA_RIG oblique, 90 = horizon). */
   tiltDeg: number;
   /** Focus point for zoom anchoring, in % space (0–100). */
   focusX: number;

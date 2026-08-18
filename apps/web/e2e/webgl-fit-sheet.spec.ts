@@ -89,7 +89,11 @@ test.describe("WebGL itemized fit-sheet (live quote)", () => {
       timeout: 10_000,
     });
 
-    // 1. Card open by default; Quote chip visible.
+    // 1. Quote mode owns the fit sheet (mode-owned panels, UI survey §7).
+    // The studio opens in sketch mode by default, so drive the Quote tab —
+    // the old "card open by default" premise was stale on main (pre-existing
+    // spec failure, reproduced on clean main before the dock push).
+    await page.getByTestId("mode-tab-quote").click();
     const card = page.locator('[data-testid="fit-sheet-card"]');
     await expect(card).toBeVisible({ timeout: 8_000 });
     const quoteChip = page.getByRole("button", { name: "▾ Quote" });

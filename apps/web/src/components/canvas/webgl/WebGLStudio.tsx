@@ -111,7 +111,7 @@ export interface WebGLStudioProps {
 }
 
 /**
- * Post-processing stack — tuned conservative for the dark Studio aesthetic.
+ * Post-processing stack — tuned conservative for the Studio Paper canvas.
  * Bloom only catches bright/emissive surfaces (gold HUD, strike alerts,
  * subsurface tubes, window glow); N8AO adds real occlusion in foliage/building
  * crevices; Vignette + SMAA finish the cinematic frame.

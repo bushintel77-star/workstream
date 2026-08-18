@@ -15,7 +15,8 @@
  *                             (flat on the ground) and in 3D (raycast-draped).
  *                             No separate SVG sketch surface, no second ink
  *                             system.
- *   - projectId + aerialUri:  Context for persistence + the aerial underlay.
+ *   - projectId + aerialUri:  Context for persistence (aerial underlay
+ *                             retired PR #199 — uri kept for the store API).
  *   - save status machine:    idle/saving/retrying/saved/error + revision.
  *
  * Binding constraint (LA Seasonal Dynamics spec): state read inside useFrame
