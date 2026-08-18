@@ -8,7 +8,7 @@
  * No value math is needed: positions are already in board-% (0–100), and
  * the coordTransform layer (pctToWorld) handles the %→metre conversion.
  *
- * Binding: docs/GOLD-STANDARD-2026-ARCHITECTURE.md §5 (state layer unchanged)
+ * Binding: docs/GOLD-STANDARD-2026-ARCHITECTURE.md §5 (two stores, one persisted canvas)
  */
 
 import type { RenderItem } from "./sceneItems";
