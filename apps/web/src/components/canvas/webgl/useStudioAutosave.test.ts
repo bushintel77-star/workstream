@@ -195,4 +195,201 @@ describe("buildPersistKey", () => {
     expect(a).not.toBe(b);
     expect(b).not.toBe(c);
   });
+
+  /* ---------------------------------------------------------------------- */
+  /* Step 0 — inspector-editable field coverage                             */
+  /* ---------------------------------------------------------------------- */
+  /* The inspector edits these fields; if any of them fails to change the   */
+  /* persist key, the edit never autosaves and is lost on reload.           */
+
+  const basePlacement = {
+    id: "c39b0a2c-1111-4222-8333-000000000001",
+    symbol_id: "OLIVE-STD",
+    x_pct: 42,
+    y_pct: 36,
+    rotation_deg: 0,
+    scale: 1,
+  };
+
+  it("changes when a placement's label, height, canopy radius, or source changes", () => {
+    const base: StudioAutosaveDoc = {
+      placements: [basePlacement],
+      strokes: [],
+    };
+    const withLabel: StudioAutosaveDoc = {
+      placements: [{ ...basePlacement, label: "Feature olive" }],
+      strokes: [],
+    };
+    const withHeight: StudioAutosaveDoc = {
+      placements: [{ ...basePlacement, height_m: 2.4 }],
+      strokes: [],
+    };
+    const withCanopy: StudioAutosaveDoc = {
+      placements: [{ ...basePlacement, canopy_radius_m: 3.2 }],
+      strokes: [],
+    };
+    const withSource: StudioAutosaveDoc = {
+      placements: [{ ...basePlacement, source: "vicmap_tree" as const }],
+      strokes: [],
+    };
+    const a = buildPersistKey(base);
+    expect(a).not.toBe(buildPersistKey(withLabel));
+    expect(a).not.toBe(buildPersistKey(withHeight));
+    expect(a).not.toBe(buildPersistKey(withCanopy));
+    expect(a).not.toBe(buildPersistKey(withSource));
+  });
+
+  const baseFeature = {
+    id: "feat-2",
+    type: "LandscapeFeature" as const,
+    metadata: {
+      layer: "softscape_beds" as const,
+      friendly_name: "Lomandra bed",
+      timestamp_created: "2026-08-18T00:00:00.000Z",
+      source_attribution: "human_drawn" as const,
+      user_modification_state: "draft" as const,
+    },
+    geometry: {
+      type: "Polygon" as const,
+      spatial_reference: "EPSG:3857",
+      canvas_origin_pct: { x_pct: 0, y_pct: 0 },
+      points: [
+        { id: "feat-2-v0", pct: { x_pct: 10, y_pct: 10 } },
+        { id: "feat-2-v1", pct: { x_pct: 20, y_pct: 10 } },
+        { id: "feat-2-v2", pct: { x_pct: 20, y_pct: 20 } },
+      ],
+    },
+    material_fill: {
+      type: "surface" as const,
+      sku: "LOMANDRA-MASS",
+      depth_m: 0.075,
+      waste_allocation_pct: 10,
+    },
+    labor_profile: {
+      base_difficulty_tier: "standard_soil" as const,
+      estimated_install_hours: 1.2,
+      calculated_labor_cost_aud: 0,
+    },
+  };
+
+  it("changes when a feature's material fill changes", () => {
+    const base: StudioAutosaveDoc = {
+      placements: [],
+      strokes: [],
+      features: [baseFeature],
+    };
+    const skuChange: StudioAutosaveDoc = {
+      placements: [],
+      strokes: [],
+      features: [
+        {
+          ...baseFeature,
+          material_fill: { ...baseFeature.material_fill, sku: "BLUESTONE-PAVE" },
+        },
+      ],
+    };
+    const depthChange: StudioAutosaveDoc = {
+      placements: [],
+      strokes: [],
+      features: [
+        {
+          ...baseFeature,
+          material_fill: { ...baseFeature.material_fill, depth_m: 0.12 },
+        },
+      ],
+    };
+    const wasteChange: StudioAutosaveDoc = {
+      placements: [],
+      strokes: [],
+      features: [
+        {
+          ...baseFeature,
+          material_fill: { ...baseFeature.material_fill, waste_allocation_pct: 15 },
+        },
+      ],
+    };
+    const a = buildPersistKey(base);
+    expect(a).not.toBe(buildPersistKey(skuChange));
+    expect(a).not.toBe(buildPersistKey(depthChange));
+    expect(a).not.toBe(buildPersistKey(wasteChange));
+  });
+
+  it("changes when a feature's friendly name or modification state changes", () => {
+    const base: StudioAutosaveDoc = {
+      placements: [],
+      strokes: [],
+      features: [baseFeature],
+    };
+    const nameChange: StudioAutosaveDoc = {
+      placements: [],
+      strokes: [],
+      features: [
+        {
+          ...baseFeature,
+          metadata: { ...baseFeature.metadata, friendly_name: "Front bed" },
+        },
+      ],
+    };
+    const stateChange: StudioAutosaveDoc = {
+      placements: [],
+      strokes: [],
+      features: [
+        {
+          ...baseFeature,
+          metadata: {
+            ...baseFeature.metadata,
+            user_modification_state: "human_locked" as const,
+          },
+        },
+      ],
+    };
+    const a = buildPersistKey(base);
+    expect(a).not.toBe(buildPersistKey(nameChange));
+    expect(a).not.toBe(buildPersistKey(stateChange));
+  });
+
+  it("changes when a feature's scatter recipe or labor tier changes", () => {
+    const withScatter = {
+      ...baseFeature,
+      procedural_scatter_contents: {
+        brush_recipe_id: "LOMANDRA-30CM",
+        seed_value: 7,
+        instances: [],
+      },
+    };
+    const base: StudioAutosaveDoc = {
+      placements: [],
+      strokes: [],
+      features: [withScatter],
+    };
+    const recipeChange: StudioAutosaveDoc = {
+      placements: [],
+      strokes: [],
+      features: [
+        {
+          ...withScatter,
+          procedural_scatter_contents: {
+            ...withScatter.procedural_scatter_contents,
+            brush_recipe_id: "LOMANDRA-45CM",
+          },
+        },
+      ],
+    };
+    const laborChange: StudioAutosaveDoc = {
+      placements: [],
+      strokes: [],
+      features: [
+        {
+          ...withScatter,
+          labor_profile: {
+            ...baseFeature.labor_profile,
+            base_difficulty_tier: "constrained" as const,
+          },
+        },
+      ],
+    };
+    const a = buildPersistKey(base);
+    expect(a).not.toBe(buildPersistKey(recipeChange));
+    expect(a).not.toBe(buildPersistKey(laborChange));
+  });
 });

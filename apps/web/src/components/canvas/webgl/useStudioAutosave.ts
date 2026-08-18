@@ -69,7 +69,11 @@ export interface StudioAutosaveDoc {
  *
  * Stroke fingerprint includes id, width, color, and the point array (rounded to
  * 1 decimal to avoid float jitter triggering spurious saves). Placement
- * fingerprint includes id, position, scale, rotation, and type.
+ * fingerprint includes id, position, scale, rotation, and type, plus every
+ * inspector-editable field (label, height, canopy radius, source); feature
+ * fingerprint includes geometry plus material fill, friendly name,
+ * modification state, scatter recipe, and labor tier. Any inspector edit
+ * must change this key or the edit will not persist.
  */
 export function buildPersistKey(doc: StudioAutosaveDoc): string {
   const strokeParts = doc.strokes.map(
@@ -87,7 +91,9 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
     (p) =>
       `${p.id}:${p.symbol_id}:${p.x_pct.toFixed(1)}:${p.y_pct.toFixed(1)}:${
         p.scale.toFixed(2)
-      }:${p.rotation_deg}`,
+      }:${p.rotation_deg}:${p.label ?? ""}:${(p.height_m ?? 0).toFixed(2)}:${
+        (p.canopy_radius_m ?? 0).toFixed(2)
+      }:${p.source ?? ""}`,
   );
   const trenchParts = (doc.constructionTrenches ?? []).map(
     (t) =>
@@ -120,7 +126,18 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
     const pts = f.geometry.points
       .map((v) => `${v.pct.x_pct.toFixed(1)},${v.pct.y_pct.toFixed(1)}`)
       .join("|");
-    return `${f.id}:${f.geometry.type}:${f.metadata.layer}:${f.geometry.points.length}:${pts}`;
+    const mf = f.material_fill
+      ? `${f.material_fill.type}:${f.material_fill.sku}:${f.material_fill.depth_m.toFixed(3)}:${f.material_fill.waste_allocation_pct.toFixed(1)}`
+      : "nomf";
+    const scatter = f.procedural_scatter_contents
+      ? `${f.procedural_scatter_contents.brush_recipe_id}:${f.procedural_scatter_contents.seed_value}:${f.procedural_scatter_contents.instances.length}`
+      : "noscatter";
+    const labor = f.labor_profile
+      ? f.labor_profile.base_difficulty_tier
+      : "nolabor";
+    return `${f.id}:${f.geometry.type}:${f.metadata.layer}:${
+      f.metadata.friendly_name ?? ""
+    }:${f.metadata.user_modification_state}:${f.geometry.points.length}:${pts}:${mf}:${scatter}:${labor}`;
   });
   return [
     `s${doc.strokes.length}:${strokeParts.join("~")}`,
