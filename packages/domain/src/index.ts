@@ -180,3 +180,5 @@ export * from './structured-stroke-cost';
 export * from './hydrology';
 export * from './strikeAlert';
 export * from './traceability';
+export * from './layers/layerRegistry';
+export * from './spatial/classifySpatialEntity';

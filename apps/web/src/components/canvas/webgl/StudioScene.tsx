@@ -31,6 +31,7 @@ import {
 } from "./terrainMath";
 import { SPATIAL_LAYER } from "./layerContract";
 import type { CanvasLayerPolicy } from "./layerPolicy";
+import { getLayerStyle, layerYOffset } from "@workstream/domain";
 import { resolveSunLightPosition } from "./sunLight";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore } from "./seasonalStore";
@@ -266,18 +267,19 @@ function LotBoundary({
   // Draped: every point samples the terrain field + the semantic clearance,
   // so the title line rides the surface instead of intersecting it (the old
   // constant-z line buried up to 7.6 m on high ground / floated on low).
+  // Style + clearance come from the Domain Layer Registry — no hardcoded hex.
   const linePoints = drapeRingToSurface(points, {
     sampler,
     scaleM,
     boardAspect,
-    offsetM: SPATIAL_LAYER.semantic.offsetM,
+    offsetM: layerYOffset("cadastre.title_boundary"),
   });
   if (linePoints.length < 2) return null;
   return (
     <Line
       points={linePoints}
-      color="#0030CF"
-      lineWidth={2.5}
+      color={getLayerStyle("cadastre.title_boundary").color}
+      lineWidth={getLayerStyle("cadastre.title_boundary").lineWidthPx}
       renderOrder={SPATIAL_LAYER.semantic.renderOrder}
     />
   );
@@ -320,7 +322,8 @@ function MarqueeBoxLayer({
   );
 }
 
-/** Easements — Signal Blue dashed lines (#0030CF reads on every ground state). */
+/** Easements — registry-styled dashed servitudes (distinct cobalt stroke,
+ *  clear of the trench tier — the depth audit's y=0.05 z-fight pair). */
 function Easements({
   rings,
   scaleM,
@@ -332,6 +335,7 @@ function Easements({
   boardAspect: number;
   sampler: ((worldX: number, worldZ: number) => number) | null;
 }) {
+  const style = getLayerStyle("vicmap.easement");
   return (
     <>
       {rings.map((ring, i) => {
@@ -340,18 +344,18 @@ function Easements({
           sampler,
           scaleM,
           boardAspect,
-          offsetM: SPATIAL_LAYER.semantic.offsetM - 0.01,
+          offsetM: layerYOffset("vicmap.easement"),
         });
         return (
           <Line
             key={`easement-${i}`}
             points={pts}
-            color="#0030CF"
-            lineWidth={1}
+            color={style.color}
+            lineWidth={style.lineWidthPx}
             dashed
-            dashSize={0.4}
-            gapSize={0.3}
-            opacity={0.5}
+            dashSize={style.dashArray?.[0] ?? 0.4}
+            gapSize={style.dashArray?.[1] ?? 0.3}
+            opacity={style.opacity}
             transparent
             renderOrder={SPATIAL_LAYER.semantic.renderOrder}
           />
@@ -382,7 +386,7 @@ function Services({
           sampler,
           scaleM,
           boardAspect,
-          offsetM: SPATIAL_LAYER.semantic.offsetM - 0.02,
+          offsetM: layerYOffset("services.gas"),
         });
         return (
           <Line
@@ -438,7 +442,7 @@ function GovernmentOverlays({
               sampler,
               scaleM,
               boardAspect,
-              offsetM: SPATIAL_LAYER.semantic.offsetM + 0.01,
+              offsetM: layerYOffset("vicmap.gov_overlay"),
             },
           );
           return (
@@ -503,10 +507,15 @@ function BuildingFootprint({
   }, [points, scaleM, boardAspect, heightM]);
 
   // Footprint outline (flat, on the ground) — keeps the surveyor read.
+  // Clearance from the Domain Layer Registry (deterministic y-bias).
   const outlinePoints = useMemo(() => {
     if (points.length < 2) return null;
     return points.map(
-      (p) => [...pctToWorld(p, scaleM, boardAspect), 0.02] as [number, number, number],
+      (p) =>
+        [
+          ...pctToWorld(p, scaleM, boardAspect),
+          layerYOffset("cadastre.building_footprint"),
+        ] as [number, number, number],
     );
   }, [points, scaleM, boardAspect]);
 
@@ -526,7 +535,11 @@ function BuildingFootprint({
       </mesh>
       {/* Ground-footprint hairline — preserves the surveyor measurement read. */}
       {outlinePoints && outlinePoints.length >= 2 && (
-        <Line points={outlinePoints} color={PALETTE.grayL700} lineWidth={1.5} />
+        <Line
+          points={outlinePoints}
+          color={getLayerStyle("cadastre.building_footprint").color}
+          lineWidth={getLayerStyle("cadastre.building_footprint").lineWidthPx}
+        />
       )}
     </group>
   );

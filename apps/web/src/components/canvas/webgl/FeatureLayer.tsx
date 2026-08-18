@@ -17,21 +17,33 @@ import { useMemo, useRef, type ElementRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import type { LandscapeFeature } from "@workstream/contracts";
+import {
+  getLayerStyle,
+  layerYOffset,
+  type LayerID,
+} from "@workstream/domain";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useStudioStore } from "./studioStore";
 import { pctToWorld, type HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
 
-/** Linework offset above the surface (draped layer clearance). */
-const FEATURE_Y = 0.03;
-
-const LAYER_COLORS: Record<string, string> = {
-  hardscape: PALETTE.gsInk,
-  structure: PALETTE.gsInk,
-  irrigation: PALETTE.cadWater,
-  softscape_beds: PALETTE.summerGreen,
-  other: PALETTE.gsInk,
+/**
+ * Feature metadata.layer → canonical Domain Layer Registry id. The registry
+ * is the single source for stroke color + y-bias — no per-component hex.
+ */
+const FEATURE_LAYER_MAP: Record<string, LayerID> = {
+  hardscape: "hardscape.paving",
+  structure: "hardscape.paving",
+  irrigation: "civil.irrigation_main",
+  softscape_beds: "softscape.planting",
+  other: "draft.user_draft",
 };
+
+const DEFAULT_FEATURE_LAYER: LayerID = "draft.user_draft";
+
+export function featureLayerIdFor(metadataLayer: string): LayerID {
+  return FEATURE_LAYER_MAP[metadataLayer] ?? DEFAULT_FEATURE_LAYER;
+}
 
 export interface FeatureLayerProps {
   scaleM: number;
@@ -103,6 +115,11 @@ function FeatureLine({
   selected: boolean;
 }) {
   const closed = feature.geometry.type === "Polygon";
+  // Style + y-bias resolve from the Domain Layer Registry via the feature's
+  // classified layer id — no per-component hex or ad-hoc lift.
+  const layerId = featureLayerIdFor(feature.metadata.layer);
+  const style = getLayerStyle(layerId);
+  const baseY = layerYOffset(layerId);
   const basePoints = useMemo(() => {
     const pts = feature.geometry.points.map((v) => {
       const [x, z] = pctToWorld(
@@ -110,11 +127,11 @@ function FeatureLine({
         scaleM,
         boardAspect,
       );
-      return [x, FEATURE_Y, z] as [number, number, number];
+      return [x, baseY, z] as [number, number, number];
     });
     if (closed && pts.length >= 3) pts.push([...pts[0]!]);
     return pts;
-  }, [feature.geometry, scaleM, boardAspect, closed]);
+  }, [feature.geometry, scaleM, boardAspect, closed, baseY]);
 
   const lineRef = useRef<ElementRef<typeof Line>>(null);
   const overlayRef = useRef<ElementRef<typeof Line>>(null);
@@ -129,7 +146,7 @@ function FeatureLine({
     if (!sampler || viewBlend < 0.001) return;
     for (let i = 0; i < basePoints.length; i++) {
       const [x, , z] = basePoints[i]!;
-      const y = FEATURE_Y + viewBlend * sampler(x, z);
+      const y = baseY + viewBlend * sampler(x, z);
       scratch[i * 3] = x;
       scratch[i * 3 + 1] = y;
       scratch[i * 3 + 2] = z;
@@ -146,15 +163,14 @@ function FeatureLine({
 
   if (basePoints.length < 2) return null;
 
-  const color = LAYER_COLORS[feature.metadata.layer] ?? PALETTE.gsInk;
   return (
     <group>
       <Line
         ref={lineRef}
         points={basePoints}
-        color={color}
-        lineWidth={2.5}
-        opacity={0.9}
+        color={style.color}
+        lineWidth={style.lineWidthPx}
+        opacity={style.opacity}
         transparent
       />
       {selected && (
