@@ -61,3 +61,8 @@ operator signs off; do not silently drop them.
 - Pan-gesture integrity: `webgl-pan-zero-commit` guards the zero-React-
   commit camera pan law; marquee drags are tool-gated, so the default
   drag path must never regress that gate.
+- Marquee in cad mode: the always-open CAD drafter panel covers the board
+  centre, so a centre marquee in cad mode is blocked until the panel is
+  closeable or auto-collapses while a pointer tool is armed (product call
+  — chrome issue, not marquee scope). The marquee e2e runs in sketch mode
+  where the gesture plumbing is proven end-to-end.

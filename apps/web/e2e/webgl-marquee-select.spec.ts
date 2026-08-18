@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type ConsoleMessage } from "@playwright/test";
 import { randomUUID } from "crypto";
 import { createAddressProject } from "./helpers";
 
@@ -17,6 +17,14 @@ test.describe("WebGL marquee box select", () => {
     request,
   }) => {
     test.setTimeout(180_000);
+    const errors: string[] = [];
+    page.on("console", (m: ConsoleMessage) => {
+      if (m.type() === "error") errors.push(m.text().slice(0, 300));
+    });
+    page.on("pageerror", (err: Error) =>
+      errors.push(`${err.name}: ${err.message.slice(0, 300)}`),
+    );
+
     const { projectId } = await createAddressProject(request, {
       address: "1 Marquee Street, Melbourne VIC 3000",
     });
@@ -60,7 +68,13 @@ test.describe("WebGL marquee box select", () => {
     );
     expect(seed.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=cad`, {
+    // Sketch mode: the mode whose event plumbing is proven end-to-end by
+    // the sketch-to-cad spec (rail clicks + canvas-centre ground gestures,
+    // with the mode panel mounted). Cad mode is deliberately avoided here:
+    // its always-open drafter panel covers the board centre (a pre-existing
+    // chrome issue, flagged in the differentiator backlog — closing it is a
+    // product call, not marquee scope).
+    await page.goto(`/projects/${projectId}?mode=sketch`, {
       waitUntil: "networkidle",
     });
     await expect(page.getByTestId("webgl-studio")).toBeVisible({
@@ -75,21 +89,11 @@ test.describe("WebGL marquee box select", () => {
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;
 
-    // The mode surface panel is a 340px card pinned top-centre (x≈470-810,
-    // y≈44-460): the drag must START on clear canvas (below the panel) or
-    // the pointerdown never reaches the ground plane. Pointer capture then
-    // keeps the gesture on the canvas across the panel region, so the box
-    // still spans the board centre — where the two seed placements sit.
-    const sx = cx - 160;
-    const sy = cy + 140;
-    const ex = cx + 160;
-    const ey = cy - 140;
-
     // Drag a box around the board centre: the two centre placements fall
     // inside; the far (10,10) placement must not.
-    await page.mouse.move(sx, sy);
+    await page.mouse.move(cx - 100, cy - 100);
     await page.mouse.down();
-    await page.mouse.move(ex, ey, { steps: 8 });
+    await page.mouse.move(cx + 100, cy + 100, { steps: 6 });
     await page.mouse.up();
 
     await expect(page.getByTestId("selection-count")).toContainText(
@@ -109,9 +113,9 @@ test.describe("WebGL marquee box select", () => {
     // Second identical drag (tool still armed, camera un-panned — a pan
     // would have moved the board centre off the box): replace path selects
     // the same two placements.
-    await page.mouse.move(sx, sy);
+    await page.mouse.move(cx - 100, cy - 100);
     await page.mouse.down();
-    await page.mouse.move(ex, ey, { steps: 8 });
+    await page.mouse.move(cx + 100, cy + 100, { steps: 6 });
     await page.mouse.up();
     await expect(page.getByTestId("selection-count")).toContainText(
       "2 selected",
@@ -120,13 +124,22 @@ test.describe("WebGL marquee box select", () => {
 
     // Shift-additive over the same box: the union dedupes — still exactly 2.
     await page.keyboard.down("Shift");
-    await page.mouse.move(sx, sy);
+    await page.mouse.move(cx - 100, cy - 100);
     await page.mouse.down();
-    await page.mouse.move(ex, ey, { steps: 8 });
+    await page.mouse.move(cx + 100, cy + 100, { steps: 6 });
     await page.mouse.up();
     await page.keyboard.up("Shift");
     await expect(page.getByTestId("selection-count")).toContainText(
       "2 selected",
     );
+
+    // No fatal console errors during the whole gesture sequence.
+    const fatal = errors.filter(
+      (e) =>
+        e.includes("Maximum update depth") ||
+        e.includes("TypeError") ||
+        e.includes("ReferenceError"),
+    );
+    expect(fatal, `Fatal console errors:\n${fatal.join("\n")}`).toHaveLength(0);
   });
 });
