@@ -487,3 +487,82 @@ describe("inspector edits (updatePlacementField / updateFeatureField)", () => {
     expect(f.metadata.user_modification_state).toBe("human_locked");
   });
 });
+
+describe("marquee tool state", () => {
+  beforeEach(() => {
+    useStudioStore.setState({
+      placements: [],
+      features: [],
+      selection: [],
+      marqueeActive: false,
+      marqueeDraft: null,
+      sketchMode: false,
+      measureActive: false,
+      trenchTool: null,
+      zoneTool: null,
+    });
+  });
+
+  it("arming marquee stands down the other pointer tools", () => {
+    const store = useStudioStore.getState();
+    store.setSketchMode(true);
+    store.setMeasureActive(true);
+    store.setTrenchTool("drainage");
+    store.setZoneTool("drip");
+    store.setMarqueeActive(true);
+    const s = useStudioStore.getState();
+    expect(s.marqueeActive).toBe(true);
+    expect(s.sketchMode).toBe(false);
+    expect(s.measureActive).toBe(false);
+    expect(s.trenchTool).toBeNull();
+    expect(s.zoneTool).toBeNull();
+  });
+
+  it("marqueeSelectBox replaces selection, unions when additive, clears draft", () => {
+    const store = useStudioStore.getState();
+    store.setPlacements([
+      {
+        id: "m-1",
+        symbol_id: "olive-standard",
+        x_pct: 30,
+        y_pct: 30,
+        rotation_deg: 0,
+        scale: 1,
+      },
+      {
+        id: "m-2",
+        symbol_id: "olive-standard",
+        x_pct: 35,
+        y_pct: 35,
+        rotation_deg: 0,
+        scale: 1,
+      },
+      {
+        id: "m-out",
+        symbol_id: "olive-standard",
+        x_pct: 5,
+        y_pct: 5,
+        rotation_deg: 0,
+        scale: 1,
+      },
+    ]);
+    store.setMarqueeDraft({ a: { x: 25, y: 25 }, b: { x: 40, y: 40 } });
+    store.marqueeSelectBox({ x0: 25, y0: 25, x1: 40, y1: 40 });
+    let s = useStudioStore.getState();
+    expect(s.selection).toEqual([
+      { kind: "placement", id: "m-1" },
+      { kind: "placement", id: "m-2" },
+    ]);
+    expect(s.marqueeDraft).toBeNull();
+    // Additive: union with an existing ref, deduped.
+    store.marqueeSelectBox({ x0: 0, y0: 0, x1: 10, y1: 10 }, {
+      additive: true,
+    });
+    s = useStudioStore.getState();
+    expect(s.selection).toEqual([
+      { kind: "placement", id: "m-1" },
+      { kind: "placement", id: "m-2" },
+      { kind: "placement", id: "m-out" },
+    ]);
+  });
+});

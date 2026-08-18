@@ -71,6 +71,7 @@ import {
   patchClamps,
   type PlacementFieldKey,
 } from "./inspectorPolicy";
+import { marqueeSelectRefs } from "./marqueeSelect";
 import type { TrenchPointPct } from "./trenchPath";
 import type { ZonePointPct } from "./irrigationZonePath";
 import type { PlanePoint } from "./photoTraceMath";
@@ -449,6 +450,20 @@ export interface StudioStoreState {
   boundaryNotice: { refId: string; reason: string; at: number } | null;
   dismissBoundaryNotice: () => void;
 
+  // --- Marquee box select (tool-gated; option A: placements + features) ---
+  /** Whether the marquee rail tool is armed (drag = box, not pan). */
+  marqueeActive: boolean;
+  /** Arm/disarm marquee (stands down ink / tape / asset / trench / zone). */
+  setMarqueeActive: (active: boolean) => void;
+  /** Live drag rectangle in board-% (rendered by the scene box overlay). */
+  marqueeDraft: { a: PctPoint; b: PctPoint } | null;
+  setMarqueeDraft: (draft: { a: PctPoint; b: PctPoint } | null) => void;
+  /** Commit a finished box: replace selection (union when additive). */
+  marqueeSelectBox: (
+    box: { x0: number; y0: number; x1: number; y1: number },
+    opts?: { additive?: boolean },
+  ) => void;
+
   // --- Project context (for persistence + aerial + flora ranking) ---
   projectId: string;
   aerialUri: string | null;
@@ -689,6 +704,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Inspector — no notice until a clamped edit fires.
   boundaryNotice: null,
 
+  // Marquee — disarmed; no live draft.
+  marqueeActive: false,
+  marqueeDraft: null,
+
   // Photo-trace elevation — no pinned session; records hydrate from the server.
   photoElevations: [],
   photoTraceSession: null,
@@ -850,6 +869,30 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       return { features, historyPast: past, historyFuture: [] };
     }),
   dismissBoundaryNotice: () => set({ boundaryNotice: null }),
+  setMarqueeActive: (active) =>
+    set(
+      active
+        ? {
+            marqueeActive: true,
+            sketchMode: false,
+            armedSymbolId: null,
+            measureActive: false,
+            trenchTool: null,
+            zoneTool: null,
+          }
+        : { marqueeActive: false },
+    ),
+  setMarqueeDraft: (marqueeDraft) => set({ marqueeDraft }),
+  marqueeSelectBox: (box, opts) =>
+    set((s) => {
+      const refs = marqueeSelectRefs(s.placements, s.features, box);
+      return {
+        selection: opts?.additive
+          ? dedupeSelection([...s.selection, ...refs])
+          : refs,
+        marqueeDraft: null,
+      };
+    }),
   addPlacement: (placement) =>
     set((s) => {
       const past = [...s.historyPast, docSnapshot(s)].slice(-50);

@@ -35,6 +35,7 @@ import { resolveSunLightPosition } from "./sunLight";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore } from "./seasonalStore";
 import { pctToWorld, type PctPoint, type HeightmapPoint } from "./coordTransform";
+import { normalizeBox } from "./marqueeSelect";
 import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
@@ -277,6 +278,43 @@ function LotBoundary({
       color="#0030CF"
       lineWidth={2.5}
       renderOrder={SPATIAL_LAYER.semantic.renderOrder}
+    />
+  );
+}
+
+/** Live marquee drag box — a dashed Primary Signal Blue rectangle riding
+ *  the semantic clearance height, so it reads above terrain like the title
+ *  line. Only mounted while the marquee tool drag is in flight. */
+function MarqueeBoxLayer({
+  scaleM,
+  boardAspect,
+}: {
+  scaleM: number;
+  boardAspect: number;
+}) {
+  const draft = useSeasonalStore((s) => s.marqueeDraft);
+  if (!draft) return null;
+  const box = normalizeBox(draft.a, draft.b);
+  const corners: PctPoint[] = [
+    { x: box.x0, y: box.y0 },
+    { x: box.x1, y: box.y0 },
+    { x: box.x1, y: box.y1 },
+    { x: box.x0, y: box.y1 },
+    { x: box.x0, y: box.y0 },
+  ];
+  const world = corners.map((p) => {
+    const [x, z] = pctToWorld(p, scaleM, boardAspect);
+    return [x, SPATIAL_LAYER.semantic.offsetM, z] as [number, number, number];
+  });
+  return (
+    <Line
+      points={world}
+      color="#3D5AFE"
+      lineWidth={1.5}
+      dashed
+      dashSize={0.35}
+      gapSize={0.25}
+      renderOrder={SPATIAL_LAYER.semantic.renderOrder + 1}
     />
   );
 }
@@ -756,6 +794,7 @@ export function StudioScene({
       <GroundContactShadows scaleM={scaleM} boardAspect={boardAspect} />
       <OriginPeg sampler={elevationSampler} />
       <LotBoundary points={boundaryPct} scaleM={scaleM} boardAspect={boardAspect} sampler={elevationSampler} />
+      <MarqueeBoxLayer scaleM={scaleM} boardAspect={boardAspect} />
       <GovernmentOverlays
         overlays={keylessOverlays}
         scaleM={scaleM}

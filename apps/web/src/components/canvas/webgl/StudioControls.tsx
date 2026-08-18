@@ -36,6 +36,11 @@ import {
 import { worldToPct, type PctPoint } from "./coordTransform";
 import { useSeasonalStore } from "./seasonalStore";
 import { useStudioStore } from "./studioStore";
+import {
+  MIN_MARQUEE_AREA_PCT,
+  boxAreaPct,
+  normalizeBox,
+} from "./marqueeSelect";
 
 export interface StudioControlsProps {
   scaleM: number;
@@ -99,6 +104,36 @@ export function StudioControls({
   }
 
   const groundRef = useRef<THREE.Mesh>(null);
+
+  // Tool-gated marquee state — refs so the pointer callbacks never go stale.
+  const marqueeActive = useStudioStore((s) => s.marqueeActive);
+  const marqueeActiveRef = useRef(marqueeActive);
+  marqueeActiveRef.current = marqueeActive;
+  const marqueeStartRef = useRef<PctPoint | null>(null);
+  // Draft writes are coalesced to one per frame (the cursor-report pattern)
+  // so a marquee drag never writes React state per pointer event.
+  const marqueePendingRef = useRef<{ a: PctPoint; b: PctPoint } | null>(null);
+  const marqueeScheduledRef = useRef(false);
+  const marqueeEpochRef = useRef(0);
+  const marqueeCoalesced = useRef<
+    ((draft: { a: PctPoint; b: PctPoint }) => void) | null
+  >(null);
+  if (!marqueeCoalesced.current) {
+    marqueeCoalesced.current = (draft) => {
+      marqueePendingRef.current = draft;
+      if (marqueeScheduledRef.current) return;
+      marqueeScheduledRef.current = true;
+      const epoch = marqueeEpochRef.current;
+      requestAnimationFrame(() => {
+        marqueeScheduledRef.current = false;
+        const value = marqueePendingRef.current;
+        marqueePendingRef.current = null;
+        if (value && marqueeEpochRef.current === epoch) {
+          useStudioStore.getState().setMarqueeDraft(value);
+        }
+      });
+    };
+  }
   const dragState = useRef<PanDragState>({
     active: false,
     isPan: false,
@@ -276,13 +311,28 @@ export function StudioControls({
         return;
       }
 
+      // Tool-gated marquee: plain drag draws the selection box instead of
+      // panning. The box lives in board-% (worldToPct of the ground ray).
+      if (marqueeActiveRef.current) {
+        const world = raycastGround(e, groundRef);
+        if (world) {
+          const pct = worldToPct(world[0], world[1], scaleM, boardAspect);
+          dragState.current.active = true;
+          dragState.current.moved = false;
+          dragState.current.isPan = false;
+          marqueeStartRef.current = pct;
+          marqueeCoalesced.current?.({ a: pct, b: pct });
+        }
+        return;
+      }
+
       dragState.current = beginPanDrag(
         useStudioStore.getState().liveRig,
         e.nativeEvent.clientX,
         e.nativeEvent.clientY,
       );
     },
-    [],
+    [scaleM, boardAspect],
   );
 
   /** Pointer move — pan if dragging (unless sketchMode is on, in which case
@@ -305,6 +355,20 @@ export function StudioControls({
           orbitState.current.moved = true;
           useStudioStore.getState().setLiveRig(orbit.nextRig);
         }
+      }
+
+      // Tool-gated marquee drag — updates the box draft; never pans.
+      if (dragState.current.active && marqueeActiveRef.current) {
+        dragState.current.moved = true;
+        const start = marqueeStartRef.current;
+        const world = raycastGround(e, groundRef);
+        if (start && world) {
+          marqueeCoalesced.current?.({
+            a: start,
+            b: worldToPct(world[0], world[1], scaleM, boardAspect),
+          });
+        }
+        return;
       }
 
       // When sketchMode is active, suppress camera pan so the drag becomes a
@@ -368,6 +432,34 @@ export function StudioControls({
         orbitState.current.active = false;
         orbitState.current.moved = false;
         return; // an orbit never fires a ground click
+      }
+      // Tool-gated marquee finalize: a real box replaces (or unions) the
+      // selection; a degenerate drag behaves like an empty-ground click.
+      if (marqueeActiveRef.current && dragState.current.active) {
+        const start = marqueeStartRef.current;
+        marqueeStartRef.current = null;
+        marqueeEpochRef.current += 1; // drop any in-flight draft write
+        marqueePendingRef.current = null;
+        useStudioStore.getState().setMarqueeDraft(null);
+        const world = raycastGround(e, groundRef);
+        const box =
+          start && world
+            ? normalizeBox(
+                start,
+                worldToPct(world[0], world[1], scaleM, boardAspect),
+              )
+            : null;
+        dragState.current.active = false;
+        dragState.current.isPan = false;
+        dragState.current.moved = false;
+        if (box && boxAreaPct(box) >= MIN_MARQUEE_AREA_PCT) {
+          useStudioStore.getState().marqueeSelectBox(box, {
+            additive: e.nativeEvent.shiftKey,
+          });
+        } else if (!e.nativeEvent.shiftKey) {
+          useStudioStore.getState().clearSelection();
+        }
+        return; // a marquee gesture never fires a ground click
       }
       if (dragState.current.active && !dragState.current.moved && onGroundClick) {
         const world = raycastGround(e, groundRef);

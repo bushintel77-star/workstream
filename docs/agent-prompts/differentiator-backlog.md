@@ -16,10 +16,14 @@ operator signs off; do not silently drop them.
    attribute-only edits persist directly. Step 0 (autosave fingerprint
    coverage) ships first with its own tests.
 2. Marquee box-select rail tool (tool-gated drag box, additive with
-   shift, plain-drag pan preserved).
+   shift, plain-drag pan preserved; option A — placements + features
+   only). In build: one drag lands in the inspector's read-only many-refs
+   summary.
 3. Photo-trace plane-to-ground projection (camera raycast to board-%),
    shipped together with live title-boundary clamping — the facade-to-plan
    converter invents positions, so the reconciliation rule binds it.
+   Blocked on a product decision: the depth rule (plane-foot line,
+   boundary-edge offset, or operator-set setback).
 4. Gizmo phase — rotate / scale / vertex manipulators with their own
    picking, snapping, and undo surface (separate from the inspector).
 
@@ -43,3 +47,17 @@ operator signs off; do not silently drop them.
 - Each item gets its own scoping pass in a fresh context before build.
 - Never fold gizmo scope into the inspector build (documented
   scope-expansion failure mode).
+- Policy classifications that affect persistence or boundary behavior
+  become tested code modules, not doc claims (the inspectorPolicy pattern
+  — a future session cannot silently ship a clamp-triggering field as
+  direct-persist without breaking a test).
+
+## Verification status notes
+
+- "Selection survives mode switches" is PARTIALLY verified: the
+  `webgl-sketch-to-cad` e2e proves the inspector and selection chip do not
+  break across mode switches. A spec asserting the SAME selection refs are
+  preserved across every mode transition is still future work.
+- Pan-gesture integrity: `webgl-pan-zero-commit` guards the zero-React-
+  commit camera pan law; marquee drags are tool-gated, so the default
+  drag path must never regress that gate.

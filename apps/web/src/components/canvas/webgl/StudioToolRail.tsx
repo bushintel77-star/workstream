@@ -79,6 +79,8 @@ export function StudioToolRail({
   const setTrenchTool = useStudioStore((s) => s.setTrenchTool);
   const zoneTool = useStudioStore((s) => s.zoneTool);
   const setZoneTool = useStudioStore((s) => s.setZoneTool);
+  const marqueeActive = useStudioStore((s) => s.marqueeActive);
+  const setMarqueeActive = useStudioStore((s) => s.setMarqueeActive);
 
   const tools: RailTool[] = [
     {
@@ -114,6 +116,15 @@ export function StudioToolRail({
       onToggle: () => setMeasureActive(!measureActive),
       accent: "var(--gs-ink-truth)",
       title: "Two-point tape",
+    },
+    {
+      id: "marquee",
+      glyph: "▭",
+      label: "Marquee",
+      active: marqueeActive,
+      onToggle: () => setMarqueeActive(!marqueeActive),
+      accent: "var(--gs-primary)",
+      title: "Drag a box to select placements and features (shift adds)",
     },
     ...(showTidy
       ? [
