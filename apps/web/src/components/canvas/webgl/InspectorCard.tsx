@@ -156,7 +156,7 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
   const source = placementSourceLabel(p.source);
 
   return (
-    <GlassCard position="top-right" style={{ width: 260, padding: 12 }}>
+    <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
       <div style={titleCss}>Placement</div>
       {notice && notice.refId === p.id ? (
         <div style={alertCss} data-testid="inspector-boundary-notice">
@@ -287,7 +287,7 @@ function FeatureInspector({ f }: { f: LandscapeFeature }) {
   const labor = f.labor_profile;
 
   return (
-    <GlassCard position="top-right" style={{ width: 260, padding: 12 }}>
+    <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
       <div style={titleCss}>Feature · {f.metadata.layer}</div>
       <Field labelText="Name">
         <input
@@ -410,7 +410,7 @@ function PhotoStrokeInspector({ ref }: { ref: SelectionRef }) {
   );
   if (!elev) return null;
   return (
-    <GlassCard position="top-right" style={{ width: 260, padding: 12 }}>
+    <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
       <div style={titleCss}>Photo trace stroke</div>
       <div style={provenanceCss} data-testid="inspector-stroke-provenance">
         Traced on {elev.name}
@@ -428,7 +428,7 @@ function SelectionSummary() {
   const features = useStudioStore((s) => s.features);
   const photoElevations = useStudioStore((s) => s.photoElevations);
   return (
-    <GlassCard position="top-right" style={{ width: 260, padding: 12 }}>
+    <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
       <div style={titleCss}>{selection.length} selected</div>
       <ul style={listCss}>
         {selection.map((r) => (

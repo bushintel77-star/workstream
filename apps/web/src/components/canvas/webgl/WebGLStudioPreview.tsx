@@ -786,24 +786,19 @@ export function WebGLStudioPreview({
       {/* ---- Perimeter tab strip — the single chrome anchor. One
           browser-tab chip strip hugs the top edge; modes on the left,
           meta surfaces on the right, live stats as the trailing status
-          cell. Exactly one frosted panel opens beneath it. ---- */}
+          cell. Panels drop into the right dock, not beneath it. ---- */}
       <div
         style={{
           position: "absolute",
           top: 12,
           left: "50%",
           transform: "translateX(-50%)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 6,
           pointerEvents: "none",
           zIndex: 6,
           maxWidth: "calc(100% - 120px)",
         }}
       >
         <PerimeterTabStrip
-          projectId={projectId}
           activeMode={activeMode}
           unlocked={unlocked}
           onNativeMode={onNativeMode}
@@ -886,7 +881,40 @@ export function WebGLStudioPreview({
             </>
           }
         />
+      </div>
 
+      {/* ---- Elevation mode: the wide board sheet stays a centred overlay
+          (it cannot fit a dock) — centring is now against the full canvas,
+          fixing the old broken containing block (UI survey §1.1). ---- */}
+      {activeMode === "elevation" ? (
+        <StudioElevationCard
+          boundaryPct={boundaryPct}
+          buildingPct={buildingPct}
+          items={studioItems}
+          scaleM={scaleM}
+          onTraceInPlan={() => setActiveMode("sketch")}
+          onClose={() => setActiveMode("sketch")}
+        />
+      ) : null}
+
+      {/* ---- Right dock — the single right-edge panel host. Mode/meta
+          surfaces and the CAD review card dock here instead of hanging
+          centred over the drawing (UI survey §1.3). ---- */}
+      <div
+        style={{
+          position: "absolute",
+          top: 152,
+          right: 12,
+          width: 360,
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          alignItems: "flex-end",
+          pointerEvents: "none",
+          zIndex: 10,
+          maxWidth: "calc(100% - 120px)",
+        }}
+      >
         {cadReviewOpen && cadProposals.length > 0 ? (
           <div
             data-gs-glass-card
@@ -908,6 +936,8 @@ export function WebGLStudioPreview({
             <SketchCadReviewCard />
           </div>
         ) : null}
+
+        <InspectorCard />
 
         {(() => {
           let body: ReactNode | null = null;
@@ -977,17 +1007,6 @@ export function WebGLStudioPreview({
                   onClose={() => setActiveMode("sketch")}
                 />
               </div>
-            );
-          } else if (activeMode === "elevation") {
-            body = (
-              <StudioElevationCard
-                boundaryPct={boundaryPct}
-                buildingPct={buildingPct}
-                items={studioItems}
-                scaleM={scaleM}
-                onTraceInPlan={() => setActiveMode("sketch")}
-                onClose={() => setActiveMode("sketch")}
-              />
             );
           } else if (activeMode === "garden") {
             body = (
@@ -1843,9 +1862,6 @@ export function WebGLStudioPreview({
           </button>
         </div>
       ) : null}
-
-      {/* Inspector — selection-driven property panel (all modes). */}
-      <InspectorCard />
 
       {/* Asset discovery fan-out dock — bottom-centre, above the growth card */}
       <AssetFanOutDock />
