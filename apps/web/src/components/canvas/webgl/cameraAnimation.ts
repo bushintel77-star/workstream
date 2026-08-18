@@ -219,7 +219,11 @@ export class FusedCameraScratch {
     this.persp.fov = fov;
     this.persp.aspect = viewportAspect;
     this.persp.near = 0.1;
-    this.persp.far = distance * 4;
+    // Far = 3d (was 4d): the terrain envelope (3× board) + camera distance
+    // still fit inside 3d at every zoom, and the 30d near/far ratio (was
+    // 40d) keeps the 10-80 mm ground-lift stack out of the same depth
+    // bucket longer under tilt (UI survey §2.2).
+    this.persp.far = distance * 3;
     this.persp.updateProjectionMatrix();
     out.copy(this.persp.projectionMatrix);
     return distance;
