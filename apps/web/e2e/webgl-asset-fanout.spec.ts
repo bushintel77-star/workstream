@@ -49,11 +49,13 @@ test.describe("WebGL asset fan-out (place + persist)", () => {
     await page.locator('[data-testid="asset-card-bluestone-paver"]').click();
     await expect(dock).toContainText("Armed", { timeout: 5_000 });
 
-    // 3. Click the lot centre — one item placed.
+    // 3. Click the lot centre — one item placed. The perimeter strip holds
+    //    the live B/I/S state (the identity chip is now the first glass
+    //    card in DOM order, so pin the assertion to the strip itself).
     const canvas = page.locator('[data-testid="webgl-canvas"]');
     const box = (await canvas.boundingBox())!;
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-    const stats = page.locator("[data-gs-glass-card]").first();
+    const stats = page.locator('[data-testid="perimeter-tab-strip"]');
     await expect(stats).toContainText("I1", { timeout: 10_000 });
 
     // Wait for the debounced autosave to persist BEFORE reloading (a real
@@ -69,7 +71,7 @@ test.describe("WebGL asset fan-out (place + persist)", () => {
     await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
       timeout: 10_000,
     });
-    const statsAfter = page.locator("[data-gs-glass-card]").first();
+    const statsAfter = page.locator('[data-testid="perimeter-tab-strip"]');
     await expect(statsAfter).toContainText("I1", { timeout: 10_000 });
 
     // 5. No fatal console errors.

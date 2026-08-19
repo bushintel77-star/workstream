@@ -792,13 +792,90 @@ export function WebGLStudioPreview({
         style={{
           position: "absolute",
           top: 12,
-          left: "50%",
-          transform: "translateX(-50%)",
+          left: 12,
+          right: 12,
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 8,
           pointerEvents: "none",
           zIndex: 6,
-          maxWidth: "calc(100% - 120px)",
         }}
       >
+        {/* Project identity — tier-1 format: file identity left, actions
+            centre, states right, one band. */}
+        {projectAddress ? (
+          <div
+            data-testid="project-identity"
+            data-gs-glass-card
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              gap: 8,
+              padding: "5px 10px",
+              borderRadius: "var(--gs-radius-pill)",
+              background: "var(--gs-glass-veil)",
+              backdropFilter: "blur(var(--gs-blur))",
+              WebkitBackdropFilter: "blur(var(--gs-blur))",
+              border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+              boxShadow: "var(--gs-shadow-1)",
+              flex: "0 0 auto",
+              maxWidth: 260,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-tech)",
+                fontSize: 11.5,
+                fontWeight: 600,
+                color: "var(--gs-ink-strong)",
+                letterSpacing: "0.01em",
+              }}
+            >
+              {projectAddress.split(",")[0]?.trim() ?? projectAddress}
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-technical-mono)",
+                fontSize: 10,
+                letterSpacing: "0.05em",
+                color: "var(--gs-ink-muted)",
+              }}
+            >
+              {projectAddress.split(",")[1]?.trim() ?? "VIC"}
+            </span>
+            <span
+              aria-hidden
+              style={{
+                width: 1,
+                height: 12,
+                background:
+                  "color-mix(in srgb, var(--gs-line) 70%, transparent)",
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "var(--font-technical-mono)",
+                fontSize: 10,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "var(--gs-primary-ink)",
+              }}
+            >
+              {activeMode}
+            </span>
+          </div>
+        ) : null}
+        <div
+          style={{
+            margin: "0 auto",
+            pointerEvents: "none",
+            maxWidth: "calc(100% - 280px)",
+            minWidth: 0,
+          }}
+        >
         <PerimeterTabStrip
           activeMode={activeMode}
           unlocked={unlocked}
@@ -882,6 +959,7 @@ export function WebGLStudioPreview({
             </>
           }
         />
+        </div>
       </div>
 
       {/* ---- Elevation mode: the wide board sheet stays a centred overlay
