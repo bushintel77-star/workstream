@@ -22,6 +22,9 @@ const GITLAB_HEAD =
   "https://gitlab.com/api/v4/projects/77999-group1%2F77999-project/repository/commits/main";
 const RAILWAY_PROJECT = "e2c12b66-af3a-4a51-a285-874c7a6de7d4";
 const POLL_MS = 60_000;
+// npm-global railway shim — the CLI is not on the spawned shell's PATH.
+const RAILWAY_CMD = path.join(process.env.APPDATA ?? "", "npm", "railway.cmd");
+const COMSEC = process.env.ComSpec ?? "cmd.exe";
 
 function readConfig() {
   try {
@@ -41,19 +44,11 @@ function log(msg) {
 
 function deploy(service, sha, title) {
   return new Promise((resolve) => {
-    const args = [
-      "up",
-      "--project",
-      RAILWAY_PROJECT,
-      "--service",
-      service,
-      "--environment",
-      "production",
-      "--detach",
-      "-m",
-      `auto-deploy ${sha.slice(0, 8)}: ${title}`,
-    ];
-    const child = execFile("railway", args, { stdio: "inherit" });
+    const msg = `auto-deploy ${sha.slice(0, 8)}: ${title}`.replace(/"/g, '\\"');
+    const cmd = `"${RAILWAY_CMD}" up --project ${RAILWAY_PROJECT} --service ${service} --environment production --detach -m "${msg}"`;
+    const child = execFile(COMSEC, ["/d", "/s", "/c", cmd], {
+      stdio: "inherit",
+    });
     child.on("exit", (code) => {
       log(`${service} up exit ${code}`);
       resolve(code ?? 1);
@@ -84,14 +79,20 @@ async function poll() {
     log(
       `new main ${commit.id.slice(0, 8)} (was ${cfg.lastSha ? cfg.lastSha.slice(0, 8) : "none"}) — ${commit.title}`,
     );
-    await deploy("web", commit.id, commit.title);
-    await deploy("api", commit.id, commit.title);
-    writeConfig({
-      ...cfg,
-      lastSha: commit.id,
-      lastDeployAt: new Date().toISOString(),
-      lastTitle: commit.title,
-    });
+    const web = await deploy("web", commit.id, commit.title);
+    const api = await deploy("api", commit.id, commit.title);
+    // Advance state only when both services accepted the deploy; a failure
+    // leaves the SHA behind so the next poll retries.
+    if (web === 0 && api === 0) {
+      writeConfig({
+        ...cfg,
+        lastSha: commit.id,
+        lastDeployAt: new Date().toISOString(),
+        lastTitle: commit.title,
+      });
+    } else {
+      log("deploy failed — will retry next poll");
+    }
   } catch (err) {
     log(`poll error: ${err && err.message ? err.message : String(err)}`);
   }
