@@ -30,6 +30,10 @@ const DEFAULT_KINDS: VicmapKeylessKind[] = [
   "native_vegetation",
   "water_corp",
   "road_casement",
+  // Environmental context — riparian context (riparian species choice,
+  // drainage planning) + excavation constraint (acid sulfate soils).
+  "wetland",
+  "acid_sulfate",
 ];
 
 function openRing(

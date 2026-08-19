@@ -55,19 +55,19 @@ export interface RenderItem {
 const SPECIES_TYPES = new Set(["canopy", "feature", "exist"]);
 const REGION_TYPES = new Set(["lawn", "bed", "paving", "deck"]);
 
-/** Gold Standard base hues for foliage, per planting family (three.js needs
- *  concrete hex — these are material/physical values, sourced from the token
- *  palette ramp in color-tokens.css). */
+/** Gold Standard base hues for foliage, per planting family. Light-theme
+ *  (l-*) ramp values from the token palette — the dark-era d-* ramp read as
+ *  murk on the paper canvas and was retired with the Studio Paper pivot. */
 const FOLIAGE = {
-  canopy: "#4c9662",       // forest (--forest-d-400)
-  feature: "#5ca871",      // sprout (--sprout-d-400)
-  exist: "#328052",        // retained (--forest-d-550)
-  hedge: "#4c7d5c",        // (--hedge-d-500)
-  bed: "#5ca871",
-  lawn: "#328052",
-  paving: "#8b96a0",       // bluestone (--bluestone-d-300)
-  deck: "#c89968",         // timber (--timber-d-300)
-  frenchdrain: "#2e86ab",  // water (--water-l-500)
+  canopy: PALETTE.forestL600,   // forest l-600
+  feature: PALETTE.sproutL500,  // sprout l-500
+  exist: PALETTE.forestL600,    // retained forest
+  hedge: PALETTE.hedgeL600,     // hedge l-600
+  bed: PALETTE.sproutL500,
+  lawn: PALETTE.lawnL100,       // light lawn on paper
+  paving: PALETTE.bluestoneL400, // bluestone l-400
+  deck: PALETTE.timberL400,     // timber l-400
+  frenchdrain: PALETTE.waterL500, // water l-500
   ghost: "#6b7078",        // muted
   trunk: "#4a3d2e",        // bark
   bollard: PALETTE.anodizedMetal, // anodized fallback (BollardLight handles its own)

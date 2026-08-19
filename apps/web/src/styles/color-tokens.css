@@ -109,8 +109,8 @@
   --gs-sky-cool: #8a9bb5;        /* Cool sky-bounce hemisphere tint */
   --gs-shadow: #05070a;          /* Contact/AO shadow colour (near-black, slight cool) */
   --gs-foliage-tint: #3d6b48;    /* Canopy subsurface/scatter tint */
-  --gs-ground-olive: #66745f;    /* Daylight site ground */
-  --gs-ground-bounce: #45513a;   /* Natural daylight ground bounce */
+  --gs-ground-olive: #a8a196;    /* Daylight site ground (paper-world neutral) */
+  --gs-ground-bounce: #8a857a;   /* Neutral warm ground bounce (olive cast removed) */
   --gs-ambient-cool: #aebfd0;    /* Cool ambient fill (sky-lit shadow lift) */
   --gs-rim-cool: #c8d8ee;        /* Cool rim/back-light (silhouette separation) */
   --gs-window-glow: #ffd989;     /* Building window emissive (warm interior glow) */
