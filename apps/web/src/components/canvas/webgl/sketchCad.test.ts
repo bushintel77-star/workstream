@@ -100,6 +100,19 @@ describe("proposeSketchCad (context-aware classifier)", () => {
     expect(insideHouse).toBe(false);
     expect(p.reason).toContain("outdoor");
   });
+
+  it("never proposes from derived hatch fills (decorative shading)", () => {
+    const hatchStroke: CanvasStroke = {
+      ...stroke("hatch-1", [[20, 20], [80, 20]]),
+      nib: "ink-03",
+      hatch: { of: "parent-1", angle_deg: 90, spacing_pct: 0.5 },
+    };
+    const proposals = proposeSketchCad([hatchStroke], {
+      boundary: BOUNDARY,
+      building: BUILDING,
+    });
+    expect(proposals).toEqual([]);
+  });
 });
 
 describe("convertStrokesToFeatures (direct one-click path)", () => {
@@ -141,6 +154,18 @@ describe("convertStrokesToFeatures (direct one-click path)", () => {
     for (const f of features) {
       expect(LandscapeFeatureSchema.safeParse(f).success).toBe(true);
     }
+  });
+
+  it("excludes derived hatch fills from conversion (decorative, not source ink)", () => {
+    const hatchStroke: CanvasStroke = {
+      ...stroke("hatch-1", [[20, 20], [80, 20]]),
+      nib: "ink-03",
+      hatch: { of: "parent-1", angle_deg: 90, spacing_pct: 0.5 },
+    };
+    const { converted, skipped } = convertStrokesToFeatures([hatchStroke]);
+    expect(converted).toBe(0);
+    expect(skipped).toBe(1);
+    expect(hatchStroke.hatch).toBeDefined();
   });
 });
 

@@ -32,23 +32,45 @@
  * Binding: docs/GOLD-STANDARD-2026-ARCHITECTURE.md (Fused Rendering Context)
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ElementRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { Line, Html } from "@react-three/drei";
+import { Html } from "@react-three/drei";
+import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import * as THREE from "three";
 import type { CanvasStroke } from "@workstream/contracts";
 import {
   collectSnapNodes,
   DEFAULT_STITCH_EPSILON_M,
+  sunPositionAt,
   type SpatialPoint,
   type SpatialStroke,
 } from "@workstream/domain";
 import { PALETTE } from "../../../styles/colorTokens";
+import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { useStudioStore } from "./studioStore";
+import { layerScaleAlpha, viewScaleRatioForZoom } from "./layerPolicy";
 import { pctToWorld, worldToPct, type PctPoint, type HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
 import { pointInPolygonXZ } from "./cutFill";
 import { snapDrawPointer, type SnapHint } from "./snapWorld";
+import {
+  bleedScaleForSegment,
+  NEUTRAL_TELEMETRY,
+  nibSpec,
+  nibSpecForStroke,
+  telemetryFromPointer,
+  widthScaleForPoint,
+  type NibSpec,
+  type StylusTelemetry,
+} from "./nibs";
+import { vectorizeStroke } from "./vectorize";
+import {
+  buildInkGeometry,
+  buildStippleGeometry,
+  stipplePointsForStroke,
+  strokeSegmentData,
+} from "./inkGeometry";
+import { NibInkMaterial, StippleMaterial } from "./inkMaterial";
 
 /** Snap-close threshold in world metres. */
 const SNAP_CLOSE_M = 2.0;
@@ -64,12 +86,18 @@ export interface FusedSketchLayerProps {
   boardAspect: number;
   /** Spot levels — when present, ink drapes over the terrain in 3D view. */
   heightmapPoints?: HeightmapPoint[];
+  /** Project latitude/longitude — resolves the solar azimuth that drives
+   *  sun-aware hatching (the inverse sun angle). Null on flat/missing. */
+  lat?: number;
+  lng?: number;
 }
 
 export function FusedSketchLayer({
   scaleM,
   boardAspect,
   heightmapPoints = [],
+  lat,
+  lng,
 }: FusedSketchLayerProps) {
   // sketchMode gates whether this layer captures pointer events. When off,
   // the camera controls get the events (orbit/pan).
@@ -81,6 +109,24 @@ export function FusedSketchLayer({
   const strokes = useStudioStore((s) => s.sketchStrokes);
   const addSketchStroke = useStudioStore((s) => s.addSketchStroke);
   const updateSketchStroke = useStudioStore((s) => s.updateSketchStroke);
+  // The armed nib — committed strokes carry its telemetry mapping.
+  const activeNib = useStudioStore((s) => s.activeNib);
+  const setLiveTelemetry = useStudioStore((s) => s.setLiveTelemetry);
+  const setSunAzimuthDeg = useStudioStore((s) => s.setSunAzimuthDeg);
+  const sunMin = useStudioStore((s) => s.sunMin);
+  const sunDatePreset = useStudioStore((s) => s.sunDatePreset);
+
+  // Resolve the CURRENT solar azimuth from the SAME (sunDatePreset, sunMin)
+  // axis the light rig samples — hatching and shadow studies agree. Pushed
+  // to the store so the palette + hatch action can read it without props.
+  useEffect(() => {
+    if (lat == null || lng == null) {
+      setSunAzimuthDeg(null);
+      return;
+    }
+    const when = sunDateFromPreset(sunDatePreset, sunMin);
+    setSunAzimuthDeg(sunPositionAt(lat, lng, when).azimuth_deg);
+  }, [lat, lng, sunMin, sunDatePreset, setSunAzimuthDeg]);
 
   // The shared elevation sampler — identical math to the TerrainMesh. null when
   // the project has no spot levels (flat ground → ink stays at FLAT_Y).
@@ -101,6 +147,8 @@ export function FusedSketchLayer({
   const isExtrudingRef = useRef(false);
   const extrudeStartYRef = useRef(0);
   const pointsRef = useRef<THREE.Vector3[]>([]);
+  // Per-point stylus telemetry — parallel to pointsRef (same index).
+  const telemetryRef = useRef<StylusTelemetry[]>([]);
 
   // Vertex magnets — committed stroke endpoints in world metres.
   const snapVertices = useMemo(
@@ -176,9 +224,11 @@ export function FusedSketchLayer({
       setSnapHint(null);
       setHover(null);
       pointsRef.current = [new THREE.Vector3(pt.x, FLAT_Y, pt.z)];
+      telemetryRef.current = [telemetryFromPointer(e.nativeEvent)];
+      setLiveTelemetry(telemetryRef.current[0]!);
       setLivePoints(pointsRef.current);
     },
-    [sketchMode, strokes, scaleM, boardAspect, setHover],
+    [sketchMode, strokes, scaleM, boardAspect, setHover, setLiveTelemetry],
   );
 
   const onPointerMove = useCallback(
@@ -215,9 +265,12 @@ export function FusedSketchLayer({
 
       if (last && last.distanceTo(new THREE.Vector3(snap.x, FLAT_Y, snap.z)) < 0.15) return;
       pointsRef.current.push(new THREE.Vector3(snap.x, FLAT_Y, snap.z));
+      const tel = telemetryFromPointer(e.nativeEvent);
+      telemetryRef.current.push(tel);
+      setLiveTelemetry(tel);
       setLivePoints([...pointsRef.current]);
     },
-    [sketchMode, extrudeTarget, scaleM, snapVertices, setHover],
+    [sketchMode, extrudeTarget, scaleM, snapVertices, setHover, setLiveTelemetry],
   );
 
   const onPointerUp = useCallback(() => {
@@ -260,15 +313,32 @@ export function FusedSketchLayer({
 
     const finalPct = closed ? [...pctPoints, pctPoints[0]!] : pctPoints;
 
+    // Stamp the nib + its telemetry mapping onto the stroke. Telemetry is
+    // rounded for storage (3dp pressure, 0.1° angles) — the renderer reads
+    // it back per-segment via widthScaleForPoint / bleedScaleForSegment.
+    const nib = nibSpec(activeNib);
+    const telemetry = telemetryRef.current.map((t) => ({
+      pressure: Math.round(t.pressure * 1000) / 1000,
+      tilt_x_deg: Math.round(t.tiltX * 10) / 10,
+      tilt_y_deg: Math.round(t.tiltY * 10) / 10,
+      azimuth_deg: Math.round(t.azimuth * 10) / 10,
+      altitude_deg: Math.round(t.altitude * 10) / 10,
+    }));
+
     const stroke: CanvasStroke = {
       id: crypto.randomUUID(),
       points: finalPct.map((p) => ({ x_pct: p.x, y_pct: p.y })),
-      color: PALETTE.sketchInk,
-      width_px: 2.5,
+      color: nib.color,
+      width_px: nib.baseWidthPx,
       kind: "ink",
+      nib: nib.kind,
+      telemetry,
     };
 
     addSketchStroke(stroke);
+    // Trace & Bake: vectorize in the background — the parametric anchor
+    // (cubic-Bézier node network) lands on the committed stroke on idle.
+    scheduleVectorize(stroke.id, finalPct, closed);
     setLivePoints([]);
   }, [
     sketchMode,
@@ -279,6 +349,7 @@ export function FusedSketchLayer({
     scaleM,
     boardAspect,
     setHover,
+    activeNib,
   ]);
 
   // ---- Render ----
@@ -318,15 +389,52 @@ export function FusedSketchLayer({
         />
       )}
 
-      {/* Live drawing stroke — drapes in real time as you draw in 3D */}
+      {/* Live drawing stroke — the armed nib's shader profile, drapes in
+          real time as you draw in 3D */}
       {livePoints.length >= 2 && (
-        <DrapedLiveLine points={livePoints} sampler={sampler} />
+        <LiveNibLine
+          points={livePoints}
+          telemetry={telemetryRef.current}
+          nib={nibSpec(activeNib)}
+          sampler={sampler}
+        />
       )}
 
       {/* Draw-time snap marker (kind-coloured ring + glyph chip) */}
       {snapHint && <SnapMarker hint={snapHint} />}
     </group>
   );
+}
+
+/**
+ * Trace & Bake, step 2: background vectorization. After the gesture ends the
+ * pointer path is simplified (Douglas-Peucker) and smoothed into cubic Bézier
+ * segments (centripetal Catmull-Rom) on the IDLE scheduler, then attached to
+ * the committed stroke as its parametric anchor (`stroke.vector`). The anchor
+ * lives in board-% space, so the visual ink scales / rotates / projects with
+ * the stroke into Elevation and Garden 3D without any world-space drift.
+ */
+function scheduleVectorize(id: string, points: PctPoint[], closed: boolean) {
+  const run = () => {
+    const v = vectorizeStroke(points, { closed });
+    // Adapt the board-% anchor to the contract shape ({x_pct, y_pct}).
+    useStudioStore.getState().updateSketchStroke(id, {
+      vector: {
+        closed: v.closed,
+        segments: v.segments.map((seg) => ({
+          c0: { x_pct: seg.c0.x, y_pct: seg.c0.y },
+          c1: { x_pct: seg.c1.x, y_pct: seg.c1.y },
+          c2: { x_pct: seg.c2.x, y_pct: seg.c2.y },
+          c3: { x_pct: seg.c3.x, y_pct: seg.c3.y },
+        })),
+      },
+    });
+  };
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(run, { timeout: 500 });
+  } else {
+    setTimeout(run, 0);
+  }
 }
 
 /**
@@ -362,7 +470,7 @@ function drapedY(
   return FLAT_Y + blend * sampler(x, z);
 }
 
-/** Render a committed stroke, draped over the terrain via per-frame Y update. */
+/** Render a committed stroke — nib-dispatched (line ink vs stipple dots). */
 function CommittedStrokeRenderer({
   stroke,
   scaleM,
@@ -374,6 +482,47 @@ function CommittedStrokeRenderer({
   boardAspect: number;
   sampler: ((x: number, z: number) => number) | null;
 }) {
+  const nib = useMemo(() => nibSpecForStroke(stroke), [stroke]);
+  if (nib.kind === "stipple") {
+    return (
+      <StippleStrokeRenderer
+        stroke={stroke}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        sampler={sampler}
+      />
+    );
+  }
+  return (
+    <InkStrokeRenderer
+      stroke={stroke}
+      nib={nib}
+      scaleM={scaleM}
+      boardAspect={boardAspect}
+      sampler={sampler}
+    />
+  );
+}
+
+interface InkRenderBase {
+  scaleM: number;
+  boardAspect: number;
+  sampler: ((x: number, z: number) => number) | null;
+}
+
+/**
+ * A committed line-ink stroke (graphite / technical ink / chisel) rendered
+ * through the dynamic NibInkMaterial — per-segment width from pressure/tilt
+ * telemetry, procedural grain, edge softness and wet-ink bleed. Draped over
+ * the terrain via per-frame position writes (the Vertical Truth lerp).
+ */
+function InkStrokeRenderer({
+  stroke,
+  nib,
+  scaleM,
+  boardAspect,
+  sampler,
+}: { stroke: CanvasStroke; nib: NibSpec } & InkRenderBase) {
   // Base world points (XZ) — computed once. Y is updated per-frame below.
   const basePoints = useMemo(() => {
     // points ?? [] — defensive against legacy strokes (see strokeToWorldPoints).
@@ -383,24 +532,52 @@ function CommittedStrokeRenderer({
     });
   }, [stroke.points, scaleM, boardAspect]);
 
+  // The dynamic ink geometry: instanceStart/End + per-segment aWidth/aBleed.
+  const geometry = useMemo(
+    () => buildInkGeometry(strokeSegmentData(stroke, nib, scaleM, boardAspect)),
+    [stroke, nib, scaleM, boardAspect],
+  );
+  const material = useMemo(
+    () =>
+      new NibInkMaterial({
+        color: nib.color,
+        linewidth: stroke.width_px ?? nib.baseWidthPx,
+        opacity: nib.opacity,
+        grain: nib.grain,
+        edgeSoft: nib.edgeSoft,
+        bleed: nib.bleed,
+      }),
+    [nib, stroke.width_px],
+  );
+  const line2 = useMemo(() => new Line2(geometry, material), [geometry, material]);
   // The Line2 ref — we mutate its geometry positions in place each frame.
-  // ElementRef<typeof Line> resolves to Line2 | LineSegments2 (see SubsurfaceEngine).
-  const lineRef = useRef<ElementRef<typeof Line>>(null);
+  const lineRef = useRef<Line2 | null>(null);
   // Pre-allocated Float32Array scratch for the per-frame position write.
-  // Sized to basePoints × 3 (x,y,z per vertex). Allocated once per stroke.
   const positionsScratch = useMemo(
     () => new Float32Array(basePoints.length * 3),
     [basePoints.length],
   );
 
-  // Per-frame: read the animated viewBlend (transient), update each vertex Y so
-  // the ink lerps from flat (plan) to terrain-draped (3D) in sync with the camera.
-  useFrame(() => {
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      material.dispose();
+    };
+  }, [geometry, material]);
+
+  // Per-frame: keep the material resolution in sync (drei <Line> parity),
+  // apply the sketchInk scale-band visibility cross-fade (macro zoom
+  // dissolves detail ink instead of popping it), and lerp each vertex Y from
+  // flat (plan) to terrain-draped (3D) in lockstep with the viewBlend.
+  useFrame(({ size }) => {
+    material.resolution.set(size.width, size.height);
+    const alpha = layerScaleAlpha(
+      "sketchInk",
+      viewScaleRatioForZoom(useStudioStore.getState().liveRig.zoom),
+    );
+    material.opacity = nib.opacity * alpha;
     if (!lineRef.current || basePoints.length === 0) return;
     const { viewBlend } = useStudioStore.getState();
-
-    // Only rewrite positions if there's a sampler AND we're not fully in plan
-    // (blend=0 → flat, the initial state — skip the write to save bandwidth).
     if (!sampler || viewBlend < 0.001) return;
 
     for (let i = 0; i < basePoints.length; i++) {
@@ -410,54 +587,145 @@ function CommittedStrokeRenderer({
       positionsScratch[i * 3 + 1] = y;
       positionsScratch[i * 3 + 2] = z;
     }
-
-    // Line2 (three.js LineSegmentsGeometry) uses instanceStart/instanceEnd
-    // attributes, not a plain position attribute — setPositions is the API.
     lineRef.current.geometry.setPositions(positionsScratch);
     lineRef.current.computeLineDistances();
   });
 
   if (basePoints.length < 2) return null;
-
-  return (
-    <group>
-      <Line
-        ref={lineRef}
-        points={basePoints}
-        color={stroke.color ?? PALETTE.sketchInk}
-        lineWidth={stroke.width_px ?? 2}
-        opacity={0.82}
-        transparent
-      />
-    </group>
-  );
+  return <primitive object={line2} ref={lineRef} />;
 }
 
-/** A live (in-progress) drawing stroke that drapes in real time. */
-function DrapedLiveLine({
+/**
+ * A committed stipple/speckle stroke — pressure-subsampled round dots whose
+ * size scales with stylus altitude (StippleMaterial). Drapes with the same
+ * Vertical Truth lerp as the line ink.
+ */
+function StippleStrokeRenderer({
+  stroke,
+  scaleM,
+  boardAspect,
+  sampler,
+}: { stroke: CanvasStroke } & InkRenderBase) {
+  const nib = useMemo(() => nibSpecForStroke(stroke), [stroke]);
+  const points = useMemo(
+    () => stipplePointsForStroke(stroke, scaleM, boardAspect),
+    [stroke, scaleM, boardAspect],
+  );
+  const geometry = useMemo(() => buildStippleGeometry(points), [points]);
+  const material = useMemo(
+    () => new StippleMaterial({ color: nib.color, opacity: nib.opacity }),
+    [nib.color, nib.opacity],
+  );
+  const cloud = useMemo(() => new THREE.Points(geometry, material), [geometry, material]);
+
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      material.dispose();
+    };
+  }, [geometry, material]);
+
+  useFrame(({ size, viewport }) => {
+    // PointsMaterial convention: scale = drawing-buffer height ÷ 2.
+    material.uniforms.uScale.value = viewport.dpr * size.height * 0.5;
+    // sketchInk scale-band visibility — dots dissolve at macro zoom.
+    const alpha = layerScaleAlpha(
+      "sketchInk",
+      viewScaleRatioForZoom(useStudioStore.getState().liveRig.zoom),
+    );
+    material.uniforms.uOpacity.value = nib.opacity * alpha;
+    if (!sampler || points.length === 0) return;
+    const { viewBlend } = useStudioStore.getState();
+    if (viewBlend < 0.001) return;
+    const pos = geometry.attributes.position as THREE.BufferAttribute;
+    const arr = pos.array as Float32Array;
+    for (let i = 0; i < points.length; i++) {
+      const [x, , z] = points[i]!.world;
+      arr[i * 3 + 1] = drapedY(x, z, viewBlend, sampler);
+    }
+    pos.needsUpdate = true;
+  });
+
+  if (points.length === 0) return null;
+  return <primitive object={cloud} />;
+}
+
+/**
+ * A live (in-progress) stroke rendered through the armed nib's shader
+ * profile — the "live shader overlay" while the gesture is still in flight.
+ * Geometry is rebuilt per pointer-move (same cost the drei <Line> path paid).
+ */
+function LiveNibLine({
   points,
+  telemetry,
+  nib,
   sampler,
 }: {
   points: THREE.Vector3[];
+  telemetry: StylusTelemetry[];
+  nib: NibSpec;
   sampler: ((x: number, z: number) => number) | null;
 }) {
-  const lineRef = useRef<ElementRef<typeof Line>>(null);
-
-  // Build the base points array (XZ from the live Vector3 points).
   const basePoints = useMemo(
     () => points.map((p) => [p.x, FLAT_Y, p.z] as [number, number, number]),
     [points],
   );
+  const geometry = useMemo(() => {
+    const n = basePoints.length;
+    const positions = new Float32Array(n * 3);
+    const widths = new Float32Array(Math.max(0, n - 1));
+    const bleeds = new Float32Array(Math.max(0, n - 1));
+    for (let i = 0; i < n; i++) {
+      positions[i * 3] = basePoints[i]![0];
+      positions[i * 3 + 1] = FLAT_Y;
+      positions[i * 3 + 2] = basePoints[i]![2];
+    }
+    for (let i = 0; i < widths.length; i++) {
+      const ta = telemetry[i] ?? NEUTRAL_TELEMETRY;
+      const tb = telemetry[i + 1] ?? NEUTRAL_TELEMETRY;
+      widths[i] = (widthScaleForPoint(nib, ta) + widthScaleForPoint(nib, tb)) / 2;
+      const dx = basePoints[i + 1]![0] - basePoints[i]![0];
+      const dz = basePoints[i + 1]![2] - basePoints[i]![2];
+      bleeds[i] = bleedScaleForSegment(nib, Math.hypot(dx, dz));
+    }
+    return buildInkGeometry({ positions, widths, bleeds });
+  }, [basePoints, telemetry, nib]);
+  const material = useMemo(
+    () =>
+      new NibInkMaterial({
+        color: nib.color,
+        linewidth: nib.baseWidthPx,
+        opacity: nib.opacity * 0.7,
+        grain: nib.grain,
+        edgeSoft: nib.edgeSoft,
+        bleed: nib.bleed,
+      }),
+    [nib],
+  );
+  const line2 = useMemo(() => new Line2(geometry, material), [geometry, material]);
+  const lineRef = useRef<Line2 | null>(null);
   const positionsScratch = useMemo(
     () => new Float32Array(Math.max(basePoints.length, 2) * 3),
     [basePoints.length],
   );
 
-  useFrame(() => {
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      material.dispose();
+    };
+  }, [geometry, material]);
+
+  useFrame(({ size }) => {
+    material.resolution.set(size.width, size.height);
+    const alpha = layerScaleAlpha(
+      "sketchInk",
+      viewScaleRatioForZoom(useStudioStore.getState().liveRig.zoom),
+    );
+    material.opacity = nib.opacity * 0.7 * alpha;
     if (!lineRef.current || basePoints.length < 2) return;
     const { viewBlend } = useStudioStore.getState();
     if (!sampler || viewBlend < 0.001) return;
-
     for (let i = 0; i < basePoints.length; i++) {
       const [x, , z] = basePoints[i]!;
       const y = drapedY(x, z, viewBlend, sampler);
@@ -469,16 +737,8 @@ function DrapedLiveLine({
     lineRef.current.computeLineDistances();
   });
 
-  return (
-    <Line
-      ref={lineRef}
-      points={basePoints}
-      color={PALETTE.sketchInk}
-      lineWidth={2}
-      opacity={0.55}
-      transparent
-    />
-  );
+  if (basePoints.length < 2) return null;
+  return <primitive object={line2} ref={lineRef} />;
 }
 
 /** An extruded 3D mass from a closed stroke footprint. */

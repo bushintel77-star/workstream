@@ -66,6 +66,7 @@ import { EarthworksCard } from "./EarthworksCard";
 import { FitSheetCard } from "./FitSheetCard";
 import { AssetFanOutDock } from "./AssetFanOutDock";
 import { StudioToolRail } from "./StudioToolRail";
+import { NibPalette } from "./NibPalette";
 import { PerimeterTabStrip, type MetaTabId } from "./PerimeterTabStrip";
 import { canvasLayerPolicy } from "./layerPolicy";
 import { importSiteTruth } from "./siteTruthImport";
@@ -1985,6 +1986,10 @@ export function WebGLStudioPreview({
         tidyDisabled={strokes.length === 0}
         onTidy={() => useStudioStore.getState().tidySketchToCad()}
       />
+
+      {/* Floating nib palette — docks beside the rail while Sketch is armed
+          (self-gates on sketchMode + photo-trace chrome ownership). */}
+      <NibPalette />
 
       {/* Selection chip — the ONE selection state readout (placements,
           features, photo-trace strokes). Esc clears; survives mode switches. */}

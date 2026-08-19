@@ -711,3 +711,101 @@ describe("marquee tool state", () => {
     ]);
   });
 });
+
+describe("studioStore expressive stylus Sketch (nib + sun hatch)", () => {
+  afterEach(() => {
+    useStudioStore.setState({
+      sketchStrokes: [],
+      activeNib: "graphite-6b",
+      sunHatchSnap: true,
+      sunAzimuthDeg: null,
+    });
+  });
+
+  const closedRing = (id: string): CanvasStroke => ({
+    id,
+    points: [
+      { x_pct: 20, y_pct: 20 },
+      { x_pct: 60, y_pct: 20 },
+      { x_pct: 60, y_pct: 60 },
+      { x_pct: 20, y_pct: 60 },
+      { x_pct: 20, y_pct: 20 },
+    ],
+    color: "#ff2ef6",
+    width_px: 2,
+    kind: "ink",
+  });
+
+  it("defaults to graphite armed, sun-hatch snap on", () => {
+    const s = useStudioStore.getState();
+    expect(s.activeNib).toBe("graphite-6b");
+    expect(s.sunHatchSnap).toBe(true);
+    expect(s.sunAzimuthDeg).toBeNull();
+  });
+
+  it("setActiveNib / setSunHatchSnap write their fields", () => {
+    const store = useStudioStore.getState();
+    store.setActiveNib("chisel-marker");
+    store.setSunHatchSnap(false);
+    store.setSunAzimuthDeg(270);
+    const s = useStudioStore.getState();
+    expect(s.activeNib).toBe("chisel-marker");
+    expect(s.sunHatchSnap).toBe(false);
+    expect(s.sunAzimuthDeg).toBe(270);
+  });
+
+  it("hatchFillStroke fills a closed ring with sun-snapped parallel lines", () => {
+    const store = useStudioStore.getState();
+    store.setSketchStrokes([closedRing("ring-1")]);
+    store.setSunAzimuthDeg(0); // due-north sun → 90° (vertical) hatch
+    store.hatchFillStroke("ring-1");
+
+    const s = useStudioStore.getState();
+    const hatches = s.sketchStrokes.filter((st) => st.hatch);
+    expect(hatches.length).toBeGreaterThan(5);
+    for (const h of hatches) {
+      expect(h.hatch!.of).toBe("ring-1");
+      expect(h.hatch!.angle_deg).toBe(90);
+      expect(h.nib).toBe("ink-03");
+      // Vertical hatch: x endpoints align (within rounding).
+      expect(h.points[0]!.x_pct).toBeCloseTo(h.points[1]!.x_pct, 1);
+    }
+  });
+
+  it("hatchFillStroke falls back to 45° when sun snap is off or azimuth unknown", () => {
+    const store = useStudioStore.getState();
+    store.setSketchStrokes([closedRing("ring-2")]);
+    store.setSunHatchSnap(false);
+    store.hatchFillStroke("ring-2");
+    const s = useStudioStore.getState();
+    const hatch = s.sketchStrokes.find((st) => st.hatch);
+    expect(hatch?.hatch?.angle_deg).toBe(45);
+  });
+
+  it("hatchFillStroke is a no-op on open strokes", () => {
+    const store = useStudioStore.getState();
+    store.setSketchStrokes([
+      {
+        ...closedRing("ring-3"),
+        points: [
+          { x_pct: 20, y_pct: 20 },
+          { x_pct: 60, y_pct: 20 },
+          { x_pct: 60, y_pct: 60 },
+        ],
+      },
+    ]);
+    store.hatchFillStroke("ring-3");
+    expect(useStudioStore.getState().sketchStrokes).toHaveLength(1);
+  });
+
+  it("hatch fill commits as a single undo step", () => {
+    const store = useStudioStore.getState();
+    store.setSketchStrokes([closedRing("ring-4")]);
+    store.hatchFillStroke("ring-4");
+    const before = useStudioStore.getState().sketchStrokes.length;
+    useStudioStore.getState().undo();
+    expect(useStudioStore.getState().sketchStrokes).toHaveLength(1); // pre-fill
+    useStudioStore.getState().redo();
+    expect(useStudioStore.getState().sketchStrokes).toHaveLength(before);
+  });
+});

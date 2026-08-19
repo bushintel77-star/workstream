@@ -897,6 +897,8 @@ export function StudioScene({
           scaleM={scaleM}
           boardAspect={boardAspect}
           heightmapPoints={heightmapPoints}
+          lat={lat}
+          lng={lng}
         />
       ) : null}
       {/* Stitch ε-snap highlights — pulsing dots at weld nodes when the

@@ -24,6 +24,7 @@ import {
 } from "@workstream/domain";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useStudioStore } from "./studioStore";
+import { layerScaleAlpha, viewScaleRatioForZoom } from "./layerPolicy";
 import { pctToWorld, type HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
 
@@ -141,6 +142,23 @@ function FeatureLine({
   );
 
   useFrame(() => {
+    // cadLinework scale-band visibility — the CAD read survives macro zoom
+    // (band [0.2, 8] × fit) and cross-fades instead of popping. drei <Line>
+    // materials default opaque; flip transparent so opacity takes effect.
+    const alpha = layerScaleAlpha(
+      "cadLinework",
+      viewScaleRatioForZoom(useStudioStore.getState().liveRig.zoom),
+    );
+    if (lineRef.current) {
+      const m = lineRef.current.material;
+      m.transparent = true;
+      m.opacity = style.opacity * alpha;
+    }
+    if (overlayRef.current) {
+      const m = overlayRef.current.material;
+      m.transparent = true;
+      m.opacity = alpha;
+    }
     if (basePoints.length < 2) return;
     const { viewBlend } = useStudioStore.getState();
     if (!sampler || viewBlend < 0.001) return;

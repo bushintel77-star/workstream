@@ -36,9 +36,18 @@ import type {
   LaborProfile,
   LandscapeFeature,
   MaterialFill,
+  NibKind,
   PhotoElevation,
   PhotoTraceStroke,
 } from "@workstream/contracts";
+import { PALETTE } from "../../../styles/colorTokens";
+import {
+  DEFAULT_HATCH_SPACING_PCT,
+  hatchLinesForPolygon,
+  isClosedRing,
+  sunHatchAngleDeg,
+} from "./hatchSun";
+import { DEFAULT_NIB, NEUTRAL_TELEMETRY, type StylusTelemetry } from "./nibs";
 import {
   melbourneSeason,
   type FloraStudioForm,
@@ -327,7 +336,12 @@ export interface StudioStoreState {
   elevationFacadeAzimuth: number | null;
 
   // --- Shared ink layer ---
-  /** All sketch strokes in board-% space (the CanvasStroke contract schema). */
+  /**
+   * All sketch strokes in board-% space (the CanvasStroke contract schema).
+   * Rendered linearly today (no spatial index — see layerPolicy.ts
+   * NON-GOALS + the FUTURE SPATIAL INDEX CONTRACT: containment-on-insert,
+   * never nearest-neighbour, when one is ever built).
+   */
   sketchStrokes: CanvasStroke[];
 
   // --- Photo-trace elevation (sketch capstone) ---
@@ -497,6 +511,39 @@ export interface StudioStoreState {
     box: { x0: number; y0: number; x1: number; y1: number },
     opts?: { additive?: boolean },
   ) => void;
+
+  // --- Expressive stylus Sketch (Limner nib taxonomy) ---
+  /** The armed nib — committed strokes carry its telemetry mapping
+   *  (nibs.ts). The floating nib palette (Sketch mode) swaps it. */
+  activeNib: NibKind;
+  /**
+   * Latest resolved solar azimuth (0° = north, Melbourne convention) — null
+   * when the project has no lat/lng. Written by the sketch layer from the
+   * SAME sun sample the light rig uses, so hatching and shadow studies
+   * always agree. Drives sun-aware hatching (the inverse sun angle).
+   */
+  sunAzimuthDeg: number | null;
+  /**
+   * Live stylus telemetry scratch — the LAST pointer sample, mutated in
+   * place per pointer-move WITHOUT set() (the transient-write doctrine:
+   * zero DOM re-renders). The nib palette polls it on a slow interval for
+   * the pressure/tilt readout. Not a persistence field.
+   */
+  liveTelemetry: StylusTelemetry;
+  /** Sun-aware hatching — hatch fills snap parallel lines to the site's
+   *  inverse sun angle. Off → 45° drafting hatch. */
+  sunHatchSnap: boolean;
+  setActiveNib: (nib: NibKind) => void;
+  setSunAzimuthDeg: (deg: number | null) => void;
+  setLiveTelemetry: (t: StylusTelemetry) => void;
+  setSunHatchSnap: (v: boolean) => void;
+  /**
+   * Hatch-fill a closed stroke with parallel lines (board-% space). When
+   * sunHatchSnap is on and the sun azimuth is known the lines snap to the
+   * inverse sun angle; otherwise 45°. Commits the derived hatch strokes in
+   * ONE history step; hatch strokes are excluded from sketch→CAD.
+   */
+  hatchFillStroke: (strokeId: string, opts?: { spacingPct?: number }) => void;
 
   // --- Project context (for persistence + aerial + flora ranking) ---
   projectId: string;
@@ -794,6 +841,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   marqueeActive: false,
   marqueeDraft: null,
 
+  // Expressive stylus Sketch — graphite armed by default; sun-hatch snap on;
+  // neutral live telemetry until the first pen sample.
+  activeNib: DEFAULT_NIB,
+  sunAzimuthDeg: null,
+  liveTelemetry: { ...NEUTRAL_TELEMETRY },
+  sunHatchSnap: true,
+
   // Photo-trace elevation — no pinned session; records hydrate from the server.
   photoElevations: [],
   photoTraceSession: null,
@@ -983,6 +1037,57 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
           ? dedupeSelection([...s.selection, ...refs])
           : refs,
         marqueeDraft: null,
+      };
+    }),
+  setActiveNib: (activeNib) => set({ activeNib }),
+  setSunAzimuthDeg: (sunAzimuthDeg) => set({ sunAzimuthDeg }),
+  // Transient scratch write — mutates the shared telemetry object in place
+  // WITHOUT set(), so per-pointer-move updates never re-render DOM
+  // subscribers (the liveRig transient doctrine). The nib palette polls
+  // getState().liveTelemetry on a slow interval for its readout.
+  setLiveTelemetry: (t) => {
+    const s = useStudioStore.getState().liveTelemetry;
+    s.pressure = t.pressure;
+    s.tiltX = t.tiltX;
+    s.tiltY = t.tiltY;
+    s.azimuth = t.azimuth;
+    s.altitude = t.altitude;
+  },
+  setSunHatchSnap: (sunHatchSnap) => set({ sunHatchSnap }),
+  hatchFillStroke: (strokeId, opts) =>
+    set((s) => {
+      const parent = s.sketchStrokes.find((st) => st.id === strokeId);
+      const pts = parent?.points;
+      if (!pts || pts.length < 3) return {};
+      const ring: PctPoint[] = pts.map((p) => ({ x: p.x_pct, y: p.y_pct }));
+      if (!isClosedRing(ring)) return {};
+      const angle =
+        s.sunHatchSnap && s.sunAzimuthDeg != null
+          ? sunHatchAngleDeg(s.sunAzimuthDeg)
+          : 45;
+      const spacing = opts?.spacingPct ?? DEFAULT_HATCH_SPACING_PCT;
+      const lines = hatchLinesForPolygon(ring, angle, spacing);
+      if (lines.length === 0) return {};
+      const round2 = (v: number) => Math.round(v * 100) / 100;
+      const baseColor = parent.color ?? PALETTE.sketchInk;
+      const baseWidth = parent.width_px ?? 2;
+      const hatchStrokes: CanvasStroke[] = lines.map((ln) => ({
+        id: crypto.randomUUID(),
+        points: [
+          { x_pct: round2(ln.a.x), y_pct: round2(ln.a.y) },
+          { x_pct: round2(ln.b.x), y_pct: round2(ln.b.y) },
+        ],
+        color: baseColor,
+        width_px: Math.max(0.75, baseWidth * 0.5),
+        kind: "ink",
+        nib: "ink-03",
+        hatch: { of: parent.id, angle_deg: angle, spacing_pct: spacing },
+      }));
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      return {
+        sketchStrokes: [...s.sketchStrokes, ...hatchStrokes],
+        historyPast: past,
+        historyFuture: [],
       };
     }),
   addPlacement: (placement) =>

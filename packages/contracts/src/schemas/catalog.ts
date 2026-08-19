@@ -97,12 +97,85 @@ const CanvasStrokePointSchema = z.object({
   y_pct: z.number(),
 });
 
+/**
+ * The expressive stylus nib taxonomy (Limner Sketch). Each nib maps PointerEvent
+ * telemetry differently — see webgl/nibs.ts for the render-side spec. Optional /
+ * absent on legacy ink and handoff-authored strokes (rendered with the default
+ * technical-ink profile).
+ */
+export const NibKindSchema = z.enum([
+  "graphite-6b",
+  "ink-03",
+  "chisel-marker",
+  "stipple",
+]);
+export type NibKind = z.infer<typeof NibKindSchema>;
+
+/**
+ * Per-point stylus telemetry captured from HTML5 PointerEvents (pressure,
+ * tiltX/tiltY, azimuthAngle, altitudeAngle) — the array is parallel to
+ * `CanvasStroke.points` (index i describes point i). Angles are normalized to
+ * degrees. Optional / absent on legacy strokes.
+ */
+const StrokeTelemetrySchema = z.object({
+  /** Normalized pen pressure 0–1 (mouse/touch synthesize 0.5 / 0). */
+  pressure: z.number().min(0).max(1),
+  /** PointerEvent.tiltX in degrees (−90…90). */
+  tilt_x_deg: z.number(),
+  /** PointerEvent.tiltY in degrees (−90…90). */
+  tilt_y_deg: z.number(),
+  /** Clockwise azimuth of the pen around the vertical, degrees (0–360). */
+  azimuth_deg: z.number().optional(),
+  /** Pen altitude above the surface, degrees (0–90). */
+  altitude_deg: z.number().optional(),
+});
+
+/** A cubic Bézier segment in board-% space (the parametric anchor node). */
+const StrokeVectorSegmentSchema = z.object({
+  c0: CanvasStrokePointSchema,
+  c1: CanvasStrokePointSchema,
+  c2: CanvasStrokePointSchema,
+  c3: CanvasStrokePointSchema,
+});
+
 /** Freehand stroke — populated when Apple Pencil / PencilKit lands (phase 2). */
 export const CanvasStrokeSchema = z.object({
   id: z.string().uuid(),
   points: z.array(CanvasStrokePointSchema),
   color: z.string().default("#ff2ef6"),
   width_px: z.number().positive().default(2),
+  /** The nib that drew this stroke (see NibKindSchema). Optional = legacy ink. */
+  nib: NibKindSchema.optional(),
+  /**
+   * Per-point stylus telemetry — parallel to `points` (see
+   * StrokeTelemetrySchema). Optional = legacy stroke without telemetry.
+   */
+  telemetry: z.array(StrokeTelemetrySchema).optional(),
+  /**
+   * The parametric anchor: the vectorized cubic-Bézier node network this
+   * stroke's visual texture stays anchored to. Computed in the background
+   * after the gesture ends (Douglas-Peucker simplification + centripetal
+   * Catmull-Rom → cubic Béziers, all in board-% so the anchor scales /
+   * rotates / projects with the stroke). Optional until vectorization lands.
+   */
+  vector: z
+    .object({
+      segments: z.array(StrokeVectorSegmentSchema),
+      closed: z.boolean(),
+    })
+    .optional(),
+  /**
+   * Sun-hatch provenance — the parent stroke id this hatch fill decorates.
+   * Hatches are derived ink (parallel lines snapped to the site's inverse
+   * sun angle) and are excluded from sketch→CAD conversion.
+   */
+  hatch: z
+    .object({
+      of: z.string().uuid(),
+      angle_deg: z.number(),
+      spacing_pct: z.number().positive(),
+    })
+    .optional(),
   /**
    * "shape" strokes (sketch line/rect/circle tool) render as crisp vector
    * geometry instead of organic freehand ink — see handoff SketchBoard /

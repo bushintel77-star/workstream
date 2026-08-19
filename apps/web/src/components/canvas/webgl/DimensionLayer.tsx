@@ -21,9 +21,11 @@
  * Binding: docs/GOLD-STANDARD-2026.md §3 (technical drafting truth)
  */
 
-import { useMemo } from "react";
+import { useMemo, useRef, type ElementRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import { Line, Html } from "@react-three/drei";
 import { useStudioStore } from "./studioStore";
+import { layerScaleAlpha, viewScaleRatioForZoom } from "./layerPolicy";
 import { pctToWorld, type PctPoint } from "./coordTransform";
 import { dimDeclutterBoxForZoom } from "./dimensionLod";
 import {
@@ -118,11 +120,32 @@ export function DimensionLayer({
     return pts;
   }, [placements, scaleM, boardAspect]);
 
+  // dims scale-band visibility: the working-drawing ring cross-fades out at
+  // macro zoom (band [0.3, 4] × fit). The line material and the label chips
+  // are faded per-frame via refs — zero React re-renders during zoom.
+  const lineRef = useRef<ElementRef<typeof Line>>(null);
+  const chipRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  useFrame(() => {
+    const alpha = layerScaleAlpha(
+      "dims",
+      viewScaleRatioForZoom(useStudioStore.getState().liveRig.zoom),
+    );
+    if (lineRef.current) {
+      const m = lineRef.current.material;
+      m.transparent = true;
+      m.opacity = 0.75 * alpha;
+    }
+    for (const el of chipRefs.current) {
+      if (el) el.style.opacity = String(alpha);
+    }
+  });
+
   if (!dimsView || segments.length === 0) return null;
 
   return (
     <group>
       <Line
+        ref={lineRef}
         segments
         points={segments}
         color={PALETTE.skyCool}
@@ -130,7 +153,7 @@ export function DimensionLayer({
         transparent
         opacity={0.75}
       />
-      {placements.map((d) => {
+      {placements.map((d, i) => {
         const [wx, wz] = pctToWorld(
           { x: d.labelX, y: d.labelY },
           scaleM,
@@ -144,7 +167,13 @@ export function DimensionLayer({
             zIndexRange={[20, 10]}
             style={{ pointerEvents: "none" }}
           >
-            <span data-testid="dim-label" style={dimLabelStyle}>
+            <span
+              ref={(el) => {
+                chipRefs.current[i] = el;
+              }}
+              data-testid="dim-label"
+              style={dimLabelStyle}
+            >
               {`${d.key} · ${d.lengthM.toFixed(2)} m`}
             </span>
           </Html>

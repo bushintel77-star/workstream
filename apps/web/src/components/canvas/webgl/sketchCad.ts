@@ -74,13 +74,16 @@ export function proposalScale(
 /**
  * Classify board-% freehand ink into confidence-scored CAD ghost proposals
  * (primary tidy path). Empty input / no convertible strokes → [].
+ * Derived hatch fills (`stroke.hatch`) are decorative shading, not source
+ * ink — excluded up front so a sun-hatch never polls the classifier.
  */
 export function proposeSketchCad(
   strokes: CanvasStroke[],
   ctx: { boundary: PctPoint[]; building: PctPoint[] },
 ): SketchCadProposal[] {
+  const source = strokes.filter((s) => !s.hatch);
   const suggestions = interpretSketchStrokesToCad(
-    strokes.map((s) => ({
+    source.map((s) => ({
       id: s.id,
       points: (s.points ?? []).map((p) => ({ x: p.x_pct, y: p.y_pct })),
     })),
@@ -124,7 +127,8 @@ export function proposeSketchCad(
 /**
  * One-click direct conversion — `recognizeStroke` (ditch / path / wall /
  * bed) → real `LandscapeFeature`s. Strokes below the confidence gate are
- * counted as skipped, never silently dropped from the reply.
+ * counted as skipped, never silently dropped from the reply. Derived hatch
+ * fills are skipped too (decorative shading, not convertible source ink).
  */
 export function convertStrokesToFeatures(strokes: CanvasStroke[]): {
   features: LandscapeFeature[];
@@ -134,6 +138,10 @@ export function convertStrokesToFeatures(strokes: CanvasStroke[]): {
   const features: LandscapeFeature[] = [];
   let skipped = 0;
   for (const stroke of strokes) {
+    if (stroke.hatch) {
+      skipped += 1;
+      continue;
+    }
     const rec = recognizeStroke(stroke);
     if (!rec || rec.confidence < MIN_DIRECT_CONFIDENCE) {
       skipped += 1;
@@ -172,6 +180,20 @@ const PROPOSAL_FEATURE_LAYERS: Partial<
  * mirrors the placement id, exactly the `itemsToFeatures` coupling the SVG
  * studio writes (`canvasBridge.ts`), so the drawn region round-trips across
  * both surfaces through `DesignCanvas.features`. Null for point proposals.
+ *
+ * PARAMETRIC ROUND-TRIP CONTRACT — the app uses the FORK model, not the
+ * dissolve model:
+ *   - Tidy keeps source ink as provenance: accepting a proposal mirrors an
+ *     outline feature but NEVER deletes the constituent strokes.
+ *   - Editing a constituent stroke afterwards does NOT dissolve or invalidate
+ *     the mirrored feature. The feature is a snapshot of the drawn outline at
+ *     accept time; the ink and the CAD entity are decoupled by design.
+ *   - Re-running Tidy simply re-proposes from the (edited) ink; the operator
+ *     decides whether to accept a new mirror. There is no automatic
+ *     re-parse and no implicit feature mutation.
+ *   Do not "fix" this to auto-sync ink → feature on edit: it would violate
+ *   the operator's explicit accept/reject agency (see layerPolicy.ts
+ *   NON-GOALS — no automatic gesture parsing).
  */
 export function featureForAcceptedProposal(
   placementId: string,

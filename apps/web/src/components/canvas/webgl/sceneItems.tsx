@@ -23,6 +23,8 @@ import {
   winterFactor,
   autumnFactor,
 } from "./seasonalStore";
+import { useStudioStore } from "./studioStore";
+import { layerScaleAlpha, viewScaleRatioForZoom } from "./layerPolicy";
 import { pctToWorld, type PctPoint } from "./coordTransform";
 
 /** Minimal StudioItem shape (the fields the renderer needs). */
@@ -216,6 +218,13 @@ function CanopyCluster({
   useFrame(() => {
     if (ghost || !groupRef.current) return;
     const { seasonProgress } = useSeasonalStore.getState();
+    // plantSymbol scale-band visibility — the seasonal loop owns canopy
+    // opacity, so it consumes the cross-fade alpha here (the SceneItems veil
+    // skips materials flagged seasonalOpacity).
+    const alpha = layerScaleAlpha(
+      "plantSymbol",
+      viewScaleRatioForZoom(useStudioStore.getState().liveRig.zoom),
+    );
     // Species truth: only deciduous canopies lerp toward autumn orange.
     const aFactor =
       leafRetention === "evergreen" ? 0 : autumnFactor(seasonProgress);
@@ -232,10 +241,13 @@ function CanopyCluster({
       const mesh = child as THREE.Mesh;
       const mat = mesh.material as THREE.MeshStandardMaterial | undefined;
       if (!mat || !mat.color) return;
+      // This material's opacity is written absolutely every frame — tell the
+      // SceneItems scale veil to skip it (it consumes alpha right here).
+      mat.userData.seasonalOpacity = true;
       // Lerp from the lobe's base summer tint toward autumn orange.
       const base = baseColors[ci] ?? SUMMER_GREEN;
       mat.color.lerpColors(base, AUTUMN_ORANGE, aFactor);
-      mat.opacity = seasonalOpacity;
+      mat.opacity = seasonalOpacity * alpha;
       ci += 1;
     });
   });
@@ -754,6 +766,15 @@ export function SceneItem({
 
 /**
  * Render all items.
+ *
+ * plantSymbol scale-band visibility: a per-frame veil over the group's
+ * transparent materials cross-fades the placement graphics out at macro
+ * zoom (band [0.3, 3.5] × fit). Materials whose opacity is written
+ * absolutely each frame by a seasonal loop are flagged `seasonalOpacity`
+ * and consume the alpha themselves; everything else static (regions, hedge
+ * lobes, ghost graphics) is base-captured here. Opaque solids (trunks,
+ * paving/deck masses) are deliberately skipped — they read as site truth
+ * surfaces and stay visible, like the siteFrame band.
  */
 export function SceneItems({
   items,
@@ -768,8 +789,27 @@ export function SceneItems({
   hideTpz?: boolean;
   growthFactor?: number;
 }) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(() => {
+    const grp = groupRef.current;
+    if (!grp) return;
+    const alpha = layerScaleAlpha(
+      "plantSymbol",
+      viewScaleRatioForZoom(useStudioStore.getState().liveRig.zoom),
+    );
+    grp.traverse((obj) => {
+      const mat = (obj as THREE.Mesh)
+        .material as THREE.MeshStandardMaterial | undefined;
+      if (!mat || !mat.transparent || mat.userData.seasonalOpacity) return;
+      const base = mat.userData.scaleVeilBase as number | undefined;
+      if (base === undefined) mat.userData.scaleVeilBase = mat.opacity;
+      mat.opacity = (mat.userData.scaleVeilBase as number) * alpha;
+    });
+  });
+
   return (
-    <>
+    <group ref={groupRef}>
       {items.map((item) => (
         <SceneItem
           key={item.id}
@@ -780,6 +820,6 @@ export function SceneItems({
           growthFactor={growthFactor}
         />
       ))}
-    </>
+    </group>
   );
 }
