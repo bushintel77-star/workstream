@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SignUp } from "@clerk/nextjs";
 import { clerkEnabled } from "../../../lib/auth";
-import s from "../../../styles/app.module.css";
+import { authAppearance } from "../../../components/auth/authAppearance";
+import auth from "../../auth.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -11,17 +12,18 @@ export default function SignUpPage() {
     redirect("/home");
   }
   return (
-    <main className={s.pageNarrow}>
-      <header className={s.masthead}>
-        <div className={s.brand}>
-          Workstream
-          <span className={s.brandSub}>Workstream · Sign up</span>
-        </div>
-      </header>
-      <SignUp />
-      <p className={s.meta}>
-        <Link href="/home">← Back to projects</Link>
-      </p>
+    <main className={auth.shell}>
+      <div className={auth.frame}>
+        <header className={auth.brand}>
+          <span className={auth.brandMark} aria-hidden />
+          <span className={auth.brandText}>Workstream</span>
+        </header>
+        <SignUp appearance={authAppearance} />
+        <p className={auth.note}>
+          Site truth, sketch, CAD and quote — Melbourne.{" "}
+          <Link href="/home">Back to projects</Link>
+        </p>
+      </div>
     </main>
   );
 }

@@ -94,6 +94,35 @@ export default async function HomePage() {
             <div className={home.dimLine} aria-hidden />
           </header>
 
+          {/* Workspace state — data chips, separated from the composer action. */}
+          {summary ? (
+            <div
+              className={home.stateStrip}
+              role="status"
+              aria-label="Workspace state"
+              data-testid="workspace-state"
+            >
+              <span
+                className={home.stateChip}
+                data-tone={summary.plan === "studio" ? "studio" : "lite"}
+              >
+                {summary.plan === "studio" ? "Studio" : "Lite"} plan
+              </span>
+              <span className={home.stateChip}>
+                Seats {summary.seats_used ?? 0}/{summary.seat_limit}
+              </span>
+              <span className={home.stateChip}>
+                Live {summary.live_channels}/{summary.total_channels}
+              </span>
+              <span
+                className={home.stateChip}
+                data-tone={summary.needs_attention ? "warn" : "ok"}
+              >
+                {summary.needs_attention ? "Attention needed" : "All clear"}
+              </span>
+            </div>
+          ) : null}
+
           <section className={home.composer} id="new-project">
             <label className={home.composerLabel} htmlFor="project-address">
               New address

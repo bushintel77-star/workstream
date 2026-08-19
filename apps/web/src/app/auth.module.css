@@ -1,0 +1,84 @@
+/* Auth shell — the sign-in / sign-up surfaces on Studio Paper. */
+
+.shell {
+  position: relative;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 48px 20px;
+  background: var(--gs-canvas);
+  color: var(--gs-ink);
+  font-family: var(--font-ui);
+}
+
+/* Quiet drafting dots behind the card — the studio's field, at rest. */
+.shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--gs-ink) 14%, transparent) 1px,
+    transparent 1.4px
+  );
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(
+    ellipse 70% 60% at 50% 42%,
+    black 0%,
+    transparent 78%
+  );
+  mask-image: radial-gradient(
+    ellipse 70% 60% at 50% 42%,
+    black 0%,
+    transparent 78%
+  );
+  pointer-events: none;
+}
+
+.frame {
+  position: relative;
+  z-index: var(--ws-z-geometry);
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.brandMark {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--gs-ink);
+  transform: rotate(45deg);
+}
+
+.brandText {
+  font-family: var(--font-tech);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--gs-ink);
+}
+
+.note {
+  margin: 0;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--gs-ink-muted);
+}
+
+.note a {
+  color: var(--gs-primary-ink);
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+.note a:hover,
+.note a:focus-visible {
+  text-decoration: underline;
+}
