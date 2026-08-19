@@ -61,39 +61,42 @@ Browser-based. No Electron, no shadcn, no new dependencies:
 
 ### 4.1 Landing — hero (100vh, no copy)
 
-- **The frame.** Full-bleed aerial of a Stonnington block centred on
-  1A Redcourt Avenue, Armadale (GNAF-verified pin), ~280 m × 169 m, slow
-  Ken Burns (scale 1.00 → 1.07, 26 s alternate). CSS dusk grade: deep
-  shadow, near-monochrome blue-grey; one property's dwelling re-lit with a
-  warm blurred glow. Negative space dominates — the shadowed streets and
-  unlit houses are canvas, not content.
+- **The frame.** Full-bleed aerial of a Toorak block centred on
+  10 Hopetoun Road (GNAF-verified pin; imagery-probed: a real swimming
+  pool and landscaped gardens inside the 2,169 m² title), ~460 m × 275 m,
+  slow Ken Burns (scale 1.00 → 1.07, 26 s alternate). CSS dusk grade:
+  deep shadow, near-monochrome blue-grey; the dwelling stays lit with a
+  warm glow while everything else recedes into the tint. Negative space
+  dominates — the shadowed streets and unlit houses are canvas, not
+  content.
 - **The overlay.** The real title polygon drawn in `--gs-truth` title
   cobalt with luminous corner dots; draw-in stroke animation when the live
   feed lands. If the registry is unreachable the hero simply omits the
   overlay — never a fabricated polygon.
-- **The chalk pass (designer's hand).** Once the truth line lands, a
-  hand-sketched white chalk pass draws over it, built entirely from the
-  real polygon geometry: the title re-traced twice with organic wobble
-  (feTurbulence displacement, two seeds), a concept sketch on the property
-  (two trees, a mass-planted Lomandra bed, a bluestone path curve), and
-  three hand-drawn leader arrows with annotations in `--font-hand`
-  (Architects Daughter): "pleached hornbeam screen", "mass-planted
-  Lomandra", "bluestone path". The chalk pass renders only on the default
-  hero — picking a real address removes it, so no fabricated design ever
-  sits on a client's actual property.
+- **The hand-written legend.** Once the truth line lands, the property's
+  features appear beside the polygon in `--font-hand` (Architects
+  Daughter) with short hand ticks: "swimming pool", "landscaped gardens",
+  "live title boundary". Every label is verified for this property — the
+  pool and gardens were pixel-probed on the sub-metre aerial, and the
+  boundary is the registry itself. No concept sketch, no invented design
+  elements. The legend renders only on the default hero; picking a real
+  address removes it, so no features are ever claimed for a client's
+  property.
 - **Top bar.** Workstream wordmark (Space Grotesk) + live VIC DMS
   coordinate chip (JetBrains Mono, tracks the current hero centre) +
   "Open the studio" / "Settings".
 - **The entry (the only copy).** A frost panel bottom-centre holding one
   input — placeholder "Enter your address" — with a Signal Blue arrow
-  button. Typing shows real GNAF matches. Picking one re-centres the
-  aerial on that property, draws its live boundary, and the button becomes
-  "Open the site" (→ `/confirm-pin`, the product's pin flow). Enter picks
-  the first match; a second Enter opens. A single mono status line under
-  the panel reports data, not marketing: "live boundary · <address>".
+  button, over a soft dark halo that cuts the aerial's glare. Typing shows
+  real GNAF matches. Picking one re-centres the aerial on that property,
+  draws its live boundary, and the button becomes "Open the site"
+  (→ `/confirm-pin`, the product's pin flow). Enter picks the first match;
+  a second Enter opens. A single mono status line under the panel reports
+  data, not marketing: "live boundary · <address>".
 - **Choreography.** Server paint → low-res base (instant) → full frame
   fades (900 ms) → boundary draws itself in when live data lands → the
-  entry takes focus on pointer devices. Nothing ever says anything.
+  legend writes itself → the entry takes focus on pointer devices.
+  Nothing ever says anything.
 
 ### 4.2 Landing — below the fold
 

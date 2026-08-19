@@ -7,16 +7,17 @@ import { operatorApiUrl } from "./public-env";
  * `/geo/hero` feed (the same Vicmap pipeline as the studio).
  */
 
-/** Hero pin — 1A Redcourt Avenue, Armadale (GNAF-verified coordinate). */
-export const HERO_PIN = { lat: -37.860043, lng: 145.011706 } as const;
-export const HERO_ADDRESS = "1A Redcourt Avenue, Armadale";
+/** Hero pin — 10 Hopetoun Road, Toorak (GNAF-verified; imagery-probed:
+ *  a real swimming pool and landscaped gardens inside the title). */
+export const HERO_PIN = { lat: -37.849765, lng: 145.028079 } as const;
+export const HERO_ADDRESS = "10 Hopetoun Road, Toorak";
 
 /**
- * Hero frame in degrees — a ~280 m × 169 m block centred on the pin. Sized
- * so the title lot (~25 m × 40 m) reads large enough to carry the boundary
- * overlay while the shadowed neighbours stay "canvas", per the art brief.
+ * Hero frame in degrees — a ~460 m × 275 m block centred on the pin. Sized
+ * so the 2,169 m² title reads as a proper estate while the shadowed
+ * neighbourhood stays "canvas", per the art brief.
  */
-export const HERO_SPAN = { lng: 0.0032, lat: 0.001517 } as const;
+export const HERO_SPAN = { lng: 0.0052, lat: 0.002464 } as const;
 
 export const HERO_IMAGE_W = 2000;
 export const HERO_IMAGE_H = 1200;

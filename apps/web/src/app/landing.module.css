@@ -39,14 +39,15 @@
 }
 
 .aerialLow {
-  filter: blur(28px) brightness(0.5) saturate(0.6) hue-rotate(190deg)
-    contrast(1.3);
+  filter: blur(28px) brightness(0.42) saturate(0.5) hue-rotate(190deg)
+    contrast(1.35);
   transform: scale(1.12);
 }
 
-/* Dusk grade — deep shadow, near-monochrome blue-grey. */
+/* Dusk grade — deep shadow, near-monochrome blue-grey. The lit property
+   stays the only bright thing in the frame. */
 .aerialHigh {
-  filter: brightness(0.5) saturate(0.62) hue-rotate(192deg) contrast(1.32);
+  filter: brightness(0.44) saturate(0.52) hue-rotate(192deg) contrast(1.36);
   opacity: 0;
   transition: opacity 900ms var(--ws-ease);
 }
@@ -57,13 +58,13 @@
 
 /* The one lit property — warm glow bleeding off the dwelling. */
 .glowShape {
-  fill: color-mix(in srgb, var(--hero-glow-warm) 55%, transparent);
+  fill: color-mix(in srgb, var(--hero-glow-warm) 62%, transparent);
   filter: blur(18px);
   mix-blend-mode: screen;
 }
 
 .glowCore {
-  fill: color-mix(in srgb, var(--hero-glow-soft) 60%, transparent);
+  fill: color-mix(in srgb, var(--hero-glow-soft) 66%, transparent);
   filter: blur(7px);
   mix-blend-mode: screen;
 }
@@ -96,58 +97,26 @@
   animation: heroDotIn 0.4s var(--ws-ease) 1.9s forwards;
 }
 
-/* ------------------------------------------------------- chalk sketch */
+/* ------------------------------------------------- hand-written features */
 
-/* The designer's hand: a double-traced chalk title over the surveyed line. */
-.sketchInk {
-  fill: none;
-  stroke: color-mix(in srgb, var(--hero-chalk) 92%, transparent);
-  stroke-width: 2.6;
+/* The hero property's features, hand-written beside the real polygon —
+   a legend with short hand ticks. No fabricated design, no claims. */
+.featureTick {
+  stroke: color-mix(in srgb, var(--hero-chalk) 78%, transparent);
+  stroke-width: 1.4;
   stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: heroDraw 2s var(--ws-ease) 0.9s forwards;
-}
-
-.sketchInkSecond {
-  stroke-width: 1.7;
-  stroke: color-mix(in srgb, var(--hero-chalk) 72%, transparent);
-  animation-delay: 1.15s;
-}
-
-.sketchConcept circle,
-.sketchConcept path {
-  fill: none;
-  stroke: color-mix(in srgb, var(--hero-chalk) 88%, transparent);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: heroDraw 1.6s var(--ws-ease) 2.1s forwards;
-  filter: url("#heroChalkA");
-}
-
-.sketchArrow {
-  fill: none;
-  stroke: color-mix(in srgb, var(--hero-chalk) 80%, transparent);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   opacity: 0;
   animation: sketchNoteIn 0.5s var(--ws-ease) 2.9s both;
 }
 
-.sketchNote {
+.featureLabel {
   fill: var(--hero-chalk);
   font-family: var(--font-hand), "Architects Daughter", cursive;
   opacity: 0;
   animation: sketchNoteIn 0.6s var(--ws-ease) 3.1s both;
   filter: drop-shadow(
-    0 1px 6px color-mix(in srgb, var(--gs-ink) 65%, transparent)
+    0 1px 6px color-mix(in srgb, var(--gs-ink) 70%, transparent)
   );
 }
 
@@ -259,11 +228,25 @@
   width: min(620px, calc(100% - 48px));
 }
 
+/* A soft dark halo behind the panel cuts the aerial's glare so the frost
+   reads calm against the brightest part of the frame. */
+.entryArea::before {
+  content: "";
+  position: absolute;
+  inset: -38px -48px;
+  background: radial-gradient(
+    50% 100% at 50% 100%,
+    color-mix(in srgb, var(--gs-ink) 52%, transparent) 0%,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+
 .entryPanel {
   position: relative;
   padding: 10px;
-  background: var(--gs-panel-frost);
-  backdrop-filter: blur(16px);
+  background: color-mix(in srgb, var(--gs-panel) 92%, transparent);
+  backdrop-filter: blur(22px);
   border: 1px solid color-mix(in srgb, var(--hero-copy) 18%, transparent);
   border-radius: var(--r-2xl);
   box-shadow: var(--gs-shadow-4);
@@ -637,15 +620,8 @@
     opacity: 1;
   }
 
-  .sketchInk,
-  .sketchConcept circle,
-  .sketchConcept path {
-    animation: none;
-    stroke-dashoffset: 0;
-  }
-
-  .sketchArrow,
-  .sketchNote {
+  .featureTick,
+  .featureLabel {
     animation: none;
     opacity: 1;
   }

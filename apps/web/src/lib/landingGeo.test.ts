@@ -18,18 +18,18 @@ describe("heroBbox / aerial URL", () => {
   it("centres the pin and keeps the 2000x1200 aspect in metres", () => {
     const b = heroBbox();
     // Centre of the bbox is the pin.
-    expect((b.west + b.east) / 2).toBeCloseTo(145.011706, 9);
-    expect((b.south + b.north) / 2).toBeCloseTo(-37.860043, 9);
+    expect((b.west + b.east) / 2).toBeCloseTo(HERO_PIN.lng, 9);
+    expect((b.south + b.north) / 2).toBeCloseTo(HERO_PIN.lat, 9);
     // Aspect at the hero latitude: lng-span * cos(lat) vs lat-span must
     // match 2000:1200 (5:3) so the export is never stretched.
-    const mPerDegLng = 111_320 * Math.cos((-37.860043 * Math.PI) / 180);
+    const mPerDegLng = 111_320 * Math.cos((HERO_PIN.lat * Math.PI) / 180);
     const widthM = (b.east - b.west) * mPerDegLng;
     const heightM = (b.north - b.south) * 111_320;
     expect(widthM / heightM).toBeCloseTo(2000 / 1200, 2);
     // Block scale — wide enough for shadowed neighbours, tight enough that
-    // a ~25 m lot reads clearly.
-    expect(widthM).toBeGreaterThan(200);
-    expect(widthM).toBeLessThan(400);
+    // a ~2,100 m² estate lot reads clearly.
+    expect(widthM).toBeGreaterThan(350);
+    expect(widthM).toBeLessThan(600);
   });
 
   it("builds a valid Esri export URL", () => {
@@ -68,7 +68,7 @@ describe("projection", () => {
   const bbox = heroBbox();
 
   it("projects pin to the frame centre", () => {
-    const [x, y] = projectLngLatToPct(145.011706, -37.860043, bbox);
+    const [x, y] = projectLngLatToPct(HERO_PIN.lng, HERO_PIN.lat, bbox);
     expect(x).toBeCloseTo(50, 6);
     expect(y).toBeCloseTo(50, 6);
   });
@@ -144,9 +144,9 @@ describe("loadHeroBoundary", () => {
 });
 
 describe("heroPinLabel", () => {
-  it("formats the Armadale pin as a DMS coordinate", () => {
+  it("formats the Toorak pin as a DMS coordinate", () => {
     const label = heroPinLabel();
-    expect(label).toMatch(/37°51′\d+(?:\.\d+)?″S/);
-    expect(label).toMatch(/145°0′\d+(?:\.\d+)?″E/);
+    expect(label).toMatch(/37°50′\d+(?:\.\d+)?″S/);
+    expect(label).toMatch(/145°1′\d+(?:\.\d+)?″E/);
   });
 });

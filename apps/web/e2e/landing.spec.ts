@@ -107,14 +107,13 @@ test.describe("Landing hero", () => {
       .catch(() => {});
     if ((await boundary.count()) > 0) {
       await expect(page.getByText(/live boundary ·/i)).toBeVisible();
-      // The chalk concept pass rides the same live polygon.
-      const sketch = page.getByTestId("hero-sketch");
-      await expect(sketch.first()).toBeVisible();
-      await expect(
-        page.getByText(/pleached hornbeam screen/i),
-      ).toBeVisible();
-      await expect(page.getByText(/mass-planted Lomandra/i)).toBeVisible();
-      await expect(page.getByText(/bluestone path/i)).toBeVisible();
+      // The hand-written feature legend rides the same live polygon, and
+      // every label is verified for this property (pool + gardens probed
+      // on the sub-metre aerial; the boundary is the registry itself).
+      await expect(page.getByTestId("hero-features").first()).toBeVisible();
+      await expect(page.getByText(/swimming pool/i)).toBeVisible();
+      await expect(page.getByText(/landscaped gardens/i)).toBeVisible();
+      await expect(page.getByText(/live title boundary/i)).toBeVisible();
     }
   });
 });
