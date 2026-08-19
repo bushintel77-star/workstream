@@ -68,7 +68,7 @@
   list-style: none;
   background: var(--surface-elevated);
   border: 1px solid var(--line-hairline);
-  border-radius: var(--r-sm);
+  border-radius: var(--gs-radius-chip);
   max-height: 280px;
   overflow-y: auto;
   box-shadow: var(--gs-shadow-2);
