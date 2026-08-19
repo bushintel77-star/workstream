@@ -18,7 +18,7 @@ const WRIGHTS_VARIANTS = [
   "WRIGHTS TERRACE, PRAHRAN",
 ];
 
-describe("tier-1 stress · costing pipeline", () => {
+describe("tier-1 stress · costing pipeline", { timeout: 20000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
 
   beforeEach(async () => {

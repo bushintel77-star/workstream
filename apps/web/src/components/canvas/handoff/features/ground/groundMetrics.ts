@@ -45,11 +45,11 @@ export function pickMetricStepM(visibleM: number): number {
   return 100;
 }
 
-export type GroundPhase = "parchment" | "cadastral" | "aerial";
+export type GroundPhase = "paper" | "cadastral" | "aerial";
 
 /**
- * Intent-driven ground phase: clean parchment → ghost cadastral on address
- * → aerial soft-stack when imagery lands (parchment remains underlay).
+ * Intent-driven ground phase: clean paper → ghost cadastral on address
+ * → aerial soft-stack when imagery lands (paper remains underlay).
  */
 export function resolveGroundPhase(args: {
   hasAerial: boolean;
@@ -60,5 +60,5 @@ export function resolveGroundPhase(args: {
   if (args.hasBoundary || (args.address && args.address.trim().length > 8)) {
     return "cadastral";
   }
-  return "parchment";
+  return "paper";
 }

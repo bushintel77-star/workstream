@@ -129,7 +129,7 @@ const PALETTE_LABELS: Record<PresentationPalette, string> = {
   sage: "Sage",
   ink: "Ink",
   blush: "Blush",
-  parchment: "Parchment",
+  paper: "Paper",
 };
 
 const FONT_LABELS: Record<PresentationFont, string> = {

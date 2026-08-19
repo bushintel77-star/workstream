@@ -16,7 +16,9 @@ new developer. Read ONBOARDING first, this file for the queue.
 2. Premium assets — species depth, thumbnails, curated palettes.
 3. Foliage "murk" polish — lift foliage to the `l-*` ramp, neutralise the olive ground-bounce on the paper canvas.
 4. Signoff record trace — verify signoff freezes the accepted quote (operator `SignoffCard` vs portal deposit must share one record).
-5. Classic-studio e2e debt — see the P3 entry below.
+5. ~~Classic-studio e2e debt~~ — resolved 2026-08-19: the SVG studio, its 63
+   classic e2e specs, and `?svg=1` routing were deleted in the GitLab migration
+   cleanup (single WebGL surface only).
 6. Longer-tail stage gaps (`docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md` §3): Phase 4 Build Pack (not built), Phase 1 floating tool ribbon on the GL surface, Phase 3 Presentation Lens polish, Stage 2 CAD (product-gated), mobile offline-first sync (design only).
 
 (Photo-trace elevation capstone: shipped 2026-08-18 — **committed on `main`
@@ -311,20 +313,14 @@ P1 entry below and `docs/CAMERA-STATE-MACHINE.md`.)
       `/Saved/`-text wait. Fix the spec or the underlying leak before
       relying on batch CI e2e for the WebGL suite.
 
-- [ ] **Classic-studio e2e debt (tracked, lowest priority).** Known red on
-      `main`: `quote-tier1.spec.ts` passes `?svg=1&mode=cad&svg=1` — the
-      duplicated `svg` param (likely read by `page.tsx` as an array, so
-      `sp.svg !== "1"` is true) mounts the WebGL studio instead of the
-      classic board; plus the
-      develop-loop council tip (`e2e/develop-loop.spec.ts` —
-      `council-setback-tip` never appears) and the classic fit-sheet strip
-      (`e2e/elevation-silhouettes.spec.ts` — `fit-sheet-layer` does not
-      mount from the header control; assertion now at `:112–113`). The
-      classic contrast gate is **not**
-      part of this debt — `canvas-contrast-aa.spec.ts` is green (zero
-      failures across the five classic modes). The full `?svg=1` suite has
-      not been re-run end-to-end since 2026-08-18; treat this list as
-      floor-not-ceiling until someone enumerates.
+- [x] **Classic-studio e2e debt — resolved 2026-08-19 by retirement.** The
+      whole `?svg=1` SVG studio was deleted (295 files + 63 classic e2e specs
+      incl. `quote-tier1`, `develop-loop`, `elevation-silhouettes`) in the
+      GitLab migration cleanup; there is no classic board left to keep in
+      sync. (Historical note retained: the specs were red because
+      `?svg=1&mode=cad&svg=1` double-param mounted the WebGL studio, the
+      develop-loop council tip never appeared, and the classic fit-sheet
+      strip never mounted.)
 
 ## Idle chrome coverage — resolved, ratchet now holds the line
 
@@ -473,15 +469,11 @@ Deliberately marked `_`-prefixed or allowlisted rather than deleted.
       dock held full presence while the pen was unarmed. **Fixed** (`9d37607`):
       recedes to 0.62 opacity with reduced lift, `pointer-events` kept so
       clicking re-arms, full presence back on hover and `focus-within`.
-- [ ] **`StudioCoachMarks` is never mounted — logged, deliberately not wired.**
-      A complete three-step onboarding tour (trace the lot / add planting / fit
-      sheet + quote) with its own stylesheet and `cc_coach_done` localStorage
-      first-run gating. Nothing imports it, so first-run onboarding has never
-      appeared. **Decision: leave it unmounted.** `AiCapabilityCue` now covers
-      the same teaching ground contextually rather than as an upfront tour, and
-      two teaching surfaces would stack — which is exactly what
-      `STUDIO-STYLING-AND-UX.md` §6 item 11 forbids. Delete it or fold its
-      copy into the cue when someone owns that call; do not mount both.
+- [x] **`StudioCoachMarks` — deleted with the SVG studio retirement
+      (2026-08-19).** It was a complete three-step onboarding tour that
+      nothing ever mounted; `AiCapabilityCue` covers the same teaching
+      ground contextually, so the component and its allowlist entry in
+      `check-feature-reachability.mjs` were removed rather than wired.
 - [x] **`CanvasMeasureSummary` deleted — superseded, not merely unmounted.**
       "Small, stage-aware measurement card; click for the full live ledger."
       It could not ship as designed: a 236px frosted card at `position:

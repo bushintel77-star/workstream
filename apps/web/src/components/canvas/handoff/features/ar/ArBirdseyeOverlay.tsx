@@ -24,7 +24,7 @@ export type ArBirdseyeOverlayProps = {
   }>;
   address?: string;
   onClose: () => void;
-  /** When true, skip getUserMedia and use a parchment fallback (tests / denied). */
+  /** When true, skip getUserMedia and use the static paper fallback (tests / denied). */
   forceFallback?: boolean;
 };
 

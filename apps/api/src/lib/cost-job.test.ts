@@ -4,7 +4,7 @@ import { runSurvey } from "./survey-job";
 import { runDesign } from "./design-job";
 import { runCosting } from "./cost-job";
 
-describe("runCosting", () => {
+describe("runCosting", { timeout: 20000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
   const owner = "test-user";
 

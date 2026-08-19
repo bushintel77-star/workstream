@@ -1,8 +1,7 @@
 /**
  * Gold Standard 2026 — Studio Autosave Hook.
  *
- * Ported from the proven useStudioState.ts autosave pattern (lines 3950-3994),
- * extracted as a standalone hook for the unified WebGL studio. This is the
+ * Extracted as a standalone hook for the unified WebGL studio. This is the
  * resilience backbone: it ensures operator work is never lost to a flaky
  * backyard Wi-Fi connection (the iPad-in-the-garden scenario).
  *
@@ -153,10 +152,10 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
 /* Backoff schedule                                                            */
 /* -------------------------------------------------------------------------- */
 
-/** Retry delays in ms — matches useStudioState.ts exactly. */
+/** Retry delays in ms — proven backoff ladder. */
 const BACKOFF_MS = [2_000, 8_000, 30_000];
 
-/** Debounce delay — matches useStudioState.ts (1100ms). */
+/** Debounce delay in ms — keeps saves quiet while the operator drafts. */
 const DEBOUNCE_MS = 1_100;
 
 /* -------------------------------------------------------------------------- */
@@ -312,7 +311,6 @@ export function useStudioAutosave(
 
 /**
  * beforeunload guard — warn before leaving when a save is in-flight or errored.
- * Ported from HandoffDesignStudio.tsx:1435-1448.
  *
  * The debounce delay is short (1100ms) so we don't guard every keystroke — we
  * only guard when the network is actually active or has failed.

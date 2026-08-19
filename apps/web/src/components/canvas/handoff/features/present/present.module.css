@@ -525,7 +525,7 @@
   --pv-accent: var(--crimson-l-600);
 }
 
-.pagePaper[data-palette="parchment"] {
+.pagePaper[data-palette="paper"] {
   --pv-paper: var(--sheet-paper, var(--gray-l-50));
   --pv-ink: var(--sheet-ink, var(--gray-l-900));
   --pv-ink-muted: var(--sheet-ink-muted, var(--gray-l-700));

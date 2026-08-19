@@ -7,7 +7,7 @@ import type {
 } from "../lib/studio-estimate-worker-types";
 
 /**
- * Off-main-thread parametric BOM for HandoffDesignStudio.
+ * Off-main-thread parametric BOM for the WebGL studio.
  * Keeps the UI fluid while excavation / CR6 / edge restraint recompute.
  */
 const ctx: DedicatedWorkerGlobalScope =

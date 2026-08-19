@@ -82,7 +82,7 @@ export const SHEET_THEME_SWATCHES: Array<{
   id: PresentationTheme;
   label: string;
 }> = [
-    { id: "parchment", label: "Parchment" },
+    { id: "paper", label: "Paper" },
     { id: "ink", label: "Ink" },
     /** Dark-concept chalk on `--surface-deep`. */
     { id: "deep", label: "Deep" },
@@ -157,7 +157,7 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
     label: "Working drawing",
     detail: "Light caption — CAD paper",
     pack: {
-      theme: "parchment",
+      theme: "paper",
       pen: "technical",
       atmosphere: "graphite",
       template_id: "curtis-working-drawing",
@@ -174,7 +174,7 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
     label: "Client brochure",
     detail: "Quote hero + ledger + swatches on one sheet",
     pack: {
-      theme: "parchment",
+      theme: "paper",
       pen: "hand_drawn",
       atmosphere: "cherry",
       template_id: "curtis-client-brochure",
@@ -256,7 +256,7 @@ export const CURTIS_SHEET_TEMPLATES: SheetTemplate[] = [
 
 export function emptyPresentationPack(): PresentationPack {
   return {
-    theme: "parchment",
+    theme: "paper",
     pen: "technical",
     atmosphere: "graphite",
     widgets: [],

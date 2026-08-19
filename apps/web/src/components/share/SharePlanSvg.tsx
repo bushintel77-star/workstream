@@ -14,7 +14,7 @@ const L = SEMANTIC_LIGHT;
 /**
  * Lightweight read-only plan from the frozen share snapshot.
  * Avoids mounting the full studio; SVG from placements + site_frame.
- * Light parchment plate — semantic tokens (not blush chrome).
+ * Light paper plate — semantic tokens (not blush chrome).
  */
 export function SharePlanSvg({ canvas, address }: Props) {
   const boundary = canvas?.site_frame?.boundary ?? [];

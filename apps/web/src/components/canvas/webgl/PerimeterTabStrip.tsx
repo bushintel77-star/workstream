@@ -11,8 +11,8 @@
  * overflows instead of growing; exactly one panel opens beneath it.
  *
  * The 8-mode system is preserved (GOLD-STANDARD-2026-ARCHITECTURE §6):
- * every mode switches natively on the WebGL surface; the classic board is
- * reachable only by explicit ?svg=1. Progressive unlock reuses the
+ * every mode switches natively on the WebGL surface (the legacy SVG board
+ * was retired 2026-08-19). Progressive unlock reuses the
  * canvas-mode law (unlockedModes + lockReasonForMode).
  *
  * Contrast/selection vocabulary per TOKENS.md: active chips go charcoal

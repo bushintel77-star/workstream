@@ -16,10 +16,10 @@ function makeCanvas(overrides: Partial<DesignCanvas> = {}): DesignCanvas {
 }
 
 describe("renderPlanSvg", () => {
-  it("renders an empty canvas with a parchment background", () => {
+  it("renders an empty canvas with a Studio Paper background", () => {
     const svg = renderPlanSvg(makeCanvas());
     expect(svg).toContain("<svg");
-    expect(svg).toContain('fill="#f5f0e6"');
+    expect(svg).toContain('fill="#f4f4f4"');
     expect(svg).toContain("</svg>");
   });
 

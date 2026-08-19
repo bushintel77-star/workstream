@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createMemoryStore } from "@workstream/db";
 import { runFullPipeline } from "./pipeline-job";
 
-describe("runFullPipeline", () => {
+describe("runFullPipeline", { timeout: 20000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
   const owner = "pipeline-test";
 

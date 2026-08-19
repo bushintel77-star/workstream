@@ -38,10 +38,9 @@ const SRC = "apps/web/src";
  * the entry when the component is wired up.
  */
 const ALLOW = new Map([
-  [
-    "StudioCoachMarks",
-    "Never mounted, so first-run onboarding has never appeared. Three-step tour with cc_coach_done localStorage gating, ready to wire.",
-  ],
+  // Empty since 2026-08-19: the SVG studio retirement deleted the last
+  // deliberately-unmounted component (StudioCoachMarks). Keep the ratchet
+  // mechanism — new entries must carry a reason and an OUTSTANDING.md item.
 ]);
 
 function walk(dir, out = []) {

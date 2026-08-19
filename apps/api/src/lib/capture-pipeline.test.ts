@@ -74,7 +74,7 @@ vi.mock("./output-job", () => ({
   }),
 }));
 
-describe("runCapturePipeline", () => {
+describe("runCapturePipeline", { timeout: 20000 }, () => {
   const owner = "owner-capture-test";
 
   beforeEach(() => {

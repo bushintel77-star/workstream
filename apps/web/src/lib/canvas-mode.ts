@@ -94,10 +94,10 @@ export function modeForLegacyPath(pathname: string): CanvasMode {
 }
 
 /**
- * Every canvas mode now mounts natively in the WebGL studio (tool rail,
- * glass cards, or a mounted classic feature module per ARCHITECTURE §5).
- * The legacy SVG studio remains reachable only by explicit ?svg=1 — it is
- * no longer part of the mode system's routing.
+ * Every canvas mode mounts natively in the WebGL studio (tool rail, glass
+ * cards, or a mounted shared feature module per ARCHITECTURE §5). The
+ * legacy SVG studio was retired 2026-08-19 — the WebGL surface is the only
+ * mount and mode routing never leaves it.
  */
 const WEBGL_STUDIO_MODES: ReadonlySet<CanvasMode> = new Set([
   "survey",

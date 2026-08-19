@@ -73,13 +73,18 @@ export type PresentationPageMargins = z.infer<
  * Capped editorial palette — a handful of curated colour schemes, not an open
  * picker. Each names a base / ink / paper combination in the Curtis house style.
  */
-export const PresentationPaletteSchema = z.enum([
-  "stone",
-  "sage",
-  "ink",
-  "blush",
-  "parchment",
-]);
+export const PresentationPaletteSchema = z
+  .string()
+  .transform((v) => (v === "parchment" ? "paper" : v))
+  .pipe(
+    z.enum([
+      "stone",
+      "sage",
+      "ink",
+      "blush",
+      "paper",
+    ]),
+  );
 export type PresentationPalette = z.infer<typeof PresentationPaletteSchema>;
 
 /**

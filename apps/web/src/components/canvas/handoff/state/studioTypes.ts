@@ -192,7 +192,6 @@ export type StudioUiState = {
   utilityPanel: "compliance" | "bom" | "sustainability" | null;
   councilTip: string | null;
   sheetScaleDenom: 50 | 100 | 150 | 200 | 250 | 300 | 400 | 500;
-  parchmentPeel: number;
   saveStatus: "idle" | "saving" | "retrying" | "saved" | "error";
   /** Set when saveStatus is error — drives honest toast copy. */
   saveErrorKind: "unreachable" | "stale_client" | "rejected" | null;

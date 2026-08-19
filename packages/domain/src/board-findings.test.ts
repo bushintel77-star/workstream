@@ -323,7 +323,7 @@ describe("sheet findings", () => {
         quote_lines: [{ label: "Turf", qty: 40, unit: "m2", total: 1800 }],
         total_incl_gst: 1980,
       },
-      sheet: { theme: "parchment", widgets: ["caption"] },
+      sheet: { theme: "paper", widgets: ["caption"] },
     });
     const hit = find(buildBoardFindings(ctx), "bf-sheet-no-quote");
     expect(hit).toBeDefined();
@@ -336,7 +336,7 @@ describe("sheet findings", () => {
       commercial: {
         quote_lines: [{ label: "Turf", qty: 40, unit: "m2", total: 1800 }],
       },
-      sheet: { theme: "parchment", widgets: ["quote_total", "zone_summary"] },
+      sheet: { theme: "paper", widgets: ["quote_total", "zone_summary"] },
     });
     expect(find(buildBoardFindings(ctx), "bf-sheet-no-quote")).toBeUndefined();
     expect(find(buildBoardFindings(ctx), "bf-sheet-no-zones")).toBeUndefined();
@@ -373,7 +373,7 @@ describe("buildBoardFindings", () => {
       commercial: {
         quote_lines: [{ label: "Turf", qty: 10, unit: "m2", total: 450 }],
       },
-      sheet: { theme: "parchment", widgets: [] },
+      sheet: { theme: "paper", widgets: [] },
     };
     const first = buildBoardFindings(ctxOf(input));
     const second = buildBoardFindings(ctxOf(input));

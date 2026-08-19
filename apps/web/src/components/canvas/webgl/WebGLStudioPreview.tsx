@@ -10,8 +10,9 @@
  * the authoritative Vicmap boundary + building envelope on Studio Paper —
  * the aerial photo underlay was retired (2026-08-18 directive).
  *
- * This is no longer a "dev-only preview" — it is the default mount. The legacy
- * SVG studio (HandoffDesignStudio) is the ?svg=1 fallback.
+ * This is no longer a "dev-only preview" — it is the default mount. The
+ * legacy SVG studio (HandoffDesignStudio) was retired 2026-08-19; this
+ * surface is the only canvas mount.
  *
  * Key fused-rendering features:
  *   - View toggle: Plan ↔ 3D drives viewBlendTarget in the store. The
@@ -741,12 +742,6 @@ export function WebGLStudioPreview({
             >
               Reload canvas
             </button>
-            <a
-              href={`/projects/${projectId}?svg=1&mode=${activeMode}`}
-              style={{ alignSelf: "center", color: "var(--gs-primary)" }}
-            >
-              Open vector fallback
-            </a>
           </div>
         </div>
       </div>

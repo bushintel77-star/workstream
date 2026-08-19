@@ -2,7 +2,7 @@
  * Infinite canvas zoom — multiplicative, pointer-anchored.
  * Zoom IN and OUT freely (soft IEEE floor/ceiling only) on free plan and on
  * A3/A4 Fit sheet (paper-fit × user zoom). Zoom-out on the free board is paired
- * with a full-bleed parchment underlay so the board never collapses into a
+ * with a full-bleed paper underlay so the board never collapses into a
  * postage stamp with empty chrome borders.
  */
 

@@ -15,42 +15,35 @@ the disagreement instead of guessing.
 
 ---
 
-## 1. The two-studio situation (read this first — it is the #1 thing new devs get wrong)
+## 1. One studio — the legacy SVG studio is retired (2026-08-19)
 
-There are **two canvas studios** in `apps/web`, and exactly one of them is
-the product:
+There is **one canvas studio** in `apps/web`:
 
-- **WebGL studio (default, the product).** `/projects/[id]` mounts it.
+- **WebGL studio (the only mount).** `/projects/[id]` mounts it.
   R3F `<Canvas>` + DOM paper-card overlay, metre-space (1 unit = 1 m),
   terrain-draped, real-sun, fused ortho↔persp camera. All new work lands
   here. Entry: `components/canvas/webgl/WebGLStudioPreview.tsx` →
   `WebGLStudio.tsx`.
-- **SVG studio (`?svg=1` deep fallback only).** The old `%`-coord parchment
-  board, `components/canvas/handoff/HandoffDesignStudio.tsx` (~6,570 lines).
-  Reachable only by explicit `?svg=1`; it is **no longer part of mode
-  routing** and is **not developed further** — it exists for vector
-  node-editing and the long tail of classic feature docks.
 
-Two consequences new devs trip on:
+The legacy SVG studio (`HandoffDesignStudio` + `useStudioState` +
+`?svg=1` routing, ~295 SVG-only files and 63 classic e2e specs) was
+**deleted 2026-08-19** in the GitLab migration cleanup. The ~51 modules the
+WebGL studio genuinely shares (catalog, canvas bridge, geometry, and the
+elevation/present/share/survey surfaces) were kept under
+`components/canvas/handoff/` pending their re-homing into the WebGL tree;
+the `--hc-*` / `--ws-*` chrome tokens moved to `styles/globals.css` as a
+global `:root` block. The former "permanent fallback vs transitional" open
+product decision is resolved: **retired**. The old board remains available
+in git history if it is ever needed.
 
-1. **The stores are separate.** The SVG studio runs the `useStudioState`
-   reducer; the WebGL studio runs its own zustand store
-   (`webgl/studioStore.ts`; `seasonalStore.ts` is a compat alias). They
-   share types and the **persisted `DesignCanvas` document** — nothing else.
-   (An old draft of `GOLD-STANDARD-2026-ARCHITECTURE.md` §5 claimed they
-   share a hook; corrected 2026-08-18.)
-2. **`?mode=` does not select a studio.** All 8 modes mount natively on
-   WebGL (`lib/canvas-mode.ts`, `WEBGL_STUDIO_MODES`). `?svg=1` is the only
-   way to the classic board.
+Two consequences:
 
-> **Open product decision (flagged, not resolved).** One doc
-> (`docs/UI-PARITY-AUDIT-2026.md` §6) describes the SVG studio as "the full
-> studio until WebGL Phase-1 completes", implying a transitional surface on
-> its way to parity/retirement. `AGENTS.md` treats it as a permanent frozen
-> fallback, never developed further. Both readings coexist in the docs.
-> Product must pick: **(a) permanent frozen fallback**, or **(b) transitional
-> until WebGL Phase 1 covers the classic surfaces, then retired.** Do not
-> build SVG features or delete the SVG studio until this is decided.
+1. **One store.** The WebGL studio runs its zustand store
+   (`webgl/studioStore.ts`; `seasonalStore.ts` is a compat alias). The SVG
+   `useStudioState` reducer is deleted. Persistence is the `DesignCanvas`
+   document, unchanged.
+2. **`?mode=` only.** All 8 modes mount natively on WebGL
+   (`lib/canvas-mode.ts`, `WEBGL_STUDIO_MODES`). `?svg=1` is inert.
 
 ## 2. Platform stages vs canvas modes
 

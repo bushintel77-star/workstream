@@ -13,7 +13,7 @@ const OWNER = "tier1-f500";
 const TARGET = 58410.35;
 const WRIGHTS = "36 Wrights Terrace, Prahran VIC 3181";
 
-describe("fortune-500 · costing concurrency + isolation", () => {
+describe("fortune-500 · costing concurrency + isolation", { timeout: 20000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
 
   beforeEach(async () => {

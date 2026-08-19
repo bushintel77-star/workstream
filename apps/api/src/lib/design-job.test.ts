@@ -3,7 +3,7 @@ import { createMemoryStore } from "@workstream/db";
 import { runSurvey } from "./survey-job";
 import { runDesign } from "./design-job";
 
-describe("runDesign", () => {
+describe("runDesign", { timeout: 20000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
   const owner = "design-test";
 

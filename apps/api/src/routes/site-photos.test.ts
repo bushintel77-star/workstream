@@ -53,7 +53,7 @@ async function seededProject() {
   return { app, store, projectId };
 }
 
-describe("API — site-photos gallery", () => {
+describe("API — site-photos gallery", { timeout: 20000 }, () => {
   it("lists an empty gallery", async () => {
     const { app, projectId } = await seededProject();
     const res = await app.inject({

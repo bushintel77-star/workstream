@@ -19,7 +19,8 @@ export function pipelineShell(page: Page) {
   return page.locator('[data-testid="project-pipeline-shell"]');
 }
 
-/** Live HandoffDesignStudio root (replaces retired site-canvas). */
+/** Retired 2026-08-19: the SVG studio (HandoffDesignStudio) is deleted;
+ *  the WebGL studio is the only canvas mount. */
 export function handoffStudio(page: Page) {
   return page.getByTestId("handoff-design-studio");
 }
@@ -63,7 +64,7 @@ export async function summonCanvasInstruments(page: Page) {
   await expect(dock.or(strip)).toBeVisible({ timeout: 10_000 });
 }
 
-/** Desktop left tool dock or phone bottom strip — summon first if idle parchment. */
+/** Desktop left tool dock or phone bottom strip — summon first if idle. */
 export async function expectToolDock(page: Page) {
   await summonCanvasInstruments(page);
   const dock = page.getByTestId("tool-dock");

@@ -170,9 +170,9 @@ export function settleTiltDeg(deg: number): number {
 }
 
 /**
- * How far the camera-bound parchment/mesh must oversize the board so
+ * How far the camera-bound paper/mesh must oversize the board so
  * rotateX + zoom-out never reveals a hard "postage stamp" plate edge.
- * Caps keep DOM cost sane; board cream still fills any extreme gap.
+ * Caps keep DOM cost sane; board paper still fills any extreme gap.
  */
 export const TILT_SKIN_SCALE_MIN = 2.4;
 export const TILT_SKIN_SCALE_MAX = 8;

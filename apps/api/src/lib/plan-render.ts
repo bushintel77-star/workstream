@@ -5,8 +5,9 @@
  * for raster-based plan dissection.
  *
  * Pure string building — no DOM, no React. Matches the client's visual style:
- * parchment background, green boundary, dark building, olive items, magenta
- * strokes. The vision model sees the same plan the operator sees.
+ * Studio Paper background (#F4F4F4), green boundary, dark building, olive
+ * items, magenta strokes. The vision model sees the same plan the operator
+ * sees.
  */
 
 import type { DesignCanvas } from "@workstream/contracts";
@@ -33,9 +34,9 @@ export function renderPlanSvg(canvas: DesignCanvas): string {
 
   const parts: string[] = [];
 
-  // Background (parchment)
+  // Background (Studio Paper)
   parts.push(
-    `<rect x="0" y="0" width="${SVG_WIDTH}" height="${SVG_HEIGHT}" fill="#f5f0e6" />`,
+    `<rect x="0" y="0" width="${SVG_WIDTH}" height="${SVG_HEIGHT}" fill="#f4f4f4" />`,
   );
 
   // Boundary (site boundary — green)

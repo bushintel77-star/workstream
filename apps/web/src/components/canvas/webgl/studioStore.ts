@@ -87,7 +87,7 @@ import type { ZonePointPct } from "./irrigationZonePath";
 import type { PlanePoint } from "./photoTraceMath";
 
 /* -------------------------------------------------------------------------- */
-/* Save status types (ported from useStudioState.ts Ui slice)                 */
+/* Save status types (the Ui slice of the studio store)                    */
 /* -------------------------------------------------------------------------- */
 
 export type SaveStatus = "idle" | "saving" | "retrying" | "saved" | "error";

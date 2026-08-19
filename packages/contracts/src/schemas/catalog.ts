@@ -688,13 +688,13 @@ export type DesignSiteFrameInput = z.input<typeof DesignSiteFrameSchema>;
  * See docs/SHEET-PRESENTATION.md.
  */
 /**
- * Fit-sheet paper theme. Legacy `blush` (pink) migrates to `deep`
- * (dark-concept / --surface-deep) on parse.
+ * Fit-sheet paper theme. Legacy values migrate on parse: `blush` (pink) and
+ * `parchment` (old cream board) → `deep` / `paper`.
  */
 export const PresentationThemeSchema = z
   .string()
-  .transform((v) => (v === "blush" ? "deep" : v))
-  .pipe(z.enum(["parchment", "ink", "deep"]));
+  .transform((v) => (v === "blush" ? "deep" : v === "parchment" ? "paper" : v))
+  .pipe(z.enum(["paper", "ink", "deep"]));
 export type PresentationTheme = z.infer<typeof PresentationThemeSchema>;
 
 /** Fit-sheet render pen — one geometry, multiple looks. */
@@ -774,7 +774,7 @@ export const PresentationWidgetSchema = z.object({
 export type PresentationWidget = z.infer<typeof PresentationWidgetSchema>;
 
 export const PresentationPackSchema = z.object({
-  theme: PresentationThemeSchema.default("parchment"),
+  theme: PresentationThemeSchema.default("paper"),
   /** Render pen — technical mono or freehand CAD pencil. */
   pen: PresentationPenSchema.default("technical"),
   /** Selective colour pigment — graphite = no accent wash. */

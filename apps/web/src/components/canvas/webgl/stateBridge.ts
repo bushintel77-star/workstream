@@ -1,14 +1,14 @@
 /**
  * Gold Standard 2026 — state bridge: StudioItem → RenderItem.
  *
- * The existing useStudioState reducer holds StudioItem[] in board-% space.
+ * The studio store holds StudioItem[] in board-% space.
  * The WebGL scene graph consumes RenderItem[] — a strict subset that drops
  * the fields the 3D renderer doesn't need (why/conf/stale/etc).
  *
  * No value math is needed: positions are already in board-% (0–100), and
  * the coordTransform layer (pctToWorld) handles the %→metre conversion.
  *
- * Binding: docs/GOLD-STANDARD-2026-ARCHITECTURE.md §5 (two stores, one persisted canvas)
+ * Binding: docs/GOLD-STANDARD-2026-ARCHITECTURE.md §5 (one store, one persisted canvas)
  */
 
 import type { RenderItem } from "./sceneItems";

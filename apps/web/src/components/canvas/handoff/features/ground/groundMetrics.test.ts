@@ -22,7 +22,7 @@ describe("groundMetrics", () => {
   it("resolves ground phase from aerial / cadastral intent", () => {
     expect(
       resolveGroundPhase({ hasAerial: false, hasBoundary: false, address: "" }),
-    ).toBe("parchment");
+    ).toBe("paper");
     expect(
       resolveGroundPhase({
         hasAerial: false,

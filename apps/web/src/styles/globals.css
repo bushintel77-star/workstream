@@ -440,3 +440,288 @@ button:focus-visible {
     -webkit-print-color-adjust: exact;
   }
 }
+/* ----------------------------------------------------------------
+/* ----------------------------------------------------------------
+ * Studio chrome tokens (--hc-*) and workspace system (--ws-*).
+ * Relocated 2026-08-19 from the retired SVG studio
+ * (components/canvas/handoff/handoffStudio.module.css) so the WebGL
+ * chrome and shared surfaces keep one token source. Global :root so
+ * they resolve regardless of the mounting surface.
+ * ---------------------------------------------------------------- */
+:root {
+  /*
+   * Handoff chrome API (--hc-*) â Studio Paper values alias color-tokens v2.
+   * White panels, neutral shadows, charcoal ink; crimson accent only.
+   * CAD vectors keep --sds-* separately.
+   */
+  --text-primary: var(--gs-ink);
+  --text-secondary: var(--gs-ink-secondary);
+  --text-muted: var(--gs-ink-muted);
+  --hc-ink: var(--text-primary);
+  --hc-ink-muted: var(--text-secondary);
+  --hc-ink-faint: var(--text-muted);
+  --hc-paper: var(--gray-l-0);
+  --hc-invert: var(--gray-l-25);
+  /*
+   * Frost AA floor (Tier-1 2026): blur alone is not enough over CAD ink.
+   * Keep glass â¥ ~92% opaque cream + hairline (--hc-line) via --hc-elev-*.
+   */
+  --hc-glass: color-mix(in srgb, var(--gray-l-0) 94%, transparent);
+  --hc-glass-soft: color-mix(in srgb, var(--gray-l-0) 88%, transparent);
+  --hc-line: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  --hc-line-soft: color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --hc-signal: var(--signal);
+  --hc-signal-ink: var(--signal-ink);
+  --hc-accent: var(--accent);
+  --hc-deep: var(--surface-deep);
+  --hc-r-control: 6px;
+  --hc-r-panel: 8px;
+  --hc-r-dock: var(--hc-r-panel);
+  --hc-r-pop: 12px;
+  --hc-r-glass: 16px;
+  --hc-r-pill: 999px;
+  /* Chrome micro type scale â one named source, denser than global --text-*.
+     Crisp whole-px steps (no sub-pixel blur); retune here to rescale all chrome. */
+  --hc-fs-1: 9px;
+  --hc-fs-2: 10px;
+  --hc-fs-3: 11px;
+  --hc-fs-4: 12px;
+  --hc-fs-5: 15px;
+  --hc-fs-6: 19px;
+  --hc-elev-1: 0 1px 2px color-mix(in srgb, var(--text-primary) 10%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --hc-elev-2: 0 2px 6px color-mix(in srgb, var(--text-primary) 12%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--text-primary) 10%, transparent);
+  --hc-elev-3: 0 6px 16px color-mix(in srgb, var(--text-primary) 16%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--text-primary) 12%, transparent);
+  --hc-elev: var(--hc-elev-2);
+  --hc-blur: 0px;
+  --hc-motion: 180ms;
+  --hc-neu-surface: color-mix(in srgb, var(--panel) 94%, var(--gray-l-0));
+  --hc-neu-raised: color-mix(in srgb, var(--gray-l-25) 92%, var(--gray-l-0));
+  --hc-neu-light: color-mix(in srgb, var(--gray-l-0) 58%, transparent);
+  --hc-neu-shadow: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  --hc-neu-out: -1px -1px 2px var(--hc-neu-light),
+    1px 1px 3px var(--hc-neu-shadow), 0 0 0 1px var(--hc-line-soft);
+  --hc-neu-out-sm: -1px -1px 1.5px var(--hc-neu-light),
+    1px 1px 2.5px var(--hc-neu-shadow), 0 0 0 1px var(--hc-line-soft);
+  --hc-neu-in: inset 1px 1px 2px var(--hc-neu-shadow),
+    inset -1px -1px 1.5px var(--hc-neu-light);
+  --hc-pad: 8px;
+  --hc-danger: var(--existing-stroke);
+  --hc-danger-soft: color-mix(in srgb, var(--existing-stroke) 16%, var(--canvas));
+  --hc-success: var(--planting-new-stroke);
+  --hc-warning: var(--warning);
+  --hc-water: var(--water-l-500);
+  --hc-accent-wash: color-mix(in srgb, var(--proposed-stroke) 10%, var(--canvas));
+  --ws-milled-surface: linear-gradient(180deg, var(--gray-l-25) 0%, var(--gray-l-50) 100%);
+  --ws-milled-border: var(--hc-line-soft);
+  --ws-milled-shadow: inset 0 1px 1px rgb(255 255 255 / 70%), var(--gs-shadow-3);
+  --ws-recessed-surface: var(--gray-l-100);
+  --ws-recessed-shadow: inset 0 2px 4px rgb(17 17 17 / 10%), 0 1px 0 rgb(255 255 255 / 70%);
+  --ws-recessed-pressed-shadow: inset 0 3px 6px rgb(17 17 17 / 14%);
+
+  /*
+   * Tier-1 Top Bar â unified header surface (spec Â§1).
+   * Mode-agnostic; the gallery frame and top bar share the Studio Paper
+   * ramp. Single source for Tier1TopBar + DeckInspectorDock.
+   */
+  --tier1-bar-bg: var(--surface-elevated);
+  --tier1-bar-ink: var(--ink-primary);
+  --tier1-bar-ink-muted: var(--ink-secondary);
+  --tier1-bar-line: var(--line-subtle, var(--surface-panel));
+  --tier1-bar-line-strong: var(--line, var(--surface-overlay));
+  --tier1-bar-active-bg: var(--surface-deep);
+  --tier1-bar-active-ink: var(--ink-primary);
+  --tier1-bar-focus-ring: var(--ink-tertiary);
+
+  --sheet-paper: var(--gray-l-25);
+  --sheet-ink: var(--text-primary);
+  --sheet-border: color-mix(in srgb, var(--text-primary) 35%, transparent);
+
+  --sds-canvas-bg: var(--canvas);
+  --sds-vector-primary: var(--text-primary);
+  --sds-vector-muted: var(--text-secondary);
+  --sds-compliance-amber: var(--warning);
+  --sds-compliance-red: var(--existing-stroke);
+  --sds-stroke-primary: 1.5;
+  --sds-stroke-secondary: 1;
+  --sds-dash: 4 4;
+  --sds-tick-len: 6px;
+  --sds-node-corner: 8px;
+  --sds-node-mid: 6px;
+  --sds-label-offset: 8px;
+  --ws-glass: var(--hc-glass-soft);
+  --ws-glass-border: var(--hc-line);
+  --ws-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /*
+   * Unified z-index scale â every floating element references these tokens.
+   * Never use raw z-index numbers in feature modules; always var(--ws-z-*).
+   *
+   *   base        0   paper underlay, tilt skin
+   *   geometry    1   zoomWorld camera, CAD vector SVG
+   *   wash        4   fit sheet scrim, shade grid, climate wash, keyless wash
+   *   annotate    8   plan dims, area labels, ticks, council labels, board edge
+   *   interact   12   TPZ pop, snap guides, marquee, crosshair, edit handles
+   *   chrome     20   honesty caption, FAB, tool dock, compliance dock, BOM dock
+   *   panel      24   formalize banner, studio sheet, sun growth dock, context strip
+   *   frame      30   gallery frame rails (studioFrameRoot), dial hint
+   *   dock       40   camera chrome portal root, command palette, annotate input, share popup
+   *   contextual 42   context strip, exist tree inspector, edit banner
+   *   sticky     48   sticky boundary rail (env / services / site / trees)
+   *   lane       52   right data lane (live measures / compliance / BOM)
+   *   veil       55   focus veil escape hatch (honesty caption never dims)
+   *   modal      60   safety waiver, confirm dialog scrim
+   *   fullscreen 80   AR birdseye, full-screen takeovers
+   */
+  --ws-z-base: 0;
+  --ws-z-geometry: 1;
+  --ws-z-wash: 4;
+  --ws-z-annotate: 8;
+  --ws-z-interact: 12;
+  --ws-z-chrome: 20;
+  --ws-z-panel: 24;
+  --ws-z-frame: 30;
+  --ws-z-dock: 40;
+  --ws-z-contextual: 42;
+  --ws-z-sticky: 48;
+  --ws-z-lane: 52;
+  --ws-z-veil: 55;
+  --ws-z-modal: 60;
+  --ws-z-fullscreen: 80;
+
+  --ws-sheet-pad: 12px;
+  --ws-sheet-margin: 8px;
+  --ws-title-w: 240px;
+  --ws-title-gap: 12px;
+  --ws-safe-left: 120px;
+  --ws-safe-top: 40px;
+  --ws-safe-right: 12px;
+  --ws-safe-bottom: 36px;
+  /*
+   * Right data lane width â single source of truth for the lane shell AND for
+   * anything that must clear it when a panel is open (vic-gov chip row, context
+   * strip). Keeps the "lane law" (no card overlap) satisfied by construction
+   * instead of each occupant re-guessing the reserve. --ws-lane-reserve is the
+   * lane plus one gutter, used as the right inset for busy-state floaters.
+   */
+  --ws-lane-w: min(304px, calc(100vw - 40px));
+  --ws-lane-reserve: calc(var(--ws-lane-w) + 16px);
+  --ws-type-kicker: 8px;
+  /*
+   * KNOWN GAP â these are deliberately identical today, and that is the bug.
+   *
+   * On-plan dimension text (drawing content) and chrome HUD text
+   * (instrumentation) are typographically indistinguishable by construction, so
+   * the drawing cannot out-rank its own instrumentation. Dimensions should sit
+   * one step above HUD.
+   *
+   * Left unchanged here on purpose: raising `--ws-type-dim` to 12px is a live
+   * layout change on a dense plan and needs `canvas-chrome-screenshots.spec.ts`
+   * plus a tight-zoom overlap check, which were not runnable when this was
+   * written. It is a one-line flip once those can run.
+   */
+  --ws-type-dim: 11px;
+  --ws-type-hud: 11px;
+  --ws-type-title: 15px;
+
+  /*
+   * Line-weight ladder â mirrors LINE_WEIGHT in
+   * features/render/lineWeight.ts. That module is the source of truth (SVG
+   * takes numeric stroke widths); these exist for CSS-styled strokes and
+   * borders that need to sit on the same hierarchy.
+   *
+   * Root-2 progression, doubling every two rungs, anchored on 0.4 â the most
+   * common existing value and the leader weight mandated by
+   * docs/STUDIO-STYLING-AND-UX.md. See lineWeight.ts for the full rationale
+   * and the role mapping.
+   *
+   * Do not add in-between values. If a stroke does not fit a rung, the
+   * hierarchy is wrong, not the ladder.
+   */
+  --ws-w-hairline: 0.2;
+  --ws-w-fine: 0.28;
+  --ws-w-thin: 0.4;
+  --ws-w-medium: 0.56;
+  --ws-w-thick: 0.8;
+  --ws-w-heavy: 1.12;
+  --ws-w-accent: 1.6;
+
+  /*
+   * Gallery frame (binding) â the drawing is the artwork, the frame is the
+   * mount. Studio Paper mount in the single theme so the plan always reads
+   * as the subject. Icons live inside these bands, never on the plan.
+   */
+  --ws-frame: var(--gs-frame);
+  --ws-frame-raise: var(--gs-panel);
+  /* Matte-paper endpoints â top catches ambient light, base sinks. */
+  --ws-frame-lit: var(--gs-surface-fill);
+  --ws-frame-sunk: var(--gs-pressed);
+  --ws-frame-ink: var(--gs-ink);
+  /*
+   * Paper-frame ink floors â solid charcoal tiers (WCAG AA on every paper
+   * surface incl. the recessed wells and frame gradient).
+   */
+  --ws-frame-ink-dim: var(--gs-ink-secondary);
+  --ws-frame-ink-faint: var(--gs-ink-muted);
+  --ws-frame-hair: color-mix(in srgb, var(--gs-ink) 10%, transparent);
+  --ws-frame-wash: color-mix(in srgb, var(--gs-ink) 6%, transparent);
+  /*
+   * Summoned frost over the plan â matches the paper frame. Consumers that
+   * still say var(--hc-frost) without a prior definition fall through here;
+   * this is the binding substrate.
+   */
+  --hc-frost: color-mix(in srgb, var(--gs-panel) 86%, transparent);
+  --hc-frost-shadow: var(--gs-shadow-3);
+  --ws-frame-top: 46px;
+  --ws-frame-left: 48px;
+  --ws-frame-right: 14px;
+  --ws-frame-bottom: 46px;
+  --ws-frame-tap: 38px;
+  --ws-frame-glyph: 17px;
+
+  /*
+   * Bottom-left floating stack (sketch pen/eraser tray, margin strip,
+   * phase chip, artboard strip) â one shared shelf ladder, shell-relative,
+   * so these never guess their own offset and collide. Each shelf is the
+   * previous shelf plus that row's own height plus one gap.
+   */
+  --ws-stack-gap: 8px;
+  --ws-stack-tray-h: 52px;
+  --ws-stack-margin-h: 42px;
+  --ws-stack-phase-h: 44px;
+  --ws-stack-1: calc(var(--ws-frame-bottom) + var(--ws-stack-gap));
+  --ws-stack-2: calc(var(--ws-stack-1) + var(--ws-stack-tray-h) + var(--ws-stack-gap));
+  --ws-stack-3: calc(var(--ws-stack-2) + var(--ws-stack-margin-h) + var(--ws-stack-gap));
+  --ws-stack-4: calc(var(--ws-stack-3) + var(--ws-stack-phase-h) + var(--ws-stack-gap));
+
+  /*
+   * Bottom gutter band (board-relative) â the same law as --ws-stack-* for the
+   * low edge of the drawing. The metre ruler owns the floor, the site-address
+   * caption sits one shelf up, contextual panels one above that. Occupants read
+   * a shelf; they never guess an offset. The CAD street cue used to guess
+   * `safe-bottom + 8px` and printed straight through the ruler's metre labels
+   * (measured overlap: cue y 848-859 vs ruler y 855-869).
+   */
+  --ws-gutter-1: var(--ws-safe-bottom);
+  --ws-gutter-2: calc(var(--ws-gutter-1) + 28px);
+  --ws-gutter-3: calc(var(--ws-gutter-2) + var(--s-5));
+
+  /*
+   * Motion + form system (binding) â one radius scale, one easing, three
+   * durations. Everything that moves or rounds pulls from these, so the whole
+   * product shares a single physical language.
+   */
+  --ws-r-1: 6px;
+  --ws-r-2: 8px;
+  --ws-r-3: 12px;
+  --ws-r-4: 16px;
+  --ws-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ws-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ws-dur-1: 120ms;
+  --ws-dur-2: 200ms;
+  --ws-dur-3: 320ms;
+  --ws-focus: 0 0 0 2px var(--hc-paper), 0 0 0 3.5px var(--hc-accent, var(--accent));
+
+}

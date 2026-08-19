@@ -51,23 +51,23 @@ A hung e2e or skipped live probe is a blocker. Binding detail: `.cursor/rules/en
 
 **Gold Standard 2026** is the supreme binding regime. The operator canvas is
 a **Zero-Chrome WebGL studio** (Three.js / React Three Fiber) per the master
-brief. The old SVG `%`-coord parchment board + `HandoffDesignStudio` has been
-replaced as the primary surface by `WebGLStudio` (R3F `<Canvas>` + DOM Paper
-Card overlay) and survives only as the `?svg=1` deep fallback.
+brief. The old SVG `%`-coord parchment board + `HandoffDesignStudio` was
+retired 2026-08-19 — `WebGLStudio` (R3F `<Canvas>` + DOM Paper Card overlay)
+is the only canvas surface.
 
 - Home: `/` redirects to `/home` — operator dashboard (address composer + sites list). The old marketing landing with mock telemetry was removed (zero-mock-data law; `docs/UI-PARITY-AUDIT-2026.md` §4)
 - Operator canvas: `/projects/[id]?mode=survey|sketch|cad|elevation|quote|present|share|garden`
 
 **Binding docs (read before touching canvas/chrome/rendering):**
 
-- **[`ONBOARDING.md`](ONBOARDING.md)** — the single current-state entry doc: two-studio split, platform stages vs canvas modes, camera machine status, reconciliation rule, sketch-to-CAD location. Read this first.
+- **[`ONBOARDING.md`](ONBOARDING.md)** — the single current-state entry doc: one WebGL studio (SVG retired), platform stages vs canvas modes, camera machine status, reconciliation rule, sketch-to-CAD location. Read this first.
 - **[`docs/GOLD-STANDARD-2026.md`](docs/GOLD-STANDARD-2026.md)** — SUPREME. The master architectural brief. "The drawing is the product." Zero-Chrome, WebGL primary surface, Paper Cards (`--gs-panel-grad` white gradient-lit panels, `--gs-panel-frost` + blur on HUD chrome, `--gs-shadow-1..4` neutral shadow tiers), Studio Paper tokens. If a change contradicts this doc, this doc wins.
 - **[`docs/GOLD-STANDARD-2026-TOKENS.md`](docs/GOLD-STANDARD-2026-TOKENS.md)** — Studio Paper palette (`#F4F4F4` canvas, `#3D5AFE` Primary Signal Blue accent, `#0030CF` Truth Anchor data stroke, `#C41E1E` Conflict/Strike crimson — conflict-only, never CTA). Fonts: Space Grotesk (technical/numeric), Inter (UI). Raw `#hex` in handoff modules is CI-gated against the `--gs-*` allowlist.
 - **[`docs/GOLD-STANDARD-2026-ARCHITECTURE.md`](docs/GOLD-STANDARD-2026-ARCHITECTURE.md)** — WebGL scene-graph, `SpatialObject` as universal node, camera/chrome layering, metre-space origin `(0,0,0)` peg, hydraulic isolation, billboarding, mobile AR bridge.
 
-**Archived (pre-Gold-Standard, do not follow):** `docs/archive/pre-gold-standard-2026/` — contains the retired `STUDIO-STYLING-AND-UX.md`, `CAD-AI-2026-UX.md`, `OPERATOR-STUDIO-GOLD-WALKTHROUGH.md`, `ENV-AND-SITE-META-STICKY.md`, and `CANVAS-FIRST-*.md` SDS docs. Retained for historical reference only.
+**Archived (pre-Gold-Standard, do not follow):** the retired first-version docs (`STUDIO-STYLING-AND-UX.md`, `CAD-AI-2026-UX.md`, `OPERATOR-STUDIO-GOLD-WALKTHROUGH.md`, `ENV-AND-SITE-META-STICKY.md`, and the `CANVAS-FIRST-*.md` SDS docs) were removed from the tree 2026-08-19 in the legacy prune; they remain available in git history.
 
-**Migration status:** The WebGL studio is THE front end — every canvas mode (survey checklist, sketch, CAD AI-hub, elevation sheet, garden 3D, quote fit-sheet, present lens, share portal) mounts natively as glass chrome over the R3F canvas. The SVG `HandoffDesignStudio` is a `?svg=1`-only deep fallback for vector node-editing and the long tail of feature docks — it is no longer part of mode routing. (The SVG studio's long-term intent — permanent frozen fallback vs transitional until WebGL Phase 1 — is an open product question; see `ONBOARDING.md`.) The photo-trace elevation capstone shipped 2026-08-18 (`docs/CAMERA-STATE-MACHINE.md`): pinned site photos are frozen calibrated camera frames with reference-line calibration and boundary-snap reconciliation.
+**Migration status:** The WebGL studio is THE front end — every canvas mode (survey checklist, sketch, CAD AI-hub, elevation sheet, garden 3D, quote fit-sheet, present lens, share portal) mounts natively as glass chrome over the R3F canvas. The SVG `HandoffDesignStudio` was deleted 2026-08-19 along with its 295 SVG-only files, 63 classic e2e specs, and `?svg=1` routing; the shared modules it left behind (catalog, canvas bridge, geometry, elevation/present/share/survey surfaces) stay under `handoff/` until re-homed, and the `--hc-*`/`--ws-*` tokens moved to `styles/globals.css` (see `ONBOARDING.md` §1). The photo-trace elevation capstone shipped 2026-08-18 (`docs/CAMERA-STATE-MACHINE.md`): pinned site photos are frozen calibrated camera frames with reference-line calibration and boundary-snap reconciliation.
 
 **Vicmap cadastral** (API): keyless DELWP GeoServer WFS at `opendata.maps.vic.gov.au` — `apps/api/src/lib/vicmap.ts` self-discovers property/building layers via GetCapabilities (no `VICMAP_ENABLED` / developer.vic.gov.au API key).
 
@@ -92,17 +92,16 @@ sheet stamp locational-indicative.)
 
 **Sketch → CAD on WebGL (2026-08-18):** the rail "Tidy" action runs the
 domain's context-aware classifier (`interpretSketchStrokesToCad`) into a
-confidence-scored ghost review (the SVG `proposeFromStrokes` accept/reject
-pattern); the one-click convert runs `recognizeStroke` →
+confidence-scored ghost review (the retired SVG studio's `proposeFromStrokes`
+accept/reject pattern); the one-click convert runs `recognizeStroke` →
 `buildLandscapeFeatureFromStroke` into real `LandscapeFeature`s persisted in
-`DesignCanvas.features`. Source ink is **kept** on both paths — SVG parity;
-the ink is the honest provenance of the converted entities. Accepted
-proposals with drawn outlines persist a mirrored Polygon feature whose id
-equals the placement id (the `itemsToFeatures` / `featuresOntoItems`
-coupling — the one place the two studios are coupled). Photo-trace strokes
-are elevation-space and are **explicitly scoped out** with a stamped notice
-in the review, never silently excluded. Converted features inherit
-already-sited ink geometry, so they raise no new title-boundary
+`DesignCanvas.features`. Source ink is **kept** on both paths; the ink is the
+honest provenance of the converted entities. Accepted proposals with drawn
+outlines persist a mirrored Polygon feature whose id equals the placement id
+(the former two-studio `itemsToFeatures` / `featuresOntoItems` coupling).
+Photo-trace strokes are elevation-space and are **explicitly scoped out** with
+a stamped notice in the review, never silently excluded. Converted features
+inherit already-sited ink geometry, so they raise no new title-boundary
 reconciliation event — the rule above still binds any future converter that
 invents positions (e.g. facade→plan projection).
 
@@ -114,11 +113,9 @@ Esc clears, and selection survives every WebGL mode switch. A tool-gated
 `marquee` rail tool): while armed, drag draws the selection box (shift
 unions); unarmed, plain drag still pans and mod-drag orbits — the tool gate
 preserves the pan law. Option A scope: placements + features only (photo
-strokes are a separate entity class with no bulk surface). Bulk-editing a
-marquee selection is deferred — the inspector shows a read-only many-refs
-summary until bulk-edit lands. There is **no cross-studio selection sync** —
-the two studios share only the persisted `DesignCanvas` document
-(ARCHITECTURE §5); do not build a runtime bridge without a product decision.
+strokes are a separate entity class with no bulk surface). Bulk-editing a marquee selection is deferred — the inspector shows a read-only many-refs
+summary until bulk-edit lands. Selection lives only in the WebGL store (the
+SVG studio is retired); there is no runtime bridge to build.
 
 ### UTF-8 / Turbopack
 

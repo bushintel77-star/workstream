@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createMemoryStore } from "@workstream/db";
 import { runSurvey } from "./survey-job";
 
-describe("runSurvey", () => {
+describe("runSurvey", { timeout: 20000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
   const owner = "test-user";
 

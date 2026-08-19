@@ -20,7 +20,7 @@ describe("sheet presentation", () => {
   it("seeds Curtis templates with unique widget ids", () => {
     expect(CURTIS_SHEET_TEMPLATES.length).toBeGreaterThanOrEqual(4);
     const pack = applySheetTemplate("curtis-client-brochure");
-    expect(pack.theme).toBe("parchment");
+    expect(pack.theme).toBe("paper");
     expect(pack.pen).toBe("hand_drawn");
     expect(pack.atmosphere).toBe("cherry");
     expect(pack.template_id).toBe("curtis-client-brochure");
