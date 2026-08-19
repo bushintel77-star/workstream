@@ -57,6 +57,104 @@ function cornerVertices(
   return closed ? ring.slice(0, -1) : ring.slice();
 }
 
+type SketchNote = {
+  x: number;
+  y: number;
+  anchor: "start" | "middle" | "end";
+  tip: [number, number];
+  label: string;
+};
+
+type SketchLayout = {
+  w: number;
+  h: number;
+  cx: number;
+  cy: number;
+  s: number;
+  fontSize: number;
+  tree1: [number, number];
+  tree2: [number, number];
+  bed: [number, number];
+  pathA: [number, number];
+  pathB: [number, number];
+  pathC: [number, number];
+  notes: SketchNote[];
+};
+
+/**
+ * Places the hand-drawn concept pass relative to the REAL title polygon,
+ * in hero-image pixels: two tree circles, a Lomandra bed, a bluestone path,
+ * and three hand annotations with leaders. All geometry derives from the
+ * polygon — nothing is positioned against a fake site.
+ */
+function sketchLayout(
+  poly: ReadonlyArray<readonly [number, number]>,
+): SketchLayout {
+  const xs = poly.map((p) => p[0]);
+  const ys = poly.map((p) => p[1]);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const w = Math.max(maxX - minX, 40);
+  const h = Math.max(maxY - minY, 40);
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  const s = Math.min(Math.max((w + h) / 2 / 210, 0.8), 1.4);
+  const fontSize = Math.min(32, Math.max(20, 26 * s));
+  return {
+    w,
+    h,
+    cx,
+    cy,
+    s,
+    fontSize,
+    tree1: [cx - w * 0.3, cy - h * 0.02],
+    tree2: [cx + w * 0.28, cy + h * 0.16],
+    bed: [cx - w * 0.22, cy + h * 0.3],
+    pathA: [cx - w * 0.1, cy + h * 0.34],
+    pathB: [cx + w * 0.12, cy - h * 0.05],
+    pathC: [cx + w * 0.26, cy - h * 0.3],
+    notes: [
+      {
+        x: cx,
+        y: minY - 52 * s,
+        anchor: "middle",
+        tip: [cx, minY - 4 * s],
+        label: "pleached hornbeam screen",
+      },
+      {
+        x: minX - 26 * s,
+        y: cy + h * 0.28,
+        anchor: "end",
+        tip: [cx - w * 0.22, cy + h * 0.3],
+        label: "mass-planted Lomandra",
+      },
+      {
+        x: maxX + 26 * s,
+        y: cy - h * 0.2,
+        anchor: "start",
+        tip: [cx + w * 0.12, cy - h * 0.05],
+        label: "bluestone path",
+      },
+    ],
+  };
+}
+
+/** Hand-drawn arrowhead: a small open V at the tip, facing the leader. */
+function arrowHead(tip: [number, number], from: [number, number]): string {
+  const dx = tip[0] - from[0];
+  const dy = tip[1] - from[1];
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const bx = tip[0] - ux * 16;
+  const by = tip[1] - uy * 16;
+  const px = -uy * 7;
+  const py = ux * 7;
+  return `${(bx + px).toFixed(2)},${(by + py).toFixed(2)} ${tip[0].toFixed(2)},${tip[1].toFixed(2)} ${(bx - px).toFixed(2)},${(by - py).toFixed(2)}`;
+}
+
 /**
  * The landing says nothing — the entry IS the pitch. A real Stonnington
  * aerial, one lit property, a live Vicmap title boundary. Type an address
@@ -184,6 +282,18 @@ export function LandingCanvas({
       ? [HERO_IMAGE_W / 2, HERO_IMAGE_H / 2]
       : ringCentroidPct(boundary.building ?? boundary.polygon);
   const glowR = boundary?.building ? 0 : 64 / scale;
+  const viewBoxStr =
+    view.w > 0
+      ? `${(HERO_IMAGE_W - view.w / scale) / 2} ${(HERO_IMAGE_H - view.h / scale) / 2} ${view.w / scale} ${view.h / scale}`
+      : undefined;
+  const titlePoints = boundary === null ? "" : toPoints(boundary.polygon);
+  // The chalk pass is the designer's hand over the DEFAULT hero only —
+  // picking a real address removes it, so no fabricated design ever sits
+  // on a client's actual property.
+  const sketch =
+    boundary && view.w > 0 && !chosen
+      ? sketchLayout(boundary.polygon)
+      : null;
 
   let statusLabel: string | null;
   if (addressLabel && boundaryState === "live") {
@@ -227,7 +337,7 @@ export function LandingCanvas({
                 className={css.boundarySvg}
                 width={view.w}
                 height={view.h}
-                viewBox={`${(HERO_IMAGE_W - view.w / scale) / 2} ${(HERO_IMAGE_H - view.h / scale) / 2} ${view.w / scale} ${view.h / scale}`}
+                viewBox={viewBoxStr}
                 preserveAspectRatio="none"
                 aria-hidden
                 data-testid="hero-boundary"
@@ -253,7 +363,7 @@ export function LandingCanvas({
                 )}
                 <path
                   className={css.boundaryPath}
-                  d={`M ${toPoints(boundary.polygon)} Z`}
+                  d={`M ${titlePoints} Z`}
                   pathLength={1}
                 />
                 <g className={css.cornerDots}>
@@ -261,6 +371,143 @@ export function LandingCanvas({
                     <circle key={i} cx={x} cy={y} r={dotR} />
                   ))}
                 </g>
+              </svg>
+            ) : null}
+            {sketch ? (
+              <svg
+                className={css.boundarySvg}
+                width={view.w}
+                height={view.h}
+                viewBox={viewBoxStr}
+                preserveAspectRatio="none"
+                aria-hidden
+                data-testid="hero-sketch"
+              >
+                <defs>
+                  <filter
+                    id="heroChalkA"
+                    x="-20%"
+                    y="-20%"
+                    width="140%"
+                    height="140%"
+                  >
+                    <feTurbulence
+                      type="fractalNoise"
+                      baseFrequency="0.016"
+                      numOctaves="2"
+                      seed="4"
+                      result="noise"
+                    />
+                    <feDisplacementMap
+                      in="SourceGraphic"
+                      in2="noise"
+                      scale="18"
+                    />
+                  </filter>
+                  <filter
+                    id="heroChalkB"
+                    x="-20%"
+                    y="-20%"
+                    width="140%"
+                    height="140%"
+                  >
+                    <feTurbulence
+                      type="fractalNoise"
+                      baseFrequency="0.018"
+                      numOctaves="2"
+                      seed="11"
+                      result="noise"
+                    />
+                    <feDisplacementMap
+                      in="SourceGraphic"
+                      in2="noise"
+                      scale="12"
+                    />
+                  </filter>
+                </defs>
+
+                {/* The designer's hand re-traces the surveyed title — twice. */}
+                <g
+                  filter="url(#heroChalkA)"
+                  transform={`translate(${sketch.cx} ${sketch.cy}) scale(1.006) translate(${-sketch.cx} ${-sketch.cy})`}
+                >
+                  <path
+                    className={css.sketchInk}
+                    d={`M ${titlePoints} Z`}
+                    pathLength={1}
+                  />
+                </g>
+                <g filter="url(#heroChalkB)">
+                  <path
+                    className={`${css.sketchInk} ${css.sketchInkSecond}`}
+                    d={`M ${titlePoints} Z`}
+                    pathLength={1}
+                  />
+                </g>
+
+                {/* Concept sketch on the property — trees, bed, path. */}
+                <g className={css.sketchConcept}>
+                  <circle
+                    cx={sketch.tree1[0]}
+                    cy={sketch.tree1[1]}
+                    r={20 * sketch.s}
+                    pathLength={1}
+                  />
+                  <circle
+                    cx={sketch.tree1[0]}
+                    cy={sketch.tree1[1]}
+                    r={12 * sketch.s}
+                    pathLength={1}
+                  />
+                  <circle
+                    cx={sketch.tree2[0]}
+                    cy={sketch.tree2[1]}
+                    r={16 * sketch.s}
+                    pathLength={1}
+                  />
+                  <circle
+                    cx={sketch.tree2[0]}
+                    cy={sketch.tree2[1]}
+                    r={9 * sketch.s}
+                    pathLength={1}
+                  />
+                  <circle
+                    cx={sketch.bed[0]}
+                    cy={sketch.bed[1]}
+                    r={26 * sketch.s}
+                    pathLength={1}
+                  />
+                  <path
+                    d={`M ${sketch.pathA[0]},${sketch.pathA[1]} Q ${sketch.pathB[0]},${sketch.pathB[1]} ${sketch.pathC[0]},${sketch.pathC[1]}`}
+                    pathLength={1}
+                  />
+                </g>
+
+                {/* Hand-drawn leaders and annotations. */}
+                {sketch.notes.map((note) => (
+                  <g key={note.label}>
+                    <path
+                      className={css.sketchArrow}
+                      d={`M ${note.x},${note.y} Q ${(note.x + note.tip[0]) / 2},${note.y - 34 * sketch.s} ${note.tip[0]},${note.tip[1]}`}
+                    />
+                    <polyline
+                      className={css.sketchArrow}
+                      points={arrowHead(note.tip, [
+                        (note.x + note.tip[0]) / 2,
+                        note.y - 34 * sketch.s,
+                      ])}
+                    />
+                    <text
+                      className={css.sketchNote}
+                      x={note.x}
+                      y={note.y}
+                      textAnchor={note.anchor}
+                      fontSize={sketch.fontSize}
+                    >
+                      {note.label}
+                    </text>
+                  </g>
+                ))}
               </svg>
             ) : null}
           </div>

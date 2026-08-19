@@ -71,6 +71,16 @@ Browser-based. No Electron, no shadcn, no new dependencies:
   cobalt with luminous corner dots; draw-in stroke animation when the live
   feed lands. If the registry is unreachable the hero simply omits the
   overlay — never a fabricated polygon.
+- **The chalk pass (designer's hand).** Once the truth line lands, a
+  hand-sketched white chalk pass draws over it, built entirely from the
+  real polygon geometry: the title re-traced twice with organic wobble
+  (feTurbulence displacement, two seeds), a concept sketch on the property
+  (two trees, a mass-planted Lomandra bed, a bluestone path curve), and
+  three hand-drawn leader arrows with annotations in `--font-hand`
+  (Architects Daughter): "pleached hornbeam screen", "mass-planted
+  Lomandra", "bluestone path". The chalk pass renders only on the default
+  hero — picking a real address removes it, so no fabricated design ever
+  sits on a client's actual property.
 - **Top bar.** Workstream wordmark (Space Grotesk) + live VIC DMS
   coordinate chip (JetBrains Mono, tracks the current hero centre) +
   "Open the studio" / "Settings".

@@ -96,6 +96,61 @@
   animation: heroDotIn 0.4s var(--ws-ease) 1.9s forwards;
 }
 
+/* ------------------------------------------------------- chalk sketch */
+
+/* The designer's hand: a double-traced chalk title over the surveyed line. */
+.sketchInk {
+  fill: none;
+  stroke: color-mix(in srgb, var(--hero-chalk) 92%, transparent);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: heroDraw 2s var(--ws-ease) 0.9s forwards;
+}
+
+.sketchInkSecond {
+  stroke-width: 1.7;
+  stroke: color-mix(in srgb, var(--hero-chalk) 72%, transparent);
+  animation-delay: 1.15s;
+}
+
+.sketchConcept circle,
+.sketchConcept path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--hero-chalk) 88%, transparent);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: heroDraw 1.6s var(--ws-ease) 2.1s forwards;
+  filter: url("#heroChalkA");
+}
+
+.sketchArrow {
+  fill: none;
+  stroke: color-mix(in srgb, var(--hero-chalk) 80%, transparent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  animation: sketchNoteIn 0.5s var(--ws-ease) 2.9s both;
+}
+
+.sketchNote {
+  fill: var(--hero-chalk);
+  font-family: var(--font-hand), "Architects Daughter", cursive;
+  opacity: 0;
+  animation: sketchNoteIn 0.6s var(--ws-ease) 3.1s both;
+  filter: drop-shadow(
+    0 1px 6px color-mix(in srgb, var(--gs-ink) 65%, transparent)
+  );
+}
+
 .scrim {
   position: absolute;
   inset: 0;
@@ -537,6 +592,15 @@
   }
 }
 
+@keyframes sketchNoteIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* ---------------------------------------------------------------- narrow */
 
 @media (max-width: 860px) {
@@ -569,6 +633,19 @@
   }
 
   .cornerDots circle {
+    animation: none;
+    opacity: 1;
+  }
+
+  .sketchInk,
+  .sketchConcept circle,
+  .sketchConcept path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .sketchArrow,
+  .sketchNote {
     animation: none;
     opacity: 1;
   }

@@ -107,6 +107,14 @@ test.describe("Landing hero", () => {
       .catch(() => {});
     if ((await boundary.count()) > 0) {
       await expect(page.getByText(/live boundary ·/i)).toBeVisible();
+      // The chalk concept pass rides the same live polygon.
+      const sketch = page.getByTestId("hero-sketch");
+      await expect(sketch.first()).toBeVisible();
+      await expect(
+        page.getByText(/pleached hornbeam screen/i),
+      ).toBeVisible();
+      await expect(page.getByText(/mass-planted Lomandra/i)).toBeVisible();
+      await expect(page.getByText(/bluestone path/i)).toBeVisible();
     }
   });
 });

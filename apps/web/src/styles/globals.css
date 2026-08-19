@@ -688,6 +688,7 @@ button:focus-visible {
   --hero-glow-soft: #ffd9a8;
   --hero-scrim: color-mix(in srgb, var(--gs-ink) 34%, transparent);
   --hero-boundary: var(--gs-truth);
+  --hero-chalk: #f4f2ec;
   --ws-frame-top: 46px;
   --ws-frame-left: 48px;
   --ws-frame-right: 14px;
