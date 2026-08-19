@@ -44,10 +44,10 @@ function log(msg) {
 
 function deploy(service, sha, title) {
   return new Promise((resolve) => {
-    const msg = `auto-deploy ${sha.slice(0, 8)}: ${title}`.replace(/"/g, '\\"');
-    // The shim path has no spaces — no inner quoting (Node's own quoting of
-    // this argument would double it and cmd would misparse the path).
-    const cmd = `${RAILWAY_CMD} up --project ${RAILWAY_PROJECT} --service ${service} --environment production --detach -m "${msg}"`;
+    // No spaces in the message: quoting through cmd.exe → .cmd → node → the
+    // Rust CLI mangles spaced values (os error 123). Dashes keep it readable.
+    const msg = `auto-deploy-${sha.slice(0, 8)}-${title.replace(/[^A-Za-z0-9:.-]+/g, "-")}`;
+    const cmd = `${RAILWAY_CMD} up --project ${RAILWAY_PROJECT} --service ${service} --environment production --detach -m ${msg}`;
     const child = execFile(COMSEC, ["/d", "/s", "/c", cmd], {
       stdio: "inherit",
     });
