@@ -24,7 +24,7 @@
 
 .target {
   margin: 0 0 var(--s-3);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   letter-spacing: 0.04em;
   /* On the white pane like .heading — shell ink would be 2.63:1 here. */
@@ -45,7 +45,7 @@
 }
 
 .kicker {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-micro);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -55,7 +55,7 @@
 
 .amount {
   display: block;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-md);
   font-weight: 600;
   margin: var(--s-2) 0;

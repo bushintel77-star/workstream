@@ -9,7 +9,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: color-mix(in srgb, #000 50%, transparent);
+  background: color-mix(in srgb, var(--gs-ink-strong) 22%, transparent);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   animation: dialogScrimIn 160ms var(--ease) both;
@@ -34,7 +34,7 @@
   border-radius: var(--r-lg);
   background: var(--surface-elevated);
   border: 1px solid var(--line-hairline);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--gs-shadow-4);
   animation: dialogIn 200ms var(--ease-emphasis) both;
   outline: none;
 }
@@ -143,7 +143,7 @@
   border: 1px solid var(--line-hairline);
   border-radius: var(--r-sm);
   background: var(--surface-elevated);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--gs-shadow-3);
   animation: popoverIn 120ms var(--ease) both;
 }
 

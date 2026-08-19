@@ -88,11 +88,15 @@
   --block: var(--gs-conflict);
   --info: var(--gs-ink-secondary);
 
-  /* type — Aegis professional-services families */
+  /* type — Gold Standard 2026 roles (TOKENS.md §2): technical/numeric =
+     Space Grotesk, UI = Inter, display = Fraunces, annotations = hand.
+     --font-mono and --font-technical-mono are compat aliases of the
+     technical role — all monos retired with IBM Plex Mono. */
   --font-display: var(--font-tech), "Space Grotesk", sans-serif;
   --font-body: var(--font-ui), "Inter", sans-serif;
   --font-serif: var(--font-ui), "Inter", sans-serif;
-  --font-mono: var(--font-technical-mono), "JetBrains Mono", monospace;
+  --font-mono: var(--font-tech), "Space Grotesk", sans-serif;
+  --font-technical-mono: var(--font-tech), "Space Grotesk", sans-serif;
   --font-hand: "Architects Daughter", cursive;
 
   /* type scale — 1.125 ratio, all components reference these.
@@ -450,7 +454,7 @@ button:focus-visible {
  * ---------------------------------------------------------------- */
 :root {
   /*
-   * Handoff chrome API (--hc-*) â Studio Paper values alias color-tokens v2.
+   * Handoff chrome API (--hc-*) — Studio Paper values alias color-tokens v2.
    * White panels, neutral shadows, charcoal ink; crimson accent only.
    * CAD vectors keep --sds-* separately.
    */
@@ -480,7 +484,7 @@ button:focus-visible {
   --hc-r-pop: 12px;
   --hc-r-glass: 16px;
   --hc-r-pill: 999px;
-  /* Chrome micro type scale â one named source, denser than global --text-*.
+  /* Chrome micro type scale — one named source, denser than global --text-*.
      Crisp whole-px steps (no sub-pixel blur); retune here to rescale all chrome. */
   --hc-fs-1: 9px;
   --hc-fs-2: 10px;
@@ -522,7 +526,7 @@ button:focus-visible {
   --ws-recessed-pressed-shadow: inset 0 3px 6px rgb(17 17 17 / 14%);
 
   /*
-   * Tier-1 Top Bar â unified header surface (spec Â§1).
+   * Tier-1 Top Bar — unified header surface (spec §1).
    * Mode-agnostic; the gallery frame and top bar share the Studio Paper
    * ramp. Single source for Tier1TopBar + DeckInspectorDock.
    */
@@ -530,10 +534,10 @@ button:focus-visible {
   --tier1-bar-ink: var(--ink-primary);
   --tier1-bar-ink-muted: var(--ink-secondary);
   --tier1-bar-line: var(--line-subtle, var(--surface-panel));
-  --tier1-bar-line-strong: var(--line, var(--surface-overlay));
+  --tier1-bar-line-strong: var(--gs-line-strong);
   --tier1-bar-active-bg: var(--surface-deep);
   --tier1-bar-active-ink: var(--ink-primary);
-  --tier1-bar-focus-ring: var(--ink-tertiary);
+  --tier1-bar-focus-ring: var(--gs-primary);
 
   --sheet-paper: var(--gray-l-25);
   --sheet-ink: var(--text-primary);
@@ -556,7 +560,7 @@ button:focus-visible {
   --ws-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   /*
-   * Unified z-index scale â every floating element references these tokens.
+   * Unified z-index scale — every floating element references these tokens.
    * Never use raw z-index numbers in feature modules; always var(--ws-z-*).
    *
    *   base        0   paper underlay, tilt skin
@@ -600,7 +604,7 @@ button:focus-visible {
   --ws-safe-right: 12px;
   --ws-safe-bottom: 36px;
   /*
-   * Right data lane width â single source of truth for the lane shell AND for
+   * Right data lane width — single source of truth for the lane shell AND for
    * anything that must clear it when a panel is open (vic-gov chip row, context
    * strip). Keeps the "lane law" (no card overlap) satisfied by construction
    * instead of each occupant re-guessing the reserve. --ws-lane-reserve is the
@@ -610,7 +614,7 @@ button:focus-visible {
   --ws-lane-reserve: calc(var(--ws-lane-w) + 16px);
   --ws-type-kicker: 8px;
   /*
-   * KNOWN GAP â these are deliberately identical today, and that is the bug.
+   * KNOWN GAP — these are deliberately identical today, and that is the bug.
    *
    * On-plan dimension text (drawing content) and chrome HUD text
    * (instrumentation) are typographically indistinguishable by construction, so
@@ -627,12 +631,12 @@ button:focus-visible {
   --ws-type-title: 15px;
 
   /*
-   * Line-weight ladder â mirrors LINE_WEIGHT in
+   * Line-weight ladder — mirrors LINE_WEIGHT in
    * features/render/lineWeight.ts. That module is the source of truth (SVG
    * takes numeric stroke widths); these exist for CSS-styled strokes and
    * borders that need to sit on the same hierarchy.
    *
-   * Root-2 progression, doubling every two rungs, anchored on 0.4 â the most
+   * Root-2 progression, doubling every two rungs, anchored on 0.4 — the most
    * common existing value and the leader weight mandated by
    * docs/STUDIO-STYLING-AND-UX.md. See lineWeight.ts for the full rationale
    * and the role mapping.
@@ -649,18 +653,18 @@ button:focus-visible {
   --ws-w-accent: 1.6;
 
   /*
-   * Gallery frame (binding) â the drawing is the artwork, the frame is the
+   * Gallery frame (binding) — the drawing is the artwork, the frame is the
    * mount. Studio Paper mount in the single theme so the plan always reads
    * as the subject. Icons live inside these bands, never on the plan.
    */
   --ws-frame: var(--gs-frame);
   --ws-frame-raise: var(--gs-panel);
-  /* Matte-paper endpoints â top catches ambient light, base sinks. */
+  /* Matte-paper endpoints — top catches ambient light, base sinks. */
   --ws-frame-lit: var(--gs-surface-fill);
   --ws-frame-sunk: var(--gs-pressed);
   --ws-frame-ink: var(--gs-ink);
   /*
-   * Paper-frame ink floors â solid charcoal tiers (WCAG AA on every paper
+   * Paper-frame ink floors — solid charcoal tiers (WCAG AA on every paper
    * surface incl. the recessed wells and frame gradient).
    */
   --ws-frame-ink-dim: var(--gs-ink-secondary);
@@ -668,7 +672,7 @@ button:focus-visible {
   --ws-frame-hair: color-mix(in srgb, var(--gs-ink) 10%, transparent);
   --ws-frame-wash: color-mix(in srgb, var(--gs-ink) 6%, transparent);
   /*
-   * Summoned frost over the plan â matches the paper frame. Consumers that
+   * Summoned frost over the plan — matches the paper frame. Consumers that
    * still say var(--hc-frost) without a prior definition fall through here;
    * this is the binding substrate.
    */
@@ -698,7 +702,7 @@ button:focus-visible {
 
   /*
    * Bottom-left floating stack (sketch pen/eraser tray, margin strip,
-   * phase chip, artboard strip) â one shared shelf ladder, shell-relative,
+   * phase chip, artboard strip) — one shared shelf ladder, shell-relative,
    * so these never guess their own offset and collide. Each shelf is the
    * previous shelf plus that row's own height plus one gap.
    */
@@ -712,7 +716,7 @@ button:focus-visible {
   --ws-stack-4: calc(var(--ws-stack-3) + var(--ws-stack-phase-h) + var(--ws-stack-gap));
 
   /*
-   * Bottom gutter band (board-relative) â the same law as --ws-stack-* for the
+   * Bottom gutter band (board-relative) — the same law as --ws-stack-* for the
    * low edge of the drawing. The metre ruler owns the floor, the site-address
    * caption sits one shelf up, contextual panels one above that. Occupants read
    * a shelf; they never guess an offset. The CAD street cue used to guess
@@ -724,7 +728,7 @@ button:focus-visible {
   --ws-gutter-3: calc(var(--ws-gutter-2) + var(--s-5));
 
   /*
-   * Motion + form system (binding) â one radius scale, one easing, three
+   * Motion + form system (binding) — one radius scale, one easing, three
    * durations. Everything that moves or rounds pulls from these, so the whole
    * product shares a single physical language.
    */

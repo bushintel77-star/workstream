@@ -444,7 +444,7 @@
   position: fixed;
   inset: 0;
   z-index: 999;
-  background: color-mix(in srgb, #000 40%, transparent);
+  background: color-mix(in srgb, var(--gs-ink-strong) 18%, transparent);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   animation: kitSheetScrimIn 160ms var(--ease, ease) both;
@@ -619,8 +619,7 @@
   color: var(--ink-secondary);
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--line-hairline, rgba(255, 255, 255, 0.1)) 60%, transparent),
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    0 4px 8px rgba(0, 0, 0, 0.1);
+    var(--gs-shadow-2);
   opacity: 0;
   pointer-events: none;
   transition: opacity 140ms var(--ease, ease) 60ms;

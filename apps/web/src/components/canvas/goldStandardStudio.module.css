@@ -46,7 +46,7 @@
   --gs-z-hud: 5;
   --gs-z-controls: 6;
   --gs-font-display: var(--font-tech), "Space Grotesk", sans-serif;
-  --gs-font-tech: var(--font-technical-mono), "JetBrains Mono", monospace;
+  --gs-font-tech: var(--font-tech), "Space Grotesk", sans-serif;
   --gs-font-ui: var(--font-inter), "Inter", sans-serif;
 
   position: relative;

@@ -58,8 +58,8 @@
   border-radius: 14px;
   background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
   border: 1px solid var(--line-hairline);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--gs-frost-blur));
+  -webkit-backdrop-filter: blur(var(--gs-frost-blur));
 }
 
 .kicker {

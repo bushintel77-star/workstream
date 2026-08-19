@@ -85,7 +85,7 @@ export function PhotoTraceHud() {
         padding: "10px 12px",
         borderRadius: "var(--gs-radius-panel)",
         background: "var(--gs-panel-frost)",
-        backdropFilter: "blur(10px)",
+        backdropFilter: "blur(var(--gs-frost-blur))",
         border: "1px solid color-mix(in srgb, var(--gs-line) 70%, transparent)",
         boxShadow: "var(--gs-shadow-2)",
         pointerEvents: "auto",

@@ -3,7 +3,6 @@ import {
   Architects_Daughter,
   Fraunces,
   Inter,
-  JetBrains_Mono,
   Space_Grotesk,
 } from "next/font/google";
 import "../styles/globals.css";
@@ -18,7 +17,6 @@ import { ClerkProvider } from "@clerk/nextjs";
  * - Space Grotesk: technical, numeric, coordinate data (--font-tech + --font-mono)
  * - Fraunces: display / presentation deck composition (--font-display + --font-serif)
  * - Architects Daughter: hand-lettered plan annotations (--font-hand)
- * - JetBrains Mono: technical mono (--font-technical-mono, main branch addition)
  * - Sora: legacy UI font variable (--font-inter, kept for compat with main's surfaces)
  */
 const fontBody = Inter({
@@ -69,12 +67,6 @@ const fontInter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
-const fontTechnicalMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-technical-mono",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Workstream",
@@ -122,7 +114,7 @@ export default function RootLayout({
   return (
     <html lang="en-AU">
       <body
-        className={`${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable} ${fontSerif.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable} ${fontTech.variable} ${fontTechnicalMono.variable}`}
+        className={`${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable} ${fontSerif.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable} ${fontTech.variable}`}
         data-build={
           process.env.NEXT_PUBLIC_BUILD_SHA ??
           process.env.RAILWAY_GIT_COMMIT_SHA ??

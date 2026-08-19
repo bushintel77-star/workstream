@@ -25,8 +25,8 @@
   animation: toastIn var(--dur-base) var(--ease-emphasis);
   border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
   box-shadow: var(--elev-2);
-  backdrop-filter: saturate(140%) blur(12px);
-  -webkit-backdrop-filter: saturate(140%) blur(12px);
+  backdrop-filter: saturate(140%) blur(var(--gs-frost-blur));
+  -webkit-backdrop-filter: saturate(140%) blur(var(--gs-frost-blur));
 }
 
 .info {
