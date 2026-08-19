@@ -40,9 +40,11 @@ const EnvSchema = z.object({
   /** Model for vision tasks (ghosts, OCR, sketch assist, dictation). */
   CLAUDE_VISION_MODEL: z.string().default("claude-sonnet-4-6"),
 
-  /* Geo — keyless Vicmap/DELWP only. Geocode = Vicmap Address GNAF +
-     Nominatim; aerial = StateView ortho WMS; cadastral/elevation = WFS.
-     No Mapbox dependency remains. */
+  /* Geo — keyless Vicmap/DELWP by default (GNAF, cadastre, overlays,
+     StateView ortho). DATAVIC_API_KEY unlocks the sharper rasters on the
+     developer.vic WoVG gateway: Coordinated Imagery Program aerial +
+     Vicmap Elevation DEM. Absent → the keyless floor applies. */
+  DATAVIC_API_KEY: z.string().optional(),
 
   /* Payments */
   STRIPE_SECRET_KEY: z

@@ -44,6 +44,12 @@ export function buildIntegrationSetupSteps(
         (by("anthropic")?.configured || by("openai")?.configured) === true,
     },
     {
+      id: "datavic",
+      label: "DataVic — Victorian imagery + elevation (optional upgrade)",
+      href: "/settings#geo",
+      done: true, // Keyless Vicmap floor always ships; the key is an upgrade.
+    },
+    {
       id: "crm",
       label: "Client sync — Zoho webhook in CRM settings (background)",
       href: "/settings#crm",

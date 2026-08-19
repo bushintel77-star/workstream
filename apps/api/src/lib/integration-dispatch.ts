@@ -180,6 +180,13 @@ export async function channelStatuses(
       note: plan === "lite" ? "Dev fallback on Lite" : "",
     },
     {
+      channel: "datavic",
+      label: "DataVic (Vic Gov)",
+      configured: has("DATAVIC_API_KEY"),
+      live: true,
+      note: "Keyless Vicmap floor is always on; key adds CIP aerial + DEM",
+    },
+    {
       channel: "stripe",
       label: "Stripe",
       configured: has("STRIPE_SECRET_KEY"),

@@ -39,6 +39,16 @@ export const INTEGRATION_REGISTRY: ReadonlyArray<IntegrationDef> = [
     channel: "openai",
   },
   {
+    key: "DATAVIC_API_KEY",
+    label: "DataVic (Victorian Government)",
+    description:
+      "WoVG gateway key — Coordinated Imagery Program aerial + Vicmap Elevation DEM. Without it the keyless DELWP GeoServer floor applies.",
+    env: "DATAVIC_API_KEY",
+    category: "geo",
+    placeholder: "…subscription key from developer.vic.gov.au…",
+    channel: "datavic",
+  },
+  {
     key: "STRIPE_SECRET_KEY",
     label: "Stripe (secret)",
     description: "Portal deposit checkout sessions.",
