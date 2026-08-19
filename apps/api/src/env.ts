@@ -40,7 +40,8 @@ const EnvSchema = z.object({
   /** Model for vision tasks (ghosts, OCR, sketch assist, dictation). */
   CLAUDE_VISION_MODEL: z.string().default("claude-sonnet-4-6"),
 
-  /* Geo — Mapbox optional (geocode/aerial). Vicmap cadastral is keyless WFS. */
+  /* Geo — Mapbox optional, aerial imagery only (geocode is keyless Vicmap
+     Address GNAF + Nominatim fallback; cadastral/elevation are keyless WFS). */
   MAPBOX_TOKEN: z.string().optional(),
 
   /* Payments */

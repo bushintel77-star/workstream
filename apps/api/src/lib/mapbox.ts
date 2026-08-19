@@ -1,8 +1,7 @@
 import { getOwnerEnv } from "./owner-secrets";
 import { fetchWithRetry } from "./http";
+import { geocodeVicmapAddress, searchVicmapAddresses } from "./vicmap-address";
 
-const MAPBOX_GEOCODE_URL =
-  "https://api.mapbox.com/geocoding/v5/mapbox.places";
 const MAPBOX_STATIC_URL =
   "https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static";
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
@@ -109,94 +108,19 @@ export async function geocodeSearch(
   const trimmed = query.trim();
   if (trimmed.length < 3) return [];
 
-  const token = getOwnerEnv("MAPBOX_TOKEN");
-  if (!token) {
-    return nominatimSearch(trimmed, limit);
-  }
-
-  const url =
-    `${MAPBOX_GEOCODE_URL}/${encodeURIComponent(trimmed)}.json` +
-    `?access_token=${token}` +
-    `&country=AU&autocomplete=true&types=address,place` +
-    `&limit=${Math.min(Math.max(limit, 1), 10)}`;
-
-  const res = await fetchWithRetry(
-    url,
-    {},
-    {
-      telemetry: {
-        spanName: "mapbox.geocode_search",
-        provider: "mapbox",
-        attributes: {
-          "pipeline.stage": "survey",
-        },
-      },
-    },
-  );
-  if (!res.ok) {
-    throw new Error(
-      `Mapbox autocomplete failed: ${res.status} ${await res.text()}`,
-    );
-  }
-  const json = (await res.json()) as {
-    features: Array<{
-      id: string;
-      place_name: string;
-      text: string;
-      center: [number, number];
-    }>;
-  };
-  const mapped = json.features.map((f) => ({
-    id: f.id,
-    place_name: f.place_name,
-    text: f.text,
-    lng: f.center[0],
-    lat: f.center[1],
-  }));
-  if (mapped.length > 0) return mapped;
-  // Mapbox empty → try Nominatim before giving up
+  // Victorian authoritative GNAF first (keyless DELWP WFS), then Nominatim.
+  const vic = await searchVicmapAddresses(trimmed, limit).catch(() => []);
+  if (vic.length > 0) return vic;
   return nominatimSearch(trimmed, limit);
 }
 
 export async function geocodeAddress(address: string): Promise<GeocodeResult> {
-  const token = getOwnerEnv("MAPBOX_TOKEN");
-  if (!token) {
-    const hits = await nominatimSearch(address, 1).catch(() => []);
-    if (hits[0]) return { lat: hits[0].lat, lng: hits[0].lng };
-    return DEV_FALLBACK_LATLNG;
-  }
+  const vic = await geocodeVicmapAddress(address).catch(() => null);
+  if (vic) return vic;
 
-  const url =
-    `${MAPBOX_GEOCODE_URL}/${encodeURIComponent(address)}.json` +
-    `?access_token=${token}&country=AU&limit=1`;
-
-  const res = await fetchWithRetry(
-    url,
-    {},
-    {
-      telemetry: {
-        spanName: "mapbox.geocode_address",
-        provider: "mapbox",
-        attributes: {
-          "pipeline.stage": "survey",
-        },
-      },
-    },
-  );
-  if (!res.ok) {
-    throw new Error(`Mapbox geocode failed: ${res.status} ${await res.text()}`);
-  }
-  const json = (await res.json()) as {
-    features: Array<{ center: [number, number] }>;
-  };
-  const feature = json.features[0];
-  if (!feature) {
-    const hits = await nominatimSearch(address, 1).catch(() => []);
-    if (hits[0]) return { lat: hits[0].lat, lng: hits[0].lng };
-    throw new Error(`Mapbox geocode: no results for "${address}"`);
-  }
-  const [lng, lat] = feature.center;
-  return { lat, lng };
+  const hits = await nominatimSearch(address, 1).catch(() => []);
+  if (hits[0]) return { lat: hits[0].lat, lng: hits[0].lng };
+  return DEV_FALLBACK_LATLNG;
 }
 
 export type AerialImageOpts = {
