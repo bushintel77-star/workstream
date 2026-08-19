@@ -791,9 +791,9 @@ export function WebGLStudioPreview({
       <div
         style={{
           position: "absolute",
-          top: 12,
-          left: 12,
-          right: 12,
+          top: 16,
+          left: 16,
+          right: 16,
           display: "flex",
           alignItems: "flex-start",
           gap: 8,
@@ -983,7 +983,8 @@ export function WebGLStudioPreview({
         style={{
           position: "absolute",
           top: 152,
-          right: 12,
+          right: 20,
+          bottom: 16,
           width: 360,
           display: "flex",
           flexDirection: "column",
@@ -992,9 +993,10 @@ export function WebGLStudioPreview({
           pointerEvents: "none",
           zIndex: 10,
           maxWidth: "calc(100% - 120px)",
-          // The dock scrolls internally — the estimation companion can exceed
-          // the viewport without escaping it (chrome-collision gate).
-          maxHeight: "calc(100dvh - 170px)",
+          // The dock floats with air on every side — a glass capsule, not a
+          // rigid dashboard column flush against the screen border. It
+          // scrolls internally so the estimation companion never escapes.
+          maxHeight: "calc(100dvh - 168px)",
           overflowY: "auto",
           scrollbarWidth: "none",
         }}

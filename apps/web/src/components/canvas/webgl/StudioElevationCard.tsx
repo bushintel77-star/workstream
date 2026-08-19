@@ -60,9 +60,9 @@ export function StudioElevationCard({
     <GlassCard
       position={{
         position: "absolute",
-        top: "50%",
+        bottom: 92,
         left: "50%",
-        transform: "translate(-50%, -50%)",
+        transform: "translateX(-50%)",
       }}
       style={{ width: "min(860px, 92vw)", padding: "10px 12px" }}
     >
