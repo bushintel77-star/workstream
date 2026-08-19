@@ -17,7 +17,7 @@ target — they're consumed by the apps at build time.
 ## Prerequisites
 
 ```bash
-gh --version      # GitHub CLI, authed with repo + workflow scopes
+git --version     # ≥ 2.x
 railway version   # Railway CLI
 node --version    # ≥ 22
 pnpm --version    # ≥ 9.15
@@ -95,14 +95,16 @@ production.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every PR and push to `main`:
+`.gitlab-ci.yml` runs on every push to `main` (and merge requests):
 
-1. `pnpm install --frozen-lockfile`
-2. `pnpm typecheck` + `pnpm test`
-3. Playwright e2e
-4. `docker build` for `apps/api/Dockerfile` and `apps/web/Dockerfile`
+1. `gate` — `pnpm run ci` (frozen install + script gates + bundle-size +
+   traceability + typecheck + lint + vitest)
+2. `secret-scan` — gitleaks
+3. `e2e` — Playwright, sharded 3-way (non-blocking)
+4. `build-api-image` / `build-web-image` — docker build smoke (no push)
 
-Railway handles the deploy from `main` automatically.
+Railway handles the deploy from `main` automatically (once GitLab is
+connected) or via `railway up` CLI.
 
 Local mirror: `pnpm run ci` and `pnpm build:docker`. Full gap audit:
 [docs/GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md).

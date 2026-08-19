@@ -243,14 +243,13 @@ replication messages.
 
 ## Section 8 - Branch protection (P1)
 
-Requires GitHub Pro for private repositories.
+Free on GitLab — the GitHub-Pro requirement is gone.
 
-1. Go to https://github.com/Boringuy7799/workstream/settings/branches.
-2. Add a branch protection rule.
-3. Branch name pattern: `main`.
-4. Enable:
-   - Require status checks to pass before merging.
-   - Require branches to be up to date before merging.
+1. Go to https://gitlab.com/<your-user>/workstream/-/settings/repository.
+2. Protected branches → protect `main`.
+3. Allowed to push: No one; allowed to merge: Maintainers.
+4. Optionally require the pipeline to pass before merge
+   (Settings → Merge requests → Pipelines must succeed).
    - Include administrators.
 5. Select required checks:
    - `typecheck`

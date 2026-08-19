@@ -12,7 +12,7 @@ new developer. Read ONBOARDING first, this file for the queue.
 
 ## Current ranked priorities (verified 2026-08-18, post photo-trace)
 
-1. CI live-verify on GitHub once the account billing hold clears (human-owned; dispatch Actions on `main`).
+1. CI live-verify on GitLab — push to `main` and confirm the `.gitlab-ci.yml` pipeline is green (migration: `docs/MIGRATE-GITHUB-TO-GITLAB.md`).
 2. Premium assets — species depth, thumbnails, curated palettes.
 3. Foliage "murk" polish — lift foliage to the `l-*` ramp, neutralise the olive ground-bounce on the paper canvas.
 4. Signoff record trace — verify signoff freezes the accepted quote (operator `SignoffCard` vs portal deposit must share one record).
@@ -55,8 +55,8 @@ P1 entry below and `docs/CAMERA-STATE-MACHINE.md`.)
       `docker-compose.yml`, CI smoke tests,
       `workflow_dispatch` deploy. Local CI now includes mobile placeholder,
       portal Edge, typecheck, lint, and Vitest gates (`0369689`).
-- [x] **Secret scanning** — gitleaks GitHub Action at
-      [.github/workflows/gitleaks.yml](.github/workflows/gitleaks.yml).
+- [x] **Secret scanning** — gitleaks, now the `secret-scan` job in
+      [.gitlab-ci.yml](.gitlab-ci.yml) (was a GitHub Action pre-migration).
 - [x] **Stripe key validation on save** — `GET /v1/balance` round-trip wired in
       [apps/api/src/routes/settings.ts](apps/api/src/routes/settings.ts) via
       `validateStripeKey()`; rejects bad keys with Stripe's own error message.
@@ -85,9 +85,10 @@ P1 entry below and `docs/CAMERA-STATE-MACHINE.md`.)
   14:01Z — #190/#191/#193 all failed; #194 web is deployed via manual
   `railway up` instead, which still works). Re-verify git deploys after the
   card clears.
-- [x] **Dependabot** — enabled for pnpm + GitHub Actions.
-- [ ] **Branch protection on `main`** — requires **GitHub Pro** on private repo (403
-      from API). Enable manually: Settings → Branches → require CI green.
+- [x] **Dependabot** — retired with the GitHub move; GitLab dependency scanning
+      is available as a pipeline job if wanted.
+- [ ] **Branch protection on `main`** — free on GitLab: Settings → Repository →
+      Protected branches → protect `main` (the GitHub-Pro requirement is gone).
 - [x] **Playwright e2e** — `design-studio.spec.ts` (load + save), `operator-happy-path.spec.ts`;
       CI job `playwright e2e` on PR + main.
 - [x] **Contract tests (extended smoke)** — Zod boundary tests +
@@ -896,7 +897,7 @@ Cross-check against build status below before treating any phase as shipped.
 | Stripe / portal / OTEL | Runbook Section 6: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `WORKSTREAM_PORTAL_SECRET`, `OTEL_EXPORTER_OTLP_ENDPOINT` |
 | EAS project | Runbook Section 5: `cd apps/mobile && npx eas-cli init` plus store credentials |
 | Litestream | Runbook Section 7 after SQLite migration |
-| Branch protection | Runbook Section 8, GitHub repo Settings (Pro plan) |
+| Branch protection | Runbook Section 8, GitLab Settings → Repository → Protected branches (free) |
 
 ## Sandbox-blocked actions (need the user)
 

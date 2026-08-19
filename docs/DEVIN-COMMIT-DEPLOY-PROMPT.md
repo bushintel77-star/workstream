@@ -39,7 +39,7 @@ This group is docs + dead-code cleanup only, no runtime behaviour change. Two co
 
 ## Push and deploy
 
-Push to `main`. **Deploy target is Railway, not Fly** — `CLAUDE.md` is explicit that Railway is canonical production and Fly configs are legacy-only; `DEPLOY.md`'s Fly instructions are stale, ignore them. Railway is GitHub-connected (`RAILWAY.md`) and auto-deploys both services (`workstream-api`, `workstream-web`) on push to `main` — you shouldn't need a manual deploy command, but confirm both services actually redeploy.
+Push to `main`. **Deploy target is Railway, not Fly** — `CLAUDE.md` is explicit that Railway is canonical production and Fly configs are legacy-only; `DEPLOY.md`'s Fly instructions are stale, ignore them. Railway is GitLab-connected (`RAILWAY.md`) and auto-deploys both services (`workstream-api`, `workstream-web`) on push to `main` — you shouldn't need a manual deploy command, but confirm both services actually redeploy (or use `railway up` CLI).
 
 After deploy, verify both are healthy:
 

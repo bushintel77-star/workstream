@@ -10,15 +10,15 @@ Do **not** set a Railway service root directory. The Dockerfiles build from the
 repo root so workspace packages (`packages/contracts`, `packages/domain`,
 `packages/db`, `packages/cad`) are available during the build.
 
-## Create the Railway project from GitHub
+## Create the Railway project from GitLab
 
 In Railway:
 
 1. New project
-2. Deploy from GitHub repo
-3. Select `Boringuy7799/workstream`
+2. Deploy from GitLab repo
+3. Select `<your-user>/workstream`
 4. If Railway auto-detects multiple apps, keep the API and Web services. If it
-   creates only one service, add the second service from the same GitHub repo.
+   creates only one service, add the second service from the same GitLab repo.
 
 ## Service settings
 

@@ -83,14 +83,14 @@ the **Project hub** and surfaces the single next-step CTA on mobile.
 
 **CI:** `pnpm run ci` is the local gate (frozen install, mobile placeholders,
 portal edge, token allowlist, reachability/CSS-scale/bundle ratchets,
-traceability, typecheck, lint, vitest). GitHub Actions runs are paused while
-the account billing hold persists. Railway deploys automatically on push to
-`main` (when GitHub webhooks are live).
+traceability, typecheck, lint, vitest). CI runs on GitLab (`.gitlab-ci.yml`).
+Railway deploys on push to `main` once the GitLab repo is connected, or via
+`railway up` CLI. See `docs/MIGRATE-GITHUB-TO-GITLAB.md`.
 
 **Local / script:**
 
 ```bash
-pnpm run ci                # mirror GitHub typecheck + test
+pnpm run ci                # full local gate (same as CI)
 pnpm build:docker          # both images
 docker compose up --build  # localhost :3001 / :3002
 railway up                 # manual deploy (needs Railway CLI auth)

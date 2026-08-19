@@ -25,7 +25,7 @@ C:\Users\Tim\Downloads\CURTIS-CO\
 | `Downloads\CURTIS-CO\workstream` | **Canonical** — edit here |
 | `Downloads\KellyBet-Fresh\WorkSteam` | **Retired duplicate** — do not develop here |
 
-GitHub: https://github.com/Boringuy7799/workstream (repo `construct` redirects here).
+GitLab: https://gitlab.com/<your-user>/workstream (migrated from GitHub 2026-08-19; see `docs/MIGRATE-GITHUB-TO-GITLAB.md`).
 
 ## Railway (canonical deploy)
 

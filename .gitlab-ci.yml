@@ -1,0 +1,111 @@
+# Workstream — GitLab CI/CD
+#
+# Replaces the retired GitHub Actions workflow (.github/workflows/ci.yml and
+# .github/workflows/gitleaks.yml). GitLab.com Free covers everything the old
+# setup needed: private repos, branch protection rules, and shared-runner CI
+# minutes. The authoritative gate remains `pnpm run ci` in the root
+# package.json; the jobs below mirror it plus browser e2e and docker builds.
+
+default:
+  image: node:22
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store
+
+variables:
+  NEXT_PUBLIC_API_URL: "https://api-production-a8ff1.up.railway.app"
+
+stages:
+  - gate
+  - scan
+  - e2e
+  - docker
+
+# ---------------------------------------------------------------- gate
+# Install (frozen lockfile) + every script gate + bundle-size web build +
+# traceability + typecheck + lint + vitest. One job == `pnpm run ci`.
+gate:
+  stage: gate
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@9.15.4 --activate
+    - pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
+  script:
+    - pnpm run ci
+  timeout: 30m
+
+# ---------------------------------------------------------------- scan
+# gitleaks secret scan (parity with the old gitleaks GitHub Action).
+secret-scan:
+  stage: scan
+  image:
+    name: zricethezav/gitleaks:latest
+    entrypoint: [""]
+  script:
+    - gitleaks detect --source "$CI_PROJECT_DIR" --verbose
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ---------------------------------------------------------------- e2e
+# Playwright, sharded 3-way. Non-blocking by design (2026-08-15): the suite
+# passes locally but browser e2e on hosted runners is environment-flaky.
+e2e:
+  stage: e2e
+  needs: ["gate"]
+  allow_failure: true
+  parallel: 3
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@9.15.4 --activate
+    - pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm --filter @workstream/web exec playwright install chromium --with-deps
+    - pnpm exec turbo run build --filter=@workstream/api...
+    - pnpm --filter @workstream/web exec playwright test --shard="$CI_NODE_INDEX/$CI_NODE_TOTAL"
+  variables:
+    CI: "true"
+    AUTH_REQUIRED: "false"
+    API_URL: "http://127.0.0.1:3001"
+    PLAYWRIGHT_BASE_URL: "http://127.0.0.1:3002"
+    NEXT_PUBLIC_API_URL: "http://127.0.0.1:3001"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+  timeout: 35m
+
+# ---------------------------------------------------------------- docker
+# Build-only image smoke (no push). Deploy stays on Railway.
+build-api-image:
+  stage: docker
+  needs: ["gate"]
+  image: docker:27
+  services:
+    - docker:27-dind
+  before_script:
+    - docker info
+  script:
+    - docker build -f apps/api/Dockerfile -t workstream-api:ci .
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+  timeout: 15m
+
+build-web-image:
+  stage: docker
+  needs: ["gate"]
+  image: docker:27
+  services:
+    - docker:27-dind
+  before_script:
+    - docker info
+  script:
+    - docker build -f apps/web/Dockerfile --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" -t workstream-web:ci .
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+  timeout: 15m
