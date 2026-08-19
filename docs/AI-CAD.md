@@ -9,9 +9,9 @@ until Accept; design and cost stay one surface.
 Close the gap between design intent and physical implementation cost. Every
 placement / CAD mutation feeds:
 
-1. **Spatial facts** — scaled layer-aware objects (hardscape, softscape, irrigation, …)
-2. **Preemptive BOM** — primary ? secondary ? tertiary ? labour ? logistics ? fees
-3. **Predictive risk** — retaining height, TRP conflicts, drainage — with temporary overlays
+1. **Spatial facts** â€” scaled layer-aware objects (hardscape, softscape, irrigation, â€¦)
+2. **Preemptive BOM** â€” primary ? secondary ? tertiary ? labour ? logistics ? fees
+3. **Predictive risk** â€” retaining height, TRP conflicts, drainage â€” with temporary overlays
 
 No Design Mode vs Quote Mode toggle. Live BOM HUD sits on Sketch / CAD / Quote lenses.
 
@@ -27,11 +27,11 @@ No Design Mode vs Quote Mode toggle. Live BOM HUD sits on Sketch / CAD / Quote l
 
 ## Operator flow
 
-1. Survey loads aerial (GIS — not LLM).
-2. Sketch placements — **live BOM** expands secondary/tertiary materials immediately.
-3. Risk chips / mitigation overlays (TRP, drainage, engineer hold) — Accept or Dismiss.
-4. CAD generate — AI ghosts on aerial; live BOM refreshes from committed geometry.
-5. Quote lens **promotes** live BOM / CAD quote to client output — not a third estimate engine.
+1. Survey loads aerial (GIS â€” not LLM).
+2. Sketch placements â€” **live BOM** expands secondary/tertiary materials immediately.
+3. Risk chips / mitigation overlays (TRP, drainage, engineer hold) â€” Accept or Dismiss.
+4. CAD generate â€” AI ghosts on aerial; live BOM refreshes from committed geometry.
+5. Quote lens **promotes** live BOM / CAD quote to client output â€” not a third estimate engine.
 6. Share portal link.
 
 AI never silently replaces geometry. Ghosts and overlays stay until Accept.
@@ -57,16 +57,16 @@ AI never silently replaces geometry. Ghosts and overlays stay until Accept.
 
 ## Packages
 
-- `packages/contracts/src/schemas/orchestration.ts` — world / BOM / risk schemas
-- `packages/domain` — `spatial-facts`, `preemptive-bom`, `preemptive-risk`, `orchestration-world`
-- `apps/api/src/lib/material-orchestrator.ts` — mutation-driven world
-- `apps/web` — `LiveBomHud` on `SiteCanvas`
+- `packages/contracts/src/schemas/orchestration.ts` â€” world / BOM / risk schemas
+- `packages/domain` â€” `spatial-facts`, `preemptive-bom`, `preemptive-risk`, `orchestration-world`
+- `apps/api/src/lib/material-orchestrator.ts` â€” mutation-driven world
+- `apps/web` â€” `LiveBomHud` on `SiteCanvas`
 
 ## Honesty
 
-Indicative / working-planning — not construction or council lodgement drawings.
+Indicative / working-planning â€” not construction or council lodgement drawings.
 TRP radii and dims are indicative (AS 4970). Confirm on site, title, and locate.
-Units: metric AU (m², m³, tonnes, lin m).
+Units: metric AU (mÂ², mÂ³, tonnes, lin m).
 
 ## Out of scope (this pass)
 

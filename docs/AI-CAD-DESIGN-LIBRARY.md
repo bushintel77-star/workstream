@@ -12,7 +12,7 @@ priorities, licence green/red list), see
 | **Osmic landscape** | CC0 | [gmgeo/osmic](https://github.com/gmgeo/osmic) | Landscape library / AI CAD design |
 | **Temaki plants** | CC0 | [rapideditor/temaki](https://github.com/rapideditor/temaki) | Shrubs / groundcover / trees |
 | **Temaki site** | CC0 | [rapideditor/temaki](https://github.com/rapideditor/temaki) | Hardscape / lighting / furniture |
-| **Wikimedia trees** | CC BY-SA 4.0 | Heinrich Böll Foundation set | Tree pack |
+| **Wikimedia trees** | CC BY-SA 4.0 | Heinrich BÃ¶ll Foundation set | Tree pack |
 | **Open Crop** | CC0 | openfarmcc/open-crop-icons | Crop library |
 | Curtis native | proprietary house style | `catalog-assets.ts` | (always) |
 

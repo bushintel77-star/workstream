@@ -31,18 +31,20 @@
  * line-weight ladder (0.4)"). Anchoring there means migration is mostly rounding
  * each call site to its nearest rung rather than a visual redesign.
  *
- * ## Status: no consumers yet
+ * ## Status: adopted, migration partial
  *
- * Nothing imports this module. It is the ladder definition only — migrating the
- * 124 call sites onto `weightFor()` is a separate, per-surface pass so that any
- * visual change is reviewable one surface at a time rather than in one
- * unreviewable sweep. `nearestRung()` exists to make that migration mechanical.
+ * `weightFor()` is consumed by the trench overlay (`TrenchOverlay.tsx:9`) and
+ * the BYDA plan styles (`bydaPlanStyles.ts:4`). The remaining work is migrating
+ * the ~124 hardcoded `strokeWidth` call sites onto `weightFor()` — a separate,
+ * per-surface pass so any visual change is reviewable one surface at a time
+ * rather than in one unreviewable sweep. `nearestRung()` exists to make that
+ * migration mechanical.
  *
  * ## Print scaling
  *
  * These are screen weights. Print output (`sheetScaleDenom`) must scale the
  * ladder, not clamp it — halving the scale should halve every rung so the
- * hierarchy survives. There is no print mapping here yet; see the TODO below.
+ * hierarchy survives. `printWeightFor()` (below) implements that mapping.
  */
 
 /** A rung on the ladder. Never inline a number — pick a rung. */

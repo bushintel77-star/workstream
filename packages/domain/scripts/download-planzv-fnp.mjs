@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(__dirname, "../assets/planzv-fnp");
 
-/** Landscape / open-space / water / protection — useful for AI CAD site design. */
+/** Landscape / open-space / water / protection â€” useful for AI CAD site design. */
 const FILES = [
   "FNP_016_Naturschutzgebiet.svg",
   "FNP_045_Wasser.svg",
@@ -41,7 +41,7 @@ fs.mkdirSync(outDir, { recursive: true });
 for (const file of FILES) {
   const url = `${BASE}/${file}`;
   const dest = path.join(outDir, file);
-  process.stdout.write(`GET ${file}… `);
+  process.stdout.write(`GET ${file}â€¦ `);
   const res = await fetch(url);
   if (!res.ok) {
     console.log(`FAIL ${res.status}`);

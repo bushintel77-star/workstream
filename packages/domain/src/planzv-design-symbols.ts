@@ -1,8 +1,8 @@
-/** AUTO-GENERATED � PlanZV FNP CC0 design symbols. Regenerate: pnpm import:planzv */
+/** AUTO-GENERATED — PlanZV FNP CC0 design symbols. Regenerate: pnpm import:planzv */
 import type { CatalogSymbol } from "@workstream/contracts";
 
 export const PLANZV_ATTRIBUTION =
-  "PlanZV FNP symbols � Stadt Halle (Saale) / IT-Consult Halle (CC0 1.0). https://github.com/geoObserver/PlanZV-FNP";
+  "PlanZV FNP symbols — Stadt Halle (Saale) / IT-Consult Halle (CC0 1.0). https://github.com/geoObserver/PlanZV-FNP";
 
 /** 17 open-space / AI CAD glyphs from PlanZV-FNP */
 export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
@@ -10,7 +10,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-naturschutzgebiet",
     "label": "Nature reserve",
     "category": "annotation",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -46,7 +46,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-wasser",
     "label": "Water / utility",
     "category": "water",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -82,7 +82,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-parkanlage",
     "label": "Park",
     "category": "planting",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -142,7 +142,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-dauerkleingaerten",
     "label": "Allotment gardens",
     "category": "planting",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -190,7 +190,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-sportplatz",
     "label": "Sports field",
     "category": "furniture",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -218,7 +218,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-badeplatz-freibad",
     "label": "Bathing / outdoor pool",
     "category": "water",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -262,7 +262,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-ueberschwemmungsgebiet",
     "label": "Flood plain",
     "category": "water",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -298,7 +298,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-landschaftsschutzgebiet",
     "label": "Landscape protection",
     "category": "annotation",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -334,7 +334,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-naturdenkmal",
     "label": "Natural monument",
     "category": "annotation",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -374,7 +374,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-geschuetzter-landschaftsbestandteil",
     "label": "Protected landscape feature",
     "category": "annotation",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -414,7 +414,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-wassersportanlage",
     "label": "Water sports",
     "category": "water",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -446,7 +446,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-flaechennaturdenkmal",
     "label": "Natural monument (area)",
     "category": "annotation",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -490,7 +490,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-verkehrsbegleitgruen",
     "label": "Roadside green",
     "category": "planting",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -530,7 +530,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-erholungswald",
     "label": "Recreation forest",
     "category": "planting",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -566,7 +566,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-golfanlage",
     "label": "Golfanlage",
     "category": "annotation",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -598,7 +598,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-ffh-richtline",
     "label": "Habitat directive (FFH)",
     "category": "annotation",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",
@@ -634,7 +634,7 @@ export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = [
     "id": "planzv-vogelschutzgebiet",
     "label": "Bird sanctuary",
     "category": "annotation",
-    "description": "PlanZV FNP open-space symbol (CC0) � geoObserver/PlanZV-FNP � AI CAD design library",
+    "description": "PlanZV FNP open-space symbol (CC0) — geoObserver/PlanZV-FNP — AI CAD design library",
     "keywords": [
       "planzv",
       "ai cad",

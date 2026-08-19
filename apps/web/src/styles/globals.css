@@ -158,6 +158,8 @@
   --r-md: 7px;
   --r-lg: 10px;
   --r-xl: 14px;
+  --r-2xl: 18px;
+  --r-3xl: 24px;
   --r-canvas: 8px;
   --r-pill: 999px;
   --radius-sm: var(--r-sm);

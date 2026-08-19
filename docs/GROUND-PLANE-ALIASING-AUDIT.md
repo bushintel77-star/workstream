@@ -1,10 +1,17 @@
 # Ground plane aliasing and z-fighting — diagnostic audit
 
 Code-first diagnostic of the severe Moire aliasing and zebra-striping on
-the WebGL ground plane in orthographic CAD view and 3D Garden mode. No
-fixes have been applied — this report is the remediation plan for sign-off
-before code execution. Every claim cites `file:line` evidence read from
-the current tree.
+the WebGL ground plane in orthographic CAD view and 3D Garden mode. Every
+claim cites `file:line` evidence read from the current tree.
+
+> **[2026-08-19] RESOLVED.** The remediation shipped in `d814ad3`
+> ("dynamic ortho depth envelope + grid lift and frequency"): the ortho
+> near/far span is now `distance * 2` (`cameraAnimation.ts:198-199`) instead
+> of ±10000, the grid sits at `0.005` (`StudioScene.tsx:124`) instead of
+> 0.001, and grid divisions are `w / 10` (`StudioScene.tsx:643`) instead of
+> `w`. The below plan is retained for history; fixes 1–3 are in. The
+> `cameraAnimation.test.ts` matrix-bounds unit test in the verification
+> section was not added.
 
 ## Root cause report
 

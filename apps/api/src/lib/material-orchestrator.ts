@@ -68,7 +68,7 @@ export async function getOrchestrationWorld(
   return world;
 }
 
-/** Called after canvas/CAD mutations — recomputes world (no blocking). */
+/** Called after canvas/CAD mutations â€” recomputes world (no blocking). */
 export async function refreshOrchestration(
   store: Store,
   ownerId: string,
@@ -156,7 +156,7 @@ export async function acceptOverlay(
   return { world, overlay, placed };
 }
 
-/** Test helper — no-op; overlay state lives in store now. */
+/** Test helper â€” no-op; overlay state lives in store now. */
 export function resetOrchestrationStateForTests(): void {
   /* persisted in store between calls in same store instance */
 }

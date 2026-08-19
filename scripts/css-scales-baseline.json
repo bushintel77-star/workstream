@@ -37,9 +37,6 @@
   "apps/web/src/components/canvas/handoff/features/assetPanel/assetCommandSheet.module.css": {
     "radius": 1
   },
-  "apps/web/src/components/canvas/handoff/features/assetPanel/assetPanel.module.css": {
-    "radius": 1
-  },
   "apps/web/src/components/canvas/handoff/features/cadPlan/cadPlan.module.css": {
     "zIndex": 1,
     "radius": 8,
@@ -107,9 +104,7 @@
     "opacity": 2
   },
   "apps/web/src/components/canvas/handoff/features/present/present.module.css": {
-    "zIndex": 11,
-    "radius": 1,
-    "opacity": 4
+    "zIndex": 11
   },
   "apps/web/src/components/canvas/handoff/features/quote/quoteBuilder.module.css": {
     "opacity": 1
@@ -155,7 +150,6 @@
     "opacity": 1
   },
   "apps/web/src/components/canvas/handoff/features/sketch/sketchDock.module.css": {
-    "radius": 3,
     "opacity": 4
   },
   "apps/web/src/components/canvas/handoff/features/stickyMeta/environmentPanel.module.css": {

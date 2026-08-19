@@ -1,7 +1,8 @@
 .card {
+  --so-op-disabled: 0.45;
   background: var(--gs-panel-grad, linear-gradient(180deg, var(--gs-panel), var(--gs-canvas)));
   border: 1px solid var(--line-hairline, rgba(0, 0, 0, 0.12));
-  border-radius: 12px;
+  border-radius: var(--hc-r-pop);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   padding: 16px 18px;
   width: 320px;
@@ -67,7 +68,7 @@
   width: 100%;
   padding: 10px 14px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--hc-r-panel);
   background: var(--accent, var(--gs-chip-active));
   color: var(--gs-chip-active-ink);
   font-size: 14px;
@@ -76,7 +77,7 @@
 }
 
 .primary:disabled {
-  opacity: 0.45;
+  opacity: var(--so-op-disabled);
   cursor: not-allowed;
 }
 

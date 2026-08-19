@@ -2977,7 +2977,7 @@
   position: absolute;
   right: 24px;
   bottom: 24px;
-  z-index: 40;
+  z-index: var(--ws-z-dock);
   pointer-events: auto;
 }
 

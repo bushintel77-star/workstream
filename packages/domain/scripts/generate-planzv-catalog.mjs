@@ -102,7 +102,7 @@ function resolveFill(attrs, fills) {
     }
   }
   if (classes.some((c) => c.startsWith("fil0") && fills.get("fil0") === "none")) {
-    // stroke-only frame ó skip unless we have stroke path later
+    // stroke-only frame ‚Äî skip unless we have stroke path later
   }
   if (!fill || fill === "none") return null;
   if (fill === "black" || fill === "#000" || fill === "#000000" || fill === "#2B2A29") {
@@ -184,7 +184,7 @@ function keyFromFile(file) {
 }
 
 if (!fs.existsSync(svgDir)) {
-  throw new Error("Missing assets/planzv-fnp ù run download-planzv-fnp.mjs first");
+  throw new Error("Missing assets/planzv-fnp ‚Äî run download-planzv-fnp.mjs first");
 }
 
 const files = fs
@@ -210,7 +210,7 @@ for (const file of files) {
     label,
     category,
     description:
-      "PlanZV FNP open-space symbol (CC0) ù geoObserver/PlanZV-FNP ù AI CAD design library",
+      "PlanZV FNP open-space symbol (CC0) ‚Äî geoObserver/PlanZV-FNP ‚Äî AI CAD design library",
     keywords: [
       "planzv",
       "ai cad",
@@ -234,11 +234,11 @@ for (const file of files) {
 const outPath = path.join(domainRoot, "src", "planzv-design-symbols.ts");
 fs.writeFileSync(
   outPath,
-  `/** AUTO-GENERATED ù PlanZV FNP CC0 design symbols. Regenerate: pnpm import:planzv */
+  `/** AUTO-GENERATED ‚Äî PlanZV FNP CC0 design symbols. Regenerate: pnpm import:planzv */
 import type { CatalogSymbol } from "@workstream/contracts";
 
 export const PLANZV_ATTRIBUTION =
-  "PlanZV FNP symbols ù Stadt Halle (Saale) / IT-Consult Halle (CC0 1.0). https://github.com/geoObserver/PlanZV-FNP";
+  "PlanZV FNP symbols ‚Äî Stadt Halle (Saale) / IT-Consult Halle (CC0 1.0). https://github.com/geoObserver/PlanZV-FNP";
 
 /** ${symbols.length} open-space / AI CAD glyphs from PlanZV-FNP */
 export const PLANZV_DESIGN_SYMBOLS: CatalogSymbol[] = ${JSON.stringify(symbols, null, 2)} as CatalogSymbol[];
