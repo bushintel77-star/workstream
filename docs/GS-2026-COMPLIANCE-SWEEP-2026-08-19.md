@@ -93,7 +93,25 @@ halo. Weather rain figure → `--ink-secondary`.
 the 9.5px glyph floor; `--text-nano/micro` hold the 10.5px label floor.
 Zero sub-floor values remain in `apps/web/src`.
 
-### 10. Hygiene
+### 10. Colour gate now enforces "never darkness"
+
+`scripts/check-handoff-chrome-colors.mjs` extended beyond hex: it now fails
+on scrim-strength black overlays — `rgba(0, 0, 0, α ≥ 0.20)` and
+`color-mix(…, #000/black ≥ 20%)` outside the render-value allowlist. That is
+the exact failure mode the original 40–50% black scrims slipped through on;
+it cannot recur. Neutral ink mixes and `--gs-shadow-1..4` remain the lawful
+dim/lift.
+
+### 11. Sun chip — real solar geometry (zero-mock)
+
+The meta chip-set's solar chip is now honest: a new domain module
+(`solar-window.ts` + tests) computes the unshaded daylight window from
+latitude and day-of-year (solar declination → hour angle). The page feeds
+it for every project with a latitude; the chip reads "X.Xh Sun Window"
+with a detail line stating canopy-adjusted exposure lives in the flora
+ring's live model. No fabricated "direct sun" figures.
+
+### 12. Hygiene
 
 - 14 double-encoded mojibake sequences in `styles/globals.css` comments
   (`â\u0080\u0094` → `—`, `Â§` → `§`) fixed byte-exact via Node; repo scanned
@@ -111,10 +129,14 @@ Zero sub-floor values remain in `apps/web/src`.
 
 ## Known remaining sweep items (next rounds)
 
-- E2e contrast gates (`webgl-contrast-aa`, `canvas-contrast-aa`) re-run
-  against a fresh dev build after the type-floor sweep — scheduled.
-- Site-wide sun grid so the meta chip-set's sun chip has a real figure
-  (the sun model currently runs only inside the flora-ring flow).
-- Periodic re-scan of new code for `rgba()` blacks, raw radii, sub-floor
-  font sizes, and non-`--gs-*` accent hues (the colour gate covers hex but
-  not `rgba()` — candidate for a gate extension).
+- GitLab CI compute is blocked at the account level (every pipeline —
+  including a one-job probe — fails instantly with zero jobs; runners are
+  online). Human step: validate a payment method under GitLab billing so
+  shared-runner compute unlocks, then the `gate`/`scan`/`e2e`/`docker`/
+  `deploy` pipeline will run as authored.
+- `RAILWAY_TOKEN` (project-scoped, Railway dashboard → Settings → Tokens)
+  must be added to GitLab CI/CD variables for the auto-deploy stage to arm;
+  it self-disables until then.
+- Periodic re-scan of new code for raw radii, sub-floor font sizes, and
+  non-`--gs-*` accent hues — the colour gate now covers hex AND black
+  scrims.
