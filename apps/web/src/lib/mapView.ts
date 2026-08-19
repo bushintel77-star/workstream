@@ -22,15 +22,26 @@ export type MercatorBounds = {
 
 const METRES_PER_DEG_LAT = 111_320;
 
-/** Parse a StateView WMS GetMap URI produced by apps/api/src/lib/aerial.ts. */
+/** Parse an aerial URI into its bbox view. Accepts both providers:
+ *  - Esri World Imagery export (bbox= + size=W,H)
+ *  - StateView ortho WMS (bbox= + width=/height=) */
 export function parseStaticAerial(uri: string): StaticMapView | null {
   try {
     const url = new URL(uri);
-    if (!/geoserver\/wms/.test(url.host + url.pathname)) return null;
     const bbox = url.searchParams.get("bbox");
-    const width = Number(url.searchParams.get("width"));
-    const height = Number(url.searchParams.get("height"));
-    if (!bbox || !Number.isFinite(width) || !Number.isFinite(height)) return null;
+    if (!bbox) return null;
+    let width: number;
+    let height: number;
+    const size = url.searchParams.get("size");
+    if (size) {
+      const [w, h] = size.split(",").map(Number);
+      width = w;
+      height = h;
+    } else {
+      width = Number(url.searchParams.get("width"));
+      height = Number(url.searchParams.get("height"));
+    }
+    if (!Number.isFinite(width) || !Number.isFinite(height)) return null;
     const [minLng, minLat, maxLng, maxLat] = bbox.split(",").map(Number);
     if (
       ![minLng, minLat, maxLng, maxLat].every(Number.isFinite) ||

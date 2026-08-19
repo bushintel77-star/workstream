@@ -10,7 +10,10 @@ import {
 const WMS = (bbox: string, w = 800, h = 480) =>
   `https://opendata.maps.vic.gov.au/geoserver/wms?service=WMS&version=1.3.0&request=GetMap&layers=open-data-platform%3Astateview_2024_sat_ortho_150cm&styles=&format=image%2Fpng&transparent=false&width=${w}&height=${h}&crs=EPSG%3A4326&bbox=${encodeURIComponent(bbox)}`;
 
-describe("parseStaticAerial (StateView WMS)", () => {
+const ESRI = (bbox: string, w = 800, h = 480) =>
+  `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=${encodeURIComponent(bbox)}&size=${w},${h}&format=png32&f=image&bboxSR=4326&imageSR=4326`;
+
+describe("parseStaticAerial (Esri export + StateView WMS)", () => {
   it("parses a WMS GetMap URI into its bbox view", () => {
     const view = parseStaticAerial(WMS("144.99,-37.84,145.01,-37.82"));
     expect(view).not.toBeNull();
@@ -20,7 +23,15 @@ describe("parseStaticAerial (StateView WMS)", () => {
     expect(view!.height).toBe(480);
   });
 
-  it("returns null for non-WMS URIs (placeholder / retired Mapbox)", () => {
+  it("parses an Esri export URI (size= format)", () => {
+    const view = parseStaticAerial(ESRI("144.99,-37.84,145.01,-37.82", 600, 400));
+    expect(view).not.toBeNull();
+    expect(view!.minLng).toBeCloseTo(144.99);
+    expect(view!.width).toBe(600);
+    expect(view!.height).toBe(400);
+  });
+
+  it("returns null for non-aerial URIs (placeholder / retired Mapbox)", () => {
     expect(parseStaticAerial("https://placeholder.aerial/satellite/-37,145?z=19")).toBeNull();
     expect(
       parseStaticAerial("https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/145,-37,19,0/800x480"),

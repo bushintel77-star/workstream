@@ -175,9 +175,9 @@ describe("API contract — projects", { timeout: 20000 }, () => {
     };
     expect(previewBody).toMatchObject({ lat: -37.84, lng: 145.01 });
     // Lot ortho (tight bbox) + neighbourhood ortho (wide bbox) — keyless
-    // StateView WMS, no Mapbox.
-    expect(previewBody.aerial_uri).toMatch(/geoserver\/wms.+request=GetMap/);
-    expect(previewBody.neighbourhood_uri).toMatch(/geoserver\/wms.+request=GetMap/);
+    // Esri World Imagery export, no Mapbox.
+    expect(previewBody.aerial_uri).toMatch(/World_Imagery\/MapServer\/export/);
+    expect(previewBody.neighbourhood_uri).toMatch(/World_Imagery\/MapServer\/export/);
     const nearSpan = spanOf(previewBody.aerial_uri);
     const farSpan = spanOf(previewBody.neighbourhood_uri);
     expect(nearSpan).toBeLessThan(farSpan);

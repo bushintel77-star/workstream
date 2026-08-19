@@ -3,7 +3,7 @@ import { outdoorWorkspaceSpan, type LngLat } from "@workstream/domain";
 
 const METRES_PER_DEG_LAT = 111_320;
 
-/** Parse a StateView ortho WMS GetMap URI (from ./aerial) for ground span. */
+/** Parse an aerial URI (Esri export or StateView WMS) for ground span. */
 export function parseStaticAerial(uri: string): {
   minLng: number;
   minLat: number;
@@ -14,11 +14,20 @@ export function parseStaticAerial(uri: string): {
 } | null {
   try {
     const url = new URL(uri);
-    if (!/geoserver\/wms/.test(url.host + url.pathname)) return null;
     const bbox = url.searchParams.get("bbox");
-    const width = Number(url.searchParams.get("width"));
-    const height = Number(url.searchParams.get("height"));
-    if (!bbox || !Number.isFinite(width) || !Number.isFinite(height)) return null;
+    if (!bbox) return null;
+    let width: number;
+    let height: number;
+    const size = url.searchParams.get("size");
+    if (size) {
+      const [w, h] = size.split(",").map(Number);
+      width = w;
+      height = h;
+    } else {
+      width = Number(url.searchParams.get("width"));
+      height = Number(url.searchParams.get("height"));
+    }
+    if (!Number.isFinite(width) || !Number.isFinite(height)) return null;
     const [minLng, minLat, maxLng, maxLat] = bbox.split(",").map(Number);
     if (
       ![minLng, minLat, maxLng, maxLat].every(Number.isFinite) ||
