@@ -118,3 +118,22 @@ settings, portal deposit flow, share portal. Auxiliary 3D surfaces:
 - Railway: api deploy SUCCESS; web already live on the consolidated main
   (the 14:15 re-deploy was SKIPPED as a no-change duplicate of the 12:51
   build) — verified by live landing markers above.
+
+## Same-session additions (post-audit)
+
+- **Vicmap meta chip-set** (`webgl/metaChips.ts` + `MetaChipSet.tsx`,
+  15 unit tests): ambient satellite tags orbiting the title boundary —
+  cadastral (SPI/PFI, parcel area, LGA), planning (zone, heritage, flood,
+  water corp, easements), terrain (steepest-fall slope + aspect, spot-level
+  count; sun chip pending a site-wide sun grid). 40% resting frost capsules,
+  phase-aware illumination (survey/cad vs elevation/garden), hover/click
+  in-place expansion, hidden in present/share. Derived only from real
+  records — zero invented chips.
+- **Micro-interactions:** tool-aware canvas cursor (crosshair while sketch/
+  measure/trench/zone/asset armed; grab/grabbing pan), rail-button hover
+  lift (-1px + shadow tier), 150 ms paper cross-fade on mode swap,
+  tabular-nums + tightened letter-spacing on dimension labels.
+- **Gold Standard compliance sweep** (commit `12ef51a` + `4670765`):
+  `docs/GS-2026-COMPLIANCE-SWEEP-2026-08-19.md` — black scrims → neutral
+  ink dims, neutral shadow tiers, Signal Blue focus rings, JetBrains Mono
+  retired, dark-era dock/control sediment re-tokened, spec radii.
