@@ -59,7 +59,8 @@ async function queryAddresses(
     `${WFS_BASE}?service=WFS&version=2.0.0&request=GetFeature` +
     `&typeNames=open-data-platform:address&outputFormat=application/json` +
     `&count=${Math.min(Math.max(limit, 1), 10)}` +
-    `&propertyName=ufi,ezi_address,label_address,is_primary,locality_name,postcode` +
+    // No propertyName filter: the point geometry must ride along for the
+    // lat/lng mapping, and GeoServer omits it when listed attributes omit it.
     `&cql_filter=${encodeURIComponent(cqlFilter)}`;
 
   const res = await fetchWithRetry(
@@ -105,10 +106,9 @@ export async function searchVicmapAddresses(
   for (const f of features) {
     const pos = lngLatOf(f.geometry);
     if (!pos) continue;
-    const label =
-      f.properties.label_address?.trim() ||
-      f.properties.ezi_address?.trim() ||
-      "";
+    // ezi_address is the canonical formatted GNAF address; label_address is
+    // a flag field ('Y'/'N') in this dataset, not a human label.
+    const label = f.properties.ezi_address?.trim() || "";
     if (!label) continue;
     out.push({
       id: `vicmap:${f.properties.pfi ?? f.properties.ufi ?? label}`,
