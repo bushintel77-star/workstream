@@ -69,7 +69,31 @@ Shared surfaces moved off the legacy `--r-*` scale onto the spec tokens:
 dropdown (was `--r-sm`) → `--gs-radius-chip`. The legacy `--r-*` scale
 (5/7/10/14/18) itself remains for non-GS surfaces pending a full audit.
 
-### 7. Hygiene
+### 7. Radius scale — spec-aligned via compat aliases
+
+The legacy `--r-*` scale (5/7/10/14/18/24px) drifted from the three sanctioned
+radii (panel 12 / chip 6 / pill 999). Re-pointed the aliases in `globals.css`:
+`--r-sm/--r-md` → `--gs-radius-chip` (6), `--r-lg/--r-xl/--r-2xl/--r-3xl/
+--r-canvas` → `--gs-radius-panel` (12), `--r-pill` → `--gs-radius-pill`.
+All 91 legacy call sites now resolve to sanctioned radii with zero call-site
+churn.
+
+### 8. Signal Blue active states + focus (§1.2)
+
+`--info` (grey `#525252`) stays for status/ink roles (info pills, semantic
+alias, overlay wash — the "status = ink + iconography" law). Accent and
+active roles converted to `--gs-primary`: rail/dock handle accent bars,
+processing-stage active border/sheen/pulse halo/spinner, reduced-motion
+halo. Weather rain figure → `--ink-secondary`.
+
+### 9. Chrome type floor (TOKENS §1.4 amendment)
+
+72 sub-floor font sizes swept to the floor: labels → 10.5px, figures → 11px
+(`--text-xs` already 11), glyph accents → 9.5px. `--text-femto/pico` now hold
+the 9.5px glyph floor; `--text-nano/micro` hold the 10.5px label floor.
+Zero sub-floor values remain in `apps/web/src`.
+
+### 10. Hygiene
 
 - 14 double-encoded mojibake sequences in `styles/globals.css` comments
   (`â\u0080\u0094` → `—`, `Â§` → `§`) fixed byte-exact via Node; repo scanned
@@ -87,13 +111,10 @@ dropdown (was `--r-sm`) → `--gs-radius-chip`. The legacy `--r-*` scale
 
 ## Known remaining sweep items (next rounds)
 
-- Full `--r-*` scale audit (5/7/10/14/18) vs the three `--gs-radius-*`
-  tokens across all component modules — shared dialogs/popovers/suggestions
-  are done; the app-shell cards and canvas surfaces remain.
-- Chrome type floor re-check (10.5px labels / 11px figures) on the
-  `--text-nano` (9px) and `--text-micro` (10px) consumers that are not glyph
-  accents.
-- `--info` alias audit: remaining grey uses that are actually status/ink
-  (allowed) vs anything acting as an accent (must be `--gs-primary`).
-- The e2e contrast gates (`webgl-contrast-aa`, `canvas-contrast-aa`) should
-  be re-run against a fresh dev build in the next verification round.
+- E2e contrast gates (`webgl-contrast-aa`, `canvas-contrast-aa`) re-run
+  against a fresh dev build after the type-floor sweep — scheduled.
+- Site-wide sun grid so the meta chip-set's sun chip has a real figure
+  (the sun model currently runs only inside the flora-ring flow).
+- Periodic re-scan of new code for `rgba()` blacks, raw radii, sub-floor
+  font sizes, and non-`--gs-*` accent hues (the colour gate covers hex but
+  not `rgba()` — candidate for a gate extension).
