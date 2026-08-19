@@ -4,6 +4,14 @@
  * the "scrub hardcoded colour" pass on every page (not just the canvas
  * studio) stays enforced.
  *
+ * Also enforces the "never darkness" law (TOKENS.md §1): scrim-strength
+ * black overlays — rgba(0,0,0, α≥0.2) and color-mix(…, #000/black ≥20%) —
+ * are forbidden outside the render-value allowlist, because raw hex checks
+ * cannot see them (that is how the 40–50% black scrims slipped through in
+ * the first place). Panels dim with neutral ink mixes
+ * (color-mix(in srgb, var(--gs-ink-strong) N%)) and lift with the neutral
+ * shadow tiers (--gs-shadow-1..4), never with black.
+ *
  * Allowlist — deliberately small; every entry is a literal *data* colour
  * (paint choice / render value), never chrome identity:
  * - color-tokens.css, colorTokens.ts, globals.css (token source of truth)
@@ -29,6 +37,11 @@ import path from "path";
 
 const ROOT = "apps/web/src";
 const HEX = /#[0-9a-fA-F]{3,8}\b/g;
+// Scrim-strength blacks — alpha or mix percent at or above the threshold.
+const SCRIM_BLACK_RGBA = /rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0?\.(\d+)\s*\)/g;
+const SCRIM_BLACK_MIX_HEX = /color-mix\(\s*in\s+srgb\s*,\s*#000(?:000)?\s+(\d+(?:\.\d+)?)%/g;
+const SCRIM_BLACK_MIX_KEY = /\bcolor-mix\(\s*in\s+srgb\s*,\s*black\s+(\d+(?:\.\d+)?)%/g;
+const SCRIM_ALPHA_MIN = 20; // 0.20
 
 /** Paths (posix) that may contain literal hex. */
 const ALLOW_PATH_SUBSTR = [
@@ -73,6 +86,7 @@ function stripComments(src, isCss) {
 
 const files = walk(ROOT);
 const violations = [];
+const scrims = [];
 
 for (const file of files) {
   const rel = file.replace(/\\/g, "/");
@@ -81,6 +95,7 @@ for (const file of files) {
   const isCss = file.endsWith(".css");
   const raw = fs.readFileSync(file, "utf8");
   const src = stripComments(raw, isCss);
+
   const hits = src.match(HEX) ?? [];
   const bad = hits.filter((h) => !ALLOW_HEX.has(h.toLowerCase()));
   if (bad.length) {
@@ -88,6 +103,27 @@ for (const file of files) {
       file: rel,
       samples: [...new Set(bad)].slice(0, 10),
       count: bad.length,
+    });
+  }
+
+  // "Never darkness" — scrim-strength black overlays (raw hex checks cannot
+  // see these; the GS sweep found 40–50% black scrims this gate should have
+  // caught). Alpha/mix ≥ 0.20 violates; neutral ink mixes are the lawful dim.
+  const scrimSamples = [];
+  for (const m of src.matchAll(SCRIM_BLACK_RGBA)) {
+    if (parseInt(m[1], 10) >= SCRIM_ALPHA_MIN) scrimSamples.push(`rgba(0,0,0,0.${m[1]})`);
+  }
+  for (const m of src.matchAll(SCRIM_BLACK_MIX_HEX)) {
+    if (parseFloat(m[1]) >= SCRIM_ALPHA_MIN) scrimSamples.push(`#000 ${m[1]}%`);
+  }
+  for (const m of src.matchAll(SCRIM_BLACK_MIX_KEY)) {
+    if (parseFloat(m[1]) >= SCRIM_ALPHA_MIN) scrimSamples.push(`black ${m[1]}%`);
+  }
+  if (scrimSamples.length) {
+    scrims.push({
+      file: rel,
+      samples: [...new Set(scrimSamples)].slice(0, 10),
+      count: scrimSamples.length,
     });
   }
 }
@@ -103,4 +139,19 @@ if (violations.length) {
   process.exit(1);
 }
 
-console.log(`ok: no raw hex in ${files.length} apps/web files`);
+if (scrims.length) {
+  console.error(
+    "FAIL: scrim-strength black overlays (never-darkness law, TOKENS §1):\n",
+  );
+  for (const v of scrims) {
+    console.error(`  ${v.file} (${v.count}) ${v.samples.join(" ")}`);
+  }
+  console.error(
+    `\n${scrims.length} file(s). Dim with color-mix(in srgb, var(--gs-ink-strong) N%); lift with --gs-shadow-1..4.`,
+  );
+  process.exit(1);
+}
+
+console.log(
+  `ok: no raw hex and no black scrims in ${files.length} apps/web files`,
+);

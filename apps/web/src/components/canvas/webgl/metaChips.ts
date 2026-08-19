@@ -237,9 +237,9 @@ export function buildMetaChips(input: MetaChipSiteInput): MetaChip[] {
     chips.push({
       id: "sun",
       group: "terrain",
-      label: `${input.sunHours.toFixed(1)}h Direct Sun`,
+      label: `${input.sunHours.toFixed(1)}h Sun Window`,
       value: "Solar",
-      detail: "Direct sun hours at the parcel centre from the live sun model — drives planting exposure choices.",
+      detail: "Unshaded daylight window at this latitude for today's date (real solar geometry). Canopy-adjusted exposure reads from the flora ring's live sun model.",
       brightModes: TERRESTRIAL_MODES,
     });
   }

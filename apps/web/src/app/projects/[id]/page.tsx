@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import {
+  daylightHoursAt,
+  dayOfYearFrom,
   isSeedSurveyLot,
   resolveOutdoorAreaM2,
 } from "@workstream/domain";
@@ -159,7 +161,12 @@ export default async function ProjectCanvasPage({
           titleRef: titleBlock?.parcelRef ?? null,
           lga: titleBlock?.councilLabel ?? null,
           lotAreaM2: titleBlock?.lotAreaM2 ?? null,
-          sunHours: null,
+          // Real solar geometry — the unshaded daylight window at the site
+          // for today's date (canopy-adjusted exposure lives in the flora ring).
+          sunHours:
+            project.lat != null
+              ? daylightHoursAt(project.lat, dayOfYearFrom(new Date()))
+              : null,
         }}
       />
     </main>

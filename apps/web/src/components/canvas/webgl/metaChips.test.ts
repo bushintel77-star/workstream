@@ -113,7 +113,7 @@ describe("buildMetaChips", () => {
     const byId = Object.fromEntries(chips.map((c) => [c.id, c]));
     expect(byId.slope.label).toContain("Slope");
     expect(byId.slope.brightModes).toEqual(["elevation", "garden"]);
-    expect(byId.sun.label).toBe("5.8h Direct Sun");
+    expect(byId.sun.label).toBe("5.8h Sun Window");
     expect(byId.relief.label).toBe("Spot levels · 3");
   });
 

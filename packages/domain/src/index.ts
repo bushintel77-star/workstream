@@ -125,6 +125,7 @@ export * from './studio-preemptive-estimate';
 export * from './resolve-quote';
 export * from './architectural-title-block';
 export * from './flora-suggestion';
+export * from './solar-window';
 export * from './volumetric-isolith';
 export * from './live-trade-sourcing';
 export * from './ghost-confidence';
