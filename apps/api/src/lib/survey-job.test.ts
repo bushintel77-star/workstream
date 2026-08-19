@@ -27,7 +27,7 @@ describe("runSurvey", { timeout: 20000 }, () => {
     expect(survey.house_area_m2).toBeGreaterThanOrEqual(0);
 
     if (survey.lot_area_m2 === 0 && survey.garden_area_m2 === 0) {
-      // Vicmap miss — Mapbox aerial only; operator Traces the title.
+      // Vicmap miss — ortho aerial only; operator Traces the title.
       expect(survey.measurements).toEqual([]);
       expect(survey.title_polygon.coordinates).toEqual([]);
       return;

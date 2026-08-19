@@ -103,7 +103,7 @@ export default function NewProjectScreen() {
           <Text style={styles.heading}>What's the address?</Text>
           <Text style={styles.helper}>
             {autocompleteAvailable
-              ? "AU addresses, Mapbox-powered. Pick a result for an exact lot match."
+              ? "AU addresses from the Victorian GNAF register. Pick a result for an exact lot match."
               : "Autocomplete unavailable. Enter the full street address manually."}
           </Text>
         </View>

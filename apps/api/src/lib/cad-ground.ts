@@ -1,42 +1,49 @@
 import type { Survey } from "@workstream/contracts";
 import { outdoorWorkspaceSpan, type LngLat } from "@workstream/domain";
 
-const MAPBOX_TILE_PX = 256;
+const METRES_PER_DEG_LAT = 111_320;
 
-/** Parse Mapbox static satellite URL for ground span (mirrors web mapView). */
-export function parseMapboxStaticAerial(uri: string): {
-  lng: number;
-  lat: number;
-  zoom: number;
+/** Parse a StateView ortho WMS GetMap URI (from ./aerial) for ground span. */
+export function parseStaticAerial(uri: string): {
+  minLng: number;
+  minLat: number;
+  maxLng: number;
+  maxLat: number;
   width: number;
   height: number;
 } | null {
-  const match = uri.match(
-    /\/static\/(?:[^/]+\/)?(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?),0\/(\d+)x(\d+)/,
-  );
-  if (!match) return null;
-  return {
-    lng: Number(match[1]),
-    lat: Number(match[2]),
-    zoom: Number(match[3]),
-    width: Number(match[4]),
-    height: Number(match[5]),
-  };
+  try {
+    const url = new URL(uri);
+    if (!/geoserver\/wms/.test(url.host + url.pathname)) return null;
+    const bbox = url.searchParams.get("bbox");
+    const width = Number(url.searchParams.get("width"));
+    const height = Number(url.searchParams.get("height"));
+    if (!bbox || !Number.isFinite(width) || !Number.isFinite(height)) return null;
+    const [minLng, minLat, maxLng, maxLat] = bbox.split(",").map(Number);
+    if (
+      ![minLng, minLat, maxLng, maxLat].every(Number.isFinite) ||
+      maxLng <= minLng ||
+      maxLat <= minLat
+    ) {
+      return null;
+    }
+    return { minLng, minLat, maxLng, maxLat, width, height };
+  } catch {
+    return null;
+  }
 }
 
 function aerialSpanMetres(survey: Survey): {
   width_m: number;
   height_m: number;
 } | null {
-  const parsed = parseMapboxStaticAerial(survey.aerial_uri);
+  const parsed = parseStaticAerial(survey.aerial_uri);
   if (!parsed) return null;
-  const latRad = (parsed.lat * Math.PI) / 180;
-  const metresPerWorldPx =
-    (40_075_016.686 * Math.cos(latRad)) /
-    (MAPBOX_TILE_PX * 2 ** parsed.zoom);
+  const centreLat = ((parsed.minLat + parsed.maxLat) / 2) * (Math.PI / 180);
   return {
-    width_m: parsed.width * metresPerWorldPx,
-    height_m: parsed.height * metresPerWorldPx,
+    width_m:
+      (parsed.maxLng - parsed.minLng) * METRES_PER_DEG_LAT * Math.cos(centreLat),
+    height_m: (parsed.maxLat - parsed.minLat) * METRES_PER_DEG_LAT,
   };
 }
 
@@ -47,7 +54,7 @@ function titleRing(survey: Survey): LngLat[] | null {
 
 /**
  * CAD template size from outdoor (title/garden) area on the aerial survey.
- * Prefer lot title bbox metres; fall back to aerial frame, then ≈garden area.
+ * Prefer lot title bbox metres; fall back to the ortho frame, then ≈garden area.
  */
 export function groundSpanFromSurvey(survey: Survey): {
   width_m: number;

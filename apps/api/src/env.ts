@@ -5,7 +5,7 @@ import { isAuthRequired } from "./lib/auth-config";
  * Boot-time validation of process.env. Fail fast in production if
  * something critical is missing or malformed; warn in dev.
  *
- * Optional vars (Anthropic, OpenAI, Mapbox, Stripe, MYOB, Xero, Twilio,
+ * Optional vars (Anthropic, OpenAI, Stripe, MYOB, Xero, Twilio,
  * Clerk) stay optional intentionally — the API ships canned fallbacks for
  * each so the operator can demo without spinning up six accounts.
  */
@@ -40,9 +40,9 @@ const EnvSchema = z.object({
   /** Model for vision tasks (ghosts, OCR, sketch assist, dictation). */
   CLAUDE_VISION_MODEL: z.string().default("claude-sonnet-4-6"),
 
-  /* Geo — Mapbox optional, aerial imagery only (geocode is keyless Vicmap
-     Address GNAF + Nominatim fallback; cadastral/elevation are keyless WFS). */
-  MAPBOX_TOKEN: z.string().optional(),
+  /* Geo — keyless Vicmap/DELWP only. Geocode = Vicmap Address GNAF +
+     Nominatim; aerial = StateView ortho WMS; cadastral/elevation = WFS.
+     No Mapbox dependency remains. */
 
   /* Payments */
   STRIPE_SECRET_KEY: z
@@ -144,11 +144,10 @@ export function loadEnv(logger: {
     const aiKeys = [
       parsed.data.OPENAI_API_KEY,
       parsed.data.ANTHROPIC_API_KEY,
-      parsed.data.MAPBOX_TOKEN,
     ].filter(Boolean).length;
-    if (aiKeys < 3) {
+    if (aiKeys < 2) {
       logger.warn(
-        `Only ${aiKeys}/3 AI/geo keys set (OPENAI, ANTHROPIC, MAPBOX). Missing keys use dev fallbacks — not suitable for paying customers.`,
+        `Only ${aiKeys}/2 AI keys set (OPENAI, ANTHROPIC). Missing keys use dev fallbacks — not suitable for paying customers.`,
       );
     }
   }

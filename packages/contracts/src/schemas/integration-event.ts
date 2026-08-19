@@ -8,7 +8,6 @@ export const IntegrationChannelSchema = z.enum([
   "xero",
   "anthropic",
   "openai",
-  "mapbox",
 ]);
 export type IntegrationChannel = z.infer<typeof IntegrationChannelSchema>;
 

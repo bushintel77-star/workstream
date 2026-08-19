@@ -6,6 +6,13 @@ import { ProjectSchema } from "@workstream/contracts";
 import { buildTestApp } from "../test/build-app";
 import { signPortalToken } from "../lib/magic-link";
 
+/** Longitude span of a WMS GetMap URI's bbox — tight = lot, wide = neighbourhood. */
+function spanOf(uri: string): number {
+  const bbox = decodeURIComponent(uri.split("bbox=")[1]?.split("&")[0] ?? "0,0,0,0");
+  const [minLng, , maxLng] = bbox.split(",").map(Number);
+  return maxLng - minLng;
+}
+
 describe("API contract — projects", { timeout: 20000 }, () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>["app"];
   let store: Awaited<ReturnType<typeof buildTestApp>>["store"];
@@ -167,11 +174,13 @@ describe("API contract — projects", { timeout: 20000 }, () => {
       neighbourhood_uri: string;
     };
     expect(previewBody).toMatchObject({ lat: -37.84, lng: 145.01 });
-    // Lot altitude for canvas + neighbourhood for locate zoom-in.
-    expect(previewBody.aerial_uri).toMatch(/(?:,20,0\/800x480|[?&]z=20\b)/);
-    expect(previewBody.neighbourhood_uri).toMatch(
-      /(?:,17,0\/800x480|[?&]z=17\b)/,
-    );
+    // Lot ortho (tight bbox) + neighbourhood ortho (wide bbox) — keyless
+    // StateView WMS, no Mapbox.
+    expect(previewBody.aerial_uri).toMatch(/geoserver\/wms.+request=GetMap/);
+    expect(previewBody.neighbourhood_uri).toMatch(/geoserver\/wms.+request=GetMap/);
+    const nearSpan = spanOf(previewBody.aerial_uri);
+    const farSpan = spanOf(previewBody.neighbourhood_uri);
+    expect(nearSpan).toBeLessThan(farSpan);
 
     const search = await app.inject({
       method: "GET",

@@ -180,13 +180,6 @@ export async function channelStatuses(
       note: plan === "lite" ? "Dev fallback on Lite" : "",
     },
     {
-      channel: "mapbox",
-      label: "Mapbox",
-      configured: has("MAPBOX_TOKEN"),
-      live: studio("MAPBOX_TOKEN"),
-      note: "",
-    },
-    {
       channel: "stripe",
       label: "Stripe",
       configured: has("STRIPE_SECRET_KEY"),

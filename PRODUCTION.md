@@ -59,7 +59,6 @@ for middleware).
 |--------|---------|-------------------|
 | `OPENAI_API_KEY` | API | Canned transcript |
 | `ANTHROPIC_API_KEY` | API | Mock design/audit |
-| `MAPBOX_TOKEN` | API | Mock survey imagery |
 | `STRIPE_SECRET_KEY` | API | Deposit checkout uses dev fallback |
 | `STRIPE_WEBHOOK_SECRET` | API | Stripe webhooks accept dev-mode unsigned payloads |
 | `CLERK_*` | both | Dev-user mode (current) |

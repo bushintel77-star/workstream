@@ -780,7 +780,9 @@ Rules:
 async function fetchAerialBase64(
   aerialUri: string,
 ): Promise<{ base64: string; mime_type: "image/jpeg" | "image/png" | "image/webp" }> {
-  const provider = aerialUri.includes("mapbox.com") ? "mapbox" : "external";
+  const provider = aerialUri.includes("opendata.maps.vic.gov.au")
+    ? "vicmap-ortho"
+    : "external";
   const res = await fetchWithRetry(aerialUri, { method: "GET" }, {
     telemetry: {
       spanName: "map.fetch_aerial_image",

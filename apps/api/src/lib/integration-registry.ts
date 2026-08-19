@@ -39,15 +39,6 @@ export const INTEGRATION_REGISTRY: ReadonlyArray<IntegrationDef> = [
     channel: "openai",
   },
   {
-    key: "MAPBOX_TOKEN",
-    label: "Mapbox",
-    description: "Geocode and aerial imagery for surveys and design studio.",
-    env: "MAPBOX_TOKEN",
-    category: "geo",
-    placeholder: "pk.eyJ…",
-    channel: "mapbox",
-  },
-  {
     key: "STRIPE_SECRET_KEY",
     label: "Stripe (secret)",
     description: "Portal deposit checkout sessions.",

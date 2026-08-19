@@ -1,6 +1,6 @@
 /**
  * Resilient wrapper around `fetch` for external services (Claude, OpenAI,
- * Mapbox, Stripe, etc.). Adds:
+ * Vicmap, Stripe, etc.). Adds:
  *
  *  - per-call timeout via AbortController (default 30s; configurable)
  *  - retries with exponential backoff on 429 / 5xx / network error
@@ -25,7 +25,7 @@ export type FetchRetryOptions = {
   /** Optional OpenTelemetry span metadata for an external provider call. */
   telemetry?: {
     spanName: string;
-    provider: "anthropic" | "openai" | "mapbox" | "external";
+    provider: "anthropic" | "openai" | "vicmap-ortho" | "external";
     attributes?: Record<string, string | number | boolean | null | undefined>;
   };
 };

@@ -182,7 +182,6 @@ Set live AI, map, portal, Stripe, and telemetry variables on the API service.
 ```
 OPENAI_API_KEY=sk-PASTE_HERE
 ANTHROPIC_API_KEY=sk-ant-PASTE_HERE
-MAPBOX_TOKEN=pk.PASTE_HERE
 STRIPE_SECRET_KEY=sk_live_PASTE_HERE
 STRIPE_WEBHOOK_SECRET=whsec_PASTE_HERE
 WORKSTREAM_PORTAL_SECRET=<openssl rand -hex 32>

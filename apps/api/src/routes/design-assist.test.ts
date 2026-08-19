@@ -9,7 +9,7 @@ import { buildTestApp } from "../test/build-app";
 const OWNER = "dev-user";
 
 const AERIAL =
-  "https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/144.993,-37.849,18,0/800x600";
+  "https://opendata.maps.vic.gov.au/geoserver/wms?service=WMS&version=1.3.0&request=GetMap&layers=open-data-platform%3Astateview_2024_sat_ortho_150cm&width=800&height=600&crs=EPSG%3A4326&bbox=144.98%2C-37.86%2C145.01%2C-37.84";
 
 async function seedBoard(
   store: Awaited<ReturnType<typeof buildTestApp>>["store"],

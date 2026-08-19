@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
-import { geocodeAddress } from "../lib/mapbox";
+import { geocodeAddress } from "../lib/geocode";
 import { buildSiteContext } from "../lib/site-context";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 

@@ -24,7 +24,7 @@ Upgrade: **Settings → Integration hub → Upgrade to Studio** (Stripe Checkout
 |---------|---------------|-----|
 | Anthropic | `ANTHROPIC_API_KEY` | Design, audit, vision |
 | OpenAI | `OPENAI_API_KEY` | Whisper transcription |
-| Mapbox | `MAPBOX_TOKEN` | Geocode + aerial |
+| Vicmap (keyless) | none | GNAF addresses, cadastre, overlays, StateView ortho aerial |
 | Stripe | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Portal deposits |
 | MYOB | `MYOB_ACCESS_TOKEN`, `MYOB_COMPANY_FILE_ID` | Invoice drafts |
 | Xero | `XERO_ACCESS_TOKEN`, `XERO_TENANT_ID` | Invoice drafts |

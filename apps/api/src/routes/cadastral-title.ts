@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { buildArchitecturalTitleBlock } from "@workstream/domain";
 import { requireAuth } from "../plugins/auth";
-import { geocodeAddress } from "../lib/mapbox";
+import { geocodeAddress } from "../lib/geocode";
 import { fetchTitleParcel } from "../lib/vicmap";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 

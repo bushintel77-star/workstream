@@ -3,7 +3,7 @@ import type { Store } from "@workstream/db";
 /**
  * Hydrate process.env with every saved integration token for `ownerId`.
  * Called on boot so the existing `process.env.X` reads in claude.ts /
- * mapbox.ts / stripe.ts / transcribe.ts pick up tokens the operator saved
+ * stripe.ts / transcribe.ts pick up tokens the operator saved
  * through the Settings UI without those libs needing to be store-aware.
  *
  * Single-tenant by design. For multi-tenant the right shape is a

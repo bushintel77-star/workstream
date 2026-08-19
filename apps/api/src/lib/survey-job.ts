@@ -5,7 +5,8 @@ import {
   gardenPolygonFromTitleAndHouse,
   polygonArea,
 } from "@workstream/domain";
-import { aerialImageUrl, aerialImageUrlForRing, geocodeAddress } from "./mapbox";
+import { aerialImageUrl, aerialImageUrlForRing } from "./aerial";
+import { geocodeAddress } from "./geocode";
 import { fetchBuildingPolygon, fetchTitleParcel } from "./vicmap";
 
 type SurveyGeometry = {
@@ -23,7 +24,7 @@ type SurveyGeometry = {
   }>;
 };
 
-/** Aerial-only survey when Vicmap misses — Mapbox still grounds Trace / Calibrate. */
+/** Aerial-only survey when Vicmap misses — the ortho still grounds Trace / Calibrate. */
 function buildAerialOnlyGeometry(): SurveyGeometry {
   const empty: GeoJsonPolygon = { type: "Polygon", coordinates: [] };
   return {
@@ -123,7 +124,7 @@ export async function runSurvey(
     geometry = await buildVicmapGeometry(center);
   } catch (err) {
     console.warn(
-      "[survey] Vicmap WFS failed — aerial only (Trace title on Mapbox):",
+      "[survey] Vicmap WFS failed — aerial only (Trace title on the ortho):",
       err,
     );
   }

@@ -407,18 +407,18 @@ function Services({
 }
 
 const OVERLAY_COLORS: Record<DesignKeylessOverlay["kind"], string> = {
-  planning: PALETTE.cobaltD400,
-  bushfire: PALETTE.warningD400,
-  contour: PALETTE.grayD500,
-  flood: PALETTE.waterD400,
+  planning: PALETTE.cobaltL600,
+  bushfire: PALETTE.warningL500,
+  contour: PALETTE.grayL300,
+  flood: PALETTE.waterL500,
   heritage: PALETTE.autumnOrange,
-  easement: PALETTE.slateD400,
-  urban_tree: PALETTE.forestD400,
+  easement: PALETTE.slateL500,
+  urban_tree: PALETTE.forestL600,
   water_corp: PALETTE.apwaWater,
-  road_casement: PALETTE.bluestoneD300,
-  acid_sulfate: PALETTE.warningD400,
-  wetland: PALETTE.waterD400,
-  native_vegetation: PALETTE.sproutD400,
+  road_casement: PALETTE.bluestoneL400,
+  acid_sulfate: PALETTE.warningL500,
+  wetland: PALETTE.waterL500,
+  native_vegetation: PALETTE.sproutL500,
 };
 
 function GovernmentOverlays({

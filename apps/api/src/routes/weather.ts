@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { fetchForecast } from "../lib/weather";
-import { geocodeAddress } from "../lib/mapbox";
+import { geocodeAddress } from "../lib/geocode";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function weatherRoutes(fastify: FastifyInstance) {

@@ -4,8 +4,8 @@ import { requireAuth } from "../plugins/auth";
 import {
   aerialImageUrl,
   aerialImageUrlForRing,
-  geocodeSearch,
-} from "../lib/mapbox";
+} from "../lib/aerial";
+import { geocodeSearch } from "../lib/geocode";
 import { fetchTitlePolygon } from "../lib/vicmap";
 
 const PreviewQuerySchema = z.object({

@@ -15,7 +15,7 @@ export default fp(async (fastify: FastifyInstance) => {
   fastify.log.info("Store initialized (in-memory)");
 
   /* Mirror saved integration tokens into process.env so the existing
-   * runtime libs (claude.ts, mapbox.ts, stripe.ts, transcribe.ts) pick
+   * runtime libs (claude.ts, stripe.ts, transcribe.ts) pick
    * them up without each lib needing to be store-aware. */
   const defaultOwner = process.env.DEV_USER_ID ?? "dev-user";
   try {

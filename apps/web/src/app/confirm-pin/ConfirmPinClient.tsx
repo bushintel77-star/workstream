@@ -13,7 +13,7 @@ import {
   geocodePreviewAction,
 } from "../actions";
 import {
-  parseMapboxStaticAerial,
+  parseStaticAerial,
   projectLngLatToPercent,
 } from "../../lib/mapView";
 import cp from "./confirm-pin.module.css";
@@ -51,7 +51,7 @@ function ringToSvgPoints(
   ring: [number, number][],
   aerialUri: string,
 ): string | null {
-  const view = parseMapboxStaticAerial(aerialUri);
+  const view = parseStaticAerial(aerialUri);
   if (!view) return null;
   const closed =
     ring.length >= 2 &&

@@ -1,12 +1,14 @@
-/** Mapbox Static Images — geographic bounds for overlay alignment. */
-
-/** Mapbox Static Images API uses 256 px tiles (not 512). */
-export const MAPBOX_TILE_PX = 256;
+/**
+ * Keyless aerial view model — StateView ortho WMS GetMap bbox.
+ * Replaces the retired Mapbox Static Images parsing (2026-08-19): the bbox
+ * IS the view, so overlay projection is plain EPSG:4326 linear mapping.
+ */
 
 export type StaticMapView = {
-  lng: number;
-  lat: number;
-  zoom: number;
+  minLng: number;
+  minLat: number;
+  maxLng: number;
+  maxLat: number;
   width: number;
   height: number;
 };
@@ -18,63 +20,29 @@ export type MercatorBounds = {
   maxY: number;
 };
 
-export function lngLatToWorldPx(
-  lng: number,
-  lat: number,
-  zoom: number,
-): [number, number] {
-  const scale = MAPBOX_TILE_PX * 2 ** zoom;
-  const x = ((lng + 180) / 360) * scale;
-  const latRad = (lat * Math.PI) / 180;
-  const y =
-    ((1 -
-      Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) /
-      2) *
-    scale;
-  return [x, y];
-}
+const METRES_PER_DEG_LAT = 111_320;
 
-/** Inverse of lngLatToWorldPx (Web Mercator, Mapbox 256 px tiles). */
-export function worldPxToLngLat(
-  x: number,
-  y: number,
-  zoom: number,
-): [number, number] {
-  const scale = MAPBOX_TILE_PX * 2 ** zoom;
-  const lng = (x / scale) * 360 - 180;
-  const n = Math.PI - (2 * Math.PI * y) / scale;
-  const lat = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
-  return [lng, lat];
-}
-
-export function staticImageMercatorBounds(
-  view: StaticMapView,
-): MercatorBounds {
-  const [cx, cy] = lngLatToWorldPx(view.lng, view.lat, view.zoom);
-  const halfW = view.width / 2;
-  const halfH = view.height / 2;
-  return {
-    minX: cx - halfW,
-    maxX: cx + halfW,
-    minY: cy - halfH,
-    maxY: cy + halfH,
-  };
-}
-
-/** Parse Mapbox static satellite URL produced by apps/api mapbox.ts */
-export function parseMapboxStaticAerial(uri: string): StaticMapView | null {
-  // Optional Static Images overlay (e.g. pin-l+c45c26(lng,lat)/) before centre.
-  const match = uri.match(
-    /\/static\/(?:[^/]+\/)?(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?),0\/(\d+)x(\d+)/,
-  );
-  if (!match) return null;
-  return {
-    lng: Number(match[1]),
-    lat: Number(match[2]),
-    zoom: Number(match[3]),
-    width: Number(match[4]),
-    height: Number(match[5]),
-  };
+/** Parse a StateView WMS GetMap URI produced by apps/api/src/lib/aerial.ts. */
+export function parseStaticAerial(uri: string): StaticMapView | null {
+  try {
+    const url = new URL(uri);
+    if (!/geoserver\/wms/.test(url.host + url.pathname)) return null;
+    const bbox = url.searchParams.get("bbox");
+    const width = Number(url.searchParams.get("width"));
+    const height = Number(url.searchParams.get("height"));
+    if (!bbox || !Number.isFinite(width) || !Number.isFinite(height)) return null;
+    const [minLng, minLat, maxLng, maxLat] = bbox.split(",").map(Number);
+    if (
+      ![minLng, minLat, maxLng, maxLat].every(Number.isFinite) ||
+      maxLng <= minLng ||
+      maxLat <= minLat
+    ) {
+      return null;
+    }
+    return { minLng, minLat, maxLng, maxLat, width, height };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -97,31 +65,30 @@ export function ringCentroid(ring: [number, number][]): {
   return { lng, lat };
 }
 
-/** Project WGS84 to 0–100 % inside the static image frame (north-up). */
+/** Project WGS84 to 0–100 % inside the ortho frame (north-up, linear). */
 export function projectLngLatToPercent(
   lng: number,
   lat: number,
   view: StaticMapView,
 ): [number, number] {
-  const [wx, wy] = lngLatToWorldPx(lng, lat, view.zoom);
-  const b = staticImageMercatorBounds(view);
-  const spanX = Math.max(b.maxX - b.minX, 1);
-  const spanY = Math.max(b.maxY - b.minY, 1);
-  const xPct = ((wx - b.minX) / spanX) * 100;
-  const yPct = ((wy - b.minY) / spanY) * 100;
+  const spanLng = Math.max(view.maxLng - view.minLng, 1e-9);
+  const spanLat = Math.max(view.maxLat - view.minLat, 1e-9);
+  const xPct = ((lng - view.minLng) / spanLng) * 100;
+  const yPct = ((view.maxLat - lat) / spanLat) * 100; // north-up
   return [xPct, yPct];
 }
 
-/** Inverse of projectLngLatToPercent — percent in the static frame → WGS84. */
+/** Inverse of projectLngLatToPercent — percent in the ortho frame → WGS84. */
 export function percentToLngLat(
   xPct: number,
   yPct: number,
   view: StaticMapView,
 ): [number, number] {
-  const b = staticImageMercatorBounds(view);
-  const wx = b.minX + (xPct / 100) * (b.maxX - b.minX);
-  const wy = b.minY + (yPct / 100) * (b.maxY - b.minY);
-  return worldPxToLngLat(wx, wy, view.zoom);
+  const spanLng = Math.max(view.maxLng - view.minLng, 1e-9);
+  const spanLat = Math.max(view.maxLat - view.minLat, 1e-9);
+  const lng = view.minLng + (xPct / 100) * spanLng;
+  const lat = view.maxLat - (yPct / 100) * spanLat;
+  return [lng, lat];
 }
 
 /**
@@ -151,10 +118,7 @@ export function fitWorldToStage(
   };
 }
 
-/**
- * Display pixel size for the aerial world — preserves Mapbox / natural aspect,
- * capped so Fit has a stable base before stage scaling.
- */
+/** Display pixel size for the aerial world, capped before stage scaling. */
 export function displaySizeForAerial(
   naturalW: number,
   naturalH: number,
@@ -173,64 +137,49 @@ export function resolveStaticMapView(
   aerialUri: string,
   lotRing: [number, number][],
 ): StaticMapView {
-  const parsed = parseMapboxStaticAerial(aerialUri);
+  const parsed = parseStaticAerial(aerialUri);
   if (parsed) return parsed;
   const c = ringCentroid(lotRing);
-  return { lng: c.lng, lat: c.lat, zoom: 19, width: 800, height: 480 };
+  const span = 0.003; // ≈ 300 m context around the fallback centre
+  return {
+    minLng: c.lng - span,
+    maxLng: c.lng + span,
+    minLat: c.lat - span * 0.6,
+    maxLat: c.lat + span * 0.6,
+    width: 800,
+    height: 480,
+  };
 }
 
-/** Ground span covered by the static image frame (metres, north-up). */
+/** Ground span covered by the ortho frame (metres, north-up). */
 export function groundSpanMetres(view: StaticMapView): {
   widthM: number;
   heightM: number;
 } {
-  return groundSpanMetresAtZoom(view, view.zoom);
+  const centreLat = ((view.minLat + view.maxLat) / 2) * (Math.PI / 180);
+  const lngSpanM = (view.maxLng - view.minLng) * METRES_PER_DEG_LAT * Math.cos(centreLat);
+  const latSpanM = (view.maxLat - view.minLat) * METRES_PER_DEG_LAT;
+  return { widthM: lngSpanM, heightM: latSpanM };
 }
 
-/** Same as groundSpanMetres but for an arbitrary zoom (e.g. a widened capture). */
+/** Same as groundSpanMetres but for an arbitrary widened bbox. */
 export function groundSpanMetresAtZoom(
-  view: Pick<StaticMapView, "lat" | "width" | "height">,
-  zoom: number,
+  view: StaticMapView,
+  _zoom: number,
 ): { widthM: number; heightM: number } {
-  const latRad = (view.lat * Math.PI) / 180;
-  const metresPerWorldPx =
-    (40_075_016.686 * Math.cos(latRad)) / (MAPBOX_TILE_PX * 2 ** zoom);
-  return {
-    widthM: view.width * metresPerWorldPx,
-    heightM: view.height * metresPerWorldPx,
-  };
+  return groundSpanMetres(view);
 }
 
 /**
- * Mapbox static URL zoom token (preserves optional pin overlay + @2x suffix).
- * Groups: 1=prefix 2=overlay 3=lng 4=lat 5=zoom 6=width 7=height 8=@2x
+ * Rebuild the WMS ortho URI with a factor-widened bbox so the same pixel
+ * budget covers a wider ground span (3D ground extends past the lot edge).
+ * Returns the original URI when it isn't a parseable ortho URI.
  */
-const MAPBOX_STATIC_ZOOM_RE =
-  /(\/static\/)((?:[^/]+\/)?)(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?),0\/(\d+)x(\d+)(@2x)?/;
-
-/**
- * Zoom reduction (whole levels) so a static view covers at least `factor`× its
- * original ground span — each level down doubles the covered span. Clamped so
- * widened captures never drop below a site-context floor.
- */
-export function zoomForWiderCoverage(view: StaticMapView, factor: number): number {
-  const safe = Math.max(factor, 1);
-  const reduced = view.zoom - Math.ceil(Math.log2(safe));
-  return Math.max(14, reduced);
-}
-
-/**
- * Rebuild a Mapbox static satellite URL at a lower zoom so the same pixel
- * budget covers a wider ground span. Used to extend the aerial past the lot
- * so the 3D ground (3× board) doesn't smear at the tile edge. Preserves the
- * token, optional pin overlay, size and @2x. Returns the original URI when it
- * isn't a parseable Mapbox static URL (e.g. the dev placeholder).
- */
-export function widerMapboxStaticAerial(
+export function widerStaticAerial(
   uri: string,
   targetSpanM: { widthM: number; heightM: number },
 ): string {
-  const view = parseMapboxStaticAerial(uri);
+  const view = parseStaticAerial(uri);
   if (!view) return uri;
   const span = groundSpanMetres(view);
   const factor = Math.max(
@@ -238,13 +187,17 @@ export function widerMapboxStaticAerial(
     targetSpanM.heightM / Math.max(span.heightM, 1),
     1,
   );
-  const zoom = zoomForWiderCoverage(view, factor);
-  if (zoom === view.zoom) return uri;
-  return uri.replace(
-    MAPBOX_STATIC_ZOOM_RE,
-    (m, p1, p2, lng, lat, _z, w, h, at2x) =>
-      `${p1}${p2}${lng},${lat},${zoom},0/${w}x${h}${at2x ?? ""}`,
+  if (factor <= 1) return uri;
+  const centreLng = (view.minLng + view.maxLng) / 2;
+  const centreLat = (view.minLat + view.maxLat) / 2;
+  const halfLng = ((view.maxLng - view.minLng) / 2) * factor;
+  const halfLat = ((view.maxLat - view.minLat) / 2) * factor;
+  const url = new URL(uri);
+  url.searchParams.set(
+    "bbox",
+    `${centreLng - halfLng},${centreLat - halfLat},${centreLng + halfLng},${centreLat + halfLat}`,
   );
+  return url.toString();
 }
 
 /** Horizontal metres per canvas pixel (scale bar / indicative readouts). */

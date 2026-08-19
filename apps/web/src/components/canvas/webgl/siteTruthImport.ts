@@ -49,7 +49,7 @@ type AutoTraceData = {
 };
 type HydrateData = {
   overlays_canvas?: Array<{
-    kind: "planning" | "bushfire" | "contour" | "flood" | "heritage" | "easement" | "urban_tree" | "water_corp" | "road_casement" | "acid_sulfate" | "wetland";
+    kind: "planning" | "bushfire" | "contour" | "flood" | "heritage" | "easement" | "urban_tree" | "water_corp" | "road_casement" | "acid_sulfate" | "wetland" | "native_vegetation";
     rings: Array<Array<{ x: number; y: number }>>;
     label: string | null;
     fetched_at: string;

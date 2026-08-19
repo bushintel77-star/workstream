@@ -59,7 +59,7 @@ pnpm --filter @workstream/mobile dev       # Expo dev server
 
 ```
 apps/
-  api/           Fastify operator API — Stripe, Anthropic, OpenAI, Mapbox, MYOB, Xero
+  api/           Fastify operator API — Stripe, Anthropic, OpenAI, Vicmap, MYOB, Xero
   web/           Next.js operator dashboard + client portal
   mobile/        Expo operator app (site-walk capture, dictation, kanban)
 packages/

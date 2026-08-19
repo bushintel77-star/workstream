@@ -35,12 +35,6 @@ export function buildIntegrationSetupSteps(
       done: plan === "studio",
     },
     {
-      id: "mapbox",
-      label: "Mapbox — site aerial and geocode",
-      href: "/settings#geo",
-      done: !need("mapbox") && (by("mapbox")?.configured ?? false),
-    },
-    {
       id: "ai",
       label: "Anthropic + OpenAI — design and transcription",
       href: "/settings#ai",

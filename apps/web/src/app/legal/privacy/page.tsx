@@ -76,8 +76,10 @@ export default function PrivacyPage() {
       <p>
         We share specific data with the minimum third parties needed to run the
         pipeline: Anthropic (design + audit + photo measurement), OpenAI
-        (transcription), Mapbox (geocoding), Stripe (payments), MYOB / Xero
-        (accounting). Each is contracted to process data only for the stated
+        (transcription), Stripe (payments), MYOB / Xero
+        (accounting). Site data (boundaries, addresses, imagery, overlays) is
+        sourced from the Victorian Government's open data services. Each
+        third party is contracted to process data only for the stated
         purpose.
       </p>
 
