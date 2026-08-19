@@ -1126,7 +1126,9 @@ export function WebGLStudioPreview({
                       border: "1px solid color-mix(in srgb, var(--gs-primary) 55%, transparent)",
                       borderRadius: "var(--gs-radius-chip)",
                       background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
-                      color: "var(--gs-primary)",
+                      // --gs-primary on its own veil reads 4.08:1 at 11px —
+                      // below AA; the cobalt ink token clears 6:1 on the veil.
+                      color: "var(--gs-primary-ink)",
                       fontFamily: "var(--font-ui)",
                       fontSize: 11,
                       fontWeight: 600,

@@ -33,7 +33,9 @@ const btnPrimary: React.CSSProperties = {
   ...btn,
   border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
   background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
-  color: "var(--gs-primary)",
+  // --gs-primary on its own veil reads 4.17:1 at 11px — below AA; the
+  // darker cobalt ink token clears 6:1 on the same veil.
+  color: "var(--gs-primary-ink)",
 };
 
 const label: React.CSSProperties = {

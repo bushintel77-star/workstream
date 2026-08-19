@@ -273,6 +273,12 @@ export function useStudioAutosave(
 
     let cancelled = false;
 
+    // Mark dirty immediately — the chip reads "Saving…" and the beforeunload
+    // guard engages for the whole debounce window. The previous behaviour
+    // (default "Saved" chip until the debounce fired) let an operator reload
+    // inside the 1.1s window and silently lose the change.
+    useStudioStore.getState().setSaveStatus("saving");
+
     const handle = window.setTimeout(() => {
       const attempt = async (trial: number): Promise<void> => {
         if (cancelled) return;
