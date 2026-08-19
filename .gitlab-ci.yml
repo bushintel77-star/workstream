@@ -23,6 +23,7 @@ stages:
   - scan
   - e2e
   - docker
+  - deploy
 
 # ---------------------------------------------------------------- gate
 # Install (frozen lockfile) + every script gate + bundle-size web build +
@@ -109,3 +110,26 @@ build-web-image:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
   timeout: 15m
+
+# ---------------------------------------------------------------- deploy
+# Auto-deploy to Railway on push to main, via the Railway CLI with a
+# project-scoped token. RAILWAY_TOKEN is a protected CI/CD variable
+# (GitLab → Settings → CI/CD → Variables, or set via the API). Until the
+# token exists the job self-disables, so a green pipeline never turns red
+# over a missing credential.
+#
+# Scope note: RAILWAY_TOKEN (project-scoped) pins the project, so the
+# explicit --project below is belt-and-braces for account tokens.
+deploy-railway:
+  stage: deploy
+  needs: ["gate"]
+  image: node:22
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $RAILWAY_TOKEN != null && $RAILWAY_TOKEN != ""
+  script:
+    - npm install -g @railway/cli
+    - railway up --service web --environment production --detach -m "GitLab CI $CI_COMMIT_SHORT_SHA: $CI_COMMIT_TITLE"
+    - railway up --service api --environment production --detach -m "GitLab CI $CI_COMMIT_SHORT_SHA: $CI_COMMIT_TITLE"
+  variables:
+    RAILWAY_PROJECT_ID: "e2c12b66-af3a-4a51-a285-874c7a6de7d4"
+  timeout: 20m
