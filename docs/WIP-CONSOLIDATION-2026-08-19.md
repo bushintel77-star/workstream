@@ -68,4 +68,6 @@ are patch-equivalent to `main`. No unlanded WIP in the object store.
 
 - `main` is the single consolidated branch (per the single-branch law).
 - `wip-stash-consolidation` kept as the preserved record of the one stash.
-- Next: push `main` to GitLab, run `pnpm run ci`, Railway CLI deploy.
+- Pushed: `main` → GitLab `https://gitlab.com/77999-group1/77999-project`
+  (commit `a358967`); GitLab CI runs on it. Railway web + api CLI deploys
+  triggered the same session after `pnpm run ci` went green.

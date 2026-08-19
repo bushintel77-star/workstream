@@ -244,7 +244,7 @@ replication messages.
 
 Free on GitLab — the GitHub-Pro requirement is gone.
 
-1. Go to https://gitlab.com/<your-user>/workstream/-/settings/repository.
+1. Go to https://gitlab.com/77999-group1/77999-project/-/settings/repository.
 2. Protected branches → protect `main`.
 3. Allowed to push: No one; allowed to merge: Maintainers.
 4. Optionally require the pipeline to pass before merge

@@ -1,4 +1,10 @@
-# Migrate the repo from GitHub to GitLab
+# Migrate the repo from GitHub to GitLab — DONE 2026-08-19
+
+Status: **completed**. Live repo: `https://gitlab.com/77999-group1/77999-project`
+(group `77999-group1`, project `77999-project`, default branch `main`).
+Local remotes: `origin` = GitLab, `github` = frozen GitHub archive.
+`main` was pushed 2026-08-19 (`a358967`) and GitLab CI (`.gitlab-ci.yml`)
+runs on it. Steps below are the historical record.
 
 Why: the GitHub account is frozen on a failed payment (a paid plan charge that
 debit cards could not settle), which paused Actions and stalled Railway
