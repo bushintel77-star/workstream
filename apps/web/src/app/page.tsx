@@ -5,17 +5,18 @@ import { LandingCanvas } from "../components/landing/LandingCanvas";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Workstream — enter your address",
+  title: "Workstream — From GIS ingest to client sign-off",
   description:
-    "The garden, drawn before it is built. Enter your address — the live title boundary, sketch, CAD and fit sheet follow from it.",
+    "From GIS ingest to client sign-off. Drop an address — Vicmap boundaries, stylus sketching, live takeoffs, and a client portal follow from it. Skip the CAD.",
 };
 
 /**
- * Canvas-first landing — the hero says nothing: a real sub-metre aerial of
- * a Stonnington block, graded to dusk, with a real Vicmap title boundary
- * drawn over it, and one address entry floating on the frame. Type an
- * address, pick the GNAF match, and the hero re-centres on that property
- * and draws its live boundary. The product demonstrates itself.
+ * Canvas-first landing — a real sub-metre aerial of a Stonnington block,
+ * graded to dusk, with a live Vicmap title boundary drawn over it, one
+ * address entry, and the studio's pitch: from GIS ingest to client sign-off.
+ * Type an address, pick the GNAF match, and the hero re-centres on that
+ * property and draws its live boundary. The product demonstrates itself —
+ * every claim on the page is a feature the studio ships.
  */
 export default function LandingPage() {
   return (

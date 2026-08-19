@@ -23,21 +23,46 @@ import css from "../../app/landing.module.css";
 
 type BoundaryState = "pending" | "live" | "unavailable";
 
-const STEPS = [
+const WORKFLOW = [
   {
     num: "01",
-    title: "Title",
-    body: "One boundary, pulled from the live Victorian cadastre. Not eyeballed, not fabricated.",
+    title: "Live GIS Ingest",
+    body: "Auto-stream Vicmap cadastral, SPI, zoning overlays, and 0.5m contours straight to your coordinates.",
   },
   {
     num: "02",
-    title: "Sketch onsite",
-    body: "Freehand over the sub-metre aerial, or photo-trace the frontage against a calibrated 1.8 m fence line.",
+    title: "Tactile Vector Sketching",
+    body: "6B graphite feel, CAD precision. Background vectorization captures pressure, tilt, and azimuth.",
   },
   {
     num: "03",
-    title: "Fit sheet",
-    body: "Generate the quote fit sheet from the same polygon that started everything.",
+    title: "Infinite 2D/3D Canvas",
+    body: "Project flat plans into 3D with real-time solar tracking and canopy shadows.",
+  },
+  {
+    num: "04",
+    title: "Pop-Free LOD",
+    body: "Seamless scale-band cross-fading from 1:1 concept sketches to 1:400 site plans.",
+  },
+  {
+    num: "05",
+    title: "Parametric Quoting",
+    body: "Real-time takeoffs. Sketch a polygon, get instant m², volumes, plant counts, and live costs.",
+  },
+  {
+    num: "06",
+    title: "One-Click Sections",
+    body: "Instant elevation profiles, ground slopes, mature heights, and setback checks.",
+  },
+  {
+    num: "07",
+    title: "Spatial UI",
+    body: "80/20 floating glass chrome. Maximum canvas, zero toolbar clutter.",
+  },
+  {
+    num: "08",
+    title: "Client Portal",
+    body: "Frosted-glass 3D walkthroughs, quote approval, and deposit capture.",
   },
 ] as const;
 
@@ -100,11 +125,240 @@ function featureLayout(
   }));
 }
 
+/** Deterministic 0–1 hash — sketch wobble stays stable across renders. */
+function wobble01(seed: number): number {
+  const s = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+function ringBoundsPx(
+  ring: ReadonlyArray<readonly [number, number]>,
+): {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  w: number;
+  h: number;
+  cx: number;
+  cy: number;
+} {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const [x, y] of ring) {
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  }
+  const w = maxX - minX;
+  const h = maxY - minY;
+  return {
+    minX,
+    minY,
+    maxX,
+    maxY,
+    w,
+    h,
+    cx: (minX + maxX) / 2,
+    cy: (minY + maxY) / 2,
+  };
+}
+
+function centroidPx(
+  ring: ReadonlyArray<readonly [number, number]>,
+): [number, number] {
+  let ax = 0;
+  let ay = 0;
+  for (const [x, y] of ring) {
+    ax += x;
+    ay += y;
+  }
+  const n = ring.length;
+  return n > 0 ? [ax / n, ay / n] : [0, 0];
+}
+
+/** A hand-drawn closed path — vertices nudged by a stable wobble. */
+function sketchClosed(
+  pts: ReadonlyArray<readonly [number, number]>,
+  seed: number,
+  amp: number,
+): string {
+  const d = pts
+    .map(([x, y], i) => {
+      const nx = x + (wobble01(seed + i * 0.53) - 0.5) * amp;
+      const ny = y + (wobble01(seed + i * 0.61 + 9.7) - 0.5) * amp;
+      return `${nx.toFixed(1)},${ny.toFixed(1)}`;
+    })
+    .join(" L ");
+  return `M ${d} Z`;
+}
+
+/** A hand-drawn open line. */
+function sketchOpen(
+  pts: ReadonlyArray<readonly [number, number]>,
+  seed: number,
+  amp: number,
+): string {
+  const d = pts
+    .map(([x, y], i) => {
+      const nx = x + (wobble01(seed + i * 0.71) - 0.5) * amp;
+      const ny = y + (wobble01(seed + i * 0.83 + 3.1) - 0.5) * amp;
+      return `${nx.toFixed(1)},${ny.toFixed(1)}`;
+    })
+    .join(" L ");
+  return `M ${d}`;
+}
+
+/** A hand-drawn circle — radius wobble + closed seam. */
+function sketchCircle(cx: number, cy: number, r: number, seed: number): string {
+  const pts: Array<[number, number]> = [];
+  const segs = 30;
+  for (let i = 0; i <= segs; i++) {
+    const a = (i / segs) * Math.PI * 2;
+    const rr = r + (wobble01(seed + i * 0.37) - 0.5) * r * 0.18;
+    pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]);
+  }
+  return sketchClosed(pts, seed, r * 0.02);
+}
+
+type PreSketchMark = {
+  kind: "zone" | "canopy" | "deck";
+  d: string;
+};
+
+type PreSketch = {
+  marks: PreSketchMark[];
+  hatches: string[];
+  path: string | null;
+  labels: Array<{ x: number; y: number; text: string }>;
+};
+
 /**
- * The landing says nothing — the entry IS the pitch. A real Stonnington
- * aerial, one lit property, a live Vicmap title boundary. Type an address
- * and the hero re-centres on YOUR property and draws ITS boundary; then one
- * tap enters the product. The product demonstrates itself.
+ * The pre-sketch — design-intent marks hand-drawn over the SURVEY state,
+ * anchored to the REAL title polygon (and its building footprint when the
+ * registry returns one): a lawn mass with chalk hatch, two canopy blobs, a
+ * deck hugging the building, and a path. Every mark is deterministic
+ * (stable across renders) and LOCATIONAL-INDICATIVE — the on-frame stamp
+ * names it a pre-sketch, and it only ever renders on the default hero
+ * property, never over a picked client address (no fabricated design on a
+ * real client's property).
+ */
+function buildPreSketch(
+  poly: ReadonlyArray<readonly [number, number]>,
+  building: ReadonlyArray<readonly [number, number]> | null,
+): PreSketch | null {
+  if (poly.length < 3) return null;
+  const b = ringBoundsPx(poly);
+  const size = (b.w + b.h) / 2;
+  if (!(size > 0)) return null;
+
+  const anchor =
+    building && building.length >= 3 ? ringBoundsPx(building) : null;
+  const bcx = anchor ? anchor.cx : b.cx;
+  const bcy = anchor ? anchor.cy : b.cy;
+  const [pcx, pcy] = centroidPx(poly);
+
+  // Garden direction — polygon centroid away from the building.
+  let dx = pcx - bcx;
+  let dy = pcy - bcy;
+  const len = Math.hypot(dx, dy) || 1;
+  dx /= len;
+  dy /= len;
+  const px = -dy; // perpendicular
+  const py = dx;
+
+  const marks: PreSketchMark[] = [];
+  const labels: Array<{ x: number; y: number; text: string }> = [];
+
+  // Lawn mass — a wobbled six-point zone in the garden direction.
+  const lawnCx = bcx + dx * size * 0.3;
+  const lawnCy = bcy + dy * size * 0.3;
+  const lawnR = size * 0.24;
+  const lawnPts: Array<[number, number]> = Array.from(
+    { length: 6 },
+    (_, i): [number, number] => {
+      const a = (i / 6) * Math.PI * 2 + 0.5;
+      const rr = lawnR * (0.72 + 0.28 * wobble01(i * 3.1 + 1));
+      return [lawnCx + Math.cos(a) * rr, lawnCy + Math.sin(a) * rr];
+    },
+  );
+  marks.push({ kind: "zone", d: sketchClosed(lawnPts, 41, size * 0.03) });
+  labels.push({ x: lawnCx, y: lawnCy - lawnR * 0.6, text: "proposed lawn" });
+
+  // Two canopy blobs flanking the lawn.
+  for (let k = 0; k < 2; k++) {
+    const side = k === 0 ? 1 : -1;
+    const ccx = lawnCx + px * side * size * 0.16 + dx * size * 0.12;
+    const ccy = lawnCy + py * side * size * 0.16 + dy * size * 0.08;
+    marks.push({
+      kind: "canopy",
+      d: sketchCircle(ccx, ccy, size * 0.11, 71 + k * 13),
+    });
+  }
+  labels.push({
+    x: lawnCx + px * size * 0.16 + dx * size * 0.12,
+    y: lawnCy + py * size * 0.16 + dy * size * 0.08,
+    text: "canopy",
+  });
+
+  // Deck — a small wobbled square hugging the building on the garden side.
+  const deckR = size * 0.09;
+  const gap = anchor ? Math.max(anchor.h, anchor.w) * 0.5 : size * 0.1;
+  const deckCx = bcx + dx * (gap + deckR);
+  const deckCy = bcy + dy * (gap + deckR);
+  const deckPts: Array<[number, number]> = [
+    [deckCx - deckR, deckCy - deckR],
+    [deckCx + deckR, deckCy - deckR],
+    [deckCx + deckR, deckCy + deckR],
+    [deckCx - deckR, deckCy + deckR],
+  ];
+  marks.push({ kind: "deck", d: sketchClosed(deckPts, 7, size * 0.02) });
+  labels.push({ x: deckCx + deckR * 1.45, y: deckCy + 6, text: "deck" });
+
+  // Path — a wobbled line from the building edge toward the lawn.
+  const path = sketchOpen(
+    [
+      [
+        bcx + dx * (anchor ? gap * 0.55 : size * 0.06),
+        bcy + dy * (anchor ? gap * 0.55 : size * 0.06),
+      ],
+      [bcx + dx * size * 0.14, bcy + dy * size * 0.14],
+    ],
+    31,
+    size * 0.02,
+  );
+
+  // Hatch — parallel chalk lines inside the lawn zone.
+  const hatches: string[] = [];
+  for (let h = 0; h < 4; h++) {
+    hatches.push(
+      sketchOpen(
+        [
+          [lawnCx - lawnR * 0.55 + h * lawnR * 0.36, lawnCy - lawnR * 0.42],
+          [
+            lawnCx - lawnR * 0.55 + h * lawnR * 0.36 - lawnR * 0.4,
+            lawnCy - lawnR * 0.42 + lawnR * 0.5,
+          ],
+        ],
+        90 + h,
+        size * 0.015,
+      ),
+    );
+  }
+
+  return { marks, hatches, path, labels };
+}
+
+/**
+ * The landing hero carries the studio's pitch over the real frame: a live
+ * Stonnington aerial, one lit property, a live Vicmap title boundary, and
+ * the promise — from GIS ingest to client sign-off. Type an address and the
+ * hero re-centres on YOUR property and draws ITS boundary; the entry and
+ * the CTA both lead into the studio. Every claim on the page is a feature
+ * the studio ships — no mock data, no fabricated telemetry.
  */
 export function LandingCanvas({
   aerialUrl: initialAerialUrl,
@@ -239,6 +493,12 @@ export function LandingCanvas({
     boundary && view.w > 0 && !chosen
       ? featureLayout(boundary.polygon)
       : null;
+  // The pre-sketch (design-intent marks over the survey state) rides the
+  // same default-only gate — stamped indicative, anchored to the real ring.
+  const preSketch =
+    boundary && view.w > 0 && !chosen
+      ? buildPreSketch(boundary.polygon, boundary.building)
+      : null;
 
   let statusLabel: string | null;
   if (addressLabel && boundaryState === "live") {
@@ -349,10 +609,60 @@ export function LandingCanvas({
                 ))}
               </svg>
             ) : null}
+            {preSketch ? (
+              <svg
+                className={css.boundarySvg}
+                width={view.w}
+                height={view.h}
+                viewBox={viewBoxStr}
+                preserveAspectRatio="none"
+                aria-hidden
+                data-testid="hero-presketch"
+              >
+                {preSketch.marks.map((m, i) => (
+                  <path
+                    key={i}
+                    className={
+                      m.kind === "zone"
+                        ? css.sketchZone
+                        : m.kind === "canopy"
+                          ? css.sketchCanopy
+                          : css.sketchDeck
+                    }
+                    d={m.d}
+                  />
+                ))}
+                {preSketch.path ? (
+                  <path className={css.sketchPath} d={preSketch.path} />
+                ) : null}
+                {preSketch.hatches.map((d, i) => (
+                  <path key={`h-${i}`} className={css.sketchHatch} d={d} />
+                ))}
+                {preSketch.labels.map((l) => (
+                  <text
+                    key={l.text}
+                    className={css.sketchLabel}
+                    x={l.x}
+                    y={l.y}
+                    fontSize={26}
+                  >
+                    {l.text}
+                  </text>
+                ))}
+              </svg>
+            ) : null}
           </div>
         </div>
         <div className={css.scrim} aria-hidden />
         <div className={css.vignette} aria-hidden />
+
+        {/* Locational-indicative stamp — the pre-sketch is design intent,
+            never survey truth. */}
+        {preSketch ? (
+          <div className={css.sketchStamp} data-testid="hero-presketch-stamp">
+            pre-sketch · indicative
+          </div>
+        ) : null}
 
         <header className={css.topbar}>
           <div className={css.brand}>
@@ -370,6 +680,27 @@ export function LandingCanvas({
           </nav>
         </header>
 
+        {/* The pitch — the studio's positioning over the real frame. */}
+        <div className={css.heroCopy}>
+          <h1 className={css.heroTitle}>
+            From GIS Ingest to Client Sign-Off.
+          </h1>
+          <p className={css.heroSkip}>Skip the CAD.</p>
+          <p className={css.heroLed}>
+            Drop an address. Auto-stream Vicmap boundaries, SPI, overlays,
+            and contours directly into an infinite 3D canvas. Sketch with
+            true stylus telemetry, run live parametric takeoffs, and send
+            clients a frosted-glass portal for instant deposit and approval.
+          </p>
+          <Link
+            href="/home"
+            className={css.heroCta}
+            data-testid="hero-open-studio"
+          >
+            Open the Studio
+          </Link>
+        </div>
+
         <HeroAddressEntry
           onPick={handlePick}
           onOpen={openSite}
@@ -379,13 +710,12 @@ export function LandingCanvas({
 
       <section className={css.steps} aria-labelledby="steps-heading">
         <header className={css.stepsHead}>
-          <p className={css.stepsKicker}>The single source of truth</p>
           <h2 id="steps-heading" className={css.stepsHeading}>
-            One polygon, three moves.
+            The Studio Workflow
           </h2>
         </header>
         <div className={css.stepsGrid}>
-          {STEPS.map((step) => (
+          {WORKFLOW.map((step) => (
             <article
               className={css.stepCard}
               data-landing-step="true"

@@ -1,14 +1,15 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Canvas-first landing — `/` says nothing. The hero is a real sub-metre
- * Stonnington aerial with a live Vicmap title boundary, and its only
- * interactive element is the address entry: type an address, pick the real
- * GNAF match, and the hero re-centres on that property and draws its
- * boundary. One tap enters the product. No pitch copy, no mock telemetry.
+ * Canvas-first landing — `/` pitches the studio over a real frame: a graded
+ * sub-metre Stonnington aerial with a live Vicmap title boundary, the
+ * "From GIS ingest to client sign-off" copy, and an address entry. Type an
+ * address, pick the real GNAF match, and the hero re-centres on that
+ * property and draws its boundary. One tap enters the product. No mock
+ * telemetry — every claim on the page is a shipped studio feature.
  */
 test.describe("Landing hero", () => {
-  test("/ renders the wordless hero without redirecting", async ({
+  test("/ renders the pitch over the real frame without redirecting", async ({
     page,
   }) => {
     await page.goto("/");
@@ -17,7 +18,21 @@ test.describe("Landing hero", () => {
       timeout: 30_000,
     });
 
-    // The entry is the page — it renders server-side and takes focus.
+    // The pitch copy rides the hero frame.
+    await expect(
+      page.getByRole("heading", {
+        name: "From GIS Ingest to Client Sign-Off.",
+      }),
+    ).toBeVisible();
+    await expect(page.getByText("Skip the CAD.")).toBeVisible();
+    await expect(page.getByText(/Auto-stream Vicmap boundaries/i)).toBeVisible();
+    // The CTA — a primary button-styled link into the studio (targeted by
+    // testid: the topbar's "Open the studio" link differs only by case).
+    const cta = page.getByTestId("hero-open-studio");
+    await expect(cta).toHaveAttribute("href", "/home");
+
+    // The entry is still the interactive half — it renders server-side and
+    // takes focus.
     const input = page.getByTestId("hero-address-input");
     await expect(input).toBeVisible();
     await expect(input).toHaveAttribute("placeholder", "Enter your address");
@@ -31,7 +46,7 @@ test.describe("Landing hero", () => {
       /services\.arcgisonline\.com/,
     );
 
-    // No saying — the retired headline and mock-landing copy are both gone.
+    // The retired wordless-era headline and mock-landing copy are both gone.
     await expect(
       page.getByRole("heading", { name: "Onsite sketch to fit sheet." }),
     ).toHaveCount(0);
@@ -72,18 +87,27 @@ test.describe("Landing hero", () => {
     }
   });
 
-  test("steps and app links are present", async ({ page }) => {
+  test("studio workflow and app links are present", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "One polygon, three moves." }),
+      page.getByRole("heading", { name: "The Studio Workflow" }),
     ).toBeVisible();
-    for (const step of ["Title", "Sketch onsite", "Fit sheet"]) {
+    for (const step of [
+      "Live GIS Ingest",
+      "Tactile Vector Sketching",
+      "Infinite 2D/3D Canvas",
+      "Pop-Free LOD",
+      "Parametric Quoting",
+      "One-Click Sections",
+      "Spatial UI",
+      "Client Portal",
+    ]) {
       await expect(
         page.getByRole("heading", { name: step, exact: true }),
       ).toBeVisible();
     }
     await expect(
-      page.getByText(/pulled from the live Victorian cadastre/i).first(),
+      page.getByText(/Auto-stream Vicmap cadastral/i).first(),
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: /Desktop app/ }),
@@ -114,6 +138,12 @@ test.describe("Landing hero", () => {
       await expect(page.getByText(/swimming pool/i)).toBeVisible();
       await expect(page.getByText(/landscaped gardens/i)).toBeVisible();
       await expect(page.getByText(/live title boundary/i)).toBeVisible();
+      // The pre-sketch (design-intent marks over the survey state) anchors
+      // to the same real ring and carries the locational-indicative stamp —
+      // it never reads as survey truth.
+      await expect(page.getByTestId("hero-presketch")).toBeVisible();
+      await expect(page.getByText(/pre-sketch · indicative/i)).toBeVisible();
+      await expect(page.getByText(/proposed lawn/i)).toBeVisible();
     }
   });
 });
