@@ -59,7 +59,7 @@ const labelChip: CSSProperties = {
   backdropFilter: "blur(var(--gs-blur))",
   WebkitBackdropFilter: "blur(var(--gs-blur))",
   fontFamily: "var(--font-tech)",
-  fontSize: 10,
+  fontSize: 10.5,
   letterSpacing: "0.08em",
   pointerEvents: "none",
 };

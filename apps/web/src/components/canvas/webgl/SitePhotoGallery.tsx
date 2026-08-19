@@ -225,7 +225,7 @@ export function SitePhotoGallery({
         <span
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 10,
+            fontSize: 10.5,
             color: "var(--gs-ink-secondary)",
           }}
         >
@@ -325,7 +325,7 @@ export function SitePhotoGallery({
                     <div
                       data-testid="site-photo-stamp"
                       style={{
-                        fontSize: 10,
+                        fontSize: 10.5,
                         color: elevation?.calibration
                           ? "var(--gs-ink-secondary)"
                           : "var(--gs-ink-muted)",

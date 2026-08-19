@@ -21,7 +21,7 @@ const LOOKS: ElevationLook[] = ["N", "E", "S", "W"];
 
 const chipStyle = (active: boolean): React.CSSProperties => ({
   fontFamily: "var(--font-ui)",
-  fontSize: 10,
+  fontSize: 10.5,
   letterSpacing: "0.06em",
   padding: "3px 10px",
   borderRadius: "var(--gs-radius-pill)",
@@ -80,7 +80,7 @@ export function StudioElevationCard({
         >
           <span
             style={{
-              fontSize: 10,
+              fontSize: 10.5,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
               color: "var(--gs-ink-secondary)",

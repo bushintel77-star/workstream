@@ -24,7 +24,7 @@ type PaletteAction = {
 
 const chip: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 10,
+  fontSize: 10.5,
   letterSpacing: "0.06em",
   padding: "1px 7px",
   borderRadius: "var(--gs-radius-pill)",

@@ -185,7 +185,7 @@ export function AssetFanOutDock() {
           WebkitBackdropFilter: "blur(var(--gs-blur))",
           pointerEvents: "none",
           fontFamily: "var(--font-tech)",
-          fontSize: 10,
+          fontSize: 10.5,
           color: GOLD,
         }}
       >

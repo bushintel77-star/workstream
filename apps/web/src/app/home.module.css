@@ -215,7 +215,7 @@
 
 .stateChip {
   font-family: var(--font-tech);
-  font-size: 10px;
+  font-size: 10.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-secondary);
@@ -575,7 +575,7 @@
 .widgetLabel {
   margin: 0;
   font-family: var(--font-tech);
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -693,7 +693,7 @@
 
 .calHead {
   font-family: var(--font-tech);
-  font-size: 9.5px;
+  font-size: 10.5px;
   text-align: center;
   color: var(--ink-tertiary);
 }
@@ -704,7 +704,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-tech);
-  font-size: 10px;
+  font-size: 10.5px;
   color: var(--ink-secondary);
   border-radius: var(--gs-radius-chip);
 }
@@ -744,7 +744,7 @@
 
 .focusStage {
   font-family: var(--font-tech);
-  font-size: 10px;
+  font-size: 10.5px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-tertiary);
@@ -904,7 +904,7 @@
 
 .northN {
   font-family: var(--font-tech);
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--gs-truth-ink);
 }
@@ -937,7 +937,7 @@
 .scaleLabel {
   margin-left: 8px;
   font-family: var(--font-tech);
-  font-size: 10px;
+  font-size: 10.5px;
   letter-spacing: 0.08em;
   color: var(--ink-tertiary);
 }

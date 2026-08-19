@@ -357,7 +357,7 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 700;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ink-primary, #fff) 10%, transparent);

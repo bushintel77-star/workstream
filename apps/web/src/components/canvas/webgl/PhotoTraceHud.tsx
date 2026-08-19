@@ -111,7 +111,7 @@ export function PhotoTraceHud() {
         <span
           data-testid="photo-trace-stamp"
           style={{
-            fontSize: 10,
+            fontSize: 10.5,
             color: elevation.calibration ? "var(--gs-ink-secondary)" : "var(--gs-ink-muted)",
           }}
         >
@@ -122,7 +122,7 @@ export function PhotoTraceHud() {
         <span
           data-testid="photo-trace-boundary-stamp"
           style={{
-            fontSize: 10,
+            fontSize: 10.5,
             color: elevation.boundary_snap
               ? "var(--gs-ink-secondary)"
               : "var(--gs-ink-muted)",

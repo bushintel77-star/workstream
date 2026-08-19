@@ -878,7 +878,7 @@ export function WebGLStudioPreview({
             <span
               style={{
                 fontFamily: "var(--font-technical-mono)",
-                fontSize: 10,
+                fontSize: 10.5,
                 letterSpacing: "0.05em",
                 color: "var(--gs-ink-muted)",
               }}
@@ -897,7 +897,7 @@ export function WebGLStudioPreview({
             <span
               style={{
                 fontFamily: "var(--font-technical-mono)",
-                fontSize: 10,
+                fontSize: 10.5,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
                 color: "var(--gs-primary-ink)",
@@ -1580,7 +1580,7 @@ export function WebGLStudioPreview({
                               ? "var(--gs-chip-active-ink)"
                               : "var(--gs-ink-secondary)",
                           fontFamily: "var(--font-ui)",
-                          fontSize: 10,
+                          fontSize: 10.5,
                           cursor: "pointer",
                         }}
                       >

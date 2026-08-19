@@ -100,12 +100,13 @@
   --font-hand: "Architects Daughter", cursive;
 
   /* type scale — 1.125 ratio, all components reference these.
-     Sub-micro sizes (nano/pico/femto) are for dense canvas chrome:
-     scale labels, HUD chips, annotations. SI-prefix order: femto < pico < nano < micro. */
-  --text-femto: 7px;
-  --text-pico: 8px;
-  --text-nano: 9px;
-  --text-micro: 10px;
+     Chrome type floor (TOKENS.md §1.4 amendment, 2026-08-15): labels 10.5px,
+     figures 11px, glyph accents 9.5px. femto/pico hold the glyph floor;
+     nano/micro hold the label floor. SI order: femto < pico < nano < micro. */
+  --text-femto: 9.5px;
+  --text-pico: 9.5px;
+  --text-nano: 10.5px;
+  --text-micro: 10.5px;
   --text-xs: 11px;
   --text-sm: 13px;
   --text-base: 15px;
@@ -157,15 +158,17 @@
   --s-7: 48px;
   --s-8: 64px;
 
-  /* radii — sharp, minimal; crisp edges, not toy-soft */
-  --r-sm: 5px;
-  --r-md: 7px;
-  --r-lg: 10px;
-  --r-xl: 14px;
-  --r-2xl: 18px;
-  --r-3xl: 24px;
-  --r-canvas: 8px;
-  --r-pill: 999px;
+  /* radii — spec-aligned to the three GS depth radii (TOKENS.md §1.4):
+     panel 12 / chip 6 / pill 999. The legacy --r-* scale survives as
+     compat aliases; every surface resolves to a sanctioned radius. */
+  --r-sm: var(--gs-radius-chip);
+  --r-md: var(--gs-radius-chip);
+  --r-lg: var(--gs-radius-panel);
+  --r-xl: var(--gs-radius-panel);
+  --r-2xl: var(--gs-radius-panel);
+  --r-3xl: var(--gs-radius-panel);
+  --r-canvas: var(--gs-radius-panel);
+  --r-pill: var(--gs-radius-pill);
   --radius-sm: var(--r-sm);
   --radius-md: var(--r-md);
   --radius-lg: var(--r-lg);

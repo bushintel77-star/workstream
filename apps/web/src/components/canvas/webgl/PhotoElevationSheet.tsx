@@ -79,13 +79,13 @@ export function PhotoElevationSheet({
             PHOTO ELEVATION
           </span>
           <span style={{ fontSize: 12 }}>{elevation.name}</span>
-          <span style={{ fontSize: 10, color: "var(--gs-ink-secondary)", fontVariantNumeric: "tabular-nums" }}>
+          <span style={{ fontSize: 10.5, color: "var(--gs-ink-secondary)", fontVariantNumeric: "tabular-nums" }}>
             {widthM.toFixed(1)} m × {heightM.toFixed(1)} m · look {Math.round(elevation.azimuth_deg)}°
           </span>
           <span
             data-testid="photo-sheet-stamp"
             style={{
-              fontSize: 10,
+              fontSize: 10.5,
               color: elevation.calibration ? "var(--gs-ink-secondary)" : "var(--gs-ink-muted)",
             }}
           >
@@ -96,7 +96,7 @@ export function PhotoElevationSheet({
           <span
             data-testid="photo-sheet-boundary-stamp"
             style={{
-              fontSize: 10,
+              fontSize: 10.5,
               color: elevation.boundary_snap
                 ? "var(--gs-ink-secondary)"
                 : "var(--gs-ink-muted)",
@@ -198,7 +198,7 @@ export function PhotoElevationSheet({
           })}
         </svg>
 
-        <p style={{ margin: "6px 0 0", fontSize: 10, color: "var(--gs-ink-muted)" }}>
+        <p style={{ margin: "6px 0 0", fontSize: 10.5, color: "var(--gs-ink-muted)" }}>
           Photo elevation sheet — {elevation.strokes.length} trace strokes.
           {elevation.calibration
             ? " Traced in true metres against the calibrated plane."

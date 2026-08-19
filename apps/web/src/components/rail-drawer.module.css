@@ -87,9 +87,9 @@
   border-radius: 1px;
 }
 
-/* Accent bar on the handle */
+/* Accent bar on the handle — Signal Blue is the sole accent (TOKENS §1.2) */
 .blue .handleLine {
-  background: var(--info);
+  background: var(--gs-primary);
 }
 
 .red .handleLine {

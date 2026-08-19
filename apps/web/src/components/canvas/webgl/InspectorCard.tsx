@@ -74,7 +74,7 @@ const fieldRowCss: CSSProperties = { marginBottom: 6 };
 const fieldLabelCss: CSSProperties = {
   display: "block",
   fontFamily: "var(--font-ui)",
-  fontSize: 10,
+  fontSize: 10.5,
   letterSpacing: "0.05em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
