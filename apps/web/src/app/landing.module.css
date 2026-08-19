@@ -191,115 +191,164 @@
   border-color: color-mix(in srgb, var(--hero-copy) 55%, transparent);
 }
 
-/* ---------------------------------------------------------------- copy */
+/* ---------------------------------------------------------------- entry */
 
-.copyLayer {
+/* The hero's only interactive element — the address entry is the pitch. */
+.entryArea {
   position: absolute;
   z-index: var(--ws-z-wash);
-  left: clamp(28px, 6vw, 96px);
-  bottom: clamp(48px, 10vh, 112px);
-  max-width: 660px;
+  left: 0;
+  right: 0;
+  bottom: clamp(48px, 9vh, 96px);
+  margin-inline: auto;
+  width: min(620px, calc(100% - 48px));
 }
 
-.kicker {
-  margin: 0 0 18px;
-  font-family: var(--font-technical-mono);
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--hero-copy-dim);
-  opacity: 0;
-  animation: heroRise 0.6s var(--ws-ease) 0.15s forwards;
+.entryPanel {
+  position: relative;
+  padding: 10px;
+  background: var(--gs-panel-frost);
+  backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--hero-copy) 18%, transparent);
+  border-radius: var(--r-2xl);
+  box-shadow: var(--gs-shadow-4);
+  transition: border-color 200ms var(--ws-ease), box-shadow 200ms var(--ws-ease);
 }
 
-.headline {
-  margin: 0 0 20px;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(44px, 6.2vw, 76px);
-  line-height: 1.02;
-  letter-spacing: -0.015em;
-  color: var(--hero-copy);
-  text-shadow: 0 2px 32px color-mix(in srgb, var(--gs-ink) 45%, transparent);
-  opacity: 0;
-  animation: heroRise 0.7s var(--ws-ease) 0.3s forwards;
+.entryPanel:focus-within {
+  border-color: color-mix(in srgb, var(--gs-primary) 75%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--gs-primary) 30%, transparent),
+    var(--gs-shadow-4);
 }
 
-.body {
-  margin: 0 0 14px;
-  font-size: 17px;
-  line-height: 1.55;
-  color: var(--hero-copy);
-  text-shadow: 0 1px 20px color-mix(in srgb, var(--gs-ink) 45%, transparent);
-  opacity: 0;
-  animation: heroRise 0.7s var(--ws-ease) 0.45s forwards;
-}
-
-.flowline {
-  margin: 0 0 28px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--hero-copy-dim);
-  opacity: 0;
-  animation: heroRise 0.7s var(--ws-ease) 0.55s forwards;
-}
-
-.ctaRow {
+.entryRow {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  opacity: 0;
-  animation: heroRise 0.7s var(--ws-ease) 0.7s forwards;
+  gap: 10px;
 }
 
-.ctaPrimary {
+.entryInput {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 14px;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--gs-ink);
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+
+.entryInput::placeholder {
+  color: var(--gs-ink-muted);
+}
+
+.entryButton {
   display: inline-flex;
   align-items: center;
-  min-height: 48px;
-  padding: 0 26px;
+  justify-content: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 0 20px;
   font-family: var(--font-ui);
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 600;
   color: var(--gs-panel);
   background: var(--gs-primary);
+  border: 0;
   border-radius: var(--r-xl);
-  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
   transition:
     background 160ms var(--ws-ease),
-    transform 160ms var(--ws-ease),
-    box-shadow 160ms var(--ws-ease);
-  box-shadow: 0 8px 28px color-mix(in srgb, var(--gs-primary) 45%, transparent);
+    transform 160ms var(--ws-ease);
 }
 
-.ctaPrimary:hover,
-.ctaPrimary:focus-visible {
+.entryButton:hover:not(:disabled),
+.entryButton:focus-visible {
   background: var(--gs-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 12px 36px color-mix(in srgb, var(--gs-primary) 55%, transparent);
 }
 
-.ctaGhost {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48px;
-  padding: 0 22px;
+.entryButton:disabled {
+  background: color-mix(in srgb, var(--gs-primary) 45%, var(--gs-frame));
+  color: color-mix(in srgb, var(--gs-panel) 80%, transparent);
+  cursor: default;
+}
+
+.entrySpinner {
+  font-family: var(--font-technical-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--gs-ink-muted);
+  white-space: nowrap;
+}
+
+.entrySuggest {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: var(--ws-z-chrome);
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--gs-panel-frost);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--gs-line);
+  border-radius: var(--r-2xl);
+  box-shadow: var(--gs-shadow-3);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.entryOption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
   font-family: var(--font-ui);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--hero-copy);
-  text-decoration: none;
-  border: 1px solid color-mix(in srgb, var(--hero-copy) 34%, transparent);
-  border-radius: var(--r-xl);
-  background: color-mix(in srgb, var(--gs-panel) 8%, transparent);
-  backdrop-filter: blur(8px);
-  transition: background 160ms var(--ws-ease), border-color 160ms var(--ws-ease);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-lg);
+  cursor: pointer;
 }
 
-.ctaGhost:hover,
-.ctaGhost:focus-visible {
-  background: color-mix(in srgb, var(--gs-panel) 18%, transparent);
-  border-color: color-mix(in srgb, var(--hero-copy) 60%, transparent);
+.entryOption:hover,
+.entryOption:focus-visible {
+  background: var(--gs-panel);
+}
+
+.entryPrimary {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gs-ink);
+}
+
+.entrySecondary {
+  font-size: 12px;
+  color: var(--gs-ink-secondary);
+}
+
+.entryStatus {
+  margin: 12px 0 0;
+  text-align: center;
+  font-family: var(--font-technical-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--hero-copy-dim);
+}
+
+.entryHint {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--hero-copy-dim);
 }
 
 /* ---------------------------------------------------------------- steps */
@@ -391,12 +440,6 @@
   color: var(--gs-ink-secondary);
 }
 
-.steps .ctaRow {
-  animation: none;
-  opacity: 1;
-  margin-bottom: 40px;
-}
-
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -479,17 +522,6 @@
   }
 }
 
-@keyframes heroRise {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes heroDraw {
   to {
     stroke-dashoffset: 0;
@@ -510,12 +542,6 @@
 @media (max-width: 860px) {
   .coordChip {
     display: none;
-  }
-
-  .copyLayer {
-    left: 24px;
-    right: 24px;
-    bottom: 40px;
   }
 
   .stepsGrid {
@@ -542,12 +568,7 @@
     stroke-dashoffset: 0;
   }
 
-  .cornerDots circle,
-  .kicker,
-  .headline,
-  .body,
-  .flowline,
-  .ctaRow {
+  .cornerDots circle {
     animation: none;
     opacity: 1;
   }

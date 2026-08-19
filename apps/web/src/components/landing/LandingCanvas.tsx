@@ -1,15 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
+  buildHeroAerialUrlFor,
   HERO_ADDRESS,
   HERO_IMAGE_H,
   HERO_IMAGE_W,
+  HERO_PIN,
   loadHeroBoundary,
+  pinDmsLabel,
   ringCentroidPct,
+  type GeoPin,
   type HeroBoundary,
 } from "../../lib/landingGeo";
+import {
+  HeroAddressEntry,
+  type AddressSuggestion,
+} from "./HeroAddressEntry";
 import css from "../../app/landing.module.css";
 
 type BoundaryState = "pending" | "live" | "unavailable";
@@ -48,34 +57,46 @@ function cornerVertices(
   return closed ? ring.slice(0, -1) : ring.slice();
 }
 
+/**
+ * The landing says nothing — the entry IS the pitch. A real Stonnington
+ * aerial, one lit property, a live Vicmap title boundary. Type an address
+ * and the hero re-centres on YOUR property and draws ITS boundary; then one
+ * tap enters the product. The product demonstrates itself.
+ */
 export function LandingCanvas({
-  aerialUrl,
-  aerialLowUrl,
-  pinLabel,
+  aerialUrl: initialAerialUrl,
+  aerialLowUrl: initialAerialLowUrl,
 }: {
   aerialUrl: string;
   aerialLowUrl: string;
-  pinLabel: string;
 }) {
+  const router = useRouter();
   const heroRef = useRef<HTMLElement | null>(null);
+  const boundaryRequestRef = useRef(0);
+  const [pin, setPin] = useState<GeoPin>(HERO_PIN);
+  const [addressLabel, setAddressLabel] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<AddressSuggestion | null>(null);
+  const [aerialUrl, setAerialUrl] = useState(initialAerialUrl);
+  const [aerialLowUrl, setAerialLowUrl] = useState(initialAerialLowUrl);
   const [boundary, setBoundary] = useState<HeroBoundary | null>(null);
   const [boundaryState, setBoundaryState] =
     useState<BoundaryState>("pending");
   const [imageReady, setImageReady] = useState(false);
   const [view, setView] = useState({ w: 0, h: 0 });
 
-  // Live Vicmap title boundary — draws itself in when the feed lands.
+  // Live Vicmap title boundary for the current pin — draws itself in.
   useEffect(() => {
     let alive = true;
-    void loadHeroBoundary().then((next) => {
-      if (!alive) return;
+    const requestId = ++boundaryRequestRef.current;
+    void loadHeroBoundary(pin).then((next) => {
+      if (!alive || requestId !== boundaryRequestRef.current) return;
       setBoundary(next);
       setBoundaryState(next ? "live" : "unavailable");
     });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [pin]);
 
   // Measure the hero box so the SVG overlay matches the object-fit crop
   // exactly (cover scale + offset math, image-pixel viewBox).
@@ -131,6 +152,29 @@ export function LandingCanvas({
     };
   }, []);
 
+  /** A picked address re-centres the hero and draws ITS real boundary. */
+  function handlePick(item: AddressSuggestion) {
+    setChosen(item);
+    setAddressLabel(item.place_name);
+    const nextPin = { lat: item.lat, lng: item.lng };
+    setPin(nextPin);
+    setBoundary(null);
+    setBoundaryState("pending");
+    setAerialUrl(buildHeroAerialUrlFor(nextPin));
+    setAerialLowUrl(buildHeroAerialUrlFor(nextPin, 64, 40));
+    setImageReady(false);
+  }
+
+  function openSite() {
+    if (!chosen) return;
+    const params = new URLSearchParams({
+      address: chosen.place_name,
+      lat: String(chosen.lat),
+      lng: String(chosen.lng),
+    });
+    router.push(`/confirm-pin?${params.toString()}`);
+  }
+
   const scale = view.w > 0 ? view.w / HERO_IMAGE_W : 1;
   const dotR = Math.max(2.4, 4.2 / scale);
   const cornerDots: readonly (readonly [number, number])[] =
@@ -141,6 +185,19 @@ export function LandingCanvas({
       : ringCentroidPct(boundary.building ?? boundary.polygon);
   const glowR = boundary?.building ? 0 : 64 / scale;
 
+  let statusLabel: string | null;
+  if (addressLabel && boundaryState === "live") {
+    statusLabel = `live boundary · ${addressLabel}`;
+  } else if (addressLabel && boundaryState === "pending") {
+    statusLabel = `locating · ${addressLabel}`;
+  } else if (addressLabel) {
+    statusLabel = `${addressLabel} · boundary unavailable`;
+  } else if (boundaryState === "live") {
+    statusLabel = `live boundary · ${HERO_ADDRESS}`;
+  } else {
+    statusLabel = "City of Stonnington · Melbourne";
+  }
+
   return (
     <div className={css.page} data-testid="workstream-landing">
       <section ref={heroRef} className={css.hero}>
@@ -148,6 +205,7 @@ export function LandingCanvas({
           <div className={css.kenburns}>
             {/* Low-res export paints instantly — the full frame fades over it. */}
             <img
+              key={`low-${aerialLowUrl}`}
               className={css.aerialLow}
               src={aerialLowUrl}
               alt=""
@@ -155,9 +213,10 @@ export function LandingCanvas({
               data-testid="hero-aerial-base"
             />
             <img
+              key={`high-${aerialUrl}`}
               className={`${css.aerialHigh} ${imageReady ? css.aerialReady : ""}`}
               src={aerialUrl}
-              alt="Sub-metre aerial of a Stonnington residential block"
+              alt="Sub-metre aerial of a Victorian residential block"
               fetchPriority="high"
               decoding="async"
               onLoad={() => setImageReady(true)}
@@ -214,9 +273,7 @@ export function LandingCanvas({
             <span className={css.brandMark} aria-hidden />
             <span className={css.brandText}>Workstream</span>
           </div>
-          <span className={css.coordChip}>
-            Stonnington · {pinLabel}
-          </span>
+          <span className={css.coordChip}>VIC · {pinDmsLabel(pin)}</span>
           <nav className={css.topbarLinks} aria-label="Landing">
             <Link href="/home" className={css.topbarLink}>
               Open the studio
@@ -227,34 +284,11 @@ export function LandingCanvas({
           </nav>
         </header>
 
-        <div className={css.copyLayer}>
-          <p className={css.kicker} data-testid="hero-boundary-status">
-            {boundaryState === "live"
-              ? `${HERO_ADDRESS} · live registry boundary`
-              : "City of Stonnington · Melbourne"}
-          </p>
-          <h1 className={css.headline}>Onsite sketch to fit sheet.</h1>
-          <p className={css.body}>
-            One title boundary, pulled from the live Victorian cadastre —
-            not drawn from memory, not eyeballed, not fabricated. Every line
-            you sketch, every elevation you trace, every plant you place sits
-            on the one polygon that actually defines the site.
-          </p>
-          <p className={css.flowline}>
-            Start with a title. Sketch onsite. Trace the street frontage from
-            a photo calibrated against a 1.8 m fence line. Generate the fit
-            sheet — all from the same boundary polygon, the single source of
-            truth for everything that follows.
-          </p>
-          <div className={css.ctaRow}>
-            <Link href="/home#new-project" className={css.ctaPrimary}>
-              Enter your address
-            </Link>
-            <Link href="/home" className={css.ctaGhost}>
-              Open the studio
-            </Link>
-          </div>
-        </div>
+        <HeroAddressEntry
+          onPick={handlePick}
+          onOpen={openSite}
+          statusLabel={statusLabel}
+        />
       </section>
 
       <section className={css.steps} aria-labelledby="steps-heading">
@@ -276,11 +310,6 @@ export function LandingCanvas({
               <p className={css.stepBody}>{step.body}</p>
             </article>
           ))}
-        </div>
-        <div className={css.ctaRow}>
-          <Link href="/home#new-project" className={css.ctaPrimary}>
-            Enter your address
-          </Link>
         </div>
         <ul className={css.chips} aria-label="What this page runs on">
           <li className={css.chip}>Vicmap cadastre — keyless state data</li>

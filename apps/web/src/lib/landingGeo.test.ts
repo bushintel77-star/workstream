@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildHeroAerialUrl,
+  buildHeroAerialUrlFor,
   HERO_IMAGE_H,
   HERO_IMAGE_W,
+  HERO_PIN,
   heroBbox,
+  heroBboxFor,
   heroPinLabel,
   loadHeroBoundary,
   pctToImagePx,
@@ -41,6 +44,23 @@ describe("heroBbox / aerial URL", () => {
     const [w, s, e, n] = params.get("bbox")!.split(",").map(Number);
     expect(w).toBeLessThan(e);
     expect(s).toBeLessThan(n);
+  });
+
+  it("re-centres the frame on any pin", () => {
+    const pin = { lat: -37.822, lng: 145.0 };
+    const b = heroBboxFor(pin);
+    expect((b.west + b.east) / 2).toBeCloseTo(pin.lng, 9);
+    expect((b.south + b.north) / 2).toBeCloseTo(pin.lat, 9);
+    // Same block span regardless of the pin.
+    expect(b.east - b.west).toBeCloseTo(heroBbox().east - heroBbox().west, 12);
+    expect(b.north - b.south).toBeCloseTo(heroBbox().north - heroBbox().south, 12);
+
+    const params = new URLSearchParams(buildHeroAerialUrlFor(pin).split("?")[1]);
+    const [w, s, e, n] = params.get("bbox")!.split(",").map(Number);
+    expect(w).toBeCloseTo(b.west, 10);
+    expect(s).toBeCloseTo(b.south, 10);
+    expect(e).toBeCloseTo(b.east, 10);
+    expect(n).toBeCloseTo(b.north, 10);
   });
 });
 
@@ -96,7 +116,7 @@ describe("loadHeroBoundary", () => {
         building: null,
       }),
     );
-    const out = await loadHeroBoundary(fetchImpl);
+    const out = await loadHeroBoundary(HERO_PIN, fetchImpl);
     expect(out).not.toBeNull();
     expect(out!.polygon).toHaveLength(5);
     const [x0, y0] = out!.polygon[0]!;
@@ -108,10 +128,17 @@ describe("loadHeroBoundary", () => {
   });
 
   it("returns null when the feed is empty or fails", async () => {
-    expect(await loadHeroBoundary(vi.fn(async () => ok({ polygon: null })))).toBeNull();
-    expect(await loadHeroBoundary(vi.fn(async () => ({ ok: false, json: async () => ({}) }) as Response))).toBeNull();
     expect(
-      await loadHeroBoundary(vi.fn(async () => { throw new Error("down"); })),
+      await loadHeroBoundary(HERO_PIN, vi.fn(async () => ok({ polygon: null }))),
+    ).toBeNull();
+    expect(
+      await loadHeroBoundary(
+        HERO_PIN,
+        vi.fn(async () => ({ ok: false, json: async () => ({}) }) as Response),
+      ),
+    ).toBeNull();
+    expect(
+      await loadHeroBoundary(HERO_PIN, vi.fn(async () => { throw new Error("down"); })),
     ).toBeNull();
   });
 });

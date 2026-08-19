@@ -7,16 +7,18 @@ Next.js + token stack.
 
 ## 1. Vision
 
-One sentence: **open the site and you are looking at a frame from the
-product, with the product's real data in it.**
+One sentence: **the landing says nothing — the entry IS the pitch.**
 
-The hero is not an illustration or a screenshot — it is the product's own
-frame: a sub-metre aerial of the operator's home turf (City of Stonnington),
-graded to dusk, one property lit, with a **real Vicmap title boundary**
-drawn over it in the exact cobalt the studio draws title polygons. The
-headline that sits on it — "Onsite sketch to fit sheet." — is a claim the
-image itself proves, because the boundary was pulled from the live
-Victorian cadastre, not drawn from memory.
+The hero is a frame from the product, with the product's real data in it: a
+sub-metre aerial of the operator's home turf (City of Stonnington), graded
+to dusk, one property lit, with a **real Vicmap title boundary** drawn over
+it in the exact cobalt the studio draws title polygons. There is no
+headline, no body copy, no claim. The hero's only interactive element is an
+address input floating on the frame. Type your address, pick the real GNAF
+match, and the hero **re-centres on your property and draws its actual
+registry boundary** — the product demonstrates itself, wordlessly. One tap
+enters the product. The insinuation does the selling; the data does the
+proof.
 
 ## 2. Competitor + 2026 pattern synthesis
 
@@ -57,7 +59,7 @@ Browser-based. No Electron, no shadcn, no new dependencies:
 
 ## 4. Screen spec (for Stitch if used)
 
-### 4.1 Landing — hero (100vh)
+### 4.1 Landing — hero (100vh, no copy)
 
 - **The frame.** Full-bleed aerial of a Stonnington block centred on
   1A Redcourt Avenue, Armadale (GNAF-verified pin), ~280 m × 169 m, slow
@@ -69,24 +71,19 @@ Browser-based. No Electron, no shadcn, no new dependencies:
   cobalt with luminous corner dots; draw-in stroke animation when the live
   feed lands. If the registry is unreachable the hero simply omits the
   overlay — never a fabricated polygon.
-- **Top bar.** Workstream wordmark (Space Grotesk) + Stonnington DMS
-  coordinate chip (JetBrains Mono) + "Open the studio" / "Settings".
-- **Copy (bottom-left, fixed-light on the grade).**
-  - Kicker: "1A Redcourt Avenue, Armadale · live registry boundary".
-  - H1 (Fraunces, clamp 44–76): "Onsite sketch to fit sheet."
-  - Body: "One title boundary, pulled from the live Victorian cadastre —
-    not drawn from memory, not eyeballed, not fabricated. Every line you
-    sketch, every elevation you trace, every plant you place sits on the
-    one polygon that actually defines the site."
-  - Flow: "Start with a title. Sketch onsite. Trace the street frontage
-    from a photo calibrated against a 1.8 m fence line. Generate the fit
-    sheet — all from the same boundary polygon, the single source of truth
-    for everything that follows."
-  - CTAs: "Enter your address" (Signal Blue pill → `/home#new-project`)
-    + "Open the studio" (frost ghost → `/home`).
+- **Top bar.** Workstream wordmark (Space Grotesk) + live VIC DMS
+  coordinate chip (JetBrains Mono, tracks the current hero centre) +
+  "Open the studio" / "Settings".
+- **The entry (the only copy).** A frost panel bottom-centre holding one
+  input — placeholder "Enter your address" — with a Signal Blue arrow
+  button. Typing shows real GNAF matches. Picking one re-centres the
+  aerial on that property, draws its live boundary, and the button becomes
+  "Open the site" (→ `/confirm-pin`, the product's pin flow). Enter picks
+  the first match; a second Enter opens. A single mono status line under
+  the panel reports data, not marketing: "live boundary · <address>".
 - **Choreography.** Server paint → low-res base (instant) → full frame
-  fades (900 ms) → copy rises in staggered 150 ms steps → boundary draws
-  itself in when live data lands.
+  fades (900 ms) → boundary draws itself in when live data lands → the
+  entry takes focus on pointer devices. Nothing ever says anything.
 
 ### 4.2 Landing — below the fold
 
@@ -111,17 +108,22 @@ API — `/integrations/hub`".
 
 - `app/page.tsx` — server: aerial URLs + metadata; renders `<LandingCanvas>`.
 - `components/landing/LandingCanvas.tsx` — client: boundary fetch,
-  cover-crop overlay math, draw-in, reveals, parallax.
-- `lib/landingGeo.ts` — bbox, projection, aerial URL, feed loader (pure
-  math unit-tested).
+  cover-crop overlay math, draw-in, reveals, parallax, re-centre on pick.
+- `components/landing/HeroAddressEntry.tsx` — the hero input: GNAF
+  suggestions, pick → re-centre, "Open the site" gate → `/confirm-pin`.
+- `lib/landingGeo.ts` — pin-parameterised bbox, projection, aerial URL,
+  feed loader (pure math unit-tested).
 - `app/landing.module.css` — tokens only (`--gs-*`, `--hero-*`, `--r-*`).
 - `routes/geo-hero.ts` (API) — public title/building feed.
 - `app/settings/page.tsx` + `settings.module.css` — settings hub.
 
 ## 6. Acceptance
 
-- First paint with server copy + low-res base — no blank/loading state.
-- The hero boundary is a live Vicmap polygon; failure omits it (never mock).
+- First paint with the entry + low-res base — no blank/loading state; the
+  input takes focus on pointer devices.
+- The hero boundary is a live Vicmap polygon for the CURRENT pin; picking
+  an address re-centres and re-draws it; failure omits it (never mock).
+- No marketing copy on the hero — only the entry, navigation, and data.
 - `prefers-reduced-motion` collapses all animation to fades.
 - Zero raw hex outside the token blocks (CI-gated); CSS Modules only.
 - Desktop-first; 44 px targets on coarse pointers (repo law).
