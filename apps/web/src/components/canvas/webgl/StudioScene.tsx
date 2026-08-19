@@ -46,6 +46,7 @@ import { StitchSnapLayer } from "./StitchSnapLayer";
 import { PhotoTracePlane } from "./PhotoTracePlane";
 import { PlacementGizmo } from "./PlacementGizmo";
 import { TerrainMesh } from "./TerrainMesh";
+import { DottedGroundField } from "./DottedGroundField";
 import { ElevationSliceLine } from "./ElevationSliceLine";
 import { DrainageFlowLayer } from "./DrainageFlowLayer";
 import { EarthworksLayer } from "./EarthworksLayer";
@@ -591,7 +592,6 @@ function GroundPlane({
   const w = scaleM * GROUND_CONTEXT_EXTENT;
   const h = scaleM * boardAspect * GROUND_CONTEXT_EXTENT;
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
-  const gridRef = useRef<THREE.GridHelper>(null);
 
   // Target colours (memoized so we don't allocate THREE.Color per frame).
   const colorOlive = useMemo(() => new THREE.Color(PALETTE.groundOlive), []);
@@ -615,14 +615,6 @@ function GroundPlane({
     mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, k);
     mat.roughness = THREE.MathUtils.lerp(mat.roughness, targetRoughness, k);
     mat.color.lerp(targetColor, k);
-
-    // Fade the grid in blueprint mode so it doesn't fight the CAD lines.
-    const grid = gridRef.current;
-    if (grid) {
-      const gridMat = grid.material as THREE.Material;
-      const targetGridOpacity = subsurfaceView ? 0.15 : 0.6;
-      gridMat.opacity = THREE.MathUtils.lerp(gridMat.opacity, targetGridOpacity, k);
-    }
   });
 
   return (
@@ -638,11 +630,9 @@ function GroundPlane({
           opacity={1}
         />
       </mesh>
-      <gridHelper
-        ref={gridRef}
-        args={[w, Math.round(w / 10), "#FFFFFF", "#D4D4D4"]}
-        position={[0, 0.01, 0]}
-      />
+      {/* Dotted infinity field — world-space procedural dots replace the
+          old line grid (hard intersections, zoom flicker, carpet edges). */}
+      <DottedGroundField w={w} h={h} />
     </>
   );
 }

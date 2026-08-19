@@ -205,17 +205,32 @@ export function PerimeterTabStrip({
       </div>
 
       {trailing ? (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginLeft: "auto",
-            flex: "0 0 auto",
-          }}
-        >
-          {trailing}
-        </div>
+        <>
+          {/* States are visually separated from the action tabs: one
+              hairline + breathing room, actions left, states right. */}
+          <div
+            aria-hidden
+            style={{
+              width: 1,
+              height: 14,
+              background: "color-mix(in srgb, var(--gs-line) 70%, transparent)",
+              flex: "0 0 auto",
+              marginLeft: "auto",
+            }}
+          />
+          <div
+            role="status"
+            aria-label="Canvas state"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flex: "0 0 auto",
+            }}
+          >
+            {trailing}
+          </div>
+        </>
       ) : null}
     </div>
   );

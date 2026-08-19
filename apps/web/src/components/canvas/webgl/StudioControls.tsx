@@ -34,6 +34,7 @@ import {
   type TouchPoint,
 } from "./touchOrbit";
 import { worldToPct, type PctPoint } from "./coordTransform";
+import { setGridFocal } from "./dottedGrid";
 import { useSeasonalStore } from "./seasonalStore";
 import { useStudioStore } from "./studioStore";
 import {
@@ -401,6 +402,9 @@ export function StudioControls({
       if (onCursorMove && reportCursor) {
         const world = raycastGround(e, groundRef);
         if (world) {
+          // The dotted ground field breathes toward the last interaction
+          // point — plain module refs, zero React commits per move.
+          setGridFocal(world[0], world[1]);
           reportCursor(worldToPct(world[0], world[1], scaleM, boardAspect));
         } else {
           reportCursor(null);
