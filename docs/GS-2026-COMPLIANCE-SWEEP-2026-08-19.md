@@ -61,7 +61,15 @@ All hardcoded heavy black shadows replaced with the neutral
   `app.module.css` page header/footer (14/16px), `toast-host`, `clientShare`,
   `arBirdseye`, `PhotoTraceHud` (10px), `rail-drawer` (20px).
 
-### 6. Hygiene
+### 6. Radius tokens (TOKENS §1.4 — panel 12px / chip 6px / pill 999px)
+
+Shared surfaces moved off the legacy `--r-*` scale onto the spec tokens:
+`ui.module.css` dialog panel (was `--r-lg` 10px) and popover menu (was
+`--r-sm` 5px) → `--gs-radius-panel`; `newProjectAddressForm` suggestions
+dropdown (was `--r-sm`) → `--gs-radius-chip`. The legacy `--r-*` scale
+(5/7/10/14/18) itself remains for non-GS surfaces pending a full audit.
+
+### 7. Hygiene
 
 - 14 double-encoded mojibake sequences in `styles/globals.css` comments
   (`â\u0080\u0094` → `—`, `Â§` → `§`) fixed byte-exact via Node; repo scanned
@@ -79,8 +87,9 @@ All hardcoded heavy black shadows replaced with the neutral
 
 ## Known remaining sweep items (next rounds)
 
-- `--r-*` radius usage vs `--gs-radius-*` (panel 12px / chip 6px / pill 999px)
-  audit across component modules.
+- Full `--r-*` scale audit (5/7/10/14/18) vs the three `--gs-radius-*`
+  tokens across all component modules — shared dialogs/popovers/suggestions
+  are done; the app-shell cards and canvas surfaces remain.
 - Chrome type floor re-check (10.5px labels / 11px figures) on the
   `--text-nano` (9px) and `--text-micro` (10px) consumers that are not glyph
   accents.
