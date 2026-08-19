@@ -55,6 +55,7 @@ import presentationPackRoutes from "../routes/presentation-pack";
 import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
 } from "../routes/integration-hub";
+import geoHeroRoutes from "../routes/geo-hero";
 
 type BuildTestAppOptions = {
   authRequired?: boolean;
@@ -123,6 +124,7 @@ export async function buildTestApp(options: BuildTestAppOptions = {}) {
   await app.register(stripeWebhookRoutes);
   await app.register(settingsRoutes, { prefix: "/settings" });
   await app.register(integrationHubRoutes, { prefix: "/integrations" });
+  await app.register(geoHeroRoutes, { prefix: "/geo" });
   await app.register(
     async (scope) => {
       await registerProjectIntegrationRoutes(scope);

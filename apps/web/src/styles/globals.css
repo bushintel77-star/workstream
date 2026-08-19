@@ -674,6 +674,20 @@ button:focus-visible {
    */
   --hc-frost: color-mix(in srgb, var(--gs-panel) 86%, transparent);
   --hc-frost-shadow: var(--gs-shadow-3);
+
+  /*
+   * Landing hero — photographic grade tokens. Fixed values by design: the
+   * dusk grade over the Stonnington aerial stays dark in both colour
+   * schemes, so hero copy, scrim and the lit-property glow must not flip
+   * with prefers-color-scheme. Boundary stroke reuses the studio title
+   * cobalt so the hero reads as a frame from the product.
+   */
+  --hero-copy: #f6f4ef;
+  --hero-copy-dim: color-mix(in srgb, #f6f4ef 68%, transparent);
+  --hero-glow-warm: #ffb066;
+  --hero-glow-soft: #ffd9a8;
+  --hero-scrim: color-mix(in srgb, var(--gs-ink) 34%, transparent);
+  --hero-boundary: var(--gs-truth);
   --ws-frame-top: 46px;
   --ws-frame-left: 48px;
   --ws-frame-right: 14px;

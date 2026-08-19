@@ -71,6 +71,7 @@ import stripeWebhookRoutes from './routes/stripe-webhook';
 import integrationHubRoutes, {
   registerProjectIntegrationRoutes,
 } from './routes/integration-hub';
+import geoHeroRoutes from './routes/geo-hero';
 import protectedFileRoutes from './routes/protected-files';
 const server = Fastify({
   /* Railway (and most PaaS) terminate TLS at the edge — trust X-Forwarded-*
@@ -211,6 +212,7 @@ async function start() {
   await server.register(stripeWebhookRoutes);
   await server.register(settingsRoutes, { prefix: '/settings' });
   await server.register(integrationHubRoutes, { prefix: '/integrations' });
+  await server.register(geoHeroRoutes, { prefix: '/geo' });
   await server.register(
     async (scope) => {
       await registerProjectIntegrationRoutes(scope);

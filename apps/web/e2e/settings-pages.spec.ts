@@ -3,25 +3,17 @@ import { test, expect } from "@playwright/test";
 const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 
 /**
- * Settings — web UI routes were removed in 9a29992 (crew/rate-card/suppliers/
- * license pages deleted). Soft isVisible skips that greened empty shells are gone.
- *
- * Hard coverage today:
- * - Web /settings/* must 404 (surfaces intentionally absent)
- * - Crew add/remove via API (fail if endpoints break)
- * - Rate card / suppliers / license API still return meaningful payloads
- *
- * When web settings UI returns, replace the 404 asserts with form + Dialog flows.
+ * Settings — web UI routes: the crew / rate-card / suppliers forms were
+ * removed in 9a29992 (soft 404 coverage). The settings hub and the license
+ * surface are present and read live API data; crew/rate-card/suppliers APIs
+ * remain and fail hard if they break.
  */
-test.describe("Settings — web routes removed", () => {
-  test("crew / rate-card / suppliers / license pages are gone", async ({
-    page,
-  }) => {
+test.describe("Settings — web routes", () => {
+  test("removed form routes 404", async ({ page }) => {
     for (const path of [
       "/settings/crew",
       "/settings/rate-card",
       "/settings/suppliers",
-      "/settings/license",
     ]) {
       const res = await page.goto(path);
       expect(res, `navigation to ${path}`).toBeTruthy();
@@ -30,6 +22,31 @@ test.describe("Settings — web routes removed", () => {
         timeout: 10_000,
       });
     }
+  });
+
+  test("/settings hub renders live integration state", async ({ page }) => {
+    await page.goto("/settings");
+    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible({
+      timeout: 30_000,
+    });
+    // Channel rows come from /integrations/hub — real API data.
+    await expect(page.getByTestId("settings-channels")).toBeVisible({
+      timeout: 30_000,
+    });
+    const rows = page.getByTestId("settings-channels").locator("li");
+    expect(await rows.count()).toBeGreaterThanOrEqual(5);
+    await expect(
+      page.getByRole("heading", { name: "Recent events" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Live from the API/),
+    ).toBeVisible();
+
+    // The license surface is reachable from the hub.
+    await page.getByRole("link", { name: "Manage license & seats" }).click();
+    await expect(
+      page.getByRole("heading", { name: "License & seats" }),
+    ).toBeVisible({ timeout: 30_000 });
   });
 });
 
@@ -117,5 +134,23 @@ test.describe("Settings — rate card / suppliers / license API", () => {
     const body = (await res.json()) as { license: Record<string, unknown> };
     expect(body.license).toBeTruthy();
     expect(typeof body.license).toBe("object");
+  });
+
+  test("geo hero feed returns the live title polygon for the landing pin", async ({
+    request,
+  }) => {
+    const res = await request.get(
+      `${API}/geo/hero?lat=-37.860043&lng=145.011706`,
+    );
+    // Keyless Vicmap is upstream-live; accept 200 or 502 (registry down),
+    // but never anything else — the route itself must exist and validate.
+    expect([200, 502]).toContain(res.status());
+    const body = (await res.json()) as {
+      polygon?: { coordinates?: number[][][] } | null;
+    };
+    if (res.status() === 200) {
+      const ring = body.polygon?.coordinates?.[0];
+      expect(ring && ring.length >= 4).toBeTruthy();
+    }
   });
 });

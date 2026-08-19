@@ -136,6 +136,16 @@ export function NewProjectAddressForm() {
 
   const canContinue = query.trim().length >= 5;
 
+  // Landing CTA ("Enter your address") deep-links to /home#new-project —
+  // land focus in the composer so the flow continues in one keystroke.
+  useEffect(() => {
+    if (window.location.hash !== "#new-project") return;
+    const el = document.getElementById("project-address");
+    if (el instanceof HTMLInputElement) {
+      window.requestAnimationFrame(() => el.focus());
+    }
+  }, []);
+
   return (
     <div className={css.form}>
       <div className={css.field}>

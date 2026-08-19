@@ -28,12 +28,18 @@ export function AppNav({ summary, brandSub = false }: Props) {
           <Link href="/home" className={nav.link}>
             Projects
           </Link>
+          <Link href="/settings" className={nav.link}>
+            Settings
+          </Link>
         </div>
         <details className={nav.mobileMenu}>
           <summary className={nav.menuButton}>Menu</summary>
           <div className={nav.mobilePanel}>
             <Link href="/home" className={nav.mobileLink}>
               Projects
+            </Link>
+            <Link href="/settings" className={nav.mobileLink}>
+              Settings
             </Link>
           </div>
         </details>
