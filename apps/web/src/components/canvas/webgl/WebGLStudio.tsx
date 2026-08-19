@@ -108,6 +108,15 @@ export interface WebGLStudioProps {
   onContextLost?: () => void;
   children?: ReactNode;
   style?: CSSProperties;
+  /** Active canvas mode — drives the meta chip-set's phase illumination. */
+  mode?: string;
+  /** Cadastral/environmental records for the ambient meta chip-set. */
+  siteMeta?: {
+    titleRef?: string | null;
+    lga?: string | null;
+    lotAreaM2?: number | null;
+    sunHours?: number | null;
+  };
 }
 
 /**
@@ -170,6 +179,8 @@ export function WebGLStudio({
   onContextLost,
   children,
   style,
+  mode = "survey",
+  siteMeta,
 }: WebGLStudioProps) {
   const onCanvasCreated = useCallback(({ gl, scene }: { gl: WebGLRenderer; scene: THREE.Scene }) => {
     gl.setClearColor(PALETTE.gsCanvas);
@@ -258,6 +269,8 @@ export function WebGLStudio({
           keylessOverlays={keylessOverlays}
           neighbourBuildings={neighbourBuildings}
           showSketch={showSketch}
+          mode={mode}
+          siteMeta={siteMeta}
         />
 
         <RenderFX />

@@ -295,13 +295,19 @@ export function StudioToolRail({
                   : "var(--gs-ink-secondary)",
               cursor: t.disabled ? "not-allowed" : "pointer",
               opacity: t.disabled ? 0.55 : 1,
-              transition: "background 0.15s, color 0.15s",
+              transition: "background 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
             }}
             onMouseEnter={(e) => {
-              if (!active && !t.disabled) e.currentTarget.style.color = "var(--gs-ink)";
+              if (t.disabled) return;
+              if (!active) e.currentTarget.style.color = "var(--gs-ink)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "var(--gs-shadow-1)";
             }}
             onMouseLeave={(e) => {
-              if (!active && !t.disabled) e.currentTarget.style.color = "var(--gs-ink-secondary)";
+              if (t.disabled) return;
+              if (!active) e.currentTarget.style.color = "var(--gs-ink-secondary)";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           >
             <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>

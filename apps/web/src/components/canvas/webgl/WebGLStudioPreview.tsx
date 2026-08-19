@@ -152,6 +152,13 @@ export interface WebGLStudioPreviewProps {
   quotePortalUri?: string | null;
   /** Null means CAD verification could not be loaded and sharing must fail closed. */
   initialCadGhostCount?: number | null;
+  /** Cadastral/environmental records for the ambient meta chip-set. */
+  siteMeta?: {
+    titleRef?: string | null;
+    lga?: string | null;
+    lotAreaM2?: number | null;
+    sunHours?: number | null;
+  };
 }
 
 export function WebGLStudioPreview({
@@ -186,6 +193,7 @@ export function WebGLStudioPreview({
   hasQuote = false,
   quotePortalUri = null,
   initialCadGhostCount = null,
+  siteMeta,
 }: WebGLStudioPreviewProps) {
   /**
    * Discrete camera write (garden look / zoom buttons / palette) — straight
@@ -236,6 +244,19 @@ export function WebGLStudioPreview({
   });
   const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null);
   const [webglLost, setWebglLost] = useState(false);
+
+  // Tool-state canvas cursor — crosshair while a draw vector is armed
+  // (sketch / measure / trench / zone / asset), grab while panning, and
+  // grabbing during an active pan drag. Survey/select keep the default.
+  const sketchMode = useStudioStore((s) => s.sketchMode);
+  const measureActive = useStudioStore((s) => s.measureActive);
+  const trenchTool = useStudioStore((s) => s.trenchTool);
+  const zoneTool = useStudioStore((s) => s.zoneTool);
+  const armedSymbolId = useStudioStore((s) => s.armedSymbolId);
+  const drawCursor =
+    sketchMode || measureActive || trenchTool !== null || zoneTool !== null || armedSymbolId !== null
+      ? "crosshair"
+      : "grab";
 
   useEffect(() => {
     const probe = document.createElement("canvas");
@@ -682,6 +703,8 @@ export function WebGLStudioPreview({
     neighbourBuildings: visibleLayers.siteTruth ? neighbourBuildings : [],
     showSketch: visibleLayers.sketch,
     layerPolicy: policy,
+    mode: activeMode,
+    siteMeta,
     onGroundClick: handleGroundClick,
     onContextLost: () => {
       setWebglLost(true);
@@ -753,7 +776,7 @@ export function WebGLStudioPreview({
       style={{
         position: "absolute",
         inset: 0,
-        cursor: "grab",
+        cursor: drawCursor,
       }}
       onPointerDown={(e) => {
         // Grabbing while panning the drawing; text inputs opt back out.
@@ -761,10 +784,10 @@ export function WebGLStudioPreview({
           e.target instanceof HTMLElement &&
           (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)
         ) return;
-        e.currentTarget.style.cursor = "grabbing";
+        if (drawCursor === "grab") e.currentTarget.style.cursor = "grabbing";
       }}
-      onPointerUp={(e) => { e.currentTarget.style.cursor = "grab"; }}
-      onPointerLeave={(e) => { e.currentTarget.style.cursor = "grab"; }}
+      onPointerUp={(e) => { e.currentTarget.style.cursor = drawCursor; }}
+      onPointerLeave={(e) => { e.currentTarget.style.cursor = drawCursor; }}
     >
       {/* The render surface: ONE studio, or the split lens (locked plan |
           live 3D, linked cameras). The DOM chrome overlays whichever is
@@ -774,6 +797,22 @@ export function WebGLStudioPreview({
       ) : (
         <WebGLStudio {...sceneProps} />
       )}
+
+      {/* Mode cross-fade — a 150 ms paper veil keyed by mode: swapping
+          Survey → Elevation blooms through the canvas colour instead of
+          hard-cutting layer visibility. Pointer-transparent, one-shot. */}
+      <div
+        key={`mode-fade-${activeMode}`}
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 1,
+          background: "var(--gs-canvas)",
+          animation: "gsModeFadeOut 150ms ease-out forwards",
+        }}
+      />
 
       {/* ---- The chrome overlay (pointer-transparent; children opt in) ---- */}
       <div

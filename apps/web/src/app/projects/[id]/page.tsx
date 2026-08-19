@@ -155,6 +155,12 @@ export default async function ProjectCanvasPage({
         hasQuote={Boolean(quoteOut)}
         quotePortalUri={quoteOut?.uri ?? null}
         initialCadGhostCount={cad?.ghost_count ?? null}
+        siteMeta={{
+          titleRef: titleBlock?.parcelRef ?? null,
+          lga: titleBlock?.councilLabel ?? null,
+          lotAreaM2: titleBlock?.lotAreaM2 ?? null,
+          sunHours: null,
+        }}
       />
     </main>
   );

@@ -51,6 +51,8 @@ import { ElevationSliceLine } from "./ElevationSliceLine";
 import { DrainageFlowLayer } from "./DrainageFlowLayer";
 import { EarthworksLayer } from "./EarthworksLayer";
 import { DimensionLayer } from "./DimensionLayer";
+import { MetaChipSet } from "./MetaChipSet";
+import { buildMetaChips } from "./metaChips";
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { TrenchLayer } from "./TrenchLayer";
 import { IrrigationZoneLayer } from "./IrrigationZoneLayer";
@@ -98,6 +100,15 @@ export interface StudioSceneProps {
   keylessOverlays?: DesignKeylessOverlay[];
   /** Real neighbouring footprints; height is rendered only when supplied. */
   neighbourBuildings?: DesignNeighbourBuilding[];
+  /** Active canvas mode — drives the meta chip-set's phase illumination. */
+  mode?: string;
+  /** Cadastral/environmental records for the ambient meta chip-set. */
+  siteMeta?: {
+    titleRef?: string | null;
+    lga?: string | null;
+    lotAreaM2?: number | null;
+    sunHours?: number | null;
+  };
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
@@ -663,6 +674,8 @@ export function StudioScene({
   keylessOverlays = [],
   neighbourBuildings = [],
   showSketch = true,
+  mode = "survey",
+  siteMeta,
 }: StudioSceneProps) {
   // Default policy keeps every mode's legacy behaviour when unset.
   const policy: CanvasLayerPolicy = layerPolicy ?? {
@@ -682,6 +695,25 @@ export function StudioScene({
   const elevationSampler = useMemo(
     () => createElevationSampler(heightmapPoints, scaleM, boardAspect),
     [heightmapPoints, scaleM, boardAspect],
+  );
+
+  // Ambient meta chip-set — derived from title/overlay/level records, never
+  // invented (absent data → absent chips). Recomputed only when inputs change.
+  const metaChips = useMemo(
+    () =>
+      buildMetaChips({
+        boundary: boundaryPct,
+        scaleM,
+        boardAspect,
+        titleRef: siteMeta?.titleRef,
+        lga: siteMeta?.lga,
+        lotAreaM2: siteMeta?.lotAreaM2,
+        overlays: keylessOverlays,
+        easementRingCount: easementsPct.length,
+        heightmap: heightmapPoints,
+        sunHours: siteMeta?.sunHours,
+      }),
+    [boundaryPct, scaleM, boardAspect, siteMeta, keylessOverlays, easementsPct, heightmapPoints],
   );
 
   return (
@@ -764,6 +796,14 @@ export function StudioScene({
         buildingPct={buildingPct}
         scaleM={scaleM}
         boardAspect={boardAspect}
+      />
+      {/* Vicmap meta chip-set — ambient satellite tags orbiting the boundary. */}
+      <MetaChipSet
+        boundaryPct={boundaryPct}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        mode={mode}
+        chips={metaChips}
       />
       {/* Measure tape — armed tool, self-gates on measureActive. */}
       <MeasureTapeLayer
