@@ -143,4 +143,61 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "off",
     },
   },
+  /*
+   * SDS UI element standards enforcement — see docs/UI-ELEMENT-STANDARDS.md.
+   *
+   * Scoped to the canvas component tree only; feature modules outside
+   * canvas are free to use whatever scales they decide on. The four
+   * numeric scales here all have a token reference in
+   * apps/web/src/styles/globals.css:
+   *   --gs-radius-{xs|sm|md|lg|xl|2xl|pill}    7 rungs
+   *   --gs-font-{micro|xs|sm|md|lg|sub|h3|h2|h1}  9 rungs
+   *   --gs-space-{1|2|3|4|6|8|10}             7 rungs
+   *
+   * Raw rgba()/rgb() is flagged anywhere under apps/web/src/components/canvas
+   * because 4 dev-HUD tokens already cover all the dark-surface needs, plus
+   * the named --gs-shadow / --gs-warning-amber companion tokens cover the
+   * only two content-meaningful rgba usages left in the tree.
+   *
+   * Companion reader: apps/web/src/components/canvas/ui.scan.test.ts
+   * catches the same patterns at vitest time (defense in depth — lint
+   * catches it on save, the scan catches it on commit).
+   *
+   * Test files (.test.ts/.test.tsx) are excluded from these lints so the
+   * scan test's own quoted examples (and any future fixture) don't trip
+   * the rule on themselves.
+   */
+  {
+    files: ["apps/web/src/components/canvas/**/*.ts", "apps/web/src/components/canvas/**/*.tsx"],
+    ignores: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "Property[key.name='borderRadius'][value.type='Literal'][value.raw=/^\\d/]",
+          message:
+            "Raw numeric borderRadius is forbidden in canvas — use var(--gs-radius-xs|sm|md|lg|xl|2xl|pill) per docs/UI-ELEMENT-STANDARDS.md §1.",
+        },
+        {
+          selector:
+            "Property[key.name='fontSize'][value.type='Literal'][value.raw=/^\\d/]",
+          message:
+            "Raw numeric fontSize is forbidden in canvas — use var(--gs-font-micro|xs|sm|md|lg|sub|h3|h2|h1) per docs/UI-ELEMENT-STANDARDS.md §2.",
+        },
+        {
+          selector:
+            "Property[key.name='gap'][value.type='Literal'][value.raw=/^\\d/]",
+          message:
+            "Raw numeric gap is forbidden in canvas — use var(--gs-space-1|2|3|4|6|8|10) per docs/UI-ELEMENT-STANDARDS.md §3.",
+        },
+        {
+          selector:
+            "Literal[value=/rgba?\\(\\s*\\d/]",
+          message:
+            "Raw rgba()/rgb() literal in canvas is forbidden — consume a CSS token (--cf-dark-chrome-bg, --cf-dark-panel-bg, --gs-shadow, --gs-warning-amber) per docs/UI-ELEMENT-STANDARDS.md §5.",
+        },
+      ],
+    },
+  },
 );

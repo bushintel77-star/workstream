@@ -125,19 +125,22 @@ and the standards it should hit:
 The standards are useless without a migration. The cost of each tier
 varies; pick the cheap ones first.
 
-**Tier 1 — zero risk, no visual change** ✅ **shipped** (28 sites across
-10 .tsx files; `ui.scan.test.ts` flipped from 4 failed to 6 passed)
-1. `borderRadius: 6` → `var(--gs-radius-md)` (~5 sites).
-2. `borderRadius: 999` → `var(--gs-radius-pill)` (10 sites, files:
-   AssetFanOutDock × 2, FitSheetCard × 2, FloraRingLayer × 3,
-   SketchCadReviewCard × 1, SplitViewLens × 1, WebGLStudioPreview × 1).
-3. `borderRadius: 10` → `var(--gs-radius-xl)` (1 site, AssetFanOutDock L58).
-4. `fontSize: 11` → `var(--gs-font-sm)` (~4 sites, mostly CfzTierInspector).
-5. `fontSize: 10.5` → `var(--gs-font-xs)` (~6 sites, micro-copy).
-6. `fontSize: 9` → `var(--gs-font-micro)` (2 sites, ViewportTransitionHUD).
-7. `gap: 4` → `var(--gs-space-2)`, `gap: 1` → `var(--gs-space-1)`,
-   `gap: 3` → `var(--gs-space-2)` (8 sites).
-8. New rung `--gs-space-10: 10px` added so `gap: 10` round-trips (3 sites
+**Tier 1 — zero risk, no visual change** ✅ **shipped** (252 sites across
+30 .tsx files; `ui.scan.test.ts` flipped from 4 failed to 6 passed;
+`pnpm exec eslint apps/web/src/components/canvas/` returns 0)
+1. `borderRadius: {3,4,6,8,12,14,999,9999}` → matching `--gs-radius-{xs|sm|md|lg|xl|2xl|pill}` (21 sites total).
+2. `fontSize: {9.5,10.5,11,11.5,12,13,14,16,20}` → matching `--gs-font-{micro|xs|sm|md|lg|sub|h3|h2|h1}` (160 sites total).
+3. `gap: {2,4,6,8,10,12,16}` → matching `--gs-space-{1|2|3|4|10|6|8}` (71 sites total).
+4. New `--gs-space-10: 10px` rung added so `gap: 10` round-trips natively
+   (3 sites in WebGLStudioPreview project destinations + meta-tab columns).
+5. 4 dark-surface `rgba(0,0,0,*)` sites → 2 dev-HUD tokens (`--cf-dark-chrome-bg` /
+   `--cf-dark-panel-bg`); 2 content-meaningful rgba literals promoted to
+   named tokens (`--gs-shadow: rgb(17 17 17)` for VignetteOverlay,
+   `--gs-warning-amber: rgba(251,191,36,0.6)` for the scrubber-handle glow).
+6. The migration is automated — `.freebuff/migrate-uistandards.py` walks
+   `pnpm eslint --format json` output and applies the line:column-precise
+   mapping. Re-runnable cleanly (idempotent: token values do not match
+   any regex the lint fires on).
    in WebGLStudioPreview project destinations + meta-tab columns).
 9. 4 hardcoded `rgba(0,0,0,*)` sites in CfzTierInspector →
    `--cf-dark-chrome-bg` / `--cf-dark-panel-bg`.
@@ -169,26 +172,37 @@ varies; pick the cheap ones first.
 ## 8. Watch-outs (companion readers)
 
 - `docs/CANVAS-FIRST-Z-STACK-CONTRACT.md` — governs stacking order.
+  Sibling contract; mirror-tree slot must coordinate with the four
+  tiers here.
 - `docs/COLOR-TOKENS.md` — pre-existing; should be cross-linked.
 - `apps/web/src/styles/globals.css` — the canonical home for these
-  tokens.
-- `apps/web/src/components/canvas/ui.scan.test.ts` — vitest scan
-  catching off-scale values (future).
-- `eslint.config.mjs` — future `no-restricted-syntax` rules for
-  off-scale `fontSize` / `borderRadius` (future).
+  tokens. The scan reads this file at test time so the scales cannot
+  silently drift apart from this contract.
+- `apps/web/src/components/canvas/ui.scan.test.ts` — vitest scan,
+  6 tests, catches off-scale values at commit time. Live.
+- `apps/web/src/components/canvas/ui.lint.test.ts` — vitest pin for
+  the lint rules in `eslint.config.mjs`. If the rules are weakened,
+  this fails first with a precise message. Live.
+- `eslint.config.mjs` — 4 `no-restricted-syntax` rules scoped to
+  `apps/web/src/components/canvas/**/*.ts(x)` (excluding test files),
+  severity `error`. Each rule's message cites this doc so a developer
+  who triggers the lint lands one click from context. Live.
+- `.freebuff/migrate-uistandards.py` — idempotent migration helper
+  (also at `scripts/migrate-uistandards.py`), walks
+  `pnpm eslint --format json` and rewrites value-by-token. Safe to
+  re-run after a future scale extension.
 
 ## 9. Open questions
 
-- **`borderRadius: 14`** (only FloraRingLayer uses) — promote or
-  special-case? Recommendation: special-case for now; promote if a
-  second user arrives.
-- **`fontSize: 13`** (subhead) — used in scrubber values, NibPalette,
-  a few callouts. Probably migrate to `--gs-font-sub` and never
-  reach for raw `13`.
-- **`transition: 200ms ease`** in `SaveStatusChip.tsx` — migrate
-  to `--gs-base`? Recommendation: `200ms` is between fast and base;
-  audit shows it's the only outlier. Either collapse to `--gs-base`
-  and accept a 20ms speed change, or keep with explicit comment.
+- **`borderRadius: 14`** — promoted to `--gs-radius-2xl` in Tier 1.
+  Single-site user (was only FloraRingLayer) is now a documented rung;
+  any future caller has a named hook.
+- **`fontSize: 13`** — promoted to `--gs-font-sub` in Tier 1.
+  Used in scrubber values, NibPalette, and a few callouts; all migrated.
+- **`transition: 200ms ease`** in `SaveStatusChip.tsx` — still raw.
+  Recommendation: collapse to `--gs-base` (180ms cubic-bezier); 20ms
+  delta is below perception threshold for status chips. Track as Tier 2
+  follow-up; not blocking because no lint rule covers transitions yet.
 
 ## 10. Files in this contract
 
@@ -196,5 +210,6 @@ varies; pick the cheap ones first.
 |---|---|
 | `docs/UI-ELEMENT-STANDARDS.md` | This document |
 | `apps/web/src/styles/globals.css` | CSS source of truth (the scale tokens) |
-| `apps/web/src/components/canvas/ui.scan.test.ts` | static scan now locks all 28 Tier-1 sites on-scale; flags any new departure (live) |
-| `eslint.config.mjs` | parallel `no-restricted-syntax` rules (future, same shape as z-stack rules) |
+| `apps/web/src/components/canvas/ui.scan.test.ts` | vitest scan: parses scales live out of globals.css, asserts 252 sites on-scale (6 passing tests, fixed in Tier 1) |
+| `apps/web/src/components/canvas/ui.lint.test.ts` | vitest pin: regression-protects the 4 lint rules' existence and shape |
+| `eslint.config.mjs` | 4 live `no-restricted-syntax` rules + test-file exclusion, severity error (mirrors cfz lint pattern) |
