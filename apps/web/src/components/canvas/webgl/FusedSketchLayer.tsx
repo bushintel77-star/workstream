@@ -48,6 +48,7 @@ import {
 import { PALETTE } from "../../../styles/colorTokens";
 import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { useStudioStore } from "./studioStore";
+import { cfZPair } from "../cfz";
 import { layerScaleAlpha, viewScaleRatioForZoom } from "./layerPolicy";
 import { pctToWorld, worldToPct, type PctPoint, type HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
@@ -834,7 +835,7 @@ function SnapMarker({ hint }: { hint: SnapHint }) {
       <Html
         position={[0, 0.5, 0]}
         center
-        zIndexRange={[20, 10]}
+        zIndexRange={cfZPair("spatialAnnotation")}
         style={{ pointerEvents: "none" }}
       >
         <span

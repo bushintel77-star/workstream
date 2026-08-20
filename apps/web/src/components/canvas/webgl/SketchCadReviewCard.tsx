@@ -194,7 +194,7 @@ export function SketchCadReviewCard() {
           aria-valuemax={100}
           style={{
             height: 4,
-            borderRadius: 999,
+            borderRadius: "var(--gs-radius-pill)",
             background: "color-mix(in srgb, var(--gs-line) 55%, transparent)",
             overflow: "hidden",
           }}

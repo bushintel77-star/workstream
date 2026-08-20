@@ -33,6 +33,7 @@ import {
   type HeightmapPoint,
 } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
+import { cfZPair } from "../cfz";
 
 /** Signal Blue — measurement/truth identity (matches the section cut). */
 const TRUTH_BLUE = "#0030CF";
@@ -191,7 +192,7 @@ export function MeasureTapeLayer({
           <Html
             position={tapeGeom.mid}
             center
-            zIndexRange={[20, 10]}
+            zIndexRange={cfZPair("spatialAnnotation")}
             style={{ pointerEvents: "none" }}
           >
             <span data-testid="measure-label" style={measureLabelStyle}>

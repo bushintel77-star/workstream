@@ -44,7 +44,6 @@ import type {
   LandscapeFeature,
   PhotoElevation,
 } from "@workstream/contracts";
-import { VignetteOverlay } from "./VignetteOverlay";
 import { SaveStatusChip } from "./SaveStatusChip";
 import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
 import { pctToWorld, type PctPoint } from "./coordTransform";
@@ -78,6 +77,7 @@ import { SitePhotoGallery } from "./SitePhotoGallery";
 import { PhotoTraceHud } from "./PhotoTraceHud";
 import { PhotoElevationSheet } from "./PhotoElevationSheet";
 import { SplitViewLens } from "./SplitViewLens";
+import { ViewportTransitionHUD } from "./ViewportTransitionHUD";
 import { placementsToItems, featuresOntoItems } from "../handoff/state/canvasBridge";
 import { toRenderItems } from "./stateBridge";
 import { SketchCadReviewCard } from "./SketchCadReviewCard";
@@ -104,6 +104,10 @@ const WebGLStudio = dynamic(() => import("./WebGLStudio").then((m) => m.WebGLStu
     <div style={{ position: "absolute", inset: 0, background: "var(--gs-canvas)" }} />
   ),
 });
+import { CanvasFirstLayout } from "./CanvasFirstLayout";
+import type { CanvasBridge, SpatialGraphNode } from "./CanvasFirstLayout";
+import { CfzTierInspector } from "./CfzTierInspector";
+import type { SelectionRef } from "./selectionPick";
 
 export interface WebGLStudioPreviewProps {
   projectId: string;
@@ -281,6 +285,50 @@ export function WebGLStudioPreview({
       setPresentationMode(true);
     }
   }, [initialMode]);
+
+  // Viewport transition keyboard shortcuts (1=plan, 2=orbit, 3=garden,
+  // 4=elevation). Document-level listener so the keys fire regardless
+  // of which chrome element has focus. The handler is split-view-aware:
+  // disabled when the dual-canvas lens is on (the per-half labels own
+  // the viewport narrative there). The list matches the existing
+  // StudioCommandPalette's onZoom + onMode so the power-user mental
+  // model stays in one place.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target;
+      if (
+        t instanceof HTMLElement &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.isContentEditable)
+      ) {
+        return;
+      }
+      if (useStudioStore.getState().splitView) return;
+      const live = useStudioStore.getState().liveRig;
+      switch (e.key) {
+        case "1":
+          writeLiveRig({ ...live, tiltDeg: 0 });
+          e.preventDefault();
+          break;
+        case "2":
+          writeLiveRig({ ...live, tiltDeg: 55 });
+          e.preventDefault();
+          break;
+        case "3":
+          writeLiveRig({ ...live, tiltDeg: 76, zoom: 1.45 });
+          e.preventDefault();
+          break;
+        case "4":
+          useStudioStore.getState().setPitchDeg(90);
+          e.preventDefault();
+          break;
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [writeLiveRig]);
 
   // Garden viewpoint — eye-level rig presets per cardinal look. The yaw
   // reuses the classic tiltMath mapping so N/E/S/W mean the same thing in
@@ -719,6 +767,184 @@ export function WebGLStudioPreview({
     },
   } as const;
 
+  /* ---------------------------------------------------------------- *
+   * Canvas-First Layout (Module 1 / 2 / 3) — wires the four-slot z-stack
+   * over the WebGL canvas and exposes an off-screen mirror tree for
+   * screen-reader users. Bridge callbacks only carry shallow primitives
+   * (vectors / flat config) — the math layer pulls them on its RAF tick.
+   *
+   * Hook order contract: every hook below MUST run before any conditional
+   * return — including the `webgl unavailable` early exit.
+   * ---------------------------------------------------------------- */
+
+  const liveFeatures = useStudioStore((s) => s.features);
+  const livePlacements = useStudioStore((s) => s.placements);
+
+  const spatialGraph: SpatialGraphNode[] = useMemo(() => {
+    const out: SpatialGraphNode[] = [];
+    for (const f of liveFeatures) {
+      const layer = f.metadata?.layer ?? "feature";
+      out.push({
+        id: `feature:${f.id}`,
+        label: `${layer} ${f.id.slice(-4)}`,
+        level: 1,
+      });
+    }
+    for (const p of livePlacements) {
+      const sym = p.symbol_id ?? "asset";
+      out.push({
+        id: `placement:${p.id}`,
+        label: `${sym} ${p.id.slice(-4)}`,
+        level: 2,
+      });
+    }
+    return out;
+  }, [liveFeatures, livePlacements]);
+
+  const activeSelectionId =
+    selection[0] != null
+      ? `${selection[0].kind}:${selection[0].id}`
+      : null;
+
+  const onSpatialSelect = useCallback((compositeId: string) => {
+    const [kind, id] = compositeId.split(":");
+    if (kind !== "feature" && kind !== "placement") return;
+    useStudioStore.getState().selectRef({ kind, id } as SelectionRef, {
+      additive: false,
+    });
+  }, []);
+
+  const bridge: CanvasBridge = useMemo(
+    () => ({
+      onCameraReset: () => {
+        writeLiveRig({ ...DEFAULT_CAMERA_RIG });
+      },
+      onScalar: (patch) => {
+        const next = useStudioStore.getState().liveRig;
+        if ("zoom" in patch) {
+          writeLiveRig({ ...next, zoom: patch.zoom });
+        }
+      },
+    }),
+    [writeLiveRig],
+  );
+
+  /* Canvas slot — owns the draw cursor + grab/grabbing toggle while the
+   * drawing owns the middle. Lives at z-0 per the SDS z-stack; chrome
+   * sits on top in a sibling slot. */
+  const canvasSlot = (
+    <div
+      style={{ position: "absolute", inset: 0 }}
+      onPointerDown={(e) => {
+        if (
+          e.target instanceof HTMLElement &&
+          (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)
+        ) return;
+        if (drawCursor === "grab") e.currentTarget.style.cursor = "grabbing";
+      }}
+      onPointerUp={(e) => { e.currentTarget.style.cursor = drawCursor; }}
+      onPointerLeave={(e) => { e.currentTarget.style.cursor = drawCursor; }}
+    >
+      {/* The render surface: ONE studio, or the split lens (locked plan |
+          live 3D, linked cameras). The DOM chrome overlays whichever is
+          mounted — one chrome, two viewports. */}
+      {splitView ? (
+        <SplitViewLens sceneProps={sceneProps} />
+      ) : (
+        <WebGLStudio {...sceneProps} />
+      )}
+
+      {/* Mode cross-fade — a 150 ms paper veil keyed by mode. */}
+      <div
+        key={`mode-fade-${activeMode}`}
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: "var(--cf-z-spatial)",
+          background: "var(--gs-canvas)",
+          animation: "gsModeFadeOut 150ms ease-out forwards",
+        }}
+      />
+    </div>
+  );
+
+  /* App slot — global application elements (Cmd-K command palette, share
+   * takeover, present deck) that must always sit ABOVE the chrome tier
+   * (z=20) so they can dim/scrim-over peripheral UI without competing
+   * with on-canvas pointer events. Inline `zIndex` overrides stripped:
+   * the wrapper owns the stack. */
+  const appSlot = (
+    <>
+      {/* Command palette — the power-operator surface (Cmd/Ctrl+K). */}
+      <StudioCommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        projectId={projectId}
+        unlocked={unlocked}
+        onMode={(m) => onNativeMode(m as Parameters<typeof onNativeMode>[0])}
+        onZoom={(dir) => zoomBy(dir === 1 ? 1 : -1)}
+        onOpenSitePhotos={() => setMetaTab("studio")}
+      />
+
+      {/* Native share — client portal promotion, centered glass. */}
+      {activeMode === "share" && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "auto",
+            background: "color-mix(in srgb, var(--gs-canvas) 55%, transparent)",
+          }}
+        >
+          <div style={{ width: "min(460px, 92vw)" }}>
+            <ShareSurface
+              projectId={projectId}
+              verificationUnavailable={cadGhostCount === null}
+              draftUnverified={(cadGhostCount ?? 0) > 0}
+              pendingGhosts={cadGhostCount ?? 0}
+              quotePersisted={quotePersisted}
+              portalUri={portalUri}
+              onQuotePersisted={(uri) => {
+                setQuotePersisted(true);
+                setPortalUri(uri);
+              }}
+              onReviewGhosts={() => setActiveMode("cad")}
+              onBack={() => setActiveMode("sketch")}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Native present — the classic PresentSurface deck as full-bleed
+          chrome over the presentation lens (ARCHITECTURE §5: the feature
+          module consumes the new shell). Owns the surface while
+          presenting; Back exits to CAD. */}
+      {presentationMode && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "auto",
+          }}
+        >
+          <PresentSurface
+            projectId={projectId}
+            imageLayers={[]}
+            planSnapshot={presentPlanSnapshot}
+            estimate={null}
+            materials={[]}
+            onBack={() => onNativeMode("cad")}
+          />
+        </div>
+      )}
+    </>
+  );
+
   if (webglAvailable === false || webglLost) {
     return (
       <div
@@ -773,57 +999,30 @@ export function WebGLStudioPreview({
   }
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        cursor: drawCursor,
-      }}
+    <CanvasFirstLayout
+      style={{ position: "absolute", cursor: drawCursor }}
       onPointerDown={(e) => {
-        // Grabbing while panning the drawing; text inputs opt back out.
         if (
           e.target instanceof HTMLElement &&
           (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)
         ) return;
-        if (drawCursor === "grab") e.currentTarget.style.cursor = "grabbing";
+        if (drawCursor === "grab") (e.currentTarget as HTMLElement).style.cursor = "grabbing";
       }}
-      onPointerUp={(e) => { e.currentTarget.style.cursor = drawCursor; }}
-      onPointerLeave={(e) => { e.currentTarget.style.cursor = drawCursor; }}
+      onPointerUp={(e) => { (e.currentTarget as HTMLElement).style.cursor = drawCursor; }}
+      onPointerLeave={(e) => { (e.currentTarget as HTMLElement).style.cursor = drawCursor; }}
+      ariaLabel="Design canvas — operator studio"
+      bridge={bridge}
+      spatialGraph={spatialGraph}
+      activeId={activeSelectionId}
+      onSelect={onSpatialSelect}
+      canvas={canvasSlot}
+      app={appSlot}
     >
-      {/* The render surface: ONE studio, or the split lens (locked plan |
-          live 3D, linked cameras). The DOM chrome overlays whichever is
-          mounted — one chrome, two viewports. */}
-      {splitView ? (
-        <SplitViewLens sceneProps={sceneProps} />
-      ) : (
-        <WebGLStudio {...sceneProps} />
-      )}
-
-      {/* Mode cross-fade — a 150 ms paper veil keyed by mode: swapping
-          Survey → Elevation blooms through the canvas colour instead of
-          hard-cutting layer visibility. Pointer-transparent, one-shot. */}
-      <div
-        key={`mode-fade-${activeMode}`}
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          pointerEvents: "none",
-          zIndex: 1,
-          background: "var(--gs-canvas)",
-          animation: "gsModeFadeOut 150ms ease-out forwards",
-        }}
-      />
-
       {/* ---- The chrome overlay (pointer-transparent; children opt in) ---- */}
       <div
         data-webgl-chrome
         style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
       >
-      {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
-      <VignetteOverlay />
-      <style>{`@keyframes wsPanelIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }`}</style>
-
       {/* ---- Perimeter tab strip — the single chrome anchor. One
           browser-tab chip strip hugs the top edge; modes on the left,
           meta surfaces on the right, live stats as the trailing status
@@ -838,7 +1037,7 @@ export function WebGLStudioPreview({
           alignItems: "flex-start",
           gap: 8,
           pointerEvents: "none",
-          zIndex: 6,
+          zIndex: "var(--cf-z-chrome)",
         }}
       >
         {/* Project identity — tier-1 format: file identity left, actions
@@ -1002,6 +1201,36 @@ export function WebGLStudioPreview({
         </div>
       </div>
 
+      {/* ---- Viewport transition HUD — fuses the Fused Rendering Context
+          (tilt axis + projection blend) into a single chrome capsule.
+          Lives in the right column between the tab strip and the right
+          dock; passes the local writeLiveRig bridge and activeMode so the
+          preset buttons can drive the camera and switch glass material. */}
+      {/* ---- Viewport transition HUD — fuses the Fused Rendering Context
+          (tilt axis + projection blend) into a single chrome capsule.
+          Lives in the right column between the tab strip and the right
+          dock; passes the local writeLiveRig bridge and activeMode so the
+          preset buttons can drive the camera and switch glass material.
+          Suppressed under SplitViewLens — the dual-canvas comparison
+          has its own per-half viewBlendLocked label, and a single
+          global HUD would misreport the locked half. */}
+      {!splitView ? (
+      <div
+        style={{
+          position: "absolute",
+          top: 70,
+          right: 400,
+          pointerEvents: "none",
+          zIndex: "var(--cf-z-chrome)",
+        }}
+      >
+        <ViewportTransitionHUD
+          activeMode={activeMode}
+          writeLiveRig={writeLiveRig}
+        />
+      </div>
+      ) : null}
+
       {/* ---- Elevation mode: the wide board sheet stays a centred overlay
           (it cannot fit a dock) — centring is now against the full canvas,
           fixing the old broken containing block (UI survey §1.1). ---- */}
@@ -1031,7 +1260,7 @@ export function WebGLStudioPreview({
           gap: 6,
           alignItems: "flex-end",
           pointerEvents: "none",
-          zIndex: 10,
+          zIndex: "var(--cf-z-chrome)",
           maxWidth: "calc(100% - 120px)",
           // The dock floats with air on every side — a glass capsule, not a
           // rigid dashboard column flush against the screen border. It
@@ -1378,7 +1607,7 @@ export function WebGLStudioPreview({
                 <SaveStatusChip />
                 <nav
                   aria-label="Project destinations"
-                  style={{ display: "flex", gap: 10 }}
+                  style={{ display: "flex", gap: "var(--gs-space-10)" }}
                 >
                   <a
                     href="/home"
@@ -1506,7 +1735,7 @@ export function WebGLStudioPreview({
           } else if (metaTab === "sun") {
             dismiss = () => setMetaTab(null);
             body = (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-10)" }}>
                 <div
                   style={{
                     display: "flex",
@@ -1561,7 +1790,7 @@ export function WebGLStudioPreview({
                       {seasonMeta.month}
                     </span>
                   </div>
-                  <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: "var(--gs-space-2)", flexWrap: "wrap" }}>
                     {SUN_DATE_PRESETS.map((p) => (
                       <button
                         key={p}
@@ -1595,7 +1824,7 @@ export function WebGLStudioPreview({
           } else if (metaTab === "growth") {
             dismiss = () => setMetaTab(null);
             body = (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-10)" }}>
                 <div
                   style={{
                     display: "flex",
@@ -2051,7 +2280,7 @@ export function WebGLStudioPreview({
             position: "absolute",
             inset: 0,
             pointerEvents: "auto",
-            zIndex: 7,
+            zIndex: "var(--cf-z-chrome)",
           }}
         >
           <PhotoElevationSheet
@@ -2061,78 +2290,15 @@ export function WebGLStudioPreview({
         </div>
       ) : null}
 
-      {/* Command palette — the power-operator surface (Cmd/Ctrl+K). */}
-      <StudioCommandPalette
-        open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-        projectId={projectId}
-        unlocked={unlocked}
-        onMode={(m) => onNativeMode(m as Parameters<typeof onNativeMode>[0])}
-        onZoom={(dir) => zoomBy(dir === 1 ? 1 : -1)}
-        onOpenSitePhotos={() => setMetaTab("studio")}
-      />
-
       {/* First-run controls hint — dismissed for the session once seen. */}
       <FirstRunHint />
 
-      {/* Native share — client portal promotion, centered glass. */}
-      {activeMode === "share" && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            pointerEvents: "auto",
-            zIndex: 6,
-            background: "color-mix(in srgb, var(--gs-canvas) 55%, transparent)",
-          }}
-        >
-          <div style={{ width: "min(460px, 92vw)" }}>
-            <ShareSurface
-              projectId={projectId}
-              verificationUnavailable={cadGhostCount === null}
-              draftUnverified={(cadGhostCount ?? 0) > 0}
-              pendingGhosts={cadGhostCount ?? 0}
-              quotePersisted={quotePersisted}
-              portalUri={portalUri}
-              onQuotePersisted={(uri) => {
-                setQuotePersisted(true);
-                setPortalUri(uri);
-              }}
-              onReviewGhosts={() => setActiveMode("cad")}
-              onBack={() => setActiveMode("sketch")}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Native present — the classic PresentSurface deck as full-bleed
-          chrome over the presentation lens (ARCHITECTURE §5: the feature
-          module consumes the new shell). Last chrome child so the paper
-          deck owns the surface while presenting; Back exits to CAD. */}
-      {presentationMode && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "auto",
-            zIndex: 8,
-          }}
-        >
-          <PresentSurface
-            projectId={projectId}
-            imageLayers={[]}
-            planSnapshot={presentPlanSnapshot}
-            estimate={null}
-            materials={[]}
-            onBack={() => onNativeMode("cad")}
-          />
-        </div>
-      )}
+      {/* Dev-only z-tier hover HUD — renders NOTHING outside dev or
+          without the `?cfz-inspect=1` URL flag. See CfzTierInspector.tsx
+          and docs/CANVAS-FIRST-Z-STACK-CONTRACT.md §7. */}
+      <CfzTierInspector />
       </div>
-    </div>
+    </CanvasFirstLayout>
   );
 }
 
@@ -2166,7 +2332,7 @@ function FirstRunHint() {
         WebkitBackdropFilter: "blur(var(--gs-blur))",
         border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
         pointerEvents: "auto",
-        zIndex: 5,
+        zIndex: "var(--cf-z-chrome)",
         fontFamily: "var(--font-ui)",
         fontSize: 11,
         color: "var(--gs-ink-secondary)",
@@ -2229,12 +2395,12 @@ function MetaChip({
       style={{
         display: "inline-flex",
         alignItems: "baseline",
-        gap: 4,
+        gap: "var(--gs-space-2)",
         padding: "2px 7px",
-        borderRadius: 999,
+        borderRadius: "var(--gs-radius-pill)",
         border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
         fontFamily: "var(--font-tech)",
-        fontSize: 10.5,
+        fontSize: "var(--gs-font-xs)",
         color: "var(--gs-ink-secondary)",
         whiteSpace: "nowrap",
       }}
@@ -2358,7 +2524,7 @@ function ScrubberTrack({
             background: "var(--gs-primary)",
             border: "2px solid var(--gs-canvas)",
             borderRadius: "50%",
-            boxShadow: "0 0 8px rgba(251,191,36,0.6)",
+            boxShadow: "0 0 8px var(--gs-warning-amber)",
             pointerEvents: "none",
           }}
         />

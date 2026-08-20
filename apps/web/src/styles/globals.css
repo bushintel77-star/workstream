@@ -598,6 +598,159 @@ button:focus-visible {
   --ws-z-modal: 60;
   --ws-z-fullscreen: 80;
 
+  /*
+   * Canvas‑First Blueprint (Module 1 — Visual Hierarchy).
+   *
+   * Four‑slot z‑stack the layout wrapper exposes. The numbers come straight
+   * from the SDS blueprint (0 / 10 / 20 / 30). They sit between rungs of the
+   * production --ws-z-* ladder above — spatial @10 is between annotate @8
+   * (drawing text) and interact @12 (on‑plan handles), chrome @20 matches
+   * the existing --ws-z-chrome, app @30 matches --ws-z-frame.
+   *
+   * Internally the wrapper exposes these four slots only; sub‑layering
+   * inside the chrome slot (dock / lane / veil / modal) keeps using the
+   * full --ws-z-* ladder.
+   *
+   * Never use raw z‑index numbers in feature modules; prefer one of these
+   * tokens so the blueprint overrides stay in one place.
+   */
+  --cf-z-canvas: 0;
+  --cf-z-spatial: 10;
+  --cf-z-chrome: 20;
+  --cf-z-app: 30;
+
+  /*
+   * UI element standards — single source of truth for surface scale.
+   *
+   * These scales back the chrome-tier cards, buttons, inputs, and
+   * operator HUDs. Authoring chrome should reach for these tokens
+   * instead of inline pixel values; the audit
+   * (docs/UI-ELEMENT-STANDARDS.md) inks the values + documents
+   * which component groups each rung targets.
+   *
+   * Migration rule: every new inline `borderRadius`, `fontSize`,
+   * `gap`, or `transition` in a .tsx file should resolve to one of
+   * these tokens. The standards-goal is zero off-scale values;
+   * a vitest scan in `apps/web/src/components/canvas/ui.scan.test.ts`
+   * catches new departures.
+   */
+
+  /* Border-radius scale — picked so a step ≈ 2× visible difference. */
+  --gs-radius-xs: 3px;
+  --gs-radius-sm: 4px;
+  --gs-radius-md: 6px;
+  --gs-radius-lg: 8px;
+  --gs-radius-xl: 12px;
+  --gs-radius-2xl: 14px;
+  --gs-radius-pill: 9999px;
+
+  /* Font-size scale — single 9-step ladder. 10.5px stays because the
+     Glass Card spec was authored at that micro-line; the rest of
+     the scale slots in cleanly around it. 9px (ViewportTransitionHUD
+     thickness indicator) is collapsed to font-micro 9.5px on
+     migration. */
+  --gs-font-micro: 9.5px;
+  --gs-font-xs: 10.5px;
+  --gs-font-sm: 11px;
+  --gs-font-md: 11.5px;
+  --gs-font-lg: 12px;
+  --gs-font-sub: 13px;
+  --gs-font-h3: 14px;
+  --gs-font-h2: 16px;
+  --gs-font-h1: 20px;
+
+  /* Spacing scale — used for gap / padding / short margins. */
+  --gs-space-1:  2px;
+  --gs-space-2:  4px;
+  --gs-space-3:  6px;
+  --gs-space-4:  8px;
+  --gs-space-6:  12px;
+  --gs-space-8:  16px;
+  --gs-space-10: 10px;
+
+  /* Transition scale — three rungs. The slider/keyframe HUD already
+     uses cubic-bezier(0.22, 1, 0.36, 1) (the "ease-out-quint" family);
+     promote it to the standard rather than invent a new one. */
+  --gs-fast: 140ms ease-out;
+  --gs-base: 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  --gs-slow: 240ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Companion dev-HUD tokens — promoted from the four hardcoded
+     rgba(0,0,0,*) sites in CfzTierInspector.tsx so the operator
+     tool inherits the same surface language as the contract. */
+  --cf-dark-chrome-bg: rgba(0, 0, 0, 0.78);
+  --cf-dark-panel-bg:  rgba(0, 0, 0, 0.86);
+
+  /* Atmospheric-tint tokens — promoted from VignetteOverlay (rgb 17
+     17 17 = ink-strong, neutral shadow) and the scrubber-handle glow
+     in WebGLStudioPreview (amber 251,191,36 at 60% alpha). These carry
+     content meaning, so they get named tokens rather than collapsing
+     into the dark-chrome/panel rungs. */
+  --gs-shadow:           rgb(17 17 17);
+  --gs-warning-amber:    rgba(251, 191, 36, 0.6);
+
+  /*
+   * drei `<Html zIndexRange>` ladder — companion to the four-slot CSS
+   * z-token stack above. drei <Html> portals run through the @react-three/
+   * drei overlay coordinator, NOT the browser CSS z-index, so the values
+   * below are numeric by necessity (drei reads them as min/max for its
+   * id-based stack, not as CSS integers). The ladder is mirrored on the
+   * SDS tiers so the two stacks stay coordinated; a future upgrade can
+   * resolve these from var(--cf-z-*) via a small helper, but right now
+   * the inline numbers are intentional.
+   *
+   * Convention (use ONLY these four pairings — no other numerics):
+   *
+   *   zIndexRange={[10,  1]}  — SPATIAL tier. World-pinned labels, pins,
+   *                              single-row callouts. Far face (1) sits
+   *                              comfortably between canvas (0) and the
+   *                              core spatial ladder (10).
+   *
+   *   zIndexRange={[20, 10]}  — SPATIAL tier. Annotation overlays,
+   *                              dimension lines, irrigation zones,
+   *                              measure tape, trench locators. Far face
+   *                              (10) reads at the spatial ladder, near
+   *                              face (20) tops the spatial slot without
+   *                              crossing into chrome.
+   *
+   *   zIndexRange={[30, 15]}  — CHROME tier. Meta chips, status badges,
+   *                              survey tags. 15 sits inside the spatial
+   *                              band but 30 chrome-pin ties the badge
+   *                              to chrome-tier affordances above 3D
+   *                              content. (Currently MetaChipSet.)
+   *
+   *   zIndexRange={[30, 20]}  — CHROME tier. Flora rings, zone rings.
+   *                              The 20 near face matches chrome so
+   *                              overlapping rings resolve against the
+   *                              chrome slot instead of bleeding under
+   *                              floating panels. (Currently FloraRingLayer.)
+   *
+   * Live inventory (last audit Aug 20):
+   *   CadProposalLayer   → [20, 10]   SPATIAL
+   *   DimensionLayer     → [20, 10]   SPATIAL
+   *   FusedSketchLayer   → [20, 10]   SPATIAL
+   *   IrrigationZoneLayer→ [20, 10]   SPATIAL
+   *   MeasureTapeLayer   → [20, 10]   SPATIAL
+   *   TrenchLayer        → [20, 10]   SPATIAL
+   *   MetaChipSet        → [30, 15]   CHROME
+   *   FloraRingLayer     → [30, 20]   CHROME
+   *
+   * If you need an additional rung, ADD it here first and document the
+   * intent, then add the matching `<Html zIndexRange={[...]}/>` site.
+   * The no-restricted-syntax rule in eslint.config.mjs does not (and
+   * cannot) cover drei drei-overlay-stack usage — this comment block is
+   * the contract.
+   */
+
+  /* Glass‑dark for chrome that must float over bright canvas washes (e.g.
+   * presentation lens, night‑mode overlays). The default Studio Paper frost
+   * is --gs-glass-veil; --cf-glass-dark is the explicit low‑opacity dark
+   * chrome the SDS asks for in §1 (rgba(20,20,20,0.65) baseline). */
+  --cf-glass-dark: rgba(20, 20, 20, 0.65);
+  --cf-glass-dark-border: color-mix(in srgb, #ffffff 18%, transparent);
+  --cf-glass-dark-blur: 12px;
+  --cf-edge-default: 16px;
+
   --ws-sheet-pad: 12px;
   --ws-sheet-margin: 8px;
   --ws-title-w: 240px;
@@ -758,4 +911,44 @@ button:focus-visible {
   to {
     opacity: 0;
   }
+}
+
+/* ---------------------------------------------------------------------- */
+/* ViewportTransitionHUD — capsule glass material (added with the component) */
+/* ---------------------------------------------------------------------- */
+.vth-root {
+  /* Frost (working modes) — white panel veil + light blur. */
+  background: color-mix(in srgb, var(--gs-glass-veil) 88%, transparent);
+  backdrop-filter: blur(var(--gs-blur));
+  -webkit-backdrop-filter: blur(var(--gs-blur));
+  border: 1px solid color-mix(in srgb, var(--gs-line) 45%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--gs-paper) 100%, transparent) inset,
+    0 8px 24px color-mix(in srgb, var(--gs-frame) 18%, transparent);
+}
+.vth-root.vth-dark {
+  /* Dark glass (presentation lens modes) — explicit low-opacity overlay. */
+  background: var(--cf-glass-dark);
+  backdrop-filter: blur(var(--cf-glass-dark-blur));
+  -webkit-backdrop-filter: blur(var(--cf-glass-dark-blur));
+  border: 1px solid var(--cf-glass-dark-border);
+  color: #f5f5f7;
+}
+.vth-root.vth-dark .vth-preset:not([data-active="true"]) {
+  color: color-mix(in srgb, #ffffff 78%, transparent);
+}
+.vth-root.vth-dark .vth-preset {
+  border-color: color-mix(in srgb, #ffffff 14%, transparent);
+}
+.vth-root.vth-dark .vth-track {
+  background: color-mix(in srgb, #ffffff 14%, transparent);
+}
+.vth-root.vth-dark .vth-marker {
+  box-shadow: 0 0 0 2px color-mix(in srgb, #1a1a1a 100%, transparent);
+}
+.vth-preset:hover {
+  background: color-mix(in srgb, var(--gs-primary) 8%, transparent);
+}
+.vth-root.vth-dark .vth-preset:hover {
+  background: color-mix(in srgb, #ffffff 8%, transparent);
 }

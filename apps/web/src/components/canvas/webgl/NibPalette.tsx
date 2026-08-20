@@ -101,7 +101,7 @@ export function NibPalette() {
         top: 152,
         display: "flex",
         alignItems: "center",
-        gap: 3,
+        gap: "var(--gs-space-2)",
         padding: 4,
         borderRadius: "var(--gs-radius-pill)",
         background: "var(--gs-glass-veil)",
@@ -110,7 +110,7 @@ export function NibPalette() {
         border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
         boxShadow: "var(--gs-shadow-2)",
         pointerEvents: "auto",
-        zIndex: 5,
+        zIndex: "var(--cf-z-chrome)",
       }}
     >
       {NIB_ORDER.map((kind) => {
@@ -215,7 +215,7 @@ export function NibPalette() {
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-end",
-          gap: 1,
+          gap: "var(--gs-space-1)",
           padding: "0 6px",
           fontFamily: "var(--font-tech)",
           fontSize: 9.5,

@@ -18,6 +18,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Html, Line } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import type { ConstructionTrenchKind } from "@workstream/contracts";
+import { cfZPair } from "../cfz";
 import {
   getLayerStyle,
   layerYOffset,
@@ -292,7 +293,7 @@ export function TrenchLayer({
                 <Html
                   position={draftLast}
                   center
-                  zIndexRange={[20, 10]}
+                  zIndexRange={cfZPair("spatialAnnotation")}
                   style={{ pointerEvents: "none" }}
                 >
                   <span data-testid="trench-draft-label" style={draftLabelStyle}>

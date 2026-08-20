@@ -35,6 +35,7 @@ import {
 } from "../handoff/geometry/outsideDims";
 import { edgeSegments } from "../handoff/geometry/polygon";
 import { PALETTE } from "../../../styles/colorTokens";
+import { cfZPair } from "../cfz";
 
 /** Hover height above the ground/terrain (above ink 0.02, below slice 0.03+). */
 const DIM_Y = 0.04;
@@ -164,7 +165,7 @@ export function DimensionLayer({
             key={d.key}
             position={[wx, DIM_Y + 0.05, wz]}
             center
-            zIndexRange={[20, 10]}
+            zIndexRange={cfZPair("spatialAnnotation")}
             style={{ pointerEvents: "none" }}
           >
             <span

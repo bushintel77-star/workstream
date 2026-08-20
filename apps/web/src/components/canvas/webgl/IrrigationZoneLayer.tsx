@@ -26,6 +26,7 @@ import type { IrrigationZoneKind } from "@workstream/contracts";
 import { getLayerStyle, layerYOffset, type LayerID } from "@workstream/domain";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useStudioStore } from "./studioStore";
+import { cfZPair } from "../cfz";
 import {
   pctToWorld,
   worldToPct,
@@ -401,7 +402,7 @@ export function IrrigationZoneLayer({
                 <Html
                   position={draftLast}
                   center
-                  zIndexRange={[20, 10]}
+                  zIndexRange={cfZPair("spatialAnnotation")}
                   style={{ pointerEvents: "none" }}
                 >
                   <span data-testid="zone-draft-label" style={zoneLabelStyle}>

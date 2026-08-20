@@ -25,6 +25,7 @@ import { useThree } from "@react-three/fiber";
 import { pctToWorld, type PctPoint } from "./coordTransform";
 import { useStudioStore } from "./studioStore";
 import type { MetaChip } from "./metaChips";
+import { cfZPair } from "../cfz";
 
 /** Screen-pixel offset of the capsule outside the boundary node. */
 const OFFSET_PX = 24;
@@ -136,7 +137,7 @@ export function MetaChipSet({
             key={chip.id}
             position={pos}
             center
-            zIndexRange={[30, 15]}
+            zIndexRange={cfZPair("chromeChip")}
             style={{ pointerEvents: "auto" }}
           >
             <span

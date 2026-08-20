@@ -14,6 +14,7 @@ import type { SketchCadProposal } from "./sketchCad";
 import { useStudioStore } from "./studioStore";
 import { pctToWorld } from "./coordTransform";
 import { PALETTE } from "../../../styles/colorTokens";
+import { cfZPair } from "../cfz";
 
 const GHOST_Y = 0.06;
 
@@ -94,7 +95,7 @@ function ProposalMarker({
         <Html
           position={[wx, GHOST_Y + 0.8, wz]}
           center
-          zIndexRange={[20, 10]}
+          zIndexRange={cfZPair("spatialAnnotation")}
           style={{ pointerEvents: "none" }}
         >
           <span

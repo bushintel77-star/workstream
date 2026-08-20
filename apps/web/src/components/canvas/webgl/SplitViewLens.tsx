@@ -53,13 +53,13 @@ const labelChip: CSSProperties = {
   // chrome column at every tested viewport (collision-spec guaranteed).
   top: 78,
   padding: "2px 9px",
-  borderRadius: 999,
+  borderRadius: "var(--gs-radius-pill)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
   background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
   backdropFilter: "blur(var(--gs-blur))",
   WebkitBackdropFilter: "blur(var(--gs-blur))",
   fontFamily: "var(--font-tech)",
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
   pointerEvents: "none",
 };
@@ -112,7 +112,7 @@ export function SplitViewLens({ sceneProps }: SplitViewLensProps) {
           background: "var(--gs-primary)",
           opacity: 0.5,
           pointerEvents: "none",
-          zIndex: 10,
+          zIndex: "var(--cf-z-chrome)",
         }}
       />
     </div>

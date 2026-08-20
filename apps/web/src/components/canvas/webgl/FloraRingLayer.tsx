@@ -35,6 +35,7 @@ import { useStudioStore } from "./studioStore";
 import { pctToWorld } from "./coordTransform";
 import { BY_TYPE } from "../handoff/studioCatalog";
 import { mapSymbolToStudioType } from "../handoff/state/studioAiEngine";
+import { cfZPair } from "../cfz";
 import {
   rankAtPoint,
   exposureLabel,
@@ -183,7 +184,7 @@ export function FloraRingLayer({
       </mesh>
 
       {/* The ring card — first clickable drei <Html> in the studio */}
-      <Html position={[wx, 0.1, wz]} center zIndexRange={[30, 20]}>
+      <Html position={[wx, 0.1, wz]} center zIndexRange={cfZPair("chromeZone")}>
         <div data-testid="flora-ring" style={cardStyle}>
           <div
             style={{
@@ -207,10 +208,10 @@ export function FloraRingLayer({
               data-testid="flora-sun-chip"
               style={{
                 fontFamily: "var(--font-tech)",
-                fontSize: 10.5,
+                fontSize: "var(--gs-font-xs)",
                 color: "var(--gs-ink-truth)",
                 border: "1px solid color-mix(in srgb, var(--gs-truth) 35%, transparent)",
-                borderRadius: 999,
+                borderRadius: "var(--gs-radius-pill)",
                 padding: "1px 7px",
               }}
             >
@@ -278,7 +279,7 @@ export function FloraRingLayer({
               style={{
                 flex: 1,
                 padding: "4px 8px",
-                borderRadius: 999,
+                borderRadius: "var(--gs-radius-pill)",
                 border: `1px solid color-mix(in srgb, ${GOLD} 50%, transparent)`,
                 background: summary.blocked
                   ? "transparent"
@@ -298,7 +299,7 @@ export function FloraRingLayer({
               onClick={() => setFloraSession(null)}
               style={{
                 padding: "4px 8px",
-                borderRadius: 999,
+                borderRadius: "var(--gs-radius-pill)",
                 border: "1px solid var(--gs-line)",
                 background: "transparent",
                 color: "var(--gs-ink-secondary)",

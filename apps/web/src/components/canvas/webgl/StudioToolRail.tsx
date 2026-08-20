@@ -258,7 +258,7 @@ export function StudioToolRail({
         flexDirection: "column",
         gap: 2,
         pointerEvents: "auto",
-        zIndex: 5,
+        zIndex: "var(--cf-z-chrome)",
         // Short viewports: the rail scrolls internally instead of escaping
         // the canvas edge (webgl-chrome-collision gate).
         maxHeight: "calc(100dvh - 170px)",
@@ -283,7 +283,7 @@ export function StudioToolRail({
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: 1,
+              gap: "var(--gs-space-1)",
               padding: "5px 0 4px",
               borderRadius: 8,
               border: "1px solid transparent",

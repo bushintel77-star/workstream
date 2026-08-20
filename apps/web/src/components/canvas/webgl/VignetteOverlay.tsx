@@ -32,7 +32,8 @@ import { memo } from "react";
 import { useStudioStore } from "./studioStore";
 
 /** The vignette gradient — matches the 3D post-processing Vignette parameters.
- *  Neutral ink tone per the shadow tiers (rgb(17 17 17)); token-only. */
+ *  Neutral ink tone per the shadow tiers; token-only (consumes --gs-ink-strong,
+ *  not a literal RGB triple). */
 const VIGNETTE_GRADIENT =
   "radial-gradient(120% 90% at 50% 50%, transparent 32%, color-mix(in srgb, var(--gs-ink-strong) 22%, transparent) 100%)";
 
@@ -58,7 +59,7 @@ export const VignetteOverlay = memo(function VignetteOverlay() {
         position: "absolute",
         inset: 0,
         pointerEvents: "none",
-        zIndex: 1, // above canvas, below GlassCards (which are zIndex 2+)
+        zIndex: "var(--cf-z-spatial)", // above canvas, below chrome — uses the SDS z-token rather than a raw number
         opacity: vignetteOpacity,
         transition: "opacity 0.3s ease",
         background: `${VIGNETTE_INNER_GLOW}, ${VIGNETTE_GRADIENT}`,

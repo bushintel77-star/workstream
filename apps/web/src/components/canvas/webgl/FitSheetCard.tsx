@@ -96,7 +96,7 @@ function StockChip({ inStock, mode }: { inStock: boolean; mode: string }) {
         color,
         border: `1px solid color-mix(in srgb, ${color} 35%, transparent)`,
         background: `color-mix(in srgb, ${color} 12%, transparent)`,
-        borderRadius: 999,
+        borderRadius: "var(--gs-radius-pill)",
         padding: "0px 5px",
         whiteSpace: "nowrap",
       }}
@@ -430,9 +430,9 @@ export function FitSheetCard({
                 data-testid="fit-sheet-drift"
                 style={{
                   fontFamily: "var(--font-tech)",
-                  fontSize: 10.5,
+                  fontSize: "var(--gs-font-xs)",
                   padding: "1px 5px",
-                  borderRadius: 999,
+                  borderRadius: "var(--gs-radius-pill)",
                   color:
                     Math.abs(driftPct) > 10
                       ? "var(--gs-warning)"

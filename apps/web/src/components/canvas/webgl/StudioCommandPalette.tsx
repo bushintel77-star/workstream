@@ -253,7 +253,10 @@ export function StudioCommandPalette({
         transform: "translateX(-50%)",
         width: "min(460px, 92vw)",
         pointerEvents: "auto",
-        zIndex: 20,
+        // No inline z-index — this surface now mounts inside
+        // CanvasFirstLayout's `app` slot (z=30). The wrapper owns the
+        // stack; a redundant zIndex:20 here would suggest chrome tier and
+        // invite future tier-crossing bugs.
         borderRadius: "var(--gs-radius-panel)",
         background: "color-mix(in srgb, var(--gs-glass) 55%, transparent)",
         backdropFilter: "blur(var(--gs-blur))",

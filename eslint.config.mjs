@@ -87,6 +87,53 @@ export default tseslint.config(
       "react-hooks/purity": "off",
     },
   },
+  /*
+   * SDS z-token enforcement — see apps/web/src/styles/globals.css
+   * (--cf-z-canvas|spatial|chrome|app). Raw numeric zIndex values and
+   * Tailwind z-N utilities both bypass that ladder, so they are forbidden
+   * anywhere under apps/web/src. Feature modules opt into one of the four
+   * named tiers; the drei `<Html zIndexRange>` ladder is documented next
+   * to the CSS block for the limited set of files that still need it.
+   */
+  {
+    files: ["apps/web/src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "Property[key.name='zIndex'][value.type='Literal'][value.raw=/^\\d/]",
+          message:
+            "Raw numeric zIndex is forbidden in apps/web — use var(--cf-z-canvas|spatial|chrome|app) so the SDS z-token ladder stays the single source of truth.",
+        },
+        {
+          selector:
+            "JSXAttribute[name.name='className'] > Literal[value=/\\bz-\\d+\\b/]",
+          message:
+            "Tailwind z-N utility classes bypass the SDS z-token ladder — use a CSS class that consumes var(--cf-z-*) instead.",
+        },
+        {
+          selector:
+            "CallExpression[callee.name='cfZPair'] > Literal[value!='spatialLabel'][value!='spatialAnnotation'][value!='chromeChip'][value!='chromeZone']",
+          message:
+            "cfZPair() only accepts one of: 'spatialLabel' | 'spatialAnnotation' | 'chromeChip' | 'chromeZone'. Adding a new kind requires (1) updating CF_Z_PAIRS in apps/web/src/components/canvas/cfz.ts, (2) documenting it in the drei `<Html zIndexRange>` ladder block of apps/web/src/styles/globals.css.",
+        },
+        {
+          // drei `<Html zIndexRange={[N, M]}>` ladder — companion to the
+          // four CSS-token restrictions above. Reaches any Literal
+          // directly nested inside a `zIndexRange` JSX attribute whose
+          // source form starts with a digit; numeric literals are
+          // caught, string literals (the kind argument of cfZPair) are
+          // ignored. Adds belt-and-suspenders against callers
+          // reintroducing raw pairs in feature modules.
+          selector:
+            "JSXAttribute[name.name='zIndexRange'] > JSXExpressionContainer > ArrayExpression > Literal[value>0][value<1000]",
+          message:
+            "Raw numeric drei <Html zIndexRange={[N, M]}> pair is forbidden — reach for cfZPair('spatialLabel'|'spatialAnnotation'|'chromeChip'|'chromeZone') from apps/web/src/components/canvas/cfz.ts so the tier ladder has one source of truth.",
+        },
+      ],
+    },
+  },
   {
     rules: {
       "@typescript-eslint/no-unused-vars": [

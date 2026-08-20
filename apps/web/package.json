@@ -8,7 +8,9 @@
     "start": "next start -p 3002",
     "typecheck": "tsc --noEmit",
     "lint": "echo ok",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "web:check-canvas-first-zstack": "playwright test e2e/canvas-first-z-stack.spec.ts",
+    "web:show-tier-recipe": "cd ../.. && pnpm exec vitest run apps/web/src/components/canvas/cfz.migration.test.ts --reporter=verbose"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",

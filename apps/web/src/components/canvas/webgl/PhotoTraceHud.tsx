@@ -89,7 +89,7 @@ export function PhotoTraceHud() {
         border: "1px solid color-mix(in srgb, var(--gs-line) 70%, transparent)",
         boxShadow: "var(--gs-shadow-2)",
         pointerEvents: "auto",
-        zIndex: 5,
+        zIndex: "var(--cf-z-chrome)",
         color: "var(--gs-ink)",
         fontFamily: "var(--font-ui)",
       }}
