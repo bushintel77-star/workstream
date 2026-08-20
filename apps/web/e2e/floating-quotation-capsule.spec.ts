@@ -51,7 +51,9 @@ test.describe("Floating Live Quote capsule — un-dock + pill default", () => {
     const pill = page.getByTestId("fit-sheet-pill");
     await expect(pill).toBeVisible({ timeout: 15_000 });
 
-    // 1. Pill is position: fixed (the un-dock itself).
+    // 1. Pill wrapper is position: fixed (the un-dock itself). The pill
+    // button is itself position: static; it's the outer capsule wrapper
+    // that floats off the right margin (FitSheetCard.tsx outerStyle).
     const position = await pill.evaluate((el) => {
       const wrap = el.parentElement;
       const wrap2 = wrap?.parentElement;
@@ -62,8 +64,8 @@ test.describe("Floating Live Quote capsule — un-dock + pill default", () => {
       };
     });
     expect(
-      position.pill,
-      `expected pill to be position: fixed (un-docked), got "${position.pill}"`,
+      position.wrap,
+      `expected pill wrapper to be position: fixed (un-docked), got "${position.wrap}"`,
     ).toBe("fixed");
 
     // 2. Pill is right-anchored (right: 16px) rather than centered or docked.
