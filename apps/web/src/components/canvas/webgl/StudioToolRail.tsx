@@ -259,6 +259,16 @@ export function StudioToolRail({
         gap: "var(--gs-space-1)",
         pointerEvents: "auto",
         zIndex: "var(--cf-z-chrome)",
+        // Floating element: the rail is a glass panel, not a naked column
+        // of buttons hovering over the drawing (GlassCard recipe — veil +
+        // blur + hairline + neutral shadow tier).
+        background: "var(--gs-glass-veil)",
+        backdropFilter: "blur(var(--gs-blur))",
+        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        borderRadius: "var(--gs-radius-panel)",
+        border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+        boxShadow: "var(--gs-shadow-2)",
+        padding: "6px",
         // Short viewports: the rail scrolls internally instead of escaping
         // the canvas edge (webgl-chrome-collision gate).
         maxHeight: "calc(100dvh - 170px)",

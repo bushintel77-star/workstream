@@ -70,37 +70,39 @@ export function PerimeterTabStrip({
   /** Status cell: live stats + save chip + measure readout. */
   trailing?: ReactNode;
 }) {
+  const glassSegment: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "var(--gs-space-1)",
+    padding: "3px 6px",
+    borderRadius: "var(--gs-radius-pill)",
+    background: "var(--gs-glass-veil)",
+    backdropFilter: "blur(var(--gs-blur))",
+    WebkitBackdropFilter: "blur(var(--gs-blur))",
+    border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+    boxShadow: "var(--gs-shadow-1)",
+    whiteSpace: "nowrap",
+  };
+
   return (
     <div
-      data-gs-glass-card
       data-testid="perimeter-tab-strip"
       aria-label="Canvas tabs"
       style={{
         display: "flex",
+        flexWrap: "wrap",
         alignItems: "center",
-        gap: "var(--gs-space-3)",
-        padding: "3px 6px",
-        borderRadius: "var(--gs-radius-pill)",
-        background: "var(--gs-glass-veil)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
-        border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-        boxShadow: "var(--gs-shadow-1)",
+        justifyContent: "center",
+        gap: "var(--gs-space-2)",
         pointerEvents: "auto",
         maxWidth: "100%",
-        overflowX: "auto",
-        scrollbarWidth: "none",
       }}
     >
       <nav
+        data-gs-glass-card
         data-testid="studio-mode-tabs"
         aria-label="Studio modes"
-        style={{
-          display: "flex",
-          gap: "var(--gs-space-1)",
-          alignItems: "center",
-          flex: "0 0 auto",
-        }}
+        style={{ ...glassSegment, flex: "0 0 auto" }}
       >
         {CANVAS_MODES.map(({ id, label }) => {
           const locked = !unlocked.has(id);
@@ -156,24 +158,10 @@ export function PerimeterTabStrip({
       </nav>
 
       <div
-        aria-hidden
-        style={{
-          width: 1,
-          height: 14,
-          background: "color-mix(in srgb, var(--gs-line) 70%, transparent)",
-          flex: "0 0 auto",
-        }}
-      />
-
-      <div
+        data-gs-glass-card
         role="group"
         aria-label="Canvas surfaces"
-        style={{
-          display: "flex",
-          gap: "var(--gs-space-1)",
-          alignItems: "center",
-          flex: "0 0 auto",
-        }}
+        style={{ ...glassSegment, flex: "0 0 auto" }}
       >
         {metaTabs.map((t) => (
           <button
@@ -205,32 +193,14 @@ export function PerimeterTabStrip({
       </div>
 
       {trailing ? (
-        <>
-          {/* States are visually separated from the action tabs: one
-              hairline + breathing room, actions left, states right. */}
-          <div
-            aria-hidden
-            style={{
-              width: 1,
-              height: 14,
-              background: "color-mix(in srgb, var(--gs-line) 70%, transparent)",
-              flex: "0 0 auto",
-              marginLeft: "auto",
-            }}
-          />
-          <div
-            role="status"
-            aria-label="Canvas state"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "var(--gs-space-4)",
-              flex: "0 0 auto",
-            }}
-          >
-            {trailing}
-          </div>
-        </>
+        <div
+          data-gs-glass-card
+          role="status"
+          aria-label="Canvas state"
+          style={{ ...glassSegment, gap: "var(--gs-space-4)", flex: "0 0 auto" }}
+        >
+          {trailing}
+        </div>
       ) : null}
     </div>
   );

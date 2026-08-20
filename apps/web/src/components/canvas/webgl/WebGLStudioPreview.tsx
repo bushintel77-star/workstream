@@ -1107,6 +1107,7 @@ export function WebGLStudioPreview({
             </span>
           </div>
         ) : null}
+        {!splitView ? (
         <div
           style={{
             margin: "0 auto",
@@ -1199,6 +1200,7 @@ export function WebGLStudioPreview({
           }
         />
         </div>
+      ) : null}
       </div>
 
       {/* ---- Viewport transition HUD — fuses the Fused Rendering Context
