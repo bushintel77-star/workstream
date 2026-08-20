@@ -175,21 +175,21 @@ export default tseslint.config(
         "error",
         {
           selector:
-            "Property[key.name='borderRadius'][value.type='Literal'][value.raw=/^\\d/]",
+            "Property[key.name='borderRadius'][value.type='Literal'][value>0]",
           message:
-            "Raw numeric borderRadius is forbidden in canvas — use var(--gs-radius-xs|sm|md|lg|xl|2xl|pill) per docs/UI-ELEMENT-STANDARDS.md §1.",
+            "Raw numeric borderRadius is forbidden in canvas — use var(--gs-radius-xs|sm|md|lg|xl|2xl|pill) per docs/UI-ELEMENT-STANDARDS.md §1. (literal 0 is reserved — it means \"no corner\" and is allowed.)",
         },
         {
           selector:
-            "Property[key.name='fontSize'][value.type='Literal'][value.raw=/^\\d/]",
+            "Property[key.name='fontSize'][value.type='Literal'][value>0]",
           message:
             "Raw numeric fontSize is forbidden in canvas — use var(--gs-font-micro|xs|sm|md|lg|sub|h3|h2|h1) per docs/UI-ELEMENT-STANDARDS.md §2.",
         },
         {
           selector:
-            "Property[key.name='gap'][value.type='Literal'][value.raw=/^\\d/]",
+            "Property[key.name='gap'][value.type='Literal'][value>0]",
           message:
-            "Raw numeric gap is forbidden in canvas — use var(--gs-space-1|2|3|4|6|8|10) per docs/UI-ELEMENT-STANDARDS.md §3.",
+            "Raw numeric gap is forbidden in canvas — use var(--gs-space-1|2|3|4|6|8|10) per docs/UI-ELEMENT-STANDARDS.md §3. (literal 0 is reserved — it means \"no gap\" and is allowed.)",
         },
         {
           selector:

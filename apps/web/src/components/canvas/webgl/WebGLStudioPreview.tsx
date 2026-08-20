@@ -2184,22 +2184,24 @@ export function WebGLStudioPreview({
             </div>
           );
         })()}
-
-        {/* Estimation companion — semi-persistent in the dock (estimation-dock
-            spec §3): renders alongside any mode surface, toggleable via the
-            Fit tab, self-gating on fitSheetOpen/items/summary. */}
-        {!splitView && fitSheetOpen ? (
-          <FitSheetCard
-            projectId={projectId}
-            items={items ?? []}
-            boundaryPct={boundaryPct}
-            constructionTrenches={constructionTrenches}
-            irrigationZones={irrigationZones}
-            scaleM={scaleM}
-            outdoorM2={outdoorM2}
-          />
-        ) : null}
       </div>
+
+      {/* Estimation companion — UN-DOCKED floating glass capsule (now at
+          chrome tier, position: fixed so it does not consume canvas width).
+          Toggled via the Fit tab. Lives outside the right dock column —
+          the dock is now reserved for actual docked chrome panels only.
+          Canvas reclaims full edge-to-edge width when this is collapsed. */}
+      {!splitView && fitSheetOpen && items && items.length > 0 ? (
+        <FitSheetCard
+          projectId={projectId}
+          items={items ?? []}
+          boundaryPct={boundaryPct}
+          constructionTrenches={constructionTrenches}
+          irrigationZones={irrigationZones}
+          scaleM={scaleM}
+          outdoorM2={outdoorM2}
+        />
+      ) : null}
 
 
 

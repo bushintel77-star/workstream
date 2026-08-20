@@ -27,7 +27,7 @@
   color: var(--surface-elevated);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .brandSub {
@@ -124,7 +124,7 @@
 .metric {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--s-1);
 }
 
 .metricLabel {
@@ -563,6 +563,8 @@
   }
 
   .sheet {
+    /* @media print: flatten to a paper rectangle (literal 0 = no radius,
+       intentional "no corner" semantic, allowed by the lint rule). */
     border-radius: 0;
     border: none;
     padding: 0;

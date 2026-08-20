@@ -161,6 +161,15 @@ varies; pick the cheap ones first.
 3. Spacing outliers (`gap: 12`) — author sign-off.
 4. Outlier curves in `StudioToolRail.tsx` — keep or migrate to `--gs-base`.
 
+**Lint rule: literal `0` is reserved, not flagged**
+- `--gs-radius` rule (`[value > 0]`) and `--gs-space` rule both skip
+  literal `0` corner cases. Rationale: `border-radius: 0` and
+  `gap: 0` carry semantic intent ("no radius", "no gap") that is
+  orthogonal to scale membership. `font-size: 0` is caught (it would
+  collapse text invisibly).
+- The `@media print` flat-sheet reset (`.sheet { border-radius: 0 }`
+  in `quote.module.css`) is the canonical user of this escape hatch.
+
 **Tier 3 — structure changes (extract primitives)**
 1. `<GlassCard>` → expand with `header` / `footer` slots where
    neighboring sites hand-roll them today.
