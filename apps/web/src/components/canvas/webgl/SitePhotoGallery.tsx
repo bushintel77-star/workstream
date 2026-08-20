@@ -22,7 +22,7 @@ import {
 
 const chip: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.04em",
   padding: "2px 8px",
   borderRadius: "var(--gs-radius-pill)",
@@ -208,13 +208,13 @@ export function SitePhotoGallery({
   return (
     <div
       data-testid="site-photo-gallery"
-      style={{ display: "flex", flexDirection: "column", gap: 8 }}
+      style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--gs-space-4)" }}>
         <span
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             fontWeight: 600,
             letterSpacing: "0.06em",
             color: "var(--gs-ink)",
@@ -225,7 +225,7 @@ export function SitePhotoGallery({
         <span
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             color: "var(--gs-ink-secondary)",
           }}
         >
@@ -257,19 +257,19 @@ export function SitePhotoGallery({
         <p
           role="alert"
           data-testid="site-photo-error"
-          style={{ margin: 0, color: "var(--gs-ink-conflict)", fontSize: 11 }}
+          style={{ margin: 0, color: "var(--gs-ink-conflict)", fontSize: "var(--gs-font-sm)" }}
         >
           {error}
         </p>
       ) : null}
       {photos.length === 0 ? (
-        <p style={{ margin: 0, color: "var(--gs-ink-secondary)", fontSize: 11 }}>
+        <p style={{ margin: 0, color: "var(--gs-ink-secondary)", fontSize: "var(--gs-font-sm)" }}>
           No site photos yet. Upload the street frontage, rear fence or side
           boundary to trace an elevation from a photo.
         </p>
       ) : (
         <ul
-          style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 6 }}
+          style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "var(--gs-space-3)" }}
         >
           {photos.map((photo) => {
             const elevation = elevationFor(photo.id);
@@ -290,7 +290,7 @@ export function SitePhotoGallery({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 8,
+                  gap: "var(--gs-space-4)",
                   padding: 6,
                   borderRadius: "var(--gs-radius-chip)",
                   border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
@@ -304,7 +304,7 @@ export function SitePhotoGallery({
                     width: 44,
                     height: 33,
                     objectFit: "cover",
-                    borderRadius: 4,
+                    borderRadius: "var(--gs-radius-sm)",
                     border: "1px solid var(--gs-line)",
                     background: "var(--gs-panel)",
                   }}
@@ -312,7 +312,7 @@ export function SitePhotoGallery({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       color: "var(--gs-ink)",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
@@ -325,7 +325,7 @@ export function SitePhotoGallery({
                     <div
                       data-testid="site-photo-stamp"
                       style={{
-                        fontSize: 10.5,
+                        fontSize: "var(--gs-font-xs)",
                         color: elevation?.calibration
                           ? "var(--gs-ink-secondary)"
                           : "var(--gs-ink-muted)",
@@ -336,7 +336,7 @@ export function SitePhotoGallery({
                     </div>
                   ) : null}
                 </div>
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: "var(--gs-space-2)", flexWrap: "wrap" }}>
                   <button
                     type="button"
                     data-testid="site-photo-pin"

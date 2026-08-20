@@ -23,7 +23,7 @@ import { useStudioStore } from "./studioStore";
 
 const titleCss: CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   fontWeight: 600,
   letterSpacing: "0.06em",
   textTransform: "uppercase",
@@ -33,21 +33,21 @@ const titleCss: CSSProperties = {
 
 const hintCss: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   color: "var(--gs-ink-secondary)",
   marginTop: 8,
 };
 
 const provenanceCss: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   color: "var(--gs-ink-secondary)",
   marginBottom: 8,
 };
 
 const alertCss: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   color: "#C41E1E",
   border: "1px solid color-mix(in srgb, #C41E1E 45%, transparent)",
   borderRadius: "var(--gs-radius-chip)",
@@ -56,7 +56,7 @@ const alertCss: CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  gap: 8,
+  gap: "var(--gs-space-4)",
 };
 
 const dismissCss: CSSProperties = {
@@ -65,7 +65,7 @@ const dismissCss: CSSProperties = {
   color: "#C41E1E",
   cursor: "pointer",
   fontFamily: "var(--font-ui)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   padding: 0,
 };
 
@@ -74,7 +74,7 @@ const fieldRowCss: CSSProperties = { marginBottom: 6 };
 const fieldLabelCss: CSSProperties = {
   display: "block",
   fontFamily: "var(--font-ui)",
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.05em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -85,7 +85,7 @@ const inputCss: CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
   fontFamily: "var(--font-ui)",
-  fontSize: 12,
+  fontSize: "var(--gs-font-lg)",
   padding: "4px 6px",
   borderRadius: "var(--gs-radius-chip)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
@@ -101,7 +101,7 @@ const listCss: CSSProperties = {
 
 const liCss: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   color: "var(--gs-ink)",
   padding: "2px 0",
 };
@@ -159,7 +159,7 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
 
   const gizmoChip = (active: boolean): React.CSSProperties => ({
     fontFamily: "var(--font-ui)",
-    fontSize: 10.5,
+    fontSize: "var(--gs-font-xs)",
     letterSpacing: "0.04em",
     padding: "3px 8px",
     borderRadius: "var(--gs-radius-pill)",
@@ -173,7 +173,7 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
     <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
       <div style={titleCss}>Placement</div>
       <Field labelText="Manipulator">
-        <div style={{ display: "flex", gap: 4 }}>
+        <div style={{ display: "flex", gap: "var(--gs-space-2)" }}>
           <button
             type="button"
             data-testid="gizmo-move"
@@ -352,7 +352,7 @@ function FeatureInspector({
             background: "transparent",
             color: "var(--gs-ink-secondary)",
             fontFamily: "var(--font-ui)",
-            fontSize: 11,
+            fontSize: "var(--gs-font-sm)",
             cursor: "pointer",
           }}
         >

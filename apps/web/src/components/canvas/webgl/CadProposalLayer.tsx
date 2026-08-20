@@ -102,7 +102,7 @@ function ProposalMarker({
             data-testid="cad-proposal-chip"
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 11,
+              fontSize: "var(--gs-font-sm)",
               fontWeight: 600,
               color: "var(--gs-panel)",
               background: "var(--gs-primary)",

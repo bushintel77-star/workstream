@@ -37,7 +37,7 @@ const chipBase: CSSProperties = {
   background: "transparent",
   color: "var(--gs-ink-secondary)",
   cursor: "pointer",
-  fontSize: 14,
+  fontSize: "var(--gs-font-h3)",
   lineHeight: 1,
   transition:
     "background 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -218,7 +218,7 @@ export function NibPalette() {
           gap: "var(--gs-space-1)",
           padding: "0 6px",
           fontFamily: "var(--font-tech)",
-          fontSize: 9.5,
+          fontSize: "var(--gs-font-micro)",
           lineHeight: 1.25,
           color: "var(--gs-ink-muted)",
           whiteSpace: "nowrap",

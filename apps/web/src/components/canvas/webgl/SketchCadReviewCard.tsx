@@ -22,7 +22,7 @@ import { proposalLabel } from "./sketchCad";
 const panel: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: 8,
+  gap: "var(--gs-space-4)",
   width: 288,
   maxHeight: "calc(100dvh - 220px)",
   overflowY: "auto",
@@ -33,7 +33,7 @@ const rowBase: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  gap: 8,
+  gap: "var(--gs-space-4)",
   width: "100%",
   padding: "6px 8px",
   border: "1px solid transparent",
@@ -41,7 +41,7 @@ const rowBase: React.CSSProperties = {
   background: "transparent",
   color: "var(--gs-ink-secondary)",
   fontFamily: "var(--font-ui)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   cursor: "pointer",
   textAlign: "left",
 };
@@ -80,7 +80,7 @@ export function SketchCadReviewCard() {
         <span
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 11,
+            fontSize: "var(--gs-font-sm)",
             fontWeight: 600,
             letterSpacing: "0.06em",
             color: "var(--gs-ink)",
@@ -98,7 +98,7 @@ export function SketchCadReviewCard() {
             background: "transparent",
             color: "var(--gs-ink-muted)",
             fontFamily: "var(--font-ui)",
-            fontSize: 11,
+            fontSize: "var(--gs-font-sm)",
             cursor: "pointer",
             padding: "2px 6px",
           }}
@@ -113,7 +113,7 @@ export function SketchCadReviewCard() {
           data-testid="cad-review-notice"
           style={{
             margin: 0,
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             lineHeight: 1.4,
             color: "var(--gs-ink-conflict)",
             border: "1px solid color-mix(in srgb, var(--gs-ink-conflict) 40%, transparent)",
@@ -128,7 +128,7 @@ export function SketchCadReviewCard() {
       <div
         role="group"
         aria-label="Sketch to CAD proposals"
-        style={{ display: "flex", flexDirection: "column", gap: 2 }}
+        style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-1)" }}
       >
         {sorted.map((p) => {
           const isActive = p.id === active.id;
@@ -173,13 +173,13 @@ export function SketchCadReviewCard() {
           paddingTop: 8,
           display: "flex",
           flexDirection: "column",
-          gap: 6,
+          gap: "var(--gs-space-3)",
         }}
       >
         <p
           style={{
             margin: 0,
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             lineHeight: 1.4,
             color: "var(--gs-ink-secondary)",
           }}
@@ -210,7 +210,7 @@ export function SketchCadReviewCard() {
         <div
           style={{
             display: "flex",
-            gap: 6,
+            gap: "var(--gs-space-3)",
             alignItems: "center",
             flexWrap: "wrap",
           }}
@@ -227,7 +227,7 @@ export function SketchCadReviewCard() {
               background: "var(--gs-primary)",
               color: "var(--gs-panel)",
               fontFamily: "var(--font-ui)",
-              fontSize: 11,
+              fontSize: "var(--gs-font-sm)",
               fontWeight: 600,
               cursor: "pointer",
             }}
@@ -245,7 +245,7 @@ export function SketchCadReviewCard() {
               background: "transparent",
               color: "var(--gs-ink-secondary)",
               fontFamily: "var(--font-ui)",
-              fontSize: 11,
+              fontSize: "var(--gs-font-sm)",
               cursor: "pointer",
             }}
           >
@@ -263,7 +263,7 @@ export function SketchCadReviewCard() {
             background: "transparent",
             color: "var(--gs-primary)",
             fontFamily: "var(--font-ui)",
-            fontSize: 11,
+            fontSize: "var(--gs-font-sm)",
             cursor: "pointer",
             textAlign: "left",
           }}

@@ -100,9 +100,9 @@ export function ViewportTransitionHUD({
         zIndex: "var(--cf-z-app)", // overlay chrome during viewport transitions
         display: "flex",
         flexDirection: "column",
-        gap: 8,
+        gap: "var(--gs-space-4)",
         padding: "10px 14px 12px",
-        borderRadius: 12,
+        borderRadius: "var(--gs-radius-xl)",
         fontFamily: "var(--font-ui)",
         color: "var(--gs-ink)",
         pointerEvents: "auto",
@@ -114,13 +114,13 @@ export function ViewportTransitionHUD({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 12,
+          gap: "var(--gs-space-6)",
         }}
       >
         <span
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 9.5,
+            fontSize: "var(--gs-font-micro)",
             fontWeight: 600,
             letterSpacing: "0.12em",
             textTransform: "uppercase",
@@ -133,7 +133,7 @@ export function ViewportTransitionHUD({
           aria-live="polite"
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 9.5,
+            fontSize: "var(--gs-font-micro)",
             fontVariantNumeric: "tabular-nums",
             opacity: 0.6,
           }}
@@ -148,7 +148,7 @@ export function ViewportTransitionHUD({
           position: "relative",
           width: 200,
           height: 6,
-          borderRadius: 3,
+          borderRadius: "var(--gs-radius-xs)",
           background: "color-mix(in srgb, currentColor 12%, transparent)",
           overflow: "visible",
         }}
@@ -162,7 +162,7 @@ export function ViewportTransitionHUD({
             top: 0,
             bottom: 0,
             width: `${markerPct}%`,
-            borderRadius: 3,
+            borderRadius: "var(--gs-radius-xs)",
             background:
               "linear-gradient(90deg, var(--gs-primary) 0%, var(--gs-truth) 100%)",
             transition: "width 180ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -253,7 +253,7 @@ export function ViewportTransitionHUD({
         style={{
           display: "flex",
           alignItems: "stretch",
-          gap: 6,
+          gap: "var(--gs-space-3)",
           marginTop: 4,
         }}
       >
@@ -306,7 +306,7 @@ function PresetButton(props: {
         gap: "var(--gs-space-2)",
         padding: "7px 4px 5px",
         border: "1px solid color-mix(in srgb, currentColor 15%, transparent)",
-        borderRadius: 8,
+        borderRadius: "var(--gs-radius-lg)",
         background: props.active
           ? "color-mix(in srgb, var(--gs-primary) 12%, transparent)"
           : "transparent",

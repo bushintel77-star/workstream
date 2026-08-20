@@ -24,7 +24,7 @@ type PaletteAction = {
 
 const chip: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.06em",
   padding: "1px 7px",
   borderRadius: "var(--gs-radius-pill)",
@@ -298,7 +298,7 @@ export function StudioCommandPalette({
           boxSizing: "border-box",
           padding: "10px 12px",
           fontFamily: "var(--font-ui)",
-          fontSize: 13,
+          fontSize: "var(--gs-font-sub)",
           color: "var(--gs-ink)",
           background: "transparent",
           border: "none",
@@ -308,7 +308,7 @@ export function StudioCommandPalette({
       <div role="listbox" aria-label="Commands" style={{ maxHeight: 300, overflowY: "auto" }}>
         {filtered.length === 0 ? (
           <p
-            style={{ padding: "10px 12px", fontSize: 11.5, color: "var(--gs-ink-secondary)", margin: 0 }}
+            style={{ padding: "10px 12px", fontSize: "var(--gs-font-md)", color: "var(--gs-ink-secondary)", margin: 0 }}
           >
             No commands match “{query}”.
           </p>
@@ -324,9 +324,9 @@ export function StudioCommandPalette({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
+                gap: "var(--gs-space-4)",
                 padding: "6px 12px",
-                fontSize: 11.5,
+                fontSize: "var(--gs-font-md)",
                 cursor: "pointer",
                 background:
                   i === activeIdx

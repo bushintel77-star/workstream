@@ -45,7 +45,7 @@ export interface MetaTabDef {
 
 const chipBase: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   letterSpacing: "0.04em",
   padding: "3px 9px",
   borderRadius: "var(--gs-radius-pill)",
@@ -53,7 +53,7 @@ const chipBase: CSSProperties = {
   whiteSpace: "nowrap",
   display: "inline-flex",
   alignItems: "center",
-  gap: 4,
+  gap: "var(--gs-space-2)",
 };
 
 export function PerimeterTabStrip({
@@ -78,7 +78,7 @@ export function PerimeterTabStrip({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 6,
+        gap: "var(--gs-space-3)",
         padding: "3px 6px",
         borderRadius: "var(--gs-radius-pill)",
         background: "var(--gs-glass-veil)",
@@ -97,7 +97,7 @@ export function PerimeterTabStrip({
         aria-label="Studio modes"
         style={{
           display: "flex",
-          gap: 2,
+          gap: "var(--gs-space-1)",
           alignItems: "center",
           flex: "0 0 auto",
         }}
@@ -170,7 +170,7 @@ export function PerimeterTabStrip({
         aria-label="Canvas surfaces"
         style={{
           display: "flex",
-          gap: 2,
+          gap: "var(--gs-space-1)",
           alignItems: "center",
           flex: "0 0 auto",
         }}
@@ -224,7 +224,7 @@ export function PerimeterTabStrip({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 8,
+              gap: "var(--gs-space-4)",
               flex: "0 0 auto",
             }}
           >

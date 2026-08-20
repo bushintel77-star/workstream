@@ -42,7 +42,7 @@ import {
 } from "./fitSheet";
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -52,7 +52,7 @@ const rowStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "baseline",
-  gap: 6,
+  gap: "var(--gs-space-3)",
   borderBottom: "1px solid var(--gs-line)",
   paddingBottom: 3,
   marginBottom: 3,
@@ -60,7 +60,7 @@ const rowStyle: React.CSSProperties = {
 
 const figureStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   color: "var(--gs-ink)",
   whiteSpace: "nowrap",
 };
@@ -70,7 +70,7 @@ const tickStyle: React.CSSProperties = {
   all: "unset",
   cursor: "pointer",
   fontFamily: "var(--font-tech)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   color: "var(--gs-ink-truth)",
   width: 16,
   textAlign: "center",
@@ -90,7 +90,7 @@ function StockChip({ inStock, mode }: { inStock: boolean; mode: string }) {
       data-testid="fit-sheet-stock-chip"
       style={{
         fontFamily: "var(--font-tech)",
-        fontSize: 10.5,
+        fontSize: "var(--gs-font-xs)",
         fontWeight: 600,
         letterSpacing: "0.05em",
         color,
@@ -232,7 +232,7 @@ export function FitSheetCard({
               data-testid="fit-sheet-settling"
               style={{
                 fontFamily: "var(--font-tech)",
-                fontSize: 10.5,
+                fontSize: "var(--gs-font-xs)",
                 color: "var(--gs-primary)",
               }}
             >
@@ -266,7 +266,7 @@ export function FitSheetCard({
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div
                       style={{
-                        fontSize: 11,
+                        fontSize: "var(--gs-font-sm)",
                         color: "var(--gs-ink)",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -276,11 +276,11 @@ export function FitSheetCard({
                     >
                       {line.label}
                     </div>
-                    <div style={{ fontSize: 10.5, color: "var(--gs-ink-secondary)" }}>
+                    <div style={{ fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
                       {section} · {line.qty.toFixed(1)} {line.unit} @ {fmtAud(line.rate)}
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "var(--gs-space-3)" }}>
                     {stock && <StockChip inStock={stock.inStock} mode={stock.mode} />}
                     <span style={figureStyle}>{fmtAud(line.total)}</span>
                   </div>
@@ -292,18 +292,18 @@ export function FitSheetCard({
         {/* Section subtotals */}
         <div
           data-testid="fit-sheet-sections"
-          style={{ display: "flex", flexWrap: "wrap", gap: 4, margin: "6px 0 8px" }}
+          style={{ display: "flex", flexWrap: "wrap", gap: "var(--gs-space-2)", margin: "6px 0 8px" }}
         >
           {summary.sections.map((s) => (
             <span
               key={s.id}
               title={`${s.lines.length} lines`}
               style={{
-                fontSize: 10.5,
+                fontSize: "var(--gs-font-xs)",
                 fontFamily: "var(--font-tech)",
                 color: "var(--gs-ink-secondary)",
                 border: "1px solid var(--gs-line)",
-                borderRadius: 6,
+                borderRadius: "var(--gs-radius-md)",
                 padding: "2px 6px",
               }}
             >
@@ -334,7 +334,7 @@ export function FitSheetCard({
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 16,
+              fontSize: "var(--gs-font-h2)",
               fontWeight: 600,
               color: "var(--gs-primary)",
             }}
@@ -364,7 +364,7 @@ export function FitSheetCard({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 6,
+                  gap: "var(--gs-space-3)",
                   padding: "2px 0",
                 }}
               >
@@ -380,7 +380,7 @@ export function FitSheetCard({
                 </button>
                 <span
                   style={{
-                    fontSize: 10.5,
+                    fontSize: "var(--gs-font-xs)",
                     color: "var(--gs-ink-muted)",
                     textDecoration: "line-through",
                     overflow: "hidden",
@@ -398,7 +398,7 @@ export function FitSheetCard({
                 </span>
                 <span
                   style={{
-                    fontSize: 10.5,
+                    fontSize: "var(--gs-font-xs)",
                     color: "var(--gs-ink-muted)",
                     whiteSpace: "nowrap",
                   }}
@@ -418,13 +418,13 @@ export function FitSheetCard({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "baseline",
-            gap: 6,
+            gap: "var(--gs-space-3)",
             marginTop: 3,
           }}
           title="Backend instant estimate of the saved canvas (POST /costing/sketch)"
         >
           <span style={labelStyle}>Backend estimate</span>
-          <span style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+          <span style={{ display: "flex", alignItems: "baseline", gap: "var(--gs-space-3)" }}>
             {driftPct != null && Math.abs(driftPct) > 2 ? (
               <span
                 data-testid="fit-sheet-drift"
@@ -465,7 +465,7 @@ export function FitSheetCard({
                 all: "unset",
                 cursor: backendBusy ? "wait" : "pointer",
                 fontFamily: "var(--font-tech)",
-                fontSize: 11,
+                fontSize: "var(--gs-font-sm)",
                 color: "var(--gs-ink-secondary)",
                 padding: "0 2px",
               }}
@@ -482,7 +482,7 @@ export function FitSheetCard({
             justifyContent: "space-between",
             marginTop: 5,
             fontFamily: "var(--font-tech)",
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             color: "var(--gs-ink-secondary)",
           }}
         >
@@ -501,7 +501,7 @@ export function FitSheetCard({
               borderLeft: "2px solid var(--gs-primary)",
               background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
               borderRadius: "0 6px 6px 0",
-              fontSize: 10.5,
+              fontSize: "var(--gs-font-xs)",
               color: "var(--gs-ink)",
               lineHeight: 1.4,
             }}
@@ -514,7 +514,7 @@ export function FitSheetCard({
         <div
           style={{
             marginTop: 5,
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             color: "var(--gs-ink-secondary)",
             letterSpacing: "0.04em",
           }}

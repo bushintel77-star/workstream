@@ -965,19 +965,19 @@ export function WebGLStudioPreview({
             width: "min(420px, 100%)",
             display: "flex",
             flexDirection: "column",
-            gap: 12,
+            gap: "var(--gs-space-6)",
             padding: 20,
             borderRadius: "var(--gs-radius-panel)",
             background: "var(--gs-glass-veil-strong)",
             border: "1px solid var(--gs-line)",
           }}
         >
-          <h1 style={{ margin: 0, fontSize: 20 }}>3D canvas unavailable</h1>
+          <h1 style={{ margin: 0, fontSize: "var(--gs-font-h1)" }}>3D canvas unavailable</h1>
           <p style={{ margin: 0, color: "var(--gs-ink-secondary)" }}>
             The graphics context is unavailable or was interrupted. Your saved
             drawing is unchanged.
           </p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "var(--gs-space-4)", flexWrap: "wrap" }}>
             <button
               type="button"
               onClick={() => window.location.reload()}
@@ -1035,7 +1035,7 @@ export function WebGLStudioPreview({
           right: 16,
           display: "flex",
           alignItems: "flex-start",
-          gap: 8,
+          gap: "var(--gs-space-4)",
           pointerEvents: "none",
           zIndex: "var(--cf-z-chrome)",
         }}
@@ -1049,7 +1049,7 @@ export function WebGLStudioPreview({
             style={{
               display: "flex",
               alignItems: "baseline",
-              gap: 8,
+              gap: "var(--gs-space-4)",
               padding: "5px 10px",
               borderRadius: "var(--gs-radius-pill)",
               background: "var(--gs-glass-veil)",
@@ -1067,7 +1067,7 @@ export function WebGLStudioPreview({
             <span
               style={{
                 fontFamily: "var(--font-tech)",
-                fontSize: 11.5,
+                fontSize: "var(--gs-font-md)",
                 fontWeight: 600,
                 color: "var(--gs-ink-strong)",
                 letterSpacing: "0.01em",
@@ -1078,7 +1078,7 @@ export function WebGLStudioPreview({
             <span
               style={{
                 fontFamily: "var(--font-technical-mono)",
-                fontSize: 10.5,
+                fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.05em",
                 color: "var(--gs-ink-muted)",
               }}
@@ -1097,7 +1097,7 @@ export function WebGLStudioPreview({
             <span
               style={{
                 fontFamily: "var(--font-technical-mono)",
-                fontSize: 10.5,
+                fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
                 color: "var(--gs-primary-ink)",
@@ -1176,7 +1176,7 @@ export function WebGLStudioPreview({
                 aria-label={`Canvas summary: ${stats.boundaryPoints} boundary points, ${stats.items} items, ${stats.strokes} strokes`}
                 style={{
                   fontFamily: "var(--font-tech)",
-                  fontSize: 10.5,
+                  fontSize: "var(--gs-font-xs)",
                   fontWeight: 500,
                   letterSpacing: "0.02em",
                   fontVariantNumeric: "tabular-nums",
@@ -1257,7 +1257,7 @@ export function WebGLStudioPreview({
           width: 360,
           display: "flex",
           flexDirection: "column",
-          gap: 6,
+          gap: "var(--gs-space-3)",
           alignItems: "flex-end",
           pointerEvents: "none",
           zIndex: "var(--cf-z-chrome)",
@@ -1300,12 +1300,12 @@ export function WebGLStudioPreview({
 
           if (activeMode === "survey") {
             body = (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}>
                 <div
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: 6,
+                    gap: "var(--gs-space-3)",
                   }}
                 >
                   <button
@@ -1315,7 +1315,7 @@ export function WebGLStudioPreview({
                     onClick={() => void runSiteTruthImport()}
                     style={{
                       fontFamily: "var(--font-ui)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       fontWeight: 600,
                       padding: "6px 10px",
                       borderRadius: "var(--gs-radius-chip)",
@@ -1333,7 +1333,7 @@ export function WebGLStudioPreview({
                       data-testid="site-truth-result"
                       style={{
                         margin: 0,
-                        fontSize: 10.5,
+                        fontSize: "var(--gs-font-xs)",
                         color: "var(--gs-ink-secondary)",
                       }}
                     >
@@ -1380,7 +1380,7 @@ export function WebGLStudioPreview({
             );
           } else if (activeMode === "sketch" && metaTab == null) {
             body = (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}>
                 <div
                   style={{
                     display: "flex",
@@ -1391,7 +1391,7 @@ export function WebGLStudioPreview({
                   <span
                     style={{
                       fontFamily: "var(--font-tech)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       fontWeight: 600,
                       letterSpacing: "0.06em",
                       color: "var(--gs-ink)",
@@ -1402,14 +1402,14 @@ export function WebGLStudioPreview({
                   <span
                     style={{
                       fontFamily: "var(--font-tech)",
-                      fontSize: 10.5,
+                      fontSize: "var(--gs-font-xs)",
                       color: "var(--gs-ink-secondary)",
                     }}
                   >
                     {strokes.length} stroke{strokes.length === 1 ? "" : "s"}
                   </span>
                 </div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}>
                   <button
                     type="button"
                     data-testid="sketch-tidy"
@@ -1428,7 +1428,7 @@ export function WebGLStudioPreview({
                       background: "var(--gs-primary)",
                       color: "var(--gs-panel)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       fontWeight: 600,
                       cursor: strokes.length === 0 ? "not-allowed" : "pointer",
                       opacity: strokes.length === 0 ? 0.5 : 1,
@@ -1452,7 +1452,7 @@ export function WebGLStudioPreview({
                       background: "transparent",
                       color: "var(--gs-ink-secondary)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       cursor: strokes.length === 0 ? "not-allowed" : "pointer",
                       opacity: strokes.length === 0 ? 0.5 : 1,
                     }}
@@ -1479,7 +1479,7 @@ export function WebGLStudioPreview({
                       // below AA; the cobalt ink token clears 6:1 on the veil.
                       color: "var(--gs-primary-ink)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       fontWeight: 600,
                       cursor: strokes.length === 0 ? "not-allowed" : "pointer",
                       opacity: strokes.length === 0 ? 0.5 : 1,
@@ -1500,7 +1500,7 @@ export function WebGLStudioPreview({
                       background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
                       color: "var(--gs-primary)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       cursor: "pointer",
                     }}
                   >
@@ -1514,7 +1514,7 @@ export function WebGLStudioPreview({
                     data-testid="sketch-cad-notice"
                     style={{
                       margin: 0,
-                      fontSize: 10.5,
+                      fontSize: "var(--gs-font-xs)",
                       lineHeight: 1.4,
                       color: /photo-traced/.test(sketchCadNotice)
                         ? "var(--gs-ink-conflict)"
@@ -1531,8 +1531,8 @@ export function WebGLStudioPreview({
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 6,
-                      fontSize: 10.5,
+                      gap: "var(--gs-space-3)",
+                      fontSize: "var(--gs-font-xs)",
                       lineHeight: 1.4,
                       color: "var(--gs-ink-secondary)",
                     }}
@@ -1547,7 +1547,7 @@ export function WebGLStudioPreview({
                         background: "transparent",
                         color: "var(--gs-ink-secondary)",
                         cursor: "pointer",
-                        fontSize: 13,
+                        fontSize: "var(--gs-font-sub)",
                         lineHeight: 1,
                         padding: "0 2px",
                       }}
@@ -1565,7 +1565,7 @@ export function WebGLStudioPreview({
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: 8,
+                  gap: "var(--gs-space-4)",
                 }}
               >
                 <div
@@ -1578,7 +1578,7 @@ export function WebGLStudioPreview({
                   <span
                     style={{
                       fontFamily: "var(--font-tech)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       fontWeight: 600,
                       letterSpacing: "0.06em",
                       color: "var(--gs-ink)",
@@ -1589,7 +1589,7 @@ export function WebGLStudioPreview({
                   <span
                     style={{
                       fontFamily: "var(--font-tech)",
-                      fontSize: 10.5,
+                      fontSize: "var(--gs-font-xs)",
                       color: "var(--gs-ink-secondary)",
                       fontVariantNumeric: "tabular-nums",
                     }}
@@ -1611,13 +1611,13 @@ export function WebGLStudioPreview({
                 >
                   <a
                     href="/home"
-                    style={{ color: "var(--gs-ink-secondary)", fontSize: 10.5 }}
+                    style={{ color: "var(--gs-ink-secondary)", fontSize: "var(--gs-font-xs)" }}
                   >
                     Sites
                   </a>
                   <a
                     href={`/projects/${projectId}/outputs`}
-                    style={{ color: "var(--gs-primary)", fontSize: 10.5 }}
+                    style={{ color: "var(--gs-primary)", fontSize: "var(--gs-font-xs)" }}
                   >
                     Outputs
                   </a>
@@ -1625,7 +1625,7 @@ export function WebGLStudioPreview({
                 <div
                   style={{
                     display: "flex",
-                    borderRadius: 6,
+                    borderRadius: "var(--gs-radius-md)",
                     border: "1px solid var(--gs-line)",
                     overflow: "hidden",
                   }}
@@ -1643,7 +1643,7 @@ export function WebGLStudioPreview({
                         ? "var(--gs-chip-active-ink)"
                         : "var(--gs-ink-secondary)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       fontWeight: 600,
                       cursor: "pointer",
                     }}
@@ -1663,7 +1663,7 @@ export function WebGLStudioPreview({
                         ? "var(--gs-chip-active-ink)"
                         : "var(--gs-ink-secondary)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       fontWeight: 600,
                       cursor: "pointer",
                     }}
@@ -1672,7 +1672,7 @@ export function WebGLStudioPreview({
                   </button>
                 </div>
                 <div
-                  style={{ display: "flex", gap: 4 }}
+                  style={{ display: "flex", gap: "var(--gs-space-2)" }}
                   role="group"
                   aria-label="Camera and history"
                 >
@@ -1713,7 +1713,7 @@ export function WebGLStudioPreview({
                           background: "transparent",
                           color: disabled ? "var(--gs-ink-muted)" : "var(--gs-ink-secondary)",
                           fontFamily: "var(--font-tech)",
-                          fontSize: 12,
+                          fontSize: "var(--gs-font-lg)",
                           cursor: disabled ? "not-allowed" : "pointer",
                         }}
                       >
@@ -1739,7 +1739,7 @@ export function WebGLStudioPreview({
                 <div
                   style={{
                     display: "flex",
-                    gap: 4,
+                    gap: "var(--gs-space-2)",
                     flexWrap: "wrap",
                   }}
                 >
@@ -1761,7 +1761,7 @@ export function WebGLStudioPreview({
                     }}
                   >
                     <span style={scrubberLabelStyle}>Sun</span>
-                    <span style={{ ...scrubberValueStyle, fontSize: 14 }}>
+                    <span style={{ ...scrubberValueStyle, fontSize: "var(--gs-font-h3)" }}>
                       {String(Math.floor(sunMin / 60)).padStart(2, "0")}:
                       {String(sunMin % 60).padStart(2, "0")}
                     </span>
@@ -1786,7 +1786,7 @@ export function WebGLStudioPreview({
                     }}
                   >
                     <span style={scrubberLabelStyle}>Season · {seasonMeta.label}</span>
-                    <span style={{ ...scrubberValueStyle, fontSize: 14 }}>
+                    <span style={{ ...scrubberValueStyle, fontSize: "var(--gs-font-h3)" }}>
                       {seasonMeta.month}
                     </span>
                   </div>
@@ -1810,7 +1810,7 @@ export function WebGLStudioPreview({
                               ? "var(--gs-chip-active-ink)"
                               : "var(--gs-ink-secondary)",
                           fontFamily: "var(--font-ui)",
-                          fontSize: 10.5,
+                          fontSize: "var(--gs-font-xs)",
                           cursor: "pointer",
                         }}
                       >
@@ -1854,7 +1854,7 @@ export function WebGLStudioPreview({
               <div
                 role="group"
                 aria-label="Canvas layers"
-                style={{ display: "flex", gap: 4, flexWrap: "wrap" }}
+                style={{ display: "flex", gap: "var(--gs-space-2)", flexWrap: "wrap" }}
               >
                 {(
                   [
@@ -1884,7 +1884,7 @@ export function WebGLStudioPreview({
                         ? "var(--gs-chip-active-ink)"
                         : "var(--gs-ink-secondary)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 10.5,
+                      fontSize: "var(--gs-font-xs)",
                       cursor: "pointer",
                     }}
                   >
@@ -1896,7 +1896,7 @@ export function WebGLStudioPreview({
           } else if (metaTab === "site") {
             dismiss = () => setMetaTab(null);
             body = (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}>
                 <SiteContextBadges
                   projectId={projectId}
                   variant="glass"
@@ -1908,14 +1908,14 @@ export function WebGLStudioPreview({
                     style={{
                       display: "flex",
                       flexWrap: "wrap",
-                      gap: 4,
+                      gap: "var(--gs-space-2)",
                       padding: "5px 7px",
                       borderRadius: "var(--gs-radius-chip)",
                       background: "var(--gs-surface-fill)",
                       border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
                       color: "var(--gs-ink-secondary)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 10.5,
+                      fontSize: "var(--gs-font-xs)",
                     }}
                   >
                     <strong style={{ color: "var(--gs-ink)" }}>
@@ -1950,14 +1950,14 @@ export function WebGLStudioPreview({
                   style={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: 4,
+                    gap: "var(--gs-space-2)",
                     padding: "6px 9px",
                     borderRadius: "var(--gs-radius-chip)",
                     background: "var(--gs-surface-fill)",
                     border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
                     color: "var(--gs-ink-secondary)",
                     fontFamily: "var(--font-ui)",
-                    fontSize: 10.5,
+                    fontSize: "var(--gs-font-xs)",
                     lineHeight: 1.45,
                   }}
                 >
@@ -1965,7 +1965,7 @@ export function WebGLStudioPreview({
                     Aboriginal cultural heritage (ACHRIS) is not part of the
                     public overlay washes — check the register before design.
                   </span>
-                  <span style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  <span style={{ display: "flex", flexWrap: "wrap", gap: "var(--gs-space-3)" }}>
                     <a
                       href="https://achris.vic.gov.au/"
                       target="_blank"
@@ -2011,7 +2011,7 @@ export function WebGLStudioPreview({
                       border: "1px solid color-mix(in srgb, var(--gs-warning) 45%, transparent)",
                       color: "var(--gs-ink)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                       lineHeight: 1.4,
                     }}
                   >
@@ -2038,7 +2038,7 @@ export function WebGLStudioPreview({
                       background: "var(--gs-surface-fill)",
                       color: "var(--gs-ink-secondary)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 11,
+                      fontSize: "var(--gs-font-sm)",
                     }}
                   >
                     Solar analysis unavailable until the property pin is verified.
@@ -2051,14 +2051,14 @@ export function WebGLStudioPreview({
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: 4,
+                      gap: "var(--gs-space-2)",
                       padding: "4px 8px",
                       borderRadius: "var(--gs-radius-pill)",
                       background: "color-mix(in srgb, var(--gs-truth-ink) 12%, transparent)",
                       border: "1px solid color-mix(in srgb, var(--gs-truth-ink) 40%, transparent)",
                       color: "var(--gs-ink-truth)",
                       fontFamily: "var(--font-ui)",
-                      fontSize: 10.5,
+                      fontSize: "var(--gs-font-xs)",
                       textDecoration: "none",
                       whiteSpace: "nowrap",
                     }}
@@ -2071,7 +2071,7 @@ export function WebGLStudioPreview({
           } else if (metaTab === "terrain") {
             dismiss = () => setMetaTab(null);
             body = (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}>
                 <SliceProfileCard
                   scaleM={scaleM}
                   boardAspect={boardAspect}
@@ -2098,10 +2098,10 @@ export function WebGLStudioPreview({
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: 8,
+                  gap: "var(--gs-space-4)",
                   color: "var(--gs-ink)",
                   fontFamily: "var(--font-ui)",
-                  fontSize: 11,
+                  fontSize: "var(--gs-font-sm)",
                   lineHeight: 1.45,
                 }}
               >
@@ -2150,7 +2150,7 @@ export function WebGLStudioPreview({
                 padding: "12px 14px",
                 display: "flex",
                 flexDirection: "column",
-                gap: 6,
+                gap: "var(--gs-space-3)",
                 animation: "wsPanelIn 160ms ease-out",
               }}
             >
@@ -2172,7 +2172,7 @@ export function WebGLStudioPreview({
                     border: "1px solid transparent",
                     background: "transparent",
                     color: "var(--gs-ink-secondary)",
-                    fontSize: 14,
+                    fontSize: "var(--gs-font-h3)",
                     lineHeight: 1,
                     cursor: "pointer",
                   }}
@@ -2233,14 +2233,14 @@ export function WebGLStudioPreview({
             bottom: 12,
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: "var(--gs-space-4)",
             pointerEvents: "auto",
             padding: "5px 10px",
             borderRadius: "var(--gs-radius-pill)",
             background: "var(--gs-chip-active)",
             color: "var(--gs-chip-active-ink)",
             fontFamily: "var(--font-ui)",
-            fontSize: 11,
+            fontSize: "var(--gs-font-sm)",
             boxShadow: "var(--gs-shadow-2)",
           }}
         >
@@ -2257,7 +2257,7 @@ export function WebGLStudioPreview({
               background: "transparent",
               color: "var(--gs-chip-active-ink)",
               fontFamily: "var(--font-ui)",
-              fontSize: 11,
+              fontSize: "var(--gs-font-sm)",
               cursor: "pointer",
               padding: 0,
             }}
@@ -2324,7 +2324,7 @@ function FirstRunHint() {
         transform: "translateX(-50%)",
         display: "flex",
         alignItems: "center",
-        gap: 8,
+        gap: "var(--gs-space-4)",
         padding: "5px 10px",
         borderRadius: "var(--gs-radius-pill)",
         background: "color-mix(in srgb, var(--gs-glass) 45%, transparent)",
@@ -2334,7 +2334,7 @@ function FirstRunHint() {
         pointerEvents: "auto",
         zIndex: "var(--cf-z-chrome)",
         fontFamily: "var(--font-ui)",
-        fontSize: 11,
+        fontSize: "var(--gs-font-sm)",
         color: "var(--gs-ink-secondary)",
       }}
     >
@@ -2367,7 +2367,7 @@ function FirstRunHint() {
 
 const scrubberLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -2375,7 +2375,7 @@ const scrubberLabelStyle: React.CSSProperties = {
 
 const scrubberValueStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 14,
+  fontSize: "var(--gs-font-h3)",
   fontWeight: 500,
   color: "var(--gs-primary)",
 };
@@ -2406,7 +2406,7 @@ function MetaChip({
       }}
     >
       <span style={{ letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</span>
-      <span style={{ color: accent ? "var(--gs-primary)" : "var(--gs-ink)", fontSize: 11 }}>
+      <span style={{ color: accent ? "var(--gs-primary)" : "var(--gs-ink)", fontSize: "var(--gs-font-sm)" }}>
         {value}
       </span>
     </span>
@@ -2441,7 +2441,7 @@ function MeasureReadoutChip({
       style={{
         marginTop: 4,
         fontFamily: "var(--font-tech)",
-        fontSize: 11,
+        fontSize: "var(--gs-font-sm)",
         color: "var(--gs-primary)",
       }}
     >
@@ -2481,7 +2481,7 @@ function ScrubberTrack({
           width: "100%",
           height: 3,
           background: "var(--gs-line)",
-          borderRadius: 9999,
+          borderRadius: "var(--gs-radius-pill)",
         }}
       >
         <div
@@ -2492,7 +2492,7 @@ function ScrubberTrack({
             height: "100%",
             width: `${pct}%`,
             background: "var(--gs-primary)",
-            borderRadius: 9999,
+            borderRadius: "var(--gs-radius-pill)",
           }}
         />
         <input
@@ -2535,7 +2535,7 @@ function ScrubberTrack({
           justifyContent: "space-between",
           marginTop: 4,
           fontFamily: "var(--font-tech)",
-          fontSize: 10.5,
+          fontSize: "var(--gs-font-xs)",
           color: "var(--gs-ink-secondary)",
         }}
       >

@@ -21,7 +21,7 @@ const LOOKS: ElevationLook[] = ["N", "E", "S", "W"];
 
 const chipStyle = (active: boolean): React.CSSProperties => ({
   fontFamily: "var(--font-ui)",
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.06em",
   padding: "3px 10px",
   borderRadius: "var(--gs-radius-pill)",
@@ -74,13 +74,13 @@ export function StudioElevationCard({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: "var(--gs-space-4)",
             marginBottom: 8,
           }}
         >
           <span
             style={{
-              fontSize: 10.5,
+              fontSize: "var(--gs-font-xs)",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
               color: "var(--gs-ink-secondary)",
@@ -88,7 +88,7 @@ export function StudioElevationCard({
           >
             Elevation · {look}
           </span>
-          <div style={{ display: "flex", gap: 4 }}>
+          <div style={{ display: "flex", gap: "var(--gs-space-2)" }}>
             {LOOKS.map((l) => (
               <button
                 key={l}
@@ -133,7 +133,7 @@ export function StudioElevationCard({
         ) : (
           <p
             style={{
-              fontSize: 12,
+              fontSize: "var(--gs-font-lg)",
               color: "var(--gs-ink-secondary)",
               padding: "24px 8px",
               textAlign: "center",

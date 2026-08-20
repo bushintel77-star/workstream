@@ -842,12 +842,12 @@ function SnapMarker({ hint }: { hint: SnapHint }) {
           data-testid="snap-glyph"
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 13,
+            fontSize: "var(--gs-font-sub)",
             fontWeight: 600,
             color,
             background: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",
             border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
-            borderRadius: 6,
+            borderRadius: "var(--gs-radius-md)",
             padding: "0px 5px",
             pointerEvents: "none",
           }}

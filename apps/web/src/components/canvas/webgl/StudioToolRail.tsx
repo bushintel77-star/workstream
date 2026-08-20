@@ -256,7 +256,7 @@ export function StudioToolRail({
         top: 152,
         display: "flex",
         flexDirection: "column",
-        gap: 2,
+        gap: "var(--gs-space-1)",
         pointerEvents: "auto",
         zIndex: "var(--cf-z-chrome)",
         // Short viewports: the rail scrolls internally instead of escaping
@@ -285,7 +285,7 @@ export function StudioToolRail({
               alignItems: "center",
               gap: "var(--gs-space-1)",
               padding: "5px 0 4px",
-              borderRadius: 8,
+              borderRadius: "var(--gs-radius-lg)",
               border: "1px solid transparent",
               background: active ? "var(--gs-chip-active)" : "transparent",
               color: active
@@ -310,14 +310,14 @@ export function StudioToolRail({
               e.currentTarget.style.boxShadow = "none";
             }}
           >
-            <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>
+            <span aria-hidden style={{ fontSize: "var(--gs-font-sub)", lineHeight: 1 }}>
               {t.glyph.trim()}
             </span>
             <span
               aria-hidden
               style={{
                 fontFamily: "var(--font-ui)",
-                fontSize: 10.5,
+                fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.04em",
                 lineHeight: 1,
                 // Text contract: labels must never wrap or spill past the

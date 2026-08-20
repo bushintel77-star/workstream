@@ -94,7 +94,7 @@ function AssetCard({
       <span
         style={{
           fontFamily: "var(--font-ui)",
-          fontSize: 10.5,
+          fontSize: "var(--gs-font-xs)",
           fontWeight: 600,
           color: "var(--gs-ink)",
           textAlign: "center",
@@ -106,7 +106,7 @@ function AssetCard({
       <span
         style={{
           fontFamily: "var(--font-tech)",
-          fontSize: 10.5,
+          fontSize: "var(--gs-font-xs)",
           color: "var(--gs-ink-secondary)",
           textAlign: "center",
           lineHeight: 1.4,
@@ -132,7 +132,7 @@ function AssetCard({
             background: `color-mix(in srgb, ${GOLD} 20%, transparent)`,
             color: GOLD,
             fontFamily: "var(--font-ui)",
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             fontWeight: 600,
           }}
         >
@@ -185,7 +185,7 @@ export function AssetFanOutDock() {
           WebkitBackdropFilter: "blur(var(--gs-blur))",
           pointerEvents: "none",
           fontFamily: "var(--font-tech)",
-          fontSize: 10.5,
+          fontSize: "var(--gs-font-xs)",
           color: GOLD,
         }}
       >
@@ -207,9 +207,9 @@ export function AssetFanOutDock() {
         transform: "translateX(-50%)",
         display: "flex",
         alignItems: "flex-end",
-        gap: 6,
+        gap: "var(--gs-space-3)",
         padding: "7px 9px",
-        borderRadius: 12,
+        borderRadius: "var(--gs-radius-xl)",
         border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
         background: "color-mix(in srgb, var(--gs-glass) 24%, transparent)",
         backdropFilter: "blur(var(--gs-blur))",
@@ -236,7 +236,7 @@ export function AssetFanOutDock() {
           alignSelf: "center",
           maxWidth: 110,
           fontFamily: "var(--font-tech)",
-          fontSize: 10.5,
+          fontSize: "var(--gs-font-xs)",
           lineHeight: 1.5,
           color: armedSymbolId ? GOLD : "var(--gs-ink-secondary)",
         }}

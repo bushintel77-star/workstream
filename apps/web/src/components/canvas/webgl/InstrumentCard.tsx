@@ -33,7 +33,7 @@ export function InstrumentCard({
     <GlassCard position={{ position: "relative" }} style={{ padding: "8px 10px" }}>
       <div
         data-testid={testId}
-        style={{ display: "flex", flexDirection: "column", gap: 6 }}
+        style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-3)" }}
       >
         <button
           type="button"
@@ -46,7 +46,7 @@ export function InstrumentCard({
             justifyContent: "space-between",
             alignItems: "baseline",
             fontFamily: "var(--font-ui)",
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             letterSpacing: "0.06em",
             textTransform: "uppercase",
             color: "var(--gs-ink-secondary)",
@@ -72,7 +72,7 @@ export function InstrumentCard({
         cursor: "pointer",
         display: "inline-flex",
         alignItems: "baseline",
-        gap: 8,
+        gap: "var(--gs-space-4)",
         padding: "4px 9px",
         borderRadius: "var(--gs-radius-pill)",
         background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
@@ -80,7 +80,7 @@ export function InstrumentCard({
         WebkitBackdropFilter: "blur(var(--gs-blur))",
         border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
         fontFamily: "var(--font-ui)",
-        fontSize: 10.5,
+        fontSize: "var(--gs-font-xs)",
         letterSpacing: "0.06em",
         textTransform: "uppercase",
         color: "var(--gs-ink-secondary)",
@@ -91,7 +91,7 @@ export function InstrumentCard({
       <span
         style={{
           fontFamily: "var(--font-tech)",
-          fontSize: 11.5,
+          fontSize: "var(--gs-font-md)",
           fontWeight: 600,
           textTransform: "none",
           letterSpacing: 0,

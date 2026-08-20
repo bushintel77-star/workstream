@@ -73,12 +73,12 @@ function zoneStyle(kind: IrrigationZoneKind) {
 
 const zoneLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   fontWeight: 600,
   color: "var(--gs-ink)",
   background: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-  borderRadius: 6,
+  borderRadius: "var(--gs-radius-md)",
   padding: "1px 8px",
   whiteSpace: "nowrap",
   pointerEvents: "none",

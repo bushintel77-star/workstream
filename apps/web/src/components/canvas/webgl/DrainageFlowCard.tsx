@@ -38,7 +38,7 @@ export interface DrainageFlowCardProps {
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -55,7 +55,7 @@ const rowStyle: React.CSSProperties = {
 
 const valueStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 12,
+  fontSize: "var(--gs-font-lg)",
   fontWeight: 500,
   color: "var(--gs-ink)",
 };
@@ -117,7 +117,7 @@ export function DrainageFlowCard({
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 10.5,
+              fontSize: "var(--gs-font-xs)",
               color: "var(--gs-ink-secondary)",
             }}
           >
@@ -154,7 +154,7 @@ export function DrainageFlowCard({
                   display: "flex",
                   justifyContent: "space-between",
                   fontFamily: "var(--font-tech)",
-                  fontSize: 10.5,
+                  fontSize: "var(--gs-font-xs)",
                   color: "var(--gs-ink-secondary)",
                   lineHeight: 1.7,
                 }}
@@ -192,7 +192,7 @@ export function DrainageFlowCard({
             <p
               style={{
                 margin: 0,
-                fontSize: 10.5,
+                fontSize: "var(--gs-font-xs)",
                 lineHeight: 1.4,
                 color: "var(--gs-ink-secondary)",
               }}
@@ -208,8 +208,8 @@ export function DrainageFlowCard({
           style={{
             marginTop: 4,
             padding: "6px 10px",
-            borderRadius: 8,
-            fontSize: 10.5,
+            borderRadius: "var(--gs-radius-lg)",
+            fontSize: "var(--gs-font-xs)",
             fontFamily: "var(--font-ui)",
             fontWeight: 600,
             color:

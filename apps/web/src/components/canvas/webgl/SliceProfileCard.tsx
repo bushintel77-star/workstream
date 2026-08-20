@@ -116,7 +116,7 @@ export function SliceProfileCard({
         >
           <span
             style={{
-              fontSize: 10.5,
+              fontSize: "var(--gs-font-xs)",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
               color: "var(--gs-ink-secondary)",
@@ -127,7 +127,7 @@ export function SliceProfileCard({
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 10.5,
+              fontSize: "var(--gs-font-xs)",
               color: "var(--gs-truth, #0030CF)",
             }}
           >
@@ -174,7 +174,7 @@ export function SliceProfileCard({
             justifyContent: "space-between",
             marginTop: 4,
             fontFamily: "var(--font-tech)",
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             color: "var(--gs-ink-secondary)",
           }}
         >

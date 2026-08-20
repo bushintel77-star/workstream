@@ -42,14 +42,14 @@ const DIM_Y = 0.04;
 
 const dimLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   fontWeight: 500,
   fontVariantNumeric: "tabular-nums",
   letterSpacing: "-0.01em",
   color: "var(--gs-ink-truth, #1A1A1A)",
   background: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
-  borderRadius: 6,
+  borderRadius: "var(--gs-radius-md)",
   padding: "0px 5px",
   whiteSpace: "nowrap",
   pointerEvents: "none",

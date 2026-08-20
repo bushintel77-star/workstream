@@ -18,7 +18,7 @@ import { CALIBRATION_PRESETS } from "./photoTraceMath";
 
 const chipStyle = (active: boolean): React.CSSProperties => ({
   fontFamily: "var(--font-ui)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   padding: "4px 10px",
   borderRadius: "var(--gs-radius-pill)",
   border: `1px solid ${
@@ -80,7 +80,7 @@ export function PhotoTraceHud() {
         transform: "translateX(-50%)",
         display: "flex",
         flexDirection: "column",
-        gap: 8,
+        gap: "var(--gs-space-4)",
         maxWidth: "min(560px, calc(100% - 48px))",
         padding: "10px 12px",
         borderRadius: "var(--gs-radius-panel)",
@@ -94,24 +94,24 @@ export function PhotoTraceHud() {
         fontFamily: "var(--font-ui)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: "var(--gs-space-4)", flexWrap: "wrap" }}>
         <span
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             fontWeight: 600,
             letterSpacing: "0.06em",
           }}
         >
           PHOTO TRACE
         </span>
-        <span style={{ fontSize: 11, color: "var(--gs-ink-secondary)" }}>
+        <span style={{ fontSize: "var(--gs-font-sm)", color: "var(--gs-ink-secondary)" }}>
           {elevation.name}
         </span>
         <span
           data-testid="photo-trace-stamp"
           style={{
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             color: elevation.calibration ? "var(--gs-ink-secondary)" : "var(--gs-ink-muted)",
           }}
         >
@@ -122,7 +122,7 @@ export function PhotoTraceHud() {
         <span
           data-testid="photo-trace-boundary-stamp"
           style={{
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             color: elevation.boundary_snap
               ? "var(--gs-ink-secondary)"
               : "var(--gs-ink-muted)",
@@ -136,11 +136,11 @@ export function PhotoTraceHud() {
 
       {session.mode === "trace" ? (
         <>
-          <p style={{ margin: 0, fontSize: 11, color: "var(--gs-ink-secondary)" }}>
+          <p style={{ margin: 0, fontSize: "var(--gs-font-sm)", color: "var(--gs-ink-secondary)" }}>
             Draw on the photo — ink is stored in true metres on the plane.
             Swivel away and the pin releases; the trace stays on the sheet.
           </p>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}>
             <button
               type="button"
               data-testid="photo-trace-calibrate"
@@ -163,7 +163,7 @@ export function PhotoTraceHud() {
         </>
       ) : (
         <>
-          <p style={{ margin: 0, fontSize: 11, color: "var(--gs-ink-secondary)" }}>
+          <p style={{ margin: 0, fontSize: "var(--gs-font-sm)", color: "var(--gs-ink-secondary)" }}>
             Draw a line on the photo along a feature with a known length, then
             pick that length below. One known dimension calibrates the whole
             frame.
@@ -173,7 +173,7 @@ export function PhotoTraceHud() {
               data-testid="photo-calibrate-draft-length"
               style={{
                 fontFamily: "var(--font-tech)",
-                fontSize: 10.5,
+                fontSize: "var(--gs-font-xs)",
                 color: "var(--gs-ink-secondary)",
                 fontVariantNumeric: "tabular-nums",
               }}
@@ -184,7 +184,7 @@ export function PhotoTraceHud() {
           <div
             role="group"
             aria-label="Known reference lengths"
-            style={{ display: "flex", gap: 6, flexWrap: "wrap" }}
+            style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}
           >
             {CALIBRATION_PRESETS.map((preset) => (
               <button
@@ -199,9 +199,9 @@ export function PhotoTraceHud() {
               </button>
             ))}
           </div>
-          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "var(--gs-space-3)", alignItems: "center", flexWrap: "wrap" }}>
             <label
-              style={{ fontSize: 10.5, color: "var(--gs-ink-secondary)" }}
+              style={{ fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}
               htmlFor="photo-calibrate-custom"
             >
               Custom (m)
@@ -227,7 +227,7 @@ export function PhotoTraceHud() {
               style={{
                 width: 84,
                 padding: "4px 8px",
-                fontSize: 16,
+                fontSize: "var(--gs-font-h2)",
                 borderRadius: "var(--gs-radius-chip)",
                 border: "1px solid var(--gs-line)",
                 background: "var(--gs-panel)",

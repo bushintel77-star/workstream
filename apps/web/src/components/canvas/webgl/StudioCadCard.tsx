@@ -18,7 +18,7 @@ type Status = { tone: "ok" | "err" | "busy"; text: string } | null;
 
 const btn: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: 11,
+  fontSize: "var(--gs-font-sm)",
   letterSpacing: "0.03em",
   padding: "5px 10px",
   borderRadius: "var(--gs-radius-chip)",
@@ -39,7 +39,7 @@ const btnPrimary: React.CSSProperties = {
 };
 
 const label: React.CSSProperties = {
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -91,14 +91,14 @@ export function StudioCadCard({
     <GlassCard position={{ position: "relative" }} style={{ width: 300, padding: "10px 12px" }}>
       <div
         data-testid="studio-cad-card"
-        style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)", display: "flex", flexDirection: "column", gap: 8 }}
+        style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)", display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <span style={label}>CAD · AI drafter</span>
           <span style={{ ...label, color: "var(--gs-ink-muted)" }}>never silent-writes</span>
         </div>
 
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}>
           <button
             type="button"
             style={btn}
@@ -145,7 +145,7 @@ export function StudioCadCard({
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: "var(--gs-space-3)" }}>
           <input
             type="text"
             value={instruction}
@@ -157,7 +157,7 @@ export function StudioCadCard({
               flex: 1,
               minWidth: 0,
               fontFamily: "var(--font-ui)",
-              fontSize: 11,
+              fontSize: "var(--gs-font-sm)",
               color: "var(--gs-ink)",
               padding: "5px 8px",
               borderRadius: "var(--gs-radius-chip)",
@@ -202,7 +202,7 @@ export function StudioCadCard({
             data-testid="cad-status"
             style={{
               margin: 0,
-              fontSize: 11,
+              fontSize: "var(--gs-font-sm)",
               lineHeight: 1.45,
               color:
                 status.tone === "err"
@@ -218,7 +218,7 @@ export function StudioCadCard({
 
         <div style={{ borderTop: "1px solid var(--gs-line-soft)", paddingTop: 8 }}>
           <span style={label}>Ask AI about this site</span>
-          <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+          <div style={{ display: "flex", gap: "var(--gs-space-3)", marginTop: 6 }}>
             <input
               type="text"
               placeholder="e.g. where should screening go?"
@@ -238,7 +238,7 @@ export function StudioCadCard({
                 flex: 1,
                 minWidth: 0,
                 fontFamily: "var(--font-ui)",
-                fontSize: 11,
+                fontSize: "var(--gs-font-sm)",
                 color: "var(--gs-ink)",
                 padding: "5px 8px",
                 borderRadius: "var(--gs-radius-chip)",

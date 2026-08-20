@@ -24,15 +24,15 @@ export function PipelineShellLoading({
           left: "50%",
           transform: "translateX(-50%)",
           display: "flex",
-          gap: 8,
-          zIndex: 2,
+          gap: "var(--gs-space-4)",
+          zIndex: "var(--cf-z-chrome)",
         }}
       >
         {Array.from({ length: 3 }, (_, i) => (
           <div
             key={i}
             className={`${sk.skel} ${sk.line}`}
-            style={{ width: 72, height: 32, borderRadius: 16 }}
+            style={{ width: 72, height: 32, borderRadius: "var(--gs-radius-xl)" }}
           />
         ))}
       </div>

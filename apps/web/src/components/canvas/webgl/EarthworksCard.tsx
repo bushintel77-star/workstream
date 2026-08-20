@@ -35,7 +35,7 @@ export interface EarthworksCardProps {
 }
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 10.5,
+  fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--gs-ink-secondary)",
@@ -52,7 +52,7 @@ const rowStyle: React.CSSProperties = {
 
 const valueStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 12,
+  fontSize: "var(--gs-font-lg)",
   fontWeight: 500,
   color: "var(--gs-ink)",
 };
@@ -117,7 +117,7 @@ export function EarthworksCard({
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: 10.5,
+              fontSize: "var(--gs-font-xs)",
               color: "var(--gs-ink-secondary)",
             }}
           >
@@ -127,11 +127,11 @@ export function EarthworksCard({
 
         {summary.perPad.map((p, i) => (
           <div key={p.id} style={rowStyle}>
-            <span style={{ fontSize: 10.5, color: "var(--gs-ink-secondary)" }}>
+            <span style={{ fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
               Pad {i + 1} · {p.result.areaM2.toFixed(0)} m² · top +
               {p.topRealM.toFixed(2)}m
             </span>
-            <span style={{ fontSize: 10.5, fontFamily: "var(--font-tech)" }}>
+            <span style={{ fontSize: "var(--gs-font-xs)", fontFamily: "var(--font-tech)" }}>
               <span style={{ color: "var(--gs-ink-conflict)" }}>
                 −{fmtM3(p.result.cutM3)}
               </span>{" "}
@@ -146,7 +146,7 @@ export function EarthworksCard({
 
         <div style={rowStyle}>
           <span style={labelStyle}>Cut / Fill total</span>
-          <span style={{ ...valueStyle, fontSize: 13 }}>
+          <span style={{ ...valueStyle, fontSize: "var(--gs-font-sub)" }}>
             <span style={{ color: "var(--gs-ink-conflict)" }}>
               {fmtM3(summary.totalCutM3)}
             </span>{" "}
@@ -173,7 +173,7 @@ export function EarthworksCard({
         <div
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: 10.5,
+            fontSize: "var(--gs-font-xs)",
             color: "var(--gs-ink-secondary)",
             marginTop: 4,
           }}
