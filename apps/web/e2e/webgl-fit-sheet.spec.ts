@@ -91,7 +91,13 @@ test.describe("WebGL itemized fit-sheet (live quote)", () => {
 
     // 1. The estimation is a docked companion — visible in ANY mode
     // (estimation-dock spec §3). The Fit tab owns the toggle; the rail
-    // quote tool is gone (one affordance per state).
+    // quote tool is gone (one affordance per state). The card ships as a
+    // floating glass pill (Gold Standard 2026 un-docked FitSheet) — click
+    // it once to expand to the itemized body before asserting.
+    await expect(page.getByTestId("fit-sheet-pill")).toBeVisible({
+      timeout: 8_000,
+    });
+    await page.getByTestId("fit-sheet-pill").click();
     const card = page.locator('[data-testid="fit-sheet-card"]');
     await expect(card).toBeVisible({ timeout: 8_000 });
     const fitTab = page.getByTestId("meta-tab-fit");
