@@ -28,15 +28,45 @@ stages:
 # ---------------------------------------------------------------- gate
 # Install (frozen lockfile) + every script gate + bundle-size web build +
 # traceability + typecheck + lint + vitest. One job == `pnpm run ci`.
+#
+# `pnpm run ci` ends on web:check-canvas-first-zstack, which is a real
+# Playwright run (e2e/canvas-first-z-stack.spec.ts). Playwright browsers live
+# outside node_modules and no package in the monorepo has a postinstall that
+# fetches them, so this job must install Chromium itself the way the `e2e` job
+# does — otherwise the fifteenth sub-check dies on "Executable doesn't exist".
+# `--with-deps` is required: node:22 is a bare Debian image without the shared
+# libraries Chromium links against. The install needs node_modules on disk, so
+# it follows an explicit `pnpm install`; the one inside `pnpm run ci` then
+# revalidates the frozen lockfile as a fast no-op.
+#
+# The browser lands in $CI_PROJECT_DIR/.playwright so it can be cached. A
+# job-level `cache:` REPLACES `default: cache:` rather than extending it, so
+# .pnpm-store and the lockfile key are restated here deliberately.
 gate:
   stage: gate
   before_script:
     - corepack enable
     - corepack prepare pnpm@9.15.4 --activate
     - pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
+    - pnpm install --frozen-lockfile
+    - pnpm --filter @workstream/web exec playwright install chromium --with-deps
   script:
     - pnpm run ci
-  timeout: 30m
+  variables:
+    PLAYWRIGHT_BROWSERS_PATH: "$CI_PROJECT_DIR/.playwright"
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store
+      - .playwright
+  # 30m -> 40m: on a cold cache this job now also pulls ~150 MB of Chromium and
+  # apt-installs its system libraries (~2-4 min) on top of a full Next.js
+  # production build for the bundle-size budget, typecheck, lint and 1900+
+  # vitest cases. Shared runners are materially slower than the ~4 min local
+  # wall clock. 40m keeps headroom without letting a genuine hang run long.
+  timeout: 40m
 
 # ---------------------------------------------------------------- scan
 # gitleaks secret scan (parity with the old gitleaks GitHub Action).
