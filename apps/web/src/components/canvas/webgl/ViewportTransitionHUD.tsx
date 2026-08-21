@@ -316,7 +316,7 @@ function PresetButton(props: {
         fontWeight: 500,
         letterSpacing: "0.08em",
         textTransform: "uppercase",
-        color: props.active ? "var(--gs-primary)" : "inherit",
+        color: props.active ? "var(--gs-primary-ink)" : "inherit",
         transition: "all 140ms ease-out",
       }}
     >
