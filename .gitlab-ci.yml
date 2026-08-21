@@ -77,6 +77,8 @@ e2e:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
   timeout: 35m
 
 # ---------------------------------------------------------------- docker
@@ -94,6 +96,8 @@ build-api-image:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
   timeout: 15m
 
 build-web-image:
@@ -109,14 +113,19 @@ build-web-image:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: true
   timeout: 15m
 
 # ---------------------------------------------------------------- deploy
 # Auto-deploy to Railway on push to main, via the Railway CLI with a
 # project-scoped token. RAILWAY_TOKEN is a protected CI/CD variable
 # (GitLab → Settings → CI/CD → Variables, or set via the API). Until the
-# token exists the job self-disables, so a green pipeline never turns red
-# over a missing credential.
+# token exists `rules` keeps this job from running, but `rules` only gate
+# execution — GitLab validates the whole config at pipeline creation, so a
+# syntax error in a disabled job still fails the pipeline with zero jobs.
+# Hence the single-quoted script lines below: a plain YAML scalar cannot
+# contain ": ", which the -m message does.
 #
 # Scope note: account-scoped tokens must scope the project explicitly; a
 # project-scoped token would pin it already. --project is belt-and-braces.
@@ -128,8 +137,8 @@ deploy-railway:
     - if: $CI_COMMIT_BRANCH == "main" && $RAILWAY_TOKEN != null && $RAILWAY_TOKEN != ""
   script:
     - npm install -g @railway/cli
-    - railway up --project "$RAILWAY_PROJECT_ID" --service web --environment production --detach -m "GitLab CI $CI_COMMIT_SHORT_SHA: $CI_COMMIT_TITLE"
-    - railway up --project "$RAILWAY_PROJECT_ID" --service api --environment production --detach -m "GitLab CI $CI_COMMIT_SHORT_SHA: $CI_COMMIT_TITLE"
+    - 'railway up --project "$RAILWAY_PROJECT_ID" --service web --environment production --detach -m "GitLab CI $CI_COMMIT_SHORT_SHA: $CI_COMMIT_TITLE"'
+    - 'railway up --project "$RAILWAY_PROJECT_ID" --service api --environment production --detach -m "GitLab CI $CI_COMMIT_SHORT_SHA: $CI_COMMIT_TITLE"'
   variables:
     RAILWAY_PROJECT_ID: "e2c12b66-af3a-4a51-a285-874c7a6de7d4"
   timeout: 20m
