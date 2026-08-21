@@ -84,6 +84,17 @@ e2e:
     API_URL: "http://127.0.0.1:3001"
     PLAYWRIGHT_BASE_URL: "http://127.0.0.1:3002"
     NEXT_PUBLIC_API_URL: "http://127.0.0.1:3001"
+    PLAYWRIGHT_BROWSERS_PATH: "$CI_PROJECT_DIR/.playwright"
+  # Job-level cache replaces default: cache, so restate .pnpm-store + lockfile key.
+  # Persist browsers even when a shard fails (cache defaults to on_success).
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store
+      - .playwright
+    when: always
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
