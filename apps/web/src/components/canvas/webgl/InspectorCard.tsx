@@ -113,7 +113,7 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
   const source = placementSourceLabel(p.source);
 
   return (
-    <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
+    <GlassCard style={{ position: "relative", width: 260, padding: 12 }}>
       <div style={titleCss}>Placement</div>
       <Field labelText="Manipulator">
         <div style={{ display: "flex", gap: "var(--gs-space-2)" }}>
@@ -278,7 +278,7 @@ function FeatureInspector({
   const labor = f.labor_profile;
 
   return (
-    <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
+    <GlassCard style={{ position: "relative", width: 260, padding: 12 }}>
       <div style={titleCss}>Feature · {f.metadata.layer}</div>
       {stitchRecord ? (
         <button
@@ -417,7 +417,7 @@ function PhotoStrokeInspector({ ref }: { ref: SelectionRef }) {
   );
   if (!elev) return null;
   return (
-    <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
+    <GlassCard style={{ position: "relative", width: 260, padding: 12 }}>
       <div style={titleCss}>Photo trace stroke</div>
       <div style={provenanceCss} data-testid="inspector-stroke-provenance">
         Traced on {elev.name}
@@ -435,7 +435,7 @@ function SelectionSummary() {
   const features = useStudioStore((s) => s.features);
   const photoElevations = useStudioStore((s) => s.photoElevations);
   return (
-    <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
+    <GlassCard style={{ position: "relative", width: 260, padding: 12 }}>
       <div style={titleCss}>{selection.length} selected</div>
       <ul style={listCss}>
         {selection.map((r) => (

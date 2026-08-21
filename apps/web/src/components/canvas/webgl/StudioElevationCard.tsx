@@ -25,11 +25,10 @@ const chipStyle = (active: boolean): React.CSSProperties => ({
   letterSpacing: "0.06em",
   padding: "3px 10px",
   borderRadius: "var(--gs-radius-pill)",
-  border: `1px solid ${
-    active
+  border: `1px solid ${active
       ? "color-mix(in srgb, var(--gs-primary) 45%, transparent)"
       : "color-mix(in srgb, var(--gs-line) 55%, transparent)"
-  }`,
+    }`,
   background: active
     ? "color-mix(in srgb, var(--gs-primary) 16%, transparent)"
     : "transparent",
@@ -58,13 +57,14 @@ export function StudioElevationCard({
 
   return (
     <GlassCard
-      position={{
+      style={{
         position: "absolute",
         bottom: 92,
         left: "50%",
         transform: "translateX(-50%)",
+        width: "min(860px, 92vw)",
+        padding: "10px 12px"
       }}
-      style={{ width: "min(860px, 92vw)", padding: "10px 12px" }}
     >
       <div
         data-testid="studio-elevation-card"

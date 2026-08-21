@@ -30,7 +30,7 @@ export function InstrumentCard({
   const colour = accent ? "var(--gs-primary)" : "var(--gs-ink-truth)";
 
   return open ? (
-    <GlassCard position={{ position: "relative" }} style={{ padding: "8px 10px" }}>
+    <GlassCard style={{ position: "relative", padding: "8px 10px" }}>
       <div
         data-testid={testId}
         style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-3)" }}

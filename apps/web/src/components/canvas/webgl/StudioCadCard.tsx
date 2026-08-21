@@ -88,7 +88,7 @@ export function StudioCadCard({
   };
 
   return (
-    <GlassCard position={{ position: "relative" }} style={{ width: 300, padding: "10px 12px" }}>
+    <GlassCard style={{ position: "relative", width: 300, padding: "10px 12px" }}>
       <div
         data-testid="studio-cad-card"
         style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)", display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}

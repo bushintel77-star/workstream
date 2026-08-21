@@ -38,8 +38,7 @@ export function PhotoElevationSheet({
   if (!elevation || !plane) {
     return (
       <GlassCard
-        position={{ position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)" }}
-        style={{ width: "min(420px, 92vw)", padding: "12px 14px" }}
+        style={{ position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)", width: "min(420px, 92vw)", padding: "12px 14px" }}
       >
         <p style={{ margin: 0, fontSize: "var(--gs-font-lg)", color: "var(--gs-ink-secondary)" }}>
           This photo elevation is no longer on the board.
@@ -62,8 +61,7 @@ export function PhotoElevationSheet({
 
   return (
     <GlassCard
-      position={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-      style={{ width: "min(880px, 94vw)", maxHeight: "92vh", overflow: "auto", padding: "12px 14px" }}
+      style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(880px, 94vw)", maxHeight: "92vh", overflow: "auto", padding: "12px 14px" }}
     >
       <div data-testid="photo-elevation-sheet" style={{ color: "var(--gs-ink)", fontFamily: "var(--font-ui)" }}>
         <div
