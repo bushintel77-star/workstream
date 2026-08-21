@@ -11,12 +11,14 @@
  * re-arm on the next clamped edit.
  */
 
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 import type {
   CatalogPlacement,
   LandscapeFeature,
   PhotoElevation,
 } from "@workstream/contracts";
+import { Button } from "./Button";
+import { Field, Input, Select } from "./Field";
 import { GlassCard } from "./GlassCard";
 import type { SelectionRef } from "./selectionPick";
 import { useStudioStore } from "./studioStore";
@@ -59,39 +61,7 @@ const alertCss: CSSProperties = {
   gap: "var(--gs-space-4)",
 };
 
-const dismissCss: CSSProperties = {
-  border: "none",
-  background: "transparent",
-  color: "#C41E1E",
-  cursor: "pointer",
-  fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-sm)",
-  padding: 0,
-};
 
-const fieldRowCss: CSSProperties = { marginBottom: 6 };
-
-const fieldLabelCss: CSSProperties = {
-  display: "block",
-  fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-xs)",
-  letterSpacing: "0.05em",
-  textTransform: "uppercase",
-  color: "var(--gs-ink-secondary)",
-  marginBottom: 2,
-};
-
-const inputCss: CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-lg)",
-  padding: "4px 6px",
-  borderRadius: "var(--gs-radius-chip)",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
-  background: "transparent",
-  color: "var(--gs-ink)",
-};
 
 const listCss: CSSProperties = {
   listStyle: "none",
@@ -105,21 +75,6 @@ const liCss: CSSProperties = {
   color: "var(--gs-ink)",
   padding: "2px 0",
 };
-
-function Field({
-  labelText,
-  children,
-}: {
-  labelText: string;
-  children: ReactNode;
-}) {
-  return (
-    <div style={fieldRowCss}>
-      <span style={fieldLabelCss}>{labelText}</span>
-      {children}
-    </div>
-  );
-}
 
 function placementSourceLabel(
   source: CatalogPlacement["source"],
@@ -157,56 +112,50 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
   const setGizmoMode = useStudioStore((s) => s.setGizmoMode);
   const source = placementSourceLabel(p.source);
 
-  const gizmoChip = (active: boolean): React.CSSProperties => ({
-    fontFamily: "var(--font-ui)",
-    fontSize: "var(--gs-font-xs)",
-    letterSpacing: "0.04em",
-    padding: "3px 8px",
-    borderRadius: "var(--gs-radius-pill)",
-    border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-    background: active ? "var(--gs-chip-active)" : "transparent",
-    color: active ? "var(--gs-chip-active-ink)" : "var(--gs-ink-secondary)",
-    cursor: "pointer",
-  });
-
   return (
     <GlassCard position={{ position: "relative" }} style={{ width: 260, padding: 12 }}>
       <div style={titleCss}>Placement</div>
       <Field labelText="Manipulator">
         <div style={{ display: "flex", gap: "var(--gs-space-2)" }}>
-          <button
-            type="button"
+          <Button
+            size="xs"
             data-testid="gizmo-move"
             aria-pressed={gizmoMode === "translate"}
-            style={gizmoChip(gizmoMode === "translate")}
+            active={gizmoMode === "translate"}
             onClick={() =>
               setGizmoMode(gizmoMode === "translate" ? null : "translate")
             }
           >
             Move
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            size="xs"
             data-testid="gizmo-rotate"
             aria-pressed={gizmoMode === "rotate"}
-            style={gizmoChip(gizmoMode === "rotate")}
+            active={gizmoMode === "rotate"}
             onClick={() => setGizmoMode(gizmoMode === "rotate" ? null : "rotate")}
           >
             Rotate
-          </button>
+          </Button>
         </div>
       </Field>
       {notice && notice.refId === p.id ? (
         <div style={alertCss} data-testid="inspector-boundary-notice">
           <span>{notice.reason}</span>
-          <button
-            type="button"
-            style={dismissCss}
+          <Button
+            variant="ghost"
+            size="xs"
+            style={{
+              border: "none",
+              padding: 0,
+              color: "var(--gs-conflict)",
+              fontWeight: 600,
+            }}
             onClick={dismiss}
             data-testid="inspector-boundary-dismiss"
           >
             Dismiss
-          </button>
+          </Button>
         </div>
       ) : null}
       {source ? (
@@ -215,11 +164,10 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
         </div>
       ) : null}
       <Field labelText="SKU / species">
-        <input
+        <Input
           key={`symbol-${p.id}`}
           defaultValue={p.symbol_id}
           data-testid="inspector-placement-symbol"
-          style={inputCss}
           onBlur={(e) => {
             const v = e.currentTarget.value.trim();
             if (v && v !== p.symbol_id) update(p.id, { symbol_id: v });
@@ -227,14 +175,13 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
         />
       </Field>
       <Field labelText="Scale">
-        <input
+        <Input
           key={`scale-${p.id}`}
           type="number"
           min="0.1"
           step="0.1"
           defaultValue={String(p.scale)}
           data-testid="inspector-placement-scale"
-          style={inputCss}
           onChange={(e) => {
             const v = Number.parseFloat(e.currentTarget.value);
             if (Number.isFinite(v) && v > 0 && v !== p.scale) {
@@ -244,7 +191,7 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
         />
       </Field>
       <Field labelText="Rotation (deg)">
-        <input
+        <Input
           key={`rotation-${p.id}`}
           type="number"
           min="0"
@@ -252,7 +199,6 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
           step="1"
           defaultValue={String(p.rotation_deg)}
           data-testid="inspector-placement-rotation"
-          style={inputCss}
           onChange={(e) => {
             const v = Number.parseFloat(e.currentTarget.value);
             if (
@@ -267,11 +213,10 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
         />
       </Field>
       <Field labelText="Label">
-        <input
+        <Input
           key={`label-${p.id}`}
           defaultValue={p.label ?? ""}
           data-testid="inspector-placement-label"
-          style={inputCss}
           onBlur={(e) => {
             const v = e.currentTarget.value;
             if (v !== (p.label ?? "")) update(p.id, { label: v });
@@ -279,14 +224,13 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
         />
       </Field>
       <Field labelText="Height (m)">
-        <input
+        <Input
           key={`height-${p.id}`}
           type="number"
           min="0"
           step="0.1"
           defaultValue={p.height_m != null ? String(p.height_m) : ""}
           data-testid="inspector-placement-height"
-          style={inputCss}
           onChange={(e) => {
             const v = Number.parseFloat(e.currentTarget.value);
             if (Number.isFinite(v) && v > 0 && v !== (p.height_m ?? 0)) {
@@ -296,7 +240,7 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
         />
       </Field>
       <Field labelText="Canopy radius (m)">
-        <input
+        <Input
           key={`canopy-${p.id}`}
           type="number"
           min="0"
@@ -305,7 +249,6 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
             p.canopy_radius_m != null ? String(p.canopy_radius_m) : ""
           }
           data-testid="inspector-placement-canopy"
-          style={inputCss}
           onChange={(e) => {
             const v = Number.parseFloat(e.currentTarget.value);
             if (Number.isFinite(v) && v > 0 && v !== (p.canopy_radius_m ?? 0)) {
@@ -360,11 +303,10 @@ function FeatureInspector({
         </button>
       ) : null}
       <Field labelText="Name">
-        <input
+        <Input
           key={`name-${f.id}`}
           defaultValue={f.metadata.friendly_name ?? ""}
           data-testid="inspector-feature-name"
-          style={inputCss}
           onBlur={(e) => {
             const v = e.currentTarget.value;
             if (v !== (f.metadata.friendly_name ?? "")) {
@@ -376,11 +318,10 @@ function FeatureInspector({
       {mf ? (
         <>
           <Field labelText="Material SKU">
-            <input
+            <Input
               key={`sku-${f.id}`}
               defaultValue={mf.sku}
               data-testid="inspector-feature-sku"
-              style={inputCss}
               onBlur={(e) => {
                 const v = e.currentTarget.value.trim();
                 if (v && v !== mf.sku) update(f.id, { material_fill: { sku: v } });
@@ -388,14 +329,13 @@ function FeatureInspector({
             />
           </Field>
           <Field labelText="Depth (m)">
-            <input
+            <Input
               key={`depth-${f.id}`}
               type="number"
               min="0"
               step="0.01"
               defaultValue={String(mf.depth_m)}
               data-testid="inspector-feature-depth"
-              style={inputCss}
               onChange={(e) => {
                 const v = Number.parseFloat(e.currentTarget.value);
                 if (Number.isFinite(v) && v > 0 && v !== mf.depth_m) {
@@ -405,7 +345,7 @@ function FeatureInspector({
             />
           </Field>
           <Field labelText="Waste (%)">
-            <input
+            <Input
               key={`waste-${f.id}`}
               type="number"
               min="0"
@@ -413,7 +353,6 @@ function FeatureInspector({
               step="1"
               defaultValue={String(mf.waste_allocation_pct)}
               data-testid="inspector-feature-waste"
-              style={inputCss}
               onChange={(e) => {
                 const v = Number.parseFloat(e.currentTarget.value);
                 if (
@@ -431,11 +370,10 @@ function FeatureInspector({
       ) : null}
       {scatter ? (
         <Field labelText="Planting recipe">
-          <input
+          <Input
             key={`recipe-${f.id}`}
             defaultValue={scatter.brush_recipe_id}
             data-testid="inspector-feature-recipe"
-            style={inputCss}
             onBlur={(e) => {
               const v = e.currentTarget.value.trim();
               if (v && v !== scatter.brush_recipe_id) {
@@ -447,11 +385,10 @@ function FeatureInspector({
       ) : null}
       {labor ? (
         <Field labelText="Labor tier">
-          <select
+          <Select
             key={`tier-${f.id}`}
             defaultValue={labor.base_difficulty_tier}
             data-testid="inspector-feature-tier"
-            style={inputCss}
             onChange={(e) => {
               const v = e.currentTarget.value as
                 | "easy"
@@ -467,7 +404,7 @@ function FeatureInspector({
             <option value="standard_soil">standard_soil</option>
             <option value="constrained">constrained</option>
             <option value="rock">rock</option>
-          </select>
+          </Select>
         </Field>
       ) : null}
     </GlassCard>

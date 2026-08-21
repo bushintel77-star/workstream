@@ -12,26 +12,10 @@
  */
 
 import { useMemo, useState } from "react";
+import { Button } from "./Button";
 import { useStudioStore } from "./studioStore";
 import { applyCalibrationRef } from "./PhotoTracePlane";
 import { CALIBRATION_PRESETS } from "./photoTraceMath";
-
-const chipStyle = (active: boolean): React.CSSProperties => ({
-  fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-sm)",
-  padding: "4px 10px",
-  borderRadius: "var(--gs-radius-pill)",
-  border: `1px solid ${
-    active
-      ? "color-mix(in srgb, var(--gs-primary) 50%, transparent)"
-      : "color-mix(in srgb, var(--gs-line) 55%, transparent)"
-  }`,
-  background: active
-    ? "color-mix(in srgb, var(--gs-primary) 14%, transparent)"
-    : "transparent",
-  color: active ? "var(--gs-primary)" : "var(--gs-ink-secondary)",
-  cursor: "pointer",
-});
 
 export function PhotoTraceHud() {
   const session = useStudioStore((s) => s.photoTraceSession);
@@ -141,24 +125,22 @@ export function PhotoTraceHud() {
             Swivel away and the pin releases; the trace stays on the sheet.
           </p>
           <div style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}>
-            <button
-              type="button"
+            <Button
+              variant="chip-tinted"
               data-testid="photo-trace-calibrate"
               onClick={() =>
                 setPhotoTraceSession({ elevationId: elevation.id, mode: "calibrate" })
               }
-              style={chipStyle(false)}
             >
               {elevation.calibration ? "Recalibrate" : "Calibrate"}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chip-tinted"
               data-testid="photo-trace-exit"
               onClick={() => setPhotoTraceSession(null)}
-              style={chipStyle(false)}
             >
               Exit photo trace
-            </button>
+            </Button>
           </div>
         </>
       ) : (
@@ -187,16 +169,16 @@ export function PhotoTraceHud() {
             style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}
           >
             {CALIBRATION_PRESETS.map((preset) => (
-              <button
+              <Button
                 key={preset.label}
-                type="button"
+                variant="chip-tinted"
                 data-testid="photo-calibrate-preset"
                 aria-pressed={reference === preset.metres && label === preset.label}
                 onClick={() => pickPreset(preset.metres, preset.label)}
-                style={chipStyle(reference === preset.metres && label === preset.label)}
+                active={reference === preset.metres && label === preset.label}
               >
                 {preset.label}
-              </button>
+              </Button>
             ))}
           </div>
           <div style={{ display: "flex", gap: "var(--gs-space-3)", alignItems: "center", flexWrap: "wrap" }}>
@@ -235,13 +217,12 @@ export function PhotoTraceHud() {
                 fontFamily: "var(--font-tech)",
               }}
             />
-            <button
-              type="button"
+            <Button
+              variant="chip-tinted"
               data-testid="photo-calibrate-apply"
               disabled={!canApply}
               onClick={() => applyCalibrationRef.current?.()}
               style={{
-                ...chipStyle(false),
                 background: canApply
                   ? "var(--gs-primary)"
                   : "color-mix(in srgb, var(--gs-primary) 8%, transparent)",
@@ -253,17 +234,16 @@ export function PhotoTraceHud() {
               }}
             >
               Apply calibration
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="chip-tinted"
               onClick={() => {
                 setPhotoCalibrateDraft(null);
                 setPhotoTraceSession({ elevationId: elevation.id, mode: "trace" });
               }}
-              style={chipStyle(false)}
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </>
       )}

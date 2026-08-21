@@ -32,6 +32,7 @@ import {
   solveLiveTradeEstimate,
   type StudioEstimateLine,
 } from "@workstream/domain";
+import { Button } from "./Button";
 import { useStudioStore } from "./studioStore";
 import { useStudioEstimate } from "../../../lib/use-studio-estimate";
 import type { RenderItem } from "./sceneItems";
@@ -436,26 +437,13 @@ function FitSheetCapsule({
           }}
         >
           <span style={labelStyle}>Itemized Quotation</span>
-          <button
-            type="button"
+          <Button
+            variant="icon"
             aria-label="Collapse quotation back to summary pill"
             onClick={() => setExpanded(false)}
-            style={{
-              all: "unset",
-              cursor: "pointer",
-              width: 22,
-              height: 22,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--gs-ink-secondary)",
-              fontSize: "var(--gs-font-h3)",
-              lineHeight: 1,
-              borderRadius: "var(--gs-radius-pill)",
-            }}
           >
             ×
-          </button>
+          </Button>
         </div>
         <div
           style={{

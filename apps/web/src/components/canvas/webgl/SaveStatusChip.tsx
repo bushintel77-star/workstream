@@ -84,7 +84,7 @@ export const SaveStatusChip = memo(function SaveStatusChip() {
         fontWeight: 600,
         color: config.color,
         whiteSpace: "nowrap",
-        transition: "color 0.2s ease, border-color 0.2s ease",
+        transition: "color var(--gs-base), border-color var(--gs-base)",
       }}
     >
       {/* Status dot — pulses during saving/retrying */}

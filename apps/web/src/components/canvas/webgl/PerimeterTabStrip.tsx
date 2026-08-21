@@ -25,6 +25,7 @@ import {
   type CanvasMode,
 } from "../../../lib/canvas-mode";
 import { lockReasonForMode } from "../../../lib/modeLockCopy";
+import { Button } from "./Button";
 
 /** Meta surfaces that open as tab panels (Fit rides the store instead). */
 export type MetaTabId =
@@ -129,30 +130,15 @@ export function PerimeterTabStrip({
           }
 
           return (
-            <button
+            <Button
               key={id}
-              type="button"
               data-testid={`mode-tab-${id}`}
               aria-label={`Mode ${label}`}
               onClick={() => onNativeMode(id)}
-              style={{
-                ...chipBase,
-                background: active ? "var(--gs-chip-active)" : "transparent",
-                color: active
-                  ? "var(--gs-chip-active-ink)"
-                  : "var(--gs-ink-secondary)",
-                transition: "background 0.15s, color 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                if (!active) e.currentTarget.style.color = "var(--gs-ink)";
-              }}
-              onMouseLeave={(e) => {
-                if (!active)
-                  e.currentTarget.style.color = "var(--gs-ink-secondary)";
-              }}
+              active={active}
             >
               {label}
-            </button>
+            </Button>
           );
         })}
       </nav>
@@ -164,31 +150,15 @@ export function PerimeterTabStrip({
         style={{ ...glassSegment, flex: "0 0 auto" }}
       >
         {metaTabs.map((t) => (
-          <button
+          <Button
             key={t.id}
-            type="button"
             data-testid={`meta-tab-${t.id}`}
             aria-pressed={t.active}
             onClick={t.onToggle}
-            style={{
-              ...chipBase,
-              background: t.active ? "var(--gs-chip-active)" : "transparent",
-              color: t.active
-                ? "var(--gs-chip-active-ink)"
-                : "var(--gs-ink-secondary)",
-              cursor: "pointer",
-              transition: "background 0.15s, color 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              if (!t.active) e.currentTarget.style.color = "var(--gs-ink)";
-            }}
-            onMouseLeave={(e) => {
-              if (!t.active)
-                e.currentTarget.style.color = "var(--gs-ink-secondary)";
-            }}
+            active={t.active}
           >
             {t.label}
-          </button>
+          </Button>
         ))}
       </div>
 

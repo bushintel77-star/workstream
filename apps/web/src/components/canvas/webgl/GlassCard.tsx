@@ -19,16 +19,48 @@ import type { CSSProperties, ReactNode } from "react";
  *
  * The container is pointer-events:none by default (so the canvas receives
  * drawing events); the card itself opts back in with pointer-events:auto.
+ *
+ * Header/footer slots — Tier 3 §1 of docs/UI-ELEMENT-STANDARDS.md. When
+ * supplied, they pin to the top and bottom of the card body in a single
+ * `flexDirection: "column"` shell, so callers stop hand-rolling the
+ * `display: flex / justify-content: space-between` pattern for card
+ * chrome. Omitting both slots leaves the inner children rendering
+ * exactly as before — pixel-stable for every existing consumer.
  */
 
 export interface GlassCardProps {
-  children: ReactNode;
+  /**
+   * Body slot — the scrollable/expandable region between the header
+   * and footer. Optional: a header-only or footer-only card is a
+   * valid composition (e.g., a divider-style card with title + close).
+   */
+  children?: ReactNode;
   /** Position of the card within the overlay. */
   position?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center" | CSSProperties;
   /** Optional className for consumer overrides. */
   className?: string;
   /** Inline style override (merged with position). */
   style?: CSSProperties;
+  /**
+   * Optional header slot — pinned to the top of the card with the
+   * `--gs-glass-edge` 12px padding baked in. Renders a top hairline so
+   * the header reads as a distinct band from the body when `bodyPadding`
+   * is set.
+   */
+  header?: ReactNode;
+  /**
+   * Optional footer slot — pinned to the bottom of the card with the
+   * same 12px padding. Renders a top hairline so the footer reads as a
+   * distinct band from the body. Use for action rows, disclaimers, or
+   * status chips that should not scroll with the body.
+   */
+  footer?: ReactNode;
+  /**
+   * When `true`, the body section becomes the scrollable region and the
+   * header/footer pin in place. Default `false` (the whole card scrolls
+   * if a consumer sets `overflow: auto` on the outer style).
+   */
+  scrollBody?: boolean;
 }
 
 const positionMap: Record<string, CSSProperties> = {
@@ -39,14 +71,65 @@ const positionMap: Record<string, CSSProperties> = {
   center: { top: "50%", left: "50%", transform: "translate(-50%, -50%)" },
 };
 
+const headerFooterShell: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "var(--gs-space-4)",
+  padding: "10px 12px",
+  flex: "0 0 auto",
+};
+
 export function GlassCard({
   children,
   position,
   className,
   style,
+  header,
+  footer,
+  scrollBody = false,
 }: GlassCardProps) {
   const posStyle =
     typeof position === "string" ? positionMap[position] : position;
+
+  // No slots → original render path, pixel-stable.
+  if (!header && !footer) {
+    return (
+      <div
+        className={className}
+        style={{
+          position: "absolute",
+          pointerEvents: "auto",
+          // Studio Paper depth law: frost panel + blur + neutral shadow tier —
+          // the card floats above the drawing on light, not darkness.
+          background: "var(--gs-glass-veil)",
+          backdropFilter: "blur(var(--gs-blur))",
+          WebkitBackdropFilter: "blur(var(--gs-blur))",
+          borderRadius: "var(--gs-radius-panel)",
+          border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+          boxShadow: "var(--gs-shadow-2)",
+          ...posStyle,
+          ...style,
+        }}
+        data-gs-glass-card
+      >
+        {children}
+      </div>
+    );
+  }
+
+  // Slot layout: header pinned at top, body in the middle (scrollable
+  // when `scrollBody`), footer pinned at the bottom. Consumer still owns
+  // the outer position/sizing via `position` + `style` — the shell only
+  // supplies the column flex and the hairline dividers.
+  const shellStyle: CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 0,
+  };
+  const bodyStyle: CSSProperties = scrollBody
+    ? { flex: "1 1 auto", minHeight: 0, overflowY: "auto" }
+    : { flex: "0 0 auto" };
 
   return (
     <div
@@ -54,8 +137,6 @@ export function GlassCard({
       style={{
         position: "absolute",
         pointerEvents: "auto",
-        // Studio Paper depth law: frost panel + blur + neutral shadow tier —
-        // the card floats above the drawing on light, not darkness.
         background: "var(--gs-glass-veil)",
         backdropFilter: "blur(var(--gs-blur))",
         WebkitBackdropFilter: "blur(var(--gs-blur))",
@@ -67,7 +148,33 @@ export function GlassCard({
       }}
       data-gs-glass-card
     >
-      {children}
+      <div style={shellStyle}>
+        {header ? (
+          <div
+            data-gs-glass-header
+            style={{
+              ...headerFooterShell,
+              borderBottom: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+            }}
+          >
+            {header}
+          </div>
+        ) : null}
+        <div data-gs-glass-body style={bodyStyle}>
+          {children}
+        </div>
+        {footer ? (
+          <div
+            data-gs-glass-footer
+            style={{
+              ...headerFooterShell,
+              borderTop: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+            }}
+          >
+            {footer}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
