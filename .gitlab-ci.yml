@@ -61,6 +61,11 @@ gate:
     paths:
       - .pnpm-store
       - .playwright
+    # `cache:` defaults to `when: on_success`, so pipeline #31's failing gate
+    # threw away the ~150 MB Chromium it had just downloaded and the next run
+    # paid the ~19s re-download again. The gate is the job most likely to fail
+    # while still having done all the expensive fetching, so persist on failure.
+    when: always
   # 30m -> 40m: on a cold cache this job now also pulls ~150 MB of Chromium and
   # apt-installs its system libraries (~2-4 min) on top of a full Next.js
   # production build for the bundle-size budget, typecheck, lint and 1900+
