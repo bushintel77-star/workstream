@@ -18,6 +18,7 @@
 import { useMemo } from "react";
 import { useStudioStore } from "./studioStore";
 import { proposalLabel } from "./sketchCad";
+import { Button } from "./Button";
 
 const panel: React.CSSProperties = {
   display: "flex",
@@ -88,23 +89,19 @@ export function SketchCadReviewCard() {
         >
           SKETCH → CAD · {sorted.length}
         </span>
-        <button
-          type="button"
+        <Button
+          variant="text"
           data-testid="cad-review-close"
           aria-label="Close sketch CAD review"
           onClick={() => close(false)}
           style={{
-            border: "none",
-            background: "transparent",
             color: "var(--gs-ink-muted)",
-            fontFamily: "var(--font-ui)",
             fontSize: "var(--gs-font-sm)",
-            cursor: "pointer",
             padding: "2px 6px",
           }}
         >
           ✕
-        </button>
+        </Button>
       </div>
 
       {photoScoped && (
@@ -215,61 +212,35 @@ export function SketchCadReviewCard() {
             flexWrap: "wrap",
           }}
         >
-          <button
-            type="button"
+          <Button
+            variant="cta"
             data-testid="cad-accept"
             onClick={() => accept(active.id)}
-            style={{
-              flex: 1,
-              padding: "5px 8px",
-              border: "1px solid var(--gs-primary)",
-              borderRadius: "var(--gs-radius-chip)",
-              background: "var(--gs-primary)",
-              color: "var(--gs-panel)",
-              fontFamily: "var(--font-ui)",
-              fontSize: "var(--gs-font-sm)",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
+            style={{ flex: 1 }}
           >
             Accept
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost-line"
             data-testid="cad-reject"
             onClick={() => reject(active.id)}
-            style={{
-              padding: "5px 8px",
-              border: "1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)",
-              borderRadius: "var(--gs-radius-chip)",
-              background: "transparent",
-              color: "var(--gs-ink-secondary)",
-              fontFamily: "var(--font-ui)",
-              fontSize: "var(--gs-font-sm)",
-              cursor: "pointer",
-            }}
           >
             Reject
-          </button>
+          </Button>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="text"
           data-testid="cad-accept-all"
           onClick={acceptAll}
           style={{
-            padding: "4px 8px",
-            border: "none",
-            borderRadius: "var(--gs-radius-chip)",
-            background: "transparent",
             color: "var(--gs-primary)",
-            fontFamily: "var(--font-ui)",
             fontSize: "var(--gs-font-sm)",
-            cursor: "pointer",
+            padding: "4px 8px",
             textAlign: "left",
           }}
         >
           Accept all {sorted.length}
-        </button>
+        </Button>
       </div>
     </div>
   );

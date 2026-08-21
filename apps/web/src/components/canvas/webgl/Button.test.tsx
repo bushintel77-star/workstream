@@ -341,6 +341,82 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain('padding:5px 8px');
   });
 
+  it('SketchCadReviewCard Accept = cta + flex:1 (cad-accept contract)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "cta", style: { flex: 1 }, "data-testid": "cad-accept" },
+        "Accept",
+      ),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="cad-accept"/);
+    // byte-identical to the prior inline Accept button
+    expect(html).toContain('flex:1');
+    expect(html).toContain('border:1px solid var(--gs-primary)');
+    expect(html).toContain('background:var(--gs-primary)');
+    expect(html).toContain('color:var(--gs-panel)');
+    expect(html).toContain('font-weight:600');
+    expect(html).toContain('padding:5px 8px');
+    expect(html).toContain('border-radius:var(--gs-radius-chip)');
+  });
+
+  it('SketchCadReviewCard Reject = ghost-line (byte-identical, cad-reject contract)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "ghost-line", "data-testid": "cad-reject" },
+        "Reject",
+      ),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="cad-reject"/);
+    expect(html).toContain(
+      'border:1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)',
+    );
+    expect(html).toContain('background:transparent');
+    expect(html).toContain('color:var(--gs-ink-secondary)');
+    expect(html).toContain('padding:5px 8px');
+    expect(html).toContain('border-radius:var(--gs-radius-chip)');
+  });
+
+  it('SketchCadReviewCard close ✕ = text + ink-muted (cad-review-close contract)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        {
+          variant: "text",
+          style: { color: "var(--gs-ink-muted)", fontSize: "var(--gs-font-sm)", padding: "2px 6px" },
+          "data-testid": "cad-review-close",
+        },
+        "✕",
+      ),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="cad-review-close"/);
+    expect(html).toContain('border:none');
+    expect(html).toContain('background:transparent');
+    expect(html).toContain('color:var(--gs-ink-muted)');
+    expect(html).toContain('padding:2px 6px');
+  });
+
+  it('SketchCadReviewCard accept-all = text + primary tint (cad-accept-all contract)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        {
+          variant: "text",
+          style: { color: "var(--gs-primary)", fontSize: "var(--gs-font-sm)", padding: "4px 8px", textAlign: "left" },
+          "data-testid": "cad-accept-all",
+        },
+        "Accept all 3",
+      ),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="cad-accept-all"/);
+    expect(html).toContain('border:none');
+    expect(html).toContain('background:transparent');
+    expect(html).toContain('color:var(--gs-primary)');
+    expect(html).toContain('padding:4px 8px');
+    expect(html).toContain('text-align:left');
+  });
+
   it('variant="chip-preset" renders the preset toggle chip (sun/layers)', () => {
     const html = renderToStaticMarkup(
       createElement(
