@@ -265,6 +265,10 @@ export interface StudioStoreState {
   assetsOpen: boolean;
   /** Armed catalog symbol — click the lot to place it; null = not armed. */
   armedSymbolId: string | null;
+  /** Drag-drop from the asset dock — AssetPlaceLayer consumes and clears. */
+  pendingAssetDrop: { symbolId: string; clientX: number; clientY: number } | null;
+  /** Area-draw mass plant (groundcover / hedge fill) while a symbol is armed. */
+  areaPlantActive: boolean;
   /** All canvas placements (CatalogPlacement contract schema). */
   placements: CatalogPlacement[];
   /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features, stitchRecords} (cap 50). */
@@ -445,6 +449,10 @@ export interface StudioStoreState {
   acceptCadProposal: (id: string) => void;
   rejectCadProposal: (id: string) => void;
   acceptAllCadProposals: () => void;
+  /** Accept only proposals at or above the confidence floor (default 0.7). */
+  acceptConfidentCadProposals: (minConfidence?: number) => void;
+  /** Drop the whole review set without minting placements. */
+  rejectAllCadProposals: () => void;
   /** One-click direct convert (recognizeStroke path); returns feature count. */
   convertStrokesToCadFeatures: () => number;
 
@@ -612,6 +620,12 @@ export interface StudioStoreState {
   setAssetsOpen: (v: boolean) => void;
   /** Arming an asset disarms sketch + measure (pointer-capture exclusion). */
   setArmedSymbolId: (id: string | null) => void;
+  setPendingAssetDrop: (
+    drop: { symbolId: string; clientX: number; clientY: number } | null,
+  ) => void;
+  setAreaPlantActive: (v: boolean) => void;
+  /** Append many placements in ONE history commit (area plant). */
+  addPlacements: (placements: CatalogPlacement[]) => void;
   /** Replace the entire placement array (hydrate / undo / branch checkout). */
   setPlacements: (placements: CatalogPlacement[]) => void;
   /** Append a single placement (a place gesture — commits undo history). */
@@ -752,6 +766,38 @@ function docSnapshot(
   };
 }
 
+function commitCadProposals(
+  s: StudioStoreState,
+  proposals: SketchCadProposal[],
+) {
+  if (proposals.length === 0) return {};
+  const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+  const placements = [...s.placements];
+  const features = [...s.features];
+  for (const proposal of proposals) {
+    const placement: CatalogPlacement = {
+      id: crypto.randomUUID(),
+      symbol_id: proposal.symbol_id,
+      x_pct: proposal.x_pct,
+      y_pct: proposal.y_pct,
+      rotation_deg: ((proposal.rotDeg ?? 0) % 360 + 360) % 360,
+      scale: proposal.scale ?? 1,
+    };
+    placements.push(placement);
+    const mirrored = featureForAcceptedProposal(placement.id, proposal);
+    if (mirrored) features.push(mirrored);
+  }
+  return {
+    placements,
+    features,
+    cadProposals: [] as SketchCadProposal[],
+    cadReviewOpen: false,
+    cadActiveProposalId: null,
+    historyPast: past,
+    historyFuture: [],
+  };
+}
+
 export const useStudioStore = create<StudioStoreState>((set) => ({
   // Temporal defaults (match the prior seasonalStore defaults)
   growthYear: 10,
@@ -796,6 +842,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Asset fan-out defaults — dock closed (chrome), nothing armed.
   assetsOpen: false,
   armedSymbolId: null,
+  pendingAssetDrop: null,
+  areaPlantActive: false,
   placements: [],
   // Spatial gizmo defaults — translate armed by default (single placement
   // selection mounts the manipulator), no drag in flight.
@@ -948,6 +996,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         ? { armedSymbolId, sketchMode: false, measureActive: false, trenchTool: null, zoneTool: null }
         : { armedSymbolId: null },
     ),
+  setPendingAssetDrop: (pendingAssetDrop) => set({ pendingAssetDrop }),
+  setAreaPlantActive: (areaPlantActive) => set({ areaPlantActive }),
   setPlacements: (placements) => set({ placements }),
   updatePlacementField: (id, patch) =>
     set((s) => {
@@ -1094,6 +1144,16 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set((s) => {
       const past = [...s.historyPast, docSnapshot(s)].slice(-50);
       return { placements: [...s.placements, placement], historyPast: past, historyFuture: [] };
+    }),
+  addPlacements: (added) =>
+    set((s) => {
+      if (added.length === 0) return {};
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      return {
+        placements: [...s.placements, ...added],
+        historyPast: past,
+        historyFuture: [],
+      };
     }),
   removePlacement: (id) =>
     set((s) => {
@@ -1495,33 +1555,19 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     }),
 
   acceptAllCadProposals: () =>
+    set((s) => commitCadProposals(s, s.cadProposals)),
+  acceptConfidentCadProposals: (minConfidence = 0.7) =>
     set((s) => {
-      if (s.cadProposals.length === 0) return {};
-      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
-      const placements = [...s.placements];
-      const features = [...s.features];
-      for (const proposal of s.cadProposals) {
-        const placement: CatalogPlacement = {
-          id: crypto.randomUUID(),
-          symbol_id: proposal.symbol_id,
-          x_pct: proposal.x_pct,
-          y_pct: proposal.y_pct,
-          rotation_deg: ((proposal.rotDeg ?? 0) % 360 + 360) % 360,
-          scale: proposal.scale ?? 1,
-        };
-        placements.push(placement);
-        const mirrored = featureForAcceptedProposal(placement.id, proposal);
-        if (mirrored) features.push(mirrored);
-      }
-      return {
-        placements,
-        features,
-        cadProposals: [],
-        cadReviewOpen: false,
-        cadActiveProposalId: null,
-        historyPast: past,
-        historyFuture: [],
-      };
+      const keep = s.cadProposals.filter((p) => p.confidence >= minConfidence);
+      if (keep.length === 0) return {};
+      const leftover = s.cadProposals.filter((p) => p.confidence < minConfidence);
+      return { ...commitCadProposals(s, keep), cadProposals: leftover, cadReviewOpen: leftover.length > 0, cadActiveProposalId: leftover[0]?.id ?? null };
+    }),
+  rejectAllCadProposals: () =>
+    set({
+      cadProposals: [],
+      cadReviewOpen: false,
+      cadActiveProposalId: null,
     }),
 
   /**

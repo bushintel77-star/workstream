@@ -94,34 +94,66 @@ export function StudioCommandPalette({
         id: `mode-${mode}`,
         label,
         group: "Mode",
+        hint: {
+          survey: "Shift+1",
+          sketch: "Shift+2",
+          cad: "Shift+3",
+          elevation: "Shift+4",
+          garden: "Shift+5",
+          quote: "Shift+6",
+          present: "Shift+7",
+          share: "Shift+8",
+        }[mode],
         run: () => onMode(mode),
       })),
-      tool("sketch", "Sketch ink", () => {
-        store.setArmedSymbolId(null);
-        store.setMeasureActive(false);
-        store.setSketchMode(!useStudioStore.getState().sketchMode);
-      }),
+      {
+        id: "tool-sketch",
+        label: "Sketch ink",
+        group: "Tool",
+        hint: "S",
+        run: () => {
+          store.setArmedSymbolId(null);
+          store.setMeasureActive(false);
+          store.setSketchMode(!useStudioStore.getState().sketchMode);
+        },
+      },
       tool("tidy", "Tidy strokes to CAD proposals", () => {
         useStudioStore.getState().tidySketchToCad();
       }),
       tool("convert-cad", "Convert strokes to CAD features", () => {
         useStudioStore.getState().convertStrokesToCadFeatures();
       }),
-      tool("measure", "Measure tape", () =>
-        store.setMeasureActive(!useStudioStore.getState().measureActive),
-      ),
-      tool("assets", "Asset library", () =>
-        store.setAssetsOpen(!useStudioStore.getState().assetsOpen),
-      ),
-      tool("underground", "Subsurface view", () =>
-        store.setSubsurfaceView(!useStudioStore.getState().subsurfaceView),
-      ),
+      {
+        id: "tool-measure",
+        label: "Measure tape",
+        group: "Tool",
+        hint: "M",
+        run: () => store.setMeasureActive(!useStudioStore.getState().measureActive),
+      },
+      {
+        id: "tool-assets",
+        label: "Asset library",
+        group: "Tool",
+        hint: "A",
+        run: () => store.setAssetsOpen(!useStudioStore.getState().assetsOpen),
+      },
+      {
+        id: "tool-underground",
+        label: "Subsurface view",
+        group: "Tool",
+        hint: "U",
+        run: () => store.setSubsurfaceView(!useStudioStore.getState().subsurfaceView),
+      },
       tool("split", "Split plan | 3D", () =>
         store.setSplitView(!useStudioStore.getState().splitView),
       ),
-      tool("dims", "Working-drawing dims", () =>
-        store.setDimsView(!useStudioStore.getState().dimsView),
-      ),
+      {
+        id: "tool-dims",
+        label: "Working-drawing dims",
+        group: "Tool",
+        hint: "D",
+        run: () => store.setDimsView(!useStudioStore.getState().dimsView),
+      },
       tool("quote", "Fit-sheet", () =>
         store.setFitSheetOpen(!useStudioStore.getState().fitSheetOpen),
       ),
@@ -178,12 +210,14 @@ export function StudioCommandPalette({
         id: "view-plan",
         label: "Plan view (orthographic)",
         group: "View",
+        hint: "1",
         run: () => store.setPitchDeg(0),
       },
       {
         id: "view-3d",
         label: "3D view (perspective)",
         group: "View",
+        hint: "2",
         run: () => store.setPitchDeg(DEFAULT_CAMERA_RIG.tiltDeg),
       },
       {

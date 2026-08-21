@@ -56,6 +56,8 @@ export function SketchCadReviewCard() {
   const accept = useStudioStore((s) => s.acceptCadProposal);
   const reject = useStudioStore((s) => s.rejectCadProposal);
   const acceptAll = useStudioStore((s) => s.acceptAllCadProposals);
+  const acceptConfident = useStudioStore((s) => s.acceptConfidentCadProposals);
+  const rejectAll = useStudioStore((s) => s.rejectAllCadProposals);
   const close = useStudioStore((s) => s.setCadReviewOpen);
 
   const sorted = useMemo(
@@ -228,19 +230,46 @@ export function SketchCadReviewCard() {
             Reject
           </Button>
         </div>
-        <Button
-          variant="text"
-          data-testid="cad-accept-all"
-          onClick={acceptAll}
-          style={{
-            color: "var(--gs-primary)",
-            fontSize: "var(--gs-font-sm)",
-            padding: "4px 8px",
-            textAlign: "left",
-          }}
-        >
-          Accept all {sorted.length}
-        </Button>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--gs-space-2)" }}>
+          <Button
+            variant="text"
+            data-testid="cad-accept-all"
+            onClick={acceptAll}
+            style={{
+              color: "var(--gs-primary)",
+              fontSize: "var(--gs-font-sm)",
+              padding: "4px 8px",
+            }}
+          >
+            Accept all {sorted.length}
+          </Button>
+          {sorted.some((p) => p.confidence >= 0.7) ? (
+            <Button
+              variant="text"
+              data-testid="cad-accept-confident"
+              onClick={() => acceptConfident(0.7)}
+              style={{
+                color: "var(--gs-primary-ink)",
+                fontSize: "var(--gs-font-sm)",
+                padding: "4px 8px",
+              }}
+            >
+              Accept ≥70%
+            </Button>
+          ) : null}
+          <Button
+            variant="text"
+            data-testid="cad-reject-all"
+            onClick={rejectAll}
+            style={{
+              color: "var(--gs-ink-secondary)",
+              fontSize: "var(--gs-font-sm)",
+              padding: "4px 8px",
+            }}
+          >
+            Reject all
+          </Button>
+        </div>
       </div>
     </div>
   );

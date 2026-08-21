@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAssetPalette } from "./assetPalette";
+import { buildAssetPalette, filterAssetPalette } from "./assetPalette";
 import { TYPE_TO_SYMBOL } from "../handoff/state/canvasBridge";
 
 describe("buildAssetPalette", () => {
@@ -46,13 +46,21 @@ describe("buildAssetPalette", () => {
     expect(deck.label).toBe("Decking");
   });
 
-  it("groups botanicals as plants and surfaces as hardscape", () => {
+  it("groups by plant type (trees / shrubs / groundcover / hardscape)", () => {
     const palette = buildAssetPalette();
     const byType = new Map(palette.map((e) => [e.type, e.category]));
-    expect(byType.get("canopy")).toBe("plant");
-    expect(byType.get("hedge")).toBe("plant");
-    expect(byType.get("lawn")).toBe("hardscape");
+    expect(byType.get("canopy")).toBe("tree");
+    expect(byType.get("hedge")).toBe("shrub");
+    expect(byType.get("bed")).toBe("groundcover");
+    expect(byType.get("lawn")).toBe("groundcover");
     expect(byType.get("paving")).toBe("hardscape");
+  });
+
+  it("filters by category and query without inventing entries", () => {
+    const palette = buildAssetPalette();
+    expect(filterAssetPalette(palette, { category: "tree" }).every((e) => e.category === "tree")).toBe(true);
+    expect(filterAssetPalette(palette, { query: "olea" }).map((e) => e.type)).toEqual(["canopy"]);
+    expect(filterAssetPalette(palette, { query: "zzzz" })).toEqual([]);
   });
 
   it("is deterministic — identical output across calls", () => {

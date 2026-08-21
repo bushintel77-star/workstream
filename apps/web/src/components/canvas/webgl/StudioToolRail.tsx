@@ -17,8 +17,11 @@
  * border, the drawing owns the middle)
  */
 
+import { useState } from "react";
 import { useStudioStore } from "./studioStore";
 import { Button } from "./Button";
+
+type RailGroup = "core" | "site" | "view";
 
 interface RailTool {
   id: string;
@@ -29,6 +32,8 @@ interface RailTool {
   accent: string;
   title: string;
   disabled?: boolean;
+  group: RailGroup;
+  advanced?: boolean;
 }
 
 export function StudioToolRail({
@@ -79,16 +84,9 @@ export function StudioToolRail({
   const marqueeActive = useStudioStore((s) => s.marqueeActive);
   const setMarqueeActive = useStudioStore((s) => s.setMarqueeActive);
 
+  const [moreOpen, setMoreOpen] = useState(false);
+
   const tools: RailTool[] = [
-    {
-      id: "present",
-      glyph: " ◉ ",
-      label: "Present",
-      active: presentActive,
-      onToggle: onPresentToggle,
-      accent: "var(--gs-primary)",
-      title: "Presentation lens",
-    },
     {
       id: "sketch",
       glyph: "✎",
@@ -103,7 +101,8 @@ export function StudioToolRail({
         setSketchMode(next);
       },
       accent: "var(--gs-primary)",
-      title: "Freehand ink",
+      title: "Freehand ink (S)",
+      group: "core",
     },
     {
       id: "measure",
@@ -112,7 +111,22 @@ export function StudioToolRail({
       active: measureActive,
       onToggle: () => setMeasureActive(!measureActive),
       accent: "var(--gs-ink-truth)",
-      title: "Two-point tape",
+      title: "Two-point tape (M)",
+      group: "core",
+    },
+    {
+      id: "assets",
+      glyph: "❖",
+      label: "Assets",
+      active: assetsOpen || armedSymbolId != null,
+      onToggle: () => {
+        const next = !assetsOpen;
+        if (!next) setArmedSymbolId(null);
+        setAssetsOpen(next);
+      },
+      accent: "var(--gs-primary)",
+      title: "Discovery fan-out (A)",
+      group: "core",
     },
     {
       id: "marquee",
@@ -122,6 +136,7 @@ export function StudioToolRail({
       onToggle: () => setMarqueeActive(!marqueeActive),
       accent: "var(--gs-primary)",
       title: "Drag a box to select placements and features (shift adds)",
+      group: "core",
     },
     ...(showTidy
       ? [
@@ -136,6 +151,7 @@ export function StudioToolRail({
               ? "Draw ink first — strokes become CAD proposals"
               : "Tidy strokes → confidence-scored CAD proposals (accept/reject review)",
             disabled: tidyDisabled,
+            group: "core" as const,
           },
         ]
       : []),
@@ -146,7 +162,9 @@ export function StudioToolRail({
       active: trenchTool != null,
       onToggle: () => setTrenchTool(trenchTool ? null : "drainage"),
       accent: "var(--gs-ink-truth)",
-      title: "Trace construction trench (drainage default; palette picks the kind)",
+      title: "Trace drainage trench (advanced)",
+      group: "site",
+      advanced: true,
     },
     {
       id: "zones",
@@ -155,7 +173,9 @@ export function StudioToolRail({
       active: zoneTool != null && zoneTool !== "lighting",
       onToggle: () => setZoneTool(zoneTool && zoneTool !== "lighting" ? null : "drip"),
       accent: "var(--gs-ink-truth)",
-      title: "Trace irrigation zone (drip default; palette picks spray)",
+      title: "Trace irrigation zone (advanced)",
+      group: "site",
+      advanced: true,
     },
     {
       id: "lighting",
@@ -164,20 +184,9 @@ export function StudioToolRail({
       active: zoneTool === "lighting",
       onToggle: () => setZoneTool(zoneTool === "lighting" ? null : "lighting"),
       accent: "var(--gs-ink-truth)",
-      title: "Trace lighting run (path + fixture count)",
-    },
-    {
-      id: "assets",
-      glyph: "❖",
-      label: "Assets",
-      active: assetsOpen || armedSymbolId != null,
-      onToggle: () => {
-        const next = !assetsOpen;
-        if (!next) setArmedSymbolId(null);
-        setAssetsOpen(next);
-      },
-      accent: "var(--gs-primary)",
-      title: "Discovery fan-out",
+      title: "Trace lighting run (advanced)",
+      group: "site",
+      advanced: true,
     },
     {
       id: "underground",
@@ -186,16 +195,28 @@ export function StudioToolRail({
       active: subsurfaceView,
       onToggle: () => setSubsurfaceView(!subsurfaceView),
       accent: "var(--gs-ink-truth)",
-      title: "Subsurface blueprint",
+      title: "Subsurface blueprint (U)",
+      group: "site",
+    },
+    {
+      id: "present",
+      glyph: " ◉ ",
+      label: "Present",
+      active: presentActive,
+      onToggle: onPresentToggle,
+      accent: "var(--gs-primary)",
+      title: "Presentation lens (Shift+7)",
+      group: "view",
     },
     {
       id: "split",
-      glyph: "⧓",
+      glyph: "⋈",
       label: "Split",
       active: splitView,
       onToggle: () => setSplitView(!splitView),
       accent: "var(--gs-primary)",
       title: "Plan | 3D split view (linked cameras)",
+      group: "view",
     },
     ...(showDims
       ? [
@@ -206,7 +227,8 @@ export function StudioToolRail({
             active: dimsView,
             onToggle: () => setDimsView(!dimsView),
             accent: "var(--gs-ink-truth)",
-            title: "Working-drawing dimensions",
+            title: "Working-drawing dimensions (D)",
+            group: "view" as const,
           },
         ]
       : []),
@@ -219,7 +241,9 @@ export function StudioToolRail({
             active: sliceActive,
             onToggle: () => setSliceActive(!sliceActive),
             accent: "var(--gs-ink-truth)",
-            title: "Elevation slice",
+            title: "Elevation slice (advanced)",
+            group: "view" as const,
+            advanced: true,
           },
           {
             id: "flow",
@@ -228,7 +252,9 @@ export function StudioToolRail({
             active: drainageView,
             onToggle: () => setDrainageView(!drainageView),
             accent: "var(--gs-ink-truth)",
-            title: "Drainage overland flow",
+            title: "Drainage overland flow (advanced)",
+            group: "view" as const,
+            advanced: true,
           },
         ]
       : []),
@@ -241,11 +267,15 @@ export function StudioToolRail({
             active: earthworksView,
             onToggle: () => setEarthworksView(!earthworksView),
             accent: "var(--gs-primary)",
-            title: "Cut / fill earthworks",
+            title: "Cut / fill earthworks (advanced)",
+            group: "view" as const,
+            advanced: true,
           },
         ]
       : []),
   ];
+
+  const visible = tools.filter((t) => moreOpen || !t.advanced || t.active);
 
   return (
     <nav
@@ -277,12 +307,24 @@ export function StudioToolRail({
         scrollbarWidth: "none",
       }}
     >
-      {tools.map((t) => {
+      {visible.map((t, i) => {
         const active = t.active;
         const name = `${active ? "▾" : "▸"} ${t.label}`;
+        const prev = visible[i - 1];
+        const showRule = Boolean(prev && prev.group !== t.group);
         return (
+          <span key={t.id} style={{ display: "contents" }}>
+            {showRule ? (
+              <span
+                aria-hidden
+                style={{
+                  height: 1,
+                  margin: "3px 4px",
+                  background: "color-mix(in srgb, var(--gs-line) 55%, transparent)",
+                }}
+              />
+            ) : null}
           <Button
-            key={t.id}
             variant="swatch"
             data-testid={`rail-${t.id}`}
             aria-label={name}
@@ -312,8 +354,35 @@ export function StudioToolRail({
               {t.label}
             </span>
           </Button>
+          </span>
         );
       })}
+      {tools.some((t) => t.advanced) ? (
+        <Button
+          variant="swatch"
+          data-testid="rail-more"
+          aria-label={moreOpen ? "▾ Less" : "▸ More"}
+          aria-expanded={moreOpen}
+          title={moreOpen ? "Hide advanced site tools" : "Show trench, zones, lighting, terrain"}
+          active={moreOpen}
+          onClick={() => setMoreOpen((v) => !v)}
+        >
+          <span aria-hidden style={{ fontSize: "var(--gs-font-sub)", lineHeight: 1 }}>
+            …
+          </span>
+          <span
+            aria-hidden
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "var(--gs-font-xs)",
+              letterSpacing: "0.04em",
+              lineHeight: 1,
+            }}
+          >
+            {moreOpen ? "Less" : "More"}
+          </span>
+        </Button>
+      ) : null}
     </nav>
   );
 }

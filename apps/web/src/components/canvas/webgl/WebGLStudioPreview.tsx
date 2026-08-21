@@ -86,7 +86,9 @@ import {
   nearestFeatureId,
   nearestPlacementId,
 } from "./selectionPick";
-import { unlockedModes, type CanvasMode, type CanvasProgress } from "../../../lib/canvas-mode";
+import { suggestedMode, unlockedModes, type CanvasMode, type CanvasProgress } from "../../../lib/canvas-mode";
+import { StudioShortcutsHelp } from "./StudioShortcutsHelp";
+import { resolveStudioShortcut } from "./studioShortcuts";
 import { SiteContextBadges } from "../../SiteContextBadges";
 import { GardenViewpointStrip } from "../handoff/features/viewpoint/GardenViewpointStrip";
 import { viewpointYawDeg, type GardenViewpointLook } from "../handoff/features/tilt/tiltMath";
@@ -287,49 +289,7 @@ export function WebGLStudioPreview({
     }
   }, [initialMode]);
 
-  // Viewport transition keyboard shortcuts (1=plan, 2=orbit, 3=garden,
-  // 4=elevation). Document-level listener so the keys fire regardless
-  // of which chrome element has focus. The handler is split-view-aware:
-  // disabled when the dual-canvas lens is on (the per-half labels own
-  // the viewport narrative there). The list matches the existing
-  // StudioCommandPalette's onZoom + onMode so the power-user mental
-  // model stays in one place.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const t = e.target;
-      if (
-        t instanceof HTMLElement &&
-        (t.tagName === "INPUT" ||
-          t.tagName === "TEXTAREA" ||
-          t.isContentEditable)
-      ) {
-        return;
-      }
-      if (useStudioStore.getState().splitView) return;
-      const live = useStudioStore.getState().liveRig;
-      switch (e.key) {
-        case "1":
-          writeLiveRig({ ...live, tiltDeg: 0 });
-          e.preventDefault();
-          break;
-        case "2":
-          writeLiveRig({ ...live, tiltDeg: 55 });
-          e.preventDefault();
-          break;
-        case "3":
-          writeLiveRig({ ...live, tiltDeg: 76, zoom: 1.45 });
-          e.preventDefault();
-          break;
-        case "4":
-          useStudioStore.getState().setPitchDeg(90);
-          e.preventDefault();
-          break;
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [writeLiveRig]);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // Garden viewpoint — eye-level rig presets per cardinal look. The yaw
   // reuses the classic tiltMath mapping so N/E/S/W mean the same thing in
@@ -348,7 +308,7 @@ export function WebGLStudioPreview({
     });
   };
 
-  const onNativeMode = (mode: CanvasMode) => {
+  const onNativeMode = useCallback((mode: CanvasMode) => {
     setActiveMode(mode);
     setMetaTab(null);
     if (mode !== "present") setPresentationMode(false);
@@ -369,7 +329,7 @@ export function WebGLStudioPreview({
       setPresentationMode(true);
     }
     // survey / share / elevation mount their glass cards on activeMode.
-  };
+  }, [applyGardenLook, gardenLook, boundaryPct.length]);
 
   // --- Store subscriptions (DOM HUD re-renders; 3D reads via getState) ---
   const year = useStudioStore((s) => s.growthYear);
@@ -659,6 +619,62 @@ export function WebGLStudioPreview({
     [progress, strokes, storePlacements, storeFeatures, boundaryPct],
   );
   const unlocked = useMemo(() => unlockedModes(liveProgress), [liveProgress]);
+  const nextMode = useMemo(() => suggestedMode(liveProgress), [liveProgress]);
+
+  // Studio keyboard map — viewport 1–4, Shift+digit modes, letter tools, ?.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const hit = resolveStudioShortcut(e);
+      if (!hit) return;
+      if (hit.kind === "viewport") {
+        if (useStudioStore.getState().splitView) return;
+        const live = useStudioStore.getState().liveRig;
+        e.preventDefault();
+        if (hit.preset === "plan") writeLiveRig({ ...live, tiltDeg: 0 });
+        else if (hit.preset === "orbit") writeLiveRig({ ...live, tiltDeg: 55 });
+        else if (hit.preset === "garden") writeLiveRig({ ...live, tiltDeg: 76, zoom: 1.45 });
+        else useStudioStore.getState().setPitchDeg(90);
+        return;
+      }
+      if (hit.kind === "mode") {
+        if (!unlocked.has(hit.mode)) return;
+        e.preventDefault();
+        onNativeMode(hit.mode);
+        return;
+      }
+      const store = useStudioStore.getState();
+      e.preventDefault();
+      switch (hit.tool) {
+        case "help":
+          setShortcutsOpen((open) => !open);
+          break;
+        case "assets":
+          store.setAssetsOpen(!store.assetsOpen);
+          break;
+        case "measure":
+          store.setMeasureActive(!store.measureActive);
+          break;
+        case "sketch-ink": {
+          const next = !store.sketchMode;
+          if (next) {
+            store.setArmedSymbolId(null);
+            store.setMeasureActive(false);
+          }
+          store.setSketchMode(next);
+          break;
+        }
+        case "underground":
+          store.setSubsurfaceView(!store.subsurfaceView);
+          break;
+        case "dims":
+          store.setDimsView(!store.dimsView);
+          break;
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [unlocked, onNativeMode, writeLiveRig]);
+
   // Mode-driven layer law — flows into the scene as props (no remounts).
   const policy = useMemo(() => canvasLayerPolicy(activeMode), [activeMode]);
   // Survey owns the subsurface works: entering survey arms the blueprint
@@ -845,6 +861,27 @@ export function WebGLStudioPreview({
       }}
       onPointerUp={(e) => { e.currentTarget.style.cursor = drawCursor; }}
       onPointerLeave={(e) => { e.currentTarget.style.cursor = drawCursor; }}
+      onDragOver={(e) => {
+        if (
+          e.dataTransfer.types.includes("text/plain") ||
+          e.dataTransfer.types.includes("application/x-workstream-symbol")
+        ) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        const symbolId =
+          e.dataTransfer.getData("application/x-workstream-symbol") ||
+          e.dataTransfer.getData("text/plain");
+        if (!symbolId) return;
+        useStudioStore.getState().setPendingAssetDrop({
+          symbolId,
+          clientX: e.clientX,
+          clientY: e.clientY,
+        });
+      }}
     >
       {/* The render surface: ONE studio, or the split lens (locked plan |
           live 3D, linked cameras). The DOM chrome overlays whichever is
@@ -887,6 +924,10 @@ export function WebGLStudioPreview({
         onMode={(m) => onNativeMode(m as Parameters<typeof onNativeMode>[0])}
         onZoom={(dir) => zoomBy(dir === 1 ? 1 : -1)}
         onOpenSitePhotos={() => setMetaTab("studio")}
+      />
+      <StudioShortcutsHelp
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
       />
 
       {/* Native share — client portal promotion, centered glass. */}
@@ -2197,6 +2238,12 @@ export function WebGLStudioPreview({
 
       {/* First-run controls hint — dismissed for the session once seen. */}
       <FirstRunHint />
+      <WorkflowGuideChip
+        activeMode={activeMode}
+        nextMode={nextMode}
+        unlocked={unlocked}
+        onMode={onNativeMode}
+      />
 
       {/* Dev-only z-tier hover HUD — renders NOTHING outside dev or
           without the `?cfz-inspect=1` URL flag. See CfzTierInspector.tsx
@@ -2243,7 +2290,7 @@ function FirstRunHint() {
         color: "var(--gs-ink-secondary)",
       }}
     >
-      <span>Wheel = zoom · Drag = pan · Tabs = surfaces · Ctrl+K = commands</span>
+      <span>Wheel = zoom · Drag = pan · 1–4 = view · ? = shortcuts · Ctrl+K = commands</span>
       <Button
         variant="text"
         aria-label="Dismiss controls hint"
@@ -2261,6 +2308,81 @@ function FirstRunHint() {
         ✕
       </Button>
     </div>
+  );
+}
+
+const WORKFLOW_STAGES: CanvasMode[] = ["survey", "sketch", "cad", "quote"];
+
+function WorkflowGuideChip({
+  activeMode,
+  nextMode,
+  unlocked,
+  onMode,
+}: {
+  activeMode: CanvasMode;
+  nextMode: CanvasMode;
+  unlocked: ReadonlySet<CanvasMode>;
+  onMode: (mode: CanvasMode) => void;
+}) {
+  return (
+    <nav
+      data-testid="workflow-guide"
+      aria-label="Studio workflow"
+      style={{
+        position: "absolute",
+        top: 70,
+        left: 16,
+        display: "flex",
+        alignItems: "center",
+        gap: "var(--gs-space-2)",
+        pointerEvents: "auto",
+        zIndex: "var(--cf-z-chrome)",
+        padding: "3px 8px",
+        borderRadius: "var(--gs-radius-pill)",
+        background: "color-mix(in srgb, var(--gs-glass) 40%, transparent)",
+        backdropFilter: "blur(var(--gs-blur))",
+        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+        fontFamily: "var(--font-tech)",
+        fontSize: "var(--gs-font-xs)",
+        letterSpacing: "0.04em",
+        color: "var(--gs-ink-secondary)",
+      }}
+    >
+      {WORKFLOW_STAGES.map((mode, i) => {
+        const locked = !unlocked.has(mode);
+        const here = mode === activeMode;
+        return (
+          <span key={mode} style={{ display: "inline-flex", alignItems: "center", gap: "var(--gs-space-2)" }}>
+            {i > 0 ? <span aria-hidden>→</span> : null}
+            <Button
+              variant="text"
+              disabled={locked}
+              aria-current={here ? "step" : undefined}
+              data-testid={`workflow-${mode}`}
+              onClick={() => onMode(mode)}
+              style={{
+                padding: "0 2px",
+                color: here
+                  ? "var(--gs-primary-ink)"
+                  : locked
+                    ? "var(--gs-ink-muted)"
+                    : "var(--gs-ink-secondary)",
+                fontWeight: here ? 600 : 400,
+                textTransform: "capitalize",
+              }}
+            >
+              {mode}
+            </Button>
+          </span>
+        );
+      })}
+      {nextMode !== activeMode ? (
+        <span style={{ marginLeft: 6, color: "var(--gs-ink-muted)" }}>
+          Next: {nextMode}
+        </span>
+      ) : null}
+    </nav>
   );
 }
 

@@ -261,21 +261,21 @@ export function ViewportTransitionHUD({
           label="Plan"
           active={tiltQuant < 5}
           onClick={() => write({ tiltDeg: TILT_PLAN })}
-          aria-label="Lock to orthographic plan view"
+          aria-label="Lock to orthographic plan view (1)"
           icon={<CadPlanIcon />}
         />
         <PresetButton
           label="Orbit"
           active={tiltQuant >= 50 && tiltQuant < 65}
           onClick={() => write({ tiltDeg: TILT_PERSPECTIVE })}
-          aria-label="Snap to perspective oblique orbit"
+          aria-label="Snap to perspective oblique orbit (2)"
           icon={<PerspectiveIcon />}
         />
         <PresetButton
           label="Garden"
           active={tiltQuant >= 70 && tiltQuant <= 82}
           onClick={() => write({ tiltDeg: TILT_GARDEN, zoom: TILT_GARDEN_ZOOM })}
-          aria-label="Snap to garden eye-level viewpoint"
+          aria-label="Snap to garden eye-level viewpoint (3)"
           icon={<GardenIcon />}
         />
       </div>

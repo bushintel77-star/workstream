@@ -19,7 +19,21 @@ import type { StudioItemType } from "../handoff/studioCatalog";
 import { STUDIO_ITEM_TYPE_LABEL } from "../handoff/studioCatalog";
 import { TYPE_TO_SYMBOL } from "../handoff/state/canvasBridge";
 
-export type AssetPaletteCategory = "plant" | "hardscape";
+export type AssetPaletteCategory = "tree" | "shrub" | "groundcover" | "hardscape";
+
+export const ASSET_CATEGORY_LABEL: Record<AssetPaletteCategory, string> = {
+  tree: "Trees",
+  shrub: "Shrubs",
+  groundcover: "Groundcover",
+  hardscape: "Hardscape",
+};
+
+export const ASSET_CATEGORIES: AssetPaletteCategory[] = [
+  "tree",
+  "shrub",
+  "groundcover",
+  "hardscape",
+];
 
 export interface AssetPaletteEntry {
   symbolId: string;
@@ -36,13 +50,17 @@ export interface AssetPaletteEntry {
   glyph: string;
 }
 
-const PLANT_TYPES = new Set<StudioItemType>([
-  "canopy",
-  "feature",
-  "hedge",
-  "bed",
-  "exist",
-]);
+const CATEGORY_BY_TYPE: Record<StudioItemType, AssetPaletteCategory> = {
+  canopy: "tree",
+  exist: "tree",
+  hedge: "shrub",
+  feature: "shrub",
+  bed: "groundcover",
+  lawn: "groundcover",
+  paving: "hardscape",
+  deck: "hardscape",
+  frenchdrain: "hardscape",
+};
 
 const GLYPH_BY_TYPE: Record<StudioItemType, string> = {
   canopy: "♠",
@@ -83,8 +101,26 @@ export function buildAssetPalette(): AssetPaletteEntry[] {
       botanicalName: catalog?.botanical_name,
       heightM: catalog?.mature_height_m,
       spreadM: catalog?.default_width_m,
-      category: PLANT_TYPES.has(type) ? "plant" : "hardscape",
+      category: CATEGORY_BY_TYPE[type],
       glyph: GLYPH_BY_TYPE[type],
     };
+  });
+}
+
+export function filterAssetPalette(
+  palette: AssetPaletteEntry[],
+  opts: { category?: AssetPaletteCategory | "all"; query?: string },
+): AssetPaletteEntry[] {
+  const q = (opts.query ?? "").trim().toLowerCase();
+  return palette.filter((e) => {
+    if (opts.category && opts.category !== "all" && e.category !== opts.category) {
+      return false;
+    }
+    if (!q) return true;
+    return (
+      e.label.toLowerCase().includes(q) ||
+      (e.botanicalName?.toLowerCase().includes(q) ?? false) ||
+      e.category.includes(q)
+    );
   });
 }

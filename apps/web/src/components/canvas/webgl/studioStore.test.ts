@@ -249,6 +249,35 @@ describe("studioStore sketch → CAD slices", () => {
     expect(s.placements).toHaveLength(1);
   });
 
+  it("rejectAllCadProposals clears the review without minting", () => {
+    const store = useStudioStore.getState();
+    store.setSiteContext(BOUNDARY, BUILDING);
+    store.setSketchStrokes([inkStroke("h1", [[12, 80], [12, 60], [12, 40]])]);
+    store.tidySketchToCad();
+    expect(useStudioStore.getState().cadProposals.length).toBeGreaterThan(0);
+    const before = useStudioStore.getState().placements.length;
+    store.rejectAllCadProposals();
+    const s = useStudioStore.getState();
+    expect(s.cadProposals).toEqual([]);
+    expect(s.cadReviewOpen).toBe(false);
+    expect(s.placements).toHaveLength(before);
+  });
+
+  it("acceptConfidentCadProposals keeps low-confidence leftovers", () => {
+    const store = useStudioStore.getState();
+    store.setSiteContext(BOUNDARY, BUILDING);
+    store.setSketchStrokes([
+      inkStroke("h1", [[12, 80], [12, 60], [12, 40]]),
+      inkStroke("h2", [[88, 80], [88, 60], [88, 40]]),
+    ]);
+    store.tidySketchToCad();
+    const proposals = useStudioStore.getState().cadProposals;
+    expect(proposals.length).toBeGreaterThan(0);
+    store.acceptConfidentCadProposals(0.99);
+    const leftover = useStudioStore.getState().cadProposals;
+    expect(leftover.every((p) => p.confidence < 0.99)).toBe(true);
+  });
+
   it("convertStrokesToCadFeatures persists real features and keeps the ink", () => {
     const store = useStudioStore.getState();
     store.setSketchStrokes([inkStroke("ditch", [[20, 50], [40, 50]])]);
