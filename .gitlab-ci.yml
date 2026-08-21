@@ -49,13 +49,16 @@ gate:
 
 # ---------------------------------------------------------------- scan
 # gitleaks secret scan (parity with the old gitleaks GitHub Action).
+# .gitleaks.toml extends the default rule set and allowlists two false
+# positives: a test-mode Stripe webhook fixture (whsec_test_) and a
+# PASTE_ placeholder in the Litestream setup doc.
 secret-scan:
   stage: scan
   image:
     name: zricethezav/gitleaks:latest
     entrypoint: [""]
   script:
-    - gitleaks detect --source "$CI_PROJECT_DIR" --verbose
+    - gitleaks detect --source "$CI_PROJECT_DIR" --config "$CI_PROJECT_DIR/.gitleaks.toml" --verbose
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"

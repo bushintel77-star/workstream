@@ -1,0 +1,19 @@
+title = "Workstream gitleaks configuration"
+
+# Extend the default rule set; only the allowlist below is custom.
+[extend]
+useDefault = true
+
+# False positives only — no real credentials live in this repo.
+#
+#   - apps/api/src/lib/stripe.test.ts: unit-test fixture for webhook
+#     signature verification. `whsec_test_...` is Stripe's test-mode prefix;
+#     the value is fabricated in the test file itself.
+#   - docs/LITESTREAM-SETUP.md: `PASTE_B2_APPLICATION_KEY` is a placeholder
+#     telling the reader to paste their own key, not a credential.
+[allowlist]
+description = "Test fixtures and documentation placeholders"
+regexes = [
+  '''whsec_test_1234567890abcdef''',
+  '''PASTE_B2_APPLICATION_KEY''',
+]
