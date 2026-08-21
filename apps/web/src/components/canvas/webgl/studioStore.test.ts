@@ -420,6 +420,146 @@ describe("removePlacement / removePlacements", () => {
   });
 });
 
+describe("mass plant (row / area) tool state", () => {
+  beforeEach(() => {
+    useStudioStore.setState({
+      armedSymbolId: null,
+      areaPlantActive: false,
+      rowPlantActive: false,
+      assetPlantDraft: null,
+    });
+  });
+
+  it("row and area are mutually exclusive — one drag, one mode", () => {
+    const store = useStudioStore.getState();
+    store.setAreaPlantActive(true);
+    store.setRowPlantActive(true);
+    let s = useStudioStore.getState();
+    expect(s.rowPlantActive).toBe(true);
+    expect(s.areaPlantActive).toBe(false);
+    s.setAreaPlantActive(true);
+    s = useStudioStore.getState();
+    expect(s.areaPlantActive).toBe(true);
+    expect(s.rowPlantActive).toBe(false);
+  });
+
+  it("the drag draft is ephemeral — dropped on mode change and on disarm", () => {
+    const store = useStudioStore.getState();
+    store.setArmedSymbolId("hornbeam-pleached");
+    store.setRowPlantActive(true);
+    store.setAssetPlantDraft({
+      mode: "row",
+      a: { x: 20, y: 20 },
+      b: { x: 60, y: 20 },
+    });
+    expect(useStudioStore.getState().assetPlantDraft).not.toBeNull();
+    useStudioStore.getState().setAreaPlantActive(true);
+    expect(useStudioStore.getState().assetPlantDraft).toBeNull();
+
+    useStudioStore.getState().setAssetPlantDraft({
+      mode: "area",
+      a: { x: 20, y: 20 },
+      b: { x: 60, y: 60 },
+    });
+    useStudioStore.getState().setArmedSymbolId(null);
+    expect(useStudioStore.getState().assetPlantDraft).toBeNull();
+  });
+
+  it("arming an asset still stands down the other pointer tools", () => {
+    const store = useStudioStore.getState();
+    store.setSketchMode(true);
+    store.setMeasureActive(true);
+    store.setTrenchTool("drainage");
+    store.setZoneTool("drip");
+    store.setArmedSymbolId("hornbeam-pleached");
+    const s = useStudioStore.getState();
+    expect(s.armedSymbolId).toBe("hornbeam-pleached");
+    expect(s.sketchMode).toBe(false);
+    expect(s.measureActive).toBe(false);
+    expect(s.trenchTool).toBeNull();
+    expect(s.zoneTool).toBeNull();
+  });
+});
+
+describe("addPlacements — title-boundary reconciliation", () => {
+  const RUN = (ids: string[], xs: number[]): CatalogPlacement[] =>
+    ids.map((id, i) => ({
+      id,
+      symbol_id: "hornbeam-pleached",
+      x_pct: xs[i]!,
+      y_pct: 50,
+      rotation_deg: 0,
+      scale: 1,
+    }));
+
+  beforeEach(() => {
+    useStudioStore.setState({
+      placements: [],
+      siteBoundary: [],
+      siteBuilding: [],
+      boundaryNotice: null,
+      historyPast: [],
+      historyFuture: [],
+    });
+  });
+  afterEach(resetStore);
+
+  it("plants the whole run and commits ONE undo step when it sits inside", () => {
+    const store = useStudioStore.getState();
+    store.setSiteContext(BOUNDARY, BUILDING);
+    store.addPlacements(RUN(["r-1", "r-2", "r-3"], [20, 40, 60]));
+    const s = useStudioStore.getState();
+    expect(s.placements.map((p) => p.id)).toEqual(["r-1", "r-2", "r-3"]);
+    expect(s.historyPast).toHaveLength(1);
+    expect(s.boundaryNotice).toBeNull();
+    s.undo();
+    expect(useStudioStore.getState().placements).toEqual([]);
+  });
+
+  it("skips generated stems outside the title boundary and stamps the trim", () => {
+    const store = useStudioStore.getState();
+    store.setSiteContext(BOUNDARY, BUILDING);
+    // 2 and 98 fall outside the 10–90 ring; 20 stays inside the outdoor area.
+    store.addPlacements(RUN(["out-l", "in", "out-r"], [2, 20, 98]));
+    const s = useStudioStore.getState();
+    expect(s.placements.map((p) => p.id)).toEqual(["in"]);
+    expect(s.boundaryNotice?.refId).toBe("mass-plant");
+    expect(s.boundaryNotice?.reason).toContain("title boundary");
+    expect(s.boundaryNotice?.reason).toContain("2 of 3");
+  });
+
+  it("skips stems that land inside the dwelling envelope", () => {
+    const store = useStudioStore.getState();
+    store.setSiteContext(BOUNDARY, BUILDING);
+    // BUILDING spans x 30–70 at y 10–30.
+    store.addPlacements([
+      { id: "house", symbol_id: "lomandra-mass", x_pct: 50, y_pct: 20, rotation_deg: 0, scale: 1 },
+      { id: "yard", symbol_id: "lomandra-mass", x_pct: 50, y_pct: 60, rotation_deg: 0, scale: 1 },
+    ]);
+    expect(useStudioStore.getState().placements.map((p) => p.id)).toEqual([
+      "yard",
+    ]);
+  });
+
+  it("plants nothing and writes no history when the whole run is outside", () => {
+    const store = useStudioStore.getState();
+    store.setSiteContext(BOUNDARY, BUILDING);
+    store.addPlacements(RUN(["a", "b"], [2, 4]));
+    const s = useStudioStore.getState();
+    expect(s.placements).toEqual([]);
+    expect(s.historyPast).toHaveLength(0);
+    expect(s.boundaryNotice?.reason).toContain("Nothing planted");
+  });
+
+  it("passes through untouched when the site has no boundary yet", () => {
+    const store = useStudioStore.getState();
+    store.addPlacements(RUN(["a", "b"], [2, 98]));
+    const s = useStudioStore.getState();
+    expect(s.placements.map((p) => p.id)).toEqual(["a", "b"]);
+    expect(s.boundaryNotice).toBeNull();
+  });
+});
+
 describe("placement transform (gizmo)", () => {
   const PLACE = (id: string, x: number, y: number): CatalogPlacement => ({
     id,

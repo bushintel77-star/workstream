@@ -9,6 +9,13 @@
  * also draggable onto the canvas. Botanical metadata comes from the real
  * catalog ("never invented"); the selected card takes the gold treatment.
  *
+ * Two faces, one dock: the curated eight are the resting face, and the
+ * wider catalog arrives through the search box or a category chip. The
+ * strip never becomes a wall — results scroll horizontally inside the
+ * dock's own max-width and are capped at MAX_DOCK_RESULTS, so the dock's
+ * footprint is identical whether it is showing eight cards or a hundred
+ * (webgl-chrome-collision.spec.ts gates that).
+ *
  * Binding: docs/GOLD-STANDARD-2026.md §3 (Asset Discovery Fan-Out)
  */
 
@@ -18,10 +25,13 @@ import {
   ASSET_CATEGORIES,
   ASSET_CATEGORY_LABEL,
   buildAssetPalette,
+  buildCatalogAssetPalette,
   filterAssetPalette,
+  MAX_DOCK_RESULTS,
   type AssetPaletteCategory,
   type AssetPaletteEntry,
 } from "./assetPalette";
+import { MASS_PLANT_NOTICE_REF } from "./inspectorPolicy";
 import { Button } from "./Button";
 import { Input } from "./Field";
 
@@ -45,6 +55,7 @@ function AssetCard({
       draggable
       data-testid={`asset-card-${entry.symbolId}`}
       title={`${entry.label} — click to arm, or drag onto the lot`}
+      style={{ flex: "0 0 auto" }}
       onDragStart={(e) => {
         e.dataTransfer.setData(SYMBOL_MIME, entry.symbolId);
         e.dataTransfer.setData("text/plain", entry.symbolId);
@@ -135,15 +146,26 @@ export function AssetFanOutDock() {
   const setArmedSymbolId = useStudioStore((s) => s.setArmedSymbolId);
   const areaPlantActive = useStudioStore((s) => s.areaPlantActive);
   const setAreaPlantActive = useStudioStore((s) => s.setAreaPlantActive);
+  const rowPlantActive = useStudioStore((s) => s.rowPlantActive);
+  const setRowPlantActive = useStudioStore((s) => s.setRowPlantActive);
+  const boundaryNotice = useStudioStore((s) => s.boundaryNotice);
+  const dismissBoundaryNotice = useStudioStore((s) => s.dismissBoundaryNotice);
 
-  const [palette] = useState(buildAssetPalette);
+  const [curated] = useState(buildAssetPalette);
+  const [catalog] = useState(buildCatalogAssetPalette);
   const [category, setCategory] = useState<AssetPaletteCategory | "all">("all");
   const [query, setQuery] = useState("");
 
-  const visible = useMemo(
-    () => filterAssetPalette(palette, { category, query }),
-    [palette, category, query],
+  // The curated eight are the resting face; searching or picking a category
+  // opens the wider catalog behind them.
+  const browsing = query.trim().length > 0 || category !== "all";
+  const matches = useMemo(
+    () => filterAssetPalette(browsing ? catalog : curated, { category, query }),
+    [browsing, catalog, curated, category, query],
   );
+  const visible = matches.slice(0, MAX_DOCK_RESULTS);
+  const trimNotice =
+    boundaryNotice?.refId === MASS_PLANT_NOTICE_REF ? boundaryNotice : null;
 
   useEffect(() => {
     if (!armedSymbolId) return;
@@ -151,11 +173,12 @@ export function AssetFanOutDock() {
       if (e.key === "Escape") {
         setArmedSymbolId(null);
         setAreaPlantActive(false);
+        setRowPlantActive(false);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [armedSymbolId, setArmedSymbolId, setAreaPlantActive]);
+  }, [armedSymbolId, setArmedSymbolId, setAreaPlantActive, setRowPlantActive]);
 
   if (!assetsOpen) return null;
 
@@ -183,9 +206,11 @@ export function AssetFanOutDock() {
           color: GOLD,
         }}
       >
-        {areaPlantActive
-          ? "Armed — drag a box to mass-plant · Esc cancels"
-          : "Armed — click the lot to place · Esc cancels"}
+        {rowPlantActive
+          ? "Armed — drag a run to row-plant · Esc cancels"
+          : areaPlantActive
+            ? "Armed — drag a box to mass-plant · Esc cancels"
+            : "Armed — click the lot to place · Esc cancels"}
         <Button
           variant="chip-preset"
           size="xs"
@@ -195,6 +220,16 @@ export function AssetFanOutDock() {
           style={{ pointerEvents: "auto" }}
         >
           Area
+        </Button>
+        <Button
+          variant="chip-preset"
+          size="xs"
+          active={rowPlantActive}
+          data-testid="asset-row-plant"
+          onClick={() => setRowPlantActive(!rowPlantActive)}
+          style={{ pointerEvents: "auto" }}
+        >
+          Row
         </Button>
       </div>
     );
@@ -277,13 +312,50 @@ export function AssetFanOutDock() {
         >
           Area plant
         </Button>
+        <Button
+          variant="chip-preset"
+          size="xs"
+          active={rowPlantActive}
+          data-testid="asset-row-plant"
+          onClick={() => setRowPlantActive(!rowPlantActive)}
+          title="Draw a run after arming to row-plant a hedge or border at mature spacing"
+        >
+          Row plant
+        </Button>
       </div>
+      {trimNotice && (
+        <div
+          data-testid="asset-boundary-notice"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--gs-space-2)",
+            pointerEvents: "auto",
+            maxWidth: "100%",
+            fontFamily: "var(--font-tech)",
+            fontSize: "var(--gs-font-xs)",
+            color: "var(--gs-conflict)",
+          }}
+        >
+          <span>{trimNotice.reason}</span>
+          <Button
+            variant="text"
+            size="xs"
+            aria-label="Dismiss boundary notice"
+            onClick={dismissBoundaryNotice}
+            style={{ color: "var(--gs-ink-secondary)" }}
+          >
+            ×
+          </Button>
+        </div>
+      )}
       <div
         style={{
           display: "flex",
           alignItems: "flex-end",
           gap: "var(--gs-space-3)",
           pointerEvents: "none",
+          maxWidth: "100%",
         }}
       >
         {visible.length === 0 ? (
@@ -299,22 +371,40 @@ export function AssetFanOutDock() {
             No assets match.
           </span>
         ) : (
-          visible.map((entry) => (
-            <AssetCard
-              key={entry.symbolId}
-              entry={entry}
-              active={entry.symbolId === armedSymbolId}
-              onPick={() =>
-                setArmedSymbolId(
-                  entry.symbolId === armedSymbolId ? null : entry.symbolId,
-                )
-              }
-            />
-          ))
+          <div
+            data-testid="asset-card-strip"
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              gap: "var(--gs-space-3)",
+              // Horizontal scroll, never wrap: the dock keeps one row and
+              // one footprint no matter how many symbols match.
+              overflowX: "auto",
+              overflowY: "hidden",
+              minWidth: 0,
+              padding: "2px",
+              pointerEvents: "auto",
+            }}
+          >
+            {visible.map((entry) => (
+              <AssetCard
+                key={entry.symbolId}
+                entry={entry}
+                active={entry.symbolId === armedSymbolId}
+                onPick={() =>
+                  setArmedSymbolId(
+                    entry.symbolId === armedSymbolId ? null : entry.symbolId,
+                  )
+                }
+              />
+            ))}
+          </div>
         )}
         <div
+          data-testid="asset-dock-hint"
           style={{
             alignSelf: "center",
+            flex: "0 0 auto",
             maxWidth: 110,
             fontFamily: "var(--font-tech)",
             fontSize: "var(--gs-font-xs)",
@@ -322,7 +412,9 @@ export function AssetFanOutDock() {
             color: "var(--gs-ink-secondary)",
           }}
         >
-          Pick or drag an asset onto the lot.
+          {browsing
+            ? `${visible.length} of ${matches.length} in ${catalog.length} catalog symbols`
+            : "Pick or drag an asset onto the lot. Search the full catalog."}
         </div>
       </div>
     </div>

@@ -1,12 +1,21 @@
 "use client";
 
 /**
- * Gold Standard 2026 — Asset Place Layer (click-to-place + drop + area fill).
+ * Gold Standard 2026 — Asset Place Layer (click-to-place + drop + mass plant).
  *
  * While a symbol is armed, an invisible raycast plane owns pointer-down,
  * snaps to the half-metre CAD grid, and mints a CatalogPlacement. HTML5
  * drops from the asset dock arrive as pendingAssetDrop (client coords →
- * ground ray). Area-plant mode drag-fills a box at mature spacing.
+ * ground ray).
+ *
+ * Two mass-plant gestures share the drag, mutually exclusive in the store:
+ *   - Area: a box fill at mature spacing (groundcover / bed).
+ *   - Row:  an evenly spaced run between two points — the hedge / border /
+ *           edge case. Spacing defaults to the catalog spread, and oriented
+ *           symbols take the run bearing so a hedge lies along the line.
+ * Either way the whole drag is ONE undo commit (addPlacements), and the
+ * flora ring stays out of it — mass planting is an explicit instruction, not
+ * a moment for a ranked suggestion.
  *
  * Binding: docs/GOLD-STANDARD-2026.md §3 (Asset Discovery Fan-Out)
  */
@@ -14,18 +23,26 @@
 import { useEffect, useRef } from "react";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import { getCatalogSymbol } from "@workstream/domain";
 import type { CatalogPlacement } from "@workstream/contracts";
 import { useStudioStore } from "./studioStore";
 import { worldToPct, type PctPoint } from "./coordTransform";
 import { snapToGridMetres } from "../handoff/geometry/snap";
+import { mapSymbolToStudioType } from "../handoff/state/studioAiEngine";
 import { symbolToFloraForm } from "./floraWorld";
-import { gridInBox } from "./fillAreaAssets";
+import {
+  gridInBox,
+  massPlantSpacingM,
+  rowAlongLine,
+  rowRotationDeg,
+} from "./fillAreaAssets";
 
 export interface AssetPlaceLayerProps {
   scaleM: number;
   boardAspect: number;
 }
+
+/** Types whose 3D body has a length axis — a run bearing means something. */
+const ORIENTED_TYPES = new Set(["hedge", "paving", "deck", "frenchdrain"]);
 
 const clampPct = (v: number): number => Math.max(0, Math.min(100, v));
 
@@ -55,13 +72,17 @@ function snapPct(raw: PctPoint, scaleM: number): PctPoint {
   return { x: clampPct(snapped.x), y: clampPct(snapped.y) };
 }
 
-function mintPlacement(symbolId: string, pct: PctPoint): CatalogPlacement {
+function mintPlacement(
+  symbolId: string,
+  pct: PctPoint,
+  rotationDeg = 0,
+): CatalogPlacement {
   return {
     id: crypto.randomUUID(),
     symbol_id: symbolId,
     x_pct: pct.x,
     y_pct: pct.y,
-    rotation_deg: 0,
+    rotation_deg: rotationDeg,
     scale: 1,
   };
 }
@@ -76,10 +97,18 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
   const setPendingDrop = useStudioStore((s) => s.setPendingAssetDrop);
   const areaPlantActive = useStudioStore((s) => s.areaPlantActive);
   const setAreaPlantActive = useStudioStore((s) => s.setAreaPlantActive);
+  const rowPlantActive = useStudioStore((s) => s.rowPlantActive);
+  const setRowPlantActive = useStudioStore((s) => s.setRowPlantActive);
+  const setAssetPlantDraft = useStudioStore((s) => s.setAssetPlantDraft);
   const { camera, gl } = useThree();
 
   const placedRef = useRef(false);
-  const boxStart = useRef<PctPoint | null>(null);
+  const dragStart = useRef<PctPoint | null>(null);
+  const massMode: "row" | "area" | null = rowPlantActive
+    ? "row"
+    : areaPlantActive
+      ? "area"
+      : null;
 
   useEffect(() => {
     if (armedSymbolId) placedRef.current = false;
@@ -125,8 +154,10 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
     const raw = worldToPct(e.point.x, e.point.z, scaleM, boardAspect);
     const pct = snapPct(raw, scaleM);
 
-    if (areaPlantActive) {
-      boxStart.current = pct;
+    if (massMode) {
+      (e.target as Element)?.setPointerCapture?.(e.pointerId);
+      dragStart.current = pct;
+      setAssetPlantDraft({ mode: massMode, a: pct, b: pct });
       return;
     }
 
@@ -141,27 +172,38 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
     setArmedSymbolId(null);
   };
 
+  const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
+    if (!massMode || !dragStart.current || !e.point) return;
+    e.stopPropagation();
+    const pct = snapPct(worldToPct(e.point.x, e.point.z, scaleM, boardAspect), scaleM);
+    setAssetPlantDraft({ mode: massMode, a: dragStart.current, b: pct });
+  };
+
   const onPointerUp = (e: ThreeEvent<PointerEvent>) => {
-    if (!armedSymbolId || !areaPlantActive || !boxStart.current || !e.point) {
-      boxStart.current = null;
+    const start = dragStart.current;
+    dragStart.current = null;
+    if (!armedSymbolId || !massMode || !start || !e.point) {
+      setAssetPlantDraft(null);
       return;
     }
     e.stopPropagation();
-    const raw = worldToPct(e.point.x, e.point.z, scaleM, boardAspect);
-    const end = snapPct(raw, scaleM);
-    const catalog = getCatalogSymbol(armedSymbolId);
-    const spacing = catalog?.default_width_m ?? catalog?.mature_height_m ?? 1.5;
-    const pts = gridInBox(boxStart.current, end, spacing, scaleM, boardAspect);
-    boxStart.current = null;
-    const form = symbolToFloraForm(armedSymbolId);
-    if (form) {
-      const first = pts[0];
-      if (first) setFloraSession({ x: first.x, y: first.y, form });
-      return;
-    }
-    addPlacements(pts.map((p) => mintPlacement(armedSymbolId, p)));
+    (e.target as Element)?.releasePointerCapture?.(e.pointerId);
+    const end = snapPct(worldToPct(e.point.x, e.point.z, scaleM, boardAspect), scaleM);
+    const spacing = massPlantSpacingM(armedSymbolId);
+    const points =
+      massMode === "row"
+        ? rowAlongLine(start, end, spacing, scaleM, boardAspect)
+        : gridInBox(start, end, spacing, scaleM, boardAspect);
+    const rotationDeg =
+      massMode === "row" &&
+      ORIENTED_TYPES.has(mapSymbolToStudioType(armedSymbolId))
+        ? rowRotationDeg(start, end, scaleM, boardAspect)
+        : 0;
+    setAssetPlantDraft(null);
+    addPlacements(points.map((p) => mintPlacement(armedSymbolId, p, rotationDeg)));
     setArmedSymbolId(null);
     setAreaPlantActive(false);
+    setRowPlantActive(false);
   };
 
   if (!armedSymbolId && !pendingDrop) return null;
@@ -173,6 +215,7 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
       rotation={[-Math.PI / 2, 0, 0]}
       position={[0, 0, 0]}
       onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
       <planeGeometry args={[planeSize, planeSize]} />

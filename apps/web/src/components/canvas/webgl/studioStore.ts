@@ -83,7 +83,9 @@ import {
 } from "./selectionPick";
 import {
   clampPlacementEdit,
+  MASS_PLANT_NOTICE_REF,
   patchClamps,
+  reconcileGeneratedPlacements,
   type PlacementFieldKey,
 } from "./inspectorPolicy";
 import { marqueeSelectRefs } from "./marqueeSelect";
@@ -267,8 +269,17 @@ export interface StudioStoreState {
   armedSymbolId: string | null;
   /** Drag-drop from the asset dock — AssetPlaceLayer consumes and clears. */
   pendingAssetDrop: { symbolId: string; clientX: number; clientY: number } | null;
-  /** Area-draw mass plant (groundcover / hedge fill) while a symbol is armed. */
+  /** Area-draw mass plant (groundcover / bed fill) while a symbol is armed. */
   areaPlantActive: boolean;
+  /** Row-draw mass plant (hedge / border run) while a symbol is armed. */
+  rowPlantActive: boolean;
+  /**
+   * The live mass-plant drag in board-% — EPHEMERAL preview state. The
+   * spacing guides read it; it is never snapshotted into history and never
+   * reaches the autosave payload (useStudioAutosave lists its slices
+   * explicitly).
+   */
+  assetPlantDraft: { mode: "row" | "area"; a: PctPoint; b: PctPoint } | null;
   /** All canvas placements (CatalogPlacement contract schema). */
   placements: CatalogPlacement[];
   /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features, stitchRecords} (cap 50). */
@@ -623,8 +634,18 @@ export interface StudioStoreState {
   setPendingAssetDrop: (
     drop: { symbolId: string; clientX: number; clientY: number } | null,
   ) => void;
+  /** Arm the box fill (stands down the row run — one drag gesture, one mode). */
   setAreaPlantActive: (v: boolean) => void;
-  /** Append many placements in ONE history commit (area plant). */
+  /** Arm the row/hedge run (stands down the box fill). */
+  setRowPlantActive: (v: boolean) => void;
+  setAssetPlantDraft: (
+    draft: { mode: "row" | "area"; a: PctPoint; b: PctPoint } | null,
+  ) => void;
+  /**
+   * Append many placements in ONE history commit (row / area fill). Centres
+   * are reconciled against the title boundary first — outside stems are
+   * dropped and the trim is stamped on `boundaryNotice`.
+   */
   addPlacements: (placements: CatalogPlacement[]) => void;
   /** Replace the entire placement array (hydrate / undo / branch checkout). */
   setPlacements: (placements: CatalogPlacement[]) => void;
@@ -844,6 +865,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   armedSymbolId: null,
   pendingAssetDrop: null,
   areaPlantActive: false,
+  rowPlantActive: false,
+  assetPlantDraft: null,
   placements: [],
   // Spatial gizmo defaults — translate armed by default (single placement
   // selection mounts the manipulator), no drag in flight.
@@ -994,10 +1017,24 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set(
       armedSymbolId
         ? { armedSymbolId, sketchMode: false, measureActive: false, trenchTool: null, zoneTool: null }
-        : { armedSymbolId: null },
+        : { armedSymbolId: null, assetPlantDraft: null },
     ),
   setPendingAssetDrop: (pendingAssetDrop) => set({ pendingAssetDrop }),
-  setAreaPlantActive: (areaPlantActive) => set({ areaPlantActive }),
+  // Box fill and row run compete for the same drag — arming one stands the
+  // other down (and drops any half-drawn preview).
+  setAreaPlantActive: (areaPlantActive) =>
+    set(
+      areaPlantActive
+        ? { areaPlantActive: true, rowPlantActive: false, assetPlantDraft: null }
+        : { areaPlantActive: false, assetPlantDraft: null },
+    ),
+  setRowPlantActive: (rowPlantActive) =>
+    set(
+      rowPlantActive
+        ? { rowPlantActive: true, areaPlantActive: false, assetPlantDraft: null }
+        : { rowPlantActive: false, assetPlantDraft: null },
+    ),
+  setAssetPlantDraft: (assetPlantDraft) => set({ assetPlantDraft }),
   setPlacements: (placements) => set({ placements }),
   updatePlacementField: (id, patch) =>
     set((s) => {
@@ -1148,9 +1185,21 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   addPlacements: (added) =>
     set((s) => {
       if (added.length === 0) return {};
+      // Generated centres invent positions — reconcile against the title
+      // boundary before they can enter the document.
+      const { kept, reason } = reconcileGeneratedPlacements(
+        added,
+        s.siteBoundary,
+        s.siteBuilding,
+      );
+      const notice = reason
+        ? { refId: MASS_PLANT_NOTICE_REF, reason, at: Date.now() }
+        : s.boundaryNotice;
+      if (kept.length === 0) return { boundaryNotice: notice };
       const past = [...s.historyPast, docSnapshot(s)].slice(-50);
       return {
-        placements: [...s.placements, ...added],
+        placements: [...s.placements, ...kept],
+        boundaryNotice: notice,
         historyPast: past,
         historyFuture: [],
       };

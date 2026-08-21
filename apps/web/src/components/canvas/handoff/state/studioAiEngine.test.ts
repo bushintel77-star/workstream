@@ -3,6 +3,7 @@ import { WRIGHTS_SEED } from "../studioCatalog";
 import {
   acceptProposal,
   buildHandoffCoaching,
+  catalogSymbolStudioType,
   draftStatus,
   isCanopyLikeSuggestion,
   mapSymbolToStudioType,
@@ -55,6 +56,46 @@ describe("studioAiEngine", () => {
     expect(mapSymbolToStudioType("curtis-hedge-120")).toBe("hedge");
     expect(mapSymbolToStudioType("curtis-hedge-090")).toBe("hedge");
     expect(mapSymbolToStudioType("curtis-deck-050")).toBe("deck");
+  });
+
+  /**
+   * Full-catalog hydrate: before the catalog pass these all fell through the
+   * id-keyword chain onto the blanket `canopy` default, so a persisted
+   * porcelain tile or a mondo-grass edge rehydrated as a six-metre tree.
+   */
+  it("resolves non-curated catalog symbols from the real catalog record", () => {
+    expect(mapSymbolToStudioType("porcelain-tile")).toBe("paving");
+    expect(mapSymbolToStudioType("gravel-mulch")).toBe("paving");
+    expect(mapSymbolToStudioType("temaki-kerb-raised")).toBe("paving");
+    expect(mapSymbolToStudioType("timber-deck")).toBe("deck");
+    expect(mapSymbolToStudioType("mondo-edge")).toBe("bed");
+    expect(mapSymbolToStudioType("dichondra-carpet")).toBe("bed");
+    expect(mapSymbolToStudioType("boston-ivy")).toBe("bed");
+    expect(mapSymbolToStudioType("correa-shrub")).toBe("hedge");
+    expect(mapSymbolToStudioType("box-ball")).toBe("hedge");
+    expect(mapSymbolToStudioType("pyrus-capital")).toBe("canopy");
+    expect(mapSymbolToStudioType("wikimedia-tree-07")).toBe("canopy");
+    expect(mapSymbolToStudioType("magnolia-little-gem")).toBe("feature");
+  });
+
+  it("reads the id before the pack keyword tail (temaki appends both tags)", () => {
+    // Every temaki plant carries "shrub" AND "groundcover" in its keywords;
+    // only the id separates an ornamental grass from a shrub.
+    expect(catalogSymbolStudioType("temaki-grass")).toBe("bed");
+    expect(catalogSymbolStudioType("temaki-shrub")).toBe("hedge");
+    expect(catalogSymbolStudioType("temaki-tree-broadleaved")).toBe("canopy");
+    expect(catalogSymbolStudioType("temaki-lawn")).toBe("lawn");
+  });
+
+  it("declines symbols the catalog cannot class, leaving the coarse chain", () => {
+    // Structure / water / furniture / lighting / planning glyphs.
+    expect(catalogSymbolStudioType("pergola")).toBeNull();
+    expect(catalogSymbolStudioType("pool")).toBeNull();
+    expect(catalogSymbolStudioType("planzv-parkanlage")).toBeNull();
+    expect(catalogSymbolStudioType("not-a-catalog-symbol")).toBeNull();
+    // The coarse keyword chain still answers for them (unchanged behaviour).
+    expect(mapSymbolToStudioType("brass-uplight")).toBe("feature");
+    expect(mapSymbolToStudioType("french-drain-line")).toBe("frenchdrain");
   });
 
   it("ghosts carry the proposed symbol height so accept does not resize", () => {

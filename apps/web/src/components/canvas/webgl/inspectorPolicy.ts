@@ -11,7 +11,10 @@
  */
 
 import type { CatalogPlacement } from "@workstream/contracts";
-import { constrainAssetCentre } from "../handoff/geometry/outdoorClamp";
+import {
+  constrainAssetCentre,
+  isPointInOutdoor,
+} from "../handoff/geometry/outdoorClamp";
 import { mapSymbolToStudioType } from "../handoff/state/studioAiEngine";
 import type { PctPoint } from "./coordTransform";
 
@@ -79,4 +82,50 @@ export function clampPlacementEdit(
     building,
   );
   return { x: r.x, y: r.y, snapped: r.snapped, reason: r.reason };
+}
+
+/** Ref the mass-plant boundary notice is filed under (no single placement). */
+export const MASS_PLANT_NOTICE_REF = "mass-plant";
+
+export interface GeneratedPlacementReconcile {
+  kept: CatalogPlacement[];
+  /** Centres dropped for falling outside the title boundary / into the house. */
+  skipped: number;
+  /** Operator-facing stamp; null when nothing needed reconciling. */
+  reason: string | null;
+}
+
+/**
+ * Title-boundary reconciliation for GENERATED placements (row + area fills).
+ *
+ * A fill invents positions, so the reconciliation rule binds: every centre is
+ * checked against the title boundary polygon minus the dwelling envelope (the
+ * same outdoor test `constrainAssetCentre` opens with). Out-of-bounds centres
+ * are SKIPPED, not clamped — clamping a run would bunch stems on the title
+ * edge and lie about the spacing the operator specified. Skipping trims the
+ * run at the boundary and stamps how many stems it cost.
+ *
+ * No boundary ring yet → nothing to reconcile; everything is kept.
+ */
+export function reconcileGeneratedPlacements(
+  placements: CatalogPlacement[],
+  boundary: PctPoint[],
+  building: PctPoint[],
+): GeneratedPlacementReconcile {
+  if (boundary.length < 3) {
+    return { kept: placements, skipped: 0, reason: null };
+  }
+  const kept = placements.filter((p) =>
+    isPointInOutdoor({ x: p.x_pct, y: p.y_pct }, boundary, building),
+  );
+  const skipped = placements.length - kept.length;
+  if (skipped === 0) return { kept, skipped: 0, reason: null };
+  return {
+    kept,
+    skipped,
+    reason:
+      kept.length === 0
+        ? `Nothing planted — all ${skipped} stems fell outside the title boundary.`
+        : `Trimmed at the title boundary — ${skipped} of ${placements.length} stems fell outside the outdoor area and were not planted.`,
+  };
 }

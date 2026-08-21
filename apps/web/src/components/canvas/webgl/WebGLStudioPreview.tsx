@@ -295,7 +295,7 @@ export function WebGLStudioPreview({
   // reuses the classic tiltMath mapping so N/E/S/W mean the same thing in
   // both studios.
   const [gardenLook, setGardenLook] = useState<GardenViewpointLook>("S");
-  const applyGardenLook = (look: GardenViewpointLook) => {
+  const applyGardenLook = useCallback((look: GardenViewpointLook) => {
     setGardenLook(look);
     // Pitch is the single camera axis — raise to a garden eye-level 76° and
     // let setPitchDeg commit the derived 3D blend target in the same write.
@@ -306,7 +306,7 @@ export function WebGLStudioPreview({
       zoom: 1.45,
       rotateDeg: viewpointYawDeg(look),
     });
-  };
+  }, [writeLiveRig]);
 
   const onNativeMode = useCallback((mode: CanvasMode) => {
     setActiveMode(mode);
@@ -2271,7 +2271,9 @@ function FirstRunHint() {
       data-testid="controls-hint"
       style={{
         position: "absolute",
-        bottom: 160,
+        // Clear of the asset dock's full height — at 160 the hint sat on the
+        // dock's chip row and swallowed the Area / Row plant toggles.
+        bottom: 200,
         left: "50%",
         transform: "translateX(-50%)",
         display: "flex",

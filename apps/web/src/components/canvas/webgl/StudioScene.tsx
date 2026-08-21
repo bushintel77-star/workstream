@@ -57,6 +57,7 @@ import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { TrenchLayer } from "./TrenchLayer";
 import { IrrigationZoneLayer } from "./IrrigationZoneLayer";
 import { AssetPlaceLayer } from "./AssetPlaceLayer";
+import { PlantSpacingGuideLayer } from "./PlantSpacingGuideLayer";
 import { FloraRingLayer } from "./FloraRingLayer";
 import { FeatureLayer } from "./FeatureLayer";
 import { CadProposalLayer } from "./CadProposalLayer";
@@ -824,6 +825,9 @@ export function StudioScene({
       <IrrigationZoneLayer scaleM={scaleM} boardAspect={boardAspect} />
       {/* Asset placement — armed fan-out symbol, self-gates on armedSymbolId. */}
       <AssetPlaceLayer scaleM={scaleM} boardAspect={boardAspect} />
+      {/* Mature-canopy spacing guides — ephemeral preview over a live row /
+          area drag and the selected placement. Never persisted. */}
+      <PlantSpacingGuideLayer scaleM={scaleM} boardAspect={boardAspect} />
       {/* Flora ring — ranked suggestions at a click (self-gates on the
           session; candidates derive from lat/lng + live sun + placements). */}
       {lat != null && lng != null ? (

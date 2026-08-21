@@ -18,6 +18,7 @@ import {
   type RgbaImageData,
   type StudioAiSuggestion,
 } from "@workstream/domain";
+import type { CatalogSymbol } from "@workstream/contracts";
 import {
   constrainAssetCentre,
   sanitizeItemsToOutdoor,
@@ -68,9 +69,137 @@ const SYMBOL_TO_TYPE: Record<string, StudioItemType> = {
   paving: "paving",
 };
 
+/*
+ * Catalog-driven resolution — the hydrate guarantee for the full symbol
+ * library.
+ *
+ * `SYMBOL_TO_TYPE` + the id-keyword chain below only ever knew the coarse
+ * Curtis palette; every other catalog symbol fell through to the blanket
+ * `canopy` default, so a persisted `porcelain-tile` or `carex-groundcover`
+ * rehydrated as a six-metre canopy tree. These token classes read the REAL
+ * catalog record (category, keywords, mature height, spread) instead, so a
+ * placement minted from anywhere in the library comes back as the same
+ * class of thing it went in as.
+ *
+ * Two passes, id tokens before keywords: the imported packs append generic
+ * tail tags ("shrub", "groundcover", "planting") to every entry, which would
+ * otherwise make `temaki-grass` a shrub and `temaki-shrub` a groundcover.
+ * The id is the honest signal for those; keywords carry the Curtis entries
+ * whose id is a species name ("box-ball", "kangaroo-paw").
+ */
+const LAWN_TOKENS = new Set(["lawn", "turf"]);
+const TREE_TOKENS = new Set([
+  "tree",
+  "canopy",
+  "palm",
+  "conifer",
+  "avenue",
+  "specimen",
+  "broadleaved",
+  "needleleaved",
+]);
+const SCREEN_TOKENS = new Set(["hedge", "screen", "topiary", "pleached"]);
+const SHRUB_TOKENS = new Set(["shrub", "bush"]);
+const GROUND_TOKENS = new Set([
+  "groundcover",
+  "ground",
+  "carpet",
+  "grass",
+  "sedge",
+  "perennial",
+  "border",
+  "understorey",
+  "edge",
+  "meadow",
+  "tussock",
+  "clump",
+  "drift",
+  "fern",
+  "climber",
+  "vine",
+  "ivy",
+  "bed",
+  "plant",
+  "succulent",
+  "strappy",
+]);
+
+/** Canopy tree above this mature height (m); below it reads as a feature. */
+const CANOPY_HEIGHT_M = 5;
+
+function tokenize(parts: string[]): Set<string> {
+  const out = new Set<string>();
+  for (const part of parts) {
+    for (const token of part.toLowerCase().split(/[^a-z0-9]+/)) {
+      if (token) out.add(token);
+    }
+  }
+  return out;
+}
+
+function hasAny(tokens: Set<string>, group: Set<string>): boolean {
+  for (const token of tokens) if (group.has(token)) return true;
+  return false;
+}
+
+function treeTypeFor(sym: CatalogSymbol): StudioItemType {
+  const h = sym.mature_height_m;
+  const big =
+    h != null && h > 0 ? h >= CANOPY_HEIGHT_M : (sym.default_width_m ?? 0) >= CANOPY_HEIGHT_M;
+  return big ? "canopy" : "feature";
+}
+
+function plantingTypeFor(
+  sym: CatalogSymbol,
+  tokens: Set<string>,
+): StudioItemType | null {
+  if (hasAny(tokens, LAWN_TOKENS)) return "lawn";
+  if (hasAny(tokens, TREE_TOKENS)) return treeTypeFor(sym);
+  if (hasAny(tokens, SCREEN_TOKENS)) return "hedge";
+  // A shrub has no dedicated studio type; the clipped-mass render is the
+  // closest honest read the renderer offers.
+  if (hasAny(tokens, SHRUB_TOKENS)) return "hedge";
+  if (hasAny(tokens, GROUND_TOKENS)) return "bed";
+  return null;
+}
+
+const catalogTypeCache = new Map<string, StudioItemType | null>();
+
+/**
+ * The studio type a REAL catalog symbol hydrates to, or null when the
+ * catalog has no entry or the record carries no confident class (planning
+ * hatches, POI glyphs). Null is the honest answer — callers either keep
+ * their own fallback (mapSymbolToStudioType) or decline to offer the
+ * symbol at all (the asset dock).
+ */
+export function catalogSymbolStudioType(
+  symbolId: string,
+): StudioItemType | null {
+  const key = symbolId.toLowerCase();
+  const cached = catalogTypeCache.get(key);
+  if (cached !== undefined) return cached;
+  const sym = getCatalogSymbol(symbolId);
+  let resolved: StudioItemType | null = null;
+  if (sym) {
+    const idTokens = tokenize([sym.id]);
+    const keywordTokens = tokenize(sym.keywords ?? []);
+    if (sym.category === "paving") {
+      resolved =
+        idTokens.has("deck") || keywordTokens.has("deck") ? "deck" : "paving";
+    } else if (sym.category === "planting") {
+      resolved =
+        plantingTypeFor(sym, idTokens) ?? plantingTypeFor(sym, keywordTokens);
+    }
+  }
+  catalogTypeCache.set(key, resolved);
+  return resolved;
+}
+
 export function mapSymbolToStudioType(symbolId: string): StudioItemType {
   const key = symbolId.toLowerCase();
   if (SYMBOL_TO_TYPE[key]) return SYMBOL_TO_TYPE[key]!;
+  const fromCatalog = catalogSymbolStudioType(key);
+  if (fromCatalog) return fromCatalog;
   if (/drain|french|storm/.test(key)) return "frenchdrain";
   // Lighting fixtures → feature glyph (symbolId preserved on StudioItem).
   if (/light|lighting|bollard|uplight|spike|graze|wash|led-/.test(key)) {
