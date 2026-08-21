@@ -17,20 +17,9 @@
 import { useEffect, useState } from "react";
 import { useStudioStore } from "./studioStore";
 import { buildAssetPalette, type AssetPaletteEntry } from "./assetPalette";
+import { Button } from "./Button";
 
 const GOLD = "var(--gs-primary)";
-
-function cardFaceStyle(active: boolean): React.CSSProperties {
-  return active
-    ? {
-        width: 108,
-        minHeight: 138,
-        border: `1px solid color-mix(in srgb, ${GOLD} 50%, transparent)`,
-        background: `color-mix(in srgb, ${GOLD} 6%, var(--gs-glass))`,
-        boxShadow: "0 0 18px color-mix(in srgb, var(--gs-primary) 12%, transparent)",
-      }
-    : { width: 92, minHeight: 118 };
-}
 
 function AssetCard({
   entry,
@@ -42,29 +31,12 @@ function AssetCard({
   onPick: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="asset-card"
+      active={active}
       aria-pressed={active}
       data-testid={`asset-card-${entry.symbolId}`}
       onClick={onPick}
-      style={{
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "var(--gs-space-2)",
-        padding: "var(--gs-space-4)",
-        borderRadius: "var(--gs-radius-xl)",
-        border: "1px solid var(--gs-line)",
-        background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
-        cursor: "pointer",
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-        pointerEvents: "auto",
-        ...cardFaceStyle(active),
-      }}
     >
       {active && (
         <span
@@ -139,7 +111,7 @@ function AssetCard({
           Place
         </span>
       )}
-    </button>
+    </Button>
   );
 }
 

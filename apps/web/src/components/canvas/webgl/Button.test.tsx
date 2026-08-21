@@ -181,6 +181,250 @@ describe("<Button> chrome-tier primitives", () => {
     );
   });
 
+  it('variant="capsule" renders the MetaChipSet boundary-marker pill', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "capsule", "data-testid": "mc" },
+        "Zone 1",
+      ),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="mc"/);
+    expect(html).toContain('font-family:var(--font-tech)');
+    expect(html).toContain('font-size:var(--gs-font-xs)');
+    expect(html).toContain('font-variant-numeric:tabular-nums');
+    expect(html).toContain('background:var(--gs-panel-frost)');
+    expect(html).toContain('border-radius:var(--gs-radius-pill)');
+    expect(html).toContain('box-shadow:var(--gs-shadow-1)');
+    expect(html).toContain('pointer-events:auto');
+    expect(html).toContain('padding:1px 8px');
+  });
+
+  it('variant="capsule" merges consumer opacity/color/transform overrides (bright/expanded state)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        {
+          variant: "capsule",
+          style: { opacity: 0.4, transform: "translateY(-1px)" },
+          "data-testid": "mc2",
+        },
+        "Zone 2",
+      ),
+    );
+    expect(html).toContain('opacity:0.4');
+    expect(html).toContain('transform:translateY(-1px)');
+    // Shell untouched
+    expect(html).toContain('background:var(--gs-panel-frost)');
+  });
+
+  it('variant="swatch" renders the StudioToolRail icon column shell', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "swatch", "data-testid": "rail" },
+        "▸ Tools",
+      ),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="rail"/);
+    expect(html).toContain('width:42');
+    expect(html).toContain('flex-direction:column');
+    expect(html).toContain('border-radius:var(--gs-radius-lg)');
+    expect(html).toContain('background:transparent');
+    expect(html).toContain('color:var(--gs-ink-secondary)');
+    expect(html).toContain('padding:5px 0 4px');
+  });
+
+  it('variant="swatch" + active=true goes charcoal (rail selection vocabulary)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "swatch", active: true, "data-testid": "rail-a" },
+        "▾ Elev",
+      ),
+    );
+    expect(html).toContain('background:var(--gs-chip-active)');
+    expect(html).toContain('color:var(--gs-chip-active-ink)');
+  });
+
+  it('variant="swatch" + disabled=true mutes to not-allowed (rail disabled contract)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "swatch", disabled: true, "data-testid": "rail-d" },
+        "▸ Slice",
+      ),
+    );
+    expect(html).toContain('cursor:not-allowed');
+    expect(html).toContain('opacity:0.55');
+    expect(html).toContain('color:var(--gs-ink-muted)');
+    // The native disabled attribute is still forwarded
+    expect(html).toMatch(/disabled/);
+  });
+
+  it('variant="asset-card" renders the AssetFanOutDock glass card shell', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "asset-card", "data-testid": "card" },
+        "Card",
+      ),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="card"/);
+    expect(html).toContain('width:92');
+    expect(html).toContain('min-height:118px');
+    expect(html).toContain('border-radius:var(--gs-radius-xl)');
+    expect(html).toContain(
+      'background:color-mix(in srgb, var(--gs-glass) 38%, transparent)',
+    );
+    expect(html).toContain('backdrop-filter:blur(var(--gs-blur))');
+    expect(html).toContain('pointer-events:auto');
+  });
+
+  it('variant="asset-card" + active=true takes the gold treatment (armed card)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "asset-card", active: true, "data-testid": "card-a" },
+        "Card",
+      ),
+    );
+    expect(html).toContain('width:108');
+    expect(html).toContain('min-height:138px');
+    expect(html).toContain(
+      'border:1px solid color-mix(in srgb, var(--gs-primary) 50%, transparent)',
+    );
+    expect(html).toContain(
+      'background:color-mix(in srgb, var(--gs-primary) 6%, var(--gs-glass))',
+    );
+    expect(html).toContain(
+      'box-shadow:0 0 18px color-mix(in srgb, var(--gs-primary) 12%, transparent)',
+    );
+  });
+
+  it('variant="cta" renders the solid primary CTA (WebGLStudioPreview Import/Tidy)', () => {
+    const html = renderToStaticMarkup(
+      createElement(Button, { variant: "cta", "data-testid": "cta" }, "Tidy"),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="cta"/);
+    expect(html).toContain('border:1px solid var(--gs-primary)');
+    expect(html).toContain('background:var(--gs-primary)');
+    expect(html).toContain('color:var(--gs-panel)');
+    expect(html).toContain('font-weight:600');
+    expect(html).toContain('border-radius:var(--gs-radius-chip)');
+    expect(html).toContain('padding:5px 8px');
+  });
+
+  it('variant="cta" + disabled dims to 50% + not-allowed (sketch action contract)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "cta", disabled: true, "data-testid": "cta-d" },
+        "Tidy",
+      ),
+    );
+    expect(html).toContain('opacity:0.5');
+    expect(html).toContain('cursor:not-allowed');
+  });
+
+  it('variant="ghost-line" renders the strong-hairline secondary action (Convert to CAD)', () => {
+    const html = renderToStaticMarkup(
+      createElement(Button, { variant: "ghost-line", "data-testid": "gl" }, "Convert"),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="gl"/);
+    expect(html).toContain(
+      'border:1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)',
+    );
+    expect(html).toContain('background:transparent');
+    expect(html).toContain('color:var(--gs-ink-secondary)');
+    expect(html).toContain('border-radius:var(--gs-radius-chip)');
+    expect(html).toContain('padding:5px 8px');
+  });
+
+  it('variant="chip-preset" renders the preset toggle chip (sun/layers)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "chip-preset", active: true, "data-testid": "cp" },
+        "Ink",
+      ),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="cp"/);
+    expect(html).toContain('font-size:var(--gs-font-xs)');
+    expect(html).toContain('padding:3px 8px');
+    expect(html).toContain('border-radius:var(--gs-radius-chip)');
+    expect(html).toContain(
+      'border:1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)',
+    );
+    // active → charcoal chip-active treatment
+    expect(html).toContain('background:var(--gs-chip-active)');
+    expect(html).toContain('color:var(--gs-chip-active-ink)');
+  });
+
+  it('variant="glyph" renders the tech-font tool button (zoom/undo/redo row)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "glyph", "data-testid": "zoom-out", "aria-label": "Zoom out" },
+        "−",
+      ),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="zoom-out"/);
+    expect(html).toContain('font-family:var(--font-tech)');
+    expect(html).toContain('font-size:var(--gs-font-lg)');
+    expect(html).toContain('padding:2px 0');
+    expect(html).toContain('border-radius:var(--gs-radius-chip)');
+    expect(html).toContain('flex:1');
+  });
+
+  it('variant="glyph" + disabled mutes ink + not-allowed (no opacity fade)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "glyph", disabled: true, "data-testid": "undo" },
+        "↶",
+      ),
+    );
+    expect(html).toContain('color:var(--gs-ink-muted)');
+    expect(html).toContain('cursor:not-allowed');
+    // glyph disabled does NOT dim opacity (row reads disabled from ink only)
+    expect(html).not.toContain('opacity:');
+  });
+
+  it('variant="text" renders the bare text button (dismiss link shell)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "text", "data-testid": "dismiss" },
+        "×",
+      ),
+    );
+    expect(html).toMatch(/<button[^>]*data-testid="dismiss"/);
+    expect(html).toContain('border:none');
+    expect(html).toContain('background:transparent');
+    expect(html).toContain('cursor:pointer');
+    expect(html).toContain('padding:0');
+  });
+
+  it('variant="primary" renders the tinted CTA chip (Review CAD / Open CAD drafter)', () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        Button,
+        { variant: "primary", "data-testid": "rev" },
+        "Review",
+      ),
+    );
+    expect(html).toContain('padding:5px 8px');
+    expect(html).toContain('border-radius:var(--gs-radius-chip)');
+    expect(html).toContain(
+      'border:1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)',
+    );
+    expect(html).toContain(
+      'background:color-mix(in srgb, var(--gs-primary) 14%, transparent)',
+    );
+    expect(html).toContain('color:var(--gs-primary)');
+  });
+
   it("merges consumer style overrides on top of the variant shell (consumer wins)", () => {
     const html = renderToStaticMarkup(
       createElement(

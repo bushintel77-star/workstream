@@ -18,6 +18,7 @@
  */
 
 import { useStudioStore } from "./studioStore";
+import { Button } from "./Button";
 
 interface RailTool {
   id: string;
@@ -280,45 +281,15 @@ export function StudioToolRail({
         const active = t.active;
         const name = `${active ? "▾" : "▸"} ${t.label}`;
         return (
-          <button
-            type="button"
+          <Button
             key={t.id}
+            variant="swatch"
             data-testid={`rail-${t.id}`}
             aria-label={name}
             title={t.title}
+            active={active}
             disabled={t.disabled === true}
             onClick={t.onToggle}
-            style={{
-              width: 42,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "var(--gs-space-1)",
-              padding: "5px 0 4px",
-              borderRadius: "var(--gs-radius-lg)",
-              border: "1px solid transparent",
-              background: active ? "var(--gs-chip-active)" : "transparent",
-              color: active
-                ? "var(--gs-chip-active-ink)"
-                : t.disabled
-                  ? "var(--gs-ink-muted)"
-                  : "var(--gs-ink-secondary)",
-              cursor: t.disabled ? "not-allowed" : "pointer",
-              opacity: t.disabled ? 0.55 : 1,
-              transition: "background 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
-            onMouseEnter={(e) => {
-              if (t.disabled) return;
-              if (!active) e.currentTarget.style.color = "var(--gs-ink)";
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "var(--gs-shadow-1)";
-            }}
-            onMouseLeave={(e) => {
-              if (t.disabled) return;
-              if (!active) e.currentTarget.style.color = "var(--gs-ink-secondary)";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
           >
             <span aria-hidden style={{ fontSize: "var(--gs-font-sub)", lineHeight: 1 }}>
               {t.glyph.trim()}
@@ -340,7 +311,7 @@ export function StudioToolRail({
             >
               {t.label}
             </span>
-          </button>
+          </Button>
         );
       })}
     </nav>

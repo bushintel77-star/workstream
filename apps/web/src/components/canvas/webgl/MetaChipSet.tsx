@@ -26,32 +26,12 @@ import { pctToWorld, type PctPoint } from "./coordTransform";
 import { useStudioStore } from "./studioStore";
 import type { MetaChip } from "./metaChips";
 import { cfZPair } from "../cfz";
+import { Button } from "./Button";
 
 /** Screen-pixel offset of the capsule outside the boundary node. */
 const OFFSET_PX = 24;
 /** Chip hover height above the ground (above dims, below slice). */
 const CHIP_Y = 0.09;
-
-const capsuleBase: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "var(--gs-space-2)",
-  padding: "1px 8px",
-  fontFamily: "var(--font-tech)",
-  fontSize: "var(--gs-font-xs)",
-  fontWeight: 500,
-  letterSpacing: "0.01em",
-  fontVariantNumeric: "tabular-nums",
-  whiteSpace: "nowrap",
-  background: "var(--gs-panel-frost)",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
-  borderRadius: "var(--gs-radius-pill)",
-  boxShadow: "var(--gs-shadow-1)",
-  color: "var(--gs-ink-muted)",
-  cursor: "pointer",
-  pointerEvents: "auto",
-  transition: "opacity 150ms ease, transform 150ms ease, box-shadow 150ms ease",
-};
 
 const detailStyle: React.CSSProperties = {
   position: "absolute",
@@ -150,13 +130,12 @@ export function MetaChipSet({
                   {chip.detail}
                 </span>
               ) : null}
-              <button
-                type="button"
+              <Button
+                variant="capsule"
                 data-testid={`meta-chip-${chip.id}`}
                 aria-label={`${chip.value}: ${chip.label}. ${chip.detail}`}
                 onClick={() => setExpandedId(expanded ? null : chip.id)}
                 style={{
-                  ...capsuleBase,
                   opacity: bright ? 1 : expanded ? 0.95 : 0.4,
                   color: bright ? "var(--gs-primary-ink)" : "var(--gs-ink-muted)",
                   transform: expanded ? "translateY(-1px)" : undefined,
@@ -165,7 +144,7 @@ export function MetaChipSet({
               >
                 <span style={{ fontWeight: 600 }}>{chip.label}</span>
                 <span style={{ opacity: 0.75 }}>{chip.value}</span>
-              </button>
+              </Button>
             </span>
           </Html>
         );

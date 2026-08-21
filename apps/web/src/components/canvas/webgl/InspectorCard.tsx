@@ -281,8 +281,8 @@ function FeatureInspector({
     <GlassCard style={{ position: "relative", width: 260, padding: 12 }}>
       <div style={titleCss}>Feature · {f.metadata.layer}</div>
       {stitchRecord ? (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           data-testid="feature-unstitch"
           onClick={() => unstitchFeature(f.id, scaleM, boardAspect)}
           title="Split the stitched geometry back into its source strokes — non-destructive, one undo step"
@@ -292,15 +292,10 @@ function FeatureInspector({
             marginBottom: 8,
             border: "1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)",
             borderRadius: "var(--gs-radius-chip)",
-            background: "transparent",
-            color: "var(--gs-ink-secondary)",
-            fontFamily: "var(--font-ui)",
-            fontSize: "var(--gs-font-sm)",
-            cursor: "pointer",
           }}
         >
           Un-stitch ({stitchRecord.segments.length} source runs)
-        </button>
+        </Button>
       ) : null}
       <Field labelText="Name">
         <Input

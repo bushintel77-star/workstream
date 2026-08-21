@@ -65,6 +65,7 @@ import { EarthworksCard } from "./EarthworksCard";
 import { FitSheetCard } from "./FitSheetCard";
 import { AssetFanOutDock } from "./AssetFanOutDock";
 import { StudioToolRail } from "./StudioToolRail";
+import { Button } from "./Button";
 import { NibPalette } from "./NibPalette";
 import { PerimeterTabStrip, type MetaTabId } from "./PerimeterTabStrip";
 import { canvasLayerPolicy } from "./layerPolicy";
@@ -978,20 +979,21 @@ export function WebGLStudioPreview({
             drawing is unchanged.
           </p>
           <div style={{ display: "flex", gap: "var(--gs-space-4)", flexWrap: "wrap" }}>
-            <button
-              type="button"
+            <Button
+              variant="cta"
               onClick={() => window.location.reload()}
               style={{
                 minHeight: 40,
                 padding: "0 12px",
-                borderRadius: "var(--gs-radius-chip)",
-                border: "1px solid var(--gs-primary)",
-                background: "var(--gs-primary)",
-                color: "var(--gs-panel)",
+                // The alert card inherits the body font (--text-base /
+                // weight 400); null the CTA base so the button inherits
+                // exactly as the prior inline button did.
+                fontSize: undefined,
+                fontWeight: undefined,
               }}
             >
               Reload canvas
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -1310,25 +1312,21 @@ export function WebGLStudioPreview({
                     gap: "var(--gs-space-3)",
                   }}
                 >
-                  <button
-                    type="button"
+                  <Button
+                    variant="cta"
                     data-testid="import-site-truth"
                     disabled={truthBusy}
                     onClick={() => void runSiteTruthImport()}
                     style={{
-                      fontFamily: "var(--font-ui)",
-                      fontSize: "var(--gs-font-sm)",
-                      fontWeight: 600,
                       padding: "6px 10px",
-                      borderRadius: "var(--gs-radius-chip)",
-                      border: "1px solid var(--gs-primary)",
-                      background: "var(--gs-primary)",
-                      color: "var(--gs-panel)",
+                      // While tracing: wait cursor + full opacity (the
+                      // cta disabled dim is for the sketch trio).
                       cursor: truthBusy ? "wait" : "pointer",
+                      opacity: truthBusy ? 1 : undefined,
                     }}
                   >
                     {truthBusy ? "Tracing Vicmap…" : "Import site truth (Vicmap)"}
-                  </button>
+                  </Button>
                   {truthMsg ? (
                     <p
                       role="status"
@@ -1412,8 +1410,8 @@ export function WebGLStudioPreview({
                   </span>
                 </div>
                 <div style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}>
-                  <button
-                    type="button"
+                  <Button
+                    variant="cta"
                     data-testid="sketch-tidy"
                     disabled={strokes.length === 0}
                     onClick={() => useStudioStore.getState().tidySketchToCad()}
@@ -1422,47 +1420,24 @@ export function WebGLStudioPreview({
                         ? "Draw ink first — strokes become CAD proposals"
                         : "Classify strokes into confidence-scored CAD proposals"
                     }
-                    style={{
-                      flex: 1,
-                      padding: "5px 8px",
-                      border: "1px solid var(--gs-primary)",
-                      borderRadius: "var(--gs-radius-chip)",
-                      background: "var(--gs-primary)",
-                      color: "var(--gs-panel)",
-                      fontFamily: "var(--font-ui)",
-                      fontSize: "var(--gs-font-sm)",
-                      fontWeight: 600,
-                      cursor: strokes.length === 0 ? "not-allowed" : "pointer",
-                      opacity: strokes.length === 0 ? 0.5 : 1,
-                    }}
+                    style={{ flex: 1 }}
                   >
                     Tidy → CAD proposals
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost-line"
                     data-testid="sketch-convert-cad"
                     disabled={strokes.length === 0}
                     onClick={() =>
                       useStudioStore.getState().convertStrokesToCadFeatures()
                     }
                     title="One-click convert — ditch/path/wall/bed CAD linework, ink kept as reference"
-                    style={{
-                      flex: 1,
-                      padding: "5px 8px",
-                      border: "1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)",
-                      borderRadius: "var(--gs-radius-chip)",
-                      background: "transparent",
-                      color: "var(--gs-ink-secondary)",
-                      fontFamily: "var(--font-ui)",
-                      fontSize: "var(--gs-font-sm)",
-                      cursor: strokes.length === 0 ? "not-allowed" : "pointer",
-                      opacity: strokes.length === 0 ? 0.5 : 1,
-                    }}
+                    style={{ flex: 1 }}
                   >
                     Convert to CAD features
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="cta"
                     data-testid="sketch-stitch"
                     disabled={strokes.length === 0}
                     onClick={() =>
@@ -1473,42 +1448,25 @@ export function WebGLStudioPreview({
                     title="Weld touching strokes into continuous polylines and closed polygons (0.15 m snap), ink kept as reference"
                     style={{
                       flex: 1,
-                      padding: "5px 8px",
                       border: "1px solid color-mix(in srgb, var(--gs-primary) 55%, transparent)",
-                      borderRadius: "var(--gs-radius-chip)",
                       background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
                       // --gs-primary on its own veil reads 4.08:1 at 11px —
                       // below AA; the cobalt ink token clears 6:1 on the veil.
                       color: "var(--gs-primary-ink)",
-                      fontFamily: "var(--font-ui)",
-                      fontSize: "var(--gs-font-sm)",
-                      fontWeight: 600,
-                      cursor: strokes.length === 0 ? "not-allowed" : "pointer",
-                      opacity: strokes.length === 0 ? 0.5 : 1,
                     }}
                   >
                     Stitch strokes
-                  </button>
+                  </Button>
                 </div>
                 {cadProposals.length > 0 && !cadReviewOpen ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="primary"
                     data-testid="cad-review-open"
                     onClick={() => setCadReviewOpen(true)}
-                    style={{
-                      padding: "5px 8px",
-                      border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
-                      borderRadius: "var(--gs-radius-chip)",
-                      background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
-                      color: "var(--gs-primary)",
-                      fontFamily: "var(--font-ui)",
-                      fontSize: "var(--gs-font-sm)",
-                      cursor: "pointer",
-                    }}
                   >
                     Review {cadProposals.length} CAD proposal
                     {cadProposals.length === 1 ? "" : "s"}
-                  </button>
+                  </Button>
                 ) : null}
                 {sketchCadNotice ? (
                   <p
@@ -1540,22 +1498,18 @@ export function WebGLStudioPreview({
                     }}
                   >
                     <span style={{ flex: 1 }}>{stitchNotice}</span>
-                    <button
-                      type="button"
+                    <Button
+                      variant="text"
                       aria-label="Dismiss stitch notice"
                       onClick={() => dismissStitchNotice()}
                       style={{
-                        border: "none",
-                        background: "transparent",
-                        color: "var(--gs-ink-secondary)",
-                        cursor: "pointer",
                         fontSize: "var(--gs-font-sub)",
                         lineHeight: 1,
                         padding: "0 2px",
                       }}
                     >
                       ×
-                    </button>
+                    </Button>
                   </div>
                 ) : null}
               </div>
@@ -1632,46 +1586,46 @@ export function WebGLStudioPreview({
                     overflow: "hidden",
                   }}
                 >
-                  <button
-                    type="button"
+                  <Button
+                    variant="chip-preset"
                     aria-pressed={!is3D}
+                    active={!is3D}
                     onClick={() => setPitchDeg(0)}
                     style={{
                       flex: 1,
                       padding: "2px 10px",
                       border: "none",
-                      background: !is3D ? "var(--gs-chip-active)" : "transparent",
-                      color: !is3D
-                        ? "var(--gs-chip-active-ink)"
-                        : "var(--gs-ink-secondary)",
-                      fontFamily: "var(--font-ui)",
+                      // Null the chip-preset pill radius so the segmented
+                      // halves stay square (the clipped container owns the
+                      // corners) — same undefined-null pattern as the
+                      // alert card's font reset.
+                      borderRadius: undefined,
                       fontSize: "var(--gs-font-sm)",
                       fontWeight: 600,
-                      cursor: "pointer",
                     }}
                   >
                     Plan
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="chip-preset"
                     aria-pressed={is3D}
+                    active={is3D}
                     onClick={() => setPitchDeg(DEFAULT_CAMERA_RIG.tiltDeg)}
                     style={{
                       flex: 1,
                       padding: "2px 10px",
                       border: "none",
-                      background: is3D ? "var(--gs-chip-active)" : "transparent",
-                      color: is3D
-                        ? "var(--gs-chip-active-ink)"
-                        : "var(--gs-ink-secondary)",
-                      fontFamily: "var(--font-ui)",
+                      // Null the chip-preset pill radius so the segmented
+                      // halves stay square (the clipped container owns the
+                      // corners) — same undefined-null pattern as the
+                      // alert card's font reset.
+                      borderRadius: undefined,
                       fontSize: "var(--gs-font-sm)",
                       fontWeight: 600,
-                      cursor: "pointer",
                     }}
                   >
                     3D
-                  </button>
+                  </Button>
                 </div>
                 <div
                   style={{ display: "flex", gap: "var(--gs-space-2)" }}
@@ -1692,9 +1646,9 @@ export function WebGLStudioPreview({
                         ? !canRedo
                         : false;
                     return (
-                      <button
+                      <Button
                         key={label}
-                        type="button"
+                        variant="glyph"
                         aria-label={label}
                         data-testid={
                           label.startsWith("Zoom out")
@@ -1707,20 +1661,9 @@ export function WebGLStudioPreview({
                         }
                         disabled={disabled}
                         onClick={fn}
-                        style={{
-                          flex: 1,
-                          padding: "2px 0",
-                          border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-                          borderRadius: "var(--gs-radius-chip)",
-                          background: "transparent",
-                          color: disabled ? "var(--gs-ink-muted)" : "var(--gs-ink-secondary)",
-                          fontFamily: "var(--font-tech)",
-                          fontSize: "var(--gs-font-lg)",
-                          cursor: disabled ? "not-allowed" : "pointer",
-                        }}
                       >
                         {glyph}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -1794,30 +1737,16 @@ export function WebGLStudioPreview({
                   </div>
                   <div style={{ display: "flex", gap: "var(--gs-space-2)", flexWrap: "wrap" }}>
                     {SUN_DATE_PRESETS.map((p) => (
-                      <button
+                      <Button
                         key={p}
-                        type="button"
+                        variant="chip-preset"
                         aria-pressed={sunDatePreset === p}
+                        active={sunDatePreset === p}
                         onClick={() => setSunDatePreset(p)}
-                        style={{
-                          padding: "2px 6px",
-                          borderRadius: "var(--gs-radius-chip)",
-                          border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
-                          background:
-                            sunDatePreset === p
-                              ? "var(--gs-chip-active)"
-                              : "transparent",
-                          color:
-                            sunDatePreset === p
-                              ? "var(--gs-chip-active-ink)"
-                              : "var(--gs-ink-secondary)",
-                          fontFamily: "var(--font-ui)",
-                          fontSize: "var(--gs-font-xs)",
-                          cursor: "pointer",
-                        }}
+                        style={{ padding: "2px 6px" }}
                       >
                         {sunDatePresetLabel(p)}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -1865,33 +1794,20 @@ export function WebGLStudioPreview({
                     ["design", "Design"],
                   ] as const
                 ).map(([layer, label]) => (
-                  <button
+                  <Button
                     key={layer}
-                    type="button"
+                    variant="chip-preset"
                     aria-pressed={visibleLayers[layer]}
+                    active={visibleLayers[layer]}
                     onClick={() =>
                       setVisibleLayers((current) => ({
                         ...current,
                         [layer]: !current[layer],
                       }))
                     }
-                    style={{
-                      padding: "3px 8px",
-                      borderRadius: "var(--gs-radius-chip)",
-                      border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
-                      background: visibleLayers[layer]
-                        ? "var(--gs-chip-active)"
-                        : "transparent",
-                      color: visibleLayers[layer]
-                        ? "var(--gs-chip-active-ink)"
-                        : "var(--gs-ink-secondary)",
-                      fontFamily: "var(--font-ui)",
-                      fontSize: "var(--gs-font-xs)",
-                      cursor: "pointer",
-                    }}
                   >
                     {label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             );
@@ -2111,21 +2027,21 @@ export function WebGLStudioPreview({
                 <span style={{ color: "var(--gs-ink-secondary)" }}>
                   Add accepted planting or hardscape items to create a live fit-sheet.
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
                   onClick={() => onNativeMode("cad")}
                   style={{
                     minHeight: 32,
                     borderRadius: "var(--gs-radius-chip)",
-                    border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
-                    background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
-                    color: "var(--gs-primary)",
-                    fontFamily: "var(--font-ui)",
-                    cursor: "pointer",
+                    // The quote-empty-state container sets font-size sm;
+                    // the prior inline button had no padding, so it
+                    // inherited UA padding (1px 6px). Null the primary
+                    // base padding so the UA default is restored exactly.
+                    padding: undefined,
                   }}
                 >
                   Open CAD drafter
-                </button>
+                </Button>
               </div>
             );
           }
@@ -2157,8 +2073,8 @@ export function WebGLStudioPreview({
               }}
             >
               {dismiss ? (
-                <button
-                  type="button"
+                <Button
+                  variant="icon"
                   aria-label="Close panel"
                   onClick={dismiss}
                   style={{
@@ -2167,20 +2083,10 @@ export function WebGLStudioPreview({
                     right: 6,
                     width: 24,
                     height: 24,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "var(--gs-radius-pill)",
-                    border: "1px solid transparent",
-                    background: "transparent",
-                    color: "var(--gs-ink-secondary)",
-                    fontSize: "var(--gs-font-h3)",
-                    lineHeight: 1,
-                    cursor: "pointer",
                   }}
                 >
                   ×
-                </button>
+                </Button>
               ) : null}
               {body}
             </div>
@@ -2251,23 +2157,18 @@ export function WebGLStudioPreview({
           <span data-testid="selection-count">
             {selection.length} selected · Esc clears
           </span>
-          <button
-            type="button"
+          <Button
+            variant="text"
             data-testid="selection-clear"
             aria-label="Clear selection"
             onClick={() => useStudioStore.getState().clearSelection()}
             style={{
-              border: "none",
-              background: "transparent",
               color: "var(--gs-chip-active-ink)",
-              fontFamily: "var(--font-ui)",
               fontSize: "var(--gs-font-sm)",
-              cursor: "pointer",
-              padding: 0,
             }}
           >
             Clear
-          </button>
+          </Button>
         </div>
       ) : null}
 
@@ -2343,8 +2244,8 @@ function FirstRunHint() {
       }}
     >
       <span>Wheel = zoom · Drag = pan · Tabs = surfaces · Ctrl+K = commands</span>
-      <button
-        type="button"
+      <Button
+        variant="text"
         aria-label="Dismiss controls hint"
         data-testid="controls-hint-dismiss"
         onClick={() => {
@@ -2352,15 +2253,13 @@ function FirstRunHint() {
           setShow(false);
         }}
         style={{
-          all: "unset",
-          cursor: "pointer",
           color: "var(--gs-primary)",
           fontFamily: "var(--font-tech)",
           padding: "0 4px",
         }}
       >
         ✕
-      </button>
+      </Button>
     </div>
   );
 }
