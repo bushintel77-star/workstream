@@ -30,7 +30,15 @@ export default defineConfig({
     baseURL: WEB_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    actionTimeout: process.env.CI ? 20_000 : 0,
+    // 20s -> 60s under CI. GPU-less shared runners fall back to software
+    // WebGL (Mesa llvmpipe), so the R3F useFrame loop saturates the main
+    // thread and a `locator.evaluate` callback cannot get a slot in 20s.
+    // Pipeline #31 lost all four attempts of canvas-first-z-stack.spec.ts
+    // to exactly that, then passed the mirror test on retry in 9.9s —
+    // contention, not deadlock. Deliberately NOT 0 (unlimited) for CI: an
+    // unbounded action would turn a genuine hang into the 40m job timeout
+    // instead of a failed test. Local stays unlimited.
+    actionTimeout: process.env.CI ? 60_000 : 0,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: LIVE
