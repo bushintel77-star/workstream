@@ -5,13 +5,22 @@ Not photorealistic — drawing-quality vectors.
 
 ## Already in Workstream
 
+Full licence record with retrieval dates and attribution obligations:
+[`ASSET-LICENCES.md`](./ASSET-LICENCES.md).
+
 | Pack | Licence | Role |
 |------|---------|------|
-| [Osmic](https://github.com/gmgeo/osmic) | CC0 | Clean map / site icons — `OSMIC_LANDSCAPE_SYMBOLS` |
-| [Open Crop Icons](https://github.com/openfarmcc/open-crop-icons) | CC0 | Plant / crop glyphs — `OPEN_CROP_SYMBOLS` |
-| [PlanZV FNP](https://github.com/) (via import script) | CC0 | German land-use planning marks — `PLANZV_DESIGN_SYMBOLS` |
-| Wikimedia tree SVGs | per-file | Canopy silhouettes — `WIKIMEDIA_TREE_SYMBOLS` |
+| [Osmic](https://github.com/gmgeo/osmic) | CC0-1.0 (repo licence) | Clean map / site icons — `OSMIC_LANDSCAPE_SYMBOLS` |
+| [PlanZV FNP](https://github.com/geoObserver/PlanZV-FNP) (via import script) | CC0 **claimed, unverified** | German land-use planning marks — `PLANZV_DESIGN_SYMBOLS` |
+| [Temaki](https://github.com/rapideditor/temaki) | CC0-1.0 | Plants + hardscape / lighting / furniture — `TEMAKI_PLANT_SYMBOLS`, `TEMAKI_SITE_SYMBOLS` |
 | [perfect-freehand](https://github.com/steveruizok/perfect-freehand) | MIT | Pressure-honest ink for sketch pad |
+
+Removed 2026-08-21:
+
+| Pack | Licence | Why |
+|------|---------|-----|
+| Wikimedia tree SVGs | **CC BY-SA 4.0** | Only obligation-carrying pack in the catalog; attribution and ShareAlike notice reached no client surface |
+| [Open Crop Icons](https://github.com/openfarmcc/open-crop-icons) | CC0-1.0 | Never rendered, but the CommonJS re-export shipped ~1.5 MB of it |
 
 ## Best next imports (CAD formal)
 

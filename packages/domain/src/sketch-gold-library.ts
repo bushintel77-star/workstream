@@ -111,11 +111,12 @@ const CATEGORY_ORDER: CatalogCategory[] = [
 export function isSketchGoldStandard(symbol: CatalogSymbol): boolean {
   if (!symbol.default_width_m || symbol.default_width_m <= 0) return false;
   if (!symbol.path_d && !symbol.asset?.layers?.length) return false;
+  // Open Crop is no longer merged into the catalog, but `import:open-crop`
+  // can regenerate it — keep the gate so a re-import cannot land silently.
   if (symbol.id.startsWith("opencrop-")) return false;
   // Curtis size ladder — the mature-height rungs the elevation reads.
   if (isGardenLadderId(symbol.id)) return true;
   if (CURTIS_GOLD_IDS.has(symbol.id)) return true;
-  if (symbol.id.startsWith("wikimedia-tree-")) return true;
   if (TEMAKI_PLANT_GOLD.test(symbol.id)) return true;
   if (TEMAKI_SITE_GOLD.test(symbol.id)) return true;
   if (OSMIC_GOLD.test(symbol.id)) return true;

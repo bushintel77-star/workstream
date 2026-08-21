@@ -545,7 +545,9 @@ failures, all now fixed:
       and `subsurfaceStudioData.ts` resolved `CatalogPlacement.symbol_id`
       against `CURTIS_DESIGN_ASSETS` (a small hand-authored subset) instead of
       `CURTIS_CATALOG_SYMBOLS` (the full served catalogue — size ladder +
-      design library + Temaki/PlanZV/Osmic/Wikimedia/Open Crop packs; see
+                      design library + Temaki/PlanZV/Osmic packs, plus the Wikimedia and
+      Open Crop packs that were still present then and were removed
+      2026-08-21 per `docs/ASSET-LICENCES.md`; see
       `packages/domain/src/catalog.ts`). Any placement using a size-ladder
       tree (`curtis-tree-*`/`curtis-hedge-*` — arguably the most commonly
       placed generic symbols) silently vanished from both studios: Growth

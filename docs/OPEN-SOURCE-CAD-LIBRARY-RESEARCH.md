@@ -26,7 +26,7 @@ asset / data pipeline — not a framework swap.
 | Band | Licences | Use |
 | --- | --- | --- |
 | **Green** | MIT, Apache-2.0, BSD, CC0, CC-BY (with attribution) | Default for deps and packs |
-| **Yellow** | CC BY-SA | OK for Wikimedia tree pack already in-repo; keep attribution trail |
+| **Yellow** | CC BY-SA | Only with a rendered attribution + ShareAlike notice on every client surface that can carry the glyph. The Wikimedia tree pack failed that test and was removed 2026-08-21 (`ASSET-LICENCES.md`); treat CC BY-SA as do-not-adopt unless the notice path is built first |
 | **Red** | AGPL, CC-BY-NC, “free download” stock (Vecteezy / Freepik / VectorStock with resale strings) | Do not pull into a commercial SaaS product |
 
 One-line rule for PRs: **no stock-vector “free” assets under deadline; no AGPL
@@ -100,7 +100,7 @@ Do **not** start with Rough.js or a CAD framework. Do **not** add Trefle.
 | --- | --- |
 | Sketch strokes | `packages/domain/src/studio-strokes.ts` (`strokePointsToPathD`) |
 | Presentation wobble | `apps/web/.../features/render/seededRandom.ts` |
-| Open symbol packs | Osmic + PlanZV + Temaki (plants + site) + Wikimedia (domain import scripts) |
+| Open symbol packs | Osmic + PlanZV + Temaki (plants + site) — all CC0, via domain import scripts |
 | Sketch chrome | Surface 2 tray + surface 3 `MarginStrip` (Undo / Tidy / Formalize) |
 | Geometry | Hand SVG + Turf; `%` board coords; Workflow 1 only until Stage 2 opens |
 

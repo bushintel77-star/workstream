@@ -20,7 +20,7 @@ See [AI-CAD-DESIGN-LIBRARY.md](./AI-CAD-DESIGN-LIBRARY.md) and
 | Pack | Dock |
 |------|------|
 | Pinned (studio types from kit bags, ≤9 tiles) | Top of Expanded |
-| Full gold catalog — Curtis + Temaki plants/site + Osmic + PlanZV + Wikimedia trees | One fold-out section per catalog category (Planting / Hardscape / Structures / Water / Site furniture / Lighting / Markup) |
+| Full gold catalog — Curtis + Temaki plants/site + Osmic + PlanZV | One fold-out section per catalog category (Planting / Hardscape / Structures / Water / Site furniture / Lighting / Markup) |
 
 Grouping + search are domain helpers (`buildSketchLibraryGroups`,
 `searchSketchLibrary` in `packages/domain/src/sketch-gold-library.ts`) —

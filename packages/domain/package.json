@@ -10,7 +10,6 @@
     "lint": "echo ok",
     "import:open-crop": "node scripts/generate-open-crop-catalog.mjs",
     "import:osmic-landscape": "node scripts/generate-osmic-landscape-catalog.mjs",
-    "import:wikimedia-trees": "node scripts/download-wikimedia-trees.mjs && node scripts/generate-wikimedia-trees-catalog.mjs",
     "import:planzv": "node scripts/download-planzv-fnp.mjs && node scripts/generate-planzv-catalog.mjs",
     "import:temaki-plants": "node scripts/download-temaki-plants.mjs && node scripts/generate-temaki-plants-catalog.mjs",
     "import:temaki-site": "node scripts/download-temaki-site.mjs && node scripts/generate-temaki-site-catalog.mjs",

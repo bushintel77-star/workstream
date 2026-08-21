@@ -74,7 +74,7 @@ describe("studioAiEngine", () => {
     expect(mapSymbolToStudioType("correa-shrub")).toBe("hedge");
     expect(mapSymbolToStudioType("box-ball")).toBe("hedge");
     expect(mapSymbolToStudioType("pyrus-capital")).toBe("canopy");
-    expect(mapSymbolToStudioType("wikimedia-tree-07")).toBe("canopy");
+    expect(mapSymbolToStudioType("osmic-nature-tree-deciduous")).toBe("canopy");
     expect(mapSymbolToStudioType("magnolia-little-gem")).toBe("feature");
   });
 

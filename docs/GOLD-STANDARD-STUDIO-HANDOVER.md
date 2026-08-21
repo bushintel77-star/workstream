@@ -141,8 +141,9 @@ screenshots are Stitch-style concept DNA only, not literal specs).
 `CatalogPlacement.symbol_id` against `CURTIS_DESIGN_ASSETS` — a small
 hand-authored subset of the catalogue. The API actually serves
 `CURTIS_CATALOG_SYMBOLS` (`CURTIS_GARDEN_LADDER_ASSETS` + `CURTIS_DESIGN_ASSETS`
-+ Temaki + PlanZV + Osmic + Wikimedia + Open Crop packs — see
-`packages/domain/src/catalog.ts`). Any placement using a size-ladder tree
++ Temaki + PlanZV + Osmic packs — see `packages/domain/src/catalog.ts`; the
+Wikimedia and Open Crop packs named here at the time were removed 2026-08-21,
+see `ASSET-LICENCES.md`). Any placement using a size-ladder tree
 (`curtis-tree-*`, `curtis-hedge-*` — arguably the *most* commonly placed
 generic symbols) or any of the other packs silently vanished from both
 studios: Growth Studio would render "No planting on this board yet" even

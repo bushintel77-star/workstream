@@ -59,7 +59,7 @@ describe("garden size ladder", () => {
     expect(isGardenLadderId("curtis-deck-050")).toBe(true);
     expect(isGardenLadderId("hornbeam-pleached")).toBe(false);
     expect(isGardenLadderId("curtis-tree-78")).toBe(false);
-    expect(isGardenLadderId("wikimedia-tree-oak")).toBe(false);
+    expect(isGardenLadderId("temaki-tree-broadleaved")).toBe(false);
   });
 
   it("snaps a measured height onto the nearest rung", () => {
