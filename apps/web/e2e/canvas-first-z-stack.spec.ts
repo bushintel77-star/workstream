@@ -102,6 +102,34 @@ async function expectZStackOnceReady(page: Page) {
 }
 
 test.describe("Canvas-First four-layer z-stack — Survey / Sketch / CAD / Garden", () => {
+  /**
+   * Machine-speed accommodation, not a relaxed product budget.
+   *
+   * This test's honest work is one `networkidle` studio load plus four WebGL
+   * mode switches. Measured on the reference dev box: the load alone is ~32s
+   * (the companion test below does nothing else and costs that much even as
+   * the *second* load in the same run, with `next dev` already warm), and each
+   * mode switch remounts the scene for a further ~13s. Total lands at 60-96s
+   * against Playwright's 90s default, so it passed roughly half the time —
+   * and when it tripped, the reported locator was merely wherever the axe fell
+   * at timeout, never a z-stack assertion. Every completed run passes every
+   * invariant below.
+   *
+   * Splitting the loop into four per-mode tests was the obvious fix and was
+   * measured instead of assumed: a Playwright test cannot inherit another
+   * test's page, so four tests means four ~32s loads. That trades ~50-70s of
+   * extra wall clock on every `pnpm run ci` for headroom this one line buys
+   * free, and it would break the cross-mode shape invariant at the bottom of
+   * the test into cross-test shared state. The per-assertion timeouts (15s
+   * attach, 10s tab strip, 12s default) are untouched, so a genuine
+   * contract break still fails fast with a useful message — this cap only
+   * governs the accumulated sum. Same reasoning and value as
+   * e2e/webgl-asset-row-plant.spec.ts. Retries are deliberately NOT the
+   * answer: CI already sets `retries: 1`, which would have masked the flake
+   * instead of exposing the budget as the cause.
+   */
+  test.setTimeout(180_000);
+
   test("each mode mounts the documented canvas → spatial → chrome → app stack", async ({
     page,
     request,
