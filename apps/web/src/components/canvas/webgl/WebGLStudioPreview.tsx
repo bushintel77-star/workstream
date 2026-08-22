@@ -1529,8 +1529,10 @@ export function WebGLStudioPreview({
               id: "fit",
               label: "Fit",
               active: fitSheetOpen,
-              onToggle: () =>
-                useStudioStore.getState().setFitSheetOpen(!fitSheetOpen),
+              onToggle: () => {
+                const open = useStudioStore.getState().fitSheetOpen;
+                useStudioStore.getState().setFitSheetOpen(!open);
+              },
             },
             ...(liveData.heightmapPoints.length > 0
               ? [

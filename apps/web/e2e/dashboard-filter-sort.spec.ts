@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { test, expect } from "@playwright/test";
-
-const API = process.env.API_URL ?? "http://127.0.0.1:3001";
+import { API, waitForApiReady } from "./helpers";
 
 /**
  * Dashboard — seed N projects; hard-expect search empty / match, sort order,
@@ -13,6 +12,7 @@ test.describe("Dashboard — search, sort, delete, undo", () => {
     page,
     request,
   }) => {
+    await waitForApiReady(request);
     const run = randomUUID().slice(0, 8);
     const seeds = [
       { name: `E2E Alpha ${run}`, street: "101 Filter St" },

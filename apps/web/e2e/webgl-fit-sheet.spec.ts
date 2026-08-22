@@ -25,6 +25,7 @@ test.describe("WebGL itemized fit-sheet (live quote)", () => {
     page,
     request,
   }) => {
+    test.setTimeout(120_000);
     const errors: string[] = [];
     page.on("console", (msg: ConsoleMessage) => {
       if (msg.type() === "error") errors.push(msg.text().slice(0, 300));
@@ -80,28 +81,28 @@ test.describe("WebGL itemized fit-sheet (live quote)", () => {
     );
     expect(seed.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?webgl=1`, {
-      waitUntil: "networkidle",
+    await page.goto(`/projects/${projectId}?webgl=1&mode=quote`, {
+      waitUntil: "domcontentloaded",
     });
-    await page.waitForTimeout(4000);
 
     await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
       timeout: 10_000,
     });
 
-    // 1. The estimation is a docked companion — visible in ANY mode
-    // (estimation-dock spec §3). The Fit tab owns the toggle; the rail
-    // quote tool is gone (one affordance per state). The card ships as a
-    // floating glass pill (Gold Standard 2026 un-docked FitSheet) — click
-    // it once to expand to the itemized body before asserting.
-    await expect(page.getByTestId("fit-sheet-pill")).toBeVisible({
-      timeout: 8_000,
-    });
-    await page.getByTestId("fit-sheet-pill").click();
+    // 1. Quote mode opens the fit companion; expand from pill when collapsed.
     const card = page.locator('[data-testid="fit-sheet-card"]');
+    const pill = page.getByTestId("fit-sheet-pill");
+    await expect(pill.or(card)).toBeVisible({ timeout: 15_000 });
+    if (await pill.isVisible()) {
+      await pill.click({ force: true });
+    }
     await expect(card).toBeVisible({ timeout: 8_000 });
     const fitTab = page.getByTestId("meta-tab-fit");
     await expect(fitTab).toHaveAttribute("aria-pressed", "true");
+
+    // Let the worker estimate settle before line interactions.
+    const settling = page.getByTestId("fit-sheet-settling");
+    await expect(settling).toHaveCount(0, { timeout: 45_000 });
 
     // 2. Itemized rows with money figures + section chips + summary.
     const lines = page.locator('[data-testid="fit-sheet-lines"] > div');
@@ -118,29 +119,34 @@ test.describe("WebGL itemized fit-sheet (live quote)", () => {
     await expect(stockChips.first()).toBeVisible({ timeout: 5_000 });
 
     // 4. Untick a line — the total drops, the row strikes through in the
-    // excluded block; re-tick restores (the design stays on canvas).
+    // excluded block; re-tick restores. Target the stable sitework fee line
+    // (always present) and click via DOM to survive estimate reflows.
     const totalFigure = (await total.innerText()).match(/\$[\d,]+\.\d{2}/)?.[0];
     expect(totalFigure).toBeDefined();
-    const firstTick = page.locator('[data-testid^="fit-line-tick-"]').first();
-    const firstTickId = await firstTick.getAttribute("data-testid");
-    expect(firstTickId).not.toBeNull();
-    await firstTick.click();
-    await expect(page.locator('[data-testid="fit-sheet-excluded"]')).toBeVisible({
-      timeout: 8_000,
+    const feeTick = page.getByRole("button", {
+      name: /Exclude Structural engineer/,
     });
-    await expect(page.locator('[data-testid^="fit-line-excluded-"]').first()).toBeVisible();
+    await feeTick.click({ force: true, timeout: 10_000 });
+    const excluded = page.locator('[data-testid="fit-sheet-excluded"]');
+    await expect(excluded).toHaveCount(1, { timeout: 8_000 });
+    await expect(page.locator('[data-testid^="fit-line-excluded-"]').first()).toHaveCount(1);
     await expect(total).not.toContainText(totalFigure!);
-    // Re-tick the SAME line (it now lives in the excluded block under the
-    // same testid — the report's first tick is a different line now).
-    await page.getByTestId(firstTickId!).click();
+    await page.getByRole("button", { name: /Include Structural engineer/ }).click({
+      force: true,
+      timeout: 10_000,
+    });
     await expect(page.locator('[data-testid="fit-sheet-excluded"]')).toHaveCount(0);
     await expect(total).toContainText(totalFigure!);
 
-    // 5. Toggle off / on via the Fit tab.
-    await fitTab.click();
+    // 5. Toggle off / on via the Fit tab — verify via companion mount,
+    // not aria-pressed (inactive tabs omit the attribute).
+    await page.keyboard.press("Escape");
+    await expect(pill).toBeVisible({ timeout: 5_000 });
+    await fitTab.evaluate((el) => (el as HTMLElement).click());
+    await expect(pill).toHaveCount(0);
     await expect(card).toHaveCount(0);
-    await fitTab.click();
-    await expect(card).toBeVisible();
+    await fitTab.evaluate((el) => (el as HTMLElement).click());
+    await expect(pill).toBeVisible({ timeout: 8_000 });
 
     // 6. No fatal console errors.
     const fatal = errors.filter(

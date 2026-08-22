@@ -171,9 +171,9 @@ test.describe("Project surfaces are reachable by clicking", () => {
     const rail = page.getByRole("navigation", { name: "Project surfaces" });
     await expect(rail).toBeVisible({ timeout: 20_000 });
 
-    // The pipeline progress screen's only entry point lives on this surface.
+    // The pipeline progress screen's hero entry point lives on this surface.
     await expect(
-      page.locator(`a[href="/projects/${projectId}/processing"]`),
+      page.getByRole("link", { name: "Follow pipeline progress" }),
     ).toBeVisible();
 
     await rail.getByRole("link", { name: "Audit" }).click();

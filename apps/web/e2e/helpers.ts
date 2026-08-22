@@ -5,7 +5,29 @@ import type { APIRequestContext, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
 /** Prefer 127.0.0.1 — `localhost` can resolve to ::1 while the API binds IPv4. */
-const API = process.env.API_URL ?? "http://127.0.0.1:3001";
+export const API = process.env.API_URL ?? "http://127.0.0.1:3001";
+
+/** Poll until the Playwright API webServer (or a reused dev API) is accepting traffic. */
+export async function waitForApiReady(
+  request: APIRequestContext,
+  timeoutMs = 60_000,
+) {
+  const deadline = Date.now() + timeoutMs;
+  let lastError = "unknown";
+  while (Date.now() < deadline) {
+    try {
+      const res = await request.get(`${API}/healthz`);
+      if (res.ok()) return;
+      lastError = `healthz ${res.status()}`;
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  throw new Error(
+    `API not ready at ${API}/healthz after ${timeoutMs}ms (${lastError})`,
+  );
+}
 
 /** Canonical Tier-1 Wrights address (proposal v3 / workbook lock). */
 export const TIER1_WRIGHTS_ADDRESS =
@@ -82,6 +104,7 @@ export const PHONE_STUDIO_VIEWPORT = { width: 390, height: 844 };
 
 /** Fresh project with survey only — empty sketch for ghost bootstrap. */
 export async function createSurveyProject(request: APIRequestContext) {
+  await waitForApiReady(request);
   const create = await request.post(`${API}/projects/`, {
     data: {
       address: "E2E Canvas AI, 42 Test Grove, Melbourne VIC 3000",
@@ -108,6 +131,7 @@ export async function seedElevationGarden(
   request: APIRequestContext,
   projectId: string,
 ) {
+  await waitForApiReady(request);
   const place = (symbol_id: string, x_pct: number, y_pct: number) => ({
     id: randomUUID(),
     symbol_id,
@@ -160,6 +184,7 @@ export async function seedPoolWithoutBarrier(
   request: APIRequestContext,
   projectId: string,
 ) {
+  await waitForApiReady(request);
   // Merge onto any existing canvas — a wipe to pool-only leaves Share disabled
   // (no costed quote lines) and Playwright then burns the full test timeout.
   const existing = await request.get(
@@ -205,6 +230,7 @@ export async function createAddressProject(
   request: APIRequestContext,
   opts: SeedProjectOpts,
 ) {
+  await waitForApiReady(request);
   const create = await request.post(`${API}/projects/`, {
     data: {
       address: opts.address,

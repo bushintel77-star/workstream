@@ -1,7 +1,17 @@
 # Railway deployment
 
-Git hosting is GitLab. GitLab CI is off — it burned minutes and took
-production down. Deploy only from this machine.
+Git hosting is GitLab. **GitLab CI gates every production deploy** — see
+`.gitlab-ci.yml`. Pushing to `main` runs `pnpm run ci`, gitleaks, Playwright
+(three shards), then `railway up` for API and web when all jobs are green.
+Set protected CI variable **`RAILWAY_TOKEN`** (project-scoped) in GitLab →
+Settings → CI/CD → Variables.
+
+Manual deploy remains available for emergencies:
+
+```bash
+railway up --project e2c12b66-af3a-4a51-a285-874c7a6de7d4 --service api --environment production --detach
+railway up --project e2c12b66-af3a-4a51-a285-874c7a6de7d4 --service web --environment production --detach
+```
 
 This is a pnpm workspace. Production is two Railway services in one project:
 
@@ -12,17 +22,8 @@ Do **not** set a Railway service root directory. The Dockerfiles build from the
 repo root so workspace packages (`packages/contracts`, `packages/domain`,
 `packages/db`, `packages/cad`) are available during the build.
 
-## Deploy
-
-No pipeline. From this machine:
-
-```bash
-railway up --project e2c12b66-af3a-4a51-a285-874c7a6de7d4 --service web --environment production --detach
-railway up --project e2c12b66-af3a-4a51-a285-874c7a6de7d4 --service api --environment production --detach
-```
-
-Do not wire Railway to a git source. A failed CI job must not be able to
-take the site down.
+Do not wire Railway to a git source — deploy only through the CI `deploy-railway`
+job (or emergency manual `railway up` above).
 
 ## Service settings
 
