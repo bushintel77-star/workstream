@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type {
   AtmospherePigment,
@@ -145,12 +145,14 @@ function safeDispose(scene?: THREE.Scene) {
 export function ClientShareTwin({ snapshot }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [webglOk, setWebglOk] = useState(true);
+  const [fallbackMessage, setFallbackMessage] = useState<string | null>(null);
   const [sunMin, setSunMin] = useState(12 * 60 + 26);
   const [lightsOn, setLightsOn] = useState(true);
   const [atmosphere, setAtmosphere] = useState<AtmospherePigment>(() =>
     initialAtmosphere(snapshot.canvas),
   );
   const [arOn, setArOn] = useState(false);
+  const fallbackTriggeredRef = useRef(false);
 
   const lat = snapshot.lat ?? DEFAULT_LAT;
   const lng = snapshot.lng ?? DEFAULT_LNG;
@@ -178,6 +180,17 @@ export function ClientShareTwin({ snapshot }: Props) {
     raf: number;
   } | null>(null);
 
+  const tripToPlanFallback = useCallback(
+    (message: string, error?: unknown) => {
+      logError(message, error);
+      if (fallbackTriggeredRef.current) return;
+      fallbackTriggeredRef.current = true;
+      setFallbackMessage(message);
+      setWebglOk(false);
+    },
+    [],
+  );
+
   useEffect(() => {
     const host = hostRef.current;
     if (!host || !webglOk) return;
@@ -194,8 +207,7 @@ export function ClientShareTwin({ snapshot }: Props) {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
     } catch (err) {
-      logError("WebGL unavailable", err);
-      window.setTimeout(() => setWebglOk(false), 0);
+      tripToPlanFallback("3D preview unavailable. Showing 2D plan instead.", err);
       return;
     }
 
@@ -365,7 +377,12 @@ export function ClientShareTwin({ snapshot }: Props) {
           try {
             renderer.render(scene!, camera);
           } catch (err) {
-            logError("Digital-twin render failed", err);
+            tripToPlanFallback(
+              "3D preview failed while rendering. Showing 2D plan instead.",
+              err,
+            );
+            disposed = true;
+            return;
           }
           raf = window.requestAnimationFrame(tick);
           if (sceneApi.current) sceneApi.current.raf = raf;
@@ -384,7 +401,10 @@ export function ClientShareTwin({ snapshot }: Props) {
           raf,
         };
       } catch (err) {
-        logError("Digital-twin scene setup failed", err);
+        tripToPlanFallback(
+          "3D preview failed to initialise. Showing 2D plan instead.",
+          err,
+        );
         safeDispose(scene);
         sceneApi.current = null;
       }
@@ -424,7 +444,7 @@ export function ClientShareTwin({ snapshot }: Props) {
     };
     // Mount once per canvas identity — controls mutate via refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount once per canvas identity
-  }, [canvas?.id, webglOk]);
+  }, [canvas?.id, tripToPlanFallback, webglOk]);
 
   useEffect(() => {
     const api = sceneApi.current;
@@ -476,7 +496,14 @@ export function ClientShareTwin({ snapshot }: Props) {
   }, [atmosphere]);
 
   if (!webglOk) {
-    return <SharePlanSvg canvas={canvas} address={snapshot.address} />;
+    return (
+      <div className={css.fallbackWrap} data-testid="share-twin-fallback">
+        <p className={css.fallbackNotice} role="status">
+          {fallbackMessage ?? "3D preview unavailable. Showing 2D plan instead."}
+        </p>
+        <SharePlanSvg canvas={canvas} address={snapshot.address} />
+      </div>
+    );
   }
 
   return (
@@ -553,11 +580,13 @@ export function ClientShareTwin({ snapshot }: Props) {
             className={css.chip}
             data-testid="share-twin-ar"
             aria-pressed={arOn}
-            onClick={() => setArOn(true)}
+            onClick={() => setArOn((current) => !current)}
           >
-            Bird&apos;s-eye overlay
+            {arOn ? "Hide bird's-eye overlay" : "Bird's-eye overlay"}
           </button>
-          <span className={css.hint}>Footprint occlusion</span>
+          <span className={css.hint}>
+            {arOn ? "Overlay active" : "Footprint occlusion"}
+          </span>
         </div>
       </div>
       {arOn ? (

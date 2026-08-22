@@ -483,21 +483,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.cardItem:hover .cardActions,
-.cardItem:focus-within .cardActions {
-  opacity: 1;
-}
-
-/* Without a hover state these actions are unreachable, not just unseen —
-   on-site the card would offer no way into the project's records. */
-@media (hover: none) {
-  .cardActions {
-    opacity: 1;
-  }
 }
 
 .cardSurfaceLink {
@@ -517,6 +502,26 @@
 
 .cardSurfaceLink:hover {
   background: color-mix(in srgb, var(--gs-primary) 20%, transparent);
+}
+
+.cardSurfaceLinkSecondary {
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
+  padding: 3px 8px;
+  border-radius: var(--gs-radius-chip);
+  border: 1px solid color-mix(in srgb, var(--line-hairline) 90%, transparent);
+  background: color-mix(in srgb, var(--surface-base) 55%, transparent);
+  color: var(--ink-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.cardSurfaceLinkSecondary:hover {
+  color: var(--ink-primary);
+  border-color: color-mix(in srgb, var(--line-strong) 55%, transparent);
 }
 
 .cardDeleteBtn {

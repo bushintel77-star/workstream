@@ -136,7 +136,17 @@ async function start() {
   });
 
   await server.register(rateLimit, {
-    max: Number(process.env.RATE_LIMIT_MAX ?? 300),
+    /* The global bucket is a production safety valve against a single
+     * abusive client. In dev every request — the web server, the browser,
+     * the preview — shares one loopback IP, so 300 req/min is exhausted by
+     * a couple of studio page loads and the operator gets 429s on every
+     * route (the studio fires ~15-25 API calls per mount). Keep the limit
+     * in production; dev gets headroom. Per-route limits (the public
+     * portal endpoints) are untouched and still apply in dev. */
+    max: Number(
+      process.env.RATE_LIMIT_MAX ??
+        (process.env.NODE_ENV === "production" ? 300 : 100_000),
+    ),
     timeWindow: process.env.RATE_LIMIT_WINDOW ?? "1 minute",
     /* Auth runs after this plugin, so userId is rarely set here. With
      * trustProxy, req.ip is the client — the correct global bucket. */

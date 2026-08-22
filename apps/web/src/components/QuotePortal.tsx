@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Tier1SavingsLedger } from "./tier1";
 import { KitButton } from "./ui/kit";
 import styles from "../app/portal/quote/[token]/quote.module.css";
@@ -67,6 +67,19 @@ const SCENARIOS = [
   },
 ] as const;
 
+function scenarioDomId(prefix: string, id: string): string {
+  return `${prefix}-${encodeURIComponent(id)}`;
+}
+
+function scenarioLabel(id: string): string {
+  return (
+    SCENARIOS.find((item) => item.id === id)?.label ??
+    id.replace(/(^|-)([a-z])/g, (_match, prefix: string, letter: string) =>
+      `${prefix ? " " : ""}${letter.toUpperCase()}`,
+    )
+  );
+}
+
 const aud2 = (n: number) =>
   new Intl.NumberFormat("en-AU", {
     style: "currency",
@@ -89,17 +102,47 @@ export function QuotePortal({
       : [];
 
   const [scenario, setScenario] = useState("standard");
+  const scenarioTabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const active =
     allCostings.find((c) => c.scenario === scenario) ??
     allCostings.find((c) => c.scenario === "standard") ??
     allCostings[0] ??
     null;
-  const activeScenarioLabel =
-    SCENARIOS.find((item) => item.id === active?.scenario)?.label ??
-    active?.scenario.replace(/(^|-)([a-z])/g, (_match, prefix: string, letter: string) =>
-      `${prefix ? " " : ""}${letter.toUpperCase()}`,
-    ) ??
-    "selected";
+  const knownScenarios = SCENARIOS.filter((candidate) =>
+    allCostings.some((costing) => costing.scenario === candidate.id),
+  );
+  const customScenarios = allCostings
+    .filter((costing) => !SCENARIOS.some((candidate) => candidate.id === costing.scenario))
+    .map((costing) => ({
+      id: costing.scenario,
+      label: scenarioLabel(costing.scenario),
+      note: "Custom pricing scenario.",
+    }));
+  const availableScenarios = [
+    ...knownScenarios,
+    ...customScenarios.filter(
+      (candidate, index, list) =>
+        list.findIndex((item) => item.id === candidate.id) === index,
+    ),
+  ];
+  const activeScenarioId = active?.scenario ?? availableScenarios[0]?.id ?? null;
+  const activeScenarioIndex = activeScenarioId
+    ? availableScenarios.findIndex((candidate) => candidate.id === activeScenarioId)
+    : -1;
+  const activeScenarioLabel = active ? scenarioLabel(active.scenario) : "selected";
+
+  function focusScenario(id: string) {
+    setScenario(id);
+    window.requestAnimationFrame(() => scenarioTabRefs.current[id]?.focus());
+  }
+
+  function moveScenarioBy(step: number) {
+    if (availableScenarios.length < 2 || activeScenarioIndex < 0) return;
+    const next =
+      (activeScenarioIndex + step + availableScenarios.length) %
+      availableScenarios.length;
+    focusScenario(availableScenarios[next]!.id);
+  }
 
   const generated = useMemo(
     () =>
@@ -193,18 +236,44 @@ export function QuotePortal({
               role="tablist"
               aria-label="Price scenarios"
             >
-              {SCENARIOS.map((s) => {
+              {availableScenarios.map((s) => {
                 const c = allCostings.find((x) => x.scenario === s.id);
                 if (!c) return null;
-                const selected = scenario === s.id;
+                const selected = activeScenarioId === s.id;
                 return (
                   <button
                     key={s.id}
                     type="button"
+                    ref={(node) => {
+                      scenarioTabRefs.current[s.id] = node;
+                    }}
+                    id={scenarioDomId("quote-scenario-tab", s.id)}
                     role="tab"
                     aria-selected={selected}
+                    aria-controls={scenarioDomId("quote-scenario-panel", s.id)}
+                    tabIndex={selected ? 0 : -1}
                     className={`${styles.scenarioCard} ${selected ? styles.scenarioCardActive : ""}`}
                     onClick={() => setScenario(s.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+                        event.preventDefault();
+                        moveScenarioBy(1);
+                      } else if (
+                        event.key === "ArrowLeft" ||
+                        event.key === "ArrowUp"
+                      ) {
+                        event.preventDefault();
+                        moveScenarioBy(-1);
+                      } else if (event.key === "Home") {
+                        event.preventDefault();
+                        focusScenario(availableScenarios[0]!.id);
+                      } else if (event.key === "End") {
+                        event.preventDefault();
+                        focusScenario(
+                          availableScenarios[availableScenarios.length - 1]!.id,
+                        );
+                      }
+                    }}
                   >
                     <span className={styles.scenarioLabel}>{s.label}</span>
                     <span className={styles.scenarioTotal}>{aud2(c.total)}</span>
@@ -215,7 +284,12 @@ export function QuotePortal({
             </div>
 
             {active && (
-              <>
+              <div
+                role="tabpanel"
+                id={scenarioDomId("quote-scenario-panel", active.scenario)}
+                aria-labelledby={scenarioDomId("quote-scenario-tab", active.scenario)}
+                tabIndex={0}
+              >
                 <div className={styles.total}>
                   <span className={styles.totalKicker}>
                     {active.scenario} · total incl. GST
@@ -265,7 +339,7 @@ export function QuotePortal({
                       ))}
                   </tbody>
                 </table>
-              </>
+              </div>
             )}
 
             <p className={styles.transparency}>

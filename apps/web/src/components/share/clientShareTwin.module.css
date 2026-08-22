@@ -4,6 +4,23 @@
   gap: 10px;
 }
 
+.fallbackWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fallbackNotice {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in srgb, var(--warn) 26%, var(--line-hairline));
+  background: color-mix(in srgb, var(--warn) 10%, var(--surface-elevated));
+  color: var(--ink-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
 .viewport {
   position: relative;
   width: 100%;

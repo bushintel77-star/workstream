@@ -76,6 +76,8 @@ export function DashboardProjects({
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [items, query, sort]);
+  const sortLabel =
+    sort === "activity" ? "Recent activity" : sort === "name" ? "Project name" : "Estimated cost";
 
   function deleteProject(project: DashboardProject) {
     setConfirmDelete(project);
@@ -88,7 +90,6 @@ export function DashboardProjects({
 
     const formData = new FormData();
     formData.set("id", project.id);
-    const previous = items;
     setItems((current) => current.filter((item) => item.id !== project.id));
     startTransition(() => {
       void deleteProjectAction(formData)
@@ -96,12 +97,16 @@ export function DashboardProjects({
           toast.show("Project deleted", "info", 5000, {
             action: {
               label: "Undo",
-              onClick: () => restoreProject(project, previous),
+              onClick: () => restoreProject(project),
             },
           });
         })
         .catch((err: unknown) => {
-          setItems(previous);
+          setItems((current) =>
+            current.some((item) => item.id === project.id)
+              ? current
+              : [project, ...current],
+          );
           toast.show(
             err instanceof Error ? err.message : "Project delete failed",
             "error",
@@ -110,13 +115,17 @@ export function DashboardProjects({
     });
   }
 
-  function restoreProject(project: DashboardProject, fallback: DashboardProject[]) {
+  function restoreProject(project: DashboardProject) {
     const formData = new FormData();
     formData.set("id", project.id);
     startTransition(() => {
       void restoreProjectAction(formData)
         .then(() => {
-          setItems(fallback);
+          setItems((current) =>
+            current.some((item) => item.id === project.id)
+              ? current
+              : [project, ...current],
+          );
           toast.show("Project restored", "success");
         })
         .catch((err: unknown) => {
@@ -133,10 +142,10 @@ export function DashboardProjects({
       {/* Index header */}
       <div className={home.indexHead}>
         <p id="sites-heading" className={home.indexLabel}>
-          {items.length > 0 ? "Projects" : "Projects"}
+          Projects register
         </p>
-        <p className={home.indexCount}>
-          {items.length} {items.length === 1 ? "entry" : "entries"}
+        <p className={home.indexCount} aria-live="polite">
+          {visibleProjects.length} shown
         </p>
       </div>
 
@@ -169,9 +178,7 @@ export function DashboardProjects({
             <option value="name">Name</option>
             <option value="cost">Cost</option>
           </KitSelect>
-          <span className={home.searchHint}>
-            {visibleProjects.length} shown
-          </span>
+          <span className={home.searchHint}>{visibleProjects.length} shown · {sortLabel}</span>
         </div>
       ) : null}
 
@@ -228,12 +235,18 @@ export function DashboardProjects({
                 </div>
               </Link>
               <div className={home.cardActions}>
-                {/* The dashboard door into the project's record surfaces. The
-                    canvas has one too, but it sits inside the Studio meta panel
-                    — reachable, not discoverable. */}
+                {/* Keep both core doors visible so operators can jump directly
+                    into the drawing or into records from one scan pass. */}
+                <Link
+                  href={`/projects/${project.id}`}
+                  className={home.cardSurfaceLink}
+                  aria-label={`Open studio for ${project.projectName}`}
+                >
+                  Studio
+                </Link>
                 <Link
                   href={`/projects/${project.id}/outputs`}
-                  className={home.cardSurfaceLink}
+                  className={home.cardSurfaceLinkSecondary}
                   aria-label={`Records for ${project.projectName}`}
                 >
                   Records

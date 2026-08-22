@@ -51,16 +51,70 @@ function networkError(method: string, path: string, err: unknown): Error {
   return new Error(`Couldn't reach the server on ${method} ${path}`);
 }
 
+/**
+ * Transient HTTP statuses — rate limits (429) and server hiccups (5xx) heal
+ * on their own, so a burst of requests must not crash a page. The API's
+ * global rate limit (300 req/min per IP) counts every studio mount's data
+ * fetches, and the project layout is `force-dynamic`, so a quick reload
+ * sequence can trip it; without retry the whole project route dies with a
+ * runtime error instead of just slowing down.
+ */
+const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+/**
+ * Only methods with a repeatable request contract are retried. PATCH is
+ * intentionally excluded: the API has PATCH endpoints with mutable side
+ * effects, and HTTP PATCH is not inherently idempotent.
+ */
+const RETRYABLE_METHODS = new Set(["GET", "PUT", "DELETE"]);
+/** Extra attempts after the first — 2 retries, ~0.5s + ~1s backoff. */
+const MAX_API_RETRIES = 2;
+/**
+ * A `retry-after` longer than this won't clear inside a request budget —
+ * surface the error instead of hanging the render.
+ */
+const MAX_RETRY_AFTER_MS = 5_000;
+
+function apiRetryDelayMs(attempt: number, res: Response): number | null {
+  const retryAfter = res.headers.get("retry-after")?.trim();
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds) && seconds >= 0) {
+      const delay = seconds * 1000;
+      return delay <= MAX_RETRY_AFTER_MS ? delay : null;
+    }
+
+    const retryAt = Date.parse(retryAfter);
+    if (Number.isFinite(retryAt)) {
+      const delay = Math.max(0, retryAt - Date.now());
+      return delay <= MAX_RETRY_AFTER_MS ? delay : null;
+    }
+  }
+  return 500 * 2 ** (attempt - 1);
+}
+
 async function apiFetch(
   path: string,
   init: RequestInit & { method?: string } = {},
+  attempt = 1,
 ): Promise<Response> {
-  const method = init.method ?? "GET";
+  const method = (init.method ?? "GET").toUpperCase();
   try {
-    return await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${API_URL}${path}`, {
       ...init,
       signal: init.signal ?? AbortSignal.timeout(API_TIMEOUT_MS),
     });
+    if (
+      RETRYABLE_STATUS.has(res.status) &&
+      RETRYABLE_METHODS.has(method) &&
+      attempt <= MAX_API_RETRIES
+    ) {
+      const delay = apiRetryDelayMs(attempt, res);
+      if (delay == null) return res;
+      if (res.body) await res.body.cancel().catch(() => undefined);
+      await new Promise((r) => setTimeout(r, delay));
+      return apiFetch(path, init, attempt + 1);
+    }
+    return res;
   } catch (err) {
     throw networkError(method, path, err);
   }

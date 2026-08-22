@@ -59,6 +59,10 @@ export default function SignInScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
+            textContentType="emailAddress"
+            returnKeyType="next"
+            accessibilityLabel="Email address"
+            accessibilityHint="Used for your Workstream sign-in"
           />
         </View>
 
@@ -71,12 +75,29 @@ export default function SignInScreen() {
             placeholder="••••••••"
             placeholderTextColor={tokens.color.ink.tertiary}
             secureTextEntry
+            autoComplete="password"
+            textContentType="password"
+            returnKeyType="done"
+            onSubmitEditing={onSignIn}
+            accessibilityLabel="Password"
+            accessibilityHint="Double tap Sign in to continue"
           />
         </View>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? (
+          <Text style={styles.error} accessibilityRole="alert">
+            {error}
+          </Text>
+        ) : null}
 
-        <Pressable style={styles.button} onPress={onSignIn} disabled={loading}>
+        <Pressable
+          style={styles.button}
+          onPress={onSignIn}
+          disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel="Sign in"
+          accessibilityState={{ disabled: loading, busy: loading }}
+        >
           {loading ? (
             <ActivityIndicator color={tokens.color.ink.inverted} />
           ) : (
@@ -84,7 +105,11 @@ export default function SignInScreen() {
           )}
         </Pressable>
 
-        <Pressable onPress={() => router.push("/(auth)/sign-up")}>
+        <Pressable
+          onPress={() => router.push("/(auth)/sign-up")}
+          accessibilityRole="button"
+          accessibilityLabel="Create a new account"
+        >
           <Text style={styles.link}>
             Don't have an account?{" "}
             <Text style={styles.linkAccent}>Sign up</Text>

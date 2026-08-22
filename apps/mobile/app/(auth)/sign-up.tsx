@@ -85,12 +85,29 @@ export default function SignUpScreen() {
               placeholder="123456"
               placeholderTextColor={tokens.color.ink.tertiary}
               keyboardType="number-pad"
+            autoComplete="one-time-code"
+            textContentType="oneTimeCode"
+            returnKeyType="done"
+            onSubmitEditing={onVerify}
+            accessibilityLabel="Email verification code"
+            accessibilityHint="Enter the six-digit code from your email"
             />
           </View>
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? (
+            <Text style={styles.error} accessibilityRole="alert">
+              {error}
+            </Text>
+          ) : null}
 
-          <Pressable style={styles.button} onPress={onVerify} disabled={loading}>
+          <Pressable
+            style={styles.button}
+            onPress={onVerify}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Verify email code"
+            accessibilityState={{ disabled: loading, busy: loading }}
+          >
             {loading ? (
               <ActivityIndicator color={tokens.color.ink.inverted} />
             ) : (
@@ -105,7 +122,7 @@ export default function SignUpScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.kicker}>WALKTHROUGH</Text>
+        <Text style={styles.kicker}>WORKSTREAM</Text>
         <Text style={styles.title}>Create account</Text>
 
         <View style={styles.field}>
@@ -119,6 +136,10 @@ export default function SignUpScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             autoComplete="email"
+            textContentType="emailAddress"
+            returnKeyType="next"
+            accessibilityLabel="Email address"
+            accessibilityHint="Used to create your Workstream account"
           />
         </View>
 
@@ -131,6 +152,10 @@ export default function SignUpScreen() {
             placeholder="••••••••"
             placeholderTextColor={tokens.color.ink.tertiary}
             secureTextEntry
+            autoComplete="password-new"
+            textContentType="newPassword"
+            returnKeyType="next"
+            accessibilityLabel="Password"
           />
         </View>
 
@@ -143,12 +168,29 @@ export default function SignUpScreen() {
             placeholder="••••••••"
             placeholderTextColor={tokens.color.ink.tertiary}
             secureTextEntry
+            autoComplete="password-new"
+            textContentType="newPassword"
+            returnKeyType="done"
+            onSubmitEditing={onSignUp}
+            accessibilityLabel="Confirm password"
+            accessibilityHint="Must match your password"
           />
         </View>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? (
+          <Text style={styles.error} accessibilityRole="alert">
+            {error}
+          </Text>
+        ) : null}
 
-        <Pressable style={styles.button} onPress={onSignUp} disabled={loading}>
+        <Pressable
+          style={styles.button}
+          onPress={onSignUp}
+          disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel="Create account"
+          accessibilityState={{ disabled: loading, busy: loading }}
+        >
           {loading ? (
             <ActivityIndicator color={tokens.color.ink.inverted} />
           ) : (
@@ -156,7 +198,11 @@ export default function SignUpScreen() {
           )}
         </Pressable>
 
-        <Pressable onPress={() => router.push("/(auth)/sign-in")}>
+        <Pressable
+          onPress={() => router.push("/(auth)/sign-in")}
+          accessibilityRole="button"
+          accessibilityLabel="Sign in with an existing account"
+        >
           <Text style={styles.link}>
             Already have an account?{" "}
             <Text style={styles.linkAccent}>Sign in</Text>

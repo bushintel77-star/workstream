@@ -510,6 +510,13 @@
   flex-wrap: wrap;
 }
 
+.surfaceNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: var(--s-4);
+}
+
 .utilityLink {
   min-height: 44px;
   display: inline-flex;
@@ -529,6 +536,12 @@
 .utilityLink:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+.utilityLinkActive {
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--line-hairline));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-sunken));
+  color: var(--ink-primary);
 }
 
 .weatherRow {

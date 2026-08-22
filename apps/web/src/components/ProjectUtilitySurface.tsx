@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type {
   ActivityEvent,
   Audit,
@@ -37,6 +38,26 @@ const DATE_FORMAT = new Intl.DateTimeFormat("en-AU", {
   minute: "2-digit",
 });
 
+const RECORD_SURFACES: ReadonlyArray<{
+  id: "outputs" | "audit" | "carbon" | "measurements" | "recordings";
+  label: string;
+  href: (projectId: string) => string;
+}> = [
+  { id: "outputs", label: "Outputs", href: (projectId) => `/projects/${projectId}/outputs` },
+  { id: "audit", label: "Audit", href: (projectId) => `/projects/${projectId}/audit` },
+  { id: "carbon", label: "Carbon", href: (projectId) => `/projects/${projectId}/carbon` },
+  {
+    id: "measurements",
+    label: "Measurements",
+    href: (projectId) => `/projects/${projectId}/measurements`,
+  },
+  {
+    id: "recordings",
+    label: "Recordings",
+    href: (projectId) => `/projects/${projectId}/recordings`,
+  },
+];
+
 type ProjectUtilityProps =
   | {
       type: "audit";
@@ -68,7 +89,7 @@ export function ProjectUtilitySurface(props: ProjectUtilityProps) {
         />
       ) : null}
       {props.type === "carbon" ? (
-        <CarbonSurface report={props.report} />
+        <CarbonSurface projectId={props.projectId} report={props.report} />
       ) : null}
       {props.type === "outputs" ? (
         <OutputsSurface projectId={props.projectId} outputs={props.outputs} />
@@ -97,6 +118,37 @@ function formatKg(value: number): string {
   return new Intl.NumberFormat("en-AU", {
     maximumFractionDigits: 1,
   }).format(value);
+}
+
+function SurfaceQuickNav({
+  projectId,
+  current,
+}: {
+  projectId: string;
+  current: "outputs" | "audit" | "carbon" | "measurements" | "recordings";
+}) {
+  return (
+    <nav className={styles.surfaceNav} aria-label="Project records navigation">
+      <Link className={styles.utilityLink} href={`/projects/${projectId}`}>
+        Open design studio
+      </Link>
+      {RECORD_SURFACES.map((surface) => (
+        <Link
+          key={surface.id}
+          className={`${styles.utilityLink} ${
+            surface.id === current ? styles.utilityLinkActive : ""
+          }`}
+          href={surface.href(projectId)}
+          aria-current={surface.id === current ? "page" : undefined}
+        >
+          {surface.label}
+        </Link>
+      ))}
+      <Link className={styles.utilityLink} href={`/projects/${projectId}/processing`}>
+        Pipeline progress
+      </Link>
+    </nav>
+  );
 }
 
 export function AuditSurface({
@@ -135,12 +187,13 @@ export function AuditSurface({
               Generate or complete the design in the studio first. The audit checks
               the current design, not the initial site survey.
             </p>
-            <a className={styles.utilityLink} href={`/projects/${projectId}/design`}>
+            <Link className={styles.utilityLink} href={`/projects/${projectId}/design`}>
               Open design studio
-            </a>
+            </Link>
           </div>
         )}
       </header>
+      <SurfaceQuickNav projectId={projectId} current="audit" />
       {audit && designReady ? (
         <>
           <div className={styles.kpiRow}>
@@ -236,7 +289,13 @@ export function AuditSurface({
   );
 }
 
-export function CarbonSurface({ report }: { report: CarbonReport | null }) {
+export function CarbonSurface({
+  projectId,
+  report,
+}: {
+  projectId: string;
+  report: CarbonReport | null;
+}) {
   return (
     <>
       <header className={styles.processingHero}>
@@ -246,6 +305,7 @@ export function CarbonSurface({ report }: { report: CarbonReport | null }) {
           A transparent embodied-carbon view of the current design scenario.
         </p>
       </header>
+      <SurfaceQuickNav projectId={projectId} current="carbon" />
       {report ? (
         <>
           <div className={styles.totalCard}>
@@ -308,6 +368,7 @@ export function OutputsSurface({
           Generate the documents that carry the design from canvas to site.
         </p>
       </header>
+      <SurfaceQuickNav projectId={projectId} current="outputs" />
       <section className={styles.card} aria-labelledby="output-generation-heading">
         <h2 id="output-generation-heading" className={styles.sectionHeading}>
           Generate documents
@@ -323,6 +384,9 @@ export function OutputsSurface({
                 </span>
               </div>
               <div className={styles.outputActions}>
+                <span className={styles.pill}>
+                  {output ? "Ready for handoff" : "Not generated"}
+                </span>
                 {output ? (
                   <a
                     className={styles.utilityLink}
@@ -369,13 +433,11 @@ export function RecordingsSurface({
         {/* The only way into the pipeline progress screen: it visualises the
             transcribe/survey/design/costing/audit chain a recording kicks off,
             and it redirects to the canvas once that chain has finished. */}
-        <a
-          className={styles.utilityLink}
-          href={`/projects/${projectId}/processing`}
-        >
+        <Link className={styles.utilityLink} href={`/projects/${projectId}/processing`}>
           Follow pipeline progress
-        </a>
+        </Link>
       </header>
+      <SurfaceQuickNav projectId={projectId} current="recordings" />
       <RecordingUpload projectId={projectId} />
       {recordings.length > 0 ? (
         <section aria-labelledby="recordings-heading">
@@ -443,6 +505,7 @@ export function MeasurementsSurface({
           reference and confidence. Confirm against tape before construction.
         </p>
       </header>
+      <SurfaceQuickNav projectId={projectId} current="measurements" />
       <PhotoMeasureUpload projectId={projectId} />
       {measurements.length > 0 ? (
         <section aria-labelledby="measurements-heading">
