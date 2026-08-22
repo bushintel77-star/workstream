@@ -157,6 +157,16 @@ deploy-railway:
   stage: deploy
   needs: ["gate"]
   image: node:22
+  # No cache. This job only installs the Railway CLI and runs `railway up`, so
+  # it never needs the pnpm store — and `railway up` uploads the whole working
+  # directory. Inheriting `default: cache:` made the runner unpack ~100k files
+  # into $CI_PROJECT_DIR/.pnpm-store first, which pushed the upload to 867 MB
+  # and Railway rejected it with HTTP 413. .gitignore does not list
+  # .pnpm-store, so nothing filtered it out of the archive.
+  # `cache: []` overrides the inherited block: nothing is restored, so there is
+  # nothing to exclude. The root .railwayignore is the second, durable half of
+  # this fix.
+  cache: []
   rules:
     - if: $CI_COMMIT_BRANCH == "main" && $RAILWAY_TOKEN != null && $RAILWAY_TOKEN != ""
   script:
