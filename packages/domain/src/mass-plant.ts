@@ -1,4 +1,8 @@
-import type { CatalogPlacement, CanvasPointPct } from "@workstream/contracts";
+import {
+  toBoardPoint,
+  type CatalogPlacement,
+  type CanvasPointPct,
+} from "@workstream/contracts";
 import {
   groundMetersToPct,
   pointInPolygonGround,
@@ -53,12 +57,10 @@ export function generateStaggeredPlacements(
     for (let x = minX - dX; x <= maxX + dX; x += dX) {
       const testX = x + offset;
       if (pointInPolygonGround(testX, y, polygonPct, scale)) {
-        const pct = groundMetersToPct(testX, y, scale);
         placements.push({
           id: newId(),
           symbol_id: symbolId,
-          x_pct: Math.min(100, Math.max(0, pct.x_pct)),
-          y_pct: Math.min(100, Math.max(0, pct.y_pct)),
+          ...toBoardPoint(groundMetersToPct(testX, y, scale)),
           rotation_deg: 0,
           scale: 1,
         });

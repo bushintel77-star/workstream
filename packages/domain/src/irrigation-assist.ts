@@ -1,8 +1,9 @@
-import type {
-  CatalogPlacement,
-  CanvasPointPct,
-  IrrigationZone,
-  SpatialObject,
+import {
+  clampBoardPct,
+  type CatalogPlacement,
+  type CanvasPointPct,
+  type IrrigationZone,
+  type SpatialObject,
 } from "@workstream/contracts";
 import { polylineLengthFromCanvasPercent } from "./canvas-geometry";
 import { emitterCountForLine, zoneFlowLph } from "./irrigation";
@@ -225,8 +226,8 @@ export function scaleAssistPipeRuns(
     return {
       ...z,
       points: z.points.map((p) => ({
-        x_pct: Math.min(100, Math.max(0, cx + (p.x_pct - cx) * s)),
-        y_pct: Math.min(100, Math.max(0, cy + (p.y_pct - cy) * s)),
+        x_pct: clampBoardPct(cx + (p.x_pct - cx) * s),
+        y_pct: clampBoardPct(cy + (p.y_pct - cy) * s),
       })),
     };
   });
@@ -245,8 +246,8 @@ export function nudgeAssistLuminaires(
     if (!isAssistLightingPlacement(p)) return p;
     return {
       ...p,
-      x_pct: Math.min(100, Math.max(0, p.x_pct + dx)),
-      y_pct: Math.min(100, Math.max(0, p.y_pct + dy)),
+      x_pct: clampBoardPct(p.x_pct + dx),
+      y_pct: clampBoardPct(p.y_pct + dy),
     };
   });
 }

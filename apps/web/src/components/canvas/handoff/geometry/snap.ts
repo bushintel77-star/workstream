@@ -1,4 +1,5 @@
 import type { PctPoint } from "./types";
+import { toBoardPctPoint } from "./boardPct";
 import { ZOOM_MIN } from "./canvasZoom";
 
 export type SnapKind = "close" | "vertex" | "angle" | "ortho" | null;
@@ -30,13 +31,6 @@ function pctDistPx(
   boardH: number,
 ): number {
   return Math.hypot(((b.x - a.x) / 100) * boardW, ((b.y - a.y) / 100) * boardH);
-}
-
-function clampPct(p: PctPoint): PctPoint {
-  return {
-    x: Math.max(0, Math.min(100, p.x)),
-    y: Math.max(0, Math.min(100, p.y)),
-  };
 }
 
 /**
@@ -88,7 +82,7 @@ export function snapTracePointer(
       if (shift || Math.abs(a - sa) < soft) {
         const nx = last.x + ((len * Math.cos(sa)) / boardW) * 100;
         const ny = last.y + ((len * Math.sin(sa)) / boardH) * 100;
-        const snapped = clampPct({ x: nx, y: ny });
+        const snapped = toBoardPctPoint({ x: nx, y: ny });
         return {
           ...snapped,
           kind: shift ? "ortho" : "angle",
@@ -98,7 +92,7 @@ export function snapTracePointer(
     }
   }
 
-  return { ...clampPct(raw), kind: null };
+  return { ...toBoardPctPoint(raw), kind: null };
 }
 
 /**
@@ -165,7 +159,7 @@ export function snapVertexDrag(
     return { x: best.x, y: best.y, kind: "vertex" };
   }
 
-  return { ...clampPct({ x, y }), kind };
+  return { ...toBoardPctPoint({ x, y }), kind };
 }
 
 /** Alignment guides while dragging a free symbol against other items. */
@@ -205,7 +199,7 @@ export function snapToGridPct(
   stepPct: number,
 ): PctPoint {
   const step = Math.max(0.25, stepPct);
-  return clampPct({
+  return toBoardPctPoint({
     x: Math.round(target.x / step) * step,
     y: Math.round(target.y / step) * step,
   });

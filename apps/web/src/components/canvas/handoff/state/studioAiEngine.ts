@@ -18,7 +18,7 @@ import {
   type RgbaImageData,
   type StudioAiSuggestion,
 } from "@workstream/domain";
-import type { CatalogSymbol } from "@workstream/contracts";
+import { clampBoardPct, type CatalogSymbol } from "@workstream/contracts";
 import {
   constrainAssetCentre,
   sanitizeItemsToOutdoor,
@@ -249,8 +249,8 @@ export function proposalToStudioItem(
   return {
     id,
     t,
-    x: Math.max(0, Math.min(100, g.x_pct)),
-    y: Math.max(0, Math.min(100, g.y_pct)),
+    x: clampBoardPct(g.x_pct),
+    y: clampBoardPct(g.y_pct),
     rot: 0,
     scale,
     ghost: true,

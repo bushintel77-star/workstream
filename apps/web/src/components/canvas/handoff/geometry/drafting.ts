@@ -1,3 +1,4 @@
+import { toBoardPctPoint } from "./boardPct";
 import { edgeLengthM } from "./polygon";
 import type { PctPoint } from "./types";
 
@@ -37,20 +38,10 @@ export function pointFromSegmentInput(
   const bearing =
     angleDeg != null && Number.isFinite(angleDeg) ? angleDeg : live.angleDeg;
   const radians = (bearing * Math.PI) / 180;
-  return {
-    x: Math.max(
-      0,
-      Math.min(100, from.x + ((length * Math.cos(radians)) / scaleM) * 100),
-    ),
-    y: Math.max(
-      0,
-      Math.min(
-        100,
-        from.y +
-        ((length * Math.sin(radians)) / (scaleM / boardAspect)) * 100,
-      ),
-    ),
-  };
+  return toBoardPctPoint({
+    x: from.x + ((length * Math.cos(radians)) / scaleM) * 100,
+    y: from.y + ((length * Math.sin(radians)) / (scaleM / boardAspect)) * 100,
+  });
 }
 
 export function deleteVertex(

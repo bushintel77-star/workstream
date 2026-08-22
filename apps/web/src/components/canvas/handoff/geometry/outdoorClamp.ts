@@ -6,6 +6,7 @@ import {
   workableCanvasM2,
 } from "@workstream/domain";
 import type { StudioItem, StudioItemType } from "../studioCatalog";
+import { toBoardPctPoint } from "./boardPct";
 import { pctRingToPlanarM, pointInPolygon } from "./polygon";
 import type { PctPoint } from "./types";
 
@@ -114,12 +115,7 @@ export function snapPointToOutdoor(
   building: PctPoint[],
 ): OutdoorSnapResult {
   if (boundary.length < 3) {
-    return {
-      x: Math.max(0, Math.min(100, p.x)),
-      y: Math.max(0, Math.min(100, p.y)),
-      snapped: false,
-      reason: null,
-    };
+    return { ...toBoardPctPoint(p), snapped: false, reason: null };
   }
 
   if (isPointInOutdoor(p, boundary, building)) {
@@ -153,8 +149,7 @@ export function snapPointToOutdoor(
   }
 
   return {
-    x: Math.max(0, Math.min(100, q.x)),
-    y: Math.max(0, Math.min(100, q.y)),
+    ...toBoardPctPoint(q),
     snapped: true,
     reason: "Kept inside outdoor area (lot − house)",
   };

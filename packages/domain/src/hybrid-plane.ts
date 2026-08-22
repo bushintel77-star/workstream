@@ -8,7 +8,14 @@
  * persistence — do not migrate the live handoff path without a schema brief.
  */
 
-export type CanvasPctPoint = { x_pct: number; y_pct: number };
+/**
+ * Unbounded canvas point, matching the contract's `CanvasPointPct`.
+ * `localMToPct` is a pure inverse of `pctToLocalM`, so metres past the board
+ * edge come back as percents past 0-100. It is deliberately NOT the
+ * board-bounded `BoardPointPct` — do not rename it toward that, and do not feed
+ * it to a bounded slot without `toBoardPoint`.
+ */
+export type CanvasPointPct = { x_pct: number; y_pct: number };
 export type LocalMetrePoint = { x_m: number; y_m: number };
 
 export type HybridPlaneMetrics = {
@@ -46,7 +53,7 @@ export function localMToPct(
   yM: number,
   scaleM: number,
   boardAspect = 1,
-): CanvasPctPoint {
+): CanvasPointPct {
   return {
     x_pct: scaleM > 0 ? (xM / scaleM) * 100 : 0,
     y_pct: scaleM > 0 ? (yM / (scaleM / boardAspect)) * 100 : 0,

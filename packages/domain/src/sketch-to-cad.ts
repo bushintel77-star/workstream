@@ -6,6 +6,8 @@
  * studio engine when merging proposals.
  */
 
+import { clampBoardPct } from "@workstream/contracts";
+
 export type SketchStrokeInput = {
   id: string;
   points: Array<{ x: number; y: number }>;
@@ -107,13 +109,14 @@ function strokeMetrics(stroke: SketchStrokeInput): StrokeMetrics | null {
   };
 }
 
+/**
+ * Decimation target for a drawn outline. Well under the contract's
+ * `MAX_SUGGESTION_OUTLINE_POINTS` cap on `SketchCadSuggestion.outline_pct` —
+ * the schema states what will be accepted, this states what we choose to send.
+ */
 const MAX_OUTLINE_POINTS = 24;
 
-function clampPct(v: number): number {
-  return Math.min(100, Math.max(0, v));
-}
-
-/** Evenly decimate a point run to ≤ MAX_OUTLINE_POINTS, clamped to 0–100. */
+/** Evenly decimate a point run to ≤ MAX_OUTLINE_POINTS, landed on the board. */
 function decimateOutline(
   pts: Array<{ x: number; y: number }>,
 ): Array<{ x: number; y: number }> | undefined {
@@ -122,7 +125,7 @@ function decimateOutline(
   const step = pts.length <= MAX_OUTLINE_POINTS ? 1 : pts.length / MAX_OUTLINE_POINTS;
   for (let i = 0; i < pts.length && out.length < MAX_OUTLINE_POINTS; i += step) {
     const p = pts[Math.floor(i)]!;
-    out.push({ x: clampPct(p.x), y: clampPct(p.y) });
+    out.push({ x: clampBoardPct(p.x), y: clampBoardPct(p.y) });
   }
   return out.length >= 3 ? out : undefined;
 }

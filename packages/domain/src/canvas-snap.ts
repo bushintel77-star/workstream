@@ -1,3 +1,5 @@
+import { clampBoardPct } from "@workstream/contracts";
+
 /** Snap canvas percent coordinates to an indicative grid (Workflow 1 sketch). */
 export function snapPctToGrid(
   value: number,
@@ -5,8 +7,7 @@ export function snapPctToGrid(
   enabled = true,
 ): number {
   if (!enabled || gridPct <= 0) return value;
-  const snapped = Math.round(value / gridPct) * gridPct;
-  return Math.min(100, Math.max(0, snapped));
+  return clampBoardPct(Math.round(value / gridPct) * gridPct);
 }
 
 export function snapPointPctToGrid(
@@ -42,8 +43,8 @@ export function snapDragPct(
   others: Array<{ id: string; x_pct: number; y_pct: number }>,
   tolerancePct = 1.25,
 ): SnapDragResult {
-  let x = Math.min(100, Math.max(0, xPct));
-  let y = Math.min(100, Math.max(0, yPct));
+  let x = clampBoardPct(xPct);
+  let y = clampBoardPct(yPct);
   const guides: SnapGuide[] = [];
   let bestDx = tolerancePct;
   let bestDy = tolerancePct;

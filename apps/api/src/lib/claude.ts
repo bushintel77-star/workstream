@@ -10,7 +10,7 @@ import type {
   RateCard,
   Survey,
 } from "@workstream/contracts";
-import { CadOpsBatchSchema } from "@workstream/contracts";
+import { CadOpsBatchSchema, clampBoardPct } from "@workstream/contracts";
 import {
   buildGhostPlacementSuggestions,
   buildStudioSystemPrompt,
@@ -897,8 +897,8 @@ export async function scanAerialGhosts(args: {
       out.push({
         id: crypto.randomUUID(),
         symbol_id: s.symbol_id,
-        x_pct: Math.min(100, Math.max(0, x)),
-        y_pct: Math.min(100, Math.max(0, y)),
+        x_pct: clampBoardPct(x),
+        y_pct: clampBoardPct(y),
         confidence: Math.min(1, Math.max(0, Number(s.confidence) || 0.5)),
         reason: s.reason?.trim() || "AI aerial hint",
       });
@@ -1122,8 +1122,8 @@ export async function formalizeSketchToCad(
       suggestions.push({
         id: crypto.randomUUID(),
         symbol_id: s.symbol_id,
-        x_pct: Math.min(100, Math.max(0, x)),
-        y_pct: Math.min(100, Math.max(0, y)),
+        x_pct: clampBoardPct(x),
+        y_pct: clampBoardPct(y),
         confidence: Math.min(1, Math.max(0, Number(s.confidence) || 0.6)),
         reason: s.reason?.trim() || "AI sketch interpretation",
         scale_hint:

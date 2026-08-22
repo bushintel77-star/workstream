@@ -1,4 +1,7 @@
-import type { GhostPlacementSuggestion } from "@workstream/contracts";
+import {
+  clampBoardPct,
+  type GhostPlacementSuggestion,
+} from "@workstream/contracts";
 
 export type ParsedStudioAssist = {
   reply: string;
@@ -42,8 +45,8 @@ export function parseStudioAssistResponse(
         suggestions.push({
           id: crypto.randomUUID(),
           symbol_id: s.symbol_id,
-          x_pct: Math.min(100, Math.max(0, x)),
-          y_pct: Math.min(100, Math.max(0, y)),
+          x_pct: clampBoardPct(x),
+          y_pct: clampBoardPct(y),
           confidence: Math.min(
             1,
             Math.max(0, Number(s.confidence) || 0.65),
