@@ -59,6 +59,9 @@ describe("survey annotation derivation", () => {
     expect(formatSurveyBearing({ x: 0, y: 0 }, { x: 10, y: -10 })).toMatch(
       /^N\d{2}°\d{2}'\d{2}"E$/,
     );
+    expect(formatSurveyBearing({ x: 0, y: 0 }, { x: 0, y: -10 }, 90)).toBe(
+      'N90°00\'00"E',
+    );
     expect(formatRl(100.5)).toBe("+100.50");
     expect(formatRl(-1.25)).toBe("-1.25");
   });
@@ -144,5 +147,57 @@ describe("survey annotation derivation", () => {
     });
     expect(compact.elevationMarks.length).toBeLessThan(full.elevationMarks.length);
     expect(compact.plantTags.length).toBeLessThan(full.plantTags.length);
+  });
+
+  it("derives live legend values from model data (no static placeholders)", () => {
+    const model = deriveSurveyedPlanModel({
+      dialect: "technical",
+      boundaryPct: boundary,
+      scaleM: 110,
+      boardAspect: 1,
+      levels,
+      placements,
+      features,
+      density: "full",
+    });
+    const legend = new Map(model.legendEntries.map((entry) => [entry.id, entry.value]));
+    expect(legend.get("boundary")).toBe(model.propertyLines[0]!.label);
+    expect(legend.get("proposed-rl")).toBe("PR +100.50");
+    expect(legend.get("existing-rl")).toBe("EX -0.25");
+    expect(legend.get("plant-tags")).toContain("lophostemon-confertus");
+    expect(legend.get("boundary")).not.toBe('N45°12\'30"E 23.45 m');
+  });
+
+  it("marks north calibration truth in legend conventions", () => {
+    const calibrated = deriveSurveyedPlanModel({
+      dialect: "technical",
+      boundaryPct: boundary,
+      scaleM: 110,
+      boardAspect: 1,
+      northBearingDeg: 17.5,
+      levels,
+      placements,
+      features,
+      density: "full",
+    });
+    const uncalibrated = deriveSurveyedPlanModel({
+      dialect: "technical",
+      boundaryPct: boundary,
+      scaleM: 110,
+      boardAspect: 1,
+      northBearingDeg: null,
+      levels,
+      placements,
+      features,
+      density: "full",
+    });
+    const byId = (entries: typeof calibrated.legendEntries) =>
+      new Map(entries.map((entry) => [entry.id, entry.value]));
+    expect(byId(calibrated.legendEntries).get("north-calibration")).toContain(
+      "17.5° true",
+    );
+    expect(byId(uncalibrated.legendEntries).get("north-calibration")).toBe(
+      "Uncalibrated — locational-indicative",
+    );
   });
 });

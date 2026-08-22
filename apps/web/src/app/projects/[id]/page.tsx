@@ -168,6 +168,7 @@ export default async function ProjectCanvasPage({
               ? daylightHoursAt(project.lat, dayOfYearFrom(new Date()))
               : null,
         }}
+        northBearingDeg={frame?.north_bearing ?? null}
       />
     </main>
   );
