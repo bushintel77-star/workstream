@@ -140,6 +140,89 @@ P1 entry below and `docs/CAMERA-STATE-MACHINE.md`.)
       stamped sheet → reload persistence) and the updated
       `e2e/webgl-photo-sketch-flow.spec.ts`.
 
+## Gate and contract debt (2026-08-22 technical analysis)
+
+Source: [`docs/TECHNICAL-ANALYSIS-2026-08-22.md`](docs/TECHNICAL-ANALYSIS-2026-08-22.md).
+The three collapsed CI ratchets, the ESLint rule-shadowing bug and the
+merge-request `gate` exclusion from that survey are **fixed** on
+`chore/repair-collapsed-ratchets`. The items below were deliberately left out of
+that MR — each needs its own change with its own blast radius. Counts below are
+re-measured, not quoted from the survey.
+
+- [ ] **Board-coordinate clamp primitive — `packages/contracts` owns the bound
+      but exports no way to satisfy it.** The `0..100` board-% bound is declared
+      in the contracts schemas and then re-implemented ad hoc everywhere:
+      **10 separate `clampPct` definitions** (`handoff/geometry/cameraPointer.ts:24`,
+      `handoff/geometry/snap.ts:35`, `handoff/state/canvasBridge.ts:293`,
+      `webgl/AssetPlaceLayer.tsx:47`, `webgl/PlacementGizmo.tsx:43`,
+      `webgl/siteTruthImport.ts:120`, `webgl/sketchCad.ts:60`,
+      `webgl/stitchBridge.ts:31`, `packages/domain/src/sketch-to-cad.ts:112`,
+      `packages/domain/src/urban-tree-ghosts.ts:31`) plus **54 hand-written
+      `Math.max(0, Math.min(100, …))` clamps** — 105 clamp sites across 26
+      files. Every caller that forgets one produces geometry the schema rejects;
+      that is what caused the production autosave 400 fixed in `1be0960`.
+      Recommendation: export the clamp and the board caps from the package that
+      declares the bound, and make the duplicates a lint or scan violation so
+      the count can only go down. A fix that only adds the export leaves 105
+      call sites unconverted, so the ratchet matters more than the helper.
+- [ ] **Two name-permutation hazards in `packages/contracts`.** Both pairs are
+      live, both are one transposition apart, and nothing stops a call site
+      importing the wrong one:
+      `CanvasPointPct` (`schemas/catalog.ts`) vs `CanvasPctPoint`
+      (`schemas/landscape-feature.ts` — and declared a *second* time in
+      `packages/domain/src/hybrid-plane.ts`); and `IrrigationZoneSchema`
+      (`schemas/catalog.ts`) vs `ZoneIrrigationSchema` (`schemas/design.ts`).
+      Rename to one convention per concept and re-export the old name only long
+      enough to migrate.
+- [ ] **`/growth-studio/[id]` is unreachable — and route reachability has no
+      gate.** A complete 3D studio (`app/growth-studio/[id]/page.tsx` 40 lines +
+      `components/canvas/growthStudio/GrowthStudioClient.tsx` 649 lines) with
+      **zero `href` or `router.push` anywhere in the product** — the only file
+      that mentions the path is the route's own client component. It cannot be
+      reached except by typing the URL. `scripts/check-feature-reachability.mjs`
+      structurally cannot catch this: Next.js reaches `page.tsx` by filesystem,
+      so a route needs no importer to exist. The limit is now documented in that
+      script's header. **Route reachability needs its own gate** — walk
+      `app/**/page.tsx`, resolve each to its href pattern, and require an
+      inbound link or an explicit allow entry. Then decide whether Growth Studio
+      gets an entry point or gets deleted.
+- [ ] **`scripts/check-bundle-size.mjs` is not the budget a Three.js app
+      needs.** 48 lines that sum uncompressed on-disk bytes of the whole chunks
+      directory against one number in `scripts/bundle-size-budget.json`. No
+      gzip/brotli measurement (so it tracks a number no user ever downloads), no
+      per-chunk cap (a single 2 MB Three.js chunk is invisible if the total
+      holds), and no per-route first-load figure — which is the only number that
+      predicts how the studio actually opens. Replace with per-route first-load
+      JS, compressed, with a per-chunk ceiling.
+- [ ] **Four packages are linted by nothing.** All six `packages/*` stub their
+      own script as `"lint": "echo ok"`, and the root `lint` script only names
+      `packages/domain/src` and `packages/contracts/src`. So `packages/cad`
+      (1,759 lines), `packages/client` (849), `packages/db` (3,792) and
+      `packages/ui` (535) — **6,935 lines** — are covered by no linter at all,
+      and `packages/ui` is additionally in the `ignores` list of
+      `eslint.config.mjs`. This is the same failure mode that let five features
+      ship inert in `apps/web` before it was first linted in 2026-08. Add them
+      to the root script and fix what falls out; do not raise the warning
+      ceiling to land it.
+- [ ] **`globals.css:4` claims a token unification that nothing enforces.** The
+      header says “Unified with `@workstream/ui` tokens
+      (`packages/ui/src/tokens.ts`)”. The package and that file both exist and
+      are consumed by 33 `apps/mobile` files — but **zero `apps/web` files
+      import `@workstream/ui`**, so for web the claim is aspirational: the two
+      token sets can drift with nothing reporting it. Either make web consume
+      the package, add a parity check like the `cfz.parity` test, or delete the
+      claim. Leaving a false provenance note in the token file is the same
+      defect class as the rule doc naming deleted specs.
+- [ ] **UI-kit `var(--ink-*, #fff)` fallbacks all disagree with their tokens.**
+      47 sites in `apps/web/src/components/ui/kit/kit.module.css` write `#fff`
+      as the fallback for tokens that resolve to `#1a1a1a`. Related root cause:
+      `globals.css:60` defines `--ink-inverted: var(--gs-ink)` — an “inverted”
+      ink token whose value is identical to the non-inverted one, so the kit had
+      nothing correct to reach for. Fix the token first, then the fallbacks.
+      `scripts/check-handoff-chrome-colors.mjs` already implements the check
+      (fallback must equal the token it backs) but is scoped to
+      `RENDER_VALUE_PATHS`; widen it to the kit once these are fixed.
+
 ## P2 — Scale + cost
 
 - [x] **Per-request owner secrets** — `owner-secrets.ts` AsyncLocalStorage; no
