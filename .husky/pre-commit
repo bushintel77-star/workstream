@@ -11,14 +11,19 @@
 #                           (warnings included: unused bindings are how five
 #                           shipped-inert features were found in apps/web)
 #   3. vitest related       specs whose module graph reaches a staged file
-#   4. source-scraping specs  the eight tests that read repo files as text
-#                           (eslint.config.mjs, globals.css, package.json).
+#   4. source-scraping specs  every test that reads repo files as text — found
+#                           by scanning, not by a list (eslint.config.mjs,
+#                           globals.css, package.json; ten of them today).
 #                           Vitest's module graph cannot see those reads, so
 #                           `related` never selects them — they run every time
-#   5. repo ratchets        the eight pure-file-reader gates from `pnpm run ci`
+#   5. repo ratchets        the nine pure-file-reader gates from `pnpm run ci`
 #                           (mobile placeholders/distribution, portal edge,
 #                           handoff colours, ui token parity, studio dialect,
-#                           feature reachability, css scales)
+#                           feature reachability, route reachability, css scales)
+#   6. gate self-tests      a `scripts/*.mjs` gate with a paired
+#                           `*.selftest.mjs` runs it when either is staged —
+#                           too slow for every commit, mandatory on the commits
+#                           that could break it
 #
 # DOES NOT COVER — CI still owns these, do not read green here as "safe to push"
 #   - the full unit suite. Only related + scraping specs run; a change with a

@@ -13,13 +13,14 @@
  * Latency matters as much as coverage: a hook slow enough to be worth
  * `--no-verify` protects nothing. Warm, the whole set is under ten seconds —
  * typecheck is turbo-cached, ESLint sees only staged files, Vitest sees only
- * related specs, and the eight repo ratchets are pure file readers.
+ * related specs, and the nine repo ratchets are pure file readers.
  *
  * lint-staged passes matched paths as positional args. Commands that take a
  * file list receive it; commands that operate on the whole project (typecheck)
  * are returned from a function that ignores the list, which is what tells
  * lint-staged not to append it.
  */
+const fs = require("node:fs");
 const path = require("node:path");
 
 /** lint-staged hands over absolute paths; the tools all want repo-relative. */
@@ -57,6 +58,26 @@ module.exports = {
    */
   [LINTED_ROOTS]: (files) =>
     `pnpm exec eslint ${rel(files).join(" ")} --max-warnings 0`,
+
+  /*
+   * A gate's self-test is the only thing proving that gate still fails when it
+   * should, and `pnpm run ci` runs it. At 3.4s it is too slow to pay on every
+   * commit and exactly right on the commits that touch the gate it guards, so
+   * it is paired by filename rather than listed in the always-on set. Pairing
+   * beats a hardcoded list for the same reason the scraping-spec scan is
+   * discovered: the next `*.selftest.mjs` is covered the day it is written.
+   */
+  "scripts/*.mjs": (files) => {
+    const staged = rel(files);
+    const selftests = new Set(
+      staged.filter((f) => f.endsWith(".selftest.mjs")),
+    );
+    for (const f of staged) {
+      const paired = f.replace(/\.mjs$/, ".selftest.mjs");
+      if (fs.existsSync(paired)) selftests.add(paired);
+    }
+    return [...selftests].map((f) => `node ${f}`);
+  },
 
   /*
    * Vitest's related-tests mode: the specs whose module graph reaches a staged

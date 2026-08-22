@@ -7,7 +7,7 @@
  *  1. **Repo-wide ratchets.** `check-css-scales`, `check-feature-reachability`
  *     and friends measure the whole tree. Nothing about the file you staged
  *     tells you whether you moved one of them off its scope, and they are all
- *     pure file readers — the eight of them together cost about 0.6s, so there
+ *     pure file readers — the nine of them together cost about 0.7s, so there
  *     is no latency argument for skipping them.
  *
  *  2. **Source-scraping specs.** Eight unit tests read repo files with
@@ -44,6 +44,7 @@ const RATCHETS = [
   "scripts/check-ui-token-parity.mjs",
   "scripts/check-studio-dialect.mjs",
   "scripts/check-feature-reachability.mjs",
+  "scripts/check-route-reachability.mjs",
   "scripts/check-css-scales.mjs",
 ];
 

@@ -259,9 +259,10 @@ re-measured, not quoted from the survey.
 - [x] **The pre-commit hook now means something** (2026-08-22). It ran
       `pnpm -w typecheck` and nothing else, so an ESLint refactor was committed
       behind a green hook with a red unit test. It now also runs ESLint on staged
-      files at `--max-warnings 0`, `vitest related` on the staged set, the eight
-      pure-file-reader CI ratchets, and — because Vitest's module graph cannot see
-      a `readFileSync` — every source-scraping spec, discovered by scan rather
+      files at `--max-warnings 0`, `vitest related` on the staged set, the nine
+      pure-file-reader CI ratchets, a gate script's paired `*.selftest.mjs` when
+      either is staged, and — because Vitest's module graph cannot see a
+      `readFileSync` — every source-scraping spec, discovered by scan rather
       than hardcoded. Scope is documented in `.husky/pre-commit` itself, including
       what it deliberately does not cover (`web:check-bundle-size` needs a full
       Next build; the full suite; e2e).
