@@ -35,13 +35,23 @@ export const ZoneLightingSchema = z.object({
 });
 export type ZoneLighting = z.infer<typeof ZoneLightingSchema>;
 
-export const ZoneIrrigationSchema = z.object({
+/**
+ * One irrigation BOM line inside a design zone — an item/qty/unit row, the
+ * sibling of `ZonePlantingSchema` / `ZoneHardscapeSchema` / `ZoneLightingSchema`.
+ *
+ * The `...Line` suffix is load-bearing: the catalog's `IrrigationZoneSchema`
+ * is a different concept entirely (an authored path on the studio canvas with
+ * emitters and hydraulics). Without the suffix the two names are permutations
+ * of each other, which makes picking the wrong one at a call site a coin flip
+ * the type system cannot catch.
+ */
+export const ZoneIrrigationLineSchema = z.object({
   item: z.string(),
   qty: z.number().nonnegative(),
   unit: z.string(),
   sku: z.string().optional(),
 });
-export type ZoneIrrigation = z.infer<typeof ZoneIrrigationSchema>;
+export type ZoneIrrigationLine = z.infer<typeof ZoneIrrigationLineSchema>;
 
 export const ZoneSchema = z.object({
   id: z.string(),
@@ -50,7 +60,7 @@ export const ZoneSchema = z.object({
   plantings: z.array(ZonePlantingSchema).default([]),
   hardscape: z.array(ZoneHardscapeSchema).default([]),
   lighting: z.array(ZoneLightingSchema).default([]),
-  irrigation: z.array(ZoneIrrigationSchema).default([]),
+  irrigation: z.array(ZoneIrrigationLineSchema).default([]),
 });
 export type Zone = z.infer<typeof ZoneSchema>;
 
