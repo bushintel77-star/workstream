@@ -194,34 +194,77 @@ re-measured, not quoted from the survey.
       holds), and no per-route first-load figure — which is the only number that
       predicts how the studio actually opens. Replace with per-route first-load
       JS, compressed, with a per-chunk ceiling.
-- [ ] **Four packages are linted by nothing.** All six `packages/*` stub their
-      own script as `"lint": "echo ok"`, and the root `lint` script only names
-      `packages/domain/src` and `packages/contracts/src`. So `packages/cad`
-      (1,759 lines), `packages/client` (849), `packages/db` (3,792) and
-      `packages/ui` (535) — **6,935 lines** — are covered by no linter at all,
-      and `packages/ui` is additionally in the `ignores` list of
-      `eslint.config.mjs`. This is the same failure mode that let five features
-      ship inert in `apps/web` before it was first linted in 2026-08. Add them
-      to the root script and fix what falls out; do not raise the warning
-      ceiling to land it.
-- [ ] **`globals.css:4` claims a token unification that nothing enforces.** The
-      header says “Unified with `@workstream/ui` tokens
-      (`packages/ui/src/tokens.ts`)”. The package and that file both exist and
-      are consumed by 33 `apps/mobile` files — but **zero `apps/web` files
-      import `@workstream/ui`**, so for web the claim is aspirational: the two
-      token sets can drift with nothing reporting it. Either make web consume
-      the package, add a parity check like the `cfz.parity` test, or delete the
-      claim. Leaving a false provenance note in the token file is the same
-      defect class as the rule doc naming deleted specs.
-- [ ] **UI-kit `var(--ink-*, #fff)` fallbacks all disagree with their tokens.**
-      47 sites in `apps/web/src/components/ui/kit/kit.module.css` write `#fff`
-      as the fallback for tokens that resolve to `#1a1a1a`. Related root cause:
-      `globals.css:60` defines `--ink-inverted: var(--gs-ink)` — an “inverted”
-      ink token whose value is identical to the non-inverted one, so the kit had
-      nothing correct to reach for. Fix the token first, then the fallbacks.
-      `scripts/check-handoff-chrome-colors.mjs` already implements the check
-      (fallback must equal the token it backs) but is scoped to
-      `RENDER_VALUE_PATHS`; widen it to the kit once these are fixed.
+- [x] **`packages/db` and `packages/ui` are now linted** (2026-08-22). The
+      audited 6,935-line figure is exact: `packages/cad` 1,759, `packages/client`
+      849, `packages/db` 3,792, `packages/ui` 535. `db` + `ui` (4,327 lines) are
+      in the root `lint` script, the `packages/ui/**` entry is gone from the
+      `ignores` list in `eslint.config.mjs`, and `packages/ui` gets
+      `react-hooks/rules-of-hooks` + `exhaustive-deps` on its own `files:` block
+      — un-ignoring it alone would have bought type-aware rules and no React
+      coverage. First run produced 4 findings in `packages/db`, all fixed, none
+      suppressed: a `throw new Error(msg)` in the **production boot-refusal path**
+      of `sqlite-persist.ts` that dropped the caught `cause` (so an operator whose
+      volume is unmounted got a flattened message with no errno or stack), a
+      `prefer-const`, and two dead type imports. No shipped-inert feature — unlike
+      `apps/web`, the unused bindings here were stale imports, not un-wired code.
+      `packages/cad` + `packages/client` landed separately in `f55badd` (one
+      finding, an unused `CatalogPlacement` import), so all four are now covered
+      and the only `"lint": "echo ok"` left in the tree is `apps/mobile`.
+      **Still open:** `apps/mobile` (ESLint-ignored repo-wide, RN rules never
+      landed) is the last unlinted surface and is bigger than all four packages
+      combined; it needs its own scoped piece of work.
+- [x] **`globals.css:4`'s token-unification claim now has a mechanism**
+      (2026-08-22) — `scripts/check-ui-token-parity.mjs`, wired into `pnpm run ci`
+      as `web:check-ui-token-parity`. It compares 32 shared colour tokens between
+      `packages/ui/src/tokens.ts` and `apps/web/src/styles/color-tokens.css` and
+      fails on value drift, on a mobile colour that no entry classifies, and on a
+      `--gs-*` token that a pair no longer resolves to. Scope floors on both the
+      parsed token count (70) and the compared pair count (30) make the
+      empty-walk collapse unreachable. Negative control run 2026-08-22: value
+      drift, drift-by-addition, drift-by-rename, total scope loss and *partial*
+      scope loss all fail the gate; sources restored byte-exactly afterwards.
+      The claim is still only about values — **zero `apps/web` files import
+      `@workstream/ui`** and that is unchanged; the gate makes the parity real
+      rather than aspirational, it does not make web a consumer.
+- [ ] **`--ink-inverted` is defined as its own opposite, and it is rendering.**
+      `globals.css:60` sets `--ink-inverted: var(--gs-ink)` = `#1a1a1a`, the same
+      value as `--ink-primary` and `--surface-inverted`. Measured in Chromium
+      against the real stylesheets (2026-08-22), composited, WCAG 2.2:
+      `toast-host.module.css` `.info` **1.24:1 — unreadable**, `.success`
+      2.76:1, `.error` 3.27:1, and `kit.module.css:163` `.btn[data-variant=
+      "accent"]` 3.39:1 across ~14 live call sites (portal error, quote portal,
+      recording + photo upload, processing screen, settings licence,
+      `PresentSurface` ×8). Toasts are the app's documented mutation-feedback
+      channel, so this is live on every server action.
+      **Fix is one line:** `--ink-inverted: var(--gs-chip-active-ink)` (`#ffffff`,
+      already documented in `color-tokens.css` as 15.83:1 on charcoal). Re-measured
+      with that override: 14.07 / 6.30 / 5.33 / 5.13:1 — all AA, and the accent
+      figure lands exactly on the "white-on-it 5.14:1" the token file claims for
+      `--gs-primary`. Not fixed here: `globals.css` was owned by another agent
+      this session.
+      Two sites are **dead CSS, not live defects**: `siteCanvas.module.css`
+      `.btnPrimary` and `.modeBtnActive` pair `--ink-inverted` with `--ink` for a
+      literal 1:1, but that module's only live importer is
+      `PipelineShellLoading.tsx`, which uses `.root` alone. Delete with the rest
+      of the SVG-era leftovers.
+      The 47 `var(--ink-*, #fff)` fallbacks in `kit.module.css` are a *separate*
+      and much smaller issue: 46 of them back `--ink-primary`, where the token is
+      correct for Studio Paper and the `#fff` fallback is the stale pre-pivot
+      value. They never fire (the tokens are always defined at `:root`), so they
+      are misleading documentation rather than a rendering bug — but they are
+      exactly the trap that makes the `--ink-inverted` defect hard to see.
+      `scripts/check-handoff-chrome-colors.mjs` already implements the
+      fallback-must-equal-token check but is scoped to `RENDER_VALUE_PATHS`;
+      widen it to the kit once the token is fixed.
+- [x] **The pre-commit hook now means something** (2026-08-22). It ran
+      `pnpm -w typecheck` and nothing else, so an ESLint refactor was committed
+      behind a green hook with a red unit test. It now also runs ESLint on staged
+      files at `--max-warnings 0`, `vitest related` on the staged set, the eight
+      pure-file-reader CI ratchets, and — because Vitest's module graph cannot see
+      a `readFileSync` — every source-scraping spec, discovered by scan rather
+      than hardcoded. Scope is documented in `.husky/pre-commit` itself, including
+      what it deliberately does not cover (`web:check-bundle-size` needs a full
+      Next build; the full suite; e2e).
 
 ## P2 — Scale + cost
 
