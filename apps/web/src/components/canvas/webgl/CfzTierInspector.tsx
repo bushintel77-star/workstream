@@ -221,7 +221,7 @@ export function CfzTierInspector() {
     padding: "6px 10px",
     borderRadius: "var(--gs-radius-md)",
     background: "var(--cf-dark-chrome-bg)",
-    color: "var(--gs-ink-strong, #fff)",
+    color: "var(--cf-glass-dark-ink)",
     whiteSpace: "pre",
   };
 
@@ -254,7 +254,7 @@ export function CfzTierInspector() {
     padding: "8px 12px",
     borderRadius: "var(--gs-radius-md)",
     background: "var(--cf-dark-chrome-bg)",
-    color: "var(--gs-ink-strong, #fff)",
+    color: "var(--cf-glass-dark-ink)",
     cursor: "help",
     userSelect: "none",
   };
@@ -276,7 +276,7 @@ export function CfzTierInspector() {
     padding: "10px 14px",
     borderRadius: "var(--gs-radius-md)",
     background: "var(--cf-dark-panel-bg)",
-    color: "var(--gs-ink-strong, #fff)",
+    color: "var(--cf-glass-dark-ink)",
     whiteSpace: "pre",
   };
 
@@ -362,7 +362,7 @@ export function CfzTierInspector() {
             padding: "6px 8px",
             borderRadius: "var(--gs-radius-md)",
             background: "var(--cf-dark-chrome-bg)",
-            color: "var(--gs-ink-strong, #fff)",
+            color: "var(--cf-glass-dark-ink)",
             display: "flex",
             gap: "var(--gs-space-2)",
             userSelect: "none",
@@ -390,7 +390,7 @@ export function CfzTierInspector() {
                   padding: "4px 8px",
                   borderRadius: "var(--gs-radius-sm)",
                   border: "1px solid currentColor",
-                  background: isPeeled ? "var(--gs-warning, #c92)" : "transparent",
+                  background: isPeeled ? "var(--gs-warning, #525252)" : "transparent",
                   color: isPeeled ? "#000" : "inherit",
                   cursor: "pointer",
                 }}

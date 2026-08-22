@@ -50,8 +50,8 @@ const provenanceCss: CSSProperties = {
 const alertCss: CSSProperties = {
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-sm)",
-  color: "#C41E1E",
-  border: "1px solid color-mix(in srgb, #C41E1E 45%, transparent)",
+  color: "var(--gs-conflict)",
+  border: "1px solid color-mix(in srgb, var(--gs-conflict) 45%, transparent)",
   borderRadius: "var(--gs-radius-chip)",
   padding: "6px 8px",
   marginBottom: 8,

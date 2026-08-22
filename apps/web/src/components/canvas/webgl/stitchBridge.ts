@@ -25,6 +25,7 @@ import {
   type StitchedFeature,
 } from "@workstream/domain";
 import type { FeatureLayer } from "@workstream/contracts";
+import { PALETTE } from "../../../styles/colorTokens";
 import { pctToWorld, worldToPct } from "./coordTransform";
 
 const clampPct = (v: number): number => Math.max(0, Math.min(100, v));
@@ -142,7 +143,7 @@ export function unstitchFeatureToSketchStrokes(
       const pct = worldToPct(p.x, p.y, scaleM, boardAspect);
       return { x_pct: clampPct(pct.x), y_pct: clampPct(pct.y) };
     }),
-    color: "#ff2ef6",
+    color: PALETTE.sketchInk,
     width_px: 2.5,
     kind: "ink",
   }));

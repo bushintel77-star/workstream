@@ -1175,7 +1175,7 @@ export function WebGLStudioPreview({
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-md)",
                 fontWeight: 600,
-                color: "#f5f5f7",
+                color: "var(--cf-glass-dark-ink)",
                 letterSpacing: "0.01em",
               }}
             >
@@ -2493,7 +2493,7 @@ function InteractionGuidanceChip({
         textOverflow: "ellipsis",
       }}
     >
-      <strong style={{ color: "#f5f5f7" }}>{guidance.label}</strong>
+              <strong style={{ color: "var(--cf-glass-dark-ink)" }}>{guidance.label}</strong>
       <span>{guidance.detail}</span>
     </div>
   );

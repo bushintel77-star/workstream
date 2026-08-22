@@ -768,6 +768,14 @@ button:focus-visible {
   --cf-glass-dark: rgba(20, 20, 20, 0.65);
   --cf-glass-dark-border: color-mix(in srgb, #ffffff 18%, transparent);
   --cf-glass-dark-blur: 12px;
+  /* THE ink for dark chrome — this family, --cf-dark-chrome-bg and
+   * --cf-dark-panel-bg. One ink for one dark identity; no per-surface bespoke
+   * palettes. Not a new value: it is the near-white already hardcoded on
+   * .vth-root.vth-dark below and repeated inline in three WebGL studio chip
+   * styles. Naming it here takes the literal out of the chrome, and gives the
+   * dev HUDs something to reach for other than --gs-ink-strong, which is
+   * paper ink (#111) and rendered them black-on-black. */
+  --cf-glass-dark-ink: #f5f5f7;
   --cf-edge-default: 16px;
 
   --ws-sheet-pad: 12px;
@@ -951,7 +959,7 @@ button:focus-visible {
   backdrop-filter: blur(var(--cf-glass-dark-blur));
   -webkit-backdrop-filter: blur(var(--cf-glass-dark-blur));
   border: 1px solid var(--cf-glass-dark-border);
-  color: #f5f5f7;
+  color: var(--cf-glass-dark-ink);
 }
 .vth-root.vth-dark .vth-preset:not([data-active="true"]) {
   color: color-mix(in srgb, #ffffff 78%, transparent);
