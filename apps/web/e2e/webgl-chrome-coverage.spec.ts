@@ -52,14 +52,9 @@ const API = process.env.API_URL ?? "http://127.0.0.1:3001";
  *     which is also the only chip in the bottom slot now that the first-run
  *     hint was folded into it.
  *   sketch 3.0 — interaction-guidance 2.88%, viewport-transition-hud 0.09%.
- *   cad 7.8 — dim-label 3.13% (the ring CAD deliberately arms),
- *     interaction-guidance up to 4.60%, viewport-transition-hud 0.09%.
+ *   cad 6.2 — dim-label 3.13% (the ring CAD deliberately arms),
+ *     interaction-guidance 2.94%, viewport-transition-hud 0.09%.
  *   quote 5.8 — dim-label 3.13%, interaction-guidance 2.56%, HUD 0.09%.
- *
- * The guidance line is measured between 2.56% and 4.60% depending on the mode's
- * detail text and whether the first-run control tail is still showing, so the
- * bands below have to absorb ~2pp of legitimate width variance. Baselines are
- * the observed maximum per mode.
  *
  * NOT comparable to the SVG-era numbers the deleted spec carried (survey 4.1%):
  * different studio, different chrome set, and a projected-boundary denominator
@@ -68,14 +63,14 @@ const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 const COVERAGE_BASELINE: Record<string, number> = {
   survey: 2.9,
   sketch: 3.0,
-  cad: 7.8,
+  cad: 6.2,
   quote: 5.8,
 };
 
-/** Guidance-line width variance + rendering jitter; a regression is larger. */
-const COVERAGE_TOLERANCE_PP = 2;
+/** Rendering jitter between runs; a real regression is far larger than this. */
+const COVERAGE_TOLERANCE_PP = 0.75;
 /** Drop beyond this means the baseline is stale and must be lowered. */
-const COVERAGE_STALE_PP = 4;
+const COVERAGE_STALE_PP = 2;
 
 /**
  * Everything that paints over the drawing. Structural where possible: the
@@ -295,6 +290,17 @@ test.describe("WebGL idle chrome coverage", () => {
       "5 Coverage Ratchet Street, Melbourne VIC 3000",
     );
     await page.setViewportSize({ width: 1600, height: 950 });
+
+    // "Idle" means the STEADY state, not the first-run state. The guidance
+    // line's first-run control tail widens the chip by ~1.7pp of the drawing,
+    // which is real coverage but transient — leaving it in made the same mode
+    // measure 2.88% and 4.60% across two runs, and a ratchet that needs a 2pp
+    // tolerance to absorb its own fixture is not measuring anything. Dismissed
+    // up front, the same way the fit-sheet preference is seeded in the collision
+    // spec.
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("gs-controls-hint-seen", "1");
+    });
 
     const report: string[] = [];
     for (const mode of ["survey", "sketch", "cad", "quote"] as const) {
