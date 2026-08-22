@@ -893,9 +893,15 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   drainageView: false,
   earthworksView: true,
 
-  // CAD annotation defaults — dims ON (the client wants to see sizes);
-  // the measure tape is an armed tool, off by default.
-  dimsView: true,
+  // CAD annotation defaults — dims OFF. The old `true` was justified by "the
+  // client wants to see sizes", which is a Quote/Present argument: it put a
+  // dimension ring on the edges of a lot the operator was still trying to
+  // establish in Survey. `DimensionLayer` mounts unconditionally and self-gates
+  // on this flag alone with no mode term, so the default WAS the policy. Mode
+  // entry now arms it — see modeArmsDims (cad + the pricing modes), which is
+  // the pattern CAD already used explicitly and the only path that should exist.
+  // The measure tape stays an armed tool, off by default.
+  dimsView: false,
   measureActive: false,
   measureTape: null,
 
