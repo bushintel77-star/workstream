@@ -21,8 +21,13 @@ import { useFrame } from "@react-three/fiber";
 import { Line, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import type {
+  CatalogPlacement,
+  ConstructionTrench,
   DesignKeylessOverlay,
   DesignNeighbourBuilding,
+  DesignSiteFrameLevel,
+  IrrigationZone,
+  LandscapeFeature,
 } from "@workstream/contracts";
 import {
   createElevationSampler,
@@ -67,6 +72,10 @@ import { FloraRingLayer } from "./FloraRingLayer";
 import { FeatureLayer } from "./FeatureLayer";
 import { CadProposalLayer } from "./CadProposalLayer";
 import { type PresentationLensFilter } from "./PresentationLens";
+import { AnnotationLayer } from "./annotations/AnnotationLayer";
+import type { AnnotationDialect } from "./annotations/model";
+import type { SurveyedPlanLayers } from "./studioStore";
+import { TradeAnnotationLayer } from "./annotations/TradeAnnotationLayer";
 
 export interface StudioSceneProps {
   scaleM: number;
@@ -115,6 +124,18 @@ export interface StudioSceneProps {
     lotAreaM2?: number | null;
     sunHours?: number | null;
   };
+  levels?: DesignSiteFrameLevel[];
+  placements?: CatalogPlacement[];
+  features?: LandscapeFeature[];
+  annotationDialect?: AnnotationDialect;
+  annotationLayers?: SurveyedPlanLayers;
+  tradePacks?: {
+    irrigationDrainage: boolean;
+    hardscapeConstruction: boolean;
+    lightingElectrical: boolean;
+  };
+  constructionTrenches?: ConstructionTrench[];
+  irrigationZones?: IrrigationZone[];
 }
 
 /** Signal Blue origin peg — a crosshair at (0,0,0). */
@@ -681,6 +702,18 @@ export function StudioScene({
   showSketch = true,
   mode = "survey",
   siteMeta,
+  levels = [],
+  placements = [],
+  features = [],
+  annotationDialect = "technical",
+  annotationLayers,
+  tradePacks = {
+    irrigationDrainage: false,
+    hardscapeConstruction: false,
+    lightingElectrical: false,
+  },
+  constructionTrenches = [],
+  irrigationZones = [],
 }: StudioSceneProps) {
   // Default policy keeps every mode's legacy behaviour when unset.
   const policy: CanvasLayerPolicy = layerPolicy ?? {
@@ -941,6 +974,37 @@ export function StudioScene({
         scaleM={scaleM}
         boardAspect={boardAspect}
         heightmapPoints={heightmapPoints}
+      />
+      <AnnotationLayer
+        boundaryPct={boundaryPct}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        levels={levels}
+        placements={placements}
+        features={features}
+        dialect={annotationDialect}
+        toggles={
+          annotationLayers ?? {
+            enabled: false,
+            propertyLines: false,
+            elevations: false,
+            plants: false,
+            materials: false,
+            callouts: false,
+            scope: false,
+          }
+        }
+      />
+      <TradeAnnotationLayer
+        boundaryPct={boundaryPct}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        dialect={annotationDialect}
+        packs={tradePacks}
+        trenches={constructionTrenches}
+        zones={irrigationZones}
+        features={features}
+        placements={placements}
       />
     </>
   );

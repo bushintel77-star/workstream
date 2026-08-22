@@ -62,6 +62,7 @@ import {
   sunDateFromPreset,
   type SunDatePreset,
 } from "../handoff/features/sunGrowth/sunDatePreset";
+import type { AnnotationDialect } from "./annotations/model";
 import type { PctPoint } from "./coordTransform";
 import {
   blendTargetForPitch,
@@ -114,6 +115,21 @@ import type { PlanePoint } from "./photoTraceMath";
 
 export type SaveStatus = "idle" | "saving" | "retrying" | "saved" | "error";
 export type SaveErrorKind = "unreachable" | "stale_client" | "rejected" | null;
+export interface SurveyedPlanLayers {
+  enabled: boolean;
+  propertyLines: boolean;
+  elevations: boolean;
+  plants: boolean;
+  materials: boolean;
+  callouts: boolean;
+  scope: boolean;
+}
+
+export interface TradePackVisibility {
+  irrigationDrainage: boolean;
+  hardscapeConstruction: boolean;
+  lightingElectrical: boolean;
+}
 
 /* -------------------------------------------------------------------------- */
 /* Seasonal math helpers — pure functions (callable from useFrame via getState) */
@@ -269,6 +285,24 @@ export interface StudioStoreState {
   measureTape: { a: PctPoint; b: PctPoint } | null;
   /** Itemized fit-sheet quotation card (Phase 3 live quote). */
   fitSheetOpen: boolean;
+  /** Surveyed-plan communication layers (bearing/RL/tags/hatches/callouts/scope). */
+  surveyedPlanLayers: SurveyedPlanLayers;
+  /** Survey communication dialect on the Survey screen. */
+  surveyAnnotationDialect: AnnotationDialect;
+  /** CAD communication layers (architectural/technical drawing overlays). */
+  cadAnnotationLayers: SurveyedPlanLayers;
+  /** CAD communication dialect on the CAD screen. */
+  cadAnnotationDialect: AnnotationDialect;
+  /** Sketch communication layers (creative design overlays). */
+  sketchAnnotationLayers: SurveyedPlanLayers;
+  /** Sketch communication dialect on the Sketch screen. */
+  sketchAnnotationDialect: AnnotationDialect;
+  /** Survey trade communication packs. */
+  surveyTradePacks: TradePackVisibility;
+  /** CAD trade communication packs. */
+  cadTradePacks: TradePackVisibility;
+  /** Sketch trade communication packs. */
+  sketchTradePacks: TradePackVisibility;
 
   /** Split view — locked plan | live 3D with linked cameras. */
   splitView: boolean;
@@ -664,6 +698,15 @@ export interface StudioStoreState {
   setMeasureTape: (a: PctPoint | null, b: PctPoint | null) => void;
 
   setFitSheetOpen: (v: boolean) => void;
+  setSurveyedPlanLayers: (patch: Partial<SurveyedPlanLayers>) => void;
+  setSurveyAnnotationDialect: (dialect: AnnotationDialect) => void;
+  setCadAnnotationLayers: (patch: Partial<SurveyedPlanLayers>) => void;
+  setCadAnnotationDialect: (dialect: AnnotationDialect) => void;
+  setSketchAnnotationLayers: (patch: Partial<SurveyedPlanLayers>) => void;
+  setSketchAnnotationDialect: (dialect: AnnotationDialect) => void;
+  setSurveyTradePacks: (patch: Partial<TradePackVisibility>) => void;
+  setCadTradePacks: (patch: Partial<TradePackVisibility>) => void;
+  setSketchTradePacks: (patch: Partial<TradePackVisibility>) => void;
   /** Estimate line ids unticked by the operator (quote-view state, not a
    *  canvas mutation — excluded lines leave the estimate, the design stays).
    *  Session-scoped; stale ids are harmless (the filter ignores unknowns). */
@@ -908,6 +951,51 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Fit-sheet default ON — the live quote IS the product (the card
   // self-gates on an empty canvas).
   fitSheetOpen: true,
+  surveyedPlanLayers: {
+    enabled: true,
+    propertyLines: true,
+    elevations: true,
+    plants: true,
+    materials: true,
+    callouts: true,
+    scope: true,
+  },
+  surveyAnnotationDialect: "technical",
+  cadAnnotationLayers: {
+    enabled: true,
+    propertyLines: true,
+    elevations: true,
+    plants: true,
+    materials: true,
+    callouts: true,
+    scope: true,
+  },
+  cadAnnotationDialect: "architectural",
+  sketchAnnotationLayers: {
+    enabled: true,
+    propertyLines: false,
+    elevations: false,
+    plants: true,
+    materials: true,
+    callouts: true,
+    scope: true,
+  },
+  sketchAnnotationDialect: "creative",
+  surveyTradePacks: {
+    irrigationDrainage: true,
+    hardscapeConstruction: true,
+    lightingElectrical: false,
+  },
+  cadTradePacks: {
+    irrigationDrainage: true,
+    hardscapeConstruction: true,
+    lightingElectrical: true,
+  },
+  sketchTradePacks: {
+    irrigationDrainage: false,
+    hardscapeConstruction: true,
+    lightingElectrical: false,
+  },
   // Estimate exclusions — no lines unticked by default.
   excludedEstimateLineIds: [],
 
@@ -1083,6 +1171,30 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set({ measureTape: a && b ? { a, b } : null }),
 
   setFitSheetOpen: (fitSheetOpen) => set({ fitSheetOpen }),
+  setSurveyedPlanLayers: (patch) =>
+    set((s) => ({
+      surveyedPlanLayers: { ...s.surveyedPlanLayers, ...patch },
+    })),
+  setSurveyAnnotationDialect: (surveyAnnotationDialect) =>
+    set({ surveyAnnotationDialect }),
+  setCadAnnotationLayers: (patch) =>
+    set((s) => ({
+      cadAnnotationLayers: { ...s.cadAnnotationLayers, ...patch },
+    })),
+  setCadAnnotationDialect: (cadAnnotationDialect) =>
+    set({ cadAnnotationDialect }),
+  setSketchAnnotationLayers: (patch) =>
+    set((s) => ({
+      sketchAnnotationLayers: { ...s.sketchAnnotationLayers, ...patch },
+    })),
+  setSketchAnnotationDialect: (sketchAnnotationDialect) =>
+    set({ sketchAnnotationDialect }),
+  setSurveyTradePacks: (patch) =>
+    set((s) => ({ surveyTradePacks: { ...s.surveyTradePacks, ...patch } })),
+  setCadTradePacks: (patch) =>
+    set((s) => ({ cadTradePacks: { ...s.cadTradePacks, ...patch } })),
+  setSketchTradePacks: (patch) =>
+    set((s) => ({ sketchTradePacks: { ...s.sketchTradePacks, ...patch } })),
   toggleEstimateLineExcluded: (id) =>
     set((s) => ({
       excludedEstimateLineIds: s.excludedEstimateLineIds.includes(id)
