@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "echo ok",
+    "lint": "eslint src --max-warnings 0",
     "import:open-crop": "node scripts/generate-open-crop-catalog.mjs",
     "import:osmic-landscape": "node scripts/generate-osmic-landscape-catalog.mjs",
     "import:planzv": "node scripts/download-planzv-fnp.mjs && node scripts/generate-planzv-catalog.mjs",

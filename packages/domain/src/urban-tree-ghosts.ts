@@ -3,6 +3,8 @@
  * Never invent DBH — canopy radius only scales the glyph roughly.
  */
 
+import { clampBoardPct } from "@workstream/contracts";
+
 export type UrbanTreeCanvasPoint = {
   x: number;
   y: number;
@@ -28,9 +30,15 @@ export type UrbanTreeGhostPlacement = {
   heightM?: number | null;
 };
 
-function clampPct(n: number): number {
+/**
+ * A tree whose letterbox projection produced a non-finite point has no known
+ * board position, so it lands at board centre rather than the 0,0 corner — it
+ * should read as "somewhere on site", not pinned to the top-left. Only that
+ * fallback is local; the bound itself is the contract's.
+ */
+function toBoardPctOrCentre(n: number): number {
   if (!Number.isFinite(n)) return 50;
-  return Math.max(0, Math.min(100, n));
+  return clampBoardPct(n);
 }
 
 /** ~6 m canopy → scale 1 at 110 m board; clamp for tiny / huge canopies. */
@@ -104,8 +112,8 @@ export function urbanTreesToExistGhosts(args: {
     }
     return {
       symbol_id: "existing-tree-retain" as const,
-      x_pct: clampPct(pct.x),
-      y_pct: clampPct(pct.y),
+      x_pct: toBoardPctOrCentre(pct.x),
+      y_pct: toBoardPctOrCentre(pct.y),
       confidence: 0.72,
       reason: bits.join(" · "),
       scale: canopyRadiusToGlyphScale(t.canopy_radius_m, boardM),

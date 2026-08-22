@@ -6,10 +6,11 @@
  * Indicative Workflow 1 geometry — not DBYD / authority asset plans.
  */
 
-import type {
-  ConstructionTrench,
-  ConstructionTrenchKind,
-  IrrigationZone,
+import {
+  clampBoardPct,
+  type ConstructionTrench,
+  type ConstructionTrenchKind,
+  type IrrigationZone,
 } from "@workstream/contracts";
 import {
   polylineLengthFromCanvasPercent,
@@ -109,10 +110,7 @@ function clearPoint(
       y: p.y + (toward.y - p.y) * t,
     };
     if (!inAnyEasement(easements, cand) && !inAnyTpz(trees, cand, scaleM)) {
-      return {
-        x: Math.max(0, Math.min(100, cand.x)),
-        y: Math.max(0, Math.min(100, cand.y)),
-      };
+      return { x: clampBoardPct(cand.x), y: clampBoardPct(cand.y) };
     }
     best = cand;
   }
@@ -127,16 +125,10 @@ function clearPoint(
   for (const o of offsets) {
     const cand = { x: p.x + o.x, y: p.y + o.y };
     if (!inAnyEasement(easements, cand) && !inAnyTpz(trees, cand, scaleM)) {
-      return {
-        x: Math.max(0, Math.min(100, cand.x)),
-        y: Math.max(0, Math.min(100, cand.y)),
-      };
+      return { x: clampBoardPct(cand.x), y: clampBoardPct(cand.y) };
     }
   }
-  return {
-    x: Math.max(0, Math.min(100, best.x)),
-    y: Math.max(0, Math.min(100, best.y)),
-  };
+  return { x: clampBoardPct(best.x), y: clampBoardPct(best.y) };
 }
 
 function clearPolyline(

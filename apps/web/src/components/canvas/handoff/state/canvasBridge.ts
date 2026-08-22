@@ -3,12 +3,13 @@
  * Ghosts never persist. Non-UUID demo ids are remapped for the contracts schema.
  */
 
-import type {
-  CatalogPlacement,
-  CanvasStroke,
-  DesignSiteFrame,
-  DesignSiteFrameInput,
-  LandscapeFeature,
+import {
+  clampBoardPct,
+  type CatalogPlacement,
+  type CanvasStroke,
+  type DesignSiteFrame,
+  type DesignSiteFrameInput,
+  type LandscapeFeature,
 } from "@workstream/contracts";
 import { symbolMatureHeightM } from "@workstream/domain";
 import type {
@@ -108,8 +109,8 @@ export function itemsToPlacements(items: StudioItem[]): CatalogPlacement[] {
     .map((i) => ({
       id: ensureUuid(i.id),
       symbol_id: i.symbolId?.trim() || TYPE_TO_SYMBOL[i.t],
-      x_pct: clampPct(i.x),
-      y_pct: clampPct(i.y),
+      x_pct: clampBoardPct(i.x),
+      y_pct: clampBoardPct(i.y),
       rotation_deg: ((i.rot % 360) + 360) % 360,
       scale: Math.max(0.05, i.scale),
       label: placementLabel(i),
@@ -193,7 +194,7 @@ export function itemsToFeatures(items: StudioItem[]): LandscapeFeature[] {
         canvas_origin_pct: { x_pct: 0, y_pct: 0 },
         points: outline.map((p, idx) => ({
           id: `v${idx}`,
-          pct: { x_pct: clampPct(p.x), y_pct: clampPct(p.y) },
+          pct: { x_pct: clampBoardPct(p.x), y_pct: clampBoardPct(p.y) },
         })),
       },
       material_fill: {
@@ -255,8 +256,8 @@ export function strokesToCanvas(strokes: SketchStroke[]): CanvasStroke[] {
   return strokes.map((s) => ({
     id: ensureUuid(s.id),
     points: s.points.map((p) => ({
-      x_pct: clampPct(p.x),
-      y_pct: clampPct(p.y),
+      x_pct: clampBoardPct(p.x),
+      y_pct: clampBoardPct(p.y),
     })),
     color: s.color ?? "var(--text-primary)",
     width_px: s.widthPx ?? 2,
@@ -265,10 +266,10 @@ export function strokesToCanvas(strokes: SketchStroke[]): CanvasStroke[] {
     ...(s.kind ? { kind: s.kind } : {}),
     ...(s.shapeTool ? { shape_tool: s.shapeTool } : {}),
     ...(s.shapeStart
-      ? { shape_start: { x_pct: clampPct(s.shapeStart.x), y_pct: clampPct(s.shapeStart.y) } }
+      ? { shape_start: { x_pct: clampBoardPct(s.shapeStart.x), y_pct: clampBoardPct(s.shapeStart.y) } }
       : {}),
     ...(s.shapeEnd
-      ? { shape_end: { x_pct: clampPct(s.shapeEnd.x), y_pct: clampPct(s.shapeEnd.y) } }
+      ? { shape_end: { x_pct: clampBoardPct(s.shapeEnd.x), y_pct: clampBoardPct(s.shapeEnd.y) } }
       : {}),
   }));
 }
@@ -290,15 +291,10 @@ export function canvasToStrokes(strokes: CanvasStroke[]): SketchStroke[] {
   }));
 }
 
-function clampPct(n: number): number {
-  if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(100, n));
-}
-
 function ringToFrame(pts: PctPoint[]) {
   return pts.map((p) => ({
-    x_pct: clampPct(p.x),
-    y_pct: clampPct(p.y),
+    x_pct: clampBoardPct(p.x),
+    y_pct: clampBoardPct(p.y),
   }));
 }
 
@@ -336,8 +332,8 @@ export function snapshotToSiteFrame(args: {
     easements: args.easements.map(ringToFrame),
     services: args.services.map(ringToFrame),
     levels: args.levels.map((lv) => ({
-      x_pct: clampPct(lv.x),
-      y_pct: clampPct(lv.y),
+      x_pct: clampBoardPct(lv.x),
+      y_pct: clampBoardPct(lv.y),
       z_m: lv.z,
       source: "authored" as const,
     })),
@@ -345,24 +341,24 @@ export function snapshotToSiteFrame(args: {
       id: run.id,
       source: "indicative" as const,
       points: run.points.map((pt) => ({
-        x_pct: clampPct(pt.x),
-        y_pct: clampPct(pt.y),
+        x_pct: clampBoardPct(pt.x),
+        y_pct: clampBoardPct(pt.y),
         z_m: pt.z,
       })),
     })),
     byda_assets: (args.bydaAssets ?? []).map((a) => ({
       ...a,
       ring: a.ring.map((pt) => ({
-        x_pct: clampPct(pt.x_pct),
-        y_pct: clampPct(pt.y_pct),
+        x_pct: clampBoardPct(pt.x_pct),
+        y_pct: clampBoardPct(pt.y_pct),
       })),
     })),
     keyless_overlays: (args.keylessOverlays ?? []).map((overlay) => ({
       ...overlay,
       rings: overlay.rings.map((ring) =>
         ring.map((pt) => ({
-          x_pct: clampPct(pt.x_pct),
-          y_pct: clampPct(pt.y_pct),
+          x_pct: clampBoardPct(pt.x_pct),
+          y_pct: clampBoardPct(pt.y_pct),
         })),
       ),
     })),

@@ -1,4 +1,7 @@
-import type { GhostPlacementSuggestion } from "@workstream/contracts";
+import {
+  clampBoardPct,
+  type GhostPlacementSuggestion,
+} from "@workstream/contracts";
 
 export type RgbaImageData = {
   width: number;
@@ -114,8 +117,8 @@ export function detectCanopyClustersFromImageData(
     return {
       id: `canopy-cluster-${i + 1}`,
       symbol_id: symbolId,
-      x_pct: Math.min(100, Math.max(0, (cx / gridSize) * 100)),
-      y_pct: Math.min(100, Math.max(0, (cy / gridSize) * 100)),
+      x_pct: clampBoardPct((cx / gridSize) * 100),
+      y_pct: clampBoardPct((cy / gridSize) * 100),
       confidence,
       reason: "Detected canopy from aerial imagery (colour analysis)",
     };

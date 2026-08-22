@@ -208,10 +208,11 @@ function toStrokePoint(
 }
 
 /**
- * Feature geometry is board-bounded by contract (`CanvasPctPointSchema` is
+ * Feature geometry is board-bounded by contract (`BoardPointPctSchema` is
  * 0–100), while stroke points are not. A vertex placed on the context ground
  * beyond the board therefore clamps to the board edge for a region — the same
- * convention every other feature writer uses (`sketchCad.ts` clampPct).
+ * convention every other feature writer uses. Not yet migrated onto the
+ * contract's `toBoardPoint`; see the follow-up MR for this directory.
  */
 function toFeaturePoint(
   v: WorldXZ,

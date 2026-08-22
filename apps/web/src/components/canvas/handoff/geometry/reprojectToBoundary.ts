@@ -1,5 +1,6 @@
 import type { PctPoint } from "./types";
 import type { SketchStroke, StudioItem } from "../studioCatalog";
+import { toBoardPctPoint } from "./boardPct";
 import { sanitizeItemsToOutdoor } from "./outdoorClamp";
 
 type RingBBox = {
@@ -39,10 +40,7 @@ export function reprojectPointFromRing(
   const bh = Math.max(1e-6, b.maxY - b.minY);
   const nx = (p.x - a.minX) / aw;
   const ny = (p.y - a.minY) / ah;
-  return {
-    x: Math.max(0, Math.min(100, b.minX + nx * bw)),
-    y: Math.max(0, Math.min(100, b.minY + ny * bh)),
-  };
+  return toBoardPctPoint({ x: b.minX + nx * bw, y: b.minY + ny * bh });
 }
 
 export function reprojectRingFromRing(

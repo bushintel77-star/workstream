@@ -1,4 +1,5 @@
 import type { PctPoint } from "./types";
+import { toBoardPctPoint } from "./boardPct";
 
 /**
  * Camera matching `.zoomWorld`:
@@ -21,13 +22,6 @@ export type BoardCamera = {
   focusY: number;
 };
 
-function clampPct(p: PctPoint): PctPoint {
-  return {
-    x: Math.max(0, Math.min(100, p.x)),
-    y: Math.max(0, Math.min(100, p.y)),
-  };
-}
-
 /** Screen point → board % under the current camera (inverts zoomWorld). */
 export function clientToBoardPct(
   clientX: number,
@@ -49,7 +43,7 @@ export function clientToBoardPct(
   const ry = sx * sin + sy * cos;
   const lx = ox + rx / zoom;
   const ly = oy + ry / zoom;
-  return clampPct({
+  return toBoardPctPoint({
     x: Number(((lx / w) * 100).toFixed(4)),
     y: Number(((ly / h) * 100).toFixed(4)),
   });
