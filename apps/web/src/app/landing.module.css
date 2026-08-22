@@ -56,150 +56,166 @@
   opacity: 1;
 }
 
-/* The one lit property — warm glow bleeding off the dwelling. */
-.glowShape {
-  fill: color-mix(in srgb, var(--hero-glow-warm) 62%, transparent);
-  filter: blur(18px);
-  mix-blend-mode: screen;
-}
-
-.glowCore {
-  fill: color-mix(in srgb, var(--hero-glow-soft) 66%, transparent);
-  filter: blur(7px);
-  mix-blend-mode: screen;
-}
-
-.boundarySvg {
+/* Dark-hero site analysis board. This borrows the reference framework's
+   hierarchy—site frame, analytical layers, perimeter notes—not its palette or
+   content. The aerial remains the hero; this is a quiet instrument over it. */
+.siteAnalysis {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  z-index: var(--ws-z-wash);
+  top: clamp(132px, 16vh, 178px);
+  right: clamp(20px, 4vw, 64px);
+  width: min(43vw, 620px);
+  height: min(58vh, 560px);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px 14px;
+  color: var(--hero-copy);
+  background: linear-gradient(145deg, rgb(22 25 28 / 78%), rgb(15 17 20 / 60%));
+  border: 1px solid rgb(246 244 239 / 24%);
+  border-radius: 22px;
+  box-shadow: 0 20px 55px rgb(0 0 0 / 28%), inset 0 1px 0 rgb(255 255 255 / 10%);
+  backdrop-filter: blur(8px);
   pointer-events: none;
 }
 
-/* The title polygon — same cobalt as the studio canvas. Draws itself in. */
-.boundaryPath {
-  fill: none;
-  stroke: var(--hero-boundary);
+.siteAnalysisHeader,
+.siteAnalysisFooter {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.siteAnalysisKicker,
+.siteAnalysisIndex,
+.siteAnalysisFooter {
+  font-family: var(--font-technical-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.siteAnalysisKicker,
+.siteAnalysisIndex {
+  color: var(--hero-copy-dim);
+}
+
+.siteAnalysisTitle {
+  margin: 3px 0 0;
+  font-family: var(--font-tech);
+  font-size: clamp(18px, 2vw, 26px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.siteAnalysisIndex {
+  padding-top: 4px;
+  white-space: nowrap;
+}
+
+.siteAnalysisSvg {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  margin: 12px 0 10px;
+  overflow: visible;
+}
+
+.siteAnalysisPanel {
+  fill: rgb(11 13 15 / 38%);
+  stroke: rgb(246 244 239 / 14%);
   stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.siteAnalysisAerial {
+  opacity: 0.52;
+  mix-blend-mode: screen;
+}
+
+.siteAnalysisGrid {
+  opacity: 0.42;
+}
+
+.siteAnalysisGridLine {
+  fill: none;
+  stroke: rgb(246 244 239 / 14%);
+  stroke-width: 1;
+}
+
+.siteAnalysisBoundary {
+  fill: rgb(246 244 239 / 5%);
+  stroke: rgb(246 244 239 / 82%);
+  stroke-width: 2.2;
+  stroke-dasharray: 12 9;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: heroDraw 1.8s var(--ws-ease) 0.35s forwards;
-  filter: drop-shadow(0 0 6px var(--hero-boundary));
 }
 
-.cornerDots circle {
-  fill: var(--hero-boundary);
-  filter: drop-shadow(0 0 5px var(--hero-boundary));
-  opacity: 0;
-  animation: heroDotIn 0.4s var(--ws-ease) 1.9s forwards;
-}
-
-/* ------------------------------------------------- hand-written features */
-
-/* The hero property's features, hand-written beside the real polygon —
-   a legend with short hand ticks. No fabricated design, no claims. */
-.featureTick {
-  stroke: color-mix(in srgb, var(--hero-chalk) 78%, transparent);
-  stroke-width: 1.4;
-  stroke-linecap: round;
+.siteAnalysisBuilding {
+  fill: rgb(246 244 239 / 18%);
+  stroke: rgb(246 244 239 / 96%);
+  stroke-width: 3.2;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
-  opacity: 0;
-  animation: sketchNoteIn 0.5s var(--ws-ease) 2.9s both;
 }
 
-.featureLabel {
-  fill: var(--hero-chalk);
-  font-family: var(--font-hand), "Architects Daughter", cursive;
-  opacity: 0;
-  animation: sketchNoteIn 0.6s var(--ws-ease) 3.1s both;
-  filter: drop-shadow(
-    0 1px 6px color-mix(in srgb, var(--gs-ink) 70%, transparent)
-  );
-}
-
-/* -------------------------------------------------- pre-sketch overlay */
-
-/* The pre-sketch — design-intent marks in the same chalk hand as the
-   feature legend, anchored to the real title polygon. Stamped
-   "pre-sketch · indicative": design intent, never survey truth. */
-.sketchZone,
-.sketchCanopy,
-.sketchDeck,
-.sketchPath,
-.sketchHatch {
+.siteAnalysisLeader {
   fill: none;
-  stroke: var(--hero-chalk);
+  stroke: color-mix(in srgb, var(--hero-glow-warm) 78%, var(--hero-copy));
+  stroke-width: 1.6;
+  stroke-dasharray: 7 6;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
 
-.sketchZone {
-  fill: color-mix(in srgb, var(--hero-chalk) 7%, transparent);
-  stroke-width: 1.4;
-  stroke-dasharray: 7 5;
-  opacity: 0;
-  animation: sketchNoteIn 0.7s var(--ws-ease) 1.5s both;
+.siteAnalysisAnchor {
+  fill: var(--hero-glow-soft);
+  stroke: rgb(246 244 239 / 92%);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
 }
 
-.sketchCanopy {
-  fill: color-mix(in srgb, var(--hero-chalk) 5%, transparent);
-  stroke-width: 1.4;
-  stroke-dasharray: 5 4;
-  opacity: 0;
-  animation: sketchNoteIn 0.7s var(--ws-ease) 1.7s both;
-}
-
-.sketchDeck {
-  fill: color-mix(in srgb, var(--hero-chalk) 6%, transparent);
-  stroke-width: 1.3;
-  stroke-dasharray: 5 4;
-  opacity: 0;
-  animation: sketchNoteIn 0.6s var(--ws-ease) 1.65s both;
-}
-
-.sketchPath {
-  stroke-width: 1.4;
-  stroke-dasharray: 6 5;
-  opacity: 0;
-  animation: sketchNoteIn 0.6s var(--ws-ease) 1.8s both;
-}
-
-.sketchHatch {
-  stroke-width: 1.1;
-  stroke-dasharray: 3 3;
-  opacity: 0;
-  animation: sketchNoteIn 0.7s var(--ws-ease) 2.0s both;
-}
-
-.sketchLabel {
-  fill: var(--hero-chalk);
+.siteAnalysisAnnotation {
+  fill: color-mix(in srgb, var(--hero-glow-soft) 88%, var(--hero-copy));
   font-family: var(--font-hand), "Architects Daughter", cursive;
-  opacity: 0;
-  animation: sketchNoteIn 0.6s var(--ws-ease) 2.3s both;
-  filter: drop-shadow(
-    0 1px 6px color-mix(in srgb, var(--gs-ink) 70%, transparent)
-  );
+  font-size: 22px;
+  letter-spacing: 0.01em;
 }
 
-.sketchStamp {
-  position: absolute;
-  z-index: var(--ws-z-wash);
-  top: 96px;
-  right: 28px;
+.siteAnalysisSubannotation {
+  fill: color-mix(in srgb, var(--hero-copy-dim) 82%, var(--hero-glow-soft));
   font-family: var(--font-technical-mono);
   font-size: 11px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+}
+
+.siteAnalysisNorth {
+  fill: none;
+  stroke: rgb(246 244 239 / 80%);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.siteAnalysisNorth text {
+  fill: var(--hero-copy);
+  stroke: none;
+  font-family: var(--font-hand), "Architects Daughter", cursive;
+  font-size: 22px;
+}
+
+.siteAnalysisFooter {
   color: var(--hero-copy-dim);
-  padding: 6px 12px;
-  border: 1px dashed color-mix(in srgb, var(--hero-copy) 30%, transparent);
-  border-radius: var(--r-xl);
-  background: color-mix(in srgb, var(--gs-ink) 30%, transparent);
-  backdrop-filter: blur(6px);
-  opacity: 0;
-  animation: sketchNoteIn 0.5s var(--ws-ease) 2.6s both;
+  white-space: nowrap;
+}
+
+.siteAnalysisFooter span:last-child {
+  text-align: right;
 }
 
 .scrim {
@@ -737,30 +753,6 @@
   }
 }
 
-@keyframes heroDraw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes heroDotIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes sketchNoteIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 /* ---------------------------------------------------------------- narrow */
 
 @media (max-width: 1100px) {
@@ -770,6 +762,27 @@
 }
 
 @media (max-width: 860px) {
+  .siteAnalysis {
+    top: auto;
+    right: 16px;
+    bottom: clamp(112px, 18vh, 160px);
+    width: calc(100% - 32px);
+    height: min(34vh, 300px);
+    padding: 12px 14px 10px;
+    border-radius: 16px;
+  }
+
+  .siteAnalysisAnnotation {
+    font-size: 18px;
+  }
+
+  .siteAnalysisSubannotation,
+  .siteAnalysisKicker,
+  .siteAnalysisIndex,
+  .siteAnalysisFooter {
+    font-size: 8px;
+  }
+
   .coordChip {
     display: none;
   }
@@ -798,33 +811,6 @@
   .aerialHigh {
     opacity: 1;
     transition: none;
-  }
-
-  .boundaryPath {
-    animation: none;
-    stroke-dashoffset: 0;
-  }
-
-  .cornerDots circle {
-    animation: none;
-    opacity: 1;
-  }
-
-  .featureTick,
-  .featureLabel {
-    animation: none;
-    opacity: 1;
-  }
-
-  .sketchZone,
-  .sketchCanopy,
-  .sketchDeck,
-  .sketchPath,
-  .sketchHatch,
-  .sketchLabel,
-  .sketchStamp {
-    animation: none;
-    opacity: 1;
   }
 
   .stepCard {
