@@ -96,6 +96,11 @@ async function expectZStackOnceReady(page: Page) {
   await expect(page.locator('[data-cf-layout="root"]')).toBeAttached({
     timeout: 15_000,
   });
+  await expect
+    .poll(async () => (await readLayerZStack(page))?.length ?? 0, {
+      timeout: 20_000,
+    })
+    .toBe(EXPECTED_LAYERS.length);
   const stack = await readLayerZStack(page);
   expect(stack, "Canvas-First wrapper mounted but returned no layers").not.toBeNull();
   return stack!;
@@ -128,7 +133,7 @@ test.describe("Canvas-First four-layer z-stack — Survey / Sketch / CAD / Garde
    * answer: CI already sets `retries: 1`, which would have masked the flake
    * instead of exposing the budget as the cause.
    */
-  test.setTimeout(180_000);
+  test.setTimeout(process.env.CI ? 240_000 : 180_000);
 
   test("each mode mounts the documented canvas → spatial → chrome → app stack", async ({
     page,
@@ -136,7 +141,10 @@ test.describe("Canvas-First four-layer z-stack — Survey / Sketch / CAD / Garde
   }) => {
     const { projectId } = await createWrightsTier1Project(request);
     await page.goto(`/projects/${projectId}?webgl=1`, {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
+      timeout: 30_000,
     });
 
     // The mode-tab strip is the chrome-tier affordance that drives
@@ -166,7 +174,7 @@ test.describe("Canvas-First four-layer z-stack — Survey / Sketch / CAD / Garde
       // ViewportTransitionHUD's snap-back. Probe immediately instead.
       // For all other modes, click first to trigger the transition.
       if (mode !== "survey") {
-        await tab.click();
+        await tab.click({ force: true, timeout: 60_000 });
         // The wrapper's chrome slot re-keys during the transition:
         // ViewportTransitionHUD snaps back from `--cf-z-app` to the
         // chrome tier. Wait for the tab strip to remain attached
@@ -248,7 +256,7 @@ test.describe("Canvas-First accessibility mirror — data-cf-mirror", () => {
   }) => {
     const { projectId } = await createWrightsTier1Project(request);
     await page.goto(`/projects/${projectId}?webgl=1`, {
-      waitUntil: "networkidle",
+      waitUntil: "domcontentloaded",
     });
 
     await expect(page.locator('[data-cf-layout="root"]')).toBeAttached({

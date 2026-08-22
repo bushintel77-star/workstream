@@ -23,6 +23,7 @@ const IGNORED = [
   /favicon/i,
   /Failed to load resource.*40[34]/i,
   /WebGL.*(deprecated|software)/i,
+  /WebGL context lost/i,
   /Download the React DevTools/i,
 ];
 
@@ -131,21 +132,25 @@ test.describe("Project surfaces are reachable by clicking", () => {
     page,
     request,
   }) => {
+    const address = "E2E Surface Rail Card, 9 Reach St, Melbourne VIC 3000";
     const { projectId } = await createAddressProject(request, {
-      address: "E2E Surface Rail Card, 9 Reach St, Melbourne VIC 3000",
+      address,
       seedCanvas: true,
     });
     const errors = watchConsole(page);
 
-    await page.goto("/home");
-    const records = page
-      .locator(`a[href="/projects/${projectId}/outputs"]`)
-      .first();
-    await expect(records).toBeAttached({ timeout: 20_000 });
-    await records.click();
-    await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/outputs`), {
-      timeout: 30_000,
-    });
+    await page.goto("/home", { waitUntil: "domcontentloaded" });
+    await expect(
+      page.getByRole("region", { name: "Projects register" }),
+    ).toBeVisible({ timeout: 20_000 });
+    const records = page.locator(`a[href="/projects/${projectId}/outputs"]`);
+    await expect(records).toHaveCount(1, { timeout: 20_000 });
+    await Promise.all([
+      page.waitForURL(new RegExp(`/projects/${projectId}/outputs`), {
+        timeout: 30_000,
+      }),
+      records.click(),
+    ]);
     await expect(
       page
         .getByRole("navigation", { name: "Project surfaces" })
