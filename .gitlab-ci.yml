@@ -42,6 +42,21 @@ gate:
     - pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
   script:
     - pnpm run ci
+  # These rules are load-bearing, not boilerplate. Until 2026-08-22 this job
+  # declared none, so it defaulted to branch pipelines only and was *excluded*
+  # from merge-request pipelines. That invalidated the five jobs declaring
+  # `needs: ["gate"]`, and GitLab rejects a pipeline whose `needs` target is not
+  # in it — so every MR pipeline failed at creation with zero jobs
+  # ("job needs 'gate' job, but 'gate' does not exist in the pipeline"). Net
+  # effect: no merge request had ever been gated. Same rules as `secret-scan`.
+  #
+  # Consequence worth knowing: a push to a branch with no open MR now creates no
+  # pipeline at all (every job here is scoped to an MR or to main). That is the
+  # standard merge-request-pipelines workflow and it stops the gate running
+  # twice for the same commit; open the MR and the pipeline runs.
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
   # 30m: full Next.js production build for the bundle-size budget, typecheck,
   # lint and 1900+ vitest cases. Shared runners are slower than the local
   # wall clock; 30m keeps headroom without letting a genuine hang run long.

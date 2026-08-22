@@ -23,13 +23,34 @@
  *  - A component that IS imported but rendered behind a condition that is never
  *    true reads as reachable. That is the next mutation of this bug and needs a
  *    runtime probe, not a static one.
+ *  - A module-internal helper is rescued by a reachable sibling export in the
+ *    same file (see pass 2), so a helper mounted by a dead sibling in a module
+ *    with any other live export reads as reachable.
+ *  - Routes are not components: Next.js reaches `page.tsx` by filesystem, so an
+ *    entire route with no inbound link in the product passes. `/growth-studio/[id]`
+ *    is exactly that today. Route reachability needs a separate gate.
  *
  * Usage: node scripts/check-feature-reachability.mjs
  */
 import fs from "fs";
 import path from "path";
 
-const FEATURES = "apps/web/src/components/canvas/handoff/features";
+/**
+ * Scanned roots, each with a floor on how many components it must yield.
+ *
+ * The floor is the entire point of this list. Until 2026-08-22 the only root was
+ * `canvas/handoff/features` — the *retired* SVG studio. `walk()` returns `[]` for
+ * a missing directory (see below), so when the 2026-08-19 retirement emptied that
+ * folder the gate degraded to a silent no-op that still printed "ok": 9
+ * components inspected while the 61 in `canvas/webgl` — the surface where every
+ * new component now lands — went unexamined. A root that falls below its floor
+ * fails loudly, so the next directory move cannot quietly empty this gate.
+ *
+ * Raise a floor when a root grows. Never lower one to make CI pass.
+ */
+const ROOTS = [
+  { dir: "apps/web/src/components/canvas", min: 60 },
+];
 const SRC = "apps/web/src";
 
 /**
@@ -63,25 +84,55 @@ const EXPORT_PATTERNS = [
   /export\s+default\s+function\s+([A-Z][A-Za-z0-9_]*)\s*\(/g,
 ];
 
-const featureFiles = walk(FEATURES).filter(
-  (f) => f.endsWith(".tsx") && !isTest(f),
-);
+/**
+ * `SCREAMING_SNAKE_CASE` matches the PascalCase patterns above but can never be
+ * mounted — JSX treats it as a literal tag. The docstring always claimed consts
+ * were skipped; the regex never actually did, so widening the scope surfaced
+ * `CAMERA_CHROME_ATTR` (a `data-` attribute name used twice in its own file) as
+ * an inert component.
+ */
+const isConstantCase = (name) => /^[A-Z0-9_]+$/.test(name);
 
 /** name -> defining file */
 const exported = new Map();
-for (const file of featureFiles) {
-  const src = fs
-    .readFileSync(file, "utf8")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/(^|[^:])\/\/.*$/gm, "$1");
-  for (const re of EXPORT_PATTERNS) {
-    for (const m of src.matchAll(re)) {
-      const name = m[1];
-      // Types/consts that happen to be PascalCase are fine to skip: we only
-      // care about things that could be mounted, i.e. defined in a .tsx.
-      if (!exported.has(name)) exported.set(name, file);
+/** dir -> { found, min } — checked against the floor before anything else. */
+const scope = new Map();
+
+for (const { dir, min } of ROOTS) {
+  const files = walk(dir).filter((f) => f.endsWith(".tsx") && !isTest(f));
+  const namesHere = new Set();
+  for (const file of files) {
+    const src = fs
+      .readFileSync(file, "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/.*$/gm, "$1");
+    for (const re of EXPORT_PATTERNS) {
+      for (const m of src.matchAll(re)) {
+        const name = m[1];
+        if (isConstantCase(name)) continue;
+        namesHere.add(name);
+        // Types/consts that happen to be PascalCase are fine to skip: we only
+        // care about things that could be mounted, i.e. defined in a .tsx.
+        if (!exported.has(name)) exported.set(name, file);
+      }
     }
   }
+  scope.set(dir, { found: namesHere.size, min });
+}
+
+const starved = [...scope.entries()].filter(([, s]) => s.found < s.min);
+if (starved.length) {
+  console.error(
+    "FAIL: a scanned root yielded fewer components than its floor. The gate is\n" +
+    "not measuring what it claims to — a directory was moved, renamed or emptied:\n",
+  );
+  for (const [dir, s] of starved) {
+    console.error(`  ${dir}\n    found ${s.found}, floor ${s.min}`);
+  }
+  console.error(
+    "\nRepoint ROOTS at the real location. Do not lower the floor to pass.",
+  );
+  process.exit(1);
 }
 
 /**
@@ -103,21 +154,26 @@ for (const f of allSource) {
   contentByFile.set(f, stripped);
 }
 
-const unreachable = [];
-for (const [name, definedIn] of exported) {
+/** Matchers for a real reference to `name`. Prose mentioning it does not count. */
+function matchers(name) {
+  return {
+    // An import binding, possibly inside a multi-line `{ ... }` block.
+    asImport: new RegExp(`\\bimport\\b[^;]*\\b${name}\\b[^;]*from\\b`),
+    asJsx: new RegExp(`<${name}[\\s/>]`),
+    asCall: new RegExp(`\\b${name}\\s*\\(`),
+    // Barrel re-export, including aliased: `export { Foo as Bar } from "./Foo"`.
+    // This is the one-level indirection noted in the limits above.
+    asReexport: new RegExp(`export\\s*{[^}]*\\b${name}\\b[^}]*}\\s*from`),
+  };
+}
+
+/** Referenced from any file other than its own definition and test sibling. */
+function referencedElsewhere(name, definedIn) {
   const testSiblings = new Set([
     definedIn.replace(/\.tsx$/, ".test.tsx"),
     definedIn.replace(/\.tsx$/, ".test.ts"),
   ]);
-  // An import binding (possibly inside a multi-line `{ ... }` block), a JSX
-  // tag, or a direct call. Prose mentioning the name does not count.
-  const asImport = new RegExp(`\\bimport\\b[^;]*\\b${name}\\b[^;]*from\\b`);
-  const asJsx = new RegExp(`<${name}[\\s/>]`);
-  const asCall = new RegExp(`\\b${name}\\s*\\(`);
-  // Barrel re-export, including aliased: `export { Foo as Bar } from "./Foo"`.
-  // This is the one-level indirection noted in the limits above.
-  const asReexport = new RegExp(`export\\s*{[^}]*\\b${name}\\b[^}]*}\\s*from`);
-  let referenced = false;
+  const { asImport, asJsx, asCall, asReexport } = matchers(name);
   for (const [f, content] of contentByFile) {
     if (f === definedIn || testSiblings.has(f)) continue;
     if (
@@ -126,11 +182,39 @@ for (const [name, definedIn] of exported) {
       asCall.test(content) ||
       asReexport.test(content)
     ) {
-      referenced = true;
-      break;
+      return true;
     }
   }
-  if (!referenced) unreachable.push({ name, file: rel(definedIn) });
+  return false;
+}
+
+/** Pass 1: cross-file reachability, which is the original test. */
+const crossFile = new Map();
+for (const [name, definedIn] of exported) {
+  crossFile.set(name, referencedElsewhere(name, definedIn));
+}
+
+/**
+ * Pass 2: rescue module-internal helpers.
+ *
+ * A component mounted only by a sibling export in the same file is reachable —
+ * `SceneItem` is rendered by `SceneItems` in `webgl/sceneItems.tsx`, and
+ * `StudioScene` mounts `SceneItems`. Pass 1 skips the defining file (so that a
+ * component referencing only itself cannot vouch for itself), which reported
+ * that as inert. Requiring a *distinct* reachable export in the same file keeps
+ * the original protection: a lone self-referential component still fails.
+ */
+const unreachable = [];
+for (const [name, definedIn] of exported) {
+  if (crossFile.get(name)) continue;
+  const siblingReachable = [...exported].some(
+    ([other, otherFile]) =>
+      otherFile === definedIn && other !== name && crossFile.get(other),
+  );
+  const { asJsx, asCall } = matchers(name);
+  const own = contentByFile.get(definedIn) ?? "";
+  if (siblingReachable && (asJsx.test(own) || asCall.test(own))) continue;
+  unreachable.push({ name, file: rel(definedIn) });
 }
 
 const unexpected = unreachable.filter((u) => !ALLOW.has(u.name));
@@ -158,7 +242,12 @@ if (stale.length) {
   process.exit(1);
 }
 
+const scopeNote = [...scope.entries()]
+  .map(([dir, s]) => `${dir.replace("apps/web/src/components/", "")} ${s.found}/${s.min}`)
+  .join(", ");
+
 console.log(
-  `ok: ${exported.size} feature components, all reachable ` +
-  `(${ALLOW.size} allowlisted: ${[...ALLOW.keys()].join(", ") || "none"})`,
+  `ok: ${exported.size} canvas components, all reachable ` +
+  `(${ALLOW.size} allowlisted: ${[...ALLOW.keys()].join(", ") || "none"}; ` +
+  `scope ${scopeNote})`,
 );

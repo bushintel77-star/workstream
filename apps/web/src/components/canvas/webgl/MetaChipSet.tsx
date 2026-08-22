@@ -58,7 +58,7 @@ const detailStyle: React.CSSProperties = {
   border: "1px solid var(--cf-glass-dark-border)",
   borderRadius: "var(--gs-radius-panel)",
   boxShadow: "var(--gs-shadow-3)",
-  color: "#f5f5f7",
+  color: "var(--cf-glass-dark-ink)",
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-sm)",
   lineHeight: 1.45,

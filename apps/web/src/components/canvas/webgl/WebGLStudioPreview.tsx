@@ -44,6 +44,7 @@ import type {
   LandscapeFeature,
   PhotoElevation,
 } from "@workstream/contracts";
+import { VignetteOverlay } from "./VignetteOverlay";
 import { SaveStatusChip } from "./SaveStatusChip";
 import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
 import { pctToWorld, type PctPoint } from "./coordTransform";
@@ -1125,6 +1126,9 @@ export function WebGLStudioPreview({
         data-webgl-chrome
         style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
       >
+      {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
+      <VignetteOverlay />
+
       {/* ---- Perimeter tab strip — the single chrome anchor. One
           browser-tab chip strip hugs the top edge; modes on the left,
           meta surfaces on the right, live stats as the trailing status
@@ -1171,7 +1175,7 @@ export function WebGLStudioPreview({
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-md)",
                 fontWeight: 600,
-                color: "#f5f5f7",
+                color: "var(--cf-glass-dark-ink)",
                 letterSpacing: "0.01em",
               }}
             >
@@ -2489,7 +2493,7 @@ function InteractionGuidanceChip({
         textOverflow: "ellipsis",
       }}
     >
-      <strong style={{ color: "#f5f5f7" }}>{guidance.label}</strong>
+              <strong style={{ color: "var(--cf-glass-dark-ink)" }}>{guidance.label}</strong>
       <span>{guidance.detail}</span>
     </div>
   );

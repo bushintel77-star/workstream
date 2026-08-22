@@ -46,7 +46,7 @@ const measureLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
   fontSize: "var(--gs-font-sm)",
   fontWeight: 600,
-  color: "var(--gs-primary, #FBBF24)",
+  color: "var(--gs-primary, #3D5AFE)",
   background: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",
   border: "1px solid color-mix(in srgb, var(--gs-primary) 35%, transparent)",
   borderRadius: "var(--gs-radius-md)",

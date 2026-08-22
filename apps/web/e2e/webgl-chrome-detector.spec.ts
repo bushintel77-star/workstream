@@ -11,9 +11,15 @@ import { createAddressProject } from "./helpers";
  *   No DOM chrome renders inside the R3F <Canvas> element.
  *   All overlay chrome lives in the sibling [data-testid=webgl-chrome-overlay] div.
  *
- * This probe is authored but not yet wired into CI — it activates when the
- * WebGLStudio is mounted on the project page (Phase 1 completion). Until then
- * it skips if the WebGL studio is not found.
+ * Wiring (corrected 2026-08-22 — the previous note claimed this was "authored
+ * but not yet wired into CI" and that it "skips if the WebGL studio is not
+ * found"; neither was true). `playwright.config.ts` sets `testDir: ./e2e` with
+ * no filter, so the GitLab `e2e` job runs this spec in its shard sweep. That
+ * job is `allow_failure: true` by design — GPU-less shared runners fall back to
+ * software WebGL — so it reports without blocking. There is no skip path: the
+ * spec hard-asserts the R3F canvas is visible and fails if the studio is
+ * absent, which is the correct behaviour now that WebGLStudio is the only
+ * canvas surface.
  */
 
 test.describe("WebGL chrome detector (gate C successor)", () => {

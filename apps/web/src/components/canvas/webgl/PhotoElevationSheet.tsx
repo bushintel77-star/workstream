@@ -146,7 +146,7 @@ export function PhotoElevationSheet({
                 y1={vbH - PAD_PX}
                 x2={PAD_PX + m * PX_PER_M}
                 y2={vbH - PAD_PX + (m % 5 === 0 ? 8 : 4)}
-                stroke="#59636B"
+                stroke="var(--gs-ink-muted)"
                 strokeWidth={m % 5 === 0 ? 1.2 : 0.6}
               />
               {m % 5 === 0 && (
@@ -154,7 +154,7 @@ export function PhotoElevationSheet({
                   x={PAD_PX + m * PX_PER_M}
                   y={vbH - PAD_PX + 18}
                   fontSize={9}
-                  fill="#3A414B"
+                  fill="var(--gs-ink-secondary)"
                   textAnchor="middle"
                   fontFamily="Space Grotesk, monospace"
                 >
@@ -169,7 +169,7 @@ export function PhotoElevationSheet({
             y1={vbH - PAD_PX}
             x2={vbW - PAD_PX}
             y2={vbH - PAD_PX}
-            stroke="#0030CF"
+            stroke="var(--gs-truth)"
             strokeWidth={1.4}
           />
           {/* Operator trace — plane-space metres mapped 1:1 onto the sheet. */}
