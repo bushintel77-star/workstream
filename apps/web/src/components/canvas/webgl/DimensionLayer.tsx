@@ -18,16 +18,35 @@
  * in Presentation mode (the client wants to see sizes), and toggle via the
  * store's dimsView chip.
  *
+ * THIS LAYER OWNS SURVEY EDGE TRUTH (2026-08-22). `AnnotationLayer` used to
+ * label the same boundary edges a second time with a bearing pill at each edge
+ * midpoint, so every edge carried two labels printing the same length from two
+ * systems that could not see each other. The bearing now joins the key and the
+ * distance in one chip here, and the annotation layer renders design intent
+ * only. Because bearings matter most in Survey — where `modeArmsDims` is
+ * deliberately false, since a working-drawing ring over a lot still being
+ * traced is noise — the chips can render without the ring: `showBearings`
+ * lights the boundary chips alone, `dimsView` adds the full ring and the
+ * building F-dims.
+ *
  * Binding: docs/GOLD-STANDARD-2026.md §3 (technical drafting truth)
  */
 
 import { useMemo, useRef, type ElementRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Line, Html } from "@react-three/drei";
+import * as THREE from "three";
 import { useStudioStore } from "./studioStore";
 import { layerScaleAlpha, viewScaleRatioForZoom } from "./layerPolicy";
 import { pctToWorld, type PctPoint } from "./coordTransform";
-import { dimDeclutterBoxForZoom } from "./dimensionLod";
+import {
+  BEARING_CHIP_WIDTH_SCALE,
+  dimDeclutterBoxForZoom,
+  estimateDimChipRect,
+} from "./dimensionLod";
+import { formatSurveyBearing, surveyEdgeLabel } from "./annotations/derive";
+import type { AnnotationRect } from "./annotationLayout";
+import { publishAnnotationRects } from "./annotationReservations";
 import {
   buildOutsideDims,
   declutterOutsideDims,
@@ -39,6 +58,15 @@ import { cfZPair } from "../cfz";
 
 /** Hover height above the ground/terrain (above ink 0.02, below slice 0.03+). */
 const DIM_Y = 0.04;
+
+/** Tighter offsets inside the lot so the F-ring nests near the fabric. */
+const BUILDING_DIM_OPTS = {
+  offsetPct: 1.6,
+  tickPct: 0.8,
+  labelExtraPct: 1.0,
+  gapPct: 0.25,
+  overshootPct: 0.35,
+};
 
 const dimLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
@@ -55,11 +83,27 @@ const dimLabelStyle: React.CSSProperties = {
   pointerEvents: "none",
 };
 
+/**
+ * `family` exists because two controls can put a chip on screen: the Dims
+ * instrument (the working-drawing ring, boundary + building) and the CAD/Survey
+ * card's Bearings control (boundary survey truth alone). Without it the DOM
+ * cannot say which instrument owns a chip, and "Dims off" looks broken when the
+ * four boundary chips correctly stay behind.
+ */
+type DimChip = OutsideDimPlacement & {
+  text: string;
+  family: "boundary" | "building";
+};
+
 export interface DimensionLayerProps {
   boundaryPct: PctPoint[];
   buildingPct?: PctPoint[];
   scaleM: number;
   boardAspect: number;
+  /** True north, for the bearing half of the chip. */
+  northBearingDeg?: number | null;
+  /** Boundary chips render even when the full ring is off. */
+  showBearings?: boolean;
 }
 
 export function DimensionLayer({
@@ -67,6 +111,8 @@ export function DimensionLayer({
   buildingPct,
   scaleM,
   boardAspect,
+  northBearingDeg,
+  showBearings = false,
 }: DimensionLayerProps) {
   const dimsView = useStudioStore((s) => s.dimsView);
   // Quantised zoom (0.5 steps) — the declutter box scales with 1/zoom so
@@ -74,44 +120,80 @@ export function DimensionLayer({
   // Quantising keeps the zero-commit pan law: liveRig is written per frame,
   // but the selector only re-renders when the quantised zoom crosses a step.
   const zoom = useStudioStore((s) => Math.round(s.liveRig.zoom * 2) / 2);
-  const declutterBox = useMemo(() => dimDeclutterBoxForZoom(zoom), [zoom]);
 
-  // Board-% dims → visible placements (decluttered, label-collision-free).
-  const placements = useMemo(() => {
-    const out: OutsideDimPlacement[] = [];
-    if (boundaryPct.length >= 3) {
-      const dims = buildOutsideDims(
-        edgeSegments(boundaryPct, "B", scaleM, boardAspect),
-        boundaryPct,
-      );
-      out.push(...declutterOutsideDims(dims, declutterBox));
-    }
-    if (buildingPct && buildingPct.length >= 3) {
-      // Tighter offsets inside the lot so the F-ring nests near the fabric.
-      const dims = buildOutsideDims(
-        edgeSegments(buildingPct, "F", scaleM, boardAspect),
-        buildingPct,
-        {
-          offsetPct: 1.6,
-          tickPct: 0.8,
-          labelExtraPct: 1.0,
-          gapPct: 0.25,
-          overshootPct: 0.35,
-        },
-      );
-      out.push(...declutterOutsideDims(dims, declutterBox));
-    }
-    return out.filter((d) => d.visible);
-  }, [boundaryPct, buildingPct, scaleM, boardAspect, declutterBox]);
+  const northCalibrated =
+    northBearingDeg != null &&
+    Number.isFinite(northBearingDeg) &&
+    northBearingDeg >= 0 &&
+    northBearingDeg <= 360;
+  // An uncalibrated frame cannot produce a real bearing, so the chip drops it
+  // rather than printing a precise-looking fiction off board north.
+  const withBearings = showBearings && northCalibrated;
+
+  const showRing = dimsView;
+  const showLabels = dimsView || showBearings;
+
+  const boundaryBox = useMemo(
+    () =>
+      dimDeclutterBoxForZoom(zoom, withBearings ? BEARING_CHIP_WIDTH_SCALE : 1),
+    [zoom, withBearings],
+  );
+  const buildingBox = useMemo(() => dimDeclutterBoxForZoom(zoom), [zoom]);
+
+  const boundaryChips = useMemo<DimChip[]>(() => {
+    if (boundaryPct.length < 3) return [];
+    const segs = edgeSegments(boundaryPct, "B", scaleM, boardAspect);
+    const bearingByKey = new Map(
+      segs.map((s) => [
+        s.key,
+        withBearings ? formatSurveyBearing(s.a, s.b, northBearingDeg) : "",
+      ]),
+    );
+    return declutterOutsideDims(buildOutsideDims(segs, boundaryPct), boundaryBox)
+      .filter((d) => d.visible)
+      .map((d) => ({
+        ...d,
+        family: "boundary" as const,
+        text: surveyEdgeLabel(
+          d.key,
+          bearingByKey.get(d.key) ?? "",
+          d.lengthM.toFixed(2),
+        ),
+      }));
+  }, [boundaryPct, scaleM, boardAspect, boundaryBox, withBearings, northBearingDeg]);
+
+  const buildingChips = useMemo<DimChip[]>(() => {
+    if (!buildingPct || buildingPct.length < 3) return [];
+    const dims = buildOutsideDims(
+      edgeSegments(buildingPct, "F", scaleM, boardAspect),
+      buildingPct,
+      BUILDING_DIM_OPTS,
+    );
+    return declutterOutsideDims(dims, buildingBox)
+      .filter((d) => d.visible)
+      .map((d) => ({
+        ...d,
+        family: "building" as const,
+        text: surveyEdgeLabel(d.key, "", d.lengthM.toFixed(2)),
+      }));
+  }, [buildingPct, scaleM, boardAspect, buildingBox]);
+
+  // Bearings-only mode is the boundary's survey truth, not a working drawing:
+  // no ring line work, no building F-dims.
+  const chips = useMemo(
+    () => (showRing ? [...boundaryChips, ...buildingChips] : boundaryChips),
+    [showRing, boundaryChips, buildingChips],
+  );
 
   // All line work flattened into disjoint pairs for ONE Line2 draw call.
   const segments = useMemo(() => {
+    if (!showRing) return [];
     const toWorld = (x: number, y: number): [number, number, number] => {
       const [wx, wz] = pctToWorld({ x, y }, scaleM, boardAspect);
       return [wx, DIM_Y, wz];
     };
     const pts: Array<[number, number, number]> = [];
-    for (const d of placements) {
+    for (const d of [...boundaryChips, ...buildingChips]) {
       pts.push(toWorld(d.x1, d.y1), toWorld(d.x2, d.y2)); // dimension string
       pts.push(toWorld(d.extA.x1, d.extA.y1), toWorld(d.extA.x2, d.extA.y2));
       pts.push(toWorld(d.extB.x1, d.extB.y1), toWorld(d.extB.x2, d.extB.y2));
@@ -119,14 +201,15 @@ export function DimensionLayer({
       pts.push(toWorld(d.tickB.x1, d.tickB.y1), toWorld(d.tickB.x2, d.tickB.y2));
     }
     return pts;
-  }, [placements, scaleM, boardAspect]);
+  }, [showRing, boundaryChips, buildingChips, scaleM, boardAspect]);
 
   // dims scale-band visibility: the working-drawing ring cross-fades out at
   // macro zoom (band [0.3, 4] × fit). The line material and the label chips
   // are faded per-frame via refs — zero React re-renders during zoom.
   const lineRef = useRef<ElementRef<typeof Line>>(null);
   const chipRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  useFrame(() => {
+  const scratch = useRef(new THREE.Vector3());
+  useFrame(({ camera, size }) => {
     const alpha = layerScaleAlpha(
       "dims",
       viewScaleRatioForZoom(useStudioStore.getState().liveRig.zoom),
@@ -139,22 +222,48 @@ export function DimensionLayer({
     for (const el of chipRefs.current) {
       if (el) el.style.opacity = String(alpha);
     }
+
+    // Publish the chip footprints so the callout solver can route around the
+    // ring. Chips that are not drawn reserve nothing — `useFrame` is registered
+    // before this component's early return, so gating on `showLabels` here is
+    // what stops an unrendered ring from pushing callouts around.
+    const rects: AnnotationRect[] = [];
+    if (showLabels && alpha >= 0.05) {
+      for (const chip of chips) {
+        const [wx, wz] = pctToWorld(
+          { x: chip.labelX, y: chip.labelY },
+          scaleM,
+          boardAspect,
+        );
+        const projected = scratch.current.set(wx, DIM_Y + 0.05, wz).project(camera);
+        rects.push(
+          estimateDimChipRect(
+            chip.text,
+            ((projected.x + 1) * size.width) / 2,
+            ((1 - projected.y) * size.height) / 2,
+          ),
+        );
+      }
+    }
+    publishAnnotationRects("dimensionChip", rects);
   });
 
-  if (!dimsView || segments.length === 0) return null;
+  if (!showLabels || chips.length === 0) return null;
 
   return (
     <group>
-      <Line
-        ref={lineRef}
-        segments
-        points={segments}
-        color={PALETTE.skyCool}
-        lineWidth={1}
-        transparent
-        opacity={0.75}
-      />
-      {placements.map((d, i) => {
+      {segments.length > 0 ? (
+        <Line
+          ref={lineRef}
+          segments
+          points={segments}
+          color={PALETTE.skyCool}
+          lineWidth={1}
+          transparent
+          opacity={0.75}
+        />
+      ) : null}
+      {chips.map((d, i) => {
         const [wx, wz] = pctToWorld(
           { x: d.labelX, y: d.labelY },
           scaleM,
@@ -173,9 +282,10 @@ export function DimensionLayer({
                 chipRefs.current[i] = el;
               }}
               data-testid="dim-label"
+              data-dim-family={d.family}
               style={dimLabelStyle}
             >
-              {`${d.key} · ${d.lengthM.toFixed(2)} m`}
+              {d.text}
             </span>
           </Html>
         );

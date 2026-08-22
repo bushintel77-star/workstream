@@ -830,13 +830,20 @@ export function StudioScene({
           heightmapPoints={heightmapPoints}
         />
       )}
-      {/* Working-drawing dimension ring (boundary B… + building F…) —
-          self-gates on dimsView; stays visible in Presentation mode. */}
+      {/* Working-drawing dimension ring (boundary B… + building F…) and the
+          owner of survey edge truth — key, bearing and distance in one chip.
+          The full ring self-gates on dimsView; the boundary chips also light on
+          `bearings` alone, because Survey needs metes-and-bounds without a
+          working-drawing ring over a lot still being traced. */}
       <DimensionLayer
         boundaryPct={boundaryPct}
         buildingPct={buildingPct}
         scaleM={scaleM}
         boardAspect={boardAspect}
+        northBearingDeg={northBearingDeg}
+        showBearings={
+          (annotationLayers?.enabled ?? false) && (annotationLayers?.bearings ?? false)
+        }
       />
       {/* E2E-only: publish the projected boundary box for the coverage ratchet
           (folds to null in production — see BoundaryProjectionProbe). */}
@@ -990,7 +997,6 @@ export function StudioScene({
         toggles={
           annotationLayers ?? {
             enabled: false,
-            propertyLines: false,
             elevations: false,
             plants: false,
             materials: false,

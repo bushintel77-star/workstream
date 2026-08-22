@@ -117,7 +117,13 @@ export type SaveStatus = "idle" | "saving" | "retrying" | "saved" | "error";
 export type SaveErrorKind = "unreachable" | "stale_client" | "rejected" | null;
 export interface SurveyedPlanLayers {
   enabled: boolean;
-  propertyLines: boolean;
+  /**
+   * Survey bearings on the dimension-ring chips (`B7 · S85°25'26"W · 48.20 m`).
+   * Was `propertyLines`, when this flag drew a second copy of the title boundary
+   * in `AnnotationLayer`; `DimensionLayer` owns boundary edge truth now, and the
+   * boundary line itself is `LotBoundary` — never toggleable, it is the anchor.
+   */
+  bearings: boolean;
   elevations: boolean;
   plants: boolean;
   materials: boolean;
@@ -953,7 +959,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   fitSheetOpen: true,
   surveyedPlanLayers: {
     enabled: true,
-    propertyLines: true,
+    bearings: true,
     elevations: true,
     plants: true,
     materials: true,
@@ -963,7 +969,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   surveyAnnotationDialect: "technical",
   cadAnnotationLayers: {
     enabled: true,
-    propertyLines: true,
+    bearings: true,
     elevations: true,
     plants: true,
     materials: true,
@@ -973,7 +979,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   cadAnnotationDialect: "architectural",
   sketchAnnotationLayers: {
     enabled: true,
-    propertyLines: false,
+    bearings: false,
     elevations: false,
     plants: true,
     materials: true,

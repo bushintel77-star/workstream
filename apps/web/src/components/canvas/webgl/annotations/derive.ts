@@ -73,7 +73,7 @@ function materialFamily(feature: LandscapeFeature): MaterialHatchFamily {
   return "concrete";
 }
 
-function plantCode(symbolId: string, idx: number): string {
+function plantCodeBase(symbolId: string): string {
   const catalog = getCatalogSymbol(symbolId);
   const botanical = catalog?.botanical_name?.trim() ?? "";
   if (botanical !== "") {
@@ -86,11 +86,80 @@ function plantCode(symbolId: string, idx: number): string {
   const tokens = symbolId.split(/[-_]/).filter(Boolean);
   if (tokens.length >= 2) return `${tokens[0]![0]}${tokens[1]![0]}`.toUpperCase();
   const fallback = tokens[0] ?? symbolId;
-  return (fallback.slice(0, 2) || "PT").toUpperCase() + String(idx + 1);
+  return (fallback.slice(0, 2) || "PT").toUpperCase();
+}
+
+/**
+ * One code per species, unique across the schedule.
+ *
+ * A schedule code identifies a species, not an instance — it used to be
+ * suffixed with the placement index on the fallback branch, so the same species
+ * could appear under several codes, and two species sharing initials could
+ * collide on the botanical branch. Allocated over every placement (not the
+ * density-sliced view) so codes do not change when the view compacts.
+ */
+function allocatePlantCodes(symbolIds: string[]): Map<string, string> {
+  const used = new Set<string>();
+  const out = new Map<string, string>();
+  for (const symbolId of symbolIds) {
+    if (out.has(symbolId)) continue;
+    const base = plantCodeBase(symbolId);
+    let code = base;
+    let suffix = 2;
+    while (used.has(code)) code = `${base}${suffix++}`;
+    used.add(code);
+    out.set(symbolId, code);
+  }
+  return out;
 }
 
 function detailId(index: number): string {
   return `D-${String(index + 1).padStart(2, "0")}`;
+}
+
+/** `bluestone-paver` → `Bluestone paver`. */
+function humanize(value: string): string {
+  const spaced = value.replace(/[-_]+/g, " ").trim();
+  if (spaced === "") return "";
+  return spaced[0]!.toUpperCase() + spaced.slice(1);
+}
+
+/**
+ * The one survey edge-truth format, shared by the dimension ring chip and the
+ * legend so the two can never drift. The bearing is omitted entirely when north
+ * is uncalibrated rather than computed against board north.
+ */
+export function surveyEdgeLabel(
+  key: string,
+  bearing: string,
+  distanceM: string,
+): string {
+  return bearing === ""
+    ? `${key} \u00b7 ${distanceM} m`
+    : `${key} \u00b7 ${bearing} \u00b7 ${distanceM} m`;
+}
+
+interface CalloutGroup {
+  atPct: { x: number; y: number };
+  text: string;
+  count: number;
+}
+
+type KeyedCalloutGroup = CalloutGroup & { key: string };
+
+/**
+ * Collapse repeats into one callout each.
+ *
+ * Six boxes all reading `Intent: frame planting rhythm (…)` is what the old
+ * per-placement derivation produced whenever a canvas had no material polygons,
+ * and the 132 px box then ellipsis-truncated the plant code that was the only
+ * difference between them. Grouping by species/material means one box per
+ * distinct thing, front-loaded with the token that distinguishes it.
+ */
+function groupCallouts<T extends CalloutGroup>(groups: T[], limit: number): T[] {
+  return [...groups]
+    .sort((a, b) => b.count - a.count || a.text.localeCompare(b.text))
+    .slice(0, limit);
 }
 
 function buildLegend(entries: SurveyedPlanLegendEntry[]): SurveyedPlanLegendEntry[] {
@@ -131,21 +200,23 @@ export function deriveSurveyedPlanModel(params: {
     : "Uncalibrated — locational-indicative";
   const styleProfile = dialectStyleProfile(dialect);
   const compact = density === "compact";
+  // Edge keys match `edgeSegments(boundary, "B", …)` — the dimension ring is
+  // what renders these, so the keys have to be the same ones it prints.
   const propertyLines = boundaryPct.map((from, idx) => {
     const to = boundaryPct[(idx + 1) % boundaryPct.length]!;
-    const bearing = formatSurveyBearing(
-      from,
-      to,
-      northCalibrated ? northBearingDeg : null,
-    );
+    const key = `B${idx + 1}`;
+    const bearing = northCalibrated
+      ? formatSurveyBearing(from, to, northBearingDeg)
+      : "";
     const distanceM = fmt2(edgeLengthM(from, to, scaleM, boardAspect));
     return {
       id: `boundary-${idx + 1}`,
+      key,
       fromPct: from,
       toPct: to,
       bearing,
       distanceM,
-      label: `${bearing} ${distanceM} m`,
+      label: surveyEdgeLabel(key, bearing, distanceM),
     };
   });
 
@@ -161,46 +232,82 @@ export function deriveSurveyedPlanModel(params: {
         : ("existing" as const),
   }));
 
+  const plantCodes = allocatePlantCodes(placements.map((p) => p.symbol_id));
   const plantTags = placements
     .slice(0, compact ? 14 : placements.length)
-    .map((placement, idx) => ({
-    id: `plant-${placement.id}`,
-    atPct: { x: placement.x_pct, y: placement.y_pct },
-    code: plantCode(placement.symbol_id, idx),
-    scheduleLabel: `${plantCode(placement.symbol_id, idx)} \u2192 ${placement.symbol_id}`,
-    symbolId: placement.symbol_id,
-  }));
-
-  const materialHatches = features
-    .filter((feature) => feature.geometry.type === "Polygon" && feature.geometry.points.length >= 3)
-    .map((feature, idx) => {
-      const ringPct = feature.geometry.points.map((point) => ({
-        x: point.pct.x_pct,
-        y: point.pct.y_pct,
-      }));
-      const family = materialFamily(feature);
+    .map((placement) => {
+      const code = plantCodes.get(placement.symbol_id) ?? "PT";
       return {
-        id: `hatch-${feature.id}`,
-        family,
-        ringPct,
-        label: `${family[0]!.toUpperCase()}${family.slice(1)} hatch ${idx + 1}`,
+        id: `plant-${placement.id}`,
+        atPct: { x: placement.x_pct, y: placement.y_pct },
+        code,
+        scheduleLabel: `${code} \u2192 ${placement.symbol_id}`,
+        symbolId: placement.symbol_id,
       };
     });
 
-  const calloutAnchors = [
-    ...materialHatches.map((hatch) => centroid(hatch.ringPct)),
-    ...plantTags.slice(0, compact ? 3 : 6).map((tag) => tag.atPct),
-  ];
-  const callouts = calloutAnchors.map((atPct, idx) => ({
-    id: `callout-${idx + 1}`,
+  const hatchPolygons = features.filter(
+    (feature) =>
+      feature.geometry.type === "Polygon" && feature.geometry.points.length >= 3,
+  );
+  const materialHatches = hatchPolygons.map((feature, idx) => {
+    const ringPct = feature.geometry.points.map((point) => ({
+      x: point.pct.x_pct,
+      y: point.pct.y_pct,
+    }));
+    const family = materialFamily(feature);
+    return {
+      id: `hatch-${feature.id}`,
+      family,
+      ringPct,
+      label: `${family[0]!.toUpperCase()}${family.slice(1)} hatch ${idx + 1}`,
+    };
+  });
+
+  // One callout per distinct material and per distinct species, anchored at the
+  // group centroid, ranked by how much of the design it speaks for.
+  const groupsByKey = new Map<string, KeyedCalloutGroup>();
+  const addToGroup = (
+    key: string,
+    text: string,
+    at: { x: number; y: number },
+  ) => {
+    const existing = groupsByKey.get(key);
+    if (existing) {
+      existing.count += 1;
+      existing.atPct = {
+        x: existing.atPct.x + (at.x - existing.atPct.x) / existing.count,
+        y: existing.atPct.y + (at.y - existing.atPct.y) / existing.count,
+      };
+      return;
+    }
+    groupsByKey.set(key, { key, text, atPct: at, count: 1 });
+  };
+
+  hatchPolygons.forEach((feature, idx) => {
+    const hatch = materialHatches[idx]!;
+    const sku = feature.material_fill?.sku ?? feature.metadata.friendly_name ?? "";
+    const name = humanize(sku) || `${humanize(hatch.family)} surface`;
+    addToGroup(`mat:${name}`, name, centroid(hatch.ringPct));
+  });
+  for (const tag of plantTags) {
+    const botanical = getCatalogSymbol(tag.symbolId)?.botanical_name?.trim() ?? "";
+    const name = botanical !== "" ? botanical : humanize(tag.symbolId);
+    addToGroup(`plant:${tag.symbolId}`, `${tag.code} \u00b7 ${name}`, tag.atPct);
+  }
+
+  const callouts = groupCallouts(
+    [...groupsByKey.values()],
+    compact ? 4 : 8,
+  ).map((group, idx) => ({
+    // Keyed by group, not by position: the layout solver's hysteresis keys off
+    // this id, so a positional id would make a callout inherit a neighbour's
+    // slot whenever the ranking shifts.
+    id: `callout-${group.key}`,
     detailId: detailId(idx),
-    atPct,
-    text:
-      idx < materialHatches.length
-        ? materialHatches[idx]!.label
-        : dialect === "technical"
-          ? `Plant schedule ${plantTags[idx - materialHatches.length]?.code ?? ""}`.trim()
-          : `Intent: frame planting rhythm (${plantTags[idx - materialHatches.length]?.code ?? ""})`.trim(),
+    atPct: group.atPct,
+    text: group.count > 1 ? `${group.text} \u00d7${group.count}` : group.text,
+    count: group.count,
   }));
 
   const scopePoints = [
@@ -286,7 +393,16 @@ export function deriveSurveyedPlanModel(params: {
           ? `${materialHatches[0].label} (${materialHatches[0].family})`
           : "No material hatch polygons",
     },
-    { id: "callout", category: "detail_callout", group: "callouts", label: "Callout", value: "D-## detail key with leader" },
+    {
+      id: "callout",
+      category: "detail_callout",
+      group: "callouts",
+      label: "Callout",
+      value:
+        callouts[0] != null
+          ? `${callouts[0].detailId} ${callouts[0].text}`
+          : "No detail callouts on this view",
+    },
     { id: "scope", category: "scope_outline", group: "scope", label: "Scope", value: "Dashed contractor work extent" },
     {
       id: "north-calibration",

@@ -34,7 +34,7 @@ const MODEL: SurveyedPlanNotationModel = {
 describe("annotation legend filtering", () => {
   it("shows only active symbol families plus conventions", () => {
     const entries = visibleLegendEntries(MODEL, {
-      propertyLines: true,
+      bearings: true,
       elevations: false,
       plants: false,
       materials: false,
@@ -46,7 +46,7 @@ describe("annotation legend filtering", () => {
 
   it("groups entries in drafting reading order", () => {
     const entries = visibleLegendEntries(MODEL, {
-      propertyLines: true,
+      bearings: true,
       elevations: true,
       plants: true,
       materials: false,

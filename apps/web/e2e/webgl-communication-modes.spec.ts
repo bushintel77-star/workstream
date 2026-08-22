@@ -183,15 +183,174 @@ test.describe("WebGL communication modes", () => {
       page.getByTestId("survey-communication-mode-technical"),
     ).toHaveAttribute("aria-pressed", "true");
 
-    const firstBoundary = page.getByTestId("annotation-boundary-label").first();
+    // Boundary edge truth is one chip owned by the dimension ring: key, bearing
+    // and distance. `AnnotationLayer` used to print a second bearing pill on the
+    // same edge, so this used to assert on `annotation-boundary-label`.
+    const firstBoundary = page.getByTestId("dim-label").first();
     await expect(firstBoundary).toBeVisible();
     const baseline = (await firstBoundary.textContent())?.trim();
+    expect(baseline).toMatch(/^B\d+ · /);
+    expect(baseline).toMatch(/ m$/);
 
     await page.getByTestId("survey-communication-mode-architectural").click();
     await expect(
       page.getByTestId("survey-communication-mode-architectural"),
     ).toHaveAttribute("aria-pressed", "true");
     await expect(firstBoundary).toHaveText(baseline ?? "");
+  });
+
+  test("survey truth keeps the Truth Anchor in every dialect", async ({
+    page,
+    request,
+  }) => {
+    const { projectId } = await createAddressProject(request, {
+      address: "9 Hierarchy Invariant Street, Prahran VIC 3181",
+    });
+    await seedCanvas(projectId, request, 21);
+
+    // The UI-level half of `style.invariant.test.ts`. The architectural dialect
+    // is the CAD default and it used to paint the immutable title boundary with
+    // design ink (#1a1a1a) while handing the blue to plant tags and callouts, so
+    // switching dialect silently inverted the immutable/mutable read.
+    const TRUTH_ANCHOR = "rgb(0, 48, 207)";
+
+    // One atomic DOM snapshot per dialect. Per-element locators raced the
+    // legend's re-render on dialect switch, and a stale handle reads as a
+    // timeout rather than a colour mismatch.
+    const swatchColours = () =>
+      page.evaluate(() => {
+        const out: Record<string, string> = {};
+        document
+          .querySelectorAll('[data-testid^="legend-swatch-"]')
+          .forEach((el) => {
+            const category = (el.getAttribute("data-testid") ?? "").replace(
+              "legend-swatch-",
+              "",
+            );
+            out[category] = getComputedStyle(el).borderTopColor;
+          });
+        return out;
+      });
+
+    // Dialects on offer differ per mode (`communicationProfileForMode`) — CAD
+    // has no `creative`, sketch does — so discover them rather than assume, and
+    // visit both modes to cover all four.
+    const checkMode = async (mode: string) => {
+      await page.goto(`/projects/${projectId}?mode=${mode}`, {
+        waitUntil: "networkidle",
+      });
+      await expect(page.getByTestId("survey-communication-card")).toBeVisible();
+
+      // Sketch ships with bearings off, so the boundary legend row (and its
+      // swatch) is absent there until the control is armed.
+      const bearings = page.getByTestId("survey-communication-filter-bearings");
+      if ((await bearings.getAttribute("aria-pressed")) !== "true") {
+        await bearings.click();
+      }
+
+      const dialects = await page
+        .locator('[data-testid^="survey-communication-mode-"]')
+        .evaluateAll((els) =>
+          els.map((el) =>
+            (el.getAttribute("data-testid") ?? "").replace(
+              "survey-communication-mode-",
+              "",
+            ),
+          ),
+        );
+      expect(dialects.length, `${mode} offers no dialects`).toBeGreaterThan(0);
+
+      for (const dialect of dialects) {
+        await page.getByTestId(`survey-communication-mode-${dialect}`).click();
+        await expect(
+          page.getByTestId(`survey-communication-mode-${dialect}`),
+        ).toHaveAttribute("aria-pressed", "true");
+
+        await expect
+          .poll(async () => (await swatchColours()).property_line, {
+            message: `${mode}/${dialect} moved the boundary off the Truth Anchor`,
+          })
+          .toBe(TRUTH_ANCHOR);
+
+        // And no design family may borrow that blue in any dialect.
+        const colours = await swatchColours();
+        for (const category of ["plant_tag", "detail_callout", "scope_outline"]) {
+          const colour = colours[category];
+          if (colour == null) continue;
+          expect(
+            colour,
+            `${mode}/${dialect} gave ${category} the Truth Anchor`,
+          ).not.toBe(TRUTH_ANCHOR);
+        }
+      }
+      return dialects;
+    };
+
+    const cad = await checkMode("cad");
+    const sketch = await checkMode("sketch");
+    // Between the two modes every shipped dialect is exercised.
+    expect(new Set([...cad, ...sketch])).toEqual(
+      new Set(["technical", "architectural", "creative", "hybrid"]),
+    );
+  });
+
+  test("the Bearings control owns the boundary edge chips", async ({
+    page,
+    request,
+  }) => {
+    const { projectId } = await createAddressProject(request, {
+      address: "11 Bearings Control Street, Prahran VIC 3181",
+    });
+    await seedCanvas(projectId, request, 21);
+
+    await page.goto(`/projects/${projectId}?mode=survey`, { waitUntil: "networkidle" });
+    await expect(page.getByTestId("survey-communication-card")).toBeVisible();
+
+    // Survey does not arm the dimension ring (`modeArmsDims`), so these chips
+    // are here purely because Bearings is on — this is the path that replaced
+    // AnnotationLayer's second bearing pill on every boundary edge.
+    const boundaryLabels = page.locator(
+      '[data-testid="dim-label"][data-dim-family="boundary"]',
+    );
+    await expect(boundaryLabels.first()).toBeVisible();
+    await expect(boundaryLabels.first()).toHaveText(/^B\d+ · .* · \d+\.\d{2} m$/);
+
+    const bearings = page.getByTestId("survey-communication-filter-bearings");
+    await expect(bearings).toHaveAttribute("aria-pressed", "true");
+    await bearings.click();
+    await expect(boundaryLabels).toHaveCount(0);
+    await bearings.click();
+    await expect(boundaryLabels.first()).toBeVisible();
+  });
+
+  test("detail callouts group instead of repeating one box per placement", async ({
+    page,
+    request,
+  }) => {
+    const { projectId } = await createAddressProject(request, {
+      address: "10 Callout Grouping Street, Prahran VIC 3181",
+    });
+    await seedCanvas(projectId, request, 21);
+
+    await page.goto(`/projects/${projectId}?mode=cad`, { waitUntil: "networkidle" });
+    await expect(page.getByTestId("survey-communication-card")).toBeVisible();
+
+    const callouts = page.getByTestId("annotation-callout");
+    await expect(callouts.first()).toBeVisible();
+
+    // Every box must say something different. Six boxes reading the same
+    // truncated "Intent: frame planting rhythm (…)" was the defect.
+    const titles = await callouts.evaluateAll((els) =>
+      els.map((el) => el.getAttribute("title") ?? ""),
+    );
+    expect(titles.length).toBeGreaterThan(0);
+    expect(new Set(titles).size).toBe(titles.length);
+
+    // And each box declares how many things it speaks for.
+    const counts = await callouts.evaluateAll((els) =>
+      els.map((el) => Number(el.getAttribute("data-callout-count") ?? "0")),
+    );
+    expect(counts.every((c) => c >= 1)).toBe(true);
   });
 
   test("CAD and Sketch mode defaults are architectural and creative", async ({
@@ -310,13 +469,13 @@ test.describe("WebGL communication modes", () => {
       page.getByTestId("survey-communication-legend").getByText("Uncalibrated — locational-indicative"),
     ).toBeVisible();
 
-    const boundaryRatio = await contrastRatioFor(page, '[data-testid="annotation-boundary-label"]');
+    const boundaryRatio = await contrastRatioFor(page, '[data-testid="dim-label"]');
     const calloutToggle = page.getByTestId("survey-communication-filter-callouts");
     if ((await calloutToggle.getAttribute("aria-pressed")) !== "true") {
       await calloutToggle.click();
     }
-    await expect(page.locator('[title^="D-0"]').first()).toBeVisible();
-    const calloutRatio = await contrastRatioFor(page, '[title^="D-0"]');
+    await expect(page.getByTestId("annotation-callout").first()).toBeVisible();
+    const calloutRatio = await contrastRatioFor(page, '[data-testid="annotation-callout"]');
     expect(boundaryRatio).not.toBeNull();
     expect(calloutRatio).not.toBeNull();
     expect(boundaryRatio!).toBeGreaterThanOrEqual(4.5);

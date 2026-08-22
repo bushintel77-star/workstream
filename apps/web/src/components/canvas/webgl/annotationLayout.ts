@@ -12,6 +12,23 @@ export interface AnnotationRect {
   height: number;
 }
 
+export type AnnotationSide = "top" | "right" | "bottom" | "left";
+
+/**
+ * The discrete candidate a callout landed on. Persisting this across frames is
+ * what makes the layout stable: the solver re-derives from scratch every frame
+ * inside `useFrame`, and without a memory of last frame's choice a label whose
+ * candidates score within a few points of each other flips sides as the camera
+ * moves. Stickiness is on the discrete slot rather than on absolute screen
+ * position, because the slot's position is derived from the anchor — so a
+ * sticky label still tracks its anchor exactly, it just stops changing lanes.
+ */
+export interface AnnotationSlot {
+  side: AnnotationSide;
+  laneOffset: number;
+  ringScale: number;
+}
+
 export interface AnnotationLayoutOptions {
   width: number;
   height: number;
@@ -21,21 +38,32 @@ export interface AnnotationLayoutOptions {
   gap?: number;
   reserved?: AnnotationRect[];
   maxVisible?: number;
+  /** Last frame's slot per anchor id — see `AnnotationSlot`. */
+  previous?: ReadonlyMap<string, AnnotationSlot>;
 }
 
 export interface AnnotationPlacement extends AnnotationAnchor {
   label: AnnotationRect;
   leader: Array<{ x: number; y: number }>;
-  side: "top" | "right" | "bottom" | "left";
+  side: AnnotationSide;
+  slot: AnnotationSlot;
 }
 
-type Side = AnnotationPlacement["side"];
+type Side = AnnotationSide;
 type Point = { x: number; y: number };
 
 const PERIMETER_SIDES: Side[] = ["top", "right", "bottom", "left"];
 const CALLOUT_LANE_ORDER = [0, -1, 1, -2, 2] as const;
 const CALLOUT_RING_ORDER = [1, 1.4, 1.8] as const;
 const LEADER_EDGE_INSET = 4;
+
+/**
+ * Hysteresis discounts. Both sit far below the overlap weights (12000+), so a
+ * sticky slot never wins over a collision-free one — it only breaks ties that
+ * would otherwise be decided by sub-pixel score noise.
+ */
+const STICKY_SLOT_BONUS = 900;
+const STICKY_SIDE_BONUS = 400;
 
 function overlap(a: AnnotationRect, b: AnnotationRect): number {
   const x = Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x));
@@ -234,9 +262,193 @@ export function layoutPerimeterAnnotations(
     });
     candidates.sort((a, b) => a.score - b.score || PERIMETER_SIDES.indexOf(a.side) - PERIMETER_SIDES.indexOf(b.side));
     const best = candidates[0]!;
-    placed.push({ ...anchor, label: best.label, leader: best.leader, side: best.side });
+    placed.push({
+      ...anchor,
+      label: best.label,
+      leader: best.leader,
+      side: best.side,
+      slot: { side: best.side, laneOffset: 0, ringScale: 1 },
+    });
   }
   return placed;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Point markers (plant tag pucks)                                            */
+/* -------------------------------------------------------------------------- */
+
+/** Which displacement candidate a marker landed on. `dirIndex: -1` = in place. */
+export interface MarkerSlot {
+  dirIndex: number;
+  ringIndex: number;
+}
+
+export interface MarkerLayoutOptions {
+  width: number;
+  height: number;
+  /** Marker diameter in px — markers are circles in a square bounding box. */
+  size: number;
+  padding?: number;
+  /** Clearance required between two marker boxes, px. */
+  minGap?: number;
+  reserved?: AnnotationRect[];
+  /** Hard cap on drawn markers; anything past it comes back `hidden`. */
+  maxVisible?: number;
+  previous?: ReadonlyMap<string, MarkerSlot>;
+}
+
+export interface MarkerPlacement extends AnnotationAnchor {
+  /** Final marker centre — equal to the anchor unless displaced. */
+  markerX: number;
+  markerY: number;
+  /** Anchor → marker-edge leader. Empty when the marker sits in place. */
+  leader: Point[];
+  displaced: boolean;
+  /** True when no free slot existed — drop the label rather than stack it. */
+  hidden: boolean;
+  slot: MarkerSlot;
+}
+
+/** Eight compass directions, cardinals first so displacement reads deliberate. */
+const MARKER_DIRECTIONS: Point[] = [
+  { x: 0, y: -1 },
+  { x: 1, y: 0 },
+  { x: 0, y: 1 },
+  { x: -1, y: 0 },
+  { x: 0.7071, y: -0.7071 },
+  { x: 0.7071, y: 0.7071 },
+  { x: -0.7071, y: 0.7071 },
+  { x: -0.7071, y: -0.7071 },
+];
+
+const MARKER_RING_ORDER = [1.15, 1.95, 2.75] as const;
+const STICKY_MARKER_BONUS = 220;
+
+/** The square a marker occupies, inflated by half the required clearance. */
+export function markerRect(
+  placement: Pick<MarkerPlacement, "markerX" | "markerY">,
+  size: number,
+  gap = 0,
+): AnnotationRect {
+  const side = size + gap;
+  return {
+    x: placement.markerX - side / 2,
+    y: placement.markerY - side / 2,
+    width: side,
+    height: side,
+  };
+}
+
+/**
+ * Lay out point markers (the plant tag pucks) so they stop stacking where
+ * planting clusters.
+ *
+ * A marker prefers its true position; when that collides it walks out along a
+ * compass ring and keeps a leader back to the real point, which is what makes
+ * displacement honest on a survey-grade plan — the puck is a label, and the
+ * leader preserves the position it labels. When no ring slot is free the marker
+ * is reported `hidden` rather than drawn on top of a neighbour, because a
+ * stack of overlapping codes conveys less than one legible code.
+ */
+export function layoutPointMarkers(
+  anchors: AnnotationAnchor[],
+  options: MarkerLayoutOptions,
+): MarkerPlacement[] {
+  const reserved = options.reserved ?? [];
+  const gap = options.minGap ?? 3;
+  const padding = options.padding ?? 4;
+  const half = options.size / 2;
+  const maxVisible = Math.max(0, options.maxVisible ?? anchors.length);
+  const ordered = [...anchors].sort(
+    (a, b) => (b.priority ?? 0) - (a.priority ?? 0) || a.id.localeCompare(b.id),
+  );
+
+  const placed: MarkerPlacement[] = [];
+  const placedRects: AnnotationRect[] = [];
+  const out: MarkerPlacement[] = [];
+
+  for (const anchor of ordered) {
+    const prior = options.previous?.get(anchor.id);
+    const candidates: Array<{
+      x: number;
+      y: number;
+      slot: MarkerSlot;
+      collision: number;
+      score: number;
+    }> = [];
+
+    const consider = (x: number, y: number, slot: MarkerSlot, ringIndex: number) => {
+      const cx = clamp(x, padding + half, Math.max(padding + half, options.width - padding - half));
+      const cy = clamp(y, padding + half, Math.max(padding + half, options.height - padding - half));
+      const rect = markerRect({ markerX: cx, markerY: cy }, options.size, gap);
+      const placedOverlap = placedRects.reduce((sum, item) => sum + overlap(rect, item), 0);
+      const reservedOverlap = reserved.reduce((sum, item) => sum + overlap(rect, item), 0);
+      const displacement = Math.hypot(cx - anchor.x, cy - anchor.y);
+      let stickiness = 0;
+      if (prior && prior.dirIndex === slot.dirIndex && prior.ringIndex === slot.ringIndex) {
+        stickiness -= STICKY_MARKER_BONUS;
+      }
+      candidates.push({
+        x: cx,
+        y: cy,
+        slot,
+        collision: placedOverlap + reservedOverlap,
+        score:
+          placedOverlap * 12000 +
+          reservedOverlap * 9000 +
+          displacement * 6 +
+          ringIndex * 30 +
+          stickiness,
+      });
+    };
+
+    consider(anchor.x, anchor.y, { dirIndex: -1, ringIndex: 0 }, 0);
+    for (let ringIndex = 0; ringIndex < MARKER_RING_ORDER.length; ringIndex++) {
+      const radius = options.size * MARKER_RING_ORDER[ringIndex]!;
+      for (let dirIndex = 0; dirIndex < MARKER_DIRECTIONS.length; dirIndex++) {
+        const dir = MARKER_DIRECTIONS[dirIndex]!;
+        consider(
+          anchor.x + dir.x * radius,
+          anchor.y + dir.y * radius,
+          { dirIndex, ringIndex },
+          ringIndex + 1,
+        );
+      }
+    }
+
+    candidates.sort((a, b) => a.score - b.score);
+    const best = candidates[0]!;
+    const displaced = best.slot.dirIndex >= 0;
+    const hidden = best.collision > 0 || placed.length >= maxVisible;
+    const placement: MarkerPlacement = {
+      ...anchor,
+      markerX: best.x,
+      markerY: best.y,
+      leader: displaced && !hidden ? [{ x: anchor.x, y: anchor.y }, leaderTip(anchor, best, half)] : [],
+      displaced,
+      hidden,
+      slot: best.slot,
+    };
+    out.push(placement);
+    if (!hidden) {
+      placed.push(placement);
+      placedRects.push(markerRect(placement, options.size, gap));
+    }
+  }
+
+  return out;
+}
+
+/** Where the leader meets the puck: on its rim, aimed back at the true point. */
+function leaderTip(
+  anchor: Point,
+  marker: { x: number; y: number },
+  half: number,
+): Point {
+  const dx = anchor.x - marker.x;
+  const dy = anchor.y - marker.y;
+  const length = Math.hypot(dx, dy) || 1;
+  return { x: marker.x + (dx / length) * half, y: marker.y + (dy / length) * half };
 }
 
 export function layoutCalloutAnnotations(
@@ -253,10 +465,12 @@ export function layoutCalloutAnnotations(
 
   for (const anchor of visible) {
     const sideOrder = sideOrderForAnchor(anchor, options);
+    const prior = options.previous?.get(anchor.id);
     const candidates: Array<{
       side: Side;
       label: AnnotationRect;
       leader: Point[];
+      slot: AnnotationSlot;
       score: number;
     }> = [];
     for (let sideIndex = 0; sideIndex < sideOrder.length; sideIndex++) {
@@ -279,6 +493,13 @@ export function layoutCalloutAnnotations(
             anchor.x - (label.x + label.width / 2),
             anchor.y - (label.y + label.height / 2),
           );
+          let stickiness = 0;
+          if (prior && prior.side === side) {
+            stickiness -=
+              prior.laneOffset === laneOffset && prior.ringScale === ringScale
+                ? STICKY_SLOT_BONUS
+                : STICKY_SIDE_BONUS;
+          }
           const score =
             placedOverlap * 12000 +
             reservedOverlap * 18000 +
@@ -288,8 +509,15 @@ export function layoutCalloutAnnotations(
             shift * 90 +
             ringIndex * 35 +
             Math.abs(laneOffset) * 18 +
-            sideIndex * 8;
-          candidates.push({ side, label, leader, score });
+            sideIndex * 8 +
+            stickiness;
+          candidates.push({
+            side,
+            label,
+            leader,
+            slot: { side, laneOffset, ringScale },
+            score,
+          });
         }
       }
     }
@@ -301,6 +529,7 @@ export function layoutCalloutAnnotations(
       label: best.label,
       leader: best.leader,
       side: best.side,
+      slot: best.slot,
     });
   }
 

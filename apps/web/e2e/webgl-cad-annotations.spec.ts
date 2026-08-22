@@ -92,11 +92,30 @@ test.describe("WebGL CAD annotations (dims + measure tape)", () => {
     expect(labelCount).toBeGreaterThanOrEqual(3);
     await expect(dimLabels.first()).toContainText(/ m$/);
 
-    // 2. The Dims chip toggles the ring off and back on.
+    // 2. The Dims chip toggles the working-drawing ring off and back on.
+    //
+    //    Asserted per family, not as a total count. Two controls can put a chip
+    //    on screen: this Dims instrument (the full ring — boundary AND building
+    //    F-dims) and the CAD card's Bearings control (boundary survey truth
+    //    alone, which Survey needs because `modeArmsDims` deliberately leaves
+    //    dims off there). So Dims-off clears the building dims and the ring line
+    //    work while the four boundary chips correctly stay — turning Bearings
+    //    off is what clears those, covered in webgl-communication-modes.spec.
+    const buildingLabels = page.locator(
+      '[data-testid="dim-label"][data-dim-family="building"]',
+    );
+    const boundaryLabels = page.locator(
+      '[data-testid="dim-label"][data-dim-family="boundary"]',
+    );
+    await expect(buildingLabels.first()).toBeVisible();
+    await expect(boundaryLabels.first()).toBeVisible();
+
     const dimsChip = page.getByRole("button", { name: "▾ Dims" });
     await dimsChip.click();
-    await expect(page.locator('[data-testid="dim-label"]')).toHaveCount(0);
+    await expect(buildingLabels).toHaveCount(0);
+    await expect(boundaryLabels.first()).toBeVisible();
     await page.getByRole("button", { name: "▸ Dims" }).click();
+    await expect(buildingLabels.first()).toBeVisible();
     await expect(dimLabels.first()).toBeVisible();
 
     // 3. Arm the measure tape and drag a line across the canvas.

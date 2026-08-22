@@ -974,7 +974,7 @@ export function WebGLStudioPreview({
       annotationControl == null
         ? {
             enabled: false,
-            propertyLines: false,
+            bearings: false,
             elevations: false,
             plants: false,
             materials: false,

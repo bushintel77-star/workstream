@@ -109,7 +109,7 @@ export function SurveyCommunicationCard({
       <div role="group" aria-label="Legend filters" style={{ display: "flex", gap: "var(--gs-space-2)", flexWrap: "wrap" }}>
         {(
           [
-            ["propertyLines", "Boundary"],
+            ["bearings", "Bearings"],
             ["elevations", "RL"],
             ["plants", "Plants"],
             ["materials", "Hatches"],
@@ -169,16 +169,32 @@ export function SurveyCommunicationCard({
             <strong style={{ fontFamily: "var(--font-tech)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
               {GROUP_LABEL[group.group]}
             </strong>
-            {group.entries.map((entry) => (
-              <div key={entry.id} style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: "var(--gs-space-2)" }}>
-                <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink)" }}>
-                  {entry.label}
-                </span>
-                <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
-                  {entry.value}
-                </span>
-              </div>
-            ))}
+            {group.entries.map((entry) => {
+              const style = model.styleProfile.categories[entry.category];
+              return (
+                <div key={entry.id} style={{ display: "grid", gridTemplateColumns: "22px 108px 1fr", gap: "var(--gs-space-2)", alignItems: "center" }}>
+                  {/* Stroke swatch — the legend is where the operator reads that
+                      Truth Anchor blue means surveyed truth and ink means design
+                      intent, so it draws from the same dialect profile the canvas
+                      does rather than restating the colours. */}
+                  <span
+                    aria-hidden
+                    data-testid={`legend-swatch-${entry.category}`}
+                    style={{
+                      display: "block",
+                      width: 18,
+                      borderTop: `${style.strokeWidth}px ${style.dash != null ? "dashed" : "solid"} ${style.stroke}`,
+                    }}
+                  />
+                  <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink)" }}>
+                    {entry.label}
+                  </span>
+                  <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
+                    {entry.value}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         ))}
         {tradeLegend.length > 0 ? (

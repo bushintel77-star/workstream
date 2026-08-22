@@ -1,3 +1,25 @@
+/**
+ * Gold Standard 2026 — annotation dialect styling.
+ *
+ * THE HIERARCHY INVARIANT (the reason this file is data-driven):
+ *
+ *   The Truth Anchor tokens (`--gs-truth*`) mean "surveyed site truth". The
+ *   title boundary carries them in EVERY dialect; no design category may use
+ *   them, or any other blue, in ANY dialect.
+ *
+ * Dialects differentiate by line weight, hatch density and dash pattern — never
+ * by hue. This is both how drafting dialects actually differ and the only way
+ * the immutable/mutable read survives dialect switching.
+ *
+ * This used to be four hand-written branches, and they disagreed: the
+ * `architectural` dialect (the CAD default) painted `property_line` with
+ * `--gs-ink` (#1a1a1a) while giving `plant_tag`, `detail_callout` and
+ * `scope_outline` the blue `--gs-primary-ink` — inverting the signal, so at
+ * default settings the immutable survey boundary read as design ink and the
+ * mutable design elements read as survey data. `style.invariant.test.ts` now
+ * fails on any reintroduction.
+ */
+
 import type {
   AnnotationDialect,
   CategoryStyle,
@@ -13,137 +35,81 @@ const HIERARCHY_BY_DIALECT: Record<AnnotationDialect, DraftingLineHierarchy> = {
   hybrid: { boundaryPx: 2.25, annotationPx: 1.25, guidePx: 0.8 },
 };
 
+/** Hatch ink strength per dialect — the technical read is the densest. */
+const HATCH_INK_MIX_PCT: Record<AnnotationDialect, number> = {
+  technical: 58,
+  architectural: 46,
+  creative: 36,
+  hybrid: 52,
+};
+
+/** Scope-extent dash per dialect. */
+const SCOPE_DASH: Record<AnnotationDialect, string> = {
+  technical: "6 4",
+  architectural: "4 4",
+  creative: "7 3",
+  hybrid: "5 4",
+};
+
+/**
+ * Categories that represent surveyed truth, and may therefore carry the Truth
+ * Anchor. Everything else is design intent.
+ */
+export const SURVEY_TRUTH_CATEGORIES: readonly SurveyedAnnotationCategory[] = [
+  "property_line",
+];
+
+export const DESIGN_CATEGORIES: readonly SurveyedAnnotationCategory[] = [
+  "elevation_rl",
+  "plant_tag",
+  "material_hatch",
+  "detail_callout",
+  "scope_outline",
+];
+
+/**
+ * Tokens reserved for surveyed truth. A design category resolving to any of
+ * these is the hierarchy inversion this module exists to prevent.
+ * `--gs-primary*` is on the list because it is the CTA accent: close enough to
+ * the Truth Anchor on paper to be misread as survey data, and off-brief for
+ * drafting overlays regardless.
+ */
+export const RESERVED_TRUTH_TOKENS: readonly string[] = [
+  "--gs-truth",
+  "--gs-truth-soft",
+  "--gs-truth-ink",
+  "--gs-signal-blue",
+  "--gs-signal-blue-ink",
+  "--gs-primary",
+  "--gs-primary-ink",
+];
+
 function categoryStyles(
   dialect: AnnotationDialect,
   hierarchy: DraftingLineHierarchy,
 ): Record<SurveyedAnnotationCategory, CategoryStyle> {
-  if (dialect === "technical") {
-    return {
-      property_line: {
-        stroke: "var(--gs-primary-ink)",
-        strokeWidth: hierarchy.boundaryPx,
-        text: "var(--gs-primary-ink)",
-      },
-      elevation_rl: {
-        stroke: "var(--gs-ink-secondary)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-ink)",
-      },
-      plant_tag: {
-        stroke: "var(--gs-ink)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-ink)",
-        fill: "color-mix(in srgb, var(--gs-glass) 84%, transparent)",
-      },
-      material_hatch: {
-        stroke: "color-mix(in srgb, var(--gs-ink) 58%, transparent)",
-        strokeWidth: hierarchy.guidePx,
-        text: "var(--gs-ink-secondary)",
-      },
-      detail_callout: {
-        stroke: "var(--gs-ink)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-ink)",
-      },
-      scope_outline: {
-        stroke: "var(--gs-ink-secondary)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-ink-secondary)",
-        dash: "6 4",
-      },
-    };
-  }
-  if (dialect === "architectural") {
-    return {
-      property_line: {
-        stroke: "var(--gs-ink)",
-        strokeWidth: hierarchy.boundaryPx,
-        text: "var(--gs-ink)",
-      },
-      elevation_rl: {
-        stroke: "var(--gs-primary)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-primary-ink)",
-      },
-      plant_tag: {
-        stroke: "var(--gs-primary-ink)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-primary-ink)",
-        fill: "color-mix(in srgb, var(--gs-primary) 8%, var(--gs-canvas))",
-      },
-      material_hatch: {
-        stroke: "color-mix(in srgb, var(--gs-ink) 46%, transparent)",
-        strokeWidth: hierarchy.guidePx,
-        text: "var(--gs-ink-secondary)",
-      },
-      detail_callout: {
-        stroke: "var(--gs-primary-ink)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-ink)",
-      },
-      scope_outline: {
-        stroke: "var(--gs-primary-ink)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-primary-ink)",
-        dash: "4 4",
-      },
-    };
-  }
-  if (dialect === "creative") {
-    return {
-      property_line: {
-        stroke: "color-mix(in srgb, var(--gs-ink-secondary) 82%, transparent)",
-        strokeWidth: hierarchy.boundaryPx,
-        text: "var(--gs-ink-secondary)",
-      },
-      elevation_rl: {
-        stroke: "color-mix(in srgb, var(--gs-primary) 52%, transparent)",
-        strokeWidth: hierarchy.guidePx,
-        text: "var(--gs-ink-secondary)",
-      },
-      plant_tag: {
-        stroke: "var(--gs-primary-ink)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-primary-ink)",
-        fill: "color-mix(in srgb, var(--gs-primary) 11%, var(--gs-canvas))",
-      },
-      material_hatch: {
-        stroke: "color-mix(in srgb, var(--gs-primary-ink) 36%, transparent)",
-        strokeWidth: hierarchy.guidePx,
-        text: "var(--gs-ink-secondary)",
-      },
-      detail_callout: {
-        stroke: "var(--gs-primary-ink)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-ink)",
-      },
-      scope_outline: {
-        stroke: "var(--gs-primary-ink)",
-        strokeWidth: hierarchy.annotationPx,
-        text: "var(--gs-primary-ink)",
-        dash: "7 3",
-      },
-    };
-  }
   return {
+    // Surveyed truth — Truth Anchor in every dialect. Only the weight varies.
     property_line: {
-      stroke: "var(--gs-primary-ink)",
+      stroke: "var(--gs-truth)",
       strokeWidth: hierarchy.boundaryPx,
-      text: "var(--gs-primary-ink)",
+      text: "var(--gs-truth-ink)",
     },
+    // Measured levels read as strong ink; proposed vs existing is carried by
+    // ink weight at render time, not by hue.
     elevation_rl: {
-      stroke: "color-mix(in srgb, var(--gs-primary) 70%, var(--gs-ink-secondary))",
+      stroke: "var(--gs-ink-secondary)",
       strokeWidth: hierarchy.annotationPx,
       text: "var(--gs-ink)",
     },
     plant_tag: {
-      stroke: "var(--gs-primary-ink)",
+      stroke: "var(--gs-ink)",
       strokeWidth: hierarchy.annotationPx,
       text: "var(--gs-ink)",
-      fill: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",
+      fill: "color-mix(in srgb, var(--gs-glass) 84%, transparent)",
     },
     material_hatch: {
-      stroke: "color-mix(in srgb, var(--gs-ink) 52%, transparent)",
+      stroke: `color-mix(in srgb, var(--gs-ink) ${HATCH_INK_MIX_PCT[dialect]}%, transparent)`,
       strokeWidth: hierarchy.guidePx,
       text: "var(--gs-ink-secondary)",
     },
@@ -156,7 +122,7 @@ function categoryStyles(
       stroke: "var(--gs-ink-secondary)",
       strokeWidth: hierarchy.annotationPx,
       text: "var(--gs-ink-secondary)",
-      dash: "5 4",
+      dash: SCOPE_DASH[dialect],
     },
   };
 }

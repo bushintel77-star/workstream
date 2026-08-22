@@ -1,7 +1,7 @@
 import type { SurveyedPlanLegendEntry, SurveyedPlanNotationModel } from "./model";
 
 export interface LegendFilter {
-  propertyLines: boolean;
+  bearings: boolean;
   elevations: boolean;
   plants: boolean;
   materials: boolean;
@@ -10,7 +10,7 @@ export interface LegendFilter {
 }
 
 const CATEGORY_BY_FILTER = {
-  propertyLines: ["property_line"],
+  bearings: ["property_line"],
   elevations: ["elevation_rl"],
   plants: ["plant_tag"],
   materials: ["material_hatch"],

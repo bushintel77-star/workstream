@@ -1,5 +1,28 @@
 "use client";
 
+/**
+ * Gold Standard 2026 — design communication overlay.
+ *
+ * SCOPE (narrowed 2026-08-22): design intent only — RL marks, plant tags,
+ * material hatches, detail callouts, scope extents. Survey edge truth (the
+ * boundary line and its bearing/distance labels) belongs to `DimensionLayer`.
+ *
+ * This layer used to draw the title boundary a second time: the same
+ * `boundaryPct` ring that `LotBoundary` drapes over the terrain in the Truth
+ * Anchor colour was re-projected here onto a flat plane at y = 0.12 and coloured
+ * by dialect — which in `architectural`, the CAD default, meant near-black. So
+ * the immutable survey boundary rendered twice, in two colours, at two screen
+ * positions that separated under any camera tilt or terrain relief, and it
+ * labelled every edge a second time with the length the dimension ring was
+ * already printing.
+ *
+ * DECLUTTER ORDER. Every family publishes its footprint before the next one
+ * lays out, so the solver actually sees its neighbours: RL marks (measured
+ * truth, immovable) → plant pucks (displaceable, keep a leader) → callouts
+ * (fully movable, leader by design). Dimension-ring chips arrive through
+ * `annotationReservations`, since they belong to a sibling component.
+ */
+
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
@@ -11,19 +34,21 @@ import type {
 } from "@workstream/contracts";
 import { pctToWorld, type PctPoint } from "../coordTransform";
 import { useStudioStore } from "../studioStore";
-import {
-  deriveSurveyedPlanModel,
-} from "./derive";
+import { deriveSurveyedPlanModel } from "./derive";
 import type { AnnotationDialect } from "./model";
 import { cfZPair } from "../../cfz";
 import {
   layoutCalloutAnnotations,
+  layoutPointMarkers,
+  markerRect,
   type AnnotationRect,
+  type AnnotationSlot,
+  type MarkerSlot,
 } from "../annotationLayout";
+import { readAnnotationRects } from "../annotationReservations";
 
 interface AnnotationLayerToggles {
   enabled: boolean;
-  propertyLines: boolean;
   elevations: boolean;
   plants: boolean;
   materials: boolean;
@@ -54,6 +79,11 @@ const FULL_CALLOUT = {
   padding: 16,
   fontSize: "11px",
 };
+
+/** RL chip box — mirrors the rendered div's margins and width. */
+const RL_MARK = { width: 52, height: 20, offsetX: -26, offsetY: -10 };
+/** Plant puck diameter — mirrors the rendered div. */
+const PUCK_SIZE = 24;
 
 function calloutReservedRects(width: number, height: number): AnnotationRect[] {
   const rects: AnnotationRect[] = [{ x: 0, y: 0, width: 96, height: 112 }];
@@ -122,16 +152,20 @@ export function AnnotationLayer({
   );
 
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const boundaryRefs = useRef<Map<string, SVGLineElement | null>>(new Map());
-  const boundaryLabelRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const levelRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const plantRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
+  const plantLeaderRefs = useRef<Map<string, SVGPolylineElement | null>>(new Map());
   const calloutLeaderRefs = useRef<Map<string, SVGPolylineElement | null>>(new Map());
   const calloutBoxRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const scopeRefs = useRef<Map<string, SVGPolylineElement | null>>(new Map());
   const hatchRefs = useRef<Map<string, SVGPolygonElement | null>>(new Map());
   const northRef = useRef<HTMLDivElement | null>(null);
   const scratch = useRef(new THREE.Vector3());
+  // Last frame's chosen slots — the solver runs from scratch every frame, and
+  // without this a label whose candidates score within noise of each other
+  // flips lanes while the camera moves.
+  const calloutSlots = useRef<Map<string, AnnotationSlot>>(new Map());
+  const plantSlots = useRef<Map<string, MarkerSlot>>(new Map());
 
   useFrame(({ camera, size }) => {
     if (!toggles.enabled) return;
@@ -144,61 +178,56 @@ export function AnnotationLayer({
       };
     };
 
-    for (const line of model.propertyLines) {
-      const from = projectPct(line.fromPct);
-      const to = projectPct(line.toPct);
-      const lineEl = boundaryRefs.current.get(line.id);
-      if (lineEl) {
-        lineEl.setAttribute("x1", from.x.toFixed(1));
-        lineEl.setAttribute("y1", from.y.toFixed(1));
-        lineEl.setAttribute("x2", to.x.toFixed(1));
-        lineEl.setAttribute("y2", to.y.toFixed(1));
-      }
-      const labelEl = boundaryLabelRefs.current.get(line.id);
-      if (labelEl) {
-        labelEl.style.transform = `translate3d(${((from.x + to.x) / 2).toFixed(1)}px, ${((from.y + to.y) / 2 - 10).toFixed(1)}px, 0)`;
-      }
-    }
+    // Chrome + the sibling dimension ring's chips.
+    const chromeRects = calloutReservedRects(size.width, size.height);
+    const occupied: AnnotationRect[] = [...chromeRects, ...readAnnotationRects()];
 
+    // 1. RL marks — measured truth, drawn where they are and never displaced.
     for (const mark of model.elevationMarks) {
       const p = projectPct(mark.atPct);
       const el = levelRefs.current.get(mark.id);
       if (el) {
         el.style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0)`;
       }
-    }
-
-    for (const tag of model.plantTags) {
-      const p = projectPct(tag.atPct);
-      const el = plantRefs.current.get(tag.id);
-      if (el) {
-        el.style.transform = `translate3d(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px, 0)`;
+      if (toggles.elevations) {
+        occupied.push({
+          x: p.x + RL_MARK.offsetX,
+          y: p.y + RL_MARK.offsetY,
+          width: RL_MARK.width,
+          height: RL_MARK.height,
+        });
       }
     }
 
-    const calloutAnchors = model.callouts.map((callout, index) => {
-      const anchor = projectPct(callout.atPct);
-      return {
-        id: callout.id,
-        x: anchor.x,
-        y: anchor.y,
-        priority: model.callouts.length - index,
-      };
-    });
-    const calloutPlacements = layoutCalloutAnnotations(calloutAnchors, {
-      width: size.width,
-      height: size.height,
-      labelWidth: calloutProfile.width,
-      labelHeight: calloutProfile.height,
-      padding: calloutProfile.padding,
-      gap: calloutProfile.gap,
-      reserved: calloutReservedRects(size.width, size.height),
-    });
-    const byId = new Map(calloutPlacements.map((placement) => [placement.id, placement]));
-    for (const callout of model.callouts) {
-      const placement = byId.get(callout.id);
-      if (!placement) continue;
-      const leader = calloutLeaderRefs.current.get(callout.id);
+    // 2. Plant pucks — displaced along a compass ring when they would stack,
+    //    with a leader back to the true position.
+    const plantPlacements = layoutPointMarkers(
+      model.plantTags.map((tag, index) => {
+        const p = projectPct(tag.atPct);
+        return {
+          id: tag.id,
+          x: p.x,
+          y: p.y,
+          priority: model.plantTags.length - index,
+        };
+      }),
+      {
+        width: size.width,
+        height: size.height,
+        size: PUCK_SIZE,
+        reserved: occupied,
+        previous: plantSlots.current,
+      },
+    );
+    const nextPlantSlots = new Map<string, MarkerSlot>();
+    for (const placement of plantPlacements) {
+      nextPlantSlots.set(placement.id, placement.slot);
+      const el = plantRefs.current.get(placement.id);
+      if (el) {
+        el.style.transform = `translate3d(${placement.markerX.toFixed(1)}px, ${placement.markerY.toFixed(1)}px, 0)`;
+        el.style.visibility = placement.hidden ? "hidden" : "visible";
+      }
+      const leader = plantLeaderRefs.current.get(placement.id);
       if (leader) {
         leader.setAttribute(
           "points",
@@ -207,11 +236,52 @@ export function AnnotationLayer({
             .join(" "),
         );
       }
-      const box = calloutBoxRefs.current.get(callout.id);
+      if (!placement.hidden && toggles.plants) {
+        occupied.push(markerRect(placement, PUCK_SIZE));
+      }
+    }
+    plantSlots.current = nextPlantSlots;
+
+    // 3. Callouts — fully movable, so they route around everything above.
+    const calloutPlacements = layoutCalloutAnnotations(
+      model.callouts.map((callout, index) => {
+        const anchor = projectPct(callout.atPct);
+        return {
+          id: callout.id,
+          x: anchor.x,
+          y: anchor.y,
+          priority: model.callouts.length - index,
+        };
+      }),
+      {
+        width: size.width,
+        height: size.height,
+        labelWidth: calloutProfile.width,
+        labelHeight: calloutProfile.height,
+        padding: calloutProfile.padding,
+        gap: calloutProfile.gap,
+        reserved: occupied,
+        previous: calloutSlots.current,
+      },
+    );
+    const nextCalloutSlots = new Map<string, AnnotationSlot>();
+    for (const placement of calloutPlacements) {
+      nextCalloutSlots.set(placement.id, placement.slot);
+      const leader = calloutLeaderRefs.current.get(placement.id);
+      if (leader) {
+        leader.setAttribute(
+          "points",
+          placement.leader
+            .map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`)
+            .join(" "),
+        );
+      }
+      const box = calloutBoxRefs.current.get(placement.id);
       if (box) {
         box.style.transform = `translate3d(${placement.label.x.toFixed(1)}px, ${placement.label.y.toFixed(1)}px, 0)`;
       }
     }
+    calloutSlots.current = nextCalloutSlots;
 
     for (const scope of model.scopeOutlines) {
       const points = scope.ringPct.map((point) => projectPct(point));
@@ -292,16 +362,16 @@ export function AnnotationLayer({
                 opacity={0.75}
               />
             ))}
-          {toggles.propertyLines &&
-            model.propertyLines.map((line) => (
-              <line
-                key={line.id}
+          {toggles.plants &&
+            model.plantTags.map((tag) => (
+              <polyline
+                key={`plant-leader-${tag.id}`}
                 ref={(el) => {
-                  boundaryRefs.current.set(line.id, el);
+                  plantLeaderRefs.current.set(tag.id, el);
                 }}
-                stroke={style.categories.property_line.stroke}
-                strokeWidth={style.categories.property_line.strokeWidth}
-                strokeLinecap="round"
+                fill="none"
+                stroke={style.categories.plant_tag.stroke}
+                strokeWidth={style.categories.plant_tag.strokeWidth * 0.7}
               />
             ))}
           {toggles.callouts &&
@@ -332,35 +402,6 @@ export function AnnotationLayer({
             ))}
         </svg>
 
-        {toggles.propertyLines &&
-          model.propertyLines.map((line) => (
-            <div
-              key={`lbl-${line.id}`}
-              data-testid="annotation-boundary-label"
-              ref={(el) => {
-                boundaryLabelRefs.current.set(line.id, el);
-              }}
-              style={{
-                position: "absolute",
-                transform: "translate3d(0,0,0)",
-                marginLeft: -78,
-                width: 156,
-                textAlign: "center",
-                fontFamily: "var(--font-tech)",
-                fontSize: "11px",
-                lineHeight: 1.2,
-                color: style.categories.property_line.text,
-                background: "color-mix(in srgb, var(--gs-canvas) 70%, transparent)",
-                border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
-                borderRadius: "999px",
-                padding: "1px 6px",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {line.label}
-            </div>
-          ))}
-
         {toggles.elevations &&
           model.elevationMarks.map((mark) => (
             <div
@@ -372,13 +413,15 @@ export function AnnotationLayer({
               style={{
                 position: "absolute",
                 transform: "translate3d(0,0,0)",
-                marginLeft: -26,
-                marginTop: -10,
-                width: 52,
+                marginLeft: RL_MARK.offsetX,
+                marginTop: RL_MARK.offsetY,
+                width: RL_MARK.width,
                 textAlign: "center",
                 fontFamily: "var(--font-tech)",
                 fontSize: "11px",
-                color: mark.source === "proposed" ? "var(--gs-primary-ink)" : "var(--gs-ink-secondary)",
+                // Proposed vs existing is carried by ink weight, not hue — the
+                // blues are reserved for surveyed truth (see annotations/style).
+                color: mark.source === "proposed" ? "var(--gs-ink)" : "var(--gs-ink-secondary)",
                 borderTop: `1px solid ${style.categories.elevation_rl.stroke}`,
                 borderBottom: `1px solid ${style.categories.elevation_rl.stroke}`,
                 background: "color-mix(in srgb, var(--gs-canvas) 78%, transparent)",
@@ -392,16 +435,17 @@ export function AnnotationLayer({
           model.plantTags.map((tag) => (
             <div
               key={tag.id}
+              data-testid="annotation-plant-tag"
               ref={(el) => {
                 plantRefs.current.set(tag.id, el);
               }}
               style={{
                 position: "absolute",
                 transform: "translate3d(0,0,0)",
-                marginLeft: -12,
-                marginTop: -12,
-                width: 24,
-                height: 24,
+                marginLeft: -PUCK_SIZE / 2,
+                marginTop: -PUCK_SIZE / 2,
+                width: PUCK_SIZE,
+                height: PUCK_SIZE,
                 borderRadius: "999px",
                 border: `1px solid ${style.categories.plant_tag.stroke}`,
                 background: style.categories.plant_tag.fill ?? "var(--gs-canvas)",
@@ -426,6 +470,11 @@ export function AnnotationLayer({
                 calloutBoxRefs.current.set(callout.id, el);
               }}
               title={`${callout.detailId} ${callout.text}`}
+              data-testid="annotation-callout"
+              // How many placements/polygons this one box speaks for. Grouping
+              // is the fix for six boxes reading the same thing, so the count is
+              // what a gate asserts to prove the grouping still happens.
+              data-callout-count={callout.count}
               style={{
                 position: "absolute",
                 transform: "translate3d(0,0,0)",

@@ -36,8 +36,12 @@ export interface DialectStyleProfile {
 
 export interface PropertyLineNotation {
   id: string;
+  /** Edge key matching the dimension ring (`B1`…), which renders this edge. */
+  key: string;
   fromPct: { x: number; y: number };
   toPct: { x: number; y: number };
+  /** Empty when north is uncalibrated — a DMS bearing off an uncalibrated
+   *  frame is a precise-looking fiction, so it is omitted rather than shown. */
   bearing: string;
   distanceM: string;
   label: string;
@@ -69,7 +73,13 @@ export interface DetailCalloutNotation {
   id: string;
   detailId: string;
   atPct: { x: number; y: number };
+  /**
+   * Front-loaded with the distinguishing token (plant code / material name),
+   * because the callout box ellipsis-truncates and the tail is what gets eaten.
+   */
   text: string;
+  /** How many placements or polygons this callout speaks for (grouped). */
+  count: number;
 }
 
 export interface ScopeOutlineNotation {
