@@ -8,15 +8,21 @@ alwaysApply: true
 A feature/fix is **not finished** when the code is written. It is finished when
 the gate below has been executed (or an item is explicitly waived with a reason).
 
+Everything named in this file is verified to exist. If you find a reference here
+that does not resolve, fix this file in the same change — a mandatory rule that
+names deleted files teaches every reader to treat the whole thing as advisory,
+which destroys the parts that matter.
+
 ## Gate (in order)
 
 1. **Typecheck** — `pnpm typecheck` (or package filter) green.
 2. **Unit tests** — run the tests you touched / added; green.
-3. **Kept smoke** — if the change has a regression risk (canvas camera, cream,
-   deploy-critical UI), a Playwright or scripted probe must **exist and pass**,
-   not merely be authored. Writing `e2e/*.spec.ts` without a green run ≠ done.
+3. **Kept smoke** — if the change has a regression risk (canvas camera, chrome
+   layering, contrast, deploy-critical UI), a Playwright or scripted probe must
+   **exist and pass**, not merely be authored. Writing `e2e/*.spec.ts` without a
+   green run ≠ done.
 4. **Commit + push** — only when the user asked to ship / finish / PR; then push
-   so Railway (or CI) can deploy.
+   so CI (and Railway) can pick it up.
 5. **Live check** — when the job includes deploy or “live”, probe the deployed
    URL (or CI status) for the commit / behaviour. Code on `main` without a live
    check is incomplete if live was in scope.
@@ -29,28 +35,80 @@ the gate below has been executed (or an item is explicitly waived with a reason)
   `reuseExistingServer` (start API/web yourself) or fix the hang, then re-run.
 - One-off probe scripts that get deleted are not a substitute for a kept smoke
   when the gap analysis called for CI/e2e.
+- A gate you did not watch fire is not a gate. When you add or re-scope one,
+  prove it fails on a deliberate negative control, then prove it passes.
 - Prefer: fail the gate loudly over a green narrative with missing evidence.
+
+## Running the e2e suite
+
+`pnpm --filter @workstream/web test:e2e`. Let Playwright start its own servers:
+`playwright.config.ts` sets `RATE_LIMIT_MAX: 10000` on the API it launches
+because e2e creates many projects from one loopback IP. `reuseExistingServer` is
+on outside CI, so reusing a plain `pnpm dev` API inherits production throttling
+and batches of 4+ spec files fail at project creation. That is the limiter, not
+the code.
 
 ## Canvas-specific (Workstream)
 
-- Phase 0 cream/zoom: parchment outside camera + `aerial-image-slot`
-  `data-hide-paper="1"` — covered by `e2e/canvas-cream-zoom.spec.ts`.
-- View rotate: pointer/wheel must use inverse camera (`clientToBoardPct`); do
-  not ship rotate without that path verified.
-- **Camera chrome (gates B+C):** frosted / dock / HUD UI MUST render through
-  `CameraChrome` (portals to `camera-chrome-root` sibling of `.zoomWorld`,
-  stamps `data-camera-chrome`). Kept detector:
-  `e2e/canvas-chrome-detector.spec.ts` — must stay at **zero**
-  `[data-testid=zoom-world] [data-camera-chrome]` after zoom-out. Do not use
-  `scale(1/--studio-zoom)` as a substitute. See `docs/STUDIO-STYLING-AND-UX.md`
-  § Camera parenting.
-- **Nested chrome portals:** a component rendered inside a `FrameDrawer` must
-  NOT wrap itself in `CameraChrome` — the drawer already portals. A second
-  portal escapes the drawer and drops the component on the drawing with whatever
-  absolute offset its CSS still carries (this is what parked the Sheets strip
-  mid-plan and ate elevation callout clicks). Cover:
-  `e2e/elevation-callout-hit.spec.ts`.
-- **Contrast:** `e2e/canvas-contrast-aa.spec.ts` must stay at zero WCAG AA text
-  failures across all five modes. When touching ink tokens or any translucent
-  chrome surface, run it — it flattens the composited background, so it catches
-  what eyeballing a token value cannot.
+The canvas is the **Gold Standard 2026 WebGL studio** (Three.js / React Three
+Fiber). The SVG `%`-coord studio and its 63 `canvas-*` specs were deleted in the
+2026-08-19 prune. Binding doc: `docs/GOLD-STANDARD-2026.md` (supreme), plus
+`docs/GOLD-STANDARD-2026-ARCHITECTURE.md` for the scene graph and chrome
+layering.
+
+- **Chrome parenting — no DOM chrome inside the R3F `<Canvas>`.** All overlay
+  chrome lives in the sibling `[data-testid=webgl-chrome-overlay]` div. Kept
+  detector: `e2e/webgl-chrome-detector.spec.ts`, which asserts the canvas
+  contains zero `[data-gs-glass-card], [data-camera-chrome]` and that the
+  overlay is a sibling, not a descendant.
+
+  Do **not** reach for `CameraChrome` / `camera-chrome-root` /
+  `data-camera-chrome` here. That was the SVG studio's portal host, it is
+  retired, and `docs/agent-prompts/ui-root-cause-survey.md` §8 explicitly
+  forbids introducing it into WebGL: the WebGL dock is plain DOM overlay
+  positioning inside the existing `data-webgl-chrome` overlay.
+
+- **Chrome collision:** `e2e/webgl-chrome-collision.spec.ts` collects every
+  chrome surface's bounding rect across three states (idle, maximum
+  instruments, assets dock open) at two viewports, and asserts they are
+  pairwise non-intersecting and on-screen. Run it when you add, move or resize
+  any floating card — DOM containment is allowed, geometric overlap is not.
+
+- **Contrast:** `e2e/webgl-contrast-aa.spec.ts` must stay at zero WCAG AA text
+  failures across all five modes (survey, sketch, cad, elevation, quote). When
+  touching ink tokens or any translucent chrome surface, run it — it flattens
+  the composited background, so it catches what eyeballing a token value
+  cannot. Two live examples of what eyeballing misses: `--gs-ink-strong` (#111
+  paper ink) was being used as the ink on near-black dev-HUD chrome, and a
+  `var(--gs-primary, #FBBF24)` fallback kept a pre-pivot amber for a token that
+  is now Signal Blue.
+
+- **z-ladder:** the four-tier Canvas-First ladder
+  (`--cf-z-canvas|spatial|chrome|app`) is the only source of truth. Raw numeric
+  `zIndex`, Tailwind `z-N`, and raw drei `<Html zIndexRange>` pairs are all
+  forbidden — use `cfZPair()` from `apps/web/src/components/canvas/cfz.ts`.
+  Kept smoke: `e2e/canvas-first-z-stack.spec.ts`. Guarded from two more
+  directions on purpose: the `no-restricted-syntax` selectors in
+  `eslint.config.mjs` (`Z_TOKEN_SELECTORS`, which the canvas block must
+  **spread**, not replace — flat config does not merge same-named rule options)
+  and the `inlineZIndex` axis in `scripts/check-css-scales.mjs`. Keep all three.
+
+- **Colour:** `scripts/check-handoff-chrome-colors.mjs` classifies hex in
+  `components/canvas/webgl/` per occurrence — a literal in a `style={{}}` /
+  `CSSProperties` object or an SVG `stroke=`/`fill=` attribute is chrome and
+  must be a token; a Three.js material, light or shader value may stay literal.
+  Do not re-add a blanket path exemption; that is what let six chrome hex
+  values accumulate behind a "Three.js render values" justification.
+
+- **Ratchet floors:** the reachability, css-scale and colour gates each declare
+  a scope floor. They exist because `walk()` returns `[]` for a missing
+  directory, which silently turned the reachability gate into a no-op that
+  still printed `ok` for three days after the SVG retirement moved its only
+  root. Never lower a floor to make CI pass — repoint the root.
+
+## CI
+
+`pnpm run ci` is the authoritative gate and mirrors the GitLab `gate` job.
+Pre-commit (husky/lint-staged) runs **typecheck only** — it does not run lint or
+vitest, so a green commit hook is not a green gate. Run `pnpm test` and
+`pnpm lint` yourself before you push, or read the pipeline.
