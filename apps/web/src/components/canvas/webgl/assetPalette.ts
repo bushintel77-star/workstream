@@ -83,7 +83,7 @@ const CATEGORY_BY_TYPE: Record<StudioItemType, AssetPaletteCategory> = {
   frenchdrain: "hardscape",
 };
 
-const GLYPH_BY_TYPE: Record<StudioItemType, string> = {
+export const GLYPH_BY_TYPE: Record<StudioItemType, string> = {
   canopy: "♠",
   feature: "✿",
   paving: "▦",

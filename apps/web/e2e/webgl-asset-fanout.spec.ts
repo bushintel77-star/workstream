@@ -67,10 +67,16 @@ test.describe("WebGL asset fan-out (place + persist)", () => {
     // domcontentloaded (not networkidle): production keeps background
     // polling alive, so networkidle never settles there.
     await page.reload({ waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(4000);
     await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
-      timeout: 10_000,
+      timeout: 15_000,
     });
+    // Wait for the autosave round-trip to complete — the save-status-chip
+    // transitions through saving → saved after hydration, which is a more
+    // reliable signal than a fixed timeout or the stats strip text (which
+    // can render before the canvas rehydrates).
+    await expect(
+      page.locator('[data-testid="save-status-chip"][data-status="saved"]'),
+    ).toBeVisible({ timeout: 20_000 });
     const statsAfter = page.locator('[data-testid="perimeter-tab-strip"]');
     await expect(statsAfter).toContainText("I1", { timeout: 10_000 });
 

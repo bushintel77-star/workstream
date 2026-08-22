@@ -35,6 +35,7 @@ import { MASS_PLANT_NOTICE_REF } from "./inspectorPolicy";
 import { Button } from "./Button";
 import { Input } from "./Field";
 
+
 const GOLD = "var(--gs-primary)";
 const SYMBOL_MIME = "application/x-workstream-symbol";
 
@@ -47,6 +48,17 @@ function AssetCard({
   active: boolean;
   onPick: () => void;
 }) {
+  const tooltip = [
+    entry.label,
+    entry.botanicalName,
+    entry.heightM != null
+      ? `H ${entry.heightM.toFixed(1)}${entry.spreadM != null ? ` · R ${entry.spreadM.toFixed(1)}` : ""}`
+      : null,
+    "Click to arm · Drag onto lot",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   return (
     <Button
       variant="asset-card"
@@ -54,8 +66,16 @@ function AssetCard({
       aria-pressed={active}
       draggable
       data-testid={`asset-card-${entry.symbolId}`}
-      title={`${entry.label} — click to arm, or drag onto the lot`}
-      style={{ flex: "0 0 auto" }}
+      title={tooltip}
+      style={{
+        flex: "0 0 auto",
+        width: active ? 80 : 68,
+        minHeight: active ? 56 : 48,
+        flexDirection: "row",
+        gap: "var(--gs-space-2)",
+        padding: "5px 8px",
+        justifyContent: "flex-start",
+      }}
       onDragStart={(e) => {
         e.dataTransfer.setData(SYMBOL_MIME, entry.symbolId);
         e.dataTransfer.setData("text/plain", entry.symbolId);
@@ -80,9 +100,10 @@ function AssetCard({
       )}
       <span
         style={{
-          fontSize: active ? 20 : 16,
+          fontSize: active ? 18 : 15,
           lineHeight: 1,
           color: active ? GOLD : "var(--gs-ink-secondary)",
+          flex: "0 0 auto",
         }}
         aria-hidden
       >
@@ -94,36 +115,21 @@ function AssetCard({
           fontSize: "var(--gs-font-xs)",
           fontWeight: 600,
           color: "var(--gs-ink)",
-          textAlign: "center",
-          lineHeight: 1.25,
+          lineHeight: 1.2,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          minWidth: 0,
         }}
       >
         {entry.label}
-      </span>
-      <span
-        style={{
-          fontFamily: "var(--font-tech)",
-          fontSize: "var(--gs-font-xs)",
-          color: "var(--gs-ink-secondary)",
-          textAlign: "center",
-          lineHeight: 1.4,
-        }}
-      >
-        {entry.botanicalName && <em>{entry.botanicalName}</em>}
-        {entry.heightM != null && (
-          <div>
-            H {entry.heightM.toFixed(1)}
-            {entry.spreadM != null ? ` · R ${entry.spreadM.toFixed(1)}`
-              : ""}
-          </div>
-        )}
       </span>
       {active && (
         <span
           data-testid="asset-place-cta"
           style={{
-            marginTop: "var(--gs-space-1)",
-            padding: "var(--gs-space-1) 9px",
+            flex: "0 0 auto",
+            padding: "2px 6px",
             borderRadius: "var(--gs-radius-pill)",
             border: `1px solid color-mix(in srgb, ${GOLD} 50%, transparent)`,
             background: `color-mix(in srgb, ${GOLD} 20%, transparent)`,
@@ -131,6 +137,7 @@ function AssetCard({
             fontFamily: "var(--font-ui)",
             fontSize: "var(--gs-font-xs)",
             fontWeight: 600,
+            lineHeight: 1.3,
           }}
         >
           Place
@@ -144,9 +151,7 @@ export function AssetFanOutDock() {
   const assetsOpen = useStudioStore((s) => s.assetsOpen);
   const armedSymbolId = useStudioStore((s) => s.armedSymbolId);
   const setArmedSymbolId = useStudioStore((s) => s.setArmedSymbolId);
-  const areaPlantActive = useStudioStore((s) => s.areaPlantActive);
   const setAreaPlantActive = useStudioStore((s) => s.setAreaPlantActive);
-  const rowPlantActive = useStudioStore((s) => s.rowPlantActive);
   const setRowPlantActive = useStudioStore((s) => s.setRowPlantActive);
   const boundaryNotice = useStudioStore((s) => s.boundaryNotice);
   const dismissBoundaryNotice = useStudioStore((s) => s.dismissBoundaryNotice);
@@ -174,6 +179,7 @@ export function AssetFanOutDock() {
         setArmedSymbolId(null);
         setAreaPlantActive(false);
         setRowPlantActive(false);
+        useStudioStore.getState().setMassPlantPreviewCount(0);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -182,95 +188,35 @@ export function AssetFanOutDock() {
 
   if (!assetsOpen) return null;
 
-  if (armedSymbolId) {
-    return (
-      <div
-        data-testid="asset-dock"
-        style={{
-          position: "absolute",
-          bottom: 12,
-          left: "calc(50% - 85px)",
-          transform: "translateX(-50%)",
-          display: "flex",
-          alignItems: "center",
-          gap: "var(--gs-space-3)",
-          padding: "5px 12px",
-          borderRadius: "var(--gs-radius-pill)",
-          border: `1px solid color-mix(in srgb, ${GOLD} 40%, transparent)`,
-          background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-          backdropFilter: "blur(var(--gs-blur))",
-          WebkitBackdropFilter: "blur(var(--gs-blur))",
-          pointerEvents: "auto",
-          fontFamily: "var(--font-tech)",
-          fontSize: "var(--gs-font-xs)",
-          color: GOLD,
-        }}
-      >
-        {rowPlantActive
-          ? "Armed — drag a run to row-plant · Esc cancels"
-          : areaPlantActive
-            ? "Armed — drag a box to mass-plant · Esc cancels"
-            : "Armed — click the lot to place · Esc cancels"}
-        <Button
-          variant="chip-preset"
-          size="xs"
-          active={areaPlantActive}
-          data-testid="asset-area-plant"
-          onClick={() => setAreaPlantActive(!areaPlantActive)}
-          style={{ pointerEvents: "auto" }}
-        >
-          Area
-        </Button>
-        <Button
-          variant="chip-preset"
-          size="xs"
-          active={rowPlantActive}
-          data-testid="asset-row-plant"
-          onClick={() => setRowPlantActive(!rowPlantActive)}
-          style={{ pointerEvents: "auto" }}
-        >
-          Row
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div
       data-testid="asset-dock"
       style={{
         position: "absolute",
         bottom: 12,
-        left: "calc(50% - 85px)",
+        left: "50%",
         transform: "translateX(-50%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: "var(--gs-space-3)",
-        padding: "7px 9px",
+        gap: "var(--gs-space-2)",
+        padding: "5px 8px",
         borderRadius: "var(--gs-radius-xl)",
         border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
         background: "color-mix(in srgb, var(--gs-glass) 24%, transparent)",
         backdropFilter: "blur(var(--gs-blur))",
         WebkitBackdropFilter: "blur(var(--gs-blur))",
         pointerEvents: "none",
-        /*
-         * Centred at `50% - 85px`, the right edge sits at `vw/2 - 85 + w/2`;
-         * clearing the right dock (360px wide, 20px inset) needs
-         * `w <= vw - 622`. The old `100vw - 460px` budget let the dock reach
-         * 500px at 960, putting its right edge at x=645 under a dock column
-         * starting at x=580 — a 45x120px bite out of the survey panel.
-         */
         maxWidth: "min(64rem, calc(100vw - 640px))",
       }}
     >
+      {/* Single compact row: filters + search */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "var(--gs-space-2)",
+          gap: "var(--gs-space-1)",
           pointerEvents: "auto",
-          flexWrap: "wrap",
           justifyContent: "center",
         }}
       >
@@ -295,7 +241,7 @@ export function AssetFanOutDock() {
             {ASSET_CATEGORY_LABEL[id]}
           </Button>
         ))}
-        <label style={{ width: 140 }}>
+        <label style={{ width: 110 }}>
           <Input
             aria-label="Search assets"
             data-testid="asset-search"
@@ -304,31 +250,11 @@ export function AssetFanOutDock() {
             onChange={(e) => setQuery(e.target.value)}
             style={{
               fontSize: "var(--gs-font-xs)",
-              padding: "2px 6px",
+              padding: "2px 5px",
               background: "var(--gs-panel)",
             }}
           />
         </label>
-        <Button
-          variant="chip-preset"
-          size="xs"
-          active={areaPlantActive}
-          data-testid="asset-area-plant"
-          onClick={() => setAreaPlantActive(!areaPlantActive)}
-          title="Draw a box after arming to mass-plant at mature spacing"
-        >
-          Area plant
-        </Button>
-        <Button
-          variant="chip-preset"
-          size="xs"
-          active={rowPlantActive}
-          data-testid="asset-row-plant"
-          onClick={() => setRowPlantActive(!rowPlantActive)}
-          title="Draw a run after arming to row-plant a hedge or border at mature spacing"
-        >
-          Row plant
-        </Button>
       </div>
       {trimNotice && (
         <div
@@ -356,11 +282,12 @@ export function AssetFanOutDock() {
           </Button>
         </div>
       )}
+      {/* Card strip — single horizontal row, scrollable */}
       <div
         style={{
           display: "flex",
-          alignItems: "flex-end",
-          gap: "var(--gs-space-3)",
+          alignItems: "center",
+          gap: "var(--gs-space-2)",
           pointerEvents: "none",
           maxWidth: "100%",
         }}
@@ -382,10 +309,8 @@ export function AssetFanOutDock() {
             data-testid="asset-card-strip"
             style={{
               display: "flex",
-              alignItems: "flex-end",
-              gap: "var(--gs-space-3)",
-              // Horizontal scroll, never wrap: the dock keeps one row and
-              // one footprint no matter how many symbols match.
+              alignItems: "center",
+              gap: "var(--gs-space-2)",
               overflowX: "auto",
               overflowY: "hidden",
               minWidth: 0,
@@ -407,22 +332,20 @@ export function AssetFanOutDock() {
             ))}
           </div>
         )}
-        <div
-          data-testid="asset-dock-hint"
-          style={{
-            alignSelf: "center",
-            flex: "0 0 auto",
-            maxWidth: 110,
-            fontFamily: "var(--font-tech)",
-            fontSize: "var(--gs-font-xs)",
-            lineHeight: 1.5,
-            color: "var(--gs-ink-secondary)",
-          }}
-        >
-          {browsing
-            ? `${visible.length} of ${matches.length} in ${catalog.length} catalog symbols`
-            : "Pick or drag an asset onto the lot. Search the full catalog."}
-        </div>
+        {browsing && (
+          <span
+            data-testid="asset-dock-hint"
+            style={{
+              flex: "0 0 auto",
+              fontFamily: "var(--font-tech)",
+              fontSize: "var(--gs-font-xs)",
+              color: "var(--gs-ink-secondary)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {visible.length}/{matches.length}
+          </span>
+        )}
       </div>
     </div>
   );

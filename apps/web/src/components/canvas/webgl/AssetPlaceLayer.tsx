@@ -99,6 +99,7 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
   const rowPlantActive = useStudioStore((s) => s.rowPlantActive);
   const setRowPlantActive = useStudioStore((s) => s.setRowPlantActive);
   const setAssetPlantDraft = useStudioStore((s) => s.setAssetPlantDraft);
+  const setMassPlantPreviewCount = useStudioStore((s) => s.setMassPlantPreviewCount);
   const { camera, gl } = useThree();
 
   const placedRef = useRef(false);
@@ -150,6 +151,10 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (!armedSymbolId || !e.point) return;
     e.stopPropagation();
+    const ne = e.nativeEvent as PointerEvent;
+    if (ne.clientX != null && ne.clientY != null) {
+      setPointerClientPos({ x: ne.clientX, y: ne.clientY });
+    }
     const raw = worldToPct(e.point.x, e.point.z, scaleM, boardAspect);
     const pct = snapPct(raw, scaleM);
 
@@ -171,11 +176,27 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
     setArmedSymbolId(null);
   };
 
+  // Report cursor position for the floating placement toolbar.
+  const setPointerClientPos = useStudioStore((s) => s.setPointerClientPos);
+
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
+    // Always track cursor for the floating toolbar — even outside mass-drag.
+    const ne = e.nativeEvent as PointerEvent;
+    if (ne.clientX != null && ne.clientY != null) {
+      setPointerClientPos({ x: ne.clientX, y: ne.clientY });
+    }
     if (!massMode || !dragStart.current || !e.point) return;
     e.stopPropagation();
     const pct = snapPct(worldToPct(e.point.x, e.point.z, scaleM, boardAspect), scaleM);
     setAssetPlantDraft({ mode: massMode, a: dragStart.current, b: pct });
+    // Live stem count for cost preview in the dock.
+    if (armedSymbolId) {
+      const spacing = massPlantSpacingM(armedSymbolId);
+      const pts = massMode === "row"
+        ? rowAlongLine(dragStart.current, pct, spacing, scaleM, boardAspect)
+        : gridInBox(dragStart.current, pct, spacing, scaleM, boardAspect);
+      setMassPlantPreviewCount(pts.length);
+    }
   };
 
   const onPointerUp = (e: ThreeEvent<PointerEvent>) => {
@@ -199,6 +220,7 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
         ? rowRotationDeg(start, end, scaleM, boardAspect)
         : 0;
     setAssetPlantDraft(null);
+    setMassPlantPreviewCount(0);
     addPlacements(points.map((p) => mintPlacement(armedSymbolId, p, rotationDeg)));
     setArmedSymbolId(null);
     setAreaPlantActive(false);

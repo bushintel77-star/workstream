@@ -69,13 +69,13 @@ test.describe("WebGL asset row plant (hedge run + persist)", () => {
       timeout: 10_000,
     });
 
-    // 1. Open the dock, arm the row tool, then arm the hedge symbol.
+    // 1. Open the dock, arm the hedge symbol, then switch to row-plant mode.
     await page.getByRole("button", { name: "▸ Assets" }).click();
     const dock = page.locator('[data-testid="asset-dock"]');
     await expect(dock).toBeVisible({ timeout: 5_000 });
-    await page.locator('[data-testid="asset-row-plant"]').click();
     await page.locator('[data-testid="asset-card-hornbeam-pleached"]').click();
-    await expect(dock).toContainText("row-plant", { timeout: 5_000 });
+    await page.locator('[data-testid="floating-row-plant"]').click();
+    await expect(page.locator('[data-testid="floating-placement-toolbar"]')).toContainText("row", { timeout: 5_000 });
 
     // 2. Drag the run. The guide must read out before the commit.
     const canvas = page.locator('[data-testid="webgl-canvas"]');

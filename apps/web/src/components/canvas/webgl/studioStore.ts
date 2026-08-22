@@ -331,6 +331,10 @@ export interface StudioStoreState {
    * explicitly).
    */
   assetPlantDraft: { mode: "row" | "area"; a: PctPoint; b: PctPoint } | null;
+  /** Stem count preview during mass-plant drag — for cost preview in the dock. */
+  massPlantPreviewCount: number;
+  /** Live cursor client position over the canvas — drives the floating placement toolbar. */
+  pointerClientPos: { x: number; y: number } | null;
   /** All canvas placements (CatalogPlacement contract schema). */
   placements: CatalogPlacement[];
   /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features, stitchRecords} (cap 50). */
@@ -734,6 +738,8 @@ export interface StudioStoreState {
   setAssetPlantDraft: (
     draft: { mode: "row" | "area"; a: PctPoint; b: PctPoint } | null,
   ) => void;
+  setMassPlantPreviewCount: (count: number) => void;
+  setPointerClientPos: (pos: { x: number; y: number } | null) => void;
   /**
    * Append many placements in ONE history commit (row / area fill). Centres
    * are reconciled against the title boundary first — outside stems are
@@ -1015,6 +1021,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   areaPlantActive: false,
   rowPlantActive: false,
   assetPlantDraft: null,
+  massPlantPreviewCount: 0,
+  pointerClientPos: null,
   placements: [],
   // Spatial gizmo defaults — translate armed by default (single placement
   // selection mounts the manipulator), no drag in flight.
@@ -1224,7 +1232,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
             zoneTool: null,
             draftSession: null,
           }
-        : { armedSymbolId: null, assetPlantDraft: null },
+        : { armedSymbolId: null, assetPlantDraft: null, massPlantPreviewCount: 0, pointerClientPos: null },
     ),
   setPendingAssetDrop: (pendingAssetDrop) => set({ pendingAssetDrop }),
   // Box fill and row run compete for the same drag — arming one stands the
@@ -1242,6 +1250,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         : { rowPlantActive: false, assetPlantDraft: null },
     ),
   setAssetPlantDraft: (assetPlantDraft) => set({ assetPlantDraft }),
+  setMassPlantPreviewCount: (massPlantPreviewCount) => set({ massPlantPreviewCount }),
+  setPointerClientPos: (pointerClientPos) => set({ pointerClientPos }),
   setPlacements: (placements) => set({ placements }),
   updatePlacementField: (id, patch) =>
     set((s) => {

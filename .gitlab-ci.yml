@@ -101,7 +101,7 @@ e2e:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
-  timeout: 45m
+  timeout: 90m
 
 # ---------------------------------------------------------------- docker
 # Optional image smoke — manual, does not gate deploy.

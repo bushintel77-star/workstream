@@ -211,7 +211,10 @@ export async function deleteProjectAction(formData: FormData) {
   } catch (err) {
     throw wrapApiError(err, "Could not delete project");
   }
-  revalidatePath("/");
+  // No revalidatePath here — the client optimistically removes the card and
+  // shows a toast+undo. revalidatePath("/") triggers a full server-component
+  // re-render that wipes the ToastHost state before the toast can appear.
+  // Fresh data is fetched on the next full navigation.
 }
 
 export async function restoreProjectAction(formData: FormData) {
@@ -222,7 +225,7 @@ export async function restoreProjectAction(formData: FormData) {
   } catch (err) {
     throw wrapApiError(err, "Could not restore project");
   }
-  revalidatePath("/");
+  // Same as deleteProjectAction — avoid revalidatePath to preserve toast state.
 }
 
 /* -- Pipeline runners ------------------------------------------------- */

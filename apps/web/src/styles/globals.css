@@ -256,14 +256,28 @@ html {
 }
 
 html,
-body,
-#root,
-main {
+body {
   margin: 0;
   padding: 0;
   width: 100vw;
   height: 100vh;
-  overflow: hidden !important;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--ink-primary);
+  background: var(--canvas-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+#root,
+main {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: 1.5;
@@ -283,6 +297,16 @@ body {
   padding-right: env(safe-area-inset-right);
   background-color: var(--canvas-base);
   background-image: none;
+}
+
+/* Studio pages: lock overflow so the WebGL canvas fills the viewport without
+   scrollbars or rubber-bounce. Non-studio pages (landing, dashboard, settings)
+   keep normal scroll. */
+html:has([data-testid="webgl-studio"]),
+body:has([data-testid="webgl-studio"]),
+#root:has([data-testid="webgl-studio"]),
+main:has([data-testid="webgl-studio"]) {
+  overflow: hidden !important;
 }
 
 button,

@@ -89,7 +89,6 @@ export function HomePlanner({ projects }: Props) {
   const [taskInput, setTaskInput] = useState("");
   const [savingTask, setSavingTask] = useState(false);
 
-  // Tick every minute
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 60_000);
     return () => window.clearInterval(id);

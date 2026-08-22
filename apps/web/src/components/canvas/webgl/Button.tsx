@@ -355,12 +355,12 @@ const swatchBase: CSSProperties = {
 const assetCardBase: CSSProperties = {
   position: "relative",
   display: "flex",
-  flexDirection: "column",
+  flexDirection: "row",
   alignItems: "center",
   justifyContent: "center",
   gap: "var(--gs-space-2)",
-  padding: "var(--gs-space-4)",
-  borderRadius: "var(--gs-radius-xl)",
+  padding: "5px 8px",
+  borderRadius: "var(--gs-radius-lg)",
   border: "1px solid var(--gs-line)",
   background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
   backdropFilter: "blur(var(--gs-blur))",
@@ -368,8 +368,8 @@ const assetCardBase: CSSProperties = {
   cursor: "pointer",
   transition: "transform 0.2s ease, box-shadow 0.2s ease",
   pointerEvents: "auto",
-  width: 92,
-  minHeight: 118,
+  width: 68,
+  minHeight: 48,
 };
 
 export type ButtonProps = Omit<
@@ -449,14 +449,14 @@ const activeOverride = (variant: ButtonVariant): CSSProperties => {
   }
   if (variant === "asset-card") {
     return {
-      width: 108,
-      minHeight: 138,
+      width: 80,
+      minHeight: 56,
       border:
         "1px solid color-mix(in srgb, var(--gs-primary) 50%, transparent)",
       background:
         "color-mix(in srgb, var(--gs-primary) 6%, var(--gs-glass))",
       boxShadow:
-        "0 0 18px color-mix(in srgb, var(--gs-primary) 12%, transparent)",
+        "0 0 12px color-mix(in srgb, var(--gs-primary) 10%, transparent)",
     };
   }
   return {};

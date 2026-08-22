@@ -73,6 +73,7 @@ import { DrainageFlowCard } from "./DrainageFlowCard";
 import { EarthworksCard } from "./EarthworksCard";
 import { FitSheetCard } from "./FitSheetCard";
 import { AssetFanOutDock } from "./AssetFanOutDock";
+import { FloatingPlacementToolbar } from "./FloatingPlacementToolbar";
 import { StudioToolRail } from "./StudioToolRail";
 import { Button } from "./Button";
 import { NibPalette } from "./NibPalette";
@@ -2626,6 +2627,9 @@ export function WebGLStudioPreview({
 
       {/* Asset discovery fan-out dock — bottom-centre, above the growth card */}
       <AssetFanOutDock />
+
+      {/* Floating cursor toolbar — shows when an asset is armed */}
+      <FloatingPlacementToolbar />
 
       {/* Photo-trace HUD — the only chrome while a photo is pinned. */}
       <PhotoTraceHud />

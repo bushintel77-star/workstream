@@ -271,9 +271,9 @@ describe("<Button> chrome-tier primitives", () => {
       ),
     );
     expect(html).toMatch(/<button[^>]*data-testid="card"/);
-    expect(html).toContain('width:92');
-    expect(html).toContain('min-height:118px');
-    expect(html).toContain('border-radius:var(--gs-radius-xl)');
+    expect(html).toContain('width:68');
+    expect(html).toContain('min-height:48px');
+    expect(html).toContain('border-radius:var(--gs-radius-lg)');
     expect(html).toContain(
       'background:color-mix(in srgb, var(--gs-glass) 38%, transparent)',
     );
@@ -289,16 +289,14 @@ describe("<Button> chrome-tier primitives", () => {
         "Card",
       ),
     );
-    expect(html).toContain('width:108');
-    expect(html).toContain('min-height:138px');
+    expect(html).toContain('width:80');
+    expect(html).toContain('min-height:56px');
     expect(html).toContain(
       'border:1px solid color-mix(in srgb, var(--gs-primary) 50%, transparent)',
     );
     expect(html).toContain(
       'background:color-mix(in srgb, var(--gs-primary) 6%, var(--gs-glass))',
-    );
-    expect(html).toContain(
-      'box-shadow:0 0 18px color-mix(in srgb, var(--gs-primary) 12%, transparent)',
+    );    expect(html).toContain('box-shadow:0 0 12px color-mix(in srgb, var(--gs-primary) 10%, transparent)',
     );
   });
 
