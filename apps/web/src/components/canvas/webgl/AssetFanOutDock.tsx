@@ -254,7 +254,14 @@ export function AssetFanOutDock() {
         backdropFilter: "blur(var(--gs-blur))",
         WebkitBackdropFilter: "blur(var(--gs-blur))",
         pointerEvents: "none",
-        maxWidth: "min(64rem, calc(100vw - 460px))",
+        /*
+         * Centred at `50% - 85px`, the right edge sits at `vw/2 - 85 + w/2`;
+         * clearing the right dock (360px wide, 20px inset) needs
+         * `w <= vw - 622`. The old `100vw - 460px` budget let the dock reach
+         * 500px at 960, putting its right edge at x=645 under a dock column
+         * starting at x=580 — a 45x120px bite out of the survey panel.
+         */
+        maxWidth: "min(64rem, calc(100vw - 640px))",
       }}
     >
       <div

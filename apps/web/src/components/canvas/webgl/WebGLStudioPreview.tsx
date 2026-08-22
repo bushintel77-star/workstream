@@ -833,6 +833,11 @@ export function WebGLStudioPreview({
   );
 
   const is3D = viewBlendTarget > 0.5;
+  /* Quantised to 5-degree steps — the same trick ViewportTransitionHUD uses to
+     keep an orbit gesture at ~18 re-renders instead of one per frame. */
+  const pitchQuant = useStudioStore((s) =>
+    Math.round(s.liveRig.tiltDeg / 5) * 5,
+  );
 
   // Pads exist ⇔ any committed stroke OR any drafted region carries an
   // extrusion height — gates the Earth toggle + EarthworksCard. Both sources
@@ -1163,8 +1168,19 @@ export function WebGLStudioPreview({
       app={appSlot}
     >
       {/* ---- The chrome overlay (pointer-transparent; children opt in) ---- */}
+      {/* The committed camera state is stamped here so it is observable at all.
+          It was previously readable only from the Plan/3D control inside the
+          Studio meta panel and the projection HUD's presets — both summoned,
+          both absent in some modes — which is why "the camera opens oblique in
+          every mode" survived unnoticed. `data-view-blend` is the committed
+          plan/3D target and `data-pitch-deg` the quantised live rig pitch: if
+          those two ever disagree at rest, the divergence is visible in the DOM
+          rather than only in what the operator sees. */}
       <div
         data-webgl-chrome
+        data-mode={activeMode}
+        data-view-blend={is3D ? "3d" : "plan"}
+        data-pitch-deg={pitchQuant}
         style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
       >
       {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
@@ -2469,7 +2485,15 @@ function InteractionGuidanceChip({
         display: "flex",
         alignItems: "baseline",
         gap: "var(--gs-space-3)",
-        maxWidth: "min(560px, calc(100vw - 32px))",
+        /*
+         * The width budget is what keeps this off the tool rail. Centred at
+         * `50% - 190px`, the left edge sits at `vw/2 - 190 - w/2`; clearing the
+         * rail's 64px column plus its margin needs `w <= vw - 540`. At 960 the
+         * old `calc(100vw - 32px)` let the chip reach 560px and its left edge
+         * landed at x=10, straight on the rail — which the merged first-run tail
+         * made reachable where the shorter guidance line alone was not.
+         */
+        maxWidth: "min(560px, calc(100vw - 560px))",
         padding: "6px 11px",
         borderRadius: "var(--gs-radius-pill)",
         background: "var(--cf-glass-dark)",
