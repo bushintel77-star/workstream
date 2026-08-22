@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BoardPctSchema, BoardPointPctSchema } from "./board-coords";
 
 /** Who authored the geometry - AI regen must never overwrite human_locked. */
 export const FeatureSourceAttributionSchema = z.enum([
@@ -28,12 +29,6 @@ export const FeatureLayerSchema = z.enum([
 ]);
 export type FeatureLayer = z.infer<typeof FeatureLayerSchema>;
 
-export const CanvasPctPointSchema = z.object({
-  x_pct: z.number().min(0).max(100),
-  y_pct: z.number().min(0).max(100),
-});
-export type CanvasPctPoint = z.infer<typeof CanvasPctPointSchema>;
-
 export const GeodeticPointSchema = z.object({
   lng: z.number(),
   lat: z.number(),
@@ -47,7 +42,7 @@ export const BezierControlSchema = z.object({
 
 export const FeatureVertexSchema = z.object({
   id: z.string().min(1),
-  pct: CanvasPctPointSchema,
+  pct: BoardPointPctSchema,
   geodetic: GeodeticPointSchema.optional(),
   bezier_control: BezierControlSchema.optional(),
 });
@@ -57,7 +52,7 @@ export const FeatureGeometrySchema = z.object({
   type: z.enum(["Polygon", "Point", "LineString"]),
   /** Project CRS hint - UI source of truth is pct. */
   spatial_reference: z.string().default("EPSG:3857"),
-  canvas_origin_pct: CanvasPctPointSchema.default({ x_pct: 0, y_pct: 0 }),
+  canvas_origin_pct: BoardPointPctSchema.default({ x_pct: 0, y_pct: 0 }),
   points: z.array(FeatureVertexSchema).min(1),
 });
 export type FeatureGeometry = z.infer<typeof FeatureGeometrySchema>;
@@ -84,8 +79,8 @@ export const ScatterInstanceSchema = z.object({
   instance_id: z.string().min(1),
   sku: z.string().min(1),
   symbol_id: z.string().optional(),
-  x_pct: z.number().min(0).max(100),
-  y_pct: z.number().min(0).max(100),
+  x_pct: BoardPctSchema,
+  y_pct: BoardPctSchema,
   rotation_deg: z.number().default(0),
   scale: z.number().positive().default(1),
   live_cost_aud: z.number().nonnegative().optional(),

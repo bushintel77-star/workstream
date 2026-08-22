@@ -1,3 +1,4 @@
+export * from "./schemas/board-coords";
 export * from "./schemas/project";
 export * from "./schemas/stage-log";
 export * from "./schemas/recording";

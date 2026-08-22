@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  BoardPctSchema,
+  MAX_STROKE_SHAPE_POINTS,
+  MAX_SUGGESTION_OUTLINE_POINTS,
+} from "./board-coords";
 import { LandscapeFeatureSchema } from "./landscape-feature";
 
 export const CatalogCategorySchema = z.enum([
@@ -199,7 +204,10 @@ export const CanvasStrokeSchema = z.object({
    * flattened render path so every existing stroke consumer (hit-testing,
    * cut/fill pad detection, sketch→CAD) keeps working untouched.
    */
-  shape_points: z.array(CanvasStrokePointSchema).max(256).optional(),
+  shape_points: z
+    .array(CanvasStrokePointSchema)
+    .max(MAX_STROKE_SHAPE_POINTS)
+    .optional(),
   /** True when a polyline/curve run was closed back onto its origin. */
   shape_closed: z.boolean().optional(),
   /**
@@ -211,7 +219,13 @@ export const CanvasStrokeSchema = z.object({
 });
 export type CanvasStroke = z.infer<typeof CanvasStrokeSchema>;
 
-/** Percent point on the design studio aerial canvas. */
+/**
+ * Percent point on the design studio aerial canvas — deliberately UNBOUNDED.
+ * The canvas extends past the board: ink and authored runs may sit on the
+ * context ground beyond the 0-100 edges. Anything that must be *on the board*
+ * uses `BoardPointPctSchema` instead, and reaches the board through
+ * `toBoardPoint` (see ./board-coords).
+ */
 export const CanvasPointPctSchema = z.object({
   x_pct: z.number(),
   y_pct: z.number(),
@@ -532,8 +546,8 @@ export type SketchToCadRequest = z.infer<typeof SketchToCadRequestSchema>;
 export const SketchCadSuggestionSchema = z.object({
   id: z.string(),
   symbol_id: z.string(),
-  x_pct: z.number().min(0).max(100),
-  y_pct: z.number().min(0).max(100),
+  x_pct: BoardPctSchema,
+  y_pct: BoardPctSchema,
   confidence: z.number().min(0).max(1),
   reason: z.string(),
   /** Suggested glyph scale for the studio item. */
@@ -544,7 +558,10 @@ export const SketchCadSuggestionSchema = z.object({
    * Decimated drawn outline (board %) — present only for closed area masses
    * so the plan can render the region the operator actually drew.
    */
-  outline_pct: z.array(CanvasPointPctSchema).max(64).optional(),
+  outline_pct: z
+    .array(CanvasPointPctSchema)
+    .max(MAX_SUGGESTION_OUTLINE_POINTS)
+    .optional(),
 });
 export type SketchCadSuggestion = z.infer<typeof SketchCadSuggestionSchema>;
 
@@ -561,8 +578,8 @@ export type SketchToCadResponse = z.infer<typeof SketchToCadResponseSchema>;
  * Distinct from HITL SiteBoundary (geo/metres Vicmap lock).
  */
 export const DesignSiteFramePointSchema = z.object({
-  x_pct: z.number().min(0).max(100),
-  y_pct: z.number().min(0).max(100),
+  x_pct: BoardPctSchema,
+  y_pct: BoardPctSchema,
 });
 export type DesignSiteFramePoint = z.infer<typeof DesignSiteFramePointSchema>;
 
