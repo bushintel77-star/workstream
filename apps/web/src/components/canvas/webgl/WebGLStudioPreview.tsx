@@ -88,6 +88,7 @@ import { PhotoTraceHud } from "./PhotoTraceHud";
 import { PhotoElevationSheet } from "./PhotoElevationSheet";
 import { SplitViewLens } from "./SplitViewLens";
 import { ViewportTransitionHUD } from "./ViewportTransitionHUD";
+import { StudioSurfaceErrorBoundary } from "./StudioSurfaceErrorBoundary";
 import { placementsToItems, featuresOntoItems } from "../handoff/state/canvasBridge";
 import { toRenderItems } from "./stateBridge";
 import { SketchCadReviewCard } from "./SketchCadReviewCard";
@@ -183,6 +184,8 @@ export interface WebGLStudioPreviewProps {
     lotAreaM2?: number | null;
     sunHours?: number | null;
   };
+  /** True north bearing for board-up. Null/undefined means uncalibrated. */
+  northBearingDeg?: number | null;
 }
 
 export function WebGLStudioPreview({
@@ -218,6 +221,7 @@ export function WebGLStudioPreview({
   quotePortalUri = null,
   initialCadGhostCount = null,
   siteMeta,
+  northBearingDeg = null,
 }: WebGLStudioPreviewProps) {
   /**
    * Discrete camera write (garden look / zoom buttons / palette) — straight
@@ -953,6 +957,7 @@ export function WebGLStudioPreview({
     layerPolicy: policy,
     mode: activeMode,
     siteMeta,
+    northBearingDeg,
     levels,
     placements: storePlacements,
     features: storeFeatures,
@@ -1002,6 +1007,7 @@ export function WebGLStudioPreview({
         boundaryPct,
         scaleM,
         boardAspect,
+        northBearingDeg,
         levels,
         placements: storePlacements,
         features: storeFeatures,
@@ -1012,6 +1018,7 @@ export function WebGLStudioPreview({
       boundaryPct,
       scaleM,
       boardAspect,
+      northBearingDeg,
       levels,
       storePlacements,
       storeFeatures,
@@ -1181,11 +1188,19 @@ export function WebGLStudioPreview({
       {/* The render surface: ONE studio, or the split lens (locked plan |
           live 3D, linked cameras). The DOM chrome overlays whichever is
           mounted — one chrome, two viewports. */}
-      {splitView ? (
-        <SplitViewLens sceneProps={sceneProps} />
-      ) : (
-        <WebGLStudio {...sceneProps} />
-      )}
+      <StudioSurfaceErrorBoundary
+        tone="canvas"
+        areaLabel="Canvas surface"
+        title="Unable to render canvas view"
+        detail="The WebGL drawing surface hit a render exception. Chrome tools and saved data are still available while you retry."
+        testId="webgl-canvas-boundary-fallback"
+      >
+        {splitView ? (
+          <SplitViewLens sceneProps={sceneProps} />
+        ) : (
+          <WebGLStudio {...sceneProps} />
+        )}
+      </StudioSurfaceErrorBoundary>
 
       {/* Mode cross-fade — a 150 ms paper veil keyed by mode. */}
       <div
@@ -1740,10 +1755,17 @@ export function WebGLStudioPreview({
           } else if (activeMode === "cad") {
             body = (
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}>
-                <StudioCadCard
-                  projectId={projectId}
-                  onCadResult={(result) => setCadGhostCount(result.ghost_count)}
-                />
+                <StudioSurfaceErrorBoundary
+                  areaLabel="Design assist panel"
+                  title="Design assist unavailable"
+                  detail="The AI drafter panel crashed and was isolated. Annotation and canvas tools are still active."
+                  testId="design-assist-boundary-fallback"
+                >
+                  <StudioCadCard
+                    projectId={projectId}
+                    onCadResult={(result) => setCadGhostCount(result.ghost_count)}
+                  />
+                </StudioSurfaceErrorBoundary>
                 <SurveyCommunicationCard
                   dialect={cadAnnotationDialect}
                   onDialect={setCadAnnotationDialect}

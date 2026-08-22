@@ -29,15 +29,20 @@ function fmt2(value: number): string {
 export function formatSurveyBearing(
   fromPct: { x: number; y: number },
   toPct: { x: number; y: number },
+  northBearingDeg?: number | null,
 ): string {
-  const dEast = toPct.x - fromPct.x;
-  const dNorth = -(toPct.y - fromPct.y);
+  const eastBoard = toPct.x - fromPct.x;
+  const northBoard = -(toPct.y - fromPct.y);
+  const theta = (((northBearingDeg ?? 0) % 360) + 360) % 360;
+  const thetaRad = (theta * Math.PI) / 180;
+  const dEast = eastBoard * Math.cos(thetaRad) + northBoard * Math.sin(thetaRad);
+  const dNorth = -eastBoard * Math.sin(thetaRad) + northBoard * Math.cos(thetaRad);
   const ns = dNorth >= 0 ? "N" : "S";
   const ew = dEast >= 0 ? "E" : "W";
   const northAbs = Math.abs(dNorth);
   const eastAbs = Math.abs(dEast);
-  const theta = northAbs < 1e-9 ? 90 : (Math.atan(eastAbs / northAbs) * 180) / Math.PI;
-  const dms = toDms(theta);
+  const bearingTheta = northAbs < 1e-9 ? 90 : (Math.atan(eastAbs / northAbs) * 180) / Math.PI;
+  const dms = toDms(bearingTheta);
   const deg = String(dms.deg).padStart(2, "0");
   const min = String(dms.min).padStart(2, "0");
   const sec = String(dms.sec).padStart(2, "0");
@@ -99,6 +104,7 @@ export function deriveSurveyedPlanModel(params: {
   boundaryPct: Array<{ x: number; y: number }>;
   scaleM: number;
   boardAspect: number;
+  northBearingDeg?: number | null;
   levels: DesignSiteFrameLevel[];
   placements: CatalogPlacement[];
   features: LandscapeFeature[];
@@ -109,16 +115,29 @@ export function deriveSurveyedPlanModel(params: {
     boundaryPct,
     scaleM,
     boardAspect,
+    northBearingDeg,
     levels,
     placements,
     features,
     density,
   } = params;
+  const northCalibrated =
+    northBearingDeg != null &&
+    Number.isFinite(northBearingDeg) &&
+    northBearingDeg >= 0 &&
+    northBearingDeg <= 360;
+  const northLabel = northCalibrated
+    ? `${northBearingDeg!.toFixed(1)}° true`
+    : "Uncalibrated — locational-indicative";
   const styleProfile = dialectStyleProfile(dialect);
   const compact = density === "compact";
   const propertyLines = boundaryPct.map((from, idx) => {
     const to = boundaryPct[(idx + 1) % boundaryPct.length]!;
-    const bearing = formatSurveyBearing(from, to);
+    const bearing = formatSurveyBearing(
+      from,
+      to,
+      northCalibrated ? northBearingDeg : null,
+    );
     const distanceM = fmt2(edgeLengthM(from, to, scaleM, boardAspect));
     return {
       id: `boundary-${idx + 1}`,
@@ -216,16 +235,66 @@ export function deriveSurveyedPlanModel(params: {
   }
 
   const legendEntries = buildLegend([
-    { id: "boundary", category: "property_line", group: "boundaries", label: "Boundary", value: 'N45°12\'30"E 23.45 m' },
-    { id: "existing-rl", category: "elevation_rl", group: "levels", label: "RL existing", value: "EX -00.25" },
-    { id: "proposed-rl", category: "elevation_rl", group: "levels", label: "RL proposed", value: "PR +100.50" },
-    { id: "plant-tags", category: "plant_tag", group: "plants", label: "Plant tags", value: "LC -> lophostemon-confertus" },
+    {
+      id: "boundary",
+      category: "property_line",
+      group: "boundaries",
+      label: "Boundary",
+      value: propertyLines[0]?.label ?? "No boundary segments available",
+    },
+    {
+      id: "existing-rl",
+      category: "elevation_rl",
+      group: "levels",
+      label: "RL existing",
+      value:
+        elevationMarks.find((mark) => mark.source === "existing")?.rlText != null
+          ? `EX ${elevationMarks.find((mark) => mark.source === "existing")!.rlText}`
+          : "No existing RL marks",
+    },
+    {
+      id: "proposed-rl",
+      category: "elevation_rl",
+      group: "levels",
+      label: "RL proposed",
+      value:
+        elevationMarks.find((mark) => mark.source === "proposed")?.rlText != null
+          ? `PR ${elevationMarks.find((mark) => mark.source === "proposed")!.rlText}`
+          : "No proposed RL marks",
+    },
+    {
+      id: "plant-tags",
+      category: "plant_tag",
+      group: "plants",
+      label: "Plant tags",
+      value:
+        plantTags[0] != null
+          ? `${plantTags[0].code} → ${plantTags[0].symbolId}`
+          : "No plant tags on this view",
+    },
     { id: "hatch-brick", category: "material_hatch", group: "materials", label: "Brick hatch", value: "Diagonal + coursing ticks" },
     { id: "hatch-stone", category: "material_hatch", group: "materials", label: "Stone hatch", value: "Alternating diagonal set" },
     { id: "hatch-gravel", category: "material_hatch", group: "materials", label: "Gravel hatch", value: "Dot aggregate pattern" },
     { id: "hatch-concrete", category: "material_hatch", group: "materials", label: "Concrete hatch", value: "Sparse orthogonal hatch" },
+    {
+      id: "material-example",
+      category: "material_hatch",
+      group: "materials",
+      label: "Active material",
+      value:
+        materialHatches[0] != null
+          ? `${materialHatches[0].label} (${materialHatches[0].family})`
+          : "No material hatch polygons",
+    },
     { id: "callout", category: "detail_callout", group: "callouts", label: "Callout", value: "D-## detail key with leader" },
     { id: "scope", category: "scope_outline", group: "scope", label: "Scope", value: "Dashed contractor work extent" },
+    {
+      id: "north-calibration",
+      category: "property_line",
+      group: "conventions",
+      label: "North frame",
+      value: northLabel,
+    },
     {
       id: "units",
       category: "property_line",

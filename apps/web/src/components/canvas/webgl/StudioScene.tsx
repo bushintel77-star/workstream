@@ -124,6 +124,8 @@ export interface StudioSceneProps {
     lotAreaM2?: number | null;
     sunHours?: number | null;
   };
+  /** True-north bearing of board-up, when calibrated (deg clockwise). */
+  northBearingDeg?: number | null;
   levels?: DesignSiteFrameLevel[];
   placements?: CatalogPlacement[];
   features?: LandscapeFeature[];
@@ -702,6 +704,7 @@ export function StudioScene({
   showSketch = true,
   mode = "survey",
   siteMeta,
+  northBearingDeg,
   levels = [],
   placements = [],
   features = [],
@@ -979,6 +982,7 @@ export function StudioScene({
         boundaryPct={boundaryPct}
         scaleM={scaleM}
         boardAspect={boardAspect}
+        northBearingDeg={northBearingDeg}
         levels={levels}
         placements={placements}
         features={features}

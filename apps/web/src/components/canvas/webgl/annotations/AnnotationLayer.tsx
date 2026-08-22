@@ -16,6 +16,10 @@ import {
 } from "./derive";
 import type { AnnotationDialect } from "./model";
 import { cfZPair } from "../../cfz";
+import {
+  layoutCalloutAnnotations,
+  type AnnotationRect,
+} from "../annotationLayout";
 
 interface AnnotationLayerToggles {
   enabled: boolean;
@@ -35,10 +39,43 @@ function levelPrefix(source: "existing" | "proposed"): string {
   return source === "proposed" ? "PR" : "EX";
 }
 
+const COMPACT_CALLOUT = {
+  width: 112,
+  height: 34,
+  gap: 12,
+  padding: 12,
+  fontSize: "10px",
+};
+
+const FULL_CALLOUT = {
+  width: 132,
+  height: 38,
+  gap: 16,
+  padding: 16,
+  fontSize: "11px",
+};
+
+function calloutReservedRects(width: number, height: number): AnnotationRect[] {
+  const rects: AnnotationRect[] = [{ x: 0, y: 0, width: 96, height: 112 }];
+  if (width >= 760) {
+    rects.push({ x: 0, y: 84, width: 72, height: Math.max(0, height - 168) });
+  }
+  if (width >= 900) {
+    rects.push({
+      x: Math.max(0, width - 356),
+      y: 82,
+      width: 340,
+      height: Math.max(0, Math.min(height - 140, 430)),
+    });
+  }
+  return rects;
+}
+
 export function AnnotationLayer({
   boundaryPct,
   scaleM,
   boardAspect,
+  northBearingDeg,
   levels,
   placements,
   features,
@@ -48,6 +85,7 @@ export function AnnotationLayer({
   boundaryPct: PctPoint[];
   scaleM: number;
   boardAspect: number;
+  northBearingDeg?: number | null;
   levels: DesignSiteFrameLevel[];
   placements: CatalogPlacement[];
   features: LandscapeFeature[];
@@ -56,6 +94,7 @@ export function AnnotationLayer({
 }) {
   const zoom = useStudioStore((s) => s.liveRig.zoom);
   const density = zoom <= 0.75 ? "compact" : "full";
+  const calloutProfile = density === "compact" ? COMPACT_CALLOUT : FULL_CALLOUT;
   const model = useMemo(
     () =>
       deriveSurveyedPlanModel({
@@ -63,12 +102,23 @@ export function AnnotationLayer({
         boundaryPct,
         scaleM,
         boardAspect,
+        northBearingDeg,
         levels,
         placements,
         features,
         density,
       }),
-    [dialect, boundaryPct, scaleM, boardAspect, levels, placements, features, density],
+    [
+      dialect,
+      boundaryPct,
+      scaleM,
+      boardAspect,
+      northBearingDeg,
+      levels,
+      placements,
+      features,
+      density,
+    ],
   );
 
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -126,23 +176,40 @@ export function AnnotationLayer({
       }
     }
 
-    for (let idx = 0; idx < model.callouts.length; idx++) {
-      const callout = model.callouts[idx]!;
+    const calloutAnchors = model.callouts.map((callout, index) => {
       const anchor = projectPct(callout.atPct);
-      const dx = idx % 2 === 0 ? 76 : -76;
-      const dy = idx % 3 === 0 ? -48 : 44;
-      const bubble = { x: anchor.x + dx, y: anchor.y + dy };
+      return {
+        id: callout.id,
+        x: anchor.x,
+        y: anchor.y,
+        priority: model.callouts.length - index,
+      };
+    });
+    const calloutPlacements = layoutCalloutAnnotations(calloutAnchors, {
+      width: size.width,
+      height: size.height,
+      labelWidth: calloutProfile.width,
+      labelHeight: calloutProfile.height,
+      padding: calloutProfile.padding,
+      gap: calloutProfile.gap,
+      reserved: calloutReservedRects(size.width, size.height),
+    });
+    const byId = new Map(calloutPlacements.map((placement) => [placement.id, placement]));
+    for (const callout of model.callouts) {
+      const placement = byId.get(callout.id);
+      if (!placement) continue;
       const leader = calloutLeaderRefs.current.get(callout.id);
       if (leader) {
-        const elbow = { x: bubble.x, y: anchor.y };
         leader.setAttribute(
           "points",
-          `${anchor.x.toFixed(1)},${anchor.y.toFixed(1)} ${elbow.x.toFixed(1)},${elbow.y.toFixed(1)} ${bubble.x.toFixed(1)},${bubble.y.toFixed(1)}`,
+          placement.leader
+            .map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`)
+            .join(" "),
         );
       }
       const box = calloutBoxRefs.current.get(callout.id);
       if (box) {
-        box.style.transform = `translate3d(${bubble.x.toFixed(1)}px, ${bubble.y.toFixed(1)}px, 0)`;
+        box.style.transform = `translate3d(${placement.label.x.toFixed(1)}px, ${placement.label.y.toFixed(1)}px, 0)`;
       }
     }
 
@@ -169,8 +236,15 @@ export function AnnotationLayer({
       }
     }
 
+    const northCalibrated =
+      northBearingDeg != null &&
+      Number.isFinite(northBearingDeg) &&
+      northBearingDeg >= 0 &&
+      northBearingDeg <= 360;
     if (northRef.current) {
       northRef.current.style.transform = "translate3d(16px, 56px, 0)";
+      northRef.current.style.opacity = northCalibrated ? "1" : "0.82";
+      northRef.current.style.borderStyle = northCalibrated ? "solid" : "dashed";
     }
   });
 
@@ -351,24 +425,31 @@ export function AnnotationLayer({
               ref={(el) => {
                 calloutBoxRefs.current.set(callout.id, el);
               }}
+              title={`${callout.detailId} ${callout.text}`}
               style={{
                 position: "absolute",
                 transform: "translate3d(0,0,0)",
-                marginLeft: -56,
-                marginTop: -18,
-                width: 112,
+                top: 0,
+                left: 0,
+                width: calloutProfile.width,
+                height: calloutProfile.height,
                 border: `1px solid ${style.categories.detail_callout.stroke}`,
                 background: "color-mix(in srgb, var(--gs-canvas) 84%, transparent)",
                 color: style.categories.detail_callout.text,
                 borderRadius: 6,
                 padding: "3px 6px",
                 fontFamily: "var(--font-ui)",
-                fontSize: "11px",
+                fontSize: calloutProfile.fontSize,
                 lineHeight: 1.25,
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                overflow: "hidden",
+                whiteSpace: "nowrap",
               }}
             >
-              <strong style={{ fontFamily: "var(--font-tech)" }}>{callout.detailId}</strong>{" "}
-              {callout.text}
+              <strong style={{ fontFamily: "var(--font-tech)", flex: "0 0 auto" }}>{callout.detailId}</strong>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{callout.text}</span>
             </div>
           ))}
 
@@ -396,7 +477,17 @@ export function AnnotationLayer({
 
         <div
           ref={northRef}
-          aria-label="North orientation"
+          data-testid="annotation-north-indicator"
+          aria-label={
+            northBearingDeg != null
+              ? `North orientation calibrated at ${northBearingDeg.toFixed(1)} degrees`
+              : "North orientation uncalibrated and indicative"
+          }
+          title={
+            northBearingDeg != null
+              ? `True north calibration: ${northBearingDeg.toFixed(1)}°`
+              : "North calibration unavailable — locational-indicative only"
+          }
           style={{
             position: "absolute",
             color: "var(--gs-ink-secondary)",
@@ -411,7 +502,18 @@ export function AnnotationLayer({
             background: "color-mix(in srgb, var(--gs-canvas) 75%, transparent)",
           }}
         >
-          N↑
+          <span
+            style={{
+              transform:
+                northBearingDeg != null
+                  ? `rotate(${northBearingDeg.toFixed(1)}deg)`
+                  : "none",
+              transformOrigin: "50% 50%",
+              display: "inline-block",
+            }}
+          >
+            N↑
+          </span>
         </div>
       </div>
     </Html>

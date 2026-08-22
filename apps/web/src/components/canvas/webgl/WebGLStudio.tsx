@@ -124,6 +124,7 @@ export interface WebGLStudioProps {
     lotAreaM2?: number | null;
     sunHours?: number | null;
   };
+  northBearingDeg?: number | null;
   levels?: DesignSiteFrameLevel[];
   placements?: CatalogPlacement[];
   features?: LandscapeFeature[];
@@ -200,6 +201,7 @@ export function WebGLStudio({
   style,
   mode = "survey",
   siteMeta,
+  northBearingDeg,
   levels,
   placements,
   features,
@@ -298,6 +300,7 @@ export function WebGLStudio({
           showSketch={showSketch}
           mode={mode}
           siteMeta={siteMeta}
+          northBearingDeg={northBearingDeg}
           levels={levels}
           placements={placements}
           features={features}
