@@ -51,6 +51,20 @@ export function defaultStructuredToolProps(
   }
 }
 
+/**
+ * Feature geometry is board-bounded by contract (`CanvasPctPointSchema` is
+ * 0-100), while stroke points are not (`CanvasPointPctSchema` is unbounded —
+ * ink drawn on the context ground beyond the board is legal). Ink converted
+ * into a feature therefore clamps to the board edge, the same convention every
+ * other feature writer uses (`draftShape.ts` toFeaturePoint, `sketchCad.ts`
+ * clampPct). Without it the feature fails validation and every autosave of the
+ * whole canvas is rejected.
+ */
+function clampToBoard(v: number): number {
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(100, v));
+}
+
 export function buildLandscapeFeatureFromStroke(args: {
   kind: StructuredToolKind;
   points: Array<{ x_pct: number; y_pct: number }>;
@@ -62,7 +76,7 @@ export function buildLandscapeFeatureFromStroke(args: {
   const now = args.now ?? new Date().toISOString();
   const pts = args.points.map((p, i) => ({
     id: `${id}-v${i}`,
-    pct: { x_pct: p.x_pct, y_pct: p.y_pct },
+    pct: { x_pct: clampToBoard(p.x_pct), y_pct: clampToBoard(p.y_pct) },
   }));
 
   const isBed = args.kind === "bed";

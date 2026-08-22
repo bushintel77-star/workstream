@@ -156,6 +156,24 @@ describe("convertStrokesToFeatures (direct one-click path)", () => {
     }
   });
 
+  it("converts ink drawn off the board into board-bounded features", () => {
+    // Ink on the context ground past both board edges is legal; the feature
+    // vertices it converts into are not, and an out-of-bounds vertex fails
+    // every subsequent whole-canvas autosave.
+    const { features, converted } = convertStrokesToFeatures([
+      stroke("offboard", [[-194.37, 50], [-40, 50.2], [120, 168.04]]),
+    ]);
+    expect(converted).toBe(1);
+    const f = features[0]!;
+    for (const v of f.geometry.points) {
+      expect(v.pct.x_pct).toBeGreaterThanOrEqual(0);
+      expect(v.pct.x_pct).toBeLessThanOrEqual(100);
+      expect(v.pct.y_pct).toBeGreaterThanOrEqual(0);
+      expect(v.pct.y_pct).toBeLessThanOrEqual(100);
+    }
+    expect(LandscapeFeatureSchema.safeParse(f).success).toBe(true);
+  });
+
   it("excludes derived hatch fills from conversion (decorative, not source ink)", () => {
     const hatchStroke: CanvasStroke = {
       ...stroke("hatch-1", [[20, 20], [80, 20]]),
