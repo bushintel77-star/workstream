@@ -109,6 +109,11 @@ layering.
 ## CI
 
 `pnpm run ci` is the authoritative gate and mirrors the GitLab `gate` job.
-Pre-commit (husky/lint-staged) runs **typecheck only** — it does not run lint or
-vitest, so a green commit hook is not a green gate. Run `pnpm test` and
-`pnpm lint` yourself before you push, or read the pipeline.
+
+Pre-commit (husky/lint-staged) covers typecheck, ESLint on the staged files at
+`--max-warnings 0`, `vitest related` on the staged set, the eight pure-file-reader
+CI ratchets, and the source-scraping specs that `related` structurally cannot
+select. It does **not** run the full suite, `web:check-bundle-size` (a full Next
+build), or e2e — so a green hook is still not a green gate. The authoritative
+scope list lives in `.husky/pre-commit`; keep it accurate in the same change that
+alters the hook.
