@@ -177,14 +177,31 @@ export const CanvasStrokeSchema = z.object({
     })
     .optional(),
   /**
-   * "shape" strokes (sketch line/rect/circle tool) render as crisp vector
-   * geometry instead of organic freehand ink — see handoff SketchBoard /
-   * FreehandLayer. Optional / absent = legacy ink stroke, unchanged.
+   * "shape" strokes render as crisp vector geometry instead of organic
+   * freehand ink. Optional / absent = legacy ink stroke, unchanged.
+   *
+   * `line` / `rect` / `circle` are the two-point tools from the retired SVG
+   * SketchBoard and stay described by `shape_start` + `shape_end`.
+   * `polyline` / `curve` are the WebGL precision drafting tools and carry an
+   * ordered vertex list in `shape_points` instead — a two-point model cannot
+   * express an n-vertex run (docs/precision-drafting-tools-spec.md §6).
    */
   kind: z.enum(["ink", "shape"]).optional(),
-  shape_tool: z.enum(["line", "rect", "circle"]).optional(),
+  shape_tool: z
+    .enum(["line", "rect", "circle", "polyline", "curve"])
+    .optional(),
   shape_start: CanvasStrokePointSchema.optional(),
   shape_end: CanvasStrokePointSchema.optional(),
+  /**
+   * Ordered vertices for `polyline` / `curve` shapes, in board %. These are the
+   * placed control points, NOT the tessellation — a curve stays editable and
+   * small by storing what the operator clicked. `points` still carries the
+   * flattened render path so every existing stroke consumer (hit-testing,
+   * cut/fill pad detection, sketch→CAD) keeps working untouched.
+   */
+  shape_points: z.array(CanvasStrokePointSchema).max(256).optional(),
+  /** True when a polyline/curve run was closed back onto its origin. */
+  shape_closed: z.boolean().optional(),
   /**
    * Extrusion height (metres) — set when a closed stroke footprint is extruded
    * into a 3D mass via the FusedSketchLayer drag-up gesture. Absent on flat

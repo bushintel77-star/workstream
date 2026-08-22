@@ -6,10 +6,18 @@
  * with no zoom context, so this module re-expresses the same priority ladder
  * in world metres:
  *
- *   1. close  — magnet to the live stroke's origin (auto-close assist)
- *   2. vertex — magnet to any committed stroke endpoint (cadastral join)
- *   3. angle  — soft-snap the ray from the last live point to 45° increments
- *   4. none   — the raw pointer passes through untouched
+ *   1. close    — magnet to the live stroke's origin (auto-close assist)
+ *   2. vertex   — magnet to any committed stroke endpoint (cadastral join)
+ *   3. boundary — magnet to the nearest point on a title boundary edge
+ *   4. angle    — soft-snap the ray from the last live point to 45° increments
+ *   5. none     — the raw pointer passes through untouched
+ *
+ * The boundary rung sits above angle deliberately: on a landscape setout the
+ * edges that matter run along or off the title line, so a real site line beats
+ * an abstract 45° octagon. It sits below vertex because a specific point is a
+ * stronger intent than a line. Snapping to the title line is also what keeps
+ * drawn geometry reconciled with the boundary rather than merely near it
+ * (AGENTS.md, title-boundary reconciliation rule).
  *
  * Pure function: identical inputs → identical output. Safe to call per
  * pointer-move.
@@ -18,7 +26,7 @@
  */
 
 /** Snap kinds, highest priority first. null = no snap (raw pointer). */
-export type SnapKind = "close" | "vertex" | "angle" | null;
+export type SnapKind = "close" | "vertex" | "boundary" | "angle" | null;
 
 /** A snap decision: where the pointer SHOULD read, and why. */
 export interface SnapHint {
@@ -33,10 +41,22 @@ export interface WorldXZ {
   z: number;
 }
 
+/** A title boundary edge in world metres (one segment of the parcel ring). */
+export interface SnapSegment {
+  a: WorldXZ;
+  b: WorldXZ;
+}
+
 /** Close magnet radius — matches FusedSketchLayer's SNAP_CLOSE_M. */
 export const SNAP_CLOSE_M = 2.0;
 /** Vertex magnet radius — cadastral joins, generous on a lot scale. */
 export const SNAP_VERTEX_M = 1.2;
+/**
+ * Title boundary magnet radius. Tighter than the vertex magnet because a line
+ * is a far larger target than a point — at the vertex radius it would swallow
+ * every pointer move near the parcel edge.
+ */
+export const SNAP_BOUNDARY_M = 1.0;
 /** Angle soft-snap window either side of a 45° increment. */
 export const SNAP_ANGLE_TOL_DEG = 5;
 /** Angle increment (degrees). 45 = the drafting octagon. */
@@ -45,8 +65,28 @@ export const SNAP_ANGLE_STEP_DEG = 45;
 export interface SnapDrawOptions {
   closeM?: number;
   vertexM?: number;
+  boundaryM?: number;
   angleTolDeg?: number;
   angleStepDeg?: number;
+}
+
+/** Nearest point to (px,pz) on the segment a→b, clamped to the segment. */
+export function closestPointOnSegment(
+  px: number,
+  pz: number,
+  a: WorldXZ,
+  b: WorldXZ,
+): WorldXZ {
+  const dx = b.x - a.x;
+  const dz = b.z - a.z;
+  const lenSq = dx * dx + dz * dz;
+  // Degenerate edge (duplicate ring point) — the segment IS the point.
+  if (lenSq === 0) return { x: a.x, z: a.z };
+  const t = Math.max(
+    0,
+    Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / lenSq),
+  );
+  return { x: a.x + t * dx, z: a.z + t * dz };
 }
 
 /**
@@ -65,11 +105,14 @@ export function snapDrawPointer(
     origin: WorldXZ | null;
     last: WorldXZ | null;
     vertices: readonly WorldXZ[];
+    /** Title boundary edges in world metres. Omit to disable the rung. */
+    boundaryEdges?: readonly SnapSegment[];
   },
   opts?: SnapDrawOptions,
 ): SnapHint {
   const closeM = opts?.closeM ?? SNAP_CLOSE_M;
   const vertexM = opts?.vertexM ?? SNAP_VERTEX_M;
+  const boundaryM = opts?.boundaryM ?? SNAP_BOUNDARY_M;
   const angleTolDeg = opts?.angleTolDeg ?? SNAP_ANGLE_TOL_DEG;
   const angleStepDeg = opts?.angleStepDeg ?? SNAP_ANGLE_STEP_DEG;
 
@@ -95,7 +138,23 @@ export function snapDrawPointer(
     return { x: bestVertex.x, z: bestVertex.z, kind: "vertex" };
   }
 
-  // 3. Angle — project the pointer onto the nearest 45° ray from the last
+  // 3. Boundary — nearest point on any title boundary edge within radius.
+  //    Beats the 45° rung: a real site line outranks the abstract octagon.
+  let bestEdge: WorldXZ | null = null;
+  let bestEdgeDist = Infinity;
+  for (const edge of ctx.boundaryEdges ?? []) {
+    const p = closestPointOnSegment(rawX, rawZ, edge.a, edge.b);
+    const d = Math.hypot(rawX - p.x, rawZ - p.z);
+    if (d <= boundaryM && d < bestEdgeDist) {
+      bestEdge = p;
+      bestEdgeDist = d;
+    }
+  }
+  if (bestEdge) {
+    return { x: bestEdge.x, z: bestEdge.z, kind: "boundary" };
+  }
+
+  // 4. Angle — project the pointer onto the nearest 45° ray from the last
   //    point, keeping the pointer's current distance (soft: length is free,
   //    direction is quantised).
   if (ctx.last) {
@@ -118,6 +177,6 @@ export function snapDrawPointer(
     }
   }
 
-  // 4. No snap.
+  // 5. No snap.
   return { x: rawX, z: rawZ, kind: null };
 }

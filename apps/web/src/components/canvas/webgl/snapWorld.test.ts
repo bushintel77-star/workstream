@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
   snapDrawPointer,
+  SNAP_BOUNDARY_M,
   SNAP_CLOSE_M,
   SNAP_VERTEX_M,
+  type SnapSegment,
   type WorldXZ,
 } from "./snapWorld";
 
-const NONE: { origin: WorldXZ | null; last: WorldXZ | null; vertices: readonly WorldXZ[] } = {
+const NONE: {
+  origin: WorldXZ | null;
+  last: WorldXZ | null;
+  vertices: readonly WorldXZ[];
+  boundaryEdges?: readonly SnapSegment[];
+} = {
   origin: null,
   last: null,
   vertices: [],
@@ -149,6 +156,93 @@ describe("snapDrawPointer", () => {
     const rad = (135 * Math.PI) / 180;
     expect(r.x).toBeCloseTo(last.x + Math.cos(rad) * 6, 5);
     expect(r.z).toBeCloseTo(last.z + Math.sin(rad) * 6, 5);
+  });
+
+  /* ---------------------------------------------------------------------- */
+  /* boundary                                                                */
+  /* ---------------------------------------------------------------------- */
+
+  it("magnets onto the nearest point of a title boundary edge", () => {
+    // A 20 m edge running east along z = 0.
+    const boundaryEdges = [{ a: { x: 0, z: 0 }, b: { x: 20, z: 0 } }];
+    const r = snapDrawPointer(8, 0.4, { ...NONE, boundaryEdges });
+    expect(r.kind).toBe("boundary");
+    // Perpendicular foot: x is preserved, z collapses onto the line.
+    expect(r.x).toBeCloseTo(8, 6);
+    expect(r.z).toBeCloseTo(0, 6);
+  });
+
+  it("clamps to the segment ends rather than the infinite line", () => {
+    const boundaryEdges = [{ a: { x: 0, z: 0 }, b: { x: 10, z: 0 } }];
+    // Beyond the far end, but within radius of the endpoint itself.
+    const r = snapDrawPointer(10.5, 0.3, { ...NONE, boundaryEdges });
+    expect(r.kind).toBe("boundary");
+    expect(r.x).toBeCloseTo(10, 6);
+    expect(r.z).toBeCloseTo(0, 6);
+  });
+
+  it("does not snap beyond the boundary radius", () => {
+    const boundaryEdges = [{ a: { x: 0, z: 0 }, b: { x: 20, z: 0 } }];
+    const r = snapDrawPointer(8, SNAP_BOUNDARY_M + 0.5, { ...NONE, boundaryEdges });
+    expect(r.kind).toBeNull();
+  });
+
+  it("picks the closest edge when two run near each other", () => {
+    const boundaryEdges = [
+      { a: { x: 0, z: 0 }, b: { x: 20, z: 0 } },
+      { a: { x: 0, z: 1.2 }, b: { x: 20, z: 1.2 } },
+    ];
+    const r = snapDrawPointer(5, 0.9, { ...NONE, boundaryEdges });
+    expect(r.kind).toBe("boundary");
+    expect(r.z).toBeCloseTo(1.2, 6);
+  });
+
+  it("survives a degenerate edge (duplicate ring point)", () => {
+    const boundaryEdges = [{ a: { x: 4, z: 4 }, b: { x: 4, z: 4 } }];
+    const r = snapDrawPointer(4.3, 4, { ...NONE, boundaryEdges });
+    expect(r.kind).toBe("boundary");
+    expect(r.x).toBeCloseTo(4, 6);
+    expect(r.z).toBeCloseTo(4, 6);
+  });
+
+  it("is inert when no boundary is supplied (existing callers unchanged)", () => {
+    const r = snapDrawPointer(8, 0.1, NONE);
+    expect(r.kind).toBeNull();
+  });
+
+  /* ---------------------------------------------------------------------- */
+  /* priority: close > vertex > boundary > angle                             */
+  /* ---------------------------------------------------------------------- */
+
+  it("vertex beats boundary when both are in radius", () => {
+    const boundaryEdges = [{ a: { x: 0, z: 0 }, b: { x: 20, z: 0 } }];
+    const r = snapDrawPointer(5.2, 0.2, {
+      ...NONE,
+      vertices: [{ x: 5, z: 0.1 }],
+      boundaryEdges,
+    });
+    expect(r.kind).toBe("vertex");
+    expect(r.x).toBe(5);
+  });
+
+  it("boundary beats the 45 degree rung — a real site line outranks the octagon", () => {
+    const boundaryEdges = [{ a: { x: 0, z: 0 }, b: { x: 20, z: 0 } }];
+    // From the last point this pointer also sits within the 45° window, but
+    // it is within 0.3 m of the title line, so the boundary must win.
+    const last = { x: 4, z: -3.7 };
+    const r = snapDrawPointer(7.7, -0.3, { ...NONE, last, boundaryEdges });
+    expect(r.kind).toBe("boundary");
+    expect(r.z).toBeCloseTo(0, 6);
+  });
+
+  it("close still beats boundary", () => {
+    const boundaryEdges = [{ a: { x: 0, z: 0 }, b: { x: 20, z: 0 } }];
+    const r = snapDrawPointer(6, 0.2, {
+      ...NONE,
+      origin: { x: 6.5, z: 0.6 },
+      boundaryEdges,
+    });
+    expect(r.kind).toBe("close");
   });
 
   /* ---------------------------------------------------------------------- */

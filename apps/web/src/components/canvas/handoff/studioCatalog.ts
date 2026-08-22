@@ -330,9 +330,18 @@ export type SketchStroke = {
    * Undefined / "ink" = unchanged legacy freehand behaviour.
    */
   kind?: "ink" | "shape";
-  shapeTool?: "line" | "rect" | "circle";
+  /**
+   * Mirrors `CanvasStroke.shape_tool`. `line`/`rect`/`circle` are the retired
+   * SVG two-point tools; `polyline`/`curve` are the WebGL drafting tools and
+   * carry their vertices in `shapePoints` rather than start/end.
+   */
+  shapeTool?: "line" | "rect" | "circle" | "polyline" | "curve";
   shapeStart?: Pt;
   shapeEnd?: Pt;
+  /** Placed control points for polyline / curve shapes (board %). */
+  shapePoints?: Pt[];
+  /** True when a polyline / curve run closed back onto its origin. */
+  shapeClosed?: boolean;
 };
 
 export const MODE_TABS = [
