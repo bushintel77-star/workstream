@@ -122,16 +122,16 @@ export default tseslint.config(
       "**/coverage/**",
       "**/.turbo/**",
       "apps/mobile/**",
-      "packages/ui/**",
     ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   /*
-   * React / Next rules are scoped to apps/web — it is the only React surface in
-   * this config (apps/mobile and packages/ui are ignored above). Leaving them
-   * global would run hook rules over Fastify routes and Zod schemas for no
-   * benefit.
+   * React / Next rules are scoped to apps/web. Leaving them global would run
+   * hook rules over Fastify routes, Zod schemas and the SQLite journal for no
+   * benefit. `packages/ui` is the other React surface and gets the two classic
+   * hook rules on its own (see the block below it); only apps/mobile is still
+   * unlinted entirely.
    *
    * We enable the two classic hook rules explicitly rather than extending
    * `reactHooks.configs.flat["recommended-latest"]`. That preset also turns on
@@ -184,6 +184,24 @@ export default tseslint.config(
        * OUTSTANDING.md, not silenced with an inline comment.
        */
       "@next/next/no-page-custom-font": "off",
+    },
+  },
+  /*
+   * packages/ui is the shared React Native design-system surface consumed by
+   * apps/mobile. It was ESLint-ignored outright until 2026-08-22, so the two
+   * classic hook rules are enabled here explicitly — without them, un-ignoring
+   * the package bought type-aware rules but no React coverage at all.
+   *
+   * The React Compiler set is deliberately left off, matching apps/web: those
+   * rules are tracked as scoped work in OUTSTANDING.md, and the Next plugin has
+   * nothing to say about a React Native package.
+   */
+  {
+    files: ["packages/ui/**/*.{ts,tsx}"],
+    plugins: { "react-hooks": reactHooks },
+    rules: {
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
   {

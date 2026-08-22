@@ -1,7 +1,6 @@
 import type {
   Audit,
   Costing,
-  CreateProjectInput,
   CrewMember,
   Design,
   IntegrationSecret,
@@ -11,7 +10,6 @@ import type {
   PlantPalette,
   Project,
   ProjectMyobLink,
-  ProjectStatus,
   RateCard,
   Recording,
   SkuLink,
@@ -1600,7 +1598,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       ) {
         throw new Error(`Branch already open: ${name}`);
       }
-      let from = input.from_revision_id
+      const from = input.from_revision_id
         ? getRevision(arrays, input.from_revision_id)
         : getRevision(arrays, main.tip_revision_id);
       if (!from || from.project_id !== projectId) {

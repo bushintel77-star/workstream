@@ -112,7 +112,10 @@ export function assertSqliteDirWritable(
   } catch (err) {
     const msg = `[db] SQLite path not writable: ${dir} (${err instanceof Error ? err.message : String(err)})`;
     if (opts.production) {
-      throw new Error(msg);
+      /* Keep the cause: this is the production boot-refusal path, and the
+       * operator needs the underlying errno/syscall/stack, not just the
+       * flattened message. */
+      throw new Error(msg, { cause: err });
     }
     console.warn(`${msg} — continuing without durability (dev only)`);
   }

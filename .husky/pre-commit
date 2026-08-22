@@ -1,1 +1,41 @@
+#!/usr/bin/env sh
+# Pre-commit gate — read this before trusting a green run.
+#
+# The promise: a green hook means this commit will not take `pnpm run ci` red
+# for a reason the hook could have seen. It is not "CI ran".
+#
+# COVERS
+#   1. typecheck            whole workspace, turbo-cached (runs on any staged file,
+#                           so a lone tsconfig.json edit is still checked)
+#   2. eslint               staged files under the linted roots, --max-warnings 0
+#                           (warnings included: unused bindings are how five
+#                           shipped-inert features were found in apps/web)
+#   3. vitest related       specs whose module graph reaches a staged file
+#   4. source-scraping specs  every test that reads repo files as text — found
+#                           by scanning, not by a list (eslint.config.mjs,
+#                           globals.css, package.json; ten of them today).
+#                           Vitest's module graph cannot see those reads, so
+#                           `related` never selects them — they run every time
+#   5. repo ratchets        the nine pure-file-reader gates from `pnpm run ci`
+#                           (mobile placeholders/distribution, portal edge,
+#                           handoff colours, ui token parity, studio dialect,
+#                           feature reachability, route reachability, css scales)
+#   6. gate self-tests      a `scripts/*.mjs` gate with a paired
+#                           `*.selftest.mjs` runs it when either is staged —
+#                           too slow for every commit, mandatory on the commits
+#                           that could break it
+#
+# DOES NOT COVER — CI still owns these, do not read green here as "safe to push"
+#   - the full unit suite. Only related + scraping specs run; a change with a
+#     non-obvious blast radius can still break a spec CI will catch
+#   - web:check-bundle-size. It runs a full Next build, minutes per commit. A
+#     hook that slow gets bypassed with --no-verify, which protects nothing
+#   - check:traceability, Playwright e2e, and pnpm install --frozen-lockfile
+#   - anything in apps/mobile, which is ESLint-ignored repo-wide
+#
+# History: until 2026-08-22 this hook ran typecheck only. An ESLint refactor was
+# committed behind a green hook with a red unit test, and CI caught what the
+# hook should have. If you widen or narrow the scope, update this list in the
+# same change — a hook whose documented scope is wrong is worse than no hook,
+# because people stop reading it.
 pnpm exec lint-staged

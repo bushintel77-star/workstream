@@ -27,8 +27,12 @@ co-pilot for Curtis & Co (Melbourne).
 - **Conventional Commits** — `feat(web):`, `fix(api):`, `chore(deploy):`. Match
   the existing log; don't invent new prefixes.
 - **Lint is a zero-tolerance gate.** `pnpm lint` runs ESLint over `apps/api/src`,
-  `apps/web/src`, `packages/domain/src` and `packages/contracts/src` at
-  `--max-warnings 0`. `apps/web` was unlinted until 2026-08; five features had
+  `apps/web/src`, `packages/domain/src`, `packages/contracts/src`,
+  `packages/db/src` and `packages/ui/src` at `--max-warnings 0`. Every package
+  with a `lint` script runs the real thing — if you see `"lint": "echo ok"`,
+  that package is not covered and the script is lying. `apps/mobile` is the one
+  surface still ESLint-ignored outright.
+  `apps/web` was unlinted until 2026-08; five features had
   shipped inert because nothing reported the unused variable that proved it. Do
   not raise the ceiling to land work — fix it, or mark it `_`-prefixed with the
   reason inline and an `OUTSTANDING.md` entry.
