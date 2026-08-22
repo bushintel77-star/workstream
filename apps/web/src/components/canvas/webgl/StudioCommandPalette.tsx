@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 import { useStudioStore } from "./studioStore";
-import { DEFAULT_CAMERA_RIG } from "./cameraRig";
+import { OBLIQUE_PITCH_DEG } from "./cameraRig";
 import type { CanvasMode } from "../../../lib/canvas-mode";
 
 type PaletteAction = {
@@ -218,7 +218,7 @@ export function StudioCommandPalette({
         label: "3D view (perspective)",
         group: "View",
         hint: "2",
-        run: () => store.setPitchDeg(DEFAULT_CAMERA_RIG.tiltDeg),
+        run: () => store.setPitchDeg(OBLIQUE_PITCH_DEG),
       },
       {
         id: "view-zoom-in",

@@ -873,7 +873,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // View defaults
   subsurfaceView: false,
   sketchMode: false,
-  viewBlendTarget: 0, // start in plan view (ortho, CAD-accurate)
+  // Plan view (ortho, CAD-accurate). This is now true of BOTH fields: the rig
+  // default carried a 55° pitch until 2026-08-22, so the two disagreed at rest
+  // and the camera opened oblique in every mode while the studio believed it
+  // was in plan. See DEFAULT_CAMERA_RIG.
+  viewBlendTarget: 0,
   viewBlend: 0, // animated value — FusedCamera writes this each frame
   liveRig: DEFAULT_CAMERA_RIG, // transient — StudioControls writes during a gesture
   elevationActive: false, // committed — StudioControls writes once on gesture end
@@ -1032,7 +1036,21 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // directly (it changes every frame). Use viewBlendTarget for UI. Consumers
   // that must track the camera (stroke drape) read via getState() in useFrame.
   setViewBlend: (viewBlend) => set({ viewBlend }),
-  setLiveRig: (liveRig) => set({ liveRig }),
+  // The committed plan/3D target is DERIVED from the rig's pitch, never stored
+  // independently: FusedCamera already springs on `blendTargetForPitch(pitch)`
+  // each frame, so any writer that moved the pitch without committing the
+  // target (every `writeLiveRig` caller — keyboard presets, camera reset, the
+  // 3D chip) left the studio rendering perspective while `tiltLocked` still
+  // read plan, and editing stayed unlocked under a 3D view. Committing here
+  // closes that for all callers at once. Pan/zoom writes do not change pitch,
+  // so the target is identical and no extra React render is scheduled.
+  setLiveRig: (liveRig) =>
+    set((s) => {
+      const target = blendTargetForPitch(liveRig.tiltDeg);
+      return target === s.viewBlendTarget
+        ? { liveRig }
+        : { liveRig, viewBlendTarget: target };
+    }),
 
   setSliceActive: (sliceActive) => set({ sliceActive }),
   setSliceAxis: (sliceAxis) => set({ sliceAxis }),

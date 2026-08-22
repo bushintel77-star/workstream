@@ -17,6 +17,8 @@
  * view rotation gesture.
  */
 
+import type { CanvasMode } from "../../../lib/canvas-mode";
+
 export interface StudioCameraRig {
   /** Pan offset in world units (metres). */
   panX: number;
@@ -25,20 +27,38 @@ export interface StudioCameraRig {
   zoom: number;
   /** Plan rotation in degrees (0 = north up). */
   rotateDeg: number;
-  /** Tilt angle in degrees (0 = top-down, 55 = DEFAULT_CAMERA_RIG oblique, 90 = horizon). */
+  /** Tilt angle in degrees (0 = top-down plan, OBLIQUE_PITCH_DEG, 90 = horizon). */
   tiltDeg: number;
   /** Focus point for zoom anchoring, in % space (0–100). */
   focusX: number;
   focusY: number;
 }
 
-/** Default rig: fit, top-down (plan view), north up, no tilt. */
+/** The oblique 3D preset — the "Orbit" viewport, keyboard 2, palette command. */
+export const OBLIQUE_PITCH_DEG = 55;
+/** Garden eye-level preset — the "Garden" viewport, keyboard 3. */
+export const GARDEN_PITCH_DEG = 76;
+
+/**
+ * Default rig: fit, top-down PLAN view, north up, no tilt.
+ *
+ * `tiltDeg` was 55 here until 2026-08-22, described as "the oblique angle used
+ * when viewBlendTarget=1". That comment predated the pitch-collapse refactor
+ * that made the rig authoritative: `FusedCamera` derives its spring target from
+ * `blendTargetForPitch(rig.tiltDeg)` every frame and ignores `viewBlendTarget`,
+ * so a 55° default sprang the camera to full perspective on EVERY first mount,
+ * in every mode — including `?mode=cad`, whose whole point is a locked plan.
+ * Worse, `viewBlendTarget` stayed 0, so `StudioScene` computed
+ * `tiltLocked=false` and left editing unlocked under a 3D view. The oblique
+ * preset now lives in `OBLIQUE_PITCH_DEG` and the default is the plan the
+ * docstring always claimed.
+ */
 export const DEFAULT_CAMERA_RIG: StudioCameraRig = {
   panX: 0,
   panY: 0,
   zoom: 1,
   rotateDeg: 0,
-  tiltDeg: 55, // default oblique angle (used when viewBlendTarget=1)
+  tiltDeg: 0,
   focusX: 50,
   focusY: 50,
 };
@@ -74,6 +94,38 @@ export function clampPitchDeg(deg: number): number {
  */
 export function blendTargetForPitch(pitchDeg: number): 0 | 1 {
   return clampPitchDeg(pitchDeg) > 0.5 ? 1 : 0;
+}
+
+/**
+ * The pitch a mode opens at. Entering a mode is the ONE place the camera
+ * commits an angle, so a deep link (`?mode=cad`) and a tab click must resolve
+ * through this same function — `onNativeMode` used to be the only path, and it
+ * only fires on a click, shortcut or palette command, so every deep-linked
+ * mount inherited the rig default instead.
+ *
+ * Plan for the drafting and pricing modes; the two 3D modes carry their look.
+ */
+export function modeEntryPitchDeg(mode: CanvasMode): number {
+  switch (mode) {
+    case "garden":
+      return GARDEN_PITCH_DEG;
+    case "elevation":
+      return PITCH_MAX_DEG;
+    default:
+      // survey | sketch | cad | quote | present | share — plan view.
+      return 0;
+  }
+}
+
+/**
+ * Modes that arm the working-drawing dimension ring on entry. CAD already did
+ * this explicitly in `onNativeMode`; the pricing modes want sizes for the same
+ * reason the store's old `dimsView: true` default cited ("the client wants to
+ * see sizes") — which was never an argument for Survey, where the operator is
+ * still establishing the lot the ring would be labelling.
+ */
+export function modeArmsDims(mode: CanvasMode): boolean {
+  return mode === "cad" || mode === "quote" || mode === "present";
 }
 
 /** Facade-normal azimuth step (multiples of 90° — the N/E/S/W elevation looks). */

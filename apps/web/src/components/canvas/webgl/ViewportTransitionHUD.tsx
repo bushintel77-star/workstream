@@ -24,9 +24,9 @@
  *     omitted. All three are primitive rig writes - the canvas engine
  *     interpolates the projection matrix on its RAF tick.
  *   - Preset patches follow existing conventions:
- *       CAD Plan     -> tiltDeg: 0
- *       Perspective  -> tiltDeg: 55   (DEFAULT_CAMERA_RIG.oblique)
- *       Garden Angle -> tiltDeg: 76, zoom: 1.45  (applyGardenLook)
+ *       CAD Plan     -> tiltDeg: 0                  (DEFAULT_CAMERA_RIG)
+ *       Perspective  -> tiltDeg: OBLIQUE_PITCH_DEG
+ *       Garden Angle -> tiltDeg: GARDEN_PITCH_DEG, zoom: 1.45 (applyGardenLook)
  *
  * Material model:
  *   - White frost (--gs-glass-veil) for working modes (survey, sketch,
@@ -40,13 +40,18 @@
 
 import { useCallback } from "react";
 import { useStudioStore } from "./studioStore";
-import type { StudioCameraRig } from "./cameraRig";
+import {
+  GARDEN_PITCH_DEG,
+  OBLIQUE_PITCH_DEG,
+  PITCH_MAX_DEG,
+  type StudioCameraRig,
+} from "./cameraRig";
 
 const TILT_QUANT_STEP = 5;
-const TILT_MAX = 90;
+const TILT_MAX = PITCH_MAX_DEG;
 const TILT_PLAN = 0;
-const TILT_PERSPECTIVE = 55;
-const TILT_GARDEN = 76;
+const TILT_PERSPECTIVE = OBLIQUE_PITCH_DEG;
+const TILT_GARDEN = GARDEN_PITCH_DEG;
 const TILT_GARDEN_ZOOM = 1.45;
 const TILT_BLEND_BREAK = 0.5;
 
@@ -61,10 +66,12 @@ export interface ViewportTransitionHUDProps {
   activeMode: string;
   writeLiveRig?: (rig: StudioCameraRig) => void;
   /**
-   * Icon-only preset group, no gauge and no labels. Survey mode has nothing
-   * to project yet, so the full capsule is dead weight there — and at narrow
-   * viewports the full capsule slid left into the drawing. The presets still
-   * work; only the projection gauge is dropped.
+   * Icon-only preset group, no gauge and no labels — for narrow viewports,
+   * where the full capsule slid left into the drawing. The presets still work;
+   * only the projection gauge is dropped.
+   *
+   * Survey no longer renders this component at all (it had nothing to project,
+   * and the compact group still floated in the upper-right of the drawing).
    */
   compact?: boolean;
 }
