@@ -12,7 +12,8 @@ describe("canvasLayerPolicy (mode-driven layer law)", () => {
     expect(p.subsurface).toBe(false);
     expect(p.utilities).toBe(false);
     expect(p.easements).toBe(true);
-    expect(p.draftingSurface).toBe(false);
+    // Drafting context: the ground is a sheet to draw on, not a material.
+    expect(p.groundAlbedo).toBe("paper");
   });
 
   it("SKETCH is a clean paper trace surface — ink is the only texture", () => {
@@ -23,18 +24,50 @@ describe("canvasLayerPolicy (mode-driven layer law)", () => {
     expect(p.easements).toBe(true);
   });
 
-  it("SURVEY owns the subsurface works — blueprint ground + utilities", () => {
+  it("SURVEY owns the subsurface works but does not force the blueprint ground", () => {
     const p = canvasLayerPolicy("survey");
-    expect(p.subsurface).toBe(true);
+    // Forcing this made Step 0 the only mode that never showed paper: the
+    // subsurface view lerps the ground to the blueprint vellum. The Underground
+    // rail toggle is the operator override.
+    expect(p.subsurface).toBe(false);
     expect(p.utilities).toBe(true);
     expect(p.easements).toBe(true);
   });
 
-  it("presentation contexts keep utilities available on paper", () => {
+  it("no mode force-arms the blueprint ground", () => {
+    for (const mode of [
+      "survey",
+      "sketch",
+      "cad",
+      "elevation",
+      "garden",
+      "quote",
+      "present",
+      "share",
+    ] as const) {
+      expect(
+        canvasLayerPolicy(mode).subsurface,
+        `${mode} must leave the subsurface view to the operator`,
+      ).toBe(false);
+    }
+  });
+
+  it("presentation contexts keep utilities and a site-material ground", () => {
     for (const mode of ["garden", "quote", "present", "share"] as const) {
       const p = canvasLayerPolicy(mode);
       expect(p.utilities).toBe(true);
-      expect(p.draftingSurface).toBe(false);
+      // Material contexts: the ground is a surface being specified.
+      expect(p.groundAlbedo).toBe("site");
+    }
+  });
+
+  it("the drafting modes rest on paper — the only way #F4F4F4 is reachable", () => {
+    // The ground mesh spans GROUND_CONTEXT_EXTENT boards, 2.3x the visible
+    // frame at zoom 1, so its albedo IS the operator's background. While every
+    // mode rested on groundOlive the canvas clear colour was unreachable
+    // without zooming out past 0.43.
+    for (const mode of ["survey", "sketch", "cad", "elevation"] as const) {
+      expect(canvasLayerPolicy(mode).groundAlbedo, mode).toBe("paper");
     }
   });
 });

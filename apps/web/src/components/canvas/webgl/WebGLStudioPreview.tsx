@@ -46,7 +46,14 @@ import type {
 } from "@workstream/contracts";
 import { VignetteOverlay } from "./VignetteOverlay";
 import { SaveStatusChip } from "./SaveStatusChip";
-import { DEFAULT_CAMERA_RIG, type StudioCameraRig } from "./cameraRig";
+import {
+  DEFAULT_CAMERA_RIG,
+  GARDEN_PITCH_DEG,
+  OBLIQUE_PITCH_DEG,
+  modeArmsDims,
+  modeEntryPitchDeg,
+  type StudioCameraRig,
+} from "./cameraRig";
 import { pctToWorld, type PctPoint } from "./coordTransform";
 import { PRESENTATION_LENS, TECHNICAL_LENS } from "./PresentationLens";
 import {
@@ -281,18 +288,6 @@ export function WebGLStudioPreview({
     );
   }, []);
 
-  // Deep-link entry: ?mode=quote opens the fit-sheet, ?mode=present arms the
-  // presentation lens, ?mode=garden frames the 3D garden view. Sketch stays
-  // un-armed (the rail / ?tool=sketch owns the draw cursor) — the tab already
-  // marks the sketch surface active.
-  useEffect(() => {
-    if (initialMode === "quote") {
-      useStudioStore.getState().setFitSheetOpen(true);
-    } else if (initialMode === "present") {
-      setPresentationMode(true);
-    }
-  }, [initialMode]);
-
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // Garden viewpoint — eye-level rig presets per cardinal look. The yaw
@@ -301,39 +296,74 @@ export function WebGLStudioPreview({
   const [gardenLook, setGardenLook] = useState<GardenViewpointLook>("S");
   const applyGardenLook = useCallback((look: GardenViewpointLook) => {
     setGardenLook(look);
-    // Pitch is the single camera axis — raise to a garden eye-level 76° and
-    // let setPitchDeg commit the derived 3D blend target in the same write.
-    useStudioStore.getState().setPitchDeg(76);
+    // Pitch is the single camera axis — raise to the garden eye level and let
+    // the rig write commit the derived 3D blend target in the same set.
     writeLiveRig({
       ...DEFAULT_CAMERA_RIG,
-      tiltDeg: 76,
+      tiltDeg: GARDEN_PITCH_DEG,
       zoom: 1.45,
       rotateDeg: viewpointYawDeg(look),
     });
   }, [writeLiveRig]);
+
+  /**
+   * Camera + instrument state for entering a mode. Shared by the tab/shortcut
+   * path (`onNativeMode`) and the deep-link mount effect below, so `?mode=cad`
+   * and clicking the CAD tab cannot resolve to different cameras — which is
+   * exactly what happened while `onNativeMode` was the only path.
+   */
+  const applyModeCamera = useCallback(
+    (mode: CanvasMode) => {
+      const store = useStudioStore.getState();
+      if (mode === "garden") {
+        applyGardenLook(gardenLook);
+      } else {
+        store.setPitchDeg(modeEntryPitchDeg(mode));
+      }
+      if (modeArmsDims(mode) && boundaryPct.length >= 3) {
+        store.setDimsView(true);
+      }
+    },
+    [applyGardenLook, gardenLook, boundaryPct.length],
+  );
 
   const onNativeMode = useCallback((mode: CanvasMode) => {
     setActiveMode(mode);
     setMetaTab(null);
     if (mode !== "present") setPresentationMode(false);
     const store = useStudioStore.getState();
+    applyModeCamera(mode);
     if (mode === "sketch") {
       store.setArmedSymbolId(null);
       store.setMeasureActive(false);
       store.setSketchMode(true);
     } else if (mode === "quote") {
       store.setFitSheetOpen(true);
-    } else if (mode === "garden") {
-      applyGardenLook(gardenLook);
-    } else if (mode === "cad") {
-      // CAD style = technical 2D: locked plan view with working-drawing dims.
-      store.setPitchDeg(0);
-      if (boundaryPct.length >= 3) store.setDimsView(true);
     } else if (mode === "present") {
       setPresentationMode(true);
     }
     // survey / share / elevation mount their glass cards on activeMode.
-  }, [applyGardenLook, gardenLook, boundaryPct.length]);
+  }, [applyModeCamera]);
+
+  /**
+   * Deep-link entry. `activeMode` initialises from `initialMode` and
+   * `onNativeMode` only fires on a click, shortcut or palette command, so every
+   * `?mode=` mount used to inherit the rig default — a 55° oblique — and the
+   * only mount effect handled quote and present. Sketch deliberately stays
+   * un-armed here (the rail / `?tool=sketch` owns the draw cursor); this effect
+   * resolves the camera and the instruments, not the active tool.
+   */
+  const modeEntryRef = useState({ done: false })[0];
+  useEffect(() => {
+    if (modeEntryRef.done) return;
+    modeEntryRef.done = true;
+    applyModeCamera(initialMode);
+    if (initialMode === "quote") {
+      useStudioStore.getState().setFitSheetOpen(true);
+    } else if (initialMode === "present") {
+      setPresentationMode(true);
+    }
+  }, [initialMode, applyModeCamera, modeEntryRef]);
 
   // --- Store subscriptions (DOM HUD re-renders; 3D reads via getState) ---
   const year = useStudioStore((s) => s.growthYear);
@@ -638,8 +668,17 @@ export function WebGLStudioPreview({
    * which fits the remaining gap at every viewport the collision spec walks.
    */
   const narrowViewport = useMediaQuery("(max-width: 1100px)");
-  /* Survey has nothing to project yet, so it always gets the compact form. */
-  const hudCompact = activeMode === "survey" || narrowViewport;
+  const hudCompact = narrowViewport;
+  /*
+   * Survey drops the projection capsule entirely. It already argued its own
+   * case ("Survey mode has nothing to project yet, so the full capsule is dead
+   * weight there" — ViewportTransitionHUD) and then rendered the compact preset
+   * group anyway, floating in the upper-right of the drawing at top:152
+   * right:400. If it is dead weight, it is dead weight: the presets stay
+   * reachable from the keyboard (1/2/3), the command palette, and the Plan/3D
+   * segmented control in the identity strip.
+   */
+  const showProjectionHud = activeMode !== "survey";
 
   // Survey capture progress — ONE derivation feeding both the setup panel and
   // the chrome pill, so the two can never disagree on "X of 5". Completion is
@@ -687,8 +726,10 @@ export function WebGLStudioPreview({
         const live = useStudioStore.getState().liveRig;
         e.preventDefault();
         if (hit.preset === "plan") writeLiveRig({ ...live, tiltDeg: 0 });
-        else if (hit.preset === "orbit") writeLiveRig({ ...live, tiltDeg: 55 });
-        else if (hit.preset === "garden") writeLiveRig({ ...live, tiltDeg: 76, zoom: 1.45 });
+        else if (hit.preset === "orbit")
+          writeLiveRig({ ...live, tiltDeg: OBLIQUE_PITCH_DEG });
+        else if (hit.preset === "garden")
+          writeLiveRig({ ...live, tiltDeg: GARDEN_PITCH_DEG, zoom: 1.45 });
         else useStudioStore.getState().setPitchDeg(90);
         return;
       }
@@ -792,6 +833,11 @@ export function WebGLStudioPreview({
   );
 
   const is3D = viewBlendTarget > 0.5;
+  /* Quantised to 5-degree steps — the same trick ViewportTransitionHUD uses to
+     keep an orbit gesture at ~18 re-renders instead of one per frame. */
+  const pitchQuant = useStudioStore((s) =>
+    Math.round(s.liveRig.tiltDeg / 5) * 5,
+  );
 
   // Pads exist ⇔ any committed stroke OR any drafted region carries an
   // extrusion height — gates the Earth toggle + EarthworksCard. Both sources
@@ -1122,8 +1168,19 @@ export function WebGLStudioPreview({
       app={appSlot}
     >
       {/* ---- The chrome overlay (pointer-transparent; children opt in) ---- */}
+      {/* The committed camera state is stamped here so it is observable at all.
+          It was previously readable only from the Plan/3D control inside the
+          Studio meta panel and the projection HUD's presets — both summoned,
+          both absent in some modes — which is why "the camera opens oblique in
+          every mode" survived unnoticed. `data-view-blend` is the committed
+          plan/3D target and `data-pitch-deg` the quantised live rig pitch: if
+          those two ever disagree at rest, the divergence is visible in the DOM
+          rather than only in what the operator sees. */}
       <div
         data-webgl-chrome
+        data-mode={activeMode}
+        data-view-blend={is3D ? "3d" : "plan"}
+        data-pitch-deg={pitchQuant}
         style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
       >
       {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
@@ -1333,7 +1390,7 @@ export function WebGLStudioPreview({
           Suppressed under SplitViewLens — the dual-canvas comparison
           has its own per-half viewBlendLocked label, and a single
           global HUD would misreport the locked half. */}
-      {!splitView ? (
+      {!splitView && showProjectionHud ? (
       <div
         style={
           hudCompact
@@ -1705,7 +1762,7 @@ export function WebGLStudioPreview({
                     variant="chip-preset"
                     aria-pressed={is3D}
                     active={is3D}
-                    onClick={() => setPitchDeg(DEFAULT_CAMERA_RIG.tiltDeg)}
+                    onClick={() => setPitchDeg(OBLIQUE_PITCH_DEG)}
                     style={{
                       flex: 1,
                       padding: "2px 10px",
@@ -2187,24 +2244,26 @@ export function WebGLStudioPreview({
             </div>
           );
         })()}
-      </div>
 
-      {/* Estimation companion — UN-DOCKED floating glass capsule (now at
-          chrome tier, position: fixed so it does not consume canvas width).
-          Toggled via the Fit tab. Lives outside the right dock column —
-          the dock is now reserved for actual docked chrome panels only.
-          Canvas reclaims full edge-to-edge width when this is collapsed. */}
-      {!splitView && fitSheetOpen && items && items.length > 0 ? (
-        <FitSheetCard
-          projectId={projectId}
-          items={items ?? []}
-          boundaryPct={boundaryPct}
-          constructionTrenches={constructionTrenches}
-          irrigationZones={irrigationZones}
-          scaleM={scaleM}
-          outdoorM2={outdoorM2}
-        />
-      ) : null}
+        {/* Estimation companion — a flow child of this dock, stacked AFTER the
+            mode panel so it can never paint over one (estimation-dock-spec §3
+            placement, restored 2026-08-22). The dock's own scroller absorbs the
+            overflow when panel + card exceed the column. Toggled via the Fit
+            tab; the flag stays mode-independent, only the expanded default is
+            mode-gated. */}
+        {!splitView && fitSheetOpen && items && items.length > 0 ? (
+          <FitSheetCard
+            projectId={projectId}
+            items={items ?? []}
+            boundaryPct={boundaryPct}
+            constructionTrenches={constructionTrenches}
+            irrigationZones={irrigationZones}
+            scaleM={scaleM}
+            outdoorM2={outdoorM2}
+            allowExpanded={activeMode !== "survey"}
+          />
+        ) : null}
+      </div>
 
 
 
@@ -2296,8 +2355,6 @@ export function WebGLStudioPreview({
         <SurveyLocateState address={projectAddress} />
       ) : null}
 
-      {/* First-run controls hint — dismissed for the session once seen. */}
-      <FirstRunHint />
       <WorkflowGuideChip
         activeMode={activeMode}
         nextMode={nextMode}
@@ -2382,73 +2439,29 @@ function SurveyLocateState({ address }: { address?: string | null }) {
   );
 }
 
-/**
- * First-run controls hint — one dismissible chip, remembered for the
- * browser session. Zoom/pan/Cmd+K were invisible until asked; make the
- * control scheme discoverable once.
- */
-function FirstRunHint() {
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    if (!sessionStorage.getItem("gs-controls-hint-seen")) setShow(true);
-  }, []);
-  if (!show) return null;
-  return (
-    <div
-      data-testid="controls-hint"
-      style={{
-        position: "absolute",
-        // Clear of the asset dock's full height — at 160 the hint sat on the
-        // dock's chip row and swallowed the Area / Row plant toggles. Centred
-        // on the free canvas (the dock owns 380px of the right edge) and
-        // stacked below the guidance line, which claims 288.
-        bottom: 244,
-        left: "calc(50% - 190px)",
-        transform: "translateX(-50%)",
-        display: "flex",
-        alignItems: "center",
-        gap: "var(--gs-space-4)",
-        padding: "5px 10px",
-        borderRadius: "var(--gs-radius-pill)",
-        background: "color-mix(in srgb, var(--gs-glass) 45%, transparent)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
-        border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
-        pointerEvents: "auto",
-        zIndex: "var(--cf-z-chrome)",
-        fontFamily: "var(--font-ui)",
-        fontSize: "var(--gs-font-sm)",
-        color: "var(--gs-ink-secondary)",
-      }}
-    >
-      <span>Wheel = zoom · Drag = pan · choose a tool to draw or place · ? = shortcuts</span>
-      <Button
-        variant="text"
-        aria-label="Dismiss controls hint"
-        data-testid="controls-hint-dismiss"
-        onClick={() => {
-          sessionStorage.setItem("gs-controls-hint-seen", "1");
-          setShow(false);
-        }}
-        style={{
-          color: "var(--gs-primary)",
-          fontFamily: "var(--font-tech)",
-          padding: "0 4px",
-        }}
-      >
-        ✕
-      </Button>
-    </div>
-  );
-}
-
 const WORKFLOW_STAGES: CanvasMode[] = ["survey", "sketch", "cad", "quote"];
 
+/**
+ * The bottom slot — ONE chip.
+ *
+ * `FirstRunHint` used to render a second, separate chip horizontally co-located
+ * with this one, with vertical offsets hand-tuned against each other ("stacked
+ * below the guidance line, which claims 288"). The content was redundant: this
+ * line already said "Survey mode · Review site truth and constraints before
+ * designing" while the hint said "Wheel = zoom · Drag = pan · choose a tool to
+ * draw or place · ? = shortcuts". The guidance line owns the slot now and
+ * carries the control scheme as a first-run tail, dismissed for the session —
+ * `StudioShortcutsHelp` behind `?` is the durable home for the full scheme.
+ */
 function InteractionGuidanceChip({
   guidance,
 }: {
   guidance: { label: string; detail: string };
 }) {
+  const [showControls, setShowControls] = useState(false);
+  useEffect(() => {
+    if (!sessionStorage.getItem("gs-controls-hint-seen")) setShowControls(true);
+  }, []);
   return (
     <div
       data-testid="interaction-guidance"
@@ -2472,7 +2485,15 @@ function InteractionGuidanceChip({
         display: "flex",
         alignItems: "baseline",
         gap: "var(--gs-space-3)",
-        maxWidth: "min(560px, calc(100vw - 32px))",
+        /*
+         * The width budget is what keeps this off the tool rail. Centred at
+         * `50% - 190px`, the left edge sits at `vw/2 - 190 - w/2`; clearing the
+         * rail's 64px column plus its margin needs `w <= vw - 540`. At 960 the
+         * old `calc(100vw - 32px)` let the chip reach 560px and its left edge
+         * landed at x=10, straight on the rail — which the merged first-run tail
+         * made reachable where the shorter guidance line alone was not.
+         */
+        maxWidth: "min(560px, calc(100vw - 560px))",
         padding: "6px 11px",
         borderRadius: "var(--gs-radius-pill)",
         background: "var(--cf-glass-dark)",
@@ -2480,7 +2501,9 @@ function InteractionGuidanceChip({
         WebkitBackdropFilter: "blur(var(--cf-glass-dark-blur))",
         border: "1px solid var(--cf-glass-dark-border)",
         boxShadow: "var(--gs-shadow-1)",
-        pointerEvents: "none",
+        // The first-run tail carries a dismiss button, so the chip opts into
+        // pointer events only while that button exists.
+        pointerEvents: showControls ? "auto" : "none",
         zIndex: "var(--cf-z-chrome)",
         fontFamily: "var(--font-ui)",
         fontSize: "var(--gs-font-xs)",
@@ -2495,6 +2518,28 @@ function InteractionGuidanceChip({
     >
               <strong style={{ color: "var(--cf-glass-dark-ink)" }}>{guidance.label}</strong>
       <span>{guidance.detail}</span>
+      {showControls ? (
+        <>
+          <span aria-hidden style={{ opacity: 0.45 }}>|</span>
+          <span>Wheel = zoom · Drag = pan · ? = shortcuts</span>
+          <Button
+            variant="text"
+            aria-label="Dismiss controls hint"
+            data-testid="controls-hint-dismiss"
+            onClick={() => {
+              sessionStorage.setItem("gs-controls-hint-seen", "1");
+              setShowControls(false);
+            }}
+            style={{
+              color: "#f5f5f7",
+              fontFamily: "var(--font-tech)",
+              padding: "0 4px",
+            }}
+          >
+            ✕
+          </Button>
+        </>
+      ) : null}
     </div>
   );
 }

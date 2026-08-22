@@ -13,8 +13,10 @@
  *   SKETCH  — clean paper trace surface; ink is the only texture.
  *   CAD     — clean drafting: paper, accepted geometry, dims; subsurface
  *             remains explicitly opt-in.
- *   SURVEY  — owns the subsurface works: blueprint ground, BYDA utilities,
- *             easements, services rendered distinct (dashed/coloured).
+ *   SURVEY  — owns the subsurface works: BYDA utilities, easements, services
+ *             rendered distinct (dashed/coloured). The blueprint ground is
+ *             reachable from the Underground toggle but NOT forced on entry —
+ *             Step 0 establishes the twin on paper (2026-08-22).
  *   GARDEN/QUOTE/PRESENT — presentation contexts; subsurface available via
  *             the Underground tool but not forced.
  *
@@ -56,8 +58,22 @@ export type CanvasLayerPolicy = {
   utilities: boolean;
   /** Easement rings render. */
   easements: boolean;
-  /** Drafting-grey ground for CAD (vs the olive site surface). */
-  draftingSurface: boolean;
+  /**
+   * Resting ground albedo — what the ONE ground surface reads as when the
+   * subsurface view is not armed.
+   *
+   * "paper" — the drafting contexts (survey/sketch/cad/elevation). The ground
+   * mesh spans GROUND_CONTEXT_EXTENT boards, which is 2.3x the visible frame at
+   * zoom 1, so its albedo IS what the operator calls "the background". Painting
+   * it `--gs-canvas` is the only way `#F4F4F4` is reachable without zooming out
+   * past 0.43 — the drawing is the product, and the drawing sits on paper.
+   * "site" — the material contexts (garden/quote/present/share), where the
+   * ground is a real surface being specified and the warm olive belongs.
+   *
+   * Replaces the `draftingSurface` flag, which every branch returned false for
+   * since it was introduced — the drafting-grey ground was never reachable.
+   */
+  groundAlbedo: "paper" | "site";
 };
 
 export function canvasLayerPolicy(mode: CanvasMode): CanvasLayerPolicy {
@@ -67,36 +83,43 @@ export function canvasLayerPolicy(mode: CanvasMode): CanvasLayerPolicy {
         subsurface: false,
         utilities: false,
         easements: true,
-        draftingSurface: false,
+        groundAlbedo: "paper",
       };
     case "cad":
       return {
         subsurface: false,
         utilities: false,
         easements: true,
-        draftingSurface: false,
+        groundAlbedo: "paper",
       };
     case "survey":
       return {
-        subsurface: true,
+        // NOT armed on entry (2026-08-22). Survey used to force the subsurface
+        // view, which lerps the ground to the blueprint vellum — so Step 0, the
+        // one mode whose job is establishing the digital twin on paper, was the
+        // only mode that never showed paper. The Underground rail toggle is the
+        // operator override this policy already documents at line 16; survey
+        // still OWNS the subsurface works, it just does not force the view.
+        subsurface: false,
         utilities: true,
         easements: true,
-        draftingSurface: false,
+        groundAlbedo: "paper",
       };
     case "elevation":
       return {
         subsurface: false,
         utilities: false,
         easements: true,
-        draftingSurface: false,
+        groundAlbedo: "paper",
       };
     default:
-      // garden | quote | present | share — presentation contexts.
+      // garden | quote | present | share — presentation contexts, where the
+      // ground is a material being specified rather than a sheet to draw on.
       return {
         subsurface: false,
         utilities: true,
         easements: true,
-        draftingSurface: false,
+        groundAlbedo: "site",
       };
   }
 }

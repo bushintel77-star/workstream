@@ -8,6 +8,11 @@ import {
   isElevationRig,
   settleOrbitRig,
   DEFAULT_CAMERA_RIG,
+  OBLIQUE_PITCH_DEG,
+  GARDEN_PITCH_DEG,
+  PITCH_MAX_DEG,
+  modeEntryPitchDeg,
+  modeArmsDims,
 } from "./cameraRig";
 import { FusedCameraScratch } from "./cameraAnimation";
 
@@ -35,10 +40,54 @@ describe("pitchRadians", () => {
     expect(eighty).toBeGreaterThan(seventySix);
   });
 
-  it("default rig starts at a mid-orbit oblique angle", () => {
-    expect(DEFAULT_CAMERA_RIG.tiltDeg).toBe(55);
-    expect(pitchRadians(DEFAULT_CAMERA_RIG.tiltDeg)).toBeGreaterThan(0);
-    expect(pitchRadians(DEFAULT_CAMERA_RIG.tiltDeg)).toBeLessThan(Math.PI / 2);
+  it("default rig starts in plan view, and the oblique preset is its own constant", () => {
+    // The default used to be 55° with a docstring claiming plan view. Because
+    // FusedCamera derives its blend from the LIVE pitch, that default sprang
+    // the camera to full perspective on every first mount, in every mode.
+    expect(DEFAULT_CAMERA_RIG.tiltDeg).toBe(0);
+    expect(pitchRadians(DEFAULT_CAMERA_RIG.tiltDeg)).toBe(0);
+    expect(blendTargetForPitch(DEFAULT_CAMERA_RIG.tiltDeg)).toBe(0);
+
+    // The oblique angle still exists — it is a named preset, not a default.
+    expect(OBLIQUE_PITCH_DEG).toBe(55);
+    expect(pitchRadians(OBLIQUE_PITCH_DEG)).toBeGreaterThan(0);
+    expect(pitchRadians(OBLIQUE_PITCH_DEG)).toBeLessThan(Math.PI / 2);
+    expect(blendTargetForPitch(OBLIQUE_PITCH_DEG)).toBe(1);
+  });
+});
+
+describe("modeEntryPitchDeg / modeArmsDims (mode entry is one function)", () => {
+  it("opens every drafting and pricing mode in plan view", () => {
+    for (const mode of [
+      "survey",
+      "sketch",
+      "cad",
+      "quote",
+      "present",
+      "share",
+    ] as const) {
+      expect(modeEntryPitchDeg(mode), `${mode} must open in plan`).toBe(0);
+      expect(blendTargetForPitch(modeEntryPitchDeg(mode))).toBe(0);
+    }
+  });
+
+  it("keeps the two 3D modes at their own pitches", () => {
+    expect(modeEntryPitchDeg("garden")).toBe(GARDEN_PITCH_DEG);
+    expect(modeEntryPitchDeg("elevation")).toBe(PITCH_MAX_DEG);
+    expect(blendTargetForPitch(modeEntryPitchDeg("garden"))).toBe(1);
+    expect(blendTargetForPitch(modeEntryPitchDeg("elevation"))).toBe(1);
+  });
+
+  it("arms dimensions for CAD and the pricing modes only", () => {
+    expect(modeArmsDims("cad")).toBe(true);
+    expect(modeArmsDims("quote")).toBe(true);
+    expect(modeArmsDims("present")).toBe(true);
+    // Survey is establishing the lot the ring would be labelling.
+    expect(modeArmsDims("survey")).toBe(false);
+    expect(modeArmsDims("sketch")).toBe(false);
+    expect(modeArmsDims("garden")).toBe(false);
+    expect(modeArmsDims("elevation")).toBe(false);
+    expect(modeArmsDims("share")).toBe(false);
   });
 });
 

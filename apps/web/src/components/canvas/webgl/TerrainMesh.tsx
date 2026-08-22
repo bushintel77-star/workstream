@@ -23,7 +23,7 @@
  * Binding: docs/GOLD-STANDARD-2026.md §3 Phase 2 (terrain heightmap)
  */
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { PALETTE } from "../../../styles/colorTokens";
@@ -43,7 +43,8 @@ export interface TerrainMeshProps {
   /** Spot level sample points in world space [{x, z, y}]. */
   heightmapPoints: HeightmapPoint[];
   /** CAD mode: the surface lerps to the neutral drafting grey. */
-  draftingSurface?: boolean;
+  /** Resting ground albedo per the mode's layer policy. */
+  groundAlbedo?: "paper" | "site";
 }
 
 /**
@@ -78,44 +79,40 @@ export function buildTerrainGeometry(
   return geo;
 }
 
-export function TerrainMesh({ scaleM, boardAspect, heightmapPoints, draftingSurface = false }: TerrainMeshProps) {
+export function TerrainMesh({ scaleM, boardAspect, heightmapPoints, groundAlbedo = "site" }: TerrainMeshProps) {
   const geometry = useMemo(
     () => buildTerrainGeometry(scaleM, boardAspect, heightmapPoints),
     [scaleM, boardAspect, heightmapPoints],
   );
 
+  const restHex =
+    groundAlbedo === "paper" ? PALETTE.gsCanvas : PALETTE.groundOlive;
   const material = useMemo(
-    () => createTerrainMaterial(PALETTE.groundOlive),
-    [],
+    () => createTerrainMaterial(restHex),
+    [restHex],
   );
   useEffect(() => () => material.dispose(), [material]);
 
   // Subsurface blueprint lerp — same behaviour the flat GroundPlane had:
   // the whole surface lightens toward vellum + drops roughness so the CAD
-  // lines read through.
-  const matRef = useRef(material);
-  const colorOlive = useMemo(() => new THREE.Color(PALETTE.groundOlive), []);
+  // lines read through. Contour banding + slope albedo still carry the relief
+  // on the paper albedo (terrainMaterial.ts), so plan view reads as a survey
+  // drawing rather than a lit site surface.
+  const colorRest = useMemo(() => new THREE.Color(restHex), [restHex]);
   const colorVellum = useMemo(
     () => new THREE.Color(PALETTE.renderBlueprintGround),
     [],
   );
-  const colorDrafting = useMemo(
-    () => new THREE.Color(PALETTE.draftingGrey),
-    [],
-  );
   useFrame((_, delta) => {
-    const mat = matRef.current;
+    // The material is re-created when the mode's resting albedo changes, so
+    // read it from the closure — a ref captured at first render would go stale.
+    const mat = material;
     const { subsurfaceView } = useSeasonalStore.getState();
     const k = Math.min(1, delta * 4);
     mat.opacity = THREE.MathUtils.lerp(mat.opacity, subsurfaceView ? 0.88 : 1.0, k);
     mat.roughness = THREE.MathUtils.lerp(mat.roughness, subsurfaceView ? 0.6 : 0.92, k);
-    // Mode surface law: CAD drafting grey > subsurface vellum > site olive.
-    const target = draftingSurface
-      ? colorDrafting
-      : subsurfaceView
-        ? colorVellum
-        : colorOlive;
-    mat.color.lerp(target, k);
+    // Mode surface law: subsurface vellum > the mode's resting albedo.
+    mat.color.lerp(subsurfaceView ? colorVellum : colorRest, k);
   });
 
   if (!geometry) return null;

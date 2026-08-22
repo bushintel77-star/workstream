@@ -1,27 +1,41 @@
 "use client";
 
 /**
- * Gold Standard 2026 — Fit-Sheet Card as a floating glass capsule.
- *
- * Previously a docked right-edge sidebar (FitSheetCard width=272px,
- * position: relative) that ate the canvas's right margin. Now an
- * un-docked floating capsule anchored to the right margin via
- * `position: fixed` so the canvas keeps its full edge-to-edge width.
+ * Gold Standard 2026 — Fit-Sheet Card, the estimation companion.
  *
  * Display modes:
- *   PILL (collapsible)      — minimal "[ 🧾 Live Quote: $3,294.39 ]"
- *                             off the right margin. Click expands.
- *   CAPSULE (expanded)      — full itemized content rendered inside
- *                             a glass surface, with a close affordance
- *                             that collapses back to pill. Esc also
- *                             closes.
+ *   PILL (collapsed)        — minimal "[ 🧾 Live Quote: $3,294.39 ]".
+ *                             Click expands.
+ *   CAPSULE (expanded)      — full itemized content inside a glass
+ *                             surface, with a close affordance that
+ *                             collapses back to pill. Esc also closes.
  *
  * Persistence: the user's last choice is saved to localStorage so the
  * capsule stays in the same shape across sessions.
  *
- * Z-stack (Canvas-First):
- *   chrome tier (--cf-z-chrome) — sits below the canvas-mode panels
- *   (--cf-z-app) and the assembly tools. Never above a mode panel.
+ * ## Placement — a flow child of the right dock (restored 2026-08-22)
+ *
+ * This docstring used to claim "chrome tier … Never above a mode panel" while
+ * the capsule was an un-docked `position: fixed` surface pinned to
+ * bottom-right, at the SAME `--cf-z-chrome` tier as the right dock and later in
+ * DOM order — so it painted on top. At 950px viewport height the 320x600
+ * expanded card covered the survey checklist by 316x214px and ate "Spot levels",
+ * the fifth and last row.
+ *
+ * Nothing about z-index could fix that: a 420px mode panel and a 600px card
+ * cannot both fit a 950px column, so one of them has to give. The card is now a
+ * flex child of the right dock — the placement `docs/estimation-dock-spec.md`
+ * §3 specified in the first place ("the estimation mounts in the right dock as
+ * a companion") — which stacks it BELOW the mode panel by construction and
+ * lets the dock's own scroller absorb the overflow. The invariant is now
+ * structural rather than a comment, and `webgl-chrome-collision.spec.ts`
+ * asserts it directly.
+ *
+ * The flag stays mode-independent (one toggle, always reachable, per
+ * estimation-dock-spec §2.1/§3); only the EXPANDED default is mode-gated, so
+ * Survey always opens on the pill — `GOLD-STANDARD-2026.md:74` puts the
+ * itemised fit-sheet in Phase 3 Client Proposal, and Step 0's job is
+ * establishing the digital twin.
  *
  * Binding: docs/GOLD-STANDARD-2026.md §3 Phase 3 (Itemized Fit-Sheet).
  */
@@ -124,6 +138,13 @@ export interface FitSheetCardProps {
   outdoorM2: number;
   /** For the backend sketch-cost fetch (one visible source of truth). */
   projectId: string;
+  /**
+   * May the capsule restore its persisted EXPANDED shape on mount? False in
+   * Survey (Step 0 establishes the twin; pricing is Phase 3), where the card
+   * always opens as the pill. The pill still expands on click — the toggle
+   * stays mode-independent, only the default does not.
+   */
+  allowExpanded: boolean;
 }
 
 export function FitSheetCard({
@@ -134,6 +155,7 @@ export function FitSheetCard({
   scaleM,
   outdoorM2,
   projectId,
+  allowExpanded,
 }: FitSheetCardProps) {
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
   const excludedEstimateLineIds = useStudioStore(
@@ -215,6 +237,7 @@ export function FitSheetCard({
 
   return (
     <FitSheetCapsule
+      allowExpanded={allowExpanded}
       summary={summary}
       excludedLines={excludedLines}
       settling={settling}
@@ -228,13 +251,14 @@ export function FitSheetCard({
 }
 
 /**
- * Floating glass capsule — pill (default off first open) or expanded.
- * Persists expanded/collapsed preference in localStorage.
+ * Glass capsule — pill (default off first open) or expanded. Persists the
+ * expanded/collapsed preference in localStorage.
  *
  * `pointer-events: none` on the outer wrapper so the canvas keeps full
- * event coverage; the surface opt back in via `pointer-events: auto`.
+ * event coverage; the surfaces opt back in via `pointer-events: auto`.
  */
 function FitSheetCapsule({
+  allowExpanded,
   summary,
   excludedLines,
   settling,
@@ -244,6 +268,7 @@ function FitSheetCapsule({
   runBackendFetch,
   driftPct,
 }: {
+  allowExpanded: boolean;
   summary: {
     sections: Array<{
       id: string;
@@ -275,7 +300,7 @@ function FitSheetCapsule({
   driftPct: number | null;
 }) {
   const [expanded, setExpanded] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
+    if (typeof window === "undefined" || !allowExpanded) return false;
     try {
       return window.localStorage.getItem(STORAGE_KEY) === "1";
     } catch {
@@ -302,17 +327,27 @@ function FitSheetCapsule({
     return () => document.removeEventListener("keydown", onKey);
   }, [expanded]);
 
+  // A flow child of the right dock — the dock owns the position, the z-tier and
+  // the overflow scroller. No `position: fixed`, no z-index of its own: that is
+  // what let this paint over a mode panel at the same tier.
+  // A flow child of the right dock — the dock owns the position, the z-tier and
+  // the overflow scroller. No `position: fixed`, no z-index of its own: that is
+  // what let this paint over a mode panel at the same tier.
+  //
+  // Expanded, the wrapper takes the column's REMAINING height rather than a
+  // fixed 600px, so a tall mode panel shrinks the card instead of pushing it out
+  // of the dock's scroller. `min-height: 0` is what makes the shrink legal.
   const outerStyle: React.CSSProperties = {
-    position: "fixed",
-    right: 16,
-    bottom: 16,
-    zIndex: "var(--cf-z-chrome)",
+    position: "relative",
     pointerEvents: "none",
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-end",
     gap: "var(--gs-space-2)",
     transition: "opacity var(--gs-base)",
+    ...(expanded
+      ? { flex: "1 1 auto", minHeight: 0, width: "100%" }
+      : { flex: "0 0 auto" }),
   };
 
   const surfaceStyle: React.CSSProperties = {
@@ -334,6 +369,7 @@ function FitSheetCapsule({
           type="button"
           aria-label={`Open live quote, total ${fmtAud(summary.total)}`}
           aria-expanded={false}
+          data-gs-glass-card
           data-testid="fit-sheet-pill"
           onClick={() => setExpanded(true)}
           style={{
@@ -415,12 +451,15 @@ function FitSheetCapsule({
       <div
         role="dialog"
         aria-label={`Itemized quotation, total ${fmtAud(summary.total)}`}
+        data-gs-glass-card
         data-testid="fit-sheet-card"
         style={{
           ...surfaceStyle,
           width: 320,
           maxWidth: "calc(100vw - 32px)",
-          maxHeight: "min(calc(100dvh - 96px), 600px)",
+          flex: "1 1 auto",
+          minHeight: 0,
+          maxHeight: 600,
           borderRadius: "var(--gs-radius-panel)",
           padding: "10px 12px",
           display: "flex",

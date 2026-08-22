@@ -68,7 +68,13 @@ test.describe("WebGL CAD annotations (dims + measure tape)", () => {
     );
     expect(seed.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?webgl=1`, {
+    // Explicit ?mode=cad. This navigated with no mode until 2026-08-22 and
+    // relied on the store's `dimsView: true` default to have a ring to assert —
+    // which is exactly the default that put a dimension ring over a Survey lot
+    // the operator was still establishing. Dims are now armed by mode entry
+    // (`modeArmsDims`), so the spec that tests the CAD dimension ring has to
+    // actually be in CAD.
+    await page.goto(`/projects/${projectId}?webgl=1&mode=cad`, {
       // domcontentloaded (not networkidle): production keeps background
       // polling alive, so networkidle never settles there.
       waitUntil: "domcontentloaded",
