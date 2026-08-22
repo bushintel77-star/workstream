@@ -175,20 +175,6 @@ export function CameraChrome({
   );
 }
 
-/**
- * @deprecated Use {@link CameraChrome}. Kept as a thin alias so call sites
- * migrate without behavior change — still stamps data-camera-chrome.
- */
-export function BoardChromePortal({
-  children,
-  anchorRef,
-}: {
-  children: ReactNode;
-  anchorRef?: RefObject<HTMLElement | null>;
-}) {
-  return <CameraChrome anchorRef={anchorRef}>{children}</CameraChrome>;
-}
-
 /** Build a BoardCamera from live plan camera props + layout size. */
 export function boardCameraFromPlan(args: {
   boardW: number;
