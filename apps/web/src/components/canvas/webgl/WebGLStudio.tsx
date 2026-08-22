@@ -41,8 +41,13 @@ import {
 import * as THREE from "three";
 import type { WebGLRenderer } from "three";
 import type {
+  CatalogPlacement,
+  ConstructionTrench,
   DesignKeylessOverlay,
   DesignNeighbourBuilding,
+  DesignSiteFrameLevel,
+  IrrigationZone,
+  LandscapeFeature,
 } from "@workstream/contracts";
 import { PALETTE } from "../../../styles/colorTokens";
 import { StudioScene } from "./StudioScene";
@@ -50,6 +55,8 @@ import type { PctPoint, HeightmapPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
 import type { SubsurfaceUtility, StrikeAlertData } from "./features/SubsurfaceEngine";
 import type { PresentationLensFilter } from "./PresentationLens";
+import type { AnnotationDialect } from "./annotations/model";
+import type { SurveyedPlanLayers } from "./studioStore";
 
 /**
  * Image-based lighting must never take the drawing down: a failed
@@ -117,6 +124,18 @@ export interface WebGLStudioProps {
     lotAreaM2?: number | null;
     sunHours?: number | null;
   };
+  levels?: DesignSiteFrameLevel[];
+  placements?: CatalogPlacement[];
+  features?: LandscapeFeature[];
+  annotationDialect?: AnnotationDialect;
+  annotationLayers?: SurveyedPlanLayers;
+  tradePacks?: {
+    irrigationDrainage: boolean;
+    hardscapeConstruction: boolean;
+    lightingElectrical: boolean;
+  };
+  constructionTrenches?: ConstructionTrench[];
+  irrigationZones?: IrrigationZone[];
 }
 
 /**
@@ -181,6 +200,14 @@ export function WebGLStudio({
   style,
   mode = "survey",
   siteMeta,
+  levels,
+  placements,
+  features,
+  annotationDialect,
+  annotationLayers,
+  tradePacks,
+  constructionTrenches,
+  irrigationZones,
 }: WebGLStudioProps) {
   const onCanvasCreated = useCallback(({ gl, scene }: { gl: WebGLRenderer; scene: THREE.Scene }) => {
     gl.setClearColor(PALETTE.gsCanvas);
@@ -271,6 +298,14 @@ export function WebGLStudio({
           showSketch={showSketch}
           mode={mode}
           siteMeta={siteMeta}
+          levels={levels}
+          placements={placements}
+          features={features}
+          annotationDialect={annotationDialect}
+          annotationLayers={annotationLayers}
+          tradePacks={tradePacks}
+          constructionTrenches={constructionTrenches}
+          irrigationZones={irrigationZones}
         />
 
         <RenderFX />

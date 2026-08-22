@@ -107,6 +107,10 @@ import { buildSurveySetup } from "./surveySetup";
 import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { ShareSurface } from "../handoff/features/share/ShareSurface";
 import { PresentSurface } from "../handoff/features/present/PresentSurface";
+import { deriveSurveyedPlanModel } from "./annotations/derive";
+import { deriveTradePackModel } from "./annotations/tradeDerive";
+import { SurveyCommunicationCard } from "./annotations/SurveyCommunicationCard";
+import { communicationProfileForMode } from "./annotations/modeProfile";
 
 /** Day arc bounds — same as the 2D SunGrowthDock (~06:20 → ~19:40). */
 const DAY_START = 6 * 60 + 20;
@@ -449,6 +453,26 @@ export function WebGLStudioPreview({
   const storeFeatures = useStudioStore((s) => s.features);
   const splitView = useStudioStore((s) => s.splitView);
   const marqueeActive = useStudioStore((s) => s.marqueeActive);
+  const surveyedPlanLayers = useStudioStore((s) => s.surveyedPlanLayers);
+  const setSurveyedPlanLayers = useStudioStore((s) => s.setSurveyedPlanLayers);
+  const surveyAnnotationDialect = useStudioStore((s) => s.surveyAnnotationDialect);
+  const setSurveyAnnotationDialect = useStudioStore((s) => s.setSurveyAnnotationDialect);
+  const cadAnnotationLayers = useStudioStore((s) => s.cadAnnotationLayers);
+  const setCadAnnotationLayers = useStudioStore((s) => s.setCadAnnotationLayers);
+  const cadAnnotationDialect = useStudioStore((s) => s.cadAnnotationDialect);
+  const setCadAnnotationDialect = useStudioStore((s) => s.setCadAnnotationDialect);
+  const sketchAnnotationLayers = useStudioStore((s) => s.sketchAnnotationLayers);
+  const setSketchAnnotationLayers = useStudioStore((s) => s.setSketchAnnotationLayers);
+  const sketchAnnotationDialect = useStudioStore((s) => s.sketchAnnotationDialect);
+  const setSketchAnnotationDialect = useStudioStore((s) => s.setSketchAnnotationDialect);
+  const surveyTradePacks = useStudioStore((s) => s.surveyTradePacks);
+  const setSurveyTradePacks = useStudioStore((s) => s.setSurveyTradePacks);
+  const cadTradePacks = useStudioStore((s) => s.cadTradePacks);
+  const setCadTradePacks = useStudioStore((s) => s.setCadTradePacks);
+  const sketchTradePacks = useStudioStore((s) => s.sketchTradePacks);
+  const setSketchTradePacks = useStudioStore((s) => s.setSketchTradePacks);
+  const storeTrenches = useStudioStore((s) => s.constructionTrenches);
+  const storeZones = useStudioStore((s) => s.irrigationZones);
   const items = useMemo(() => {
     const hydrated = featuresOntoItems(
       placementsToItems(storePlacements),
@@ -801,8 +825,6 @@ export function WebGLStudioPreview({
   );
 
   // --- Autosave (debounced + retry + backoff) ---
-  const storeTrenches = useStudioStore((s) => s.constructionTrenches);
-  const storeZones = useStudioStore((s) => s.irrigationZones);
   const storePhotoElevations = useStudioStore((s) => s.photoElevations);
   const autosaveDoc = useMemo(
     () => ({
@@ -850,6 +872,60 @@ export function WebGLStudioPreview({
     [strokes, storeFeatures],
   );
 
+  const annotationControl = useMemo(
+    () =>
+      activeMode === "survey"
+        ? {
+            dialect: surveyAnnotationDialect,
+            setDialect: setSurveyAnnotationDialect,
+            layers: surveyedPlanLayers,
+            setLayers: setSurveyedPlanLayers,
+            tradePacks: surveyTradePacks,
+            setTradePacks: setSurveyTradePacks,
+          }
+        : activeMode === "cad"
+          ? {
+              dialect: cadAnnotationDialect,
+              setDialect: setCadAnnotationDialect,
+              layers: cadAnnotationLayers,
+              setLayers: setCadAnnotationLayers,
+              tradePacks: cadTradePacks,
+              setTradePacks: setCadTradePacks,
+            }
+          : activeMode === "sketch"
+            ? {
+                dialect: sketchAnnotationDialect,
+                setDialect: setSketchAnnotationDialect,
+                layers: sketchAnnotationLayers,
+                setLayers: setSketchAnnotationLayers,
+                tradePacks: sketchTradePacks,
+                setTradePacks: setSketchTradePacks,
+              }
+            : null,
+    [
+      activeMode,
+      surveyAnnotationDialect,
+      setSurveyAnnotationDialect,
+      surveyedPlanLayers,
+      setSurveyedPlanLayers,
+      cadAnnotationDialect,
+      setCadAnnotationDialect,
+      cadAnnotationLayers,
+      setCadAnnotationLayers,
+      sketchAnnotationDialect,
+      setSketchAnnotationDialect,
+      sketchAnnotationLayers,
+      setSketchAnnotationLayers,
+      surveyTradePacks,
+      setSurveyTradePacks,
+      cadTradePacks,
+      setCadTradePacks,
+      sketchTradePacks,
+      setSketchTradePacks,
+    ],
+  );
+  const communicationProfile = communicationProfileForMode(activeMode);
+
   // Scene props shared by the single studio and both split halves.
   const sceneProps = {
     scaleM,
@@ -877,6 +953,35 @@ export function WebGLStudioPreview({
     layerPolicy: policy,
     mode: activeMode,
     siteMeta,
+    levels,
+    placements: storePlacements,
+    features: storeFeatures,
+    annotationDialect: annotationControl?.dialect,
+    tradePacks:
+      annotationControl?.tradePacks ?? {
+        irrigationDrainage: false,
+        hardscapeConstruction: false,
+        lightingElectrical: false,
+      },
+    constructionTrenches: storeTrenches,
+    irrigationZones: storeZones,
+    annotationLayers:
+      annotationControl == null
+        ? {
+            enabled: false,
+            propertyLines: false,
+            elevations: false,
+            plants: false,
+            materials: false,
+            callouts: false,
+            scope: false,
+          }
+        : {
+            ...annotationControl.layers,
+            enabled:
+              annotationControl.layers.enabled &&
+              (activeMode === "survey" || activeMode === "cad" || activeMode === "sketch"),
+          },
     onGroundClick: handleGroundClick,
     onContextLost: () => {
       setWebglLost(true);
@@ -889,6 +994,90 @@ export function WebGLStudioPreview({
       );
     },
   } as const;
+
+  const surveyLegendModel = useMemo(
+    () =>
+      deriveSurveyedPlanModel({
+        dialect: annotationControl?.dialect ?? "technical",
+        boundaryPct,
+        scaleM,
+        boardAspect,
+        levels,
+        placements: storePlacements,
+        features: storeFeatures,
+        density: "full",
+      }),
+    [
+      annotationControl,
+      boundaryPct,
+      scaleM,
+      boardAspect,
+      levels,
+      storePlacements,
+      storeFeatures,
+    ],
+  );
+
+  const tradeLegendModel = useMemo(
+    () =>
+      deriveTradePackModel({
+        dialect: annotationControl?.dialect ?? "technical",
+        packs:
+          annotationControl?.tradePacks ?? {
+            irrigationDrainage: false,
+            hardscapeConstruction: false,
+            lightingElectrical: false,
+          },
+        trenches: storeTrenches,
+        zones: storeZones,
+        features: storeFeatures,
+        placements: storePlacements,
+        density: "full",
+      }),
+    [annotationControl, storeTrenches, storeZones, storeFeatures, storePlacements],
+  );
+
+  useEffect(() => {
+    const loadDialect = (
+      key: string,
+      setDialect: (value: "technical" | "architectural" | "creative" | "hybrid") => void,
+    ) => {
+      const saved = sessionStorage.getItem(key);
+      if (
+        saved === "technical" ||
+        saved === "architectural" ||
+        saved === "creative" ||
+        saved === "hybrid"
+      ) {
+        setDialect(saved);
+      }
+    };
+    loadDialect(`survey-communication-dialect-${projectId}`, setSurveyAnnotationDialect);
+    loadDialect(`cad-communication-dialect-${projectId}`, setCadAnnotationDialect);
+    loadDialect(`sketch-communication-dialect-${projectId}`, setSketchAnnotationDialect);
+  }, [
+    projectId,
+    setSurveyAnnotationDialect,
+    setCadAnnotationDialect,
+    setSketchAnnotationDialect,
+  ]);
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      `survey-communication-dialect-${projectId}`,
+      surveyAnnotationDialect,
+    );
+    sessionStorage.setItem(`cad-communication-dialect-${projectId}`, cadAnnotationDialect);
+    sessionStorage.setItem(
+      `sketch-communication-dialect-${projectId}`,
+      sketchAnnotationDialect,
+    );
+  }, [
+    projectId,
+    surveyAnnotationDialect,
+    cadAnnotationDialect,
+    sketchAnnotationDialect,
+  ]);
 
   /* ---------------------------------------------------------------- *
    * Canvas-First Layout (Module 1 / 2 / 3) — wires the four-slot z-stack
@@ -1497,17 +1686,46 @@ export function WebGLStudioPreview({
 
           if (activeMode === "survey") {
             body = (
-              <SurveySetupPanel
-                setup={surveySetup}
-                importBusy={truthBusy}
-                importMessage={truthMsg}
-                onImport={() => void runSiteTruthImport()}
-                onOpenAssets={() => {
-                  useStudioStore.getState().setAssetsOpen(true);
-                }}
-                onContinue={() => onNativeMode("sketch")}
-                continueEnabled={unlocked.has("sketch")}
-              />
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}>
+                <SurveySetupPanel
+                  setup={surveySetup}
+                  importBusy={truthBusy}
+                  importMessage={truthMsg}
+                  onImport={() => void runSiteTruthImport()}
+                  onOpenAssets={() => {
+                    useStudioStore.getState().setAssetsOpen(true);
+                  }}
+                  onContinue={() => onNativeMode("sketch")}
+                  continueEnabled={unlocked.has("sketch")}
+                />
+                <SurveyCommunicationCard
+                  dialect={surveyAnnotationDialect}
+                  onDialect={setSurveyAnnotationDialect}
+                  toggles={surveyedPlanLayers}
+                  onToggle={(patch) =>
+                    setSurveyedPlanLayers(
+                      patch as Partial<typeof surveyedPlanLayers>,
+                    )
+                  }
+                  model={surveyLegendModel}
+                  tradePacks={surveyTradePacks}
+                  onTradePacks={(patch) => setSurveyTradePacks(patch)}
+                  tradeLegend={tradeLegendModel.legend.filter(
+                    (entry) => surveyTradePacks[entry.pack],
+                  )}
+                  modes={communicationProfile?.modes}
+                  labels={{
+                    title: communicationProfile?.title ?? "Survey communication",
+                    technical:
+                      communicationProfile?.labels.technical ?? "Surveyed plan",
+                    architectural:
+                      communicationProfile?.labels.architectural ??
+                      "Design sketch",
+                    creative: communicationProfile?.labels.creative ?? "Creative",
+                    hybrid: communicationProfile?.labels.hybrid ?? "Hybrid",
+                  }}
+                />
+              </div>
             );
             dismiss = () => setActiveMode("sketch");
           } else if (activeMode === "garden") {
@@ -1521,10 +1739,40 @@ export function WebGLStudioPreview({
             );
           } else if (activeMode === "cad") {
             body = (
-              <StudioCadCard
-                projectId={projectId}
-                onCadResult={(result) => setCadGhostCount(result.ghost_count)}
-              />
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}>
+                <StudioCadCard
+                  projectId={projectId}
+                  onCadResult={(result) => setCadGhostCount(result.ghost_count)}
+                />
+                <SurveyCommunicationCard
+                  dialect={cadAnnotationDialect}
+                  onDialect={setCadAnnotationDialect}
+                  toggles={cadAnnotationLayers}
+                  onToggle={(patch) =>
+                    setCadAnnotationLayers(
+                      patch as Partial<typeof cadAnnotationLayers>,
+                    )
+                  }
+                  model={surveyLegendModel}
+                  tradePacks={cadTradePacks}
+                  onTradePacks={(patch) => setCadTradePacks(patch)}
+                  tradeLegend={tradeLegendModel.legend.filter(
+                    (entry) => cadTradePacks[entry.pack],
+                  )}
+                  modes={communicationProfile?.modes}
+                  labels={{
+                    title: communicationProfile?.title ?? "CAD communication",
+                    technical: communicationProfile?.labels.technical ?? "Technical",
+                    architectural:
+                      communicationProfile?.labels.architectural ??
+                      "Architectural",
+                    creative: communicationProfile?.labels.creative ?? "Creative",
+                    hybrid:
+                      communicationProfile?.labels.hybrid ??
+                      "Presentation blend",
+                  }}
+                />
+              </div>
             );
           } else if (activeMode === "sketch" && metaTab == null) {
             body = (
@@ -1661,6 +1909,32 @@ export function WebGLStudioPreview({
                     </Button>
                   </div>
                 ) : null}
+                <SurveyCommunicationCard
+                  dialect={sketchAnnotationDialect}
+                  onDialect={setSketchAnnotationDialect}
+                  toggles={sketchAnnotationLayers}
+                  onToggle={(patch) =>
+                    setSketchAnnotationLayers(
+                      patch as Partial<typeof sketchAnnotationLayers>,
+                    )
+                  }
+                  model={surveyLegendModel}
+                  tradePacks={sketchTradePacks}
+                  onTradePacks={(patch) => setSketchTradePacks(patch)}
+                  tradeLegend={tradeLegendModel.legend.filter(
+                    (entry) => sketchTradePacks[entry.pack],
+                  )}
+                  modes={communicationProfile?.modes}
+                  labels={{
+                    title: communicationProfile?.title ?? "Sketch communication",
+                    technical: communicationProfile?.labels.technical ?? "Technical",
+                    architectural:
+                      communicationProfile?.labels.architectural ??
+                      "Architectural",
+                    creative: communicationProfile?.labels.creative ?? "Creative",
+                    hybrid: communicationProfile?.labels.hybrid ?? "Hybrid",
+                  }}
+                />
               </div>
             );
           } else if (metaTab === "studio") {
