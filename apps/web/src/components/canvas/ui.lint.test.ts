@@ -22,63 +22,93 @@ import { describe, expect, it } from "vitest";
 const CONFIG_PATH = "eslint.config.mjs";
 const configSrc = readFileSync(CONFIG_PATH, "utf8");
 
-// Slice out the canvas UI-standards block (the one inside the
-// "SDS UI element standards enforcement" comment).
-function sliceUiStandardsBlock(src: string): string {
-  const startMarker = "SDS UI element standards enforcement";
-  const start = src.indexOf(startMarker);
-  if (start === -1) return "";
-  // The block ends at the next top-level rule block (we look for the
-  // closing }, then ); to be safe and stop at the array close).
-  // It's the second-to-last top-level block in the file, so we
-  // locate the trailing `);` of the config and back off.
-  const tail = src.lastIndexOf(");");
-  return src.slice(start, tail);
+/**
+ * Slice a named selector-set constant, e.g. `const UI_SCALE_SELECTORS = [ … ];`.
+ *
+ * The selector sets used to be written inline in their config blocks. They were
+ * hoisted into named constants on 2026-08-22 because flat config *replaces*
+ * same-named rule options instead of merging them, so the canvas block was
+ * silently dropping every z-token selector for the one surface they protect.
+ * Composing named sets makes the overlap explicit; this test follows.
+ */
+function sliceSelectorSet(src: string, name: string): string {
+  const decl = src.indexOf(`const ${name} = [`);
+  if (decl === -1) return "";
+  const end = src.indexOf("\n];", decl);
+  if (end === -1) return "";
+  // Back up over the constant's own JSDoc — that is where the contract marker
+  // and the rationale live.
+  const doc = src.lastIndexOf("/**", decl);
+  return src.slice(doc === -1 ? decl : doc, end);
 }
 
-function rulesInBlock(block: string): string[] {
-  // The block contains "rules: { ... }" — extract the inner array form
-  // of no-restricted-syntax.
-  const m = block.match(/"no-restricted-syntax"\s*:\s*\[([\s\S]*?)\n\s{6}\],/);
-  if (!m) return [];
-  return m[1]
-    .split(/\},\s*\{/)
-    .map((s) => "{" + s.trim().replace(/^\{/, "").replace(/\}$/, "") + "}");
+/** Split a selector set into one string per `{ selector, message }` entry. */
+function entriesIn(block: string): string[] {
+  if (!block) return [];
+  return block
+    .split(/\n\s{2}\{\n/)
+    .slice(1)
+    .map((s) => `{${s.replace(/\n\s{2}\},?\s*$/, "")}}`);
+}
+
+/** The canvas-scoped config block, which must spread both selector sets. */
+function sliceCanvasBlock(src: string): string {
+  const start = src.indexOf('files: ["apps/web/src/components/canvas/**/*.ts"');
+  if (start === -1) return "";
+  const end = src.indexOf("\n  },", start);
+  return end === -1 ? "" : src.slice(start, end);
 }
 
 describe("ui.lint — UI element standards lint rules in eslint.config.mjs", () => {
-  const block = sliceUiStandardsBlock(configSrc);
-  const rules = rulesInBlock(block);
+  const uiScale = sliceSelectorSet(configSrc, "UI_SCALE_SELECTORS");
+  const rules = entriesIn(uiScale);
+  const canvasBlock = sliceCanvasBlock(configSrc);
 
-  it("the canvas UI standards block exists in eslint.config.mjs", () => {
+  it("the canvas UI standards selector set exists in eslint.config.mjs", () => {
     expect(
-      block.includes("SDS UI element standards enforcement"),
-      "expected a top-level block with the documented comment marker",
+      uiScale.includes("SDS UI element standards enforcement"),
+      "expected a UI_SCALE_SELECTORS constant carrying the documented comment marker",
     ).toBe(true);
   });
 
-  it("the block scopes its files to canvas/**/*.ts(x) and excludes .test.* files", () => {
+  it("the canvas block scopes its files to canvas/**/*.ts(x) and excludes .test.* files", () => {
     expect(
-      /files\s*:\s*\[[^\]]*canvas\/\*\*\/\*\.[tc]sx[^\]]*\]/.test(block),
+      /files\s*:\s*\[[^\]]*canvas\/\*\*\/\*\.[tc]sx[^\]]*\]/.test(canvasBlock),
       "expected a files: [...] entry that names canvas/**/*.ts/tsx",
     ).toBe(true);
     expect(
-      /ignores\s*:\s*\[[^\]]*\*\/\*\.test\.[tc]sx[^\]]*\]/.test(block),
+      /ignores\s*:\s*\[[^\]]*\*\/\*\.test\.[tc]sx[^\]]*\]/.test(canvasBlock),
       "expected an ignores: [...] entry that excludes **/*.test.ts and **/*.test.tsx so the scan test's own quoted examples don't trip the rule",
     ).toBe(true);
   });
 
-  it("there are exactly four no-restricted-syntax entries inside the block", () => {
+  /*
+   * The regression this pins: the canvas block must spread BOTH sets. Spreading
+   * only UI_SCALE_SELECTORS is what shadowed the z-ladder off canvas/** for
+   * every release between the UI-scale block landing and 2026-08-22.
+   */
+  it("the canvas block spreads the z-token set as well as the UI-scale set", () => {
+    expect(
+      canvasBlock.includes("...Z_TOKEN_SELECTORS"),
+      "canvas must spread Z_TOKEN_SELECTORS — flat config replaces same-named rule options, so omitting it silently drops every z-token selector for canvas/**",
+    ).toBe(true);
+    expect(
+      canvasBlock.includes("...UI_SCALE_SELECTORS"),
+      "canvas must spread UI_SCALE_SELECTORS",
+    ).toBe(true);
+  });
+
+  it("there are exactly four selectors in the UI-scale set", () => {
     expect(
       rules.length,
       `expected 4 charted rules (borderRadius, fontSize, gap, rgba), got ${rules.length}`,
     ).toBe(4);
   });
 
-  it("the block is severity 'error' (mirrors cfz lint rule severity)", () => {
+  it("the canvas block is severity 'error' (mirrors cfz lint rule severity)", () => {
     expect(
-      /"error"/.test(block),
-      "expected the four rules to be at severity 'error', matching the cfz pattern",
+      /"error"/.test(canvasBlock),
+      "expected the rules to be at severity 'error', matching the cfz pattern",
     ).toBe(true);
   });
 
