@@ -72,9 +72,19 @@ const CHROME_SELECTOR = [
   "[data-testid='workflow-guide']",
   "[data-testid='selection-chip']",
   "[data-testid='survey-locate-state']",
-  "[data-testid='perimeter-tab-strip']",
   "[data-testid='project-identity']",
 ].join(", ");
+/*
+ * Also NOT here: `perimeter-tab-strip`. It is a transparent wrapping flex band
+ * (no background, no border, no shadow) whose painted children —
+ * `project-identity`, `studio-mode-tabs` and the surfaces group — all carry
+ * `data-gs-glass-card` and are measured individually. Measuring the container
+ * measures the gaps between its children too: when the band wraps to two rows
+ * at 960px its bbox grows to 648x101 and swallows the workflow-guide chip
+ * sitting in the empty part of the second row, which is a measurement artifact,
+ * not an overlap. The `paints()` filter in the coverage ratchet handles the same
+ * problem structurally.
+ */
 
 async function chromeRects(page: Page, selector = CHROME_SELECTOR): Promise<Rect[]> {
   return page.evaluate((sel: string) => {
