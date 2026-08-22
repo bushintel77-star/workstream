@@ -1,7 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { pipelineShell } from "./helpers";
-
-const API = process.env.API_URL ?? "http://127.0.0.1:3001";
+import { createAddressProject, pipelineShell } from "./helpers";
 
 /**
  * Canvas-first progressive disclosure on the default WebGL mount: the mode
@@ -10,61 +8,24 @@ const API = process.env.API_URL ?? "http://127.0.0.1:3001";
  * locked until a quote is persisted.
  */
 test.describe("Canvas-first mode chrome", () => {
+  test.setTimeout(process.env.CI ? 180_000 : 90_000);
+
   test("Mode tabs unlock progressively; CAD mounts natively", async ({
     page,
     request,
   }) => {
-    const create = await request.post(`${API}/projects/`, {
-      data: {
-        address: "E2E Canvas First, 12 Fit Sheet Ave, Melbourne VIC 3000",
-        lat: -37.8136,
-        lng: 144.9631,
-      },
+    // Use the deterministic survey seed instead of the asynchronous capture
+    // pipeline. This test covers canvas chrome, not external capture timing.
+    const { projectId } = await createAddressProject(request, {
+      address: "E2E Canvas First, 12 Fit Sheet Ave, Melbourne VIC 3000",
+      lat: -37.8136,
+      lng: 144.9631,
+      seedCanvas: true,
     });
-    expect(create.ok()).toBeTruthy();
-    const body = (await create.json()) as {
-      project: { id: string };
-    };
-    const projectId = body.project.id;
 
-    const pipeline = await request.post(
-      `${API}/projects/${projectId}/pipeline`,
-    );
-    expect(pipeline.ok()).toBeTruthy();
-    // The capture pipeline is async — wait for the survey stage to land, then
-    // seed one placement, so the mode unlock chain (aerial → sketch/cad) is
-    // deterministic at page render.
-    let surveyReady = false;
-    for (let i = 0; i < 20; i++) {
-      const survey = await request.get(`${API}/projects/${projectId}/survey`);
-      if (survey.ok()) {
-        surveyReady = true;
-        break;
-      }
-      await page.waitForTimeout(1500);
-    }
-    expect(surveyReady).toBeTruthy();
-    const seed = await request.put(
-      `${API}/projects/${projectId}/design-canvas`,
-      {
-        data: {
-          placements: [
-            {
-              id: "11111111-2222-4333-8444-555555555555",
-              symbol_id: "bluestone-paver",
-              x_pct: 50,
-              y_pct: 60,
-              rotation_deg: 0,
-              scale: 1,
-            },
-          ],
-          strokes: [],
-        },
-      },
-    );
-    expect(seed.ok).toBeTruthy();
-
-    await page.goto(`/projects/${projectId}`);
+    await page.goto(`/projects/${projectId}`, {
+      waitUntil: "domcontentloaded",
+    });
     await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
       timeout: 30_000,
     });
@@ -83,13 +44,18 @@ test.describe("Canvas-first mode chrome", () => {
     );
 
     // CAD is native to the WebGL studio: technical plan (dims on) + the AI
-    // drafter hub — no hand-off to the classic board. The capture pipeline
-    // runs async, so CAD sits as a locked pill until the survey lands.
+    // drafter hub — no hand-off to the classic board.
     const cadTab = page.getByRole("button", { name: "Mode CAD" });
     await expect(cadTab).toBeVisible({ timeout: 60_000 });
-    await cadTab.click();
+    // The mode transition re-keys the chrome strip. A regular actionability
+    // click can lose the button during that intentional detach on software
+    // WebGL runners, so dispatch and wait for the authoritative mode marker.
+    await cadTab.dispatchEvent("click");
+    await expect(
+      page.locator('[data-webgl-chrome][data-mode="cad"]'),
+    ).toBeAttached({ timeout: 60_000 });
     await expect(page.getByTestId("studio-cad-card")).toBeVisible({
-      timeout: 10_000,
+      timeout: 30_000,
     });
     await expect(page.getByTestId("cad-instruction")).toBeVisible();
     // Share stays locked until a quote is persisted (still asserted above via

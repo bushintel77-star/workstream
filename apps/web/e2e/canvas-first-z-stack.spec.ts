@@ -94,11 +94,11 @@ async function readLayerZStack(page: Page) {
  */
 async function expectZStackOnceReady(page: Page) {
   await expect(page.locator('[data-cf-layout="root"]')).toBeAttached({
-    timeout: 15_000,
+    timeout: process.env.CI ? 60_000 : 15_000,
   });
   await expect
     .poll(async () => (await readLayerZStack(page))?.length ?? 0, {
-      timeout: 20_000,
+      timeout: process.env.CI ? 60_000 : 20_000,
     })
     .toBe(EXPECTED_LAYERS.length);
   const stack = await readLayerZStack(page);
@@ -133,7 +133,7 @@ test.describe("Canvas-First four-layer z-stack — Survey / Sketch / CAD / Garde
    * answer: CI already sets `retries: 1`, which would have masked the flake
    * instead of exposing the budget as the cause.
    */
-  test.setTimeout(process.env.CI ? 240_000 : 180_000);
+  test.setTimeout(process.env.CI ? 300_000 : 180_000);
 
   test("each mode mounts the documented canvas → spatial → chrome → app stack", async ({
     page,
@@ -174,7 +174,14 @@ test.describe("Canvas-First four-layer z-stack — Survey / Sketch / CAD / Garde
       // ViewportTransitionHUD's snap-back. Probe immediately instead.
       // For all other modes, click first to trigger the transition.
       if (mode !== "survey") {
-        await tab.click({ force: true, timeout: 60_000 });
+        // `click()` waits for geometry stability; the mode cross-fade
+        // deliberately re-keys this strip and can detach the button while
+        // Playwright is scrolling it on software-rendered CI. Dispatch the
+        // semantic click directly, then wait on the authoritative mode marker.
+        await page.getByTestId(`mode-tab-${mode}`).dispatchEvent("click");
+        await expect(
+          page.locator(`[data-webgl-chrome][data-mode="${mode}"]`),
+        ).toBeAttached({ timeout: process.env.CI ? 60_000 : 15_000 });
         // The wrapper's chrome slot re-keys during the transition:
         // ViewportTransitionHUD snaps back from `--cf-z-app` to the
         // chrome tier. Wait for the tab strip to remain attached

@@ -30,8 +30,21 @@ export default defineConfig({
     baseURL: WEB_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    // 20s -> 60s under CI. GPU-less shared runners fall back to software
-    // WebGL (Mesa llvmpipe), so the R3F useFrame loop saturates the main
+    // Chromium no longer falls back to software WebGL automatically. GitLab
+    // runners have no GPU, so opt into ANGLE + SwiftShader explicitly instead
+    // of letting contexts migrate to Mesa llvmpipe and disappear under load.
+    // Keep local browsers on their native renderer.
+    launchOptions: {
+      args: process.env.CI
+        ? [
+            "--enable-unsafe-swiftshader",
+            "--use-angle=swiftshader",
+            "--use-gl=angle",
+          ]
+        : [],
+    },
+    // 20s -> 60s under CI. GPU-less shared runners use software WebGL, so the
+    // R3F useFrame loop can saturate the main
     // thread and a `locator.evaluate` callback cannot get a slot in 20s.
     // Pipeline #31 lost all four attempts of canvas-first-z-stack.spec.ts
     // to exactly that, then passed the mirror test on retry in 9.9s —

@@ -136,6 +136,7 @@ test.describe("Present surface states", () => {
     page,
     request,
   }) => {
+    test.setTimeout(process.env.CI ? 150_000 : 90_000);
     const { projectId } = await createSurveyProject(request);
 
     const seed = await request.put(
@@ -179,9 +180,17 @@ test.describe("Present surface states", () => {
     );
     expect(create.ok()).toBeTruthy();
 
-    await page.goto(`/projects/${projectId}?mode=present`);
+    await page.goto(`/projects/${projectId}?mode=present`, {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByTestId("webgl-studio")).toBeVisible({
+      timeout: 60_000,
+    });
+    await expect(
+      page.locator('[data-webgl-chrome][data-mode="present"]'),
+    ).toBeAttached({ timeout: 60_000 });
     await expect(page.getByTestId("present-surface")).toBeVisible({
-      timeout: 20_000,
+      timeout: 60_000,
     });
     await expect(page.getByTestId("present-surface")).toHaveAttribute(
       "data-surface-state",
