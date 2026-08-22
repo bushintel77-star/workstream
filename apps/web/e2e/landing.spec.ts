@@ -120,30 +120,22 @@ test.describe("Landing hero", () => {
     ).toHaveAttribute("href", "/settings");
   });
 
-  test("live boundary overlay renders when the registry feed lands", async ({
+  test("live site-analysis board renders from the registry feed", async ({
     page,
   }) => {
     await page.goto("/");
-    const boundary = page.getByTestId("hero-boundary");
-    await boundary
-      .first()
+    const board = page.getByTestId("hero-site-analysis");
+    await board
       .waitFor({ state: "visible", timeout: 15_000 })
       .catch(() => {});
-    if ((await boundary.count()) > 0) {
-      await expect(page.getByText(/live boundary ·/i)).toBeVisible();
-      // The hand-written feature legend rides the same live polygon, and
-      // every label is verified for this property (pool + gardens probed
-      // on the sub-metre aerial; the boundary is the registry itself).
-      await expect(page.getByTestId("hero-features").first()).toBeVisible();
-      await expect(page.getByText(/swimming pool/i)).toBeVisible();
-      await expect(page.getByText(/landscaped gardens/i)).toBeVisible();
-      await expect(page.getByText(/live title boundary/i)).toBeVisible();
-      // The pre-sketch (design-intent marks over the survey state) anchors
-      // to the same real ring and carries the locational-indicative stamp —
-      // it never reads as survey truth.
-      await expect(page.getByTestId("hero-presketch")).toBeVisible();
-      await expect(page.getByText(/pre-sketch · indicative/i)).toBeVisible();
-      await expect(page.getByText(/proposed lawn/i)).toBeVisible();
+    if ((await board.count()) > 0) {
+      await expect(board).toContainText("SITE ANALYSIS");
+      await expect(board).toContainText("TITLE / LIVE");
+      await expect(board).toContainText("VICMAP CADASTRE");
+      await expect(board).toContainText(/BOUNDARY \/ LIVE DATA|BOUNDARY \+ BUILDING \/ LIVE DATA/);
+      // The board does not invent a building footprint when Vicmap cannot
+      // provide one. It remains a live title analysis over the real aerial.
+      await expect(page.getByText(/swimming pool|landscaped gardens|pre-sketch|proposed lawn/i)).toHaveCount(0);
     }
   });
 });
