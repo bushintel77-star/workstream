@@ -39,6 +39,7 @@
  */
 
 import { useCallback } from "react";
+import { clampBoardPct } from "@workstream/contracts";
 import { useStudioStore } from "./studioStore";
 import {
   GARDEN_PITCH_DEG,
@@ -97,10 +98,7 @@ export function ViewportTransitionHUD({
     [writeLiveRig],
   );
 
-  const markerPct = Math.max(
-    0,
-    Math.min(100, (tiltQuant / TILT_MAX) * 100),
-  );
+  const markerPct = clampBoardPct((tiltQuant / TILT_MAX) * 100);
 
   const presets = (
     <>

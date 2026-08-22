@@ -39,22 +39,6 @@ const BOARD_CLAMP =
   /Math\.min\(\s*100\s*,\s*Math\.max\(\s*0\s*[,)]|Math\.max\(\s*0\s*,\s*Math\.min\(\s*100\s*[,)]/g;
 
 const ALLOWED: Record<string, string> = {
-  // Another agent holds this directory; migrating it would collide. Tracked as
-  // the follow-up MR to this one.
-  "apps/web/src/components/canvas/webgl/AssetPlaceLayer.tsx":
-    "webgl studio — follow-up MR",
-  "apps/web/src/components/canvas/webgl/PlacementGizmo.tsx":
-    "webgl studio — follow-up MR",
-  "apps/web/src/components/canvas/webgl/draftShape.ts":
-    "webgl studio — follow-up MR",
-  "apps/web/src/components/canvas/webgl/siteTruthImport.ts":
-    "webgl studio — follow-up MR",
-  "apps/web/src/components/canvas/webgl/sketchCad.ts":
-    "webgl studio — follow-up MR",
-  "apps/web/src/components/canvas/webgl/stitchBridge.ts":
-    "webgl studio — follow-up MR",
-  "apps/web/src/components/canvas/webgl/ViewportTransitionHUD.tsx":
-    "webgl studio — follow-up MR",
   // Not a board coordinate: permeable / canopy COVERAGE shares, which are
   // percentages of an area. They share the 0-100 range with the board by
   // coincidence, not by contract, and must not adopt the board primitive.

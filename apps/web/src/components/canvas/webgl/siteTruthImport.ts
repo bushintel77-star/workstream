@@ -22,6 +22,7 @@
  * units equal the real metres the drawn width represents.
  */
 
+import { clampBoardPct } from "@workstream/contracts";
 import type { DesignCanvas } from "@workstream/contracts";
 import { classifyVicmapFeature, type LayerID } from "@workstream/domain";
 
@@ -117,11 +118,10 @@ function makeBoardTransform(boundaryMetres: Pt[]) {
   if (w <= 0 || h <= 0) return null;
   const DRAWN = 84; // % of the board the lot occupies (8% margin each side)
   const scale = Math.min(DRAWN / w, DRAWN / h);
-  const clampPct = (v: number) => Math.min(100, Math.max(0, v));
   return {
     toPct: (m: Pt) => ({
-      x_pct: clampPct(50 + (m.x - (bbox.minX + bbox.maxX) / 2) * scale),
-      y_pct: clampPct(50 + (m.y - (bbox.minY + bbox.maxY) / 2) * scale),
+      x_pct: clampBoardPct(50 + (m.x - (bbox.minX + bbox.maxX) / 2) * scale),
+      y_pct: clampBoardPct(50 + (m.y - (bbox.minY + bbox.maxY) / 2) * scale),
     }),
     /** Real metres across the full 100-unit board width. */
     boardWidthM: w / ((w * scale) / 100),

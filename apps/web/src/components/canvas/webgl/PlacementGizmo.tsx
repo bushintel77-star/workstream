@@ -25,6 +25,7 @@
 import { useMemo, useRef } from "react";
 import type { Event as ThreeEvent, Object3D } from "three";
 import { TransformControls } from "@react-three/drei";
+import { clampBoardPct } from "@workstream/contracts";
 import { useStudioStore } from "./studioStore";
 import { pctToWorld, worldToPct, type HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
@@ -39,8 +40,6 @@ export interface PlacementGizmoProps {
 interface GizmoControl {
   object?: Object3D;
 }
-
-const clampPct = (v: number): number => Math.max(0, Math.min(100, v));
 
 export function PlacementGizmo({
   scaleM,
@@ -90,8 +89,8 @@ export function PlacementGizmo({
     if (gizmoMode === "translate") {
       const pct = worldToPct(obj.position.x, obj.position.z, scaleM, boardAspect);
       setTransient(placement.id, {
-        x_pct: clampPct(pct.x),
-        y_pct: clampPct(pct.y),
+        x_pct: clampBoardPct(pct.x),
+        y_pct: clampBoardPct(pct.y),
       });
     } else {
       let deg = ((obj.rotation.y * 180) / Math.PI) % 360;

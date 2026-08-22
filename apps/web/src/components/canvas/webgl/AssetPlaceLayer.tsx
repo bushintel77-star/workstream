@@ -23,6 +23,7 @@
 import { useEffect, useRef } from "react";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
+import { clampBoardPct } from "@workstream/contracts";
 import type { CatalogPlacement } from "@workstream/contracts";
 import { useStudioStore } from "./studioStore";
 import { worldToPct, type PctPoint } from "./coordTransform";
@@ -43,8 +44,6 @@ export interface AssetPlaceLayerProps {
 
 /** Types whose 3D body has a length axis — a run bearing means something. */
 const ORIENTED_TYPES = new Set(["hedge", "paving", "deck", "frenchdrain"]);
-
-const clampPct = (v: number): number => Math.max(0, Math.min(100, v));
 
 function clientToGroundPct(
   clientX: number,
@@ -69,7 +68,7 @@ function clientToGroundPct(
 
 function snapPct(raw: PctPoint, scaleM: number): PctPoint {
   const snapped = snapToGridMetres(raw, scaleM);
-  return { x: clampPct(snapped.x), y: clampPct(snapped.y) };
+  return { x: clampBoardPct(snapped.x), y: clampBoardPct(snapped.y) };
 }
 
 function mintPlacement(

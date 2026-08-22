@@ -15,6 +15,7 @@
  * the strokes it welds — undo and un-stitch both stay lossless.
  */
 
+import { clampBoardPct } from "@workstream/contracts";
 import type { CanvasStroke, LandscapeFeature } from "@workstream/contracts";
 import {
   stitchCanvasStrokes,
@@ -27,8 +28,6 @@ import {
 import type { FeatureLayer } from "@workstream/contracts";
 import { PALETTE } from "../../../styles/colorTokens";
 import { pctToWorld, worldToPct } from "./coordTransform";
-
-const clampPct = (v: number): number => Math.max(0, Math.min(100, v));
 
 /** Domain Layer Registry id → contract FeatureLayer (rendering group). */
 const LAYER_TO_FEATURE_LAYER: Partial<Record<LayerID, FeatureLayer>> = {
@@ -62,7 +61,7 @@ export function stitchedToLandscapeFeature(
     const pct = worldToPct(p.x, p.y, scaleM, boardAspect);
     return {
       id: `${feature.id}-v${i}`,
-      pct: { x_pct: clampPct(pct.x), y_pct: clampPct(pct.y) },
+      pct: { x_pct: clampBoardPct(pct.x), y_pct: clampBoardPct(pct.y) },
     };
   });
   let points = pts;
@@ -141,7 +140,7 @@ export function unstitchFeatureToSketchStrokes(
     id: crypto.randomUUID(),
     points: seg.map((p) => {
       const pct = worldToPct(p.x, p.y, scaleM, boardAspect);
-      return { x_pct: clampPct(pct.x), y_pct: clampPct(pct.y) };
+      return { x_pct: clampBoardPct(pct.x), y_pct: clampBoardPct(pct.y) };
     }),
     color: PALETTE.sketchInk,
     width_px: 2.5,

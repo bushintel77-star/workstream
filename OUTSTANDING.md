@@ -202,22 +202,19 @@ merge-request `gate` exclusion from that survey are **fixed** on
 that MR — each needs its own change with its own blast radius. Counts below are
 re-measured, not quoted from the survey.
 
-- [ ] **Board-coordinate clamp primitive — `packages/contracts` owns the bound
-      but exports no way to satisfy it.** The `0..100` board-% bound is declared
-      in the contracts schemas and then re-implemented ad hoc everywhere:
-      **10 separate `clampPct` definitions** (`handoff/geometry/cameraPointer.ts:24`,
-      `handoff/geometry/snap.ts:35`, `handoff/state/canvasBridge.ts:293`,
-      `webgl/AssetPlaceLayer.tsx:47`, `webgl/PlacementGizmo.tsx:43`,
-      `webgl/siteTruthImport.ts:120`, `webgl/sketchCad.ts:60`,
-      `webgl/stitchBridge.ts:31`, `packages/domain/src/sketch-to-cad.ts:112`,
-      `packages/domain/src/urban-tree-ghosts.ts:31`) plus **54 hand-written
-      `Math.max(0, Math.min(100, …))` clamps** — 105 clamp sites across 26
-      files. Every caller that forgets one produces geometry the schema rejects;
-      that is what caused the production autosave 400 fixed in `1be0960`.
-      Recommendation: export the clamp and the board caps from the package that
-      declares the bound, and make the duplicates a lint or scan violation so
-      the count can only go down. A fix that only adds the export leaves 105
-      call sites unconverted, so the ratchet matters more than the helper.
+- [x] **Board-coordinate clamp primitive — `packages/contracts` owns the bound
+      and exports the operation that satisfies it.** `clampBoardPct`,
+      `BOARD_PCT_MIN`/`BOARD_PCT_MAX`, `toBoardPoint`/`toBoardPoints` and the
+      proving `BoardPointPctFromUnboundedSchema` all live in
+      `packages/contracts/src/schemas/board-coords.ts`. Every hand-rolled
+      `Math.max(0, Math.min(100, …))` clamp and every duplicate `clampPct`
+      definition across `apps/web`, `apps/api` and `packages` has been migrated
+      onto the primitive (the last seven — the webgl studio writers — landed
+      with this item). `board-coords.scan.test.ts` fails the moment a new
+      hand-rolled clamp appears in a migrated scope, and keeps its one
+      allowlisted entry honest (a coverage percentage, not a board coordinate),
+      so the count can only go down. The 400 fixed in `1be0960` cannot recur
+      silently: the scan catches the writer that forgets the bound.
 - [ ] **Two name-permutation hazards in `packages/contracts`.** Both pairs are
       live, both are one transposition apart, and nothing stops a call site
       importing the wrong one:

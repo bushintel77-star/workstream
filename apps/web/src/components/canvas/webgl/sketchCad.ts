@@ -25,6 +25,7 @@
  * behaviour at the one place they are coupled (the persisted canvas).
  */
 
+import { clampBoardPct } from "@workstream/contracts";
 import type { CanvasStroke, LandscapeFeature } from "@workstream/contracts";
 import {
   featureFromRecognizedStroke,
@@ -56,11 +57,6 @@ export type SketchCadProposal = {
 
 /** Direct-conversion confidence gate — matches SVG StudioAssistPanel. */
 const MIN_DIRECT_CONFIDENCE = 0.55;
-
-function clampPct(v: number): number {
-  if (!Number.isFinite(v)) return 0;
-  return Math.max(0, Math.min(100, v));
-}
 
 /** Scale fallback for proposals without a classifier hint (SVG parity). */
 export function proposalScale(
@@ -107,8 +103,8 @@ export function proposeSketchCad(
     return {
       id: g.id,
       symbol_id: g.symbol_id,
-      x_pct: clampPct(placed.x),
-      y_pct: clampPct(placed.y),
+      x_pct: clampBoardPct(placed.x),
+      y_pct: clampBoardPct(placed.y),
       confidence: g.confidence,
       reason: placed.reason ? `${g.reason} · ${placed.reason}` : g.reason,
       scale: proposalScale(g.confidence, g.scaleHint),
@@ -116,8 +112,8 @@ export function proposeSketchCad(
       outlinePct:
         g.outlinePct && g.outlinePct.length >= 3
           ? g.outlinePct.map((p) => ({
-              x: clampPct(p.x + dx),
-              y: clampPct(p.y + dy),
+              x: clampBoardPct(p.x + dx),
+              y: clampBoardPct(p.y + dy),
             }))
           : undefined,
     };
@@ -218,7 +214,7 @@ export function featureForAcceptedProposal(
       canvas_origin_pct: { x_pct: 0, y_pct: 0 },
       points: outline.map((p, i) => ({
         id: `${placementId}-v${i}`,
-        pct: { x_pct: clampPct(p.x), y_pct: clampPct(p.y) },
+        pct: { x_pct: clampBoardPct(p.x), y_pct: clampBoardPct(p.y) },
       })),
     },
     material_fill: {

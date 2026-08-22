@@ -9,10 +9,12 @@ import { z } from "zod";
  * edge onto the context ground, so `CanvasPointPctSchema` (catalog) stays
  * unbounded. That asymmetry is the hazard this module exists to close: every
  * writer that turns unbounded source geometry into a bounded artifact has to
- * land it on the board first, and until now each one re-implemented that
- * landing by hand — ten copies of `clampPct` across 25 files. The first writer
- * to omit it (`buildLandscapeFeatureFromStroke`, 2026-08-22) took autosave down
- * with `Number must be greater than or equal to 0`.
+ * land it on the board first. Each one used to re-implement that landing by
+ * hand — ten copies of `clampPct` across 25 files. The first writer to omit it
+ * (`buildLandscapeFeatureFromStroke`, 2026-08-22) took autosave down with
+ * `Number must be greater than or equal to 0`. The hand-rolled copies are now
+ * migrated onto `clampBoardPct` / `toBoardPoint`; `board-coords.scan.test.ts`
+ * fails on any new hand-rolled clamp so the duplication cannot return.
  *
  * The bound is declared here exactly once, and so is the operation that
  * satisfies it. A writer that needs the bound imports it; it no longer has the

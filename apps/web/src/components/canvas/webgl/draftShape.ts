@@ -22,6 +22,7 @@
  * Binding: docs/precision-drafting-tools-spec.md §5–§6
  */
 
+import { toBoardPoint } from "@workstream/contracts";
 import type { CanvasStroke, LandscapeFeature } from "@workstream/contracts";
 import { pctToWorld, worldToPct, type PctPoint } from "./coordTransform";
 import { nibSpec } from "./nibs";
@@ -211,8 +212,8 @@ function toStrokePoint(
  * Feature geometry is board-bounded by contract (`BoardPointPctSchema` is
  * 0–100), while stroke points are not. A vertex placed on the context ground
  * beyond the board therefore clamps to the board edge for a region — the same
- * convention every other feature writer uses. Not yet migrated onto the
- * contract's `toBoardPoint`; see the follow-up MR for this directory.
+ * convention every other feature writer uses. Landed via the contract's
+ * `toBoardPoint`, which clamps and proves the result against the bound.
  */
 function toFeaturePoint(
   v: WorldXZ,
@@ -220,10 +221,7 @@ function toFeaturePoint(
   boardAspect: number,
 ): { x_pct: number; y_pct: number } {
   const p = toStrokePoint(v, scaleM, boardAspect);
-  return {
-    x_pct: Math.max(0, Math.min(100, p.x_pct)),
-    y_pct: Math.max(0, Math.min(100, p.y_pct)),
-  };
+  return toBoardPoint(p);
 }
 
 export interface PolylineCommitArgs {
