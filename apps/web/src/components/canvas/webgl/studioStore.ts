@@ -90,6 +90,17 @@ import {
 } from "./inspectorPolicy";
 import { marqueeSelectRefs } from "./marqueeSelect";
 import {
+  addDraftVertex as appendDraftVertex,
+  areaFeatureFromDraft,
+  beginDraftSession,
+  canCommitDraft,
+  polylineStrokeFromDraft,
+  undoDraftVertex as dropLastDraftVertex,
+  type DraftSession,
+  type DraftTool,
+} from "./draftShape";
+import type { WorldXZ } from "./snapWorld";
+import {
   stitchSketchStrokesToFeatures,
   unstitchFeatureToSketchStrokes,
 } from "./stitchBridge";
@@ -511,11 +522,44 @@ export interface StudioStoreState {
       >;
       brush_recipe_id?: string;
       labor_tier?: LaborProfile["base_difficulty_tier"];
+      /**
+       * Pad height above existing grade. Setting it turns the region into a
+       * cut/fill pad — an EDIT on an existing region, never a drawing mode
+       * (spec §8.1). Zero clears it back to a flat region.
+       */
+      extrude_height_m?: number;
     },
   ) => void;
   /** Latest boundary re-clamp notice (dismissible; re-arms per clamped edit). */
   boundaryNotice: { refId: string; reason: string; at: number } | null;
   dismissBoundaryNotice: () => void;
+
+  // --- Precision drafting (Polyline / Area click-to-place) ---
+  /**
+   * The live drafting run — the armed tool plus the vertices the operator has
+   * placed, in world metres. One session is shared by both tools (spec §5);
+   * null = no drafting tool armed, so the pan law is untouched.
+   */
+  draftSession: DraftSession | null;
+  /** Arm a drafting tool (stands down every other pointer-capture tool). */
+  beginDraft: (tool: DraftTool) => void;
+  /** Place a vertex — already snap-resolved by the drafting layer. */
+  addDraftVertex: (vertex: WorldXZ) => void;
+  /** Backspace — drop the last vertex. The tool stays armed. */
+  undoDraftVertex: () => void;
+  /** Esc — drop the whole run AND disarm the tool (sticky-tool exit). */
+  cancelDraft: () => void;
+  /**
+   * Finish the run. Polyline persists a `kind: "shape"` `CanvasStroke` (both
+   * `shape_points` and the flattened `points`); Area persists a Polygon
+   * `LandscapeFeature`. One undo step, and the tool stays armed with an empty
+   * run so a setout can continue. Returns true when something persisted.
+   */
+  commitDraft: (
+    scaleM: number,
+    boardAspect: number,
+    closed: boolean,
+  ) => boolean;
 
   // --- Marquee box select (tool-gated; option A: placements + features) ---
   /** Whether the marquee rail tool is armed (drag = box, not pan). */
@@ -912,6 +956,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   marqueeActive: false,
   marqueeDraft: null,
 
+  // Precision drafting — no tool armed, so plain drag still pans.
+  draftSession: null,
+
   // Expressive stylus Sketch — graphite armed by default; sun-hatch snap on;
   // neutral live telemetry until the first pen sample.
   activeNib: DEFAULT_NIB,
@@ -959,7 +1006,12 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setSketchMode: (sketchMode) =>
     set(
       sketchMode
-        ? { sketchMode: true, trenchTool: null, zoneTool: null }
+        ? {
+            sketchMode: true,
+            trenchTool: null,
+            zoneTool: null,
+            draftSession: null,
+          }
         : { sketchMode: false },
     ),
   setViewBlendTarget: (viewBlendTarget) =>
@@ -994,7 +1046,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setMeasureActive: (measureActive) =>
     set(
       measureActive
-        ? { measureActive: true, sketchMode: false, trenchTool: null, zoneTool: null }
+        ? {
+            measureActive: true,
+            sketchMode: false,
+            trenchTool: null,
+            zoneTool: null,
+            draftSession: null,
+          }
         : { measureActive: false },
     ),
   setMeasureTape: (a, b) =>
@@ -1016,7 +1074,14 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setArmedSymbolId: (armedSymbolId) =>
     set(
       armedSymbolId
-        ? { armedSymbolId, sketchMode: false, measureActive: false, trenchTool: null, zoneTool: null }
+        ? {
+            armedSymbolId,
+            sketchMode: false,
+            measureActive: false,
+            trenchTool: null,
+            zoneTool: null,
+            draftSession: null,
+          }
         : { armedSymbolId: null, assetPlantDraft: null },
     ),
   setPendingAssetDrop: (pendingAssetDrop) => set({ pendingAssetDrop }),
@@ -1087,6 +1152,14 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
           patch.labor_tier && f.labor_profile
             ? { ...f.labor_profile, base_difficulty_tier: patch.labor_tier }
             : f.labor_profile;
+        // A non-positive height clears the pad (the contract only models a
+        // positive extrusion — absent means flat).
+        const heightM =
+          patch.extrude_height_m === undefined
+            ? f.extrude_height_m
+            : patch.extrude_height_m > 0
+              ? patch.extrude_height_m
+              : undefined;
         return {
           ...f,
           metadata: {
@@ -1097,6 +1170,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
           material_fill: materialFill,
           procedural_scatter_contents: scatter,
           labor_profile: labor,
+          extrude_height_m: heightM,
         };
       });
       return { features, historyPast: past, historyFuture: [] };
@@ -1112,9 +1186,76 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
             measureActive: false,
             trenchTool: null,
             zoneTool: null,
+            draftSession: null,
           }
         : { marqueeActive: false },
     ),
+  beginDraft: (tool) =>
+    set({
+      draftSession: beginDraftSession(tool),
+      // Arming a drafting tool takes ground pointer capture, so every other
+      // capture tool stands down (the marquee tool-gate pattern).
+      sketchMode: false,
+      measureActive: false,
+      armedSymbolId: null,
+      assetPlantDraft: null,
+      trenchTool: null,
+      trenchDraft: null,
+      zoneTool: null,
+      zoneDraft: null,
+      marqueeActive: false,
+      marqueeDraft: null,
+      floraSession: null,
+    }),
+  addDraftVertex: (vertex) =>
+    set((s) =>
+      s.draftSession
+        ? { draftSession: appendDraftVertex(s.draftSession, vertex) }
+        : {},
+    ),
+  undoDraftVertex: () =>
+    set((s) =>
+      s.draftSession
+        ? { draftSession: dropLastDraftVertex(s.draftSession) }
+        : {},
+    ),
+  cancelDraft: () => set({ draftSession: null }),
+  commitDraft: (scaleM, boardAspect, closed) => {
+    const session = useStudioStore.getState().draftSession;
+    if (!session || !canCommitDraft(session, closed)) return false;
+    if (session.tool === "area") {
+      // Area must close — the ring IS the region (spec §5).
+      const feature = areaFeatureFromDraft({
+        id: crypto.randomUUID(),
+        vertices: session.vertices,
+        scaleM,
+        boardAspect,
+      });
+      if (!feature) return false;
+      set((s) => ({
+        features: [...s.features, feature],
+        draftSession: { tool: "area", vertices: [] },
+        historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
+        historyFuture: [],
+      }));
+      return true;
+    }
+    const stroke = polylineStrokeFromDraft({
+      id: crypto.randomUUID(),
+      vertices: session.vertices,
+      closed,
+      scaleM,
+      boardAspect,
+    });
+    if (!stroke) return false;
+    set((s) => ({
+      sketchStrokes: [...s.sketchStrokes, stroke],
+      draftSession: { tool: "polyline", vertices: [] },
+      historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
+      historyFuture: [],
+    }));
+    return true;
+  },
   setMarqueeDraft: (marqueeDraft) => set({ marqueeDraft }),
   marqueeSelectBox: (box, opts) =>
     set((s) => {
@@ -1406,6 +1547,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         trenchTool: null,
         zoneTool: null,
         floraSession: null,
+        draftSession: null,
       };
     }),
   setPhotoCalibrateDraft: (calibrateDraft) =>
@@ -1460,6 +1602,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
             measureActive: false,
             armedSymbolId: null,
             zoneTool: null,
+            draftSession: null,
           }
         : { trenchTool: null },
     ),
@@ -1480,6 +1623,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
             measureActive: false,
             armedSymbolId: null,
             trenchTool: null,
+            draftSession: null,
           }
         : { zoneTool: null },
     ),

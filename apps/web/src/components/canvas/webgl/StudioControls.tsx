@@ -290,18 +290,25 @@ export function StudioControls({
   );
 
   /** Pointer down — start tracking a potential drag. Yields the gesture when
-   *  a capture layer is armed (sketch ink / measure tape / asset placement):
-   *  without this, the early stopPropagation on this coplanar plane (mounted
-   *  first in the scene) eats the pointerdown before those layers see it. */
+   *  a capture layer is armed (sketch ink / measure tape / asset placement /
+   *  precision drafting): without this, the early stopPropagation on this
+   *  coplanar plane (mounted first in the scene) eats the pointerdown before
+   *  those layers see it. */
   const onPointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       if (twoFingerRef.current) return; // two-finger touch owns the camera
       // The spatial gizmo owns its pointer events while a drag is in flight —
       // the ground plane must never start a pan/orbit under the gizmo.
       if (useStudioStore.getState().gizmoDragging) return;
-      const { sketchMode: inkArmed, measureActive: tapeArmed, armedSymbolId: assetArmed } =
-        useSeasonalStore.getState();
-      if (inkArmed || tapeArmed || assetArmed != null) return; // capture layer wins
+      const {
+        sketchMode: inkArmed,
+        measureActive: tapeArmed,
+        armedSymbolId: assetArmed,
+        draftSession,
+      } = useSeasonalStore.getState();
+      if (inkArmed || tapeArmed || assetArmed != null || draftSession) {
+        return; // capture layer wins
+      }
       e.stopPropagation();
 
       // Cmd/Ctrl+drag orbits — pitch on the vertical axis, azimuth on the

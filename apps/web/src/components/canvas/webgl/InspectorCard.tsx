@@ -363,6 +363,27 @@ function FeatureInspector({
           </Field>
         </>
       ) : null}
+      {f.geometry.type === "Polygon" ? (
+        <Field labelText="Pad height (m)">
+          <Input
+            key={`pad-${f.id}`}
+            type="number"
+            min="0"
+            step="0.05"
+            defaultValue={
+              f.extrude_height_m != null ? String(f.extrude_height_m) : ""
+            }
+            data-testid="inspector-feature-pad-height"
+            title="Elevate the region into a cut/fill pad. Height is a property of a region, not a second way to draw one — 0 clears it."
+            onChange={(e) => {
+              const v = Number.parseFloat(e.currentTarget.value);
+              if (Number.isFinite(v) && v >= 0 && v !== (f.extrude_height_m ?? 0)) {
+                update(f.id, { extrude_height_m: v });
+              }
+            }}
+          />
+        </Field>
+      ) : null}
       {scatter ? (
         <Field labelText="Planting recipe">
           <Input
