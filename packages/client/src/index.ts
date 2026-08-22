@@ -3,7 +3,6 @@ import type {
   Costing,
   CreateCrewMemberInput,
   CreateOverrideInput,
-  CatalogPlacement,
   CatalogSymbol,
   CreateProjectInput,
   CreateTaskInput,
