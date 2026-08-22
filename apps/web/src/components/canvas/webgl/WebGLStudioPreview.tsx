@@ -2805,7 +2805,7 @@ function InteractionGuidanceChip({
               setShowControls(false);
             }}
             style={{
-              color: "#f5f5f7",
+              color: "var(--cf-glass-dark-ink)",
               fontFamily: "var(--font-tech)",
               padding: "0 4px",
             }}

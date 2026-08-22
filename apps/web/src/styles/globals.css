@@ -57,7 +57,7 @@
   --ink-primary: var(--gs-ink);
   --ink-secondary: var(--gs-ink-secondary);
   --ink-tertiary: var(--gs-ink-muted);
-  --ink-inverted: var(--gs-ink);
+  --ink-inverted: var(--gs-chip-active-ink);
 
   /* lines — dark grey hairlines on dark surfaces */
   --line-hairline: color-mix(in srgb, var(--gs-line) 55%, transparent);
