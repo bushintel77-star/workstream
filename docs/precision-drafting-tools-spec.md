@@ -54,18 +54,30 @@ persists a mirrored Polygon feature whose id equals the placement id.
 (`schemas/cad.ts:260`) includes `polyline` and `arc` kinds, so Stage 2 export
 does not need new entity types for this.
 
-## 3. Audit finding this work must absorb
+## 3. Audit finding — corrected 2026-08-22 after reading the render path
 
-**Shape strokes hydrate but have no renderer on the only surface that exists.**
-`WebGLStudioPreview.tsx:593-597` maps `kind`, `shape_tool`, `shape_start` and
-`shape_end` out of the persisted `CanvasStroke` into the store, but no layer in
-`webgl/` consumes `shapeTool`. The producer (SVG `SketchBoard`) was deleted in
-the 2026-08-19 retirement, so nothing writes them today and the gap is
-invisible — but any project whose canvas was saved before that date carries
-shape strokes that now render as ordinary ink or not at all.
+**Original claim (overstated):** shape strokes hydrate but have no renderer, so
+legacy shapes render "as ordinary ink or not at all".
 
-Whatever persistence shape this feature takes, it has to add a shape renderer
-to the WebGL surface, which closes this latent defect at the same time.
+**What the code actually does.** `WebGLStudioPreview.tsx:593-597` maps `kind`,
+`shape_tool`, `shape_start` and `shape_end` into the store, and no layer in
+`webgl/` reads `shapeTool` — that part holds. But `CommittedStrokeRenderer`
+(`FusedSketchLayer.tsx:474`) renders every stroke purely from `stroke.points`,
+and the schema guarantees shape strokes populate `points` with "a
+polyline/polygon approximation" (`catalog.ts`). So a legacy `rect` or `circle`
+**does render** — as organic nib ink tracing the approximation, losing the
+crisp vector character the `shape_*` fields exist to preserve.
+
+**Severity is lower than first stated: wrong character, not missing geometry.**
+There is no data loss and nothing is invisible. Restoring crisp rendering for
+legacy `line`/`rect`/`circle` is polish, and it is explicitly **out of v1**.
+
+**The consequence for this feature is a scope reduction.** Because
+`shape_points` carries the operator's control points while `points` keeps
+carrying the flattened render path, a new Polyline or Curve renders through the
+existing `CommittedStrokeRenderer` with **no new renderer code**. The tool only
+has to write both fields at commit time. Curve tessellates its Catmull-Rom into
+`points` and keeps the clicked vertices in `shape_points`.
 
 ## 4. The product gap in one sentence
 
@@ -135,10 +147,14 @@ migration.
 
 | Slice | Contents | Size |
 |---|---|---|
-| v1 | Contracts extension + shape renderer (closes §3) + draft session + Polyline + Area + boundary-edge snap + live readout + rail tools + `cutFill` accepts feature pads (§8.1) | M |
-| v2 | Curve (Catmull-Rom through the same vertices) | S |
+| v1 | ~~Contracts extension~~ **done** (`6ff4af7`) + ~~boundary-edge snap~~ **done** (`6ff4af7`) + draft session + Polyline + Area + live readout + rail tools + `cutFill` accepts feature pads (§8.1) | M |
+| v2 | Curve (Catmull-Rom tessellated into `points`, vertices in `shape_points`) | S |
 | v3 | Numeric entry — type a length mid-draft to constrain the next segment | S |
 | v4 | Vertex editing on a committed shape (drag a vertex, insert/delete) | M |
+| v5 | Crisp rendering for legacy `line`/`rect`/`circle` shapes (§3 polish) | S |
+
+**No shape renderer slice.** Removed after the §3 correction — new tools render
+through the existing `CommittedStrokeRenderer` by writing `points`.
 
 v3 is what makes this "professional" rather than "tidier freehand", but it is
 worthless without v1 and is cleanly separable.
@@ -223,7 +239,8 @@ features in the same slice, and legacy extruded strokes need a migration.
 - [ ] Area closes into a persisted `LandscapeFeature` that appears in the fit
       sheet as a costed line
 - [ ] A live length + bearing readout tracks the pointer during a draft
-- [ ] Shape strokes render on the WebGL surface (closing the §3 defect)
+- [ ] Polyline and Area render through the existing `CommittedStrokeRenderer`
+      by writing both `points` (flattened) and `shape_points` (control points)
 - [ ] Drafting is tool-gated — unarmed drag still pans, mod-drag still orbits
 - [ ] Contracts extended additively, no migration
 - [ ] New unit tests + the new kept e2e probe pass; the three kept gates above
