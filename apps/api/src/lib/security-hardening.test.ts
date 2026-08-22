@@ -10,15 +10,21 @@ afterEach(() => {
 });
 
 describe("isAuthRequired — production fail-closed", () => {
-  it("refuses the dev-user bypass in production even with AUTH_REQUIRED=false", () => {
+  it("honors AUTH_REQUIRED=false as an explicit production bootstrap override", () => {
     process.env.NODE_ENV = "production";
     process.env.AUTH_REQUIRED = "false";
-    expect(isAuthRequired()).toBe(true);
+    expect(isAuthRequired()).toBe(false);
   });
 
   it("requires auth by default in production", () => {
     process.env.NODE_ENV = "production";
     delete process.env.AUTH_REQUIRED;
+    expect(isAuthRequired()).toBe(true);
+  });
+
+  it("requires auth when AUTH_REQUIRED=true in production", () => {
+    process.env.NODE_ENV = "production";
+    process.env.AUTH_REQUIRED = "true";
     expect(isAuthRequired()).toBe(true);
   });
 

@@ -1,24 +1,28 @@
 # Railway deployment
 
-This repo is a shared pnpm workspace. Deploy it to Railway as **two services** in
-one Railway project:
+Git hosting is GitLab. GitLab CI is off — it burned minutes and took
+production down. Deploy only from this machine.
 
-1. API service (`@workstream/api`)
-2. Web service (`@workstream/web`)
+This is a pnpm workspace. Production is two Railway services in one project:
+
+1. API (`@workstream/api`)
+2. Web (`@workstream/web`)
 
 Do **not** set a Railway service root directory. The Dockerfiles build from the
 repo root so workspace packages (`packages/contracts`, `packages/domain`,
 `packages/db`, `packages/cad`) are available during the build.
 
-## Create the Railway project from GitLab
+## Deploy
 
-In Railway:
+No pipeline. From this machine:
 
-1. New project
-2. Deploy from GitLab repo
-3. Select `<your-user>/workstream`
-4. If Railway auto-detects multiple apps, keep the API and Web services. If it
-   creates only one service, add the second service from the same GitLab repo.
+```bash
+railway up --project e2c12b66-af3a-4a51-a285-874c7a6de7d4 --service web --environment production --detach
+railway up --project e2c12b66-af3a-4a51-a285-874c7a6de7d4 --service api --environment production --detach
+```
+
+Do not wire Railway to a git source. A failed CI job must not be able to
+take the site down.
 
 ## Service settings
 
@@ -43,9 +47,9 @@ PUBLIC_API_URL=https://<api-service-domain>
 CORS_ORIGIN=https://<web-service-domain>
 ```
 
-Auth is fail-closed in production: the API refuses to boot without
-`CLERK_SECRET_KEY`. `AUTH_REQUIRED=false` and the shared `dev-user` fallback
-are local-development only and are ignored when `NODE_ENV=production`.
+Unset `AUTH_REQUIRED` in production is fail-closed (API refuses to boot
+without `CLERK_SECRET_KEY`). Set `AUTH_REQUIRED=false` to keep the shared
+`dev-user` bootstrap until Clerk keys are on the service.
 
 Optional AI/geocode variables:
 

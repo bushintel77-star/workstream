@@ -120,7 +120,7 @@ export default fp(
 
     if (!isClerkConfigured()) {
       if (isDevAuthAllowed()) {
-        fastify.log.warn('CLERK_SECRET_KEY not set — dev-user auth only (local)');
+        fastify.log.warn('CLERK_SECRET_KEY not set — dev-user auth only');
       }
       return;
     }

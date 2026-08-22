@@ -73,13 +73,12 @@ Code-side fixes from the production gap audit
 External provisioning (Clerk secrets, Railway variables, Redis, Litestream)
 remains human-operated; the code now fails closed without it.
 
-- [x] **Production auth is fail-closed.** `isAuthRequired()` returns `true`
-      whenever `NODE_ENV=production`; the shared `dev-user` bypass and
-      `AUTH_REQUIRED=false` are local-only and cannot open a production
-      deployment. The API and worker refuse to boot without `CLERK_SECRET_KEY`
-      in production. **Human:** set `CLERK_SECRET_KEY` (+ publishable key on
-      web) on both Railway services before the next deploy — the API will
-      refuse to start without it.
+- [x] **Production auth is fail-closed by default.** Unset `AUTH_REQUIRED` in
+      production requires Clerk; `AUTH_REQUIRED=false` is the explicit
+      bootstrap override (live Railway still uses this until Clerk keys are
+      set). The API refuses to boot without `CLERK_SECRET_KEY` when auth is
+      required. **Human:** set Clerk keys on both Railway services, then set
+      `AUTH_REQUIRED=true` (or unset it) to leave the `dev-user` bootstrap.
 - [x] **Workspace membership resolution.** Clerk users resolve to their
       existing workspace (invited operator or owner row); a user with no
       membership gets a fresh owner workspace. `workspaceRole` and `actorId`

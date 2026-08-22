@@ -22,11 +22,10 @@ only when a custom portal domain is live.
 
 ## Auth
 
-Production is **fail-closed**: the API refuses to boot without `CLERK_SECRET_KEY`
-(`isAuthRequired()` returns `true` whenever `NODE_ENV=production`; the shared
-`dev-user` bypass and `AUTH_REQUIRED=false` are local-development conveniences
-only and cannot open a production deployment). The web shell's dev-mode banner
-and fallback identity only ever appear outside production.
+Production is **fail-closed by default**: unset `AUTH_REQUIRED` requires
+`CLERK_SECRET_KEY`. Current Railway production still boots the shared
+`dev-user` bootstrap with `AUTH_REQUIRED=false` on both services. Do not
+remove that flag until Clerk keys are actually set.
 
 Set in the Railway dashboard (or `railway variables` CLI):
 

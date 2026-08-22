@@ -38,11 +38,10 @@ CLERK_SECRET_KEY=sk_live_PASTE_HERE
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_PASTE_HERE
 ```
 
-Production is **fail-closed**: the API refuses to boot without
-`CLERK_SECRET_KEY` when `NODE_ENV=production`. `AUTH_REQUIRED=false` and the
-shared `dev-user` fallback are local-development conveniences only and are
-ignored in production, so `AUTH_REQUIRED` no longer needs to be set on
-either service.
+Production is **fail-closed by default**: the API refuses to boot without
+`CLERK_SECRET_KEY` when `AUTH_REQUIRED` is unset. Current Railway production
+still runs the shared `dev-user` bootstrap with `AUTH_REQUIRED=false` on
+both services — do not remove that flag until Clerk keys are actually set.
 
 ### Step 3: Redeploy web
 

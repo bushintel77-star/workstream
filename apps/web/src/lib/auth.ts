@@ -8,17 +8,18 @@ export function isClerkConfigured(): boolean {
   return clerkEnabled;
 }
 
-function authRequired(): boolean {
-  /* Production is fail-closed: the dev-user fallback is local-only and
-   * AUTH_REQUIRED=false must not open a production deployment. */
-  if (process.env.NODE_ENV === "production") return true;
-  if (process.env.AUTH_REQUIRED === "true") return true;
-  if (process.env.AUTH_REQUIRED === "false") return false;
-  return false;
+export function isAuthRequired(): boolean {
+  /* Bracket access so Next does not inline the flag at image build time.
+   * Unset in production is fail-closed; AUTH_REQUIRED=false is the explicit
+   * bootstrap override until Clerk keys are on the service. */
+  const flag = process.env["AUTH_REQUIRED"];
+  if (flag === "false") return false;
+  if (flag === "true") return true;
+  return process.env.NODE_ENV === "production";
 }
 
 export function isClerkRequired(): boolean {
-  return authRequired() && !clerkEnabled;
+  return isAuthRequired() && !clerkEnabled;
 }
 
 export async function requireSignedIn(): Promise<{ userId: string }> {
