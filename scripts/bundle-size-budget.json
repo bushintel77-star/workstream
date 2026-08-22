@@ -1,7 +1,19 @@
 {
   "web": {
+    "measuredAt": "2026-08-22",
+    "headroomNote": "Budgets are uncompressed bytes, set from the build measured on the date above: roughly 2-3% headroom on the named heavy routes, ~10% on the default and the directory backstop. Lower a number when a route gets lighter; raise one only with the reason in the commit message.",
     "directory": "apps/web/.next/static/chunks",
-    "maxBytes": 8000000,
-    "maxJavaScriptBytes": 7000000
+    "nextDir": "apps/web/.next",
+    "maxBytes": 5200000,
+    "maxJavaScriptBytes": 4900000,
+    "maxChunkBytes": 1350000,
+    "maxFirstLoadBytes": 900000,
+    "routes": {
+      "/projects/[id]": 3400000,
+      "/share/[token]": 2900000,
+      "/growth-studio/[id]": 2900000,
+      "/subsurface-studio/[id]": 2900000,
+      "/portal/quote/[token]": 2150000
+    }
   }
 }

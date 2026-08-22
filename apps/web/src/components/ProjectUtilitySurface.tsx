@@ -366,6 +366,15 @@ export function RecordingsSurface({
           Capture the site conversation — transcription feeds survey, design,
           and cost in the background.
         </p>
+        {/* The only way into the pipeline progress screen: it visualises the
+            transcribe/survey/design/costing/audit chain a recording kicks off,
+            and it redirects to the canvas once that chain has finished. */}
+        <a
+          className={styles.utilityLink}
+          href={`/projects/${projectId}/processing`}
+        >
+          Follow pipeline progress
+        </a>
       </header>
       <RecordingUpload projectId={projectId} />
       {recordings.length > 0 ? (
