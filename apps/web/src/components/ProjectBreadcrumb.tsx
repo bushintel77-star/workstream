@@ -2,32 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { projectSectionFromPathname } from "../lib/project-sections";
 import layout from "../app/projects/[id]/project-layout.module.css";
-
-const CANVAS_REDIRECTS = new Set([
-  "overview",
-  "design",
-  "design/cad",
-  "design/develop",
-  "design/studio",
-]);
-
-const SECTION_LABELS: Record<string, string> = {
-  survey: "Survey",
-  measurements: "Measurements",
-  design: "Design",
-  "design/cad": "CAD",
-  "design/develop": "Develop",
-  "design/studio": "Studio",
-  costing: "Costing",
-  carbon: "Carbon",
-  audit: "Audit",
-  outputs: "Outputs",
-  tasks: "Tasks",
-  recordings: "Recordings",
-  filing: "Filing",
-  processing: "Processing",
-};
 
 type Props = {
   projectId: string;
@@ -36,12 +12,9 @@ type Props = {
 
 export function ProjectBreadcrumb({ projectId, address }: Props) {
   const pathname = usePathname();
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments.length < 3) return null;
+  const current = projectSectionFromPathname(pathname);
+  if (!current || current.isCanvasRedirect) return null;
 
-  const subPath = segments.slice(2).join("/");
-  if (CANVAS_REDIRECTS.has(subPath)) return null;
-  const label = SECTION_LABELS[subPath] ?? subPath;
   const shortAddress =
     address.length > 40 ? `${address.slice(0, 40)}…` : address;
 
@@ -58,7 +31,7 @@ export function ProjectBreadcrumb({ projectId, address }: Props) {
         {shortAddress}
       </Link>
       <span className={layout.breadcrumbSep} aria-hidden>/</span>
-      <span className={layout.breadcrumbCurrent}>{label}</span>
+      <span className={layout.breadcrumbCurrent}>{current.label}</span>
     </nav>
   );
 }

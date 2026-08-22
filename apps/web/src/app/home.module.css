@@ -480,6 +480,9 @@
   position: absolute;
   top: 8px;
   right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   opacity: 0;
   transition: opacity 0.15s ease;
 }
@@ -489,7 +492,37 @@
   opacity: 1;
 }
 
+/* Without a hover state these actions are unreachable, not just unseen —
+   on-site the card would offer no way into the project's records. */
+@media (hover: none) {
+  .cardActions {
+    opacity: 1;
+  }
+}
+
+.cardSurfaceLink {
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
+  padding: 3px 8px;
+  border-radius: var(--gs-radius-chip);
+  border: 1px solid color-mix(in srgb, var(--gs-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--gs-primary) 10%, transparent);
+  color: var(--accent-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.cardSurfaceLink:hover {
+  background: color-mix(in srgb, var(--gs-primary) 20%, transparent);
+}
+
 .cardDeleteBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
   font-family: var(--font-ui);
   font-size: 10.5px;
   padding: 3px 8px;

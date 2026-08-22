@@ -228,6 +228,16 @@ export function DashboardProjects({
                 </div>
               </Link>
               <div className={home.cardActions}>
+                {/* The dashboard door into the project's record surfaces. The
+                    canvas has one too, but it sits inside the Studio meta panel
+                    — reachable, not discoverable. */}
+                <Link
+                  href={`/projects/${project.id}/outputs`}
+                  className={home.cardSurfaceLink}
+                  aria-label={`Records for ${project.projectName}`}
+                >
+                  Records
+                </Link>
                 <button
                   type="button"
                   className={home.cardDeleteBtn}
