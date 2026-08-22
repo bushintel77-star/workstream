@@ -20,8 +20,9 @@ test("active WebGL chrome keeps all visible text at or above AA", async ({
 
   const report: string[] = [];
   for (const mode of MODES) {
+    const waitUntil = mode === "quote" ? "domcontentloaded" : "networkidle";
     await page.goto(`/projects/${projectId}?mode=${mode}`, {
-      waitUntil: "networkidle",
+      waitUntil,
     });
     await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
       timeout: 30_000,
