@@ -127,7 +127,7 @@
   --gs-cad-gas: #c9a84c;         /* Subsurface schematic — muted gold */
   --gs-cad-comms: #b8845a;       /* Subsurface schematic — bronze */
   --gs-cad-reclaimed: #8e6bb0;   /* Subsurface schematic — muted lilac */
-  --gs-blueprint-ground: #2a2f33;/* Blueprint vellum transition — muted grey */
+  --gs-blueprint-ground: #e8e2d4;/* Blueprint vellum transition — warm drafting vellum */
   --gs-sketch-ink: #ff2ef6;      /* Freehand stroke ink (CanvasStroke default) */
 
   /* Earthworks data pair — cut/fill are drawing data, not UI accent.

@@ -114,7 +114,15 @@ export const PALETTE = {
   cadGas: "#C9A84C",         // muted gold (gas)
   cadComms: "#B8845A",       // bronze (comms/data)
   cadReclaimed: "#8E6BB0",   // muted lilac (reclaimed water)
-  renderBlueprintGround: "#2A2F33", // muted grey for vellum transition
+  // Blueprint vellum — the subsurface-armed ground. Was #2A2F33 (near-black),
+  // a Studio Dark leftover the 2026 paper pivot never revisited, while the code
+  // around it described vellum as *lighter* ("the whole surface lightens toward
+  // vellum"). Re-based 2026-08-22 to a warm drafting vellum: lighter than
+  // groundOlive as the surrounding comments always claimed, a touch warmer and
+  // darker than --gs-canvas so the armed ground still reads as a surface, and
+  // light enough that the muted cad* hairlines and the #1A1A1A dotted field
+  // gain contrast instead of losing it.
+  renderBlueprintGround: "#E8E2D4",
   sketchInk: "#FF2EF6", // magenta freehand stroke ink (CanvasStroke default)
 } as const;
 

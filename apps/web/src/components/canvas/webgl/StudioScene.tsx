@@ -52,6 +52,10 @@ import { DrainageFlowLayer } from "./DrainageFlowLayer";
 import { EarthworksLayer } from "./EarthworksLayer";
 import { DimensionLayer } from "./DimensionLayer";
 import { MetaChipSet } from "./MetaChipSet";
+import {
+  BoundaryProjectionProbe,
+  BOUNDARY_PROBE_ENABLED,
+} from "./BoundaryProjectionProbe";
 import { buildMetaChips } from "./metaChips";
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { DraftShapeLayer } from "./DraftShapeLayer";
@@ -596,11 +600,11 @@ function NeighbourBuildings({
 function GroundPlane({
   scaleM,
   boardAspect,
-  draftingSurface = false,
+  groundAlbedo = "site",
 }: {
   scaleM: number;
   boardAspect: number;
-  draftingSurface?: boolean;
+  groundAlbedo?: CanvasLayerPolicy["groundAlbedo"];
 }) {
   const w = scaleM * GROUND_CONTEXT_EXTENT;
   const h = scaleM * boardAspect * GROUND_CONTEXT_EXTENT;
@@ -608,8 +612,9 @@ function GroundPlane({
 
   // Target colours (memoized so we don't allocate THREE.Color per frame).
   const colorOlive = useMemo(() => new THREE.Color(PALETTE.groundOlive), []);
+  const colorPaper = useMemo(() => new THREE.Color(PALETTE.gsCanvas), []);
   const colorVellum = useMemo(() => new THREE.Color(PALETTE.renderBlueprintGround), []);
-  const colorDrafting = useMemo(() => new THREE.Color(PALETTE.draftingGrey), []);
+  const restColor = groundAlbedo === "paper" ? colorPaper : colorOlive;
 
   useFrame((_, delta) => {
     const mat = matRef.current;
@@ -619,11 +624,7 @@ function GroundPlane({
 
     const targetOpacity = subsurfaceView ? 0.88 : 1.0;
     const targetRoughness = subsurfaceView ? 0.6 : 0.92;
-    const targetColor = draftingSurface
-      ? colorDrafting
-      : subsurfaceView
-        ? colorVellum
-        : colorOlive;
+    const targetColor = subsurfaceView ? colorVellum : restColor;
 
     mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, k);
     mat.roughness = THREE.MathUtils.lerp(mat.roughness, targetRoughness, k);
@@ -636,7 +637,9 @@ function GroundPlane({
         <planeGeometry args={[w, h]} />
         <meshStandardMaterial
           ref={matRef}
-          color={PALETTE.groundOlive}
+          // Start AT the resting albedo — a lerp-in from olive would flash a
+          // warm ground across the whole frame on every drafting-mode mount.
+          color={groundAlbedo === "paper" ? PALETTE.gsCanvas : PALETTE.groundOlive}
           roughness={0.92}
           metalness={0.02}
           transparent
@@ -684,7 +687,7 @@ export function StudioScene({
     subsurface: false,
     utilities: true,
     easements: true,
-    draftingSurface: false,
+    groundAlbedo: "site",
   };
   // Subscribe to the view blend target — drives the editing-lock for controls
   // (editing is disabled when the camera is in 3D perspective mode, and
@@ -760,9 +763,9 @@ export function StudioScene({
 
       {/* Ground — real terrain mesh when spot levels exist, flat plane otherwise. */}
       {heightmapPoints.length > 0 ? (
-        <TerrainMesh scaleM={scaleM} boardAspect={boardAspect} heightmapPoints={heightmapPoints} draftingSurface={policy.draftingSurface} />
+        <TerrainMesh scaleM={scaleM} boardAspect={boardAspect} heightmapPoints={heightmapPoints} groundAlbedo={policy.groundAlbedo} />
       ) : (
-        <GroundPlane scaleM={scaleM} boardAspect={boardAspect} draftingSurface={policy.draftingSurface} />
+        <GroundPlane scaleM={scaleM} boardAspect={boardAspect} groundAlbedo={policy.groundAlbedo} />
       )}
       {/* Elevation Slice — draggable section-cut line (Vertical Truth). Only
           mounts when terrain exists; the DOM profile panel is in WebGLStudioPreview. */}
@@ -799,6 +802,15 @@ export function StudioScene({
         scaleM={scaleM}
         boardAspect={boardAspect}
       />
+      {/* E2E-only: publish the projected boundary box for the coverage ratchet
+          (folds to null in production — see BoundaryProjectionProbe). */}
+      {BOUNDARY_PROBE_ENABLED ? (
+        <BoundaryProjectionProbe
+          boundaryPct={boundaryPct}
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+        />
+      ) : null}
       {/* Vicmap meta chip-set — ambient satellite tags orbiting the boundary. */}
       <MetaChipSet
         boundaryPct={boundaryPct}
