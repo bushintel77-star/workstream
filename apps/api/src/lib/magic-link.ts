@@ -106,12 +106,30 @@ export function verifyPortalToken(
     return { ok: false, reason: "signature mismatch" };
   }
 
-  let payload: PortalTokenPayload;
+  let raw: unknown;
   try {
-    payload = JSON.parse(b64urlDecode(payloadB64).toString("utf8"));
+    raw = JSON.parse(b64urlDecode(payloadB64).toString("utf8"));
   } catch {
     return { ok: false, reason: "bad payload encoding" };
   }
+  /* Validate the decoded shape instead of trusting a cast: a signed token
+   * proves authenticity, not that the payload fields are well-formed. */
+  if (typeof raw !== "object" || raw === null) {
+    return { ok: false, reason: "bad payload" };
+  }
+  const obj = raw as Record<string, unknown>;
+  if (
+    typeof obj.project_id !== "string" ||
+    typeof obj.exp !== "number" ||
+    !Number.isFinite(obj.exp) ||
+    typeof obj.nonce !== "string" ||
+    obj.scope !== "quote_view" &&
+      obj.scope !== "deposit_checkout" &&
+      obj.scope !== "change_request"
+  ) {
+    return { ok: false, reason: "bad payload" };
+  }
+  const payload = obj as unknown as PortalTokenPayload;
   if (Date.now() > payload.exp) {
     return { ok: false, reason: "expired" };
   }

@@ -20,31 +20,34 @@ Railway services: `web-production-3c194` (web) and `api-production-a8ff1`
 deposit checkout callbacks resolve to the live client portal. Override it
 only when a custom portal domain is live.
 
-## Current auth mode
+## Auth
 
-`AUTH_REQUIRED=false` — open operator loop with shared `dev-user` until
-Clerk keys are provisioned. The web shell shows a persistent dev-mode
-banner whenever this fallback is active.
+Production is **fail-closed**: the API refuses to boot without `CLERK_SECRET_KEY`
+(`isAuthRequired()` returns `true` whenever `NODE_ENV=production`; the shared
+`dev-user` bypass and `AUTH_REQUIRED=false` are local-development conveniences
+only and cannot open a production deployment). The web shell's dev-mode banner
+and fallback identity only ever appear outside production.
 
-To lock down, set in the Railway dashboard (or `railway variables` CLI):
+Set in the Railway dashboard (or `railway variables` CLI):
+
+API service:
 
 ```
 CLERK_SECRET_KEY=sk_live_…
-AUTH_REQUIRED=true
 PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app
 CORS_ORIGIN=https://web-production-3c194.up.railway.app
 ```
 
-On the web service:
+Web service:
 
 ```
 CLERK_SECRET_KEY=sk_live_…
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_…
-AUTH_REQUIRED=true
 ```
 
 Redeploy web after setting `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (build-time
-for middleware).
+for middleware). Operators are resolved to their existing workspace
+membership; a user with no membership gets their own owner workspace.
 
 ## Operator loop (automated)
 
@@ -61,7 +64,7 @@ for middleware).
 | `ANTHROPIC_API_KEY` | API | Mock design/audit |
 | `STRIPE_SECRET_KEY` | API | Deposit checkout uses dev fallback |
 | `STRIPE_WEBHOOK_SECRET` | API | Stripe webhooks accept dev-mode unsigned payloads |
-| `CLERK_*` | both | Dev-user mode (current) |
+| `CLERK_*` | both | API refuses to boot in production; web falls back to dev-user locally only |
 | `PUBLIC_API_URL` | API | API readiness and generated absolute URLs may be incorrect |
 | `CORS_ORIGIN` | API | Browser calls from the web app may be rejected |
 | `WORKSTREAM_PORTAL_SECRET` | API | Rotate from legacy `CONSTRUCT_PORTAL_SECRET` |

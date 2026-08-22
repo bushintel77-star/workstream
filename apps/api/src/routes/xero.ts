@@ -7,6 +7,7 @@ import {
   listContacts,
   listItems,
 } from "../lib/xero";
+import { getOwnerEnv } from "../lib/owner-secrets";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 const XeroInvoiceBodySchema = z.object({
@@ -25,7 +26,7 @@ export default async function xeroRoutes(fastify: FastifyInstance) {
       return reply.send({
         connected: isXeroLive(),
         mode: isXeroLive() ? "live" : "dev_fallback",
-        tenant_id: process.env.XERO_TENANT_ID ?? null,
+        tenant_id: getOwnerEnv("XERO_TENANT_ID") ?? null,
         contacts_cached: contacts.length,
         items_cached: items.length,
         last_sync_at: null,

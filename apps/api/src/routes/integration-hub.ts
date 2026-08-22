@@ -5,7 +5,7 @@ import {
   IntegrationNotifyInputSchema,
   WorkspacePlanSchema,
 } from "@workstream/contracts";
-import { requireAuth } from "../plugins/auth";
+import { requireAuth, requireWorkspaceOwner } from "../plugins/auth";
 import {
   channelStatuses,
   dispatchQuoteGenerated,
@@ -76,6 +76,7 @@ export default async function integrationHubRoutes(fastify: FastifyInstance) {
     "/plan/checkout",
     { preHandler: requireAuth },
     async (request, reply) => {
+      if (!requireWorkspaceOwner(request, reply)) return;
       const ownerId = request.userId!;
       const parsed = CheckoutBodySchema.safeParse(request.body ?? {});
       const webBase =
@@ -183,12 +184,10 @@ export default async function integrationHubRoutes(fastify: FastifyInstance) {
         : "Unknown channel",
       plan: billing.plan,
     });
-  });
-
-  fastify.post(
-    "/plan/seats/checkout",
+  });  fastify.post("/plan/seats/checkout",
     { preHandler: requireAuth },
     async (request, reply) => {
+      if (!requireWorkspaceOwner(request, reply)) return;
       const ownerId = request.userId!;
       const parsed = SeatCheckoutBodySchema.safeParse(request.body ?? {});
       const webBase = process.env.WEB_BASE_URL ?? "http://localhost:3002";
@@ -224,6 +223,7 @@ export default async function integrationHubRoutes(fastify: FastifyInstance) {
     "/license/members",
     { preHandler: requireAuth },
     async (request, reply) => {
+      if (!requireWorkspaceOwner(request, reply)) return;
       const ownerId = request.userId!;
       const parsed = InviteMemberBodySchema.safeParse(request.body);
       if (!parsed.success) {
@@ -257,6 +257,7 @@ export default async function integrationHubRoutes(fastify: FastifyInstance) {
     "/license/members/:userId",
     { preHandler: requireAuth },
     async (request, reply) => {
+      if (!requireWorkspaceOwner(request, reply)) return;
       const ownerId = request.userId!;
       const { userId } = request.params as { userId: string };
       const ok = await fastify.store.removeWorkspaceMember(ownerId, userId);
@@ -274,6 +275,7 @@ export default async function integrationHubRoutes(fastify: FastifyInstance) {
     "/plan/upgrade",
     { preHandler: requireAuth },
     async (request, reply) => {
+      if (!requireWorkspaceOwner(request, reply)) return;
       const parsed = WorkspacePlanSchema.safeParse(
         (request.body as { plan?: string })?.plan ?? "studio",
       );

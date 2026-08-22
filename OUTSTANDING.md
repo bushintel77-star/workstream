@@ -66,6 +66,59 @@ P1 entry below and `docs/CAMERA-STATE-MACHINE.md`.)
       web [`instrumentation.ts`](apps/web/src/instrumentation.ts). **Human:** set
       `SENTRY_DSN` on both Railway services + `pnpm add @sentry/nextjs` on web when enabling.
 
+## Security + durability hardening (landed 2026-08-22)
+
+Code-side fixes from the production gap audit
+(`docs/GAP-ANALYSIS-CURRENT.md`, `docs/TECHNICAL-ANALYSIS-2026-08-22.md`).
+External provisioning (Clerk secrets, Railway variables, Redis, Litestream)
+remains human-operated; the code now fails closed without it.
+
+- [x] **Production auth is fail-closed.** `isAuthRequired()` returns `true`
+      whenever `NODE_ENV=production`; the shared `dev-user` bypass and
+      `AUTH_REQUIRED=false` are local-only and cannot open a production
+      deployment. The API and worker refuse to boot without `CLERK_SECRET_KEY`
+      in production. **Human:** set `CLERK_SECRET_KEY` (+ publishable key on
+      web) on both Railway services before the next deploy — the API will
+      refuse to start without it.
+- [x] **Workspace membership resolution.** Clerk users resolve to their
+      existing workspace (invited operator or owner row); a user with no
+      membership gets a fresh owner workspace. `workspaceRole` and `actorId`
+      are added to the request context; billing, integration-secret, and
+      membership administration are owner-only.
+- [x] **Owner-scoped integration secrets (no cross-tenant leakage).** Boot no
+      longer hydrates saved secrets into global `process.env`; settings
+      writes/deletes no longer mutate process-wide credentials.
+      `bindOwnerSecrets`/`runWithOwnerSecrets` scope the active owner's
+      secrets per request/job, and MYOB, Xero, Twilio, Stripe, and the
+      integration-hub read through that context. Deployment-env fallback is
+      local/test-only (`getOwnerEnv` returns `undefined` in production when
+      no owner value is bound).
+- [x] **Portal file authorization narrowed.** `quote_view` tokens can only
+      fetch client-safe assets (outputs, aerial, site photos); private
+      recordings/uploads and operator filings are denied for portal tokens.
+- [x] **Share links die with the project.** Share reads and client decisions
+      fail closed once the underlying project is tombstoned; signed tokens
+      are validated for shape/scope/expiry, and the public quote route
+      returns a minimized public DTO instead of the full internal objects.
+- [x] **Stripe webhook dedup is durable.** The in-memory dedup set is replaced
+      with a persistent atomic claim (`beginStripeEvent`/`finishStripeEvent`)
+      so duplicates stay safe across restarts and crashed deliveries are
+      retried.
+- [x] **Recording audio URI persisted.** The final audio URI is written after
+      the file lands; failed uploads clean up orphaned files/rows, and retry
+      path-extension handling is deterministic.
+- [x] **Pipeline failure states.** Worker/pipeline exceptions write
+      stage-specific `*_failed` statuses instead of leaving projects stuck in
+      `processing`.
+- [x] **Worker shutdown closes BullMQ.** `stopWorker()` awaits the worker
+      close; graceful shutdown is wired for SIGTERM/SIGINT.
+- [x] **SQLite durability guards.** `busy_timeout` for multi-writer safety and
+      a `user_version` migration boundary that refuses to boot on a newer data
+      file.
+- [x] **Build SHA surfaces in health.** Dockerfiles accept `BUILD_SHA` /
+      `NEXT_PUBLIC_BUILD_SHA`; CI passes `CI_COMMIT_SHA`; `/healthz` and web
+      report the deployed commit.
+
 ## P1 — Quality + scale
 
 - [ ] **Mobile distribution** — EAS build profiles and CI readiness checks are

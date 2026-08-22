@@ -90,6 +90,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
   const _workspaceBilling: import("./types").WorkspaceBilling[] = [];
   const _workspaceMembers: import("./types").WorkspaceMember[] = [];
   const _integrationEvents: import("./types").IntegrationEvent[] = [];
+  const _stripeEvents: import("./types").StripeEventRecord[] = [];
   const _projectFiles: import("./types").ProjectFile[] = [];
   const _designCanvases: import("@workstream/contracts").DesignCanvas[] = [];
   const _cadDocuments: import("@workstream/contracts").CadDocument[] = [];
@@ -160,6 +161,7 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
     _workspaceBilling,
     _workspaceMembers,
     _integrationEvents,
+    _stripeEvents,
     _projectFiles,
     _designCanvases,
     _cadDocuments,
@@ -687,6 +689,26 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       r.transcription_confidence = confidence;
       flush();
       return r;
+    },
+
+    async updateRecordingAudioUri(recordingId, uri) {
+      const r = _recordings.find((x) => x.id === recordingId);
+      if (!r) return null;
+      r.audio_uri = uri;
+      flush();
+      return r;
+    },
+
+    async deleteRecording(ownerId, recordingId) {
+      const rec = _recordings.find((x) => x.id === recordingId);
+      if (!rec) return false;
+      const project = _projects.find(
+        (p) => p.id === rec.project_id && p.owner_id === ownerId,
+      );
+      if (!project) return false;
+      _recordings.splice(_recordings.indexOf(rec), 1);
+      flush();
+      return true;
     },
 
     async getRecording(recordingId) {
@@ -1344,6 +1366,11 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       _workspaceMembers.splice(idx, 1);
       flush();
       return true;
+    },
+
+    async findWorkspaceByUser(userId) {
+      const row = _workspaceMembers.find((m) => m.user_id === userId);
+      return row ? { ...row } : null;
     },
 
     async appendIntegrationEvent(ownerId, input) {
@@ -2121,9 +2148,46 @@ export function createMemoryStore(opts: CreateStoreOptions = {}): Store & {
       return structuredClone(row);
     },
 
+    async beginStripeEvent(eventId, payload) {
+      const existing = _stripeEvents.find((e) => e.event_id === eventId);
+      if (existing) {
+        if (existing.status === "done") return "done";
+        // A previous attempt crashed or failed — reprocess (idempotent
+        // downstream effects) rather than dropping the delivery.
+        existing.status = "processing";
+        existing.payload = payload;
+        existing.updated_at = new Date().toISOString();
+        flush();
+        return "retry";
+      }
+      _stripeEvents.push({
+        event_id: eventId,
+        status: "processing",
+        payload,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      flush();
+      return "new";
+    },
+
+    async finishStripeEvent(eventId, status) {
+      const row = _stripeEvents.find((e) => e.event_id === eventId);
+      if (!row) return;
+      row.status = status;
+      row.updated_at = new Date().toISOString();
+      flush();
+    },
+
     async recordShareDecision(token, input) {
       const row = _shareRevisions.find((r) => r.token === token);
       if (!row) return { ok: false as const, reason: "not_found" as const };
+      // Share links die with the project: a tombstoned project must not
+      // accept decisions or expose its frozen snapshot any longer.
+      const project = _projects.find((p) => p.id === row.project_id);
+      if (!project || project.deleted_at) {
+        return { ok: false as const, reason: "not_found" as const };
+      }
       if (row.status === "superseded") {
         return { ok: false as const, reason: "superseded" as const };
       }

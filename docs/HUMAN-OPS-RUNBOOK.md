@@ -27,7 +27,6 @@ On the API service (`api-production-a8ff1`):
 
 ```
 CLERK_SECRET_KEY=sk_live_PASTE_HERE
-AUTH_REQUIRED=true
 PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app
 CORS_ORIGIN=https://web-production-3c194.up.railway.app
 ```
@@ -37,8 +36,13 @@ On the web service (`web-production-3c194`):
 ```
 CLERK_SECRET_KEY=sk_live_PASTE_HERE
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_PASTE_HERE
-AUTH_REQUIRED=true
 ```
+
+Production is **fail-closed**: the API refuses to boot without
+`CLERK_SECRET_KEY` when `NODE_ENV=production`. `AUTH_REQUIRED=false` and the
+shared `dev-user` fallback are local-development conveniences only and are
+ignored in production, so `AUTH_REQUIRED` no longer needs to be set on
+either service.
 
 ### Step 3: Redeploy web
 

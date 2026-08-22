@@ -147,6 +147,15 @@ export type TelemetryReadingInput = Omit<
   "id" | "created_at" | "project_id"
 >;
 
+/** Durable record of a Stripe webhook delivery (idempotency + audit). */
+export type StripeEventRecord = {
+  event_id: string;
+  status: "processing" | "done" | "failed";
+  payload: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type PhotoMeasurementInput = Omit<
   PhotoMeasurement,
   "id" | "created_at"
@@ -208,6 +217,13 @@ export interface Store {
     transcript: string,
     confidence: number
   ): Promise<Recording | null>;
+  /** Persist the final public audio URI once the file is on disk. */
+  updateRecordingAudioUri(
+    recordingId: string,
+    uri: string
+  ): Promise<Recording | null>;
+  /** Remove a recording row when its audio file could not be persisted. */
+  deleteRecording(ownerId: string, recordingId: string): Promise<boolean>;
   getRecording(recordingId: string): Promise<Recording | null>;
   listRateCard(ownerId: string): Promise<RateCard[]>;
   updateRateCardItem(
@@ -353,6 +369,8 @@ export interface Store {
     userId: string,
   ): Promise<boolean>;
   countWorkspaceSeats(workspaceId: string): Promise<number>;
+  /** Resolve which workspace a user belongs to (owner or invited operator). */
+  findWorkspaceByUser(userId: string): Promise<WorkspaceMember | null>;
   appendIntegrationEvent(
     ownerId: string,
     input: Omit<IntegrationEvent, "id" | "owner_id" | "created_at">,
@@ -534,6 +552,20 @@ export interface Store {
     | { ok: true; revision: ShareRevision }
     | { ok: false; reason: "not_found" | "superseded" | "already_decided" }
   >;
+  /**
+   * Persistent claim for a Stripe webhook event. Returns "done" when the
+   * event was already processed successfully (safe to skip); "new" or
+   * "retry" both mean the caller should process ("retry" = a previous
+   * attempt crashed or failed).
+   */
+  beginStripeEvent(
+    eventId: string,
+    payload: string
+  ): Promise<"new" | "done" | "retry">;
+  finishStripeEvent(
+    eventId: string,
+    status: "done" | "failed"
+  ): Promise<void>;
   listPresentationDocuments(
     ownerId: string,
     projectId: string,

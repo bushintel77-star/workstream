@@ -594,17 +594,16 @@ describe("API contract — projects", { timeout: 20000 }, () => {
         error: "Token scope does not allow file access",
       });
 
+      /* A client quote token is not an operator session: operator recordings
+       * (uploads) are off-limits even when the token matches the project. */
       const ok = await app.inject({
         method: "GET",
         url: `/uploads/${recording.id}.mp3?token=${quoteToken}`,
       });
-      expect(ok.statusCode).toBe(200);
-      expect(ok.headers["content-type"]).toBe("audio/mpeg");
-      /* Body must actually arrive — a stream sent as a statement inside an
-       * async handler once resolved empty (200, content-length 0), which
-       * surfaced as blank client-facing output pages. */
-      expect(ok.body.length).toBeGreaterThan(0);
-      expect(ok.body).toContain("contract audio");
+      expect(ok.statusCode).toBe(403);
+      expect(ok.json()).toEqual({
+        error: "Token scope does not allow this asset kind",
+      });
 
       /* Branded HTML outputs ride the same stream path — pin bytes on disk.
        * The output record's id must be the filename (asset resolution
@@ -628,6 +627,14 @@ describe("API contract — projects", { timeout: 20000 }, () => {
       expect(html.statusCode).toBe(200);
       expect(html.headers["content-type"]).toBe("text/html; charset=utf-8");
       expect(html.body).toContain("contract quote body");
+
+      /* Client-safe presentation assets stay open to the quote token, while
+       * the same asset is denied to a wrong-scope (deposit) token. */
+      const htmlWrongScope = await app.inject({
+        method: "GET",
+        url: `/outputs/${output.id}.html?token=${depositToken}`,
+      });
+      expect(htmlWrongScope.statusCode).toBe(403);
 
       const deleted = await app.inject({
         method: "DELETE",

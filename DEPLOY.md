@@ -41,13 +41,17 @@ CORS_ORIGIN=https://web-production-3c194.up.railway.app
 PUBLIC_API_URL=https://api-production-a8ff1.up.railway.app
 ```
 
-Optional — without these the API runs in dev-fallback mode:
+Required in production — the API refuses to boot without `CLERK_SECRET_KEY`
+(auth is fail-closed when `NODE_ENV=production`):
 
 ```
 CLERK_SECRET_KEY=sk_…
 ANTHROPIC_API_KEY=sk-ant-…
 OPENAI_API_KEY=sk-…
 ```
+
+The AI keys are optional at boot but their connectors fall back to canned
+output when missing.
 
 Vicmap Property/buildings use keyless DELWP GeoServer WFS — no VICMAP secret.
 

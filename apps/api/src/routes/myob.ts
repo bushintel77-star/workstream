@@ -10,6 +10,7 @@ import {
   listCustomers,
   listItems,
 } from "../lib/myob";
+import { getOwnerEnv } from "../lib/owner-secrets";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 export default async function myobRoutes(fastify: FastifyInstance) {
@@ -40,7 +41,7 @@ export default async function myobRoutes(fastify: FastifyInstance) {
       return {
         connected: isMyobLive(),
         mode: isMyobLive() ? "live" : "dev_fallback",
-        company_file_id: process.env.MYOB_COMPANY_FILE_ID ?? null,
+        company_file_id: getOwnerEnv("MYOB_COMPANY_FILE_ID") ?? null,
         customers_cached: customers.length,
         items_cached: items.length,
         sku_match_pct: matchPct,

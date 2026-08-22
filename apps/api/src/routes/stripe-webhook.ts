@@ -12,7 +12,10 @@ import { applyStudioFromCheckoutSession } from "../lib/stripe-studio";
  *   payment_intent.succeeded    → log only (Checkout covers it)
  *   payment_intent.payment_failed → log only
  *
- * The handler is idempotent — same event.id arriving twice is a no-op.
+ * Idempotency is durable, not in-memory: each event id is claimed against the
+ * store before processing and marked done afterwards, so a restart or a
+ * crash between attempts cannot double-apply a payment, and Stripe's retries
+ * after a 5xx are reprocessed rather than dropped.
  */
 export default async function stripeWebhookRoutes(fastify: FastifyInstance) {
   fastify.addContentTypeParser(
@@ -32,8 +35,6 @@ export default async function stripeWebhookRoutes(fastify: FastifyInstance) {
     },
   );
 
-  const seenEvents = new Set<string>();
-
   fastify.post("/webhooks/stripe", async (request, reply) => {
     const rawBody =
       (request as unknown as { rawBody: string }).rawBody ??
@@ -48,100 +49,114 @@ export default async function stripeWebhookRoutes(fastify: FastifyInstance) {
     }
 
     const event = request.body as StripeEvent;
-    if (seenEvents.has(event.id)) {
+    if (!event || typeof event.id !== "string" || !event.id) {
+      request.log.warn({}, "stripe webhook missing event id");
+      return reply.code(400).send({ error: "Missing event id" });
+    }
+
+    const claim = await fastify.store.beginStripeEvent(event.id, rawBody);
+    if (claim === "done") {
       return reply.send({ received: true, duplicate: true });
     }
-    seenEvents.add(event.id);
-    // Cap the dedup set so it doesn't grow unbounded
-    if (seenEvents.size > 1000) {
-      const first = seenEvents.values().next().value;
-      if (first) seenEvents.delete(first);
-    }
 
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object as {
-          id: string;
-          metadata?: {
-            project_id?: string;
-            deposit_pct?: string;
-            owner_id?: string;
-            purpose?: string;
+    try {
+      switch (event.type) {
+        case "checkout.session.completed": {
+          const session = event.data.object as {
+            id: string;
+            metadata?: {
+              project_id?: string;
+              deposit_pct?: string;
+              owner_id?: string;
+              purpose?: string;
+            };
+            payment_status?: string;
+            customer?: string;
+            subscription?: string;
           };
-          payment_status?: string;
-          customer?: string;
-          subscription?: string;
-        };
 
-        if (session.metadata?.purpose === "studio_upgrade") {
-          const upgraded = await applyStudioFromCheckoutSession(
-            fastify.store,
-            session,
-          );
-          if (upgraded) {
+          if (session.metadata?.purpose === "studio_upgrade") {
+            const upgraded = await applyStudioFromCheckoutSession(
+              fastify.store,
+              session,
+            );
+            if (upgraded) {
+              request.log.info(
+                { ownerId: session.metadata?.owner_id, sessionId: session.id },
+                "studio plan activated via Stripe",
+              );
+            }
+            break;
+          }
+
+          const projectId = session.metadata?.project_id;
+          if (!projectId) {
+            request.log.warn(
+              { sessionId: session.id },
+              "stripe session has no project_id metadata",
+            );
+            break;
+          }
+          const ownerId = await fastify.store.resolveProjectOwner(projectId);
+          if (ownerId) {
+            await fastify.store.updateProjectStatus(
+              ownerId,
+              projectId,
+              "complete",
+            );
             request.log.info(
-              { ownerId: session.metadata?.owner_id, sessionId: session.id },
-              "studio plan activated via Stripe",
+              { projectId, sessionId: session.id, event: event.type },
+              "deposit paid, project marked complete",
+            );
+          } else {
+            request.log.warn(
+              { projectId, sessionId: session.id },
+              "stripe webhook for unknown project",
             );
           }
           break;
         }
-
-        const projectId = session.metadata?.project_id;
-        if (!projectId) {
-          request.log.warn(
-            { sessionId: session.id },
-            "stripe session has no project_id metadata",
-          );
+        case "customer.subscription.deleted": {
+          const sub = event.data.object as {
+            metadata?: { owner_id?: string };
+          };
+          const ownerId = sub.metadata?.owner_id;
+          if (ownerId) {
+            await fastify.store.patchWorkspaceBilling(ownerId, {
+              plan: "lite",
+              stripe_subscription_id: null,
+            });
+            request.log.info({ ownerId }, "studio subscription ended — lite plan");
+          }
           break;
         }
-        const ownerId = await fastify.store.resolveProjectOwner(projectId);
-        if (ownerId) {
-          await fastify.store.updateProjectStatus(
-            ownerId,
-            projectId,
-            "complete",
-          );
+        case "payment_intent.succeeded":
+        case "payment_intent.payment_failed":
           request.log.info(
-            { projectId, sessionId: session.id, event: event.type },
-            "deposit paid, project marked complete",
+            { eventType: event.type, eventId: event.id },
+            "stripe payment event",
           );
-        } else {
-          request.log.warn(
-            { projectId, sessionId: session.id },
-            "stripe webhook for unknown project",
+          break;
+        default:
+          request.log.debug(
+            { eventType: event.type },
+            "unhandled stripe event",
           );
-        }
-        break;
       }
-      case "customer.subscription.deleted": {
-        const sub = event.data.object as {
-          metadata?: { owner_id?: string };
-        };
-        const ownerId = sub.metadata?.owner_id;
-        if (ownerId) {
-          await fastify.store.patchWorkspaceBilling(ownerId, {
-            plan: "lite",
-            stripe_subscription_id: null,
-          });
-          request.log.info({ ownerId }, "studio subscription ended — lite plan");
-        }
-        break;
-      }
-      case "payment_intent.succeeded":
-      case "payment_intent.payment_failed":
-        request.log.info(
-          { eventType: event.type, eventId: event.id },
-          "stripe payment event",
-        );
-        break;
-      default:
-        request.log.debug(
-          { eventType: event.type },
-          "unhandled stripe event",
-        );
-    }
 
-    return reply.send({ received: true });
+      await fastify.store.finishStripeEvent(event.id, "done");
+      return reply.send({ received: true });
+    } catch (err) {
+      /* Record the failure so a retried delivery is reprocessed (never
+       * silently skipped), then surface the error so Stripe retries. */
+      await fastify.store
+        .finishStripeEvent(event.id, "failed")
+        .catch(() => undefined);
+      request.log.error(
+        { err, eventId: event.id, eventType: event.type },
+        "stripe webhook processing failed",
+      );
+      throw err;
+    }
   });
 }

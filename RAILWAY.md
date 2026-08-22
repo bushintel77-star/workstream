@@ -38,10 +38,14 @@ Variables:
 ```bash
 NODE_ENV=production
 PORT=3001
-AUTH_REQUIRED=false
+CLERK_SECRET_KEY=sk_live_...
 PUBLIC_API_URL=https://<api-service-domain>
 CORS_ORIGIN=https://<web-service-domain>
 ```
+
+Auth is fail-closed in production: the API refuses to boot without
+`CLERK_SECRET_KEY`. `AUTH_REQUIRED=false` and the shared `dev-user` fallback
+are local-development only and are ignored when `NODE_ENV=production`.
 
 Optional AI/geocode variables:
 
@@ -66,7 +70,8 @@ Variables:
 ```bash
 NODE_ENV=production
 PORT=3002
-AUTH_REQUIRED=false
+CLERK_SECRET_KEY=sk_live_...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
 API_URL=https://<api-service-domain>
 NEXT_PUBLIC_API_URL=https://<api-service-domain>
 ```

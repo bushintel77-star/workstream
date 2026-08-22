@@ -115,6 +115,8 @@ async function runJob(store: Store, payload: PipelineJobPayload): Promise<void> 
   );
 }
 
+let workerRef: { close: () => Promise<void> } | null = null;
+
 export async function startWorker(store: Store): Promise<void> {
   if (!isQueueEnabled()) {
     console.log("[queue] REDIS_URL not set; not starting worker");
@@ -134,5 +136,18 @@ export async function startWorker(store: Store): Promise<void> {
     console.error("[queue] job failed", job?.id, err);
   });
 
+  workerRef = worker;
   console.log("[queue] BullMQ worker listening on workstream-pipeline");
+}
+
+/** Close the worker and its Redis connections on graceful shutdown. */
+export async function stopWorker(): Promise<void> {
+  if (!workerRef) return;
+  try {
+    await workerRef.close();
+  } catch (err) {
+    console.warn("[queue] worker close failed", err);
+  } finally {
+    workerRef = null;
+  }
 }

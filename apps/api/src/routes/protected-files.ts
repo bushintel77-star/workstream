@@ -6,6 +6,18 @@ import { verifyPortalToken } from "../lib/magic-link";
 
 type AssetKind = "uploads" | "outputs" | "photos" | "aerial" | "filings";
 
+/**
+ * Asset kinds a client quote token may open. Quote tokens exist to show a
+ * client their presentation material — outputs, aerial imagery, and site
+ * photos. Operator recordings (uploads) and private operator filings must
+ * stay authenticated; a client link is not an operator session.
+ */
+const QUOTE_VIEW_ASSET_KINDS: ReadonlySet<AssetKind> = new Set([
+  "outputs",
+  "aerial",
+  "photos",
+]);
+
 const DATA_ROOT = path.join(process.cwd(), "data");
 
 function contentTypeFor(ext: string): string {
@@ -70,6 +82,12 @@ async function authorizeAsset(
     }
     if (verify.payload.scope !== "quote_view") {
       reply.code(403).send({ error: "Token scope does not allow file access" });
+      return null;
+    }
+    if (!QUOTE_VIEW_ASSET_KINDS.has(kind)) {
+      reply.code(403).send({
+        error: "Token scope does not allow this asset kind",
+      });
       return null;
     }
     return { ownerId: resolved.ownerId };

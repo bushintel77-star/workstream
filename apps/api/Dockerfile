@@ -43,6 +43,9 @@ RUN pnpm --filter=@workstream/api... build
 FROM node:${NODE_VERSION}-slim AS runtime
 
 ARG PNPM_VERSION
+# The commit this image was built from; surfaced by /healthz + /readyz.
+# CI passes CI_COMMIT_SHA; local docker builds can pass $(git rev-parse HEAD).
+ARG BUILD_SHA=unknown
 RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 WORKDIR /repo
@@ -50,6 +53,7 @@ WORKDIR /repo
 ENV NODE_ENV=production
 ENV PORT=3001
 ENV NODE_OPTIONS=--experimental-sqlite
+ENV BUILD_SHA=$BUILD_SHA
 
 # Bring across the workspace manifest + built artefacts
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./

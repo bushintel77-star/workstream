@@ -1,5 +1,6 @@
 import type { Store } from "@workstream/db";
 import { isStripeLive } from "./stripe";
+import { getOwnerEnv } from "./owner-secrets";
 
 const STRIPE_API = "https://api.stripe.com/v1";
 
@@ -56,10 +57,14 @@ export async function createStudioCheckout(
     form.set("customer", billing.stripe_customer_id);
   }
 
+  const secretKey = getOwnerEnv("STRIPE_SECRET_KEY");
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY not configured for this workspace");
+  }
   const res = await fetch(`${STRIPE_API}/checkout/sessions`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+      Authorization: `Bearer ${secretKey}`,
       "content-type": "application/x-www-form-urlencoded",
     },
     body: form,
@@ -116,10 +121,14 @@ export async function createSeatCheckout(
     form.set("customer", billing.stripe_customer_id);
   }
 
+  const seatSecretKey = getOwnerEnv("STRIPE_SECRET_KEY");
+  if (!seatSecretKey) {
+    throw new Error("STRIPE_SECRET_KEY not configured for this workspace");
+  }
   const res = await fetch(`${STRIPE_API}/checkout/sessions`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+      Authorization: `Bearer ${seatSecretKey}`,
       "content-type": "application/x-www-form-urlencoded",
     },
     body: form,

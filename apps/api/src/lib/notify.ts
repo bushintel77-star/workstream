@@ -5,6 +5,8 @@
  * notification copy in development without a real Twilio account.
  */
 
+import { getOwnerEnv } from "./owner-secrets";
+
 const TWILIO_BASE = "https://api.twilio.com/2010-04-01";
 
 export type Channel = "whatsapp" | "sms";
@@ -23,20 +25,20 @@ export type SendResult = {
 
 export function isTwilioLive(): boolean {
   return (
-    !!process.env.TWILIO_ACCOUNT_SID &&
-    !!process.env.TWILIO_AUTH_TOKEN &&
-    (!!process.env.TWILIO_FROM_NUMBER ||
-      !!process.env.TWILIO_WHATSAPP_FROM)
+    !!getOwnerEnv("TWILIO_ACCOUNT_SID") &&
+    !!getOwnerEnv("TWILIO_AUTH_TOKEN") &&
+    (!!getOwnerEnv("TWILIO_FROM_NUMBER") ||
+      !!getOwnerEnv("TWILIO_WHATSAPP_FROM"))
   );
 }
 
 function channelFrom(channel: Channel): string {
   if (channel === "whatsapp") {
-    return process.env.TWILIO_WHATSAPP_FROM
-      ? `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`
+    return getOwnerEnv("TWILIO_WHATSAPP_FROM")
+      ? `whatsapp:${getOwnerEnv("TWILIO_WHATSAPP_FROM")}`
       : "";
   }
-  return process.env.TWILIO_FROM_NUMBER ?? "";
+  return getOwnerEnv("TWILIO_FROM_NUMBER") ?? "";
 }
 
 function channelTo(channel: Channel, to: string): string {
@@ -74,8 +76,8 @@ export async function send(args: SendArgs): Promise<SendResult> {
     Body: args.body,
   });
 
-  const accountSid = process.env.TWILIO_ACCOUNT_SID!;
-  const authToken = process.env.TWILIO_AUTH_TOKEN!;
+  const accountSid = getOwnerEnv("TWILIO_ACCOUNT_SID")!;
+  const authToken = getOwnerEnv("TWILIO_AUTH_TOKEN")!;
   const credentials = Buffer.from(`${accountSid}:${authToken}`).toString(
     "base64",
   );

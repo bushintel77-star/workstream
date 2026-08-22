@@ -144,6 +144,13 @@ export default async function shareRoutes(fastify: FastifyInstance) {
       if (!row || row.status === "superseded") {
         return reply.code(404).send(SHARE_NOT_FOUND_BODY);
       }
+      /* Share links die with the project: a tombstoned project must no
+       * longer expose its frozen snapshot (same body as an unknown token —
+       * no oracle). */
+      const ownerId = await fastify.store.resolveProjectOwner(row.project_id);
+      if (!ownerId) {
+        return reply.code(404).send(SHARE_NOT_FOUND_BODY);
+      }
       const payload = toPublicPayload(row);
       if (!payload) {
         return reply.code(404).send(SHARE_NOT_FOUND_BODY);

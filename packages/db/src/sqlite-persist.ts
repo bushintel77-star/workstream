@@ -53,6 +53,9 @@ type RowObj = Record<string, unknown>;
 /** Stable primary key for a store row (collections are heterogeneous). */
 export function recordIdFor(collection: string, row: RowObj): string {
   if (typeof row.id === "string" && row.id.length > 0) return row.id;
+  if (collection === "_stripeEvents" && typeof row.event_id === "string") {
+    return row.event_id;
+  }
   if (collection === "_integrations" && typeof row.key === "string") {
     return `${String(row.owner_id ?? "")}:${row.key}`;
   }
@@ -128,6 +131,32 @@ export function openSqliteJournal(sqlitePath: string): SqliteJournal {
   const db = new DatabaseSync(sqlitePath);
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec("PRAGMA synchronous = NORMAL;");
+  /* A second writer (worker process / replica) must not starve or corrupt
+   * this journal. Safe single-process cost; meaningful once a real
+   * transactional multi-process store exists. */
+  db.exec("PRAGMA busy_timeout = 5000;");
+
+  /* Schema migration boundary: the journal file is a serialisation of the
+   * in-memory arrays, so today a shape change writes new JSON into the same
+   * columns. The boundary exists so that the day a real column is added or
+   * renamed against a production volume, the process refuses to boot rather
+   * than silently reading missing data. A file newer than this build fails
+   * loudly; older files walk the (currently empty) migration list forward. */
+  const SCHEMA_VERSION = 1;
+  const currentVersion = (
+    db.prepare("PRAGMA user_version").get() as { user_version: number }
+  ).user_version;
+  if (currentVersion > SCHEMA_VERSION) {
+    db.close();
+    throw new Error(
+      `[db] SQLite schema version ${currentVersion} is newer than supported ${SCHEMA_VERSION} — refusing to open (this build is older than the data file).`,
+    );
+  }
+  if (currentVersion < SCHEMA_VERSION) {
+    /* Migrations run in order, index = version + 1 .. SCHEMA_VERSION.
+     * None exist yet; the boundary is the contract, not a no-op ceremony. */
+    db.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+  }
   db.exec(`
     CREATE TABLE IF NOT EXISTS records (
       collection TEXT NOT NULL,

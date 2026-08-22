@@ -63,10 +63,27 @@ export default async function recordingRoutes(fastify: FastifyInstance) {
         return reply.code(500).send({ error: "Failed to create recording" });
       }
 
-      const filePath = await saveAudio(recording.id, buffer, ext);
+      let filePath: string;
+      try {
+        filePath = await saveAudio(recording.id, buffer, ext);
+      } catch (err) {
+        request.log.error(err, "Failed to persist recording audio");
+        /* The row was created but the file never landed — remove it so we do
+         * not leave an empty recording pointing at nothing. */
+        await fastify.store
+          .deleteRecording(ownerId, recording.id)
+          .catch(() => undefined);
+        return reply.code(500).send({ error: "Failed to store audio file" });
+      }
 
       const baseUrl = publicBaseUrl(request);
-      recording.audio_uri = audioPublicUrl(baseUrl, recording.id, ext);
+      const uri = audioPublicUrl(baseUrl, recording.id, ext);
+      /* Persist the final public URI — the create call records a placeholder
+       * because the id (and therefore the filename) only exists after the row
+       * is created. Writing it back keeps the durable row consistent with the
+       * file that is actually on disk. */
+      await fastify.store.updateRecordingAudioUri(recording.id, uri);
+      recording.audio_uri = uri;
 
       void runCapturePipeline(
         fastify.store,

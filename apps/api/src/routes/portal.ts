@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify";
+import type { Store } from "@workstream/db";
 import {
   isTier1WrightsTerrace,
   TIER1_WRIGHTS_SAVINGS,
@@ -13,6 +14,71 @@ import {
 import { createDepositSession } from "../lib/stripe";
 import { bindOwnerSecrets } from "../lib/owner-secrets";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
+
+/**
+ * Minimized public quote payload — the client portal gets presentation data
+ * only, never internal operator records (client emails, CRM stage, audit
+ * findings, cost overrides, or other project internals carried by the raw
+ * store rows).
+ */
+function toPublicQuotePayload(input: {
+  project: NonNullable<Awaited<ReturnType<Store["getProject"]>>>;
+  survey: Awaited<ReturnType<Store["getSurvey"]>>;
+  design: Awaited<ReturnType<Store["getDesign"]>>;
+  costings: Awaited<ReturnType<Store["listCostings"]>>;
+  standard: Awaited<ReturnType<Store["listCostings"]>>[number] | undefined;
+  deposit_url: string | null;
+  tier1: typeof TIER1_WRIGHTS_SAVINGS | null;
+  hero_url: string | null;
+}) {
+  const costing = (c: (typeof input.costings)[number]) => ({
+    scenario: c.scenario,
+    subtotal: c.subtotal,
+    gst: c.gst,
+    total: c.total,
+    line_items: c.line_items.map((li) => ({
+      label: li.label,
+      qty: li.qty,
+      unit: li.unit,
+      rate: li.rate,
+      total: li.total,
+      is_provisional: li.is_provisional,
+      ...(li.sku ? { sku: li.sku } : {}),
+    })),
+    ...(c.assumptions ? { assumptions: c.assumptions } : {}),
+  });
+  return {
+    project: {
+      id: input.project.id,
+      address: input.project.address,
+      created_at: input.project.created_at,
+    },
+    survey: input.survey
+      ? {
+          lot_area_m2: input.survey.lot_area_m2,
+          house_area_m2: input.survey.house_area_m2,
+          garden_area_m2: input.survey.garden_area_m2,
+        }
+      : null,
+    design: input.design
+      ? {
+          rationale: input.design.rationale,
+          proposal: {
+            zones: (input.design.proposal?.zones ?? []).map((z) => ({
+              id: z.id,
+              name: z.name,
+              treatment: z.treatment,
+            })),
+          },
+        }
+      : null,
+    costing: input.standard ? costing(input.standard) : null,
+    costings: input.costings.map(costing),
+    deposit_url: input.deposit_url,
+    tier1: input.tier1,
+    hero_url: input.hero_url,
+  };
+}
 
 export default async function portalRoutes(fastify: FastifyInstance) {
   // --- Authed: studio side ---
@@ -88,16 +154,18 @@ export default async function portalRoutes(fastify: FastifyInstance) {
         ? survey.aerial_uri
         : null;
 
-    return reply.send({
-      project,
-      survey,
-      design,
-      costing: standard,
-      costings,
-      deposit_url: depositUrl,
-      tier1,
-      hero_url: heroUrl,
-    });
+    return reply.send(
+      toPublicQuotePayload({
+        project: project!,
+        survey,
+        design,
+        costings,
+        standard,
+        deposit_url: depositUrl,
+        tier1,
+        hero_url: heroUrl,
+      }),
+    );
   });
 
   fastify.post("/portal/deposit/*", {

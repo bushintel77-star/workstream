@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { requireAuth } from "../plugins/auth";
-import { clearEnvSecret, setEnvSecret } from "../lib/runtime-secrets";
+import { requireAuth, requireWorkspaceOwner } from "../plugins/auth";
+import { getOwnerEnv } from "../lib/owner-secrets";
 import { validateStripeKey } from "../lib/stripe";
 import {
   ALLOWED_INTEGRATION_KEYS,
@@ -74,7 +74,10 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
       const byKey = new Map(stored.map((s) => [s.key, s]));
       const items = INTEGRATION_REGISTRY.map((def) => {
         const storeRow = byKey.get(def.key);
-        const envValue = process.env[def.env];
+        /* Owner-scoped read: the AsyncLocalStorage map holds this workspace's
+         * saved secrets (bound by requireAuth). Deployment-env fallback only
+         * applies outside production (see getOwnerEnv). */
+        const envValue = getOwnerEnv(def.env);
         const source: "store" | "env" | "none" = storeRow
           ? "store"
           : envValue
@@ -107,6 +110,7 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
     "/integrations/:key",
     { preHandler: requireAuth },
     async (request, reply) => {
+      if (!requireWorkspaceOwner(request, reply)) return;
       const { key } = request.params as { key: string };
       if (!ALLOWED_INTEGRATION_KEYS.has(key)) {
         return reply.code(404).send({ error: "Unknown integration key" });
@@ -136,7 +140,6 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
         trimmed,
       );
       const billing = await fastify.store.getWorkspaceBilling(request.userId!);
-      setEnvSecret(key, trimmed);
       const mask = maskValue(row.value);
       const live = canUseLiveIntegration(billing.plan, key);
       return reply.send({
@@ -161,12 +164,12 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
     "/integrations/:key",
     { preHandler: requireAuth },
     async (request, reply) => {
+      if (!requireWorkspaceOwner(request, reply)) return;
       const { key } = request.params as { key: string };
       if (!ALLOWED_INTEGRATION_KEYS.has(key)) {
         return reply.code(404).send({ error: "Unknown integration key" });
       }
       await fastify.store.deleteIntegration(request.userId!, key);
-      clearEnvSecret(key);
       return reply.code(204).send();
     },
   );

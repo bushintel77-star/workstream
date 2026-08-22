@@ -17,6 +17,7 @@ import type {
   MyobItem,
   Project,
 } from "@workstream/contracts";
+import { getOwnerEnv } from "./owner-secrets";
 
 const MYOB_BASE = "https://api.myob.com/accountright";
 
@@ -60,21 +61,21 @@ const DEV_ITEMS: MyobItem[] = [
 ];
 
 export function isMyobLive(): boolean {
-  return !!process.env.MYOB_ACCESS_TOKEN && !!process.env.MYOB_COMPANY_FILE_ID;
+  return !!getOwnerEnv("MYOB_ACCESS_TOKEN") && !!getOwnerEnv("MYOB_COMPANY_FILE_ID");
 }
 
 function authHeaders(): Record<string, string> {
   return {
-    Authorization: `Bearer ${process.env.MYOB_ACCESS_TOKEN}`,
-    "x-myobapi-key": process.env.MYOB_CLIENT_ID ?? "",
+    Authorization: `Bearer ${getOwnerEnv("MYOB_ACCESS_TOKEN") ?? ""}`,
+    "x-myobapi-key": getOwnerEnv("MYOB_CLIENT_ID") ?? "",
     "x-myobapi-version": "v2",
-    "x-myobapi-cftoken": process.env.MYOB_CFTOKEN ?? "",
+    "x-myobapi-cftoken": getOwnerEnv("MYOB_CFTOKEN") ?? "",
     accept: "application/json",
   };
 }
 
 function companyFileUrl(path: string): string {
-  return `${MYOB_BASE}/${process.env.MYOB_COMPANY_FILE_ID}/${path.replace(/^\//, "")}`;
+  return `${MYOB_BASE}/${getOwnerEnv("MYOB_COMPANY_FILE_ID") ?? ""}/${path.replace(/^\//, "")}`;
 }
 
 async function getJson<T>(url: string): Promise<T> {
@@ -169,7 +170,7 @@ export async function draftInvoiceFromCosting(
         Description: li.label,
         Total: li.total,
         TaxCode: { Code: "GST" },
-        Account: { UID: process.env.MYOB_INCOME_ACCOUNT_UID ?? "" },
+        Account: { UID: getOwnerEnv("MYOB_INCOME_ACCOUNT_UID") ?? "" },
       })),
     TotalAmount: args.costing.total,
   };

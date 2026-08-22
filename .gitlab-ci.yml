@@ -131,7 +131,7 @@ build-api-image:
   before_script:
     - docker info
   script:
-    - docker build -f apps/api/Dockerfile -t workstream-api:ci .
+    - docker build -f apps/api/Dockerfile --build-arg BUILD_SHA="$CI_COMMIT_SHA" -t workstream-api:ci .
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
@@ -148,7 +148,7 @@ build-web-image:
   before_script:
     - docker info
   script:
-    - docker build -f apps/web/Dockerfile --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" -t workstream-web:ci .
+    - docker build -f apps/web/Dockerfile --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" --build-arg NEXT_PUBLIC_BUILD_SHA="$CI_COMMIT_SHA" -t workstream-web:ci .
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"

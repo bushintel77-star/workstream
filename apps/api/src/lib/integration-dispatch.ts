@@ -12,6 +12,7 @@ import type { IntegrationSummary } from "@workstream/contracts";
 import { isStripeLive } from "./stripe";
 import { isMyobLive } from "./myob";
 import { isXeroLive } from "./xero";
+import { getOwnerEnv } from "./owner-secrets";
 
 export type DispatchContext = {
   quote_url?: string;
@@ -158,8 +159,11 @@ export async function channelStatuses(
   const billing = await store.getWorkspaceBilling(ownerId);
   const plan = billing.plan;
   const integs = await store.listIntegrations(ownerId);
+  /* Owner-scoped: stored secrets for this workspace, plus the local-only
+   * deployment fallback from getOwnerEnv (never a cross-tenant production
+   * read of global process.env). */
   const has = (key: string) =>
-    integs.some((i) => i.key === key) || !!process.env[key];
+    integs.some((i) => i.key === key) || !!getOwnerEnv(key);
 
   const studio = (key: string) =>
     canUseLiveIntegration(plan, key) && has(key);

@@ -9,9 +9,12 @@ export function isClerkConfigured(): boolean {
 }
 
 function authRequired(): boolean {
+  /* Production is fail-closed: the dev-user fallback is local-only and
+   * AUTH_REQUIRED=false must not open a production deployment. */
+  if (process.env.NODE_ENV === "production") return true;
   if (process.env.AUTH_REQUIRED === "true") return true;
   if (process.env.AUTH_REQUIRED === "false") return false;
-  return process.env.NODE_ENV === "production";
+  return false;
 }
 
 export function isClerkRequired(): boolean {

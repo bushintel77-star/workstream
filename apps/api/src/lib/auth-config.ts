@@ -1,8 +1,15 @@
-/** True when Clerk must be configured (no dev-user fallback). */
+/**
+ * True when Clerk must be configured (no dev-user fallback).
+ *
+ * Production is always fail-closed: the shared `dev-user` bypass is a local
+ * development convenience only, and `AUTH_REQUIRED=false` must not be able to
+ * open a production deployment. Outside production the explicit flag wins.
+ */
 export function isAuthRequired(): boolean {
+  if (process.env.NODE_ENV === "production") return true;
   if (process.env.AUTH_REQUIRED === "true") return true;
   if (process.env.AUTH_REQUIRED === "false") return false;
-  return process.env.NODE_ENV === "production";
+  return false;
 }
 
 export function assertAuthConfigured(): void {

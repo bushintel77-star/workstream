@@ -17,6 +17,7 @@ import type {
   XeroContact,
   XeroItem,
 } from "@workstream/contracts";
+import { getOwnerEnv } from "./owner-secrets";
 
 const XERO_API = "https://api.xero.com/api.xro/2.0";
 
@@ -42,13 +43,13 @@ const DEV_ITEMS: XeroItem[] = [
 ];
 
 export function isXeroLive(): boolean {
-  return !!process.env.XERO_ACCESS_TOKEN && !!process.env.XERO_TENANT_ID;
+  return !!getOwnerEnv("XERO_ACCESS_TOKEN") && !!getOwnerEnv("XERO_TENANT_ID");
 }
 
 function headers(): Record<string, string> {
   return {
-    Authorization: `Bearer ${process.env.XERO_ACCESS_TOKEN}`,
-    "Xero-tenant-id": process.env.XERO_TENANT_ID ?? "",
+    Authorization: `Bearer ${getOwnerEnv("XERO_ACCESS_TOKEN") ?? ""}`,
+    "Xero-tenant-id": getOwnerEnv("XERO_TENANT_ID") ?? "",
     accept: "application/json",
   };
 }
@@ -133,7 +134,7 @@ export async function draftInvoiceFromCosting(
         Quantity: li.qty,
         UnitAmount: li.rate,
         TaxType: "OUTPUT",
-        AccountCode: process.env.XERO_INCOME_ACCOUNT_CODE ?? "200",
+        AccountCode: getOwnerEnv("XERO_INCOME_ACCOUNT_CODE") ?? "200",
       })),
   };
 

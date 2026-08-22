@@ -1,4 +1,5 @@
 import type { Store } from "@workstream/db";
+import type { ProjectStatus } from "@workstream/contracts";
 import { runSurvey } from "./survey-job";
 import { runDesign } from "./design-job";
 import { runCosting } from "./cost-job";
@@ -53,6 +54,17 @@ export async function runFullPipeline(
     } catch (err) {
       const message = err instanceof Error ? err.message : "Stage failed";
       emit({ stage: stage.name, status: "error", error: message });
+      /* A stage failure must leave the project in a visible failed state,
+       * not stuck at "processing" with no way for the UI to distinguish a
+       * running pipeline from a dead one. The retry route reads the stage
+       * log to resume from here. */
+      await store
+        .updateProjectStatus(
+          ownerId,
+          projectId,
+          `${stage.name}_failed` as ProjectStatus,
+        )
+        .catch(() => undefined);
       return { events, ok: false };
     }
   }
