@@ -398,6 +398,25 @@ button:focus-visible {
   }
 }
 
+/*
+ * WebGL studio dock/panel entrance. Lives here rather than in an inline
+ * <style> tag inside WebGLStudioPreview because three components reference it
+ * (the mode-body dock, the perimeter panel, FitSheetCard) — when it was inline
+ * it was deleted with the surrounding JSX and every panel animation silently
+ * resolved to nothing.
+ */
+@keyframes wsPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   *,
