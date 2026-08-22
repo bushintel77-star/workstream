@@ -978,3 +978,190 @@ describe("studioStore expressive stylus Sketch (nib + sun hatch)", () => {
     expect(useStudioStore.getState().sketchStrokes).toHaveLength(before);
   });
 });
+
+/* -------------------------------------------------------------------------- */
+/* Precision drafting — the draft session slice                               */
+/* -------------------------------------------------------------------------- */
+
+/** A square ring in world metres for scaleM=100, boardAspect=1. */
+const DRAFT_RING = [
+  { x: -25, z: -25 },
+  { x: 25, z: -25 },
+  { x: 25, z: 25 },
+  { x: -25, z: 25 },
+];
+
+function placeRun(vertices: Array<{ x: number; z: number }>) {
+  for (const v of vertices) useStudioStore.getState().addDraftVertex(v);
+}
+
+describe("studioStore draft session", () => {
+  afterEach(() => {
+    resetStore();
+    useStudioStore.setState({
+      draftSession: null,
+      sketchMode: false,
+      measureActive: false,
+      armedSymbolId: null,
+      trenchTool: null,
+      zoneTool: null,
+      marqueeActive: false,
+      marqueeDraft: null,
+      floraSession: null,
+    });
+  });
+
+  it("arming a drafting tool stands down every other capture tool", () => {
+    useStudioStore.setState({
+      sketchMode: true,
+      measureActive: true,
+      armedSymbolId: "olive-standard",
+      trenchTool: "drainage",
+      zoneTool: "drip",
+      marqueeActive: true,
+    });
+    useStudioStore.getState().beginDraft("polyline");
+
+    const s = useStudioStore.getState();
+    expect(s.draftSession).toEqual({ tool: "polyline", vertices: [] });
+    expect(s.sketchMode).toBe(false);
+    expect(s.measureActive).toBe(false);
+    expect(s.armedSymbolId).toBeNull();
+    expect(s.trenchTool).toBeNull();
+    expect(s.zoneTool).toBeNull();
+    expect(s.marqueeActive).toBe(false);
+  });
+
+  it("arming any other capture tool stands the draft down (both directions)", () => {
+    const store = useStudioStore.getState();
+    store.beginDraft("area");
+    store.setSketchMode(true);
+    expect(useStudioStore.getState().draftSession).toBeNull();
+
+    store.beginDraft("area");
+    store.setMeasureActive(true);
+    expect(useStudioStore.getState().draftSession).toBeNull();
+
+    store.beginDraft("area");
+    store.setMarqueeActive(true);
+    expect(useStudioStore.getState().draftSession).toBeNull();
+
+    store.beginDraft("area");
+    store.setTrenchTool("drainage");
+    expect(useStudioStore.getState().draftSession).toBeNull();
+
+    store.beginDraft("area");
+    store.setZoneTool("drip");
+    expect(useStudioStore.getState().draftSession).toBeNull();
+
+    store.beginDraft("area");
+    store.setArmedSymbolId("olive-standard");
+    expect(useStudioStore.getState().draftSession).toBeNull();
+  });
+
+  it("add / undo / cancel walk the run", () => {
+    const store = useStudioStore.getState();
+    store.beginDraft("polyline");
+    placeRun(DRAFT_RING);
+    expect(useStudioStore.getState().draftSession!.vertices).toHaveLength(4);
+
+    store.undoDraftVertex();
+    expect(useStudioStore.getState().draftSession!.vertices).toHaveLength(3);
+
+    store.cancelDraft();
+    expect(useStudioStore.getState().draftSession).toBeNull();
+    // Vertex writes with no session are inert, not a crash.
+    store.addDraftVertex({ x: 1, z: 1 });
+    expect(useStudioStore.getState().draftSession).toBeNull();
+  });
+
+  it("polyline commits a shape stroke with control points AND render path", () => {
+    const store = useStudioStore.getState();
+    store.beginDraft("polyline");
+    placeRun(DRAFT_RING);
+    expect(store.commitDraft(100, 1, true)).toBe(true);
+
+    const s = useStudioStore.getState();
+    expect(s.sketchStrokes).toHaveLength(1);
+    const stroke = s.sketchStrokes[0]!;
+    expect(stroke.kind).toBe("shape");
+    expect(stroke.shape_tool).toBe("polyline");
+    expect(stroke.shape_closed).toBe(true);
+    expect(stroke.shape_points).toHaveLength(4);
+    expect(stroke.points).toHaveLength(5); // flattened + closing point
+    // The tool stays armed with a fresh run so a setout can continue.
+    expect(s.draftSession).toEqual({ tool: "polyline", vertices: [] });
+  });
+
+  it("area commits a Polygon LandscapeFeature, not linework", () => {
+    const store = useStudioStore.getState();
+    store.beginDraft("area");
+    placeRun(DRAFT_RING);
+    expect(store.commitDraft(100, 1, true)).toBe(true);
+
+    const s = useStudioStore.getState();
+    expect(s.sketchStrokes).toHaveLength(0);
+    expect(s.features).toHaveLength(1);
+    expect(s.features[0]!.geometry.type).toBe("Polygon");
+    expect(s.features[0]!.geometry.points).toHaveLength(4);
+    expect(s.features[0]!.extrude_height_m).toBeUndefined();
+    expect(s.draftSession).toEqual({ tool: "area", vertices: [] });
+  });
+
+  it("commit is one undo step for both tools", () => {
+    const store = useStudioStore.getState();
+    store.beginDraft("polyline");
+    placeRun(DRAFT_RING);
+    store.commitDraft(100, 1, false);
+    expect(useStudioStore.getState().sketchStrokes).toHaveLength(1);
+    useStudioStore.getState().undo();
+    expect(useStudioStore.getState().sketchStrokes).toHaveLength(0);
+
+    store.beginDraft("area");
+    placeRun(DRAFT_RING);
+    store.commitDraft(100, 1, true);
+    expect(useStudioStore.getState().features).toHaveLength(1);
+    useStudioStore.getState().undo();
+    expect(useStudioStore.getState().features).toHaveLength(0);
+  });
+
+  it("refuses to commit a run that is too short and keeps the vertices", () => {
+    const store = useStudioStore.getState();
+    store.beginDraft("polyline");
+    placeRun(DRAFT_RING.slice(0, 1));
+    expect(store.commitDraft(100, 1, false)).toBe(false);
+    expect(useStudioStore.getState().sketchStrokes).toHaveLength(0);
+    expect(useStudioStore.getState().draftSession!.vertices).toHaveLength(1);
+
+    store.beginDraft("area");
+    placeRun(DRAFT_RING.slice(0, 2));
+    expect(store.commitDraft(100, 1, true)).toBe(false);
+    expect(useStudioStore.getState().features).toHaveLength(0);
+  });
+
+  it("commit with no session is inert", () => {
+    expect(useStudioStore.getState().commitDraft(100, 1, true)).toBe(false);
+  });
+
+  it("updateFeatureField sets and clears a region's pad height", () => {
+    const store = useStudioStore.getState();
+    store.beginDraft("area");
+    placeRun(DRAFT_RING);
+    store.commitDraft(100, 1, true);
+    const id = useStudioStore.getState().features[0]!.id;
+
+    store.updateFeatureField(id, { extrude_height_m: 0.6 });
+    expect(useStudioStore.getState().features[0]!.extrude_height_m).toBe(0.6);
+    // Zero clears the pad rather than persisting a non-positive height.
+    store.updateFeatureField(id, { extrude_height_m: 0 });
+    expect(
+      useStudioStore.getState().features[0]!.extrude_height_m,
+    ).toBeUndefined();
+    // An unrelated patch leaves the height alone.
+    store.updateFeatureField(id, { extrude_height_m: 1.25 });
+    store.updateFeatureField(id, { friendly_name: "Terrace pad" });
+    const f = useStudioStore.getState().features[0]!;
+    expect(f.extrude_height_m).toBe(1.25);
+    expect(f.metadata.friendly_name).toBe("Terrace pad");
+  });
+});

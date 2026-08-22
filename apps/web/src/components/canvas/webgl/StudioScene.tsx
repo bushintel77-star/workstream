@@ -54,6 +54,7 @@ import { DimensionLayer } from "./DimensionLayer";
 import { MetaChipSet } from "./MetaChipSet";
 import { buildMetaChips } from "./metaChips";
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
+import { DraftShapeLayer } from "./DraftShapeLayer";
 import { TrenchLayer } from "./TrenchLayer";
 import { IrrigationZoneLayer } from "./IrrigationZoneLayer";
 import { AssetPlaceLayer } from "./AssetPlaceLayer";
@@ -808,6 +809,13 @@ export function StudioScene({
       />
       {/* Measure tape — armed tool, self-gates on measureActive. */}
       <MeasureTapeLayer
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        heightmapPoints={heightmapPoints}
+      />
+      {/* Precision drafting (Polyline / Area) — click-to-place vertices with
+          the snap ladder; self-gates on draftSession so the pan law holds. */}
+      <DraftShapeLayer
         scaleM={scaleM}
         boardAspect={boardAspect}
         heightmapPoints={heightmapPoints}

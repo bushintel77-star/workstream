@@ -1,6 +1,7 @@
 # Precision drafting tools — Polyline, Curve, Area (WebGL surface)
 
-Design spec (2026-08-22). Status: **for review — no code changed.**
+Design spec (2026-08-22). Status: **v1 shipped** (draft session, Polyline, Area,
+live readout, rail tools, boundary snap, feature pads). v2–v5 remain unbuilt.
 
 The last unbuilt feature of Gold Standard Phase 1: constrained, exact drafting
 on the WebGL studio. Today the only way to put a line on the drawing is to
@@ -147,7 +148,7 @@ migration.
 
 | Slice | Contents | Size |
 |---|---|---|
-| v1 | ~~Contracts extension~~ **done** (`6ff4af7`) + ~~boundary-edge snap~~ **done** (`6ff4af7`) + draft session + Polyline + Area + live readout + rail tools + `cutFill` accepts feature pads (§8.1) | M |
+| v1 | ~~Contracts extension~~ **done** (`6ff4af7`) + ~~boundary-edge snap~~ **done** (`6ff4af7`) + ~~draft session + Polyline + Area + live readout + rail tools + `cutFill` accepts feature pads (§8.1)~~ **done** | M |
 | v2 | Curve (Catmull-Rom tessellated into `points`, vertices in `shape_points`) | S |
 | v3 | Numeric entry — type a length mid-draft to constrain the next segment | S |
 | v4 | Vertex editing on a committed shape (drag a vertex, insert/delete) | M |
@@ -234,17 +235,35 @@ features in the same slice, and legacy extruded strokes need a migration.
 
 ## 10. Acceptance criteria
 
-- [ ] Polyline places exact vertices with the existing snap ladder, closes on
+- [x] Polyline places exact vertices with the existing snap ladder, closes on
       the origin, and cancels cleanly on Esc
-- [ ] Area closes into a persisted `LandscapeFeature` that appears in the fit
-      sheet as a costed line
-- [ ] A live length + bearing readout tracks the pointer during a draft
-- [ ] Polyline and Area render through the existing `CommittedStrokeRenderer`
+- [x] Area closes into a persisted `LandscapeFeature` — **but it is not yet a
+      costed fit-sheet line.** See the note below; this is the one criterion
+      v1 does not meet.
+- [x] A live length + bearing readout tracks the pointer during a draft
+- [x] Polyline and Area render through the existing `CommittedStrokeRenderer`
       by writing both `points` (flattened) and `shape_points` (control points)
-- [ ] Drafting is tool-gated — unarmed drag still pans, mod-drag still orbits
-- [ ] Contracts extended additively, no migration
-- [ ] New unit tests + the new kept e2e probe pass; the three kept gates above
+- [x] Drafting is tool-gated — unarmed drag still pans, mod-drag still orbits
+- [x] Contracts extended additively, no migration
+- [x] New unit tests + the new kept e2e probe pass; the three kept gates above
       stay green
-- [ ] Rail labels still fit their 42 px pills without wrapping
-- [ ] Cut/fill earthworks still renders for legacy extruded strokes AND for
+- [x] Rail labels still fit their 42 px pills without wrapping
+- [x] Cut/fill earthworks still renders for legacy extruded strokes AND for
       new Areas carrying a height (§8.1) — verified, not assumed
+      (`webgl-drafting-tools.spec.ts` asserts the Earth instrument counts both)
+
+### 10.1 Open: an Area is costable, not yet costed
+
+`FitSheetCard` prices `items` — `placementsToItems(placements)` with feature
+outlines re-attached by mirrored id (`featuresOntoItems`). An Area is an
+ORPHAN feature: it mirrors no placement, so it contributes no estimate line,
+and the card self-gates to nothing when `items.length === 0`.
+
+The v1 region therefore carries everything a costed line needs — geometry, a
+`material_fill` whose SKU the inspector can set, a labour tier slot — without
+being priced. Closing that gap means teaching the estimate builder to read
+orphan `LandscapeFeature`s (area × material SKU → a line), which is a
+`buildEstimateArgsFromStudio` change with its own pricing decisions, not a
+drafting-tool change. Deliberately deferred rather than faked: minting a
+placeholder placement so a number appears would put an invented cost in front
+of a client.

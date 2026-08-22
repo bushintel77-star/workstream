@@ -71,8 +71,8 @@ export interface StudioAutosaveDoc {
  * fingerprint includes id, position, scale, rotation, and type, plus every
  * inspector-editable field (label, height, canopy radius, source); feature
  * fingerprint includes geometry plus material fill, friendly name,
- * modification state, scatter recipe, and labor tier. Any inspector edit
- * must change this key or the edit will not persist.
+ * modification state, scatter recipe, labor tier, and pad height. Any
+ * inspector edit must change this key or the edit will not persist.
  */
 export function buildPersistKey(doc: StudioAutosaveDoc): string {
   const strokeParts = doc.strokes.map(
@@ -136,7 +136,9 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
       : "nolabor";
     return `${f.id}:${f.geometry.type}:${f.metadata.layer}:${
       f.metadata.friendly_name ?? ""
-    }:${f.metadata.user_modification_state}:${f.geometry.points.length}:${pts}:${mf}:${scatter}:${labor}`;
+    }:${f.metadata.user_modification_state}:${f.geometry.points.length}:${pts}:${mf}:${scatter}:${labor}:${(
+      f.extrude_height_m ?? 0
+    ).toFixed(2)}`;
   });
   return [
     `s${doc.strokes.length}:${strokeParts.join("~")}`,

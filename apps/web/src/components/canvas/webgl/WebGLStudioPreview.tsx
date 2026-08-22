@@ -57,6 +57,7 @@ import {
   SUN_DATE_PRESETS,
   sunDatePresetLabel,
 } from "../handoff/features/sunGrowth/sunDatePreset";
+import { draftAreaM2, draftRunLengthM } from "./draftShape";
 import { useStudioAutosave, useBeforeUnloadGuard } from "./useStudioAutosave";
 import { computeLiveStudioData } from "./canvasBridges";
 import { SliceProfileCard } from "./SliceProfileCard";
@@ -497,6 +498,10 @@ export function WebGLStudioPreview({
           target.isContentEditable);
       if (typing || (e.key !== "Delete" && e.key !== "Backspace")) return;
       const store = useStudioStore.getState();
+      // While a drafting run is open, Backspace belongs to the run (it steps
+      // back one vertex) — deleting the standing selection under the same key
+      // would be two destructive meanings for one press.
+      if (store.draftSession && e.key === "Backspace") return;
       const placementIds = store.selection
         .filter((r) => r.kind === "placement")
         .map((r) => r.id);
@@ -787,11 +792,15 @@ export function WebGLStudioPreview({
 
   const is3D = viewBlendTarget > 0.5;
 
-  // Pads exist ⇔ any committed stroke carries an extrusion height — gates the
-  // Earth toggle + EarthworksCard.
+  // Pads exist ⇔ any committed stroke OR any drafted region carries an
+  // extrusion height — gates the Earth toggle + EarthworksCard. Both sources
+  // are pads by cutFill's single definition (spec §8.1), so the gate must see
+  // both or an elevated Area would analyse with no way to view it.
   const hasPads = useMemo(
-    () => strokes.some((s) => (s.extrude_height_m ?? 0) > 0),
-    [strokes],
+    () =>
+      strokes.some((s) => (s.extrude_height_m ?? 0) > 0) ||
+      storeFeatures.some((f) => (f.extrude_height_m ?? 0) > 0),
+    [strokes, storeFeatures],
   );
 
   // Scene props shared by the single studio and both split halves.
@@ -1299,6 +1308,7 @@ export function WebGLStudioPreview({
                 onRefresh={() => window.location.reload()}
               />
               <MeasureReadoutChip scaleM={scaleM} boardAspect={boardAspect} />
+              <DraftReadoutChip />
             </>
           }
         />
@@ -2644,6 +2654,46 @@ function MeasureReadoutChip({
       }}
     >
       Measure · {lengthM.toFixed(2)} m · Esc clears
+    </div>
+  );
+}
+
+/**
+ * Precision drafting readout — the DOM twin of the in-canvas cursor label.
+ * Subscribes to the draft session alone, so it re-renders once per placed
+ * vertex rather than per pointer move (the MeasureReadoutChip pattern), and
+ * announces the run for screen readers while the in-canvas chip carries the
+ * live segment length + bearing.
+ */
+function DraftReadoutChip() {
+  const draftSession = useStudioStore((s) => s.draftSession);
+  if (!draftSession) return null;
+
+  const { tool, vertices } = draftSession;
+  const count = vertices.length;
+  const isArea = tool === "area";
+  const figure = isArea
+    ? `${draftAreaM2(vertices).toFixed(1)} m²`
+    : `${draftRunLengthM(vertices, false).toFixed(2)} m`;
+  const closeHint = isArea
+    ? "click the origin to close"
+    : "Enter finishes · Backspace steps back";
+
+  return (
+    <div
+      data-testid="draft-status"
+      role="status"
+      aria-live="polite"
+      style={{
+        marginTop: 4,
+        fontFamily: "var(--font-tech)",
+        fontSize: "var(--gs-font-sm)",
+        color: "var(--gs-primary)",
+      }}
+    >
+      {isArea ? "Area" : "Polyline"} · {count}{" "}
+      {count === 1 ? "vertex" : "vertices"}
+      {count >= 2 ? ` · ${figure}` : ""} · {closeHint}
     </div>
   );
 }

@@ -803,18 +803,30 @@ function ExtrudeMass({
 /**
  * Snap marker — kind-coloured ring + disc + glyph chip at the snapped point.
  * Colour language mirrors the SVG studio's snap visuals: crimson = vertex
- * lock, truth blue = angle, charcoal ink = close. The glyph chip is a
- * constant-px drei <Html> span (the SVG snapGlyph badge equivalent).
+ * lock, truth blue = the geometric constraints (title boundary + 45° ray),
+ * charcoal ink = close. Boundary and angle share the truth blue because both
+ * are constraints rather than points; the glyph is what distinguishes them.
+ * The glyph chip is a constant-px drei <Html> span (the SVG snapGlyph badge
+ * equivalent).
+ *
+ * Exported so the precision drafting layer renders the SAME marker as the
+ * freehand layer — one snap vocabulary across both input paths.
  */
-function SnapMarker({ hint }: { hint: SnapHint }) {
+export function SnapMarker({ hint }: { hint: SnapHint }) {
   const color =
     hint.kind === "vertex"
       ? PALETTE.gsConflict
       : hint.kind === "close"
         ? PALETTE.gsInk
-        : "#0030CF"; // angle — Signal Blue (truth)
+        : "#0030CF"; // boundary / angle — Signal Blue (truth)
   const glyph =
-    hint.kind === "vertex" ? "●" : hint.kind === "close" ? "◎" : "∠";
+    hint.kind === "vertex"
+      ? "●"
+      : hint.kind === "close"
+        ? "◎"
+        : hint.kind === "boundary"
+          ? "▬"
+          : "∠";
 
   return (
     <group position={[hint.x, FLAT_Y + 0.07, hint.z]}>

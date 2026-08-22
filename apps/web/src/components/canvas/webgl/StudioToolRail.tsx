@@ -83,8 +83,17 @@ export function StudioToolRail({
   const setZoneTool = useStudioStore((s) => s.setZoneTool);
   const marqueeActive = useStudioStore((s) => s.marqueeActive);
   const setMarqueeActive = useStudioStore((s) => s.setMarqueeActive);
+  const draftSession = useStudioStore((s) => s.draftSession);
+  const beginDraft = useStudioStore((s) => s.beginDraft);
+  const cancelDraft = useStudioStore((s) => s.cancelDraft);
 
   const [moreOpen, setMoreOpen] = useState(false);
+
+  /** Toggle a precision drafting tool — re-clicking the armed one disarms. */
+  const toggleDraft = (tool: "polyline" | "area") => {
+    if (draftSession?.tool === tool) cancelDraft();
+    else beginDraft(tool);
+  };
 
   const tools: RailTool[] = [
     {
@@ -126,6 +135,28 @@ export function StudioToolRail({
       },
       accent: "var(--gs-primary)",
       title: "Discovery fan-out (A)",
+      group: "core",
+    },
+    {
+      id: "polyline",
+      glyph: "⌒",
+      label: "Polyline",
+      active: draftSession?.tool === "polyline",
+      onToggle: () => toggleDraft("polyline"),
+      accent: "var(--gs-primary)",
+      title:
+        "Click exact vertices for a setout line — snaps to vertices, the title boundary and 45°. Enter finishes, Backspace steps back, Esc cancels",
+      group: "core",
+    },
+    {
+      id: "area",
+      glyph: "▱",
+      label: "Area",
+      active: draftSession?.tool === "area",
+      onToggle: () => toggleDraft("area"),
+      accent: "var(--gs-primary)",
+      title:
+        "Click exact vertices for a closed region — finishes on the origin snap and persists as a costable area",
       group: "core",
     },
     {
