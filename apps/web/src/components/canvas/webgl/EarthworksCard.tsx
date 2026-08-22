@@ -8,9 +8,10 @@
  * telemetry idiom, plus a derived spoil line (×1.6 swell — the same factor
  * StudioEstimateReport applies to excavate m³ → loose spoil).
  *
- * Reads earthworksView + sketchStrokes from the store (DOM-subscribed) and
- * recomputes the SAME padCutFill integral the layer renders — the volumes on
- * screen always match the zone colours on the terrain.
+ * Reads earthworksView + sketchStrokes + features from the store
+ * (DOM-subscribed) and recomputes the SAME padCutFill integral the layer
+ * renders — the volumes on screen always match the zone colours on the
+ * terrain, for extruded ink and elevated Area regions alike.
  *
  * Real-metre convention: pad heights and diffs divide by VERTICAL_SCALE and
  * are labelled, matching the SliceProfileCard "×3 vert / Δ real" pattern.
@@ -68,6 +69,7 @@ export function EarthworksCard({
 }: EarthworksCardProps) {
   const earthworksView = useStudioStore((s) => s.earthworksView);
   const strokes = useStudioStore((s) => s.sketchStrokes);
+  const features = useStudioStore((s) => s.features);
 
   const sampler = useMemo(
     () => createElevationSampler(heightmapPoints, scaleM, boardAspect),
@@ -75,15 +77,15 @@ export function EarthworksCard({
   );
 
   const pads = useMemo(
-    () => padStrokes(strokes, scaleM, boardAspect),
-    [strokes, scaleM, boardAspect],
+    () => padStrokes(strokes, scaleM, boardAspect, features),
+    [strokes, scaleM, boardAspect, features],
   );
 
   // Per-pad analyses + totals — the same integral EarthworksLayer renders.
   const summary = useMemo(() => {
     if (!sampler) return null;
     const perPad = pads.map((pad) => ({
-      id: pad.stroke.id,
+      id: pad.id,
       topRealM: pad.heightM / VERTICAL_SCALE,
       result: padCutFill(sampler, pad.worldXZ, pad.heightM, CUT_FILL_CELL_M),
     }));

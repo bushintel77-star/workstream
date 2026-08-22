@@ -5,11 +5,12 @@
  *
  * Renders the earthworks analysis from cutFill.ts on the terrain:
  *
- *   - Committed pad masses: every closed stroke carrying extrude_height_m
- *     extrudes into a semi-transparent mass — until now committed extrusions
- *     rendered as NOTHING outside the live drag gesture (the height existed
- *     only as persisted metadata). The analysis IS the product: pads appear
- *     the moment they exist, in any view, not just sketch mode.
+ *   - Committed pad masses: every closed stroke AND every drafted Area region
+ *     carrying extrude_height_m extrudes into a semi-transparent mass — until
+ *     now committed extrusions rendered as NOTHING outside the live drag
+ *     gesture (the height existed only as persisted metadata). The analysis IS
+ *     the product: pads appear the moment they exist, in any view, not just
+ *     sketch mode. "What is a pad" stays defined once, in cutFill.padStrokes().
  *   - Cut/fill zones: per-cell quad mesh draped on the terrain under each
  *     pad — conflict red where the pad buries into the surface (excavate),
  *     Primary Gold where it floats above (build up).
@@ -56,6 +57,7 @@ export function EarthworksLayer({
 }: EarthworksLayerProps) {
   const earthworksView = useStudioStore((s) => s.earthworksView);
   const strokes = useStudioStore((s) => s.sketchStrokes);
+  const features = useStudioStore((s) => s.features);
 
   const sampler = useMemo(
     () => createElevationSampler(heightmapPoints, scaleM, boardAspect),
@@ -63,8 +65,8 @@ export function EarthworksLayer({
   );
 
   const pads = useMemo(
-    () => padStrokes(strokes, scaleM, boardAspect),
-    [strokes, scaleM, boardAspect],
+    () => padStrokes(strokes, scaleM, boardAspect, features),
+    [strokes, scaleM, boardAspect, features],
   );
 
   if (!earthworksView || !sampler || pads.length === 0) return null;
@@ -72,11 +74,7 @@ export function EarthworksLayer({
   return (
     <group>
       {pads.map((pad) => (
-        <PadEarthworks
-          key={pad.stroke.id}
-          pad={pad}
-          sampler={sampler}
-        />
+        <PadEarthworks key={pad.id} pad={pad} sampler={sampler} />
       ))}
     </group>
   );

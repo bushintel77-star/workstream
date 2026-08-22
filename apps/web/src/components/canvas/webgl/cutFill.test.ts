@@ -6,7 +6,7 @@ import {
   CUT_FILL_CELL_M,
 } from "./cutFill";
 import { VERTICAL_SCALE } from "./terrainMath";
-import type { CanvasStroke } from "@workstream/contracts";
+import type { CanvasStroke, LandscapeFeature } from "@workstream/contracts";
 
 /* -------------------------------------------------------------------------- */
 /* pointInPolygonXZ                                                           */
@@ -53,6 +53,41 @@ function makeStroke(
   };
 }
 
+function makeRegion(
+  points: Array<[number, number]>,
+  extrudeHeightM?: number,
+): LandscapeFeature {
+  return {
+    id: crypto.randomUUID(),
+    type: "LandscapeFeature",
+    metadata: {
+      layer: "other",
+      timestamp_created: new Date().toISOString(),
+      source_attribution: "human_drawn",
+      user_modification_state: "human_locked",
+    },
+    geometry: {
+      type: "Polygon",
+      spatial_reference: "EPSG:3857",
+      canvas_origin_pct: { x_pct: 0, y_pct: 0 },
+      points: points.map(([x, y], i) => ({
+        id: `v${i}`,
+        pct: { x_pct: x, y_pct: y },
+      })),
+    },
+    ...(extrudeHeightM !== undefined
+      ? { extrude_height_m: extrudeHeightM }
+      : {}),
+  };
+}
+
+const REGION_SQUARE: Array<[number, number]> = [
+  [25, 25],
+  [75, 25],
+  [75, 75],
+  [25, 75],
+];
+
 describe("padStrokes", () => {
   it("selects closed strokes with a positive extrusion height", () => {
     // Closed square in board-% (25,25)→(75,25)→(75,75)→(25,75)→(25,25),
@@ -69,10 +104,58 @@ describe("padStrokes", () => {
     );
     const pads = padStrokes([closed], 100, 1);
     expect(pads.length).toBe(1);
+    expect(pads[0]!.id).toBe(closed.id);
+    expect(pads[0]!.stroke).toBe(closed);
+    expect(pads[0]!.feature).toBeUndefined();
     expect(pads[0]!.heightM).toBe(1.5);
     expect(pads[0]!.worldXZ[0]!.x).toBeCloseTo(-25, 5);
     expect(pads[0]!.worldXZ[0]!.z).toBeCloseTo(-25, 5);
     expect(pads[0]!.worldXZ.length).toBe(5);
+  });
+
+  it("also selects Polygon regions carrying a height (drafted Areas)", () => {
+    const region = makeRegion(REGION_SQUARE, 0.9);
+    const pads = padStrokes([], 100, 1, [region]);
+    expect(pads.length).toBe(1);
+    expect(pads[0]!.id).toBe(region.id);
+    expect(pads[0]!.feature).toBe(region);
+    expect(pads[0]!.stroke).toBeUndefined();
+    expect(pads[0]!.heightM).toBe(0.9);
+    // The ring is stored open; every vertex converts, none is duplicated.
+    expect(pads[0]!.worldXZ.length).toBe(4);
+    expect(pads[0]!.worldXZ[0]!.x).toBeCloseTo(-25, 5);
+  });
+
+  it("keeps extruded ink AND elevated regions as pads together", () => {
+    const stroke = makeStroke(
+      [...REGION_SQUARE, REGION_SQUARE[0]!],
+      1.2,
+    );
+    const pads = padStrokes([stroke], 100, 1, [
+      makeRegion(REGION_SQUARE, 0.5),
+    ]);
+    expect(pads).toHaveLength(2);
+    expect(pads.filter((p) => p.stroke)).toHaveLength(1);
+    expect(pads.filter((p) => p.feature)).toHaveLength(1);
+  });
+
+  it("ignores regions with no height, short rings, and LineStrings", () => {
+    const flat = makeRegion(REGION_SQUARE);
+    const zero = makeRegion(REGION_SQUARE, 0);
+    const tiny = makeRegion(REGION_SQUARE.slice(0, 2), 1);
+    const line: LandscapeFeature = {
+      ...makeRegion(REGION_SQUARE, 1),
+      geometry: {
+        ...makeRegion(REGION_SQUARE, 1).geometry,
+        type: "LineString",
+      },
+    };
+    expect(padStrokes([], 100, 1, [flat, zero, tiny, line])).toEqual([]);
+  });
+
+  it("omitting features keeps the ink-only call site unchanged", () => {
+    const stroke = makeStroke([...REGION_SQUARE, REGION_SQUARE[0]!], 1.2);
+    expect(padStrokes([stroke], 100, 1)).toHaveLength(1);
   });
 
   it("rejects open strokes, zero heights, and short outlines", () => {

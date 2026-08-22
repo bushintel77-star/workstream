@@ -15,15 +15,26 @@
  *     diff < 0 → cut  (pad sits below the surface — excavate down)
  *   real m³ = (|diff| / VERTICAL_SCALE) × cellArea
  *
- * This module is also the single definition of "what is a pad": a closed
- * stroke carrying a positive extrude_height_m (padStrokes below). The scene
- * renderer (EarthworksLayer) and the DOM readout (EarthworksCard) both use
- * it, so the volumes on screen always match the HUD.
+ * This module is also the single definition of "what is a pad" (padStrokes
+ * below), and it recognises TWO sources:
+ *
+ *   1. a closed sketch stroke carrying a positive extrude_height_m — the
+ *      freehand drag-up gesture, earthworks' original and still-live input;
+ *   2. a Polygon LandscapeFeature carrying a positive extrude_height_m — a
+ *      region drawn with the Area drafting tool and then given a height.
+ *
+ * Both exist because creation and elevation are separate concerns: Area owns
+ * creating a region, height is an edit on one. Persisting an Area as a feature
+ * without teaching this module about features would have made Area pads
+ * invisible to cut/fill — a silent regression against the freehand behaviour
+ * (docs/precision-drafting-tools-spec.md §8.1). The scene renderer
+ * (EarthworksLayer) and the DOM readout (EarthworksCard) both call
+ * padStrokes(), so the volumes on screen always match the HUD.
  *
  * Binding: docs/GOLD-STANDARD-2026.md §3 Phase 2 (Vertical Truth consumers)
  */
 
-import type { CanvasStroke } from "@workstream/contracts";
+import type { CanvasStroke, LandscapeFeature } from "@workstream/contracts";
 import { pctToWorld } from "./coordTransform";
 import { VERTICAL_SCALE } from "./terrainMath";
 
@@ -60,9 +71,14 @@ export function pointInPolygonXZ(
   return inside;
 }
 
-/** A design pad — a closed, extruded sketch stroke in world space. */
+/** A design pad — a closed, elevated footprint in world space. */
 export interface PadStroke {
-  stroke: CanvasStroke;
+  /** Stable pad id — the source stroke id or the source feature id. */
+  id: string;
+  /** Set when the pad came from an extruded sketch stroke. */
+  stroke?: CanvasStroke;
+  /** Set when the pad came from a region carrying a height. */
+  feature?: LandscapeFeature;
   /** Footprint polygon in world metres [{x, z}]. */
   worldXZ: Array<{ x: number; z: number }>;
   /** Pad top height in world (render) metres — the extrusion depth. */
@@ -70,15 +86,24 @@ export interface PadStroke {
 }
 
 /**
- * Select + convert the pad strokes from the shared ink layer.
- * A pad = closed (first↔last within CLOSED_EPSILON_M) with extrude_height_m
- * > 0. Auto-closed strokes re-append their first point, so committed pads
- * match exactly; the epsilon also tolerates hand-drawn near-closures.
+ * Select + convert every design pad in the document.
+ *
+ * A stroke pad = closed (first↔last within CLOSED_EPSILON_M) with
+ * extrude_height_m > 0. Auto-closed strokes re-append their first point, so
+ * committed pads match exactly; the epsilon also tolerates hand-drawn
+ * near-closures.
+ *
+ * A feature pad = a Polygon LandscapeFeature (≥3 vertices, closed by
+ * definition — the ring is not stored with a duplicated last point) with
+ * extrude_height_m > 0.
+ *
+ * `features` is optional so existing callers that only have ink keep working.
  */
 export function padStrokes(
   strokes: CanvasStroke[],
   scaleM: number,
   boardAspect: number,
+  features: LandscapeFeature[] = [],
 ): PadStroke[] {
   const pads: PadStroke[] = [];
   for (const stroke of strokes) {
@@ -97,8 +122,28 @@ export function padStrokes(
     const gap = Math.hypot(last.x - first.x, last.z - first.z);
     if (gap > CLOSED_EPSILON_M) continue;
 
-    pads.push({ stroke, worldXZ, heightM });
+    pads.push({ id: stroke.id, stroke, worldXZ, heightM });
   }
+
+  for (const feature of features) {
+    const heightM = feature.extrude_height_m ?? 0;
+    if (heightM <= 0) continue;
+    if (feature.geometry.type !== "Polygon") continue;
+    const ring = feature.geometry.points;
+    if (ring.length < 3) continue;
+
+    const worldXZ = ring.map((v) => {
+      const [x, z] = pctToWorld(
+        { x: v.pct.x_pct, y: v.pct.y_pct },
+        scaleM,
+        boardAspect,
+      );
+      return { x, z };
+    });
+
+    pads.push({ id: feature.id, feature, worldXZ, heightM });
+  }
+
   return pads;
 }
 

@@ -128,6 +128,16 @@ export const LandscapeFeatureSchema = z.object({
   material_fill: MaterialFillSchema.optional(),
   procedural_scatter_contents: ProceduralScatterSchema.optional(),
   labor_profile: LaborProfileSchema.optional(),
+  /**
+   * Pad height above existing grade (metres) for a Polygon region that has
+   * been given an elevation. Mirrors `CanvasStroke.extrude_height_m`: height
+   * is a PROPERTY of a region, set as an edit, never a second way to draw one
+   * (docs/precision-drafting-tools-spec.md §8.1). A region carrying it is a
+   * cut/fill pad — `cutFill.padStrokes()` is the single definition of "pad"
+   * and reads both strokes and features. Optional / absent = flat region, so
+   * no migration and no existing feature silently becomes earthworks.
+   */
+  extrude_height_m: z.number().positive().optional(),
 });
 export type LandscapeFeature = z.infer<typeof LandscapeFeatureSchema>;
 
