@@ -72,16 +72,18 @@
   color: var(--hero-copy);
   background: linear-gradient(145deg, rgb(22 25 28 / 78%), rgb(15 17 20 / 60%));
   border: 1px solid rgb(246 244 239 / 24%);
-  border-radius: 22px;
+  border-radius: var(--r-2xl);
   box-shadow: 0 20px 55px rgb(0 0 0 / 28%), inset 0 1px 0 rgb(255 255 255 / 10%);
   backdrop-filter: blur(8px);
   pointer-events: none;
 }
 
+/* The board's own chrome sits above the drawing: the svg keeps
+   overflow: visible so leader-lined annotations can reach past its box. */
 .siteAnalysisHeader,
 .siteAnalysisFooter {
   position: relative;
-  z-index: 1;
+  z-index: var(--ws-z-chrome);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -132,18 +134,16 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* The underlay's fade lives in the soften filter's alpha slope
+   (HeroSiteAnalysisOverlay), and the grid's in its own stroke alpha, so
+   neither needs a second raw opacity step on top. */
 .siteAnalysisAerial {
-  opacity: 0.52;
   mix-blend-mode: screen;
-}
-
-.siteAnalysisGrid {
-  opacity: 0.42;
 }
 
 .siteAnalysisGridLine {
   fill: none;
-  stroke: rgb(246 244 239 / 14%);
+  stroke: rgb(246 244 239 / 6%);
   stroke-width: 1;
 }
 
@@ -769,7 +769,6 @@
     width: calc(100% - 32px);
     height: min(34vh, 300px);
     padding: 12px 14px 10px;
-    border-radius: 16px;
   }
 
   .siteAnalysisAnnotation {

@@ -120,10 +120,12 @@ export function HeroSiteAnalysisOverlay({
           <pattern id="hero-analysis-grid" width="34" height="34" patternUnits="userSpaceOnUse">
             <path d="M 34 0 L 0 0 0 34" className={css.siteAnalysisGridLine} />
           </pattern>
+          {/* feFuncA carries the underlay's whole fade — the aerial deliberately
+              has no CSS opacity on top of it. */}
           <filter id="hero-analysis-soften" x="-10%" y="-10%" width="120%" height="120%">
             <feColorMatrix type="saturate" values="0.35" />
             <feComponentTransfer>
-              <feFuncA type="linear" slope="0.68" />
+              <feFuncA type="linear" slope="0.354" />
             </feComponentTransfer>
           </filter>
         </defs>
@@ -138,7 +140,7 @@ export function HeroSiteAnalysisOverlay({
           className={css.siteAnalysisAerial}
           filter="url(#hero-analysis-soften)"
         />
-        <rect x={frame.minX} y={frame.minY} width={frame.width} height={frame.height} fill="url(#hero-analysis-grid)" className={css.siteAnalysisGrid} />
+        <rect x={frame.minX} y={frame.minY} width={frame.width} height={frame.height} fill="url(#hero-analysis-grid)" />
         <path d={`M ${points(boundary.polygon)} Z`} className={css.siteAnalysisBoundary} />
         {boundary.building && boundary.building.length >= 3 ? (
           <path d={`M ${points(boundary.building)} Z`} className={css.siteAnalysisBuilding} />
