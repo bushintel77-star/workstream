@@ -51,8 +51,11 @@ export interface NibSpec {
   kind: NibKind;
   /** Operator-facing label (sentence case). */
   label: string;
-  /** Minimal line-weight glyph for the floating nib palette. */
-  glyph: string;
+  /**
+   * Palette label. The nib swatch column is 42px wide, so this must stay
+   * short enough not to ellipsize (the tool rail's text contract).
+   */
+  shortLabel: string;
   /** Spatial & CAD purpose (tooltip line). */
   purpose: string;
   /** Base stroke width in CSS px (LineMaterial linewidth). */
@@ -76,7 +79,7 @@ export const NIBS: Record<NibKind, NibSpec> = {
   "graphite-6b": {
     kind: "graphite-6b",
     label: "6B graphite",
-    glyph: "◐",
+    shortLabel: "6B",
     purpose:
       "Soft site gesture lines, tree canopy masses, contour shading — tilt shades the flat edge, pressure drives grain & softness",
     baseWidthPx: 3.5,
@@ -97,7 +100,7 @@ export const NIBS: Record<NibKind, NibSpec> = {
   "ink-03": {
     kind: "ink-03",
     label: "0.3mm ink",
-    glyph: "─",
+    shortLabel: "Ink",
     purpose:
       "Crisp boundary tracing, exact setbacks, dimension offsets — pressure-invariant monoline, velocity adds bleed",
     baseWidthPx: 1.5,
@@ -118,7 +121,7 @@ export const NIBS: Record<NibKind, NibSpec> = {
   "chisel-marker": {
     kind: "chisel-marker",
     label: "Chisel marker",
-    glyph: "▮",
+    shortLabel: "Chisel",
     purpose:
       "Rapid surface zone fills (paving, lawn, decking) — tilt locks the nib edge, speed drives saturation and overlap banding",
     baseWidthPx: 9,
@@ -139,7 +142,7 @@ export const NIBS: Record<NibKind, NibSpec> = {
   stipple: {
     kind: "stipple",
     label: "Stipple",
-    glyph: "⠂",
+    shortLabel: "Stipple",
     purpose:
       "Indicative soil, gravel, mulch textures and soft lawn edges — pressure sets dot density, altitude scales the dot radius",
     baseWidthPx: 2,

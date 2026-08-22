@@ -24,7 +24,7 @@ import {
   CANVAS_MODES,
   type CanvasMode,
 } from "../../../lib/canvas-mode";
-import { lockReasonForMode } from "../../../lib/modeLockCopy";
+import { modeLockAction } from "../../../lib/modeLockCopy";
 import { Button } from "./Button";
 
 /** Meta surfaces that open as tab panels (Fit rides the store instead). */
@@ -62,12 +62,20 @@ export function PerimeterTabStrip({
   unlocked,
   onNativeMode,
   metaTabs,
+  surveyProgress,
   trailing,
 }: {
   activeMode: CanvasMode;
   unlocked: ReadonlySet<CanvasMode>;
   onNativeMode: (mode: CanvasMode) => void;
   metaTabs: MetaTabDef[];
+  /**
+   * Site-capture progress, shown only while the survey is incomplete. Reads
+   * the same derivation as the Survey setup panel (`surveySetup.ts`), so the
+   * two can never disagree on the count. Omit once complete — a permanent
+   * "5/5" is chrome with nothing left to say.
+   */
+  surveyProgress?: { done: number; total: number } | null;
   /** Status cell: live stats + save chip + measure readout. */
   trailing?: ReactNode;
 }) {
@@ -110,22 +118,26 @@ export function PerimeterTabStrip({
           const active = id === activeMode && !locked;
 
           if (locked) {
-            const reason = lockReasonForMode(id, unlocked);
+            const lock = modeLockAction(id, unlocked);
             return (
-              <span
+              <button
                 key={id}
+                type="button"
                 data-testid={`mode-tab-${id}`}
                 aria-disabled="true"
-                title={reason ?? "Locked"}
+                aria-label={`${label} locked: ${lock?.reason ?? "Complete the previous stage first."}`}
+                title={`${lock?.reason ?? "Complete the previous stage first."} ${lock?.actionLabel ?? ""}`}
+                onClick={() => lock && onNativeMode(lock.destination)}
                 style={{
                   ...chipBase,
                   color: "var(--gs-ink-secondary)",
                   border: "1px solid var(--gs-line-soft)",
-                  cursor: "not-allowed",
+                  cursor: "help",
+                  background: "transparent",
                 }}
               >
                 {label}
-              </span>
+              </button>
             );
           }
 
@@ -149,6 +161,17 @@ export function PerimeterTabStrip({
         aria-label="Canvas surfaces"
         style={{ ...glassSegment, flex: "0 0 auto" }}
       >
+        {surveyProgress ? (
+          <Button
+            data-testid="survey-progress"
+            aria-label={`Survey setup ${surveyProgress.done} of ${surveyProgress.total} complete — open Survey`}
+            onClick={() => onNativeMode("survey")}
+            active={activeMode === "survey"}
+            style={{ fontFamily: "var(--font-tech)" }}
+          >
+            Survey · {surveyProgress.done}/{surveyProgress.total}
+          </Button>
+        ) : null}
         {metaTabs.map((t) => (
           <Button
             key={t.id}

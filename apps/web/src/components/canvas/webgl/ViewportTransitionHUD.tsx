@@ -60,11 +60,19 @@ function quantiseTilt(deg: number): number {
 export interface ViewportTransitionHUDProps {
   activeMode: string;
   writeLiveRig?: (rig: StudioCameraRig) => void;
+  /**
+   * Icon-only preset group, no gauge and no labels. Survey mode has nothing
+   * to project yet, so the full capsule is dead weight there — and at narrow
+   * viewports the full capsule slid left into the drawing. The presets still
+   * work; only the projection gauge is dropped.
+   */
+  compact?: boolean;
 }
 
 export function ViewportTransitionHUD({
   activeMode,
   writeLiveRig,
+  compact = false,
 }: ViewportTransitionHUDProps) {
   const tiltQuant = useStudioStore((s) => quantiseTilt(s.liveRig.tiltDeg));
   const isPresentation = PRESENTATION_MODES.has(activeMode);
@@ -86,6 +94,60 @@ export function ViewportTransitionHUD({
     0,
     Math.min(100, (tiltQuant / TILT_MAX) * 100),
   );
+
+  const presets = (
+    <>
+      <PresetButton
+        label="Plan"
+        compact={compact}
+        active={tiltQuant < 5}
+        onClick={() => write({ tiltDeg: TILT_PLAN })}
+        aria-label="Lock to orthographic plan view (1)"
+        icon={<CadPlanIcon />}
+      />
+      <PresetButton
+        label="Orbit"
+        compact={compact}
+        active={tiltQuant >= 50 && tiltQuant < 65}
+        onClick={() => write({ tiltDeg: TILT_PERSPECTIVE })}
+        aria-label="Snap to perspective oblique orbit (2)"
+        icon={<PerspectiveIcon />}
+      />
+      <PresetButton
+        label="Garden"
+        compact={compact}
+        active={tiltQuant >= 70 && tiltQuant <= 82}
+        onClick={() => write({ tiltDeg: TILT_GARDEN, zoom: TILT_GARDEN_ZOOM })}
+        aria-label="Snap to garden eye-level viewpoint (3)"
+        icon={<GardenIcon />}
+      />
+    </>
+  );
+
+  if (compact) {
+    return (
+      <div
+        data-testid="viewport-transition-hud"
+        data-compact="true"
+        data-lens={isPresentation ? "dark" : "frost"}
+        role="group"
+        aria-label="Viewport projection presets"
+        style={{
+          display: "flex",
+          alignItems: "stretch",
+          gap: "var(--gs-space-2)",
+          padding: 4,
+          borderRadius: "var(--gs-radius-lg)",
+          fontFamily: "var(--font-ui)",
+          color: "var(--gs-ink)",
+          pointerEvents: "auto",
+        }}
+        className={`vth-root ${isPresentation ? "vth-dark" : "vth-frost"}`}
+      >
+        {presets}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -257,27 +319,7 @@ export function ViewportTransitionHUD({
           marginTop: 4,
         }}
       >
-        <PresetButton
-          label="Plan"
-          active={tiltQuant < 5}
-          onClick={() => write({ tiltDeg: TILT_PLAN })}
-          aria-label="Lock to orthographic plan view (1)"
-          icon={<CadPlanIcon />}
-        />
-        <PresetButton
-          label="Orbit"
-          active={tiltQuant >= 50 && tiltQuant < 65}
-          onClick={() => write({ tiltDeg: TILT_PERSPECTIVE })}
-          aria-label="Snap to perspective oblique orbit (2)"
-          icon={<PerspectiveIcon />}
-        />
-        <PresetButton
-          label="Garden"
-          active={tiltQuant >= 70 && tiltQuant <= 82}
-          onClick={() => write({ tiltDeg: TILT_GARDEN, zoom: TILT_GARDEN_ZOOM })}
-          aria-label="Snap to garden eye-level viewpoint (3)"
-          icon={<GardenIcon />}
-        />
+        {presets}
       </div>
     </div>
   );
@@ -288,6 +330,7 @@ function PresetButton(props: {
   active: boolean;
   onClick: () => void;
   icon: React.ReactNode;
+  compact?: boolean;
   "aria-label": string;
 }) {
   return (
@@ -299,12 +342,12 @@ function PresetButton(props: {
       data-active={props.active}
       className="vth-preset"
       style={{
-        flex: 1,
+        flex: props.compact ? "0 0 auto" : 1,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         gap: "var(--gs-space-2)",
-        padding: "7px 4px 5px",
+        padding: props.compact ? "5px" : "7px 4px 5px",
         border: "1px solid color-mix(in srgb, currentColor 15%, transparent)",
         borderRadius: "var(--gs-radius-lg)",
         background: props.active
@@ -321,7 +364,7 @@ function PresetButton(props: {
       }}
     >
       <span style={{ width: 22, height: 22, display: "block" }}>{props.icon}</span>
-      <span>{props.label}</span>
+      {props.compact ? null : <span>{props.label}</span>}
     </button>
   );
 }

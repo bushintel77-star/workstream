@@ -42,7 +42,13 @@ const STATUS_CONFIG: Record<
 /** Fixed width — fits the longest label ("Retrying…") + dot + padding. */
 const CHIP_MIN_WIDTH = 92;
 
-export const SaveStatusChip = memo(function SaveStatusChip() {
+export const SaveStatusChip = memo(function SaveStatusChip({
+  onRetry,
+  onRefresh,
+}: {
+  onRetry?: () => void;
+  onRefresh?: () => void;
+}) {
   const saveStatus = useStudioStore((s) => s.saveStatus);
   const saveErrorKind = useStudioStore((s) => s.saveErrorKind);
   const savedTick = useStudioStore((s) => s.savedTick);
@@ -62,6 +68,16 @@ export const SaveStatusChip = memo(function SaveStatusChip() {
       : saveStatus === "error" && saveErrorKind === "unreachable"
         ? "Offline"
         : savedLabel;
+  const action = saveStatus === "error"
+    ? saveErrorKind === "stale_client"
+      ? onRefresh
+      : onRetry
+    : undefined;
+  const actionLabel = saveStatus === "error"
+    ? saveErrorKind === "stale_client"
+      ? "Refresh safely"
+      : "Retry save"
+    : undefined;
 
   return (
     <div
@@ -100,6 +116,24 @@ export const SaveStatusChip = memo(function SaveStatusChip() {
         }}
       />
       <span style={{ textAlign: "center", flex: 1 }}>{displayLabel}</span>
+      {action && actionLabel ? (
+        <button
+          type="button"
+          aria-label={actionLabel}
+          onClick={action}
+          style={{
+            border: 0,
+            padding: 0,
+            background: "transparent",
+            color: config.color,
+            font: "inherit",
+            textDecoration: "underline",
+            cursor: "pointer",
+          }}
+        >
+          {saveErrorKind === "stale_client" ? "Refresh" : "Retry"}
+        </button>
+      ) : null}
 
       {/* Keyframes — injected once. The id ensures no duplicate if re-rendered. */}
       <style>{`

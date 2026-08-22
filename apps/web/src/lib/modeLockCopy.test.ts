@@ -1,33 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { unlockedModes } from "./canvas-mode";
-import { lockReasonForMode, MODE_LOCK_COPY } from "./modeLockCopy";
+import { lockReasonForMode, modeLockAction, MODE_LOCK_COPY } from "./modeLockCopy";
 
-describe("modeLockCopy", () => {
-  it("matches Tier-1 2026 lock strings for gated modes", () => {
-    const open = unlockedModes({
-      hasAerial: false,
-      hasSketch: false,
-      hasCad: false,
-      hasQuote: false,
+describe("mode lock copy", () => {
+  it("returns actionable survey prerequisite metadata", () => {
+    const open = unlockedModes({ hasAerial: false, hasSketch: false, hasCad: false, hasQuote: false });
+    expect(modeLockAction("cad", open)).toEqual({
+      reason: MODE_LOCK_COPY.surveyGate,
+      destination: "survey",
+      actionLabel: "Open Survey",
     });
-    expect(lockReasonForMode("sketch", open)).toBe(MODE_LOCK_COPY.surveyGate);
-    expect(lockReasonForMode("cad", open)).toBe(MODE_LOCK_COPY.surveyGate);
-    expect(lockReasonForMode("elevation", open)).toBe(MODE_LOCK_COPY.surveyGate);
-    expect(lockReasonForMode("garden", open)).toBe(MODE_LOCK_COPY.surveyGate);
-    expect(lockReasonForMode("quote", open)).toBe(MODE_LOCK_COPY.quoteGate);
-    expect(lockReasonForMode("present", open)).toBe(MODE_LOCK_COPY.presentGate);
-    expect(lockReasonForMode("share", open)).toBe(MODE_LOCK_COPY.shareGate);
-    expect(lockReasonForMode("survey", open)).toBeNull();
   });
 
-  it("clears quote lock after CAD accept progress", () => {
-    const open = unlockedModes({
-      hasAerial: true,
-      hasSketch: true,
-      hasCad: true,
-      hasQuote: false,
-    });
-    expect(lockReasonForMode("quote", open)).toBeNull();
-    expect(lockReasonForMode("share", open)).toBe(MODE_LOCK_COPY.shareGate);
+  it("routes quote and share locks to their prerequisites", () => {
+    const open = unlockedModes({ hasAerial: true, hasSketch: true, hasCad: false, hasQuote: false });
+    expect(modeLockAction("quote", open)?.destination).toBe("cad");
+    expect(modeLockAction("share", open)?.destination).toBe("quote");
+  });
+
+  it("keeps the existing reason API stable", () => {
+    const open = unlockedModes({ hasAerial: false, hasSketch: false, hasCad: false, hasQuote: false });
+    expect(lockReasonForMode("sketch", open)).toBe(MODE_LOCK_COPY.surveyGate);
+    expect(lockReasonForMode("survey", open)).toBeNull();
   });
 });

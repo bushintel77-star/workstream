@@ -3,9 +3,9 @@ import type { PctPoint } from "../../geometry";
 
 /**
  * Survey completeness rows — the five items that must be captured before the
- * base is ready for CAD. Shared between the SurveyChecklist panel (right data
- * lane) and the compact progress pill in the frame band so the two can never
- * disagree on the count.
+ * base is ready for CAD. This is the completion authority; the WebGL Survey
+ * setup panel and its chrome progress pill both read it through
+ * `webgl/surveySetup.ts`, so they can never disagree on the count.
  */
 export type SurveyChecklistRow = {
   label: string;
@@ -34,15 +34,3 @@ export function surveyChecklistRows(input: {
   ];
 }
 
-export function surveyChecklistProgress(input: {
-  boundary: PctPoint[];
-  building: PctPoint[];
-  items: StudioItem[];
-  levels: SpotLevel[];
-  services: PctPoint[][];
-  easements?: PctPoint[][];
-}): { done: number; total: number; complete: boolean } {
-  const rows = surveyChecklistRows(input);
-  const done = rows.filter((r) => r.ok).length;
-  return { done, total: rows.length, complete: done === rows.length };
-}

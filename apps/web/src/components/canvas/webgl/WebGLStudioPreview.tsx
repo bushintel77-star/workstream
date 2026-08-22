@@ -87,12 +87,15 @@ import {
   nearestPlacementId,
 } from "./selectionPick";
 import { suggestedMode, unlockedModes, type CanvasMode, type CanvasProgress } from "../../../lib/canvas-mode";
+import { interactionGuidance } from "./interactionGuidance";
 import { StudioShortcutsHelp } from "./StudioShortcutsHelp";
 import { resolveStudioShortcut } from "./studioShortcuts";
 import { SiteContextBadges } from "../../SiteContextBadges";
 import { GardenViewpointStrip } from "../handoff/features/viewpoint/GardenViewpointStrip";
 import { viewpointYawDeg, type GardenViewpointLook } from "../handoff/features/tilt/tiltMath";
-import { SurveyChecklist } from "../handoff/features/survey/SurveyChecklist";
+import { SurveySetupPanel } from "./SurveySetupPanel";
+import { buildSurveySetup } from "./surveySetup";
+import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { ShareSurface } from "../handoff/features/share/ShareSurface";
 import { PresentSurface } from "../handoff/features/present/PresentSurface";
 
@@ -265,7 +268,6 @@ export function WebGLStudioPreview({
     sketchMode || measureActive || trenchTool !== null || zoneTool !== null || armedSymbolId !== null
       ? "crosshair"
       : "grab";
-
   useEffect(() => {
     const probe = document.createElement("canvas");
     setWebglAvailable(
@@ -414,6 +416,7 @@ export function WebGLStudioPreview({
   const storePlacements = useStudioStore((s) => s.placements);
   const storeFeatures = useStudioStore((s) => s.features);
   const splitView = useStudioStore((s) => s.splitView);
+  const marqueeActive = useStudioStore((s) => s.marqueeActive);
   const items = useMemo(() => {
     const hydrated = featuresOntoItems(
       placementsToItems(storePlacements),
@@ -621,6 +624,53 @@ export function WebGLStudioPreview({
   const unlocked = useMemo(() => unlockedModes(liveProgress), [liveProgress]);
   const nextMode = useMemo(() => suggestedMode(liveProgress), [liveProgress]);
 
+  /*
+   * The full projection capsule needs ~1021px of viewport to sit between the
+   * nib palette's right edge (403px) and the right dock (380px from the right
+   * edge). Below that it slid left across the palette — 89x47px of overlap at
+   * 960px wide. Under the threshold it renders as the icon-only preset group,
+   * which fits the remaining gap at every viewport the collision spec walks.
+   */
+  const narrowViewport = useMediaQuery("(max-width: 1100px)");
+  /* Survey has nothing to project yet, so it always gets the compact form. */
+  const hudCompact = activeMode === "survey" || narrowViewport;
+
+  // Survey capture progress — ONE derivation feeding both the setup panel and
+  // the chrome pill, so the two can never disagree on "X of 5". Completion is
+  // read off real project data (see surveySetup.ts), never a manual tick.
+  const surveySetup = useMemo(
+    () =>
+      buildSurveySetup({
+        boundary: boundaryPct.map((p) => ({ x: p.x, y: p.y })),
+        building: (buildingPct ?? []).map((p) => ({ x: p.x, y: p.y })),
+        items: studioItems,
+        levels: levels.map((l) => ({
+          x: l.x_pct,
+          y: l.y_pct,
+          z: l.z_m,
+          provenance:
+            l.source === "vicmap_contour" ? "vicmap_contour" : "authored",
+        })),
+        services: bydaAssets.map((a) =>
+          a.ring.map((p) => ({ x: p.x_pct, y: p.y_pct })),
+        ),
+        easements: (easementsPct ?? []).map((ring) =>
+          ring.map((p) => ({ x: p.x, y: p.y })),
+        ),
+      }),
+    [boundaryPct, buildingPct, studioItems, levels, bydaAssets, easementsPct],
+  );
+  const guidance = interactionGuidance({
+    activeMode,
+    sketchMode,
+    measureActive,
+    armedSymbolId,
+    marqueeActive,
+    trenchTool,
+    zoneTool,
+    splitView,
+  });
+
   // Studio keyboard map — viewport 1–4, Shift+digit modes, letter tools, ?.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -718,7 +768,7 @@ export function WebGLStudioPreview({
     }),
     [storePlacements, strokes, storeTrenches, storeZones, storePhotoElevations, storeFeatures],
   );
-  useStudioAutosave(projectId, autosaveDoc);
+  const { retrySave } = useStudioAutosave(projectId, autosaveDoc);
   useBeforeUnloadGuard();
 
   const stats = useMemo(
@@ -1095,10 +1145,10 @@ export function WebGLStudioPreview({
               gap: "var(--gs-space-4)",
               padding: "5px 10px",
               borderRadius: "var(--gs-radius-pill)",
-              background: "var(--gs-glass-veil)",
-              backdropFilter: "blur(var(--gs-blur))",
-              WebkitBackdropFilter: "blur(var(--gs-blur))",
-              border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+              background: "var(--cf-glass-dark)",
+              backdropFilter: "blur(var(--cf-glass-dark-blur))",
+              WebkitBackdropFilter: "blur(var(--cf-glass-dark-blur))",
+              border: "1px solid var(--cf-glass-dark-border)",
               boxShadow: "var(--gs-shadow-1)",
               flex: "0 0 auto",
               maxWidth: 260,
@@ -1112,7 +1162,7 @@ export function WebGLStudioPreview({
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-md)",
                 fontWeight: 600,
-                color: "var(--gs-ink-strong)",
+                color: "#f5f5f7",
                 letterSpacing: "0.01em",
               }}
             >
@@ -1123,7 +1173,9 @@ export function WebGLStudioPreview({
                 fontFamily: "var(--font-technical-mono)",
                 fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.05em",
-                color: "var(--gs-ink-muted)",
+                // Dim ink on --cf-glass-dark. 72% lands at 4.06:1 — under AA
+                // at this size; 88% clears it.
+                color: "color-mix(in srgb, #ffffff 88%, transparent)",
               }}
             >
               {projectAddress.split(",")[1]?.trim() ?? "VIC"}
@@ -1143,7 +1195,7 @@ export function WebGLStudioPreview({
                 fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                color: "var(--gs-primary-ink)",
+                color: "#ffffff",
               }}
             >
               {activeMode}
@@ -1163,6 +1215,11 @@ export function WebGLStudioPreview({
           activeMode={activeMode}
           unlocked={unlocked}
           onNativeMode={onNativeMode}
+          surveyProgress={
+            surveySetup.complete
+              ? null
+              : { done: surveySetup.done, total: surveySetup.total }
+          }
           metaTabs={[
             {
               id: "studio",
@@ -1237,7 +1294,10 @@ export function WebGLStudioPreview({
                 )}
                 {" "}| {stats.scaleM.toFixed(0)}m
               </span>
-              <SaveStatusChip />
+              <SaveStatusChip
+                onRetry={retrySave}
+                onRefresh={() => window.location.reload()}
+              />
               <MeasureReadoutChip scaleM={scaleM} boardAspect={boardAspect} />
             </>
           }
@@ -1261,17 +1321,38 @@ export function WebGLStudioPreview({
           global HUD would misreport the locked half. */}
       {!splitView ? (
       <div
-        style={{
-          position: "absolute",
-          top: 70,
-          right: 400,
-          pointerEvents: "none",
-          zIndex: "var(--cf-z-chrome)",
-        }}
+        style={
+          hudCompact
+            ? {
+                /*
+                 * Compact capsule sits on the 152px content line the rail and
+                 * the right dock already use. Measured clear at 960x640: the
+                 * strip wraps to 101px tall (so top:70 lands inside it), the
+                 * nib palette ends at x=403, and the dock starts at x=580 —
+                 * this lands at x=440..560, y=152..196. The bottom-left corner
+                 * the brief suggested is not safe: the asset dock occupies it
+                 * whenever assets are open, including from the Survey panel's
+                 * own "existing trees" row.
+                 */
+                position: "absolute",
+                top: 152,
+                right: 400,
+                pointerEvents: "none",
+                zIndex: "var(--cf-z-chrome)",
+              }
+            : {
+                position: "absolute",
+                top: 70,
+                right: 400,
+                pointerEvents: "none",
+                zIndex: "var(--cf-z-chrome)",
+              }
+        }
       >
         <ViewportTransitionHUD
           activeMode={activeMode}
           writeLiveRig={writeLiveRig}
+          compact={hudCompact}
         />
       </div>
       ) : null}
@@ -1345,64 +1426,19 @@ export function WebGLStudioPreview({
 
           if (activeMode === "survey") {
             body = (
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "var(--gs-space-3)",
-                  }}
-                >
-                  <Button
-                    variant="cta"
-                    data-testid="import-site-truth"
-                    disabled={truthBusy}
-                    onClick={() => void runSiteTruthImport()}
-                    style={{
-                      padding: "6px 10px",
-                      // While tracing: wait cursor + full opacity (the
-                      // cta disabled dim is for the sketch trio).
-                      cursor: truthBusy ? "wait" : "pointer",
-                      opacity: truthBusy ? 1 : undefined,
-                    }}
-                  >
-                    {truthBusy ? "Tracing Vicmap…" : "Import site truth (Vicmap)"}
-                  </Button>
-                  {truthMsg ? (
-                    <p
-                      role="status"
-                      data-testid="site-truth-result"
-                      style={{
-                        margin: 0,
-                        fontSize: "var(--gs-font-xs)",
-                        color: "var(--gs-ink-secondary)",
-                      }}
-                    >
-                      {truthMsg}
-                    </p>
-                  ) : null}
-                </div>
-                <SurveyChecklist
-                  boundary={boundaryPct}
-                  building={buildingPct ?? []}
-                  items={studioItems}
-                  levels={levels.map((l) => ({
-                    x: l.x_pct,
-                    y: l.y_pct,
-                    z: l.z_m,
-                    provenance:
-                      l.source === "vicmap_contour" ? "vicmap_contour" : "authored",
-                  }))}
-                  services={bydaAssets.map((a) =>
-                    a.ring.map((p) => ({ x: p.x_pct, y: p.y_pct })),
-                  )}
-                  easements={(easementsPct ?? []).map((ring) =>
-                    ring.map((p) => ({ x: p.x, y: p.y })),
-                  )}
-                  onClose={() => setActiveMode("sketch")}
-                />
-              </div>
+              <SurveySetupPanel
+                setup={surveySetup}
+                importBusy={truthBusy}
+                importMessage={truthMsg}
+                onImport={() => void runSiteTruthImport()}
+                onOpenAssets={() => {
+                  useStudioStore.getState().setAssetsOpen(true);
+                }}
+                onContinue={() => onNativeMode("sketch")}
+                continueEnabled={unlocked.has("sketch")}
+              />
             );
+            dismiss = () => setActiveMode("sketch");
           } else if (activeMode === "garden") {
             body = (
               <GardenViewpointStrip
@@ -1493,6 +1529,7 @@ export function WebGLStudioPreview({
                       background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
                       // --gs-primary on its own veil reads 4.08:1 at 11px —
                       // below AA; the cobalt ink token clears 6:1 on the veil.
+                      // White reads 1.26:1 on this light veil — do not use it.
                       color: "var(--gs-primary-ink)",
                     }}
                   >
@@ -1601,7 +1638,10 @@ export function WebGLStudioPreview({
                     | {stats.scaleM.toFixed(0)} m
                   </span>
                 </div>
-                <SaveStatusChip />
+                <SaveStatusChip
+                  onRetry={retrySave}
+                  onRefresh={() => window.location.reload()}
+                />
                 <nav
                   aria-label="Project destinations"
                   style={{ display: "flex", gap: "var(--gs-space-10)" }}
@@ -2236,6 +2276,12 @@ export function WebGLStudioPreview({
         </div>
       ) : null}
 
+      {/* Survey locate state — the canvas is genuinely empty until the title
+          boundary lands, so name the property instead of showing a flat fill. */}
+      {activeMode === "survey" && boundaryPct.length < 3 ? (
+        <SurveyLocateState address={projectAddress} />
+      ) : null}
+
       {/* First-run controls hint — dismissed for the session once seen. */}
       <FirstRunHint />
       <WorkflowGuideChip
@@ -2244,6 +2290,7 @@ export function WebGLStudioPreview({
         unlocked={unlocked}
         onMode={onNativeMode}
       />
+      <InteractionGuidanceChip guidance={guidance} />
 
       {/* Dev-only z-tier hover HUD — renders NOTHING outside dev or
           without the `?cfz-inspect=1` URL flag. See CfzTierInspector.tsx
@@ -2254,6 +2301,72 @@ export function WebGLStudioPreview({
   );
 }
 
+
+/**
+ * Survey locate state — shown while the title boundary is still missing.
+ *
+ * The canvas has nothing to draw before the import lands, and a bare fill
+ * reads as a broken screen. This names the property being set up. It is
+ * bounded by the left gutter and the right dock rather than centred on the
+ * whole viewport, so it cannot land under either.
+ */
+function SurveyLocateState({ address }: { address?: string | null }) {
+  return (
+    <div
+      data-testid="survey-locate-state"
+      aria-hidden
+      style={{
+        position: "absolute",
+        left: 72,
+        right: 380,
+        top: 152,
+        bottom: 80,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "var(--gs-space-3)",
+        pointerEvents: "none",
+        zIndex: "var(--cf-z-chrome)",
+        textAlign: "center",
+      }}
+    >
+      <svg
+        width="34"
+        height="34"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--gs-ink-muted)"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" />
+        <circle cx="12" cy="10" r="2.4" />
+      </svg>
+      <span
+        style={{
+          fontFamily: "var(--font-tech)",
+          fontSize: "var(--gs-font-sub)",
+          letterSpacing: "0.02em",
+          color: "var(--gs-ink-secondary)",
+          maxWidth: 320,
+        }}
+      >
+        {address?.trim() ? address : "Locating the property"}
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-ui)",
+          fontSize: "var(--gs-font-xs)",
+          color: "var(--gs-ink-muted)",
+        }}
+      >
+        Import site truth to draw the title boundary
+      </span>
+    </div>
+  );
+}
 
 /**
  * First-run controls hint — one dismissible chip, remembered for the
@@ -2272,9 +2385,11 @@ function FirstRunHint() {
       style={{
         position: "absolute",
         // Clear of the asset dock's full height — at 160 the hint sat on the
-        // dock's chip row and swallowed the Area / Row plant toggles.
-        bottom: 200,
-        left: "50%",
+        // dock's chip row and swallowed the Area / Row plant toggles. Centred
+        // on the free canvas (the dock owns 380px of the right edge) and
+        // stacked below the guidance line, which claims 288.
+        bottom: 244,
+        left: "calc(50% - 190px)",
         transform: "translateX(-50%)",
         display: "flex",
         alignItems: "center",
@@ -2292,7 +2407,7 @@ function FirstRunHint() {
         color: "var(--gs-ink-secondary)",
       }}
     >
-      <span>Wheel = zoom · Drag = pan · 1–4 = view · ? = shortcuts · Ctrl+K = commands</span>
+      <span>Wheel = zoom · Drag = pan · choose a tool to draw or place · ? = shortcuts</span>
       <Button
         variant="text"
         aria-label="Dismiss controls hint"
@@ -2314,6 +2429,61 @@ function FirstRunHint() {
 }
 
 const WORKFLOW_STAGES: CanvasMode[] = ["survey", "sketch", "cad", "quote"];
+
+function InteractionGuidanceChip({
+  guidance,
+}: {
+  guidance: { label: string; detail: string };
+}) {
+  return (
+    <div
+      data-testid="interaction-guidance"
+      role="status"
+      aria-live="polite"
+      style={{
+        position: "absolute",
+        /*
+         * Centred on the FREE canvas, not the viewport: the right dock takes
+         * 380px off the right edge, so a 50% centre crosses it at narrow
+         * widths. Same offset trick the asset dock already uses.
+         */
+        left: "calc(50% - 190px)",
+        /*
+         * Clear of the asset dock, which is 201px tall at 960x640 (top edge at
+         * bottom:213) — not the ~150px a taller viewport suggests. 200 put
+         * this line on the dock's shoulder.
+         */
+        bottom: 288,
+        transform: "translateX(-50%)",
+        display: "flex",
+        alignItems: "baseline",
+        gap: "var(--gs-space-3)",
+        maxWidth: "min(560px, calc(100vw - 32px))",
+        padding: "6px 11px",
+        borderRadius: "var(--gs-radius-pill)",
+        background: "var(--cf-glass-dark)",
+        backdropFilter: "blur(var(--cf-glass-dark-blur))",
+        WebkitBackdropFilter: "blur(var(--cf-glass-dark-blur))",
+        border: "1px solid var(--cf-glass-dark-border)",
+        boxShadow: "var(--gs-shadow-1)",
+        pointerEvents: "none",
+        zIndex: "var(--cf-z-chrome)",
+        fontFamily: "var(--font-ui)",
+        fontSize: "var(--gs-font-xs)",
+        // Dark glass surface — the paper-era secondary ink reads as
+        // dark-on-dark here and fails webgl-contrast-aa. 88% white clears AA
+        // at this size; 72% does not.
+        color: "color-mix(in srgb, #ffffff 88%, transparent)",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+      }}
+    >
+      <strong style={{ color: "#f5f5f7" }}>{guidance.label}</strong>
+      <span>{guidance.detail}</span>
+    </div>
+  );
+}
 
 function WorkflowGuideChip({
   activeMode,
@@ -2361,6 +2531,7 @@ function WorkflowGuideChip({
               variant="text"
               disabled={locked}
               aria-current={here ? "step" : undefined}
+              aria-label={locked ? `${mode} locked. Complete the previous stage first.` : mode}
               data-testid={`workflow-${mode}`}
               onClick={() => onMode(mode)}
               style={{

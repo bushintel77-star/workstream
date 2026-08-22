@@ -148,11 +148,12 @@ test.describe("Canvas-First four-layer z-stack — Survey / Sketch / CAD / Garde
 
     for (const mode of TARGET_MODES) {
       const tab = page.getByTestId(`mode-tab-${mode}`);
-      // A locked tab renders as a <span aria-disabled="true">, not a
-      // <button>. `.click()` would no-op; `.count()`-vs.-tag check skips
-      // the iteration cleanly.
-      const tabTag = await tab.evaluate((el) => el.tagName.toLowerCase());
-      const isLocked = tabTag === "span";
+      // A locked tab is still a <button> — it routes the operator to the
+      // stage that unlocks it (PerimeterTabStrip + modeLockAction), so the
+      // tag name no longer identifies the lock. `aria-disabled="true"` is
+      // the marker. Reading an attribute also keeps this off an in-page
+      // evaluate, which is what starved the main thread on GPU-less runners.
+      const isLocked = (await tab.getAttribute("aria-disabled")) === "true";
       if (isLocked) {
         test.skip(
           true,

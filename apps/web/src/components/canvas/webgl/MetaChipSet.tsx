@@ -3,35 +3,49 @@
 /**
  * Gold Standard 2026 — Vicmap Meta Chip-Set (ambient spatial telemetry).
  *
- * Satellite tags orbiting the title boundary: each chip anchors to a
- * boundary node (B1…Bn) at a fixed screen-pixel offset OUTSIDE the parcel
- * edge it describes, rather than parking in a screen corner or an inspector.
+ * Satellite tags for the title boundary: each chip anchors to a boundary
+ * node (B1…Bn) and is parked outside the parcel by the shared perimeter
+ * annotation solver (`annotationLayout.ts`), which picks the viewport edge
+ * that avoids earlier labels and crossing leaders. A dashed leader ties
+ * every label back to the node it describes.
  *
- * - Ambient resting state: 40% opacity frost capsules, muted ink.
+ * Projection and placement run in `useFrame` and write straight to DOM refs
+ * — the SubsurfaceStudio / GrowthStudio label convention. The camera matrix
+ * mutates without notifying React, so a memo keyed on a quantised zoom
+ * would strand the chips on pan and orbit.
+ *
+ * - Ambient resting state: 40% opacity capsules, muted ink.
  * - Phase-aware illumination: the active canvas mode lights its group to
- *   full strength (survey/cad → cadastral + planning; elevation/garden →
- *   terrain) and dims the rest.
- * - In-place expansion: hover/click unfolds a micro-tooltip at the chip's
- *   origin; it dissolves when the cursor leaves.
+ *   full strength and dims the rest.
+ * - In-place expansion: hover/click unfolds a micro-tooltip.
  *
  * Data is derived, never invented — an absent record renders no chip
  * (zero-mock law). Chips are hidden in present/share (the lens strips
  * technical truth by design).
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import * as THREE from "three";
 import { Html } from "@react-three/drei";
-import { useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { pctToWorld, type PctPoint } from "./coordTransform";
-import { useStudioStore } from "./studioStore";
 import type { MetaChip } from "./metaChips";
 import { cfZPair } from "../cfz";
 import { Button } from "./Button";
+import {
+  layoutPerimeterAnnotations,
+  type AnnotationAnchor,
+} from "./annotationLayout";
 
-/** Screen-pixel offset of the capsule outside the boundary node. */
-const OFFSET_PX = 24;
-/** Chip hover height above the ground (above dims, below slice). */
+/** Chip anchor height above the ground (above dims, below slice). */
 const CHIP_Y = 0.09;
+/** Label box the solver reserves per chip, in screen pixels. */
+const LABEL_WIDTH = 170;
+const LABEL_HEIGHT = 30;
+/** Keep the ring legible — the highest-priority records win the frame. */
+const MAX_VISIBLE = 8;
+/** Viewport inset the solver parks labels within. */
+const EDGE_PADDING = 24;
 
 const detailStyle: React.CSSProperties = {
   position: "absolute",
@@ -40,16 +54,24 @@ const detailStyle: React.CSSProperties = {
   transform: "translateX(-50%)",
   width: 220,
   padding: "8px 10px",
-  background: "var(--gs-panel-grad)",
-  border: "1px solid var(--line-hairline, color-mix(in srgb, var(--gs-line) 55%, transparent))",
+  background: "var(--cf-glass-dark)",
+  border: "1px solid var(--cf-glass-dark-border)",
   borderRadius: "var(--gs-radius-panel)",
   boxShadow: "var(--gs-shadow-3)",
-  color: "var(--gs-ink-secondary)",
+  color: "#f5f5f7",
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-sm)",
-  fontWeight: 400,
   lineHeight: 1.45,
   pointerEvents: "auto",
+};
+
+const leaderLayerStyle: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  overflow: "visible",
+  pointerEvents: "none",
 };
 
 export interface MetaChipSetProps {
@@ -60,95 +82,135 @@ export interface MetaChipSetProps {
   chips: MetaChip[];
 }
 
-export function MetaChipSet({
-  boundaryPct,
-  scaleM,
-  boardAspect,
-  mode,
-  chips,
-}: MetaChipSetProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  // Quantised zoom — same one-write-per-step pattern as DimensionLayer.
-  const zoom = useStudioStore((s) => Math.round(s.liveRig.zoom * 2) / 2);
-  const widthPx = useThree((s) => s.size.width);
+function groupPriority(chip: MetaChip): number {
+  if (chip.id === "spi" || chip.id === "easement" || chip.id === "heritage" || chip.id === "flood") return 100;
+  if (chip.group === "cadastral") return 80;
+  if (chip.group === "planning") return 70;
+  return 40;
+}
 
-  // Anchor chips to boundary nodes, cycling when chips outnumber nodes.
-  const anchors = useMemo(() => {
-    const world: Array<{ node: [number, number]; dir: [number, number] }> = [];
-    let cx = 0;
-    let cy = 0;
-    const pts = boundaryPct.map((p) => {
-      const [x, z] = pctToWorld(p, scaleM, boardAspect);
-      cx += x;
-      cy += z;
-      return [x, z] as [number, number];
-    });
-    cx /= pts.length;
-    cy /= pts.length;
-    for (const [x, z] of pts) {
-      const dx = x - cx;
-      const dz = z - cy;
-      const len = Math.hypot(dx, dz) || 1;
-      world.push({ node: [x, z], dir: [dx / len, dz / len] });
-    }
-    return world;
+export function MetaChipSet({ boundaryPct, scaleM, boardAspect, mode, chips }: MetaChipSetProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const labelRefs = useRef(new Map<string, HTMLDivElement | null>());
+  const leaderRefs = useRef(new Map<string, SVGPolylineElement | null>());
+  const scratch = useRef(new THREE.Vector3());
+
+  const nodes = useMemo(() => {
+    if (boundaryPct.length < 3) return [];
+    return boundaryPct.map((p) => pctToWorld(p, scaleM, boardAspect));
   }, [boundaryPct, scaleM, boardAspect]);
 
-  if (mode === "present" || mode === "share") return null;
-  if (chips.length === 0 || boundaryPct.length < 3) return null;
+  const visibleChips = useMemo(
+    () =>
+      [...chips]
+        .sort((a, b) => groupPriority(b) - groupPriority(a) || a.id.localeCompare(b.id))
+        .slice(0, MAX_VISIBLE),
+    [chips],
+  );
 
-  // 24 px screen offset → world metres at the current zoom.
-  const pxPerMetre = Math.max((zoom * widthPx) / scaleM, 0.0001);
-  const offsetM = OFFSET_PX / pxPerMetre;
+  const hidden = mode === "present" || mode === "share";
+
+  useFrame(({ camera, size }) => {
+    if (hidden || nodes.length === 0 || visibleChips.length === 0) return;
+    const anchors: AnnotationAnchor[] = visibleChips.map((chip, index) => {
+      const node = nodes[index % nodes.length]!;
+      const ndc = scratch.current.set(node[0], CHIP_Y, node[1]).project(camera);
+      return {
+        id: chip.id,
+        x: ((ndc.x + 1) * size.width) / 2,
+        y: ((1 - ndc.y) * size.height) / 2,
+        priority: groupPriority(chip),
+      };
+    });
+    const placements = layoutPerimeterAnnotations(anchors, {
+      width: size.width,
+      height: size.height,
+      labelWidth: LABEL_WIDTH,
+      labelHeight: LABEL_HEIGHT,
+      padding: EDGE_PADDING,
+      maxVisible: MAX_VISIBLE,
+    });
+    for (const placement of placements) {
+      const label = labelRefs.current.get(placement.id);
+      if (label) {
+        label.style.transform = `translate3d(${Math.round(placement.label.x)}px, ${Math.round(placement.label.y)}px, 0)`;
+      }
+      const leader = leaderRefs.current.get(placement.id);
+      if (leader) {
+        leader.setAttribute(
+          "points",
+          placement.leader.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" "),
+        );
+      }
+    }
+  });
+
+  if (hidden || chips.length === 0 || nodes.length === 0) return null;
 
   return (
-    <group>
-      {chips.map((chip, i) => {
-        const anchor = anchors[i % anchors.length]!;
-        const pos: [number, number, number] = [
-          anchor.node[0] + anchor.dir[0] * offsetM,
-          CHIP_Y,
-          anchor.node[1] + anchor.dir[1] * offsetM,
-        ];
+    <Html fullscreen zIndexRange={cfZPair("chromeChip")} style={{ pointerEvents: "none" }}>
+      <svg aria-hidden style={leaderLayerStyle}>
+        {visibleChips.map((chip) => (
+          <polyline
+            key={chip.id}
+            ref={(el) => {
+              leaderRefs.current.set(chip.id, el);
+            }}
+            fill="none"
+            stroke="var(--gs-line-strong)"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+            opacity={0.7}
+          />
+        ))}
+      </svg>
+      {visibleChips.map((chip) => {
         const bright = chip.brightModes.includes(mode);
         const expanded = expandedId === chip.id;
         return (
-          <Html
+          <div
             key={chip.id}
-            position={pos}
-            center
-            zIndexRange={cfZPair("chromeChip")}
-            style={{ pointerEvents: "auto" }}
+            ref={(el) => {
+              labelRefs.current.set(chip.id, el);
+            }}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: LABEL_WIDTH,
+              height: LABEL_HEIGHT,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "auto",
+              willChange: "transform",
+            }}
+            onPointerEnter={() => setExpandedId(chip.id)}
+            onPointerLeave={() => setExpandedId(null)}
           >
-            <span
-              style={{ position: "relative", display: "inline-block" }}
-              onPointerEnter={() => setExpandedId(chip.id)}
-              onPointerLeave={() => setExpandedId(null)}
+            {expanded ? (
+              <span style={detailStyle} data-testid={`meta-chip-${chip.id}-detail`}>
+                {chip.detail}
+              </span>
+            ) : null}
+            <Button
+              variant="capsule"
+              data-testid={`meta-chip-${chip.id}`}
+              aria-label={`${chip.value}: ${chip.label}. ${chip.detail}`}
+              onClick={() => setExpandedId(expanded ? null : chip.id)}
+              style={{
+                fontFamily: "var(--font-hand), 'Architects Daughter', cursive",
+                opacity: bright ? 1 : expanded ? 0.95 : 0.4,
+                color: bright ? "var(--gs-primary-ink)" : "var(--gs-ink-muted)",
+                boxShadow: expanded ? "var(--gs-shadow-2)" : "var(--gs-shadow-1)",
+              }}
             >
-              {expanded ? (
-                <span style={detailStyle} data-testid={`meta-chip-${chip.id}-detail`}>
-                  {chip.detail}
-                </span>
-              ) : null}
-              <Button
-                variant="capsule"
-                data-testid={`meta-chip-${chip.id}`}
-                aria-label={`${chip.value}: ${chip.label}. ${chip.detail}`}
-                onClick={() => setExpandedId(expanded ? null : chip.id)}
-                style={{
-                  opacity: bright ? 1 : expanded ? 0.95 : 0.4,
-                  color: bright ? "var(--gs-primary-ink)" : "var(--gs-ink-muted)",
-                  transform: expanded ? "translateY(-1px)" : undefined,
-                  boxShadow: expanded ? "var(--gs-shadow-2)" : "var(--gs-shadow-1)",
-                }}
-              >
-                <span style={{ fontWeight: 600 }}>{chip.label}</span>
-                <span style={{ opacity: 0.75 }}>{chip.value}</span>
-              </Button>
-            </span>
-          </Html>
+              <span style={{ fontWeight: 600 }}>{chip.label}</span>
+              <span style={{ opacity: 0.75 }}>{chip.value}</span>
+            </Button>
+          </div>
         );
       })}
-    </group>
+    </Html>
   );
 }

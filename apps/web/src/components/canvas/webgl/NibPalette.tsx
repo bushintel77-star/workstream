@@ -7,12 +7,20 @@
  * alongside the persistent left tool rail, mounted ONLY while Sketch mode is
  * armed (and while no photo-trace session owns the chrome). It carries:
  *
- *   - the four nibs as minimal line-weight GLYPHS (no dropdowns);
+ *   - the four nibs as REAL stroke swatches (`nibPreview.ts`) — each one
+ *     drawn from the same NibSpec the shader consumes, so the palette shows
+ *     the ink it is about to lay down rather than a generic Unicode glyph;
  *   - a sun-aware hatching toggle — when on, hatch fills snap their parallel
  *     lines to the site's INVERSE sun angle (resolved by the solar layer);
  *   - a hatch-fill action that fills the most recent closed shape;
  *   - a live pressure/tilt readout polled from the store's transient
  *     telemetry scratch (zero per-move re-renders).
+ *
+ * Every control is the shared `Button` primitive's `swatch` variant — the
+ * same 42px icon-over-label column the tool rail uses, so hover lift, active
+ * state and the disabled guard live in one place. The nib swatches override
+ * the variant's charcoal active fill with a light primary veil: a dark fill
+ * would swallow the graphite and ink previews it is meant to show.
  *
  * Chrome follows the Studio Paper law: one frosted layer, hairline, neutral
  * shadow tier — the drawing reads through the pill.
@@ -23,24 +31,41 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useStudioStore } from "./studioStore";
 import { NIB_ORDER, NIBS } from "./nibs";
+import { NIB_PREVIEW_H, NIB_PREVIEW_W, nibPreview } from "./nibPreview";
 import { isClosedRing, sunHatchAngleDeg } from "./hatchSun";
-import type { CanvasStroke } from "@workstream/contracts";
+import { Button } from "./Button";
+import type { CanvasStroke, NibKind } from "@workstream/contracts";
 
-const chipBase: CSSProperties = {
-  width: 30,
-  height: 30,
+/** Swatch label — matches the tool rail's text contract (never wraps). */
+const labelStyle: CSSProperties = {
+  fontFamily: "var(--font-ui)",
+  fontSize: "var(--gs-font-xs)",
+  letterSpacing: "0.04em",
+  lineHeight: 1,
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  maxWidth: "100%",
+};
+
+/** Glyph slot for the two action swatches (sun snap / hatch fill). */
+const glyphStyle: CSSProperties = {
+  fontSize: "var(--gs-font-sub)",
+  lineHeight: 1,
+  height: NIB_PREVIEW_H,
   display: "flex",
   alignItems: "center",
-  justifyContent: "center",
-  borderRadius: "var(--gs-radius-pill)",
-  border: "1px solid transparent",
-  background: "transparent",
-  color: "var(--gs-ink-secondary)",
-  cursor: "pointer",
-  fontSize: "var(--gs-font-h3)",
-  lineHeight: 1,
-  transition:
-    "background 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
+};
+
+/**
+ * Active nib treatment. Deliberately NOT the swatch variant's charcoal
+ * fill — the swatch's whole job is to show the nib's real ink, and
+ * graphite (#3B3B3B) on charcoal is invisible.
+ */
+const nibActiveStyle: CSSProperties = {
+  background: "var(--gs-primary-veil)",
+  border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
+  color: "var(--gs-primary-ink)",
 };
 
 /** The most recent closed ring in the ink array (the hatch-fill target). */
@@ -51,6 +76,50 @@ function lastClosedStroke(strokes: readonly CanvasStroke[]): CanvasStroke | null
     if (isClosedRing(pts.map((p) => ({ x: p.x_pct, y: p.y_pct })))) return s;
   }
   return null;
+}
+
+/** One nib's ink, drawn from its own spec (colour, width, cap, softness). */
+function NibSwatchInk({ kind }: { kind: NibKind }) {
+  const preview = nibPreview(kind);
+  const filterId = `nib-soft-${kind}`;
+  return (
+    <svg
+      aria-hidden
+      width={NIB_PREVIEW_W}
+      height={NIB_PREVIEW_H}
+      viewBox={`0 0 ${NIB_PREVIEW_W} ${NIB_PREVIEW_H}`}
+      style={{ display: "block" }}
+    >
+      {preview.soft ? (
+        <defs>
+          <filter id={filterId} x="-25%" y="-50%" width="150%" height="200%">
+            <feGaussianBlur stdDeviation="0.5" />
+          </filter>
+        </defs>
+      ) : null}
+      {preview.path ? (
+        <path
+          d={preview.path}
+          fill="none"
+          stroke={preview.color}
+          strokeWidth={preview.strokeWidth}
+          strokeOpacity={preview.opacity}
+          strokeLinecap={preview.linecap}
+          filter={preview.soft ? `url(#${filterId})` : undefined}
+        />
+      ) : null}
+      {preview.dots.map((dot, i) => (
+        <circle
+          key={i}
+          cx={dot.x}
+          cy={dot.y}
+          r={dot.r}
+          fill={preview.color}
+          fillOpacity={preview.opacity}
+        />
+      ))}
+    </svg>
+  );
 }
 
 export function NibPalette() {
@@ -97,13 +166,15 @@ export function NibPalette() {
       aria-label="Sketch nibs"
       style={{
         position: "absolute",
-        left: 58,
+        // The tool rail is left 8 + 56 wide, so it ends at 64. At 58 the
+        // first nib swatch sat under the rail's right edge.
+        left: 72,
         top: 152,
         display: "flex",
         alignItems: "center",
         gap: "var(--gs-space-2)",
         padding: 4,
-        borderRadius: "var(--gs-radius-pill)",
+        borderRadius: "var(--gs-radius-xl)",
         background: "var(--gs-glass-veil)",
         backdropFilter: "blur(var(--gs-blur))",
         WebkitBackdropFilter: "blur(var(--gs-blur))",
@@ -117,67 +188,48 @@ export function NibPalette() {
         const nib = NIBS[kind];
         const active = activeNib === kind;
         return (
-          <button
-            type="button"
+          <Button
             key={kind}
+            variant="swatch"
             data-testid={`nib-${kind}`}
             aria-label={`${nib.label} nib`}
             aria-pressed={active}
             title={`${nib.label} — ${nib.purpose}`}
+            active={active}
             onClick={() => setActiveNib(kind)}
-            style={{
-              ...chipBase,
-              background: active ? "var(--gs-chip-active)" : "transparent",
-              color: active ? "var(--gs-chip-active-ink)" : "var(--gs-ink-secondary)",
-            }}
-            onMouseEnter={(e) => {
-              if (!active) e.currentTarget.style.color = "var(--gs-ink)";
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "var(--gs-shadow-1)";
-            }}
-            onMouseLeave={(e) => {
-              if (!active) e.currentTarget.style.color = "var(--gs-ink-secondary)";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
+            style={active ? nibActiveStyle : undefined}
           >
-            <span aria-hidden>{nib.glyph}</span>
-          </button>
+            <NibSwatchInk kind={kind} />
+            <span aria-hidden style={labelStyle}>
+              {nib.shortLabel}
+            </span>
+          </Button>
         );
       })}
 
-      <span aria-hidden style={{ width: 1, height: 16, background: "var(--gs-line)" }} />
+      <span aria-hidden style={{ width: 1, height: 28, background: "var(--gs-line)" }} />
 
       {/* Sun-aware hatching toggle — snaps hatch fills to the inverse sun angle. */}
-      <button
-        type="button"
+      <Button
+        variant="swatch"
         data-testid="nib-sun-snap"
         aria-label="Sun-aware hatching"
         aria-pressed={sunHatchSnap}
         title={sunTitle}
+        active={sunHatchSnap}
         onClick={() => setSunHatchSnap(!sunHatchSnap)}
-        style={{
-          ...chipBase,
-          background: sunHatchSnap ? "var(--gs-primary-veil)" : "transparent",
-          color: sunHatchSnap ? "var(--gs-primary-ink)" : "var(--gs-ink-secondary)",
-        }}
-        onMouseEnter={(e) => {
-          if (!sunHatchSnap) e.currentTarget.style.color = "var(--gs-ink)";
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "var(--gs-shadow-1)";
-        }}
-        onMouseLeave={(e) => {
-          if (!sunHatchSnap) e.currentTarget.style.color = "var(--gs-ink-secondary)";
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "none";
-        }}
       >
-        <span aria-hidden>☼</span>
-      </button>
+        <span aria-hidden style={glyphStyle}>
+          ☼
+        </span>
+        <span aria-hidden style={labelStyle}>
+          Sun
+        </span>
+      </Button>
 
       {/* Hatch-fill the last closed shape (sun-snapped when the toggle is on). */}
-      <button
-        type="button"
+      <Button
+        variant="swatch"
         data-testid="nib-hatch-fill"
         aria-label="Hatch fill last closed shape"
         title={fillTitle}
@@ -185,27 +237,14 @@ export function NibPalette() {
         onClick={() => {
           if (fillTarget) hatchFillStroke(fillTarget.id);
         }}
-        style={{
-          ...chipBase,
-          opacity: fillTarget ? 1 : 0.45,
-          cursor: fillTarget ? "pointer" : "not-allowed",
-          color: fillTarget ? "var(--gs-ink-secondary)" : "var(--gs-ink-muted)",
-        }}
-        onMouseEnter={(e) => {
-          if (!fillTarget) return;
-          e.currentTarget.style.color = "var(--gs-ink)";
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "var(--gs-shadow-1)";
-        }}
-        onMouseLeave={(e) => {
-          if (!fillTarget) return;
-          e.currentTarget.style.color = "var(--gs-ink-secondary)";
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "none";
-        }}
       >
-        <span aria-hidden>▦</span>
-      </button>
+        <span aria-hidden style={glyphStyle}>
+          ▦
+        </span>
+        <span aria-hidden style={labelStyle}>
+          Fill
+        </span>
+      </Button>
 
       {/* Live stylus telemetry readout — pressure + tilt magnitude. */}
       <div

@@ -28,14 +28,45 @@ interface Rect {
   /** True when the card sits in a scrollable column (overflow clips it by
    *  design; vertical viewport escape is then legal, horizontal is not). */
   inScroller: boolean;
+  /** Stable index within the collected set (survives the clipped filter). */
+  idx: number;
+  /**
+   * Indices of collected surfaces that DOM-contain this one. A nested surface
+   * (the save chip inside the tab strip, the survey panel inside the perimeter
+   * panel) always "overlaps" its parent — that is containment, not collision.
+   */
+  ancestors: number[];
 }
 
-async function chromeRects(page: Page): Promise<Rect[]> {
-  return page.evaluate(() => {
-    const els = document.querySelectorAll<HTMLElement>(
-      "[data-gs-glass-card], [data-testid='asset-dock'], [data-testid='studio-tool-rail']",
-    );
-    return Array.from(els)
+/**
+ * Every floating chrome surface, not a hand-maintained selector list.
+ *
+ * The original three-selector list (`[data-gs-glass-card]`, the asset dock and
+ * the tool rail) could not see the nib palette, the projection capsule, the
+ * controls hint or the guidance line — so a 89x47px overlap between the nib
+ * palette and the projection HUD at 960px shipped green. Anything that opts
+ * into pointer events and carries a testid inside the chrome overlay is chrome,
+ * and is measured.
+ */
+const CHROME_SELECTOR = [
+  "[data-gs-glass-card]",
+  "[data-testid='asset-dock']",
+  "[data-testid='studio-tool-rail']",
+  "[data-testid='nib-palette']",
+  "[data-testid='viewport-transition-hud']",
+  "[data-testid='controls-hint']",
+  "[data-testid='interaction-guidance']",
+  "[data-testid='workflow-guide']",
+  "[data-testid='selection-chip']",
+  "[data-testid='survey-locate-state']",
+  "[data-testid='perimeter-tab-strip']",
+  "[data-testid='project-identity']",
+].join(", ");
+
+async function chromeRects(page: Page, selector = CHROME_SELECTOR): Promise<Rect[]> {
+  return page.evaluate((sel: string) => {
+    const list = Array.from(document.querySelectorAll<HTMLElement>(sel));
+    return list
       .map((el, i) => {
         const r = el.getBoundingClientRect();
         let inScroller = false;
@@ -57,6 +88,10 @@ async function chromeRects(page: Page): Promise<Rect[]> {
             break;
           }
         }
+        const ancestors: number[] = [];
+        list.forEach((other, j) => {
+          if (other !== el && other.contains(el)) ancestors.push(j);
+        });
         return {
           id:
             el.getAttribute("data-testid") ??
@@ -68,10 +103,13 @@ async function chromeRects(page: Page): Promise<Rect[]> {
           h: r.height,
           inScroller,
           clipped,
+          idx: i,
+          ancestors,
         };
       })
-      .filter((r) => !r.clipped) as Rect[];
-  });
+      // Zero-size surfaces are unmounted-but-present wrappers, not chrome.
+      .filter((r) => !r.clipped && r.w > 0 && r.h > 0) as Rect[];
+  }, selector);
 }
 
 const TOL = 2; // px — sub-pixel + shadow tolerance
@@ -90,6 +128,9 @@ function expectNoCollisions(rects: Rect[], vw: number, vh: number, label: string
     for (let j = i + 1; j < rects.length; j++) {
       const a = rects[i]!;
       const b = rects[j]!;
+      // Nesting is not collision: a docked surface legitimately sits inside
+      // its host panel, and the save chip sits inside the tab strip.
+      if (a.ancestors.includes(b.idx) || b.ancestors.includes(a.idx)) continue;
       // Cards inside a scrollable column may be clipped below the fold —
       // their layout rects can extend off-screen; overlap with visible chrome
       // is still checked only where both rects are actually visible.
@@ -221,43 +262,10 @@ test.describe("WebGL chrome collision", () => {
       // label chips (25%/75% width) are the new chrome elements.
       await page.getByRole("button", { name: "▸ Split" }).click();
       await page.waitForTimeout(1200);
-      const splitRects = await page.evaluate(() => {
-        const els = document.querySelectorAll<HTMLElement>(
-          "[data-gs-glass-card], [data-testid='asset-dock'], [data-testid='studio-tool-rail'], [data-testid='split-label-plan'], [data-testid='split-label-sketch']",
-        );
-        return Array.from(els)
-          .map((el) => {
-            const r = el.getBoundingClientRect();
-            let inScroller = false;
-            let clipped = false;
-            for (
-              let a = el.parentElement;
-              a && a instanceof HTMLElement;
-              a = a.parentElement
-            ) {
-              const oy = getComputedStyle(a).overflowY;
-              if (
-                (oy === "auto" || oy === "scroll") &&
-                a.scrollHeight > a.clientHeight
-              ) {
-                inScroller = true;
-                if (a !== el && a.scrollHeight - a.clientHeight > 2)
-                  clipped = true;
-                break;
-              }
-            }
-            return {
-              id: el.getAttribute("data-testid") ?? "card",
-              x: r.x,
-              y: r.y,
-              w: r.width,
-              h: r.height,
-              inScroller,
-              clipped,
-            };
-          })
-          .filter((r) => !r.clipped);
-      });
+      const splitRects = await chromeRects(
+        page,
+        `${CHROME_SELECTOR}, [data-testid='split-label-plan'], [data-testid='split-label-sketch']`,
+      );
       expectNoCollisions(splitRects, vw, vh, `split ${vw}x${vh}`);
       await page.getByTestId("rail-split").evaluate((button: HTMLButtonElement) => {
         button.click();
