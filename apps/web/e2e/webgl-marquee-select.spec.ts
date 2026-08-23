@@ -85,6 +85,9 @@ test.describe("WebGL marquee box select", () => {
     await page.getByTestId("rail-marquee").click();
 
     const canvas = page.getByTestId("webgl-canvas");
+    // The R3F canvas mounts asynchronously after the studio shell — wait for
+    // it to lay out before reading its box (a null box throws mid-gesture).
+    await expect(canvas).toBeVisible({ timeout: 15_000 });
     const box = (await canvas.boundingBox())!;
     const cx = box.x + box.width / 2;
     const cy = box.y + box.height / 2;

@@ -101,7 +101,9 @@ test.describe("WebGL terrain instruments (drainage + earthworks)", () => {
       timeout: 10_000,
     });
 
-    // Terrain-gated chips: Section + Flow render; Earth renders (pad exists).
+    // Terrain-gated chips are ADVANCED rail tools — they live behind the
+    // rail's More toggle (moreOpen defaults false, StudioToolRail).
+    await page.getByTestId("rail-more").click();
     const flowChip = page.getByRole("button", { name: "▸ Flow" });
     await expect(flowChip).toBeVisible({ timeout: 5_000 });
     await expect(
