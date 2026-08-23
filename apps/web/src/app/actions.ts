@@ -400,6 +400,16 @@ export async function getWeatherAction(projectId: string) {
   }
 }
 
+/** Trade supplier price feeds + Melbourne trade catalog (GET /suppliers). */
+export async function getSupplierFeedAction() {
+  const { getSupplierFeedApi } = await import("../lib/api");
+  try {
+    return await getSupplierFeedApi();
+  } catch {
+    return null;
+  }
+}
+
 /** Site context — season, sun summary, and council planning badges. */
 export async function getSiteContextAction(projectId: string) {
   if (!projectId.trim()) throw new Error("Missing project");

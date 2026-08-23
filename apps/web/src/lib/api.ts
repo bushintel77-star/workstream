@@ -2006,3 +2006,52 @@ export async function deletePresentationDocumentApi(
     `/projects/${projectId}/presentation-documents/${docId}`,
   );
 }
+
+/* ------------------------------------------------------------------------ */
+/* Trade supplier price feeds — GET /suppliers (live/dev price feeds +      */
+/* Melbourne trade catalog). Mirrors the API surface in apps/api/routes/   */
+/* suppliers.ts + lib/suppliers.ts.                                         */
+/* ------------------------------------------------------------------------ */
+
+export type SupplierPrice = {
+  sku: string;
+  label: string;
+  unit: string;
+  rate: number; // AUD ex GST
+  in_stock: boolean | null;
+  source_url: string | null;
+};
+
+export type SupplierPriceList = {
+  supplier: string;
+  supplier_label: string;
+  fetched_at: string;
+  mode: "live" | "dev_fallback";
+  feed: "rate_sheet" | "dev_canned";
+  honesty: string;
+  prices: SupplierPrice[];
+};
+
+export type SupplierFeedStatus = {
+  live_count: number;
+  configured_dir: boolean;
+  suppliers_live_flag: boolean;
+  honesty: string;
+};
+
+export type MelbourneTradeCatalogHeadline = {
+  source: string;
+  offer_count: number;
+  path: string;
+  honesty: string;
+};
+
+export type SupplierFeedResponse = {
+  suppliers: SupplierPriceList[];
+  status: SupplierFeedStatus;
+  melbourne_trade_catalog: MelbourneTradeCatalogHeadline;
+};
+
+export async function getSupplierFeedApi(): Promise<SupplierFeedResponse> {
+  return apiGet<SupplierFeedResponse>("/suppliers");
+}

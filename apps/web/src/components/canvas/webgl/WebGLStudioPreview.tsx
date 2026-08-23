@@ -72,6 +72,7 @@ import { SliceProfileCard } from "./SliceProfileCard";
 import { DrainageFlowCard } from "./DrainageFlowCard";
 import { EarthworksCard } from "./EarthworksCard";
 import { FitSheetCard } from "./FitSheetCard";
+import { SupplierFeedCard } from "./SupplierFeedCard";
 import { AssetFanOutDock } from "./AssetFanOutDock";
 import { FloatingPlacementToolbar } from "./FloatingPlacementToolbar";
 import { StudioToolRail } from "./StudioToolRail";
@@ -2563,6 +2564,13 @@ export function WebGLStudioPreview({
             compact={activeMode === "survey"}
           />
         ) : null}
+
+        {/* Trade sourcing — supplier price feeds + Melbourne trade catalog.
+            Costing-context companion (same tab as the Fit sheet): when the
+            estimation companion is open, show what the trade feed actually
+            contains — prices, feed mode/honesty, low stock. Loads GET
+            /suppliers via server action. */}
+        {!splitView && fitSheetOpen ? <SupplierFeedCard /> : null}
       </div>
 
 
