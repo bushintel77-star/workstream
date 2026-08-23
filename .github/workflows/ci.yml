@@ -1,0 +1,143 @@
+name: ci
+
+# Workstream — GitHub Actions port of .gitlab-ci.yml (2026-08-23).
+#
+# Public repo => GitHub Actions runs free + unlimited. Job mapping:
+#   GitLab `gate`          -> `gate`          (pnpm run ci — the static gate)
+#   GitLab `secret-scan`   -> `secret-scan`   (gitleaks)
+#   GitLab `e2e` (6 shards)-> `e2e` matrix    (Playwright, non-gating)
+#   GitLab `deploy-railway`-> `deploy`        (Railway CLI + live probe)
+#
+# Deploy is decoupled from e2e (needs only gate + secret-scan). e2e runs on
+# every push and PR as a signal, never blocks. The two docker image-smoke
+# jobs are omitted (they were manual + allow_failure in GitLab and add no
+# signal to the deploy path).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel a superseded run when a new commit lands on the same ref (mirrors
+# GitLab's `interruptible`), so back-to-back pushes don't pile up runners.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+  PNPM_VERSION: "9.15.4"
+  NEXT_PUBLIC_API_URL: "https://api-production-a8ff1.up.railway.app"
+  PRODUCTION_API_URL: "https://api-production-a8ff1.up.railway.app"
+  PRODUCTION_WEB_URL: "https://web-production-3c194.up.railway.app"
+
+jobs:
+  # ---------------------------------------------------------------- gate
+  # Authoritative static gate — identical to local `pnpm run ci`.
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm run ci
+
+  # ---------------------------------------------------------------- scan
+  secret-scan:
+    runs-on: ubuntu-latest
+    needs: [gate]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config: .gitleaks.toml
+
+  # ---------------------------------------------------------------- e2e
+  # Playwright across 6 shards. Non-gating (continue-on-error) — the WebGL
+  # specs render through software GL on hosted runners and are slow/flaky, so
+  # a red shard must never block production. Artifacts on failure aid triage.
+  e2e:
+    needs: [gate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @workstream/web exec playwright install chromium --with-deps
+      - run: pnpm exec turbo run build --filter=@workstream/api...
+      - name: Playwright shard ${{ matrix.shard }}/6
+        run: pnpm --filter @workstream/web exec playwright test --shard=${{ matrix.shard }}/6
+        env:
+          CI: "true"
+          AUTH_REQUIRED: "false"
+          API_URL: "http://127.0.0.1:3001"
+          PLAYWRIGHT_BASE_URL: "http://127.0.0.1:3002"
+          NEXT_PUBLIC_API_URL: "http://127.0.0.1:3001"
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.shard }}
+          path: test-results/
+          retention-days: 14
+
+  # ---------------------------------------------------------------- deploy
+  # API first, then web; live probe before the job succeeds. Decoupled from
+  # e2e — runs on the static gate + secret scan only. RAILWAY_TOKEN is a
+  # repository secret (Settings -> Secrets and variables -> Actions).
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [gate, secret-scan]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm install -g @railway/cli
+      - name: Deploy api
+        run: railway up --project "$RAILWAY_PROJECT_ID" --service api --environment production --detach -m "GitHub Actions ${GITHUB_SHA:0:8}"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: "e2c12b66-af3a-4a51-a285-874c7a6de7d4"
+      - name: Deploy web
+        run: railway up --project "$RAILWAY_PROJECT_ID" --service web --environment production --detach -m "GitHub Actions ${GITHUB_SHA:0:8}"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: "e2c12b66-af3a-4a51-a285-874c7a6de7d4"
+      - name: Wait for API health
+        run: |
+          ok=0
+          for i in $(seq 1 36); do
+            if curl -sf "$PRODUCTION_API_URL/readyz" | grep -q '"status":"ok"'; then ok=1; break; fi
+            sleep 10
+          done
+          [ "$ok" -eq 1 ] || { echo "API /readyz did not return ok within 6 minutes"; exit 1; }
+      - name: Probe web
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$PRODUCTION_WEB_URL/home")
+          [ "$code" = "200" ] || { echo "Web /home returned HTTP $code (expected 200)"; exit 1; }
+          echo "Web /home HTTP 200"
