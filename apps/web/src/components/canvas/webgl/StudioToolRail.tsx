@@ -364,26 +364,29 @@ export function StudioToolRail({
             disabled={t.disabled === true}
             onClick={t.onToggle}
           >
-            <span aria-hidden style={{ fontSize: "var(--gs-font-sub)", lineHeight: 1 }}>
-              {t.glyph.trim()}
-            </span>
             <span
               aria-hidden
-              style={{
-                fontFamily: "var(--font-ui)",
-                fontSize: "var(--gs-font-xs)",
-                letterSpacing: "0.04em",
-                lineHeight: 1,
-                // Text contract: labels must never wrap or spill past the
-                // 42px pill — overflow clips + ellipsis (UI survey §1.2).
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                maxWidth: "100%",
-              }}
+              style={{ fontSize: "var(--gs-font-sub)", lineHeight: 1 }}
             >
-              {t.label}
+              {t.glyph.trim()}
             </span>
+            {active ? (
+              <span
+                aria-hidden
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "var(--gs-font-xs)",
+                  letterSpacing: "0.04em",
+                  lineHeight: 1,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "100%",
+                }}
+              >
+                {t.label}
+              </span>
+            ) : null}
           </Button>
           </span>
         );
