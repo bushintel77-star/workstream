@@ -3,10 +3,10 @@
 /**
  * Gold Standard 2026 — Floating Placement Toolbar.
  *
- * A compact cursor-following toolbar that appears when an asset is armed.
- * Shows the armed symbol glyph + name, live cost preview, and placement
- * mode toggles (single / area / row). Positioned near the cursor so the
- * operator never has to look away from the canvas.
+ * A compact toolbar that appears when an asset is armed. Shows the armed
+ * symbol glyph + name, live cost preview, and placement mode toggles
+ * (single / area / row). Anchored at the arm point — not cursor-chasing,
+ * which would make its own buttons unclickable.
  *
  * Binding: docs/GOLD-STANDARD-2026.md §3 (Asset Discovery Fan-Out)
  */
@@ -26,6 +26,10 @@ const GOLD = "var(--gs-primary)";
 const OFFSET_X = 16;
 const OFFSET_Y = -8;
 
+/** Last known pointer position — module ref, zero store writes (the
+ *  always-on tracker below updates this, never the store). */
+let lastPointerPos: { x: number; y: number } | null = null;
+
 export function FloatingPlacementToolbar() {
   const armedSymbolId = useStudioStore((s) => s.armedSymbolId);
   const pointerClientPos = useStudioStore((s) => s.pointerClientPos);
@@ -35,15 +39,24 @@ export function FloatingPlacementToolbar() {
   const setRowPlantActive = useStudioStore((s) => s.setRowPlantActive);
   const massPlantPreviewCount = useStudioStore((s) => s.massPlantPreviewCount);
 
-  // Track cursor globally so the toolbar appears immediately on arm —
-  // before the pointer enters the R3F canvas.
+  // Anchor at the arm point, not the live cursor: a cursor-chasing toolbar
+  // runs away from its own buttons. The always-on listener only writes the
+  // module ref above (zero store writes, so the zero-commit pan law holds);
+  // the store is seeded once per arm from the last pointer event.
   useEffect(() => {
-    if (!armedSymbolId) return;
     const onMove = (e: MouseEvent) => {
-      useStudioStore.getState().setPointerClientPos({ x: e.clientX, y: e.clientY });
+      lastPointerPos = { x: e.clientX, y: e.clientY };
     };
     window.addEventListener("mousemove", onMove, { passive: true });
     return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+
+  // Seed the position the moment a symbol is armed — the click that armed
+  // it already happened, so no second mousemove is coming.
+  useEffect(() => {
+    if (armedSymbolId && lastPointerPos) {
+      useStudioStore.getState().setPointerClientPos(lastPointerPos);
+    }
   }, [armedSymbolId]);
 
   if (!armedSymbolId || !pointerClientPos) return null;

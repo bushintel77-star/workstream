@@ -176,15 +176,9 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
     setArmedSymbolId(null);
   };
 
-  // Report cursor position for the floating placement toolbar.
   const setPointerClientPos = useStudioStore((s) => s.setPointerClientPos);
 
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
-    // Always track cursor for the floating toolbar — even outside mass-drag.
-    const ne = e.nativeEvent as PointerEvent;
-    if (ne.clientX != null && ne.clientY != null) {
-      setPointerClientPos({ x: ne.clientX, y: ne.clientY });
-    }
     if (!massMode || !dragStart.current || !e.point) return;
     e.stopPropagation();
     const pct = snapPct(worldToPct(e.point.x, e.point.z, scaleM, boardAspect), scaleM);

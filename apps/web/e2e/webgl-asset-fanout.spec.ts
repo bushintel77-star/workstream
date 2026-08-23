@@ -47,7 +47,11 @@ test.describe("WebGL asset fan-out (place + persist)", () => {
     // 2. Arm the paver — a HARDSCAPE symbol (plants now open the flora ring,
     //    which has its own spec; this spec pins the direct-place + persist path).
     await page.locator('[data-testid="asset-card-bluestone-paver"]').click();
-    await expect(dock).toContainText("Armed", { timeout: 5_000 });
+    // Armed feedback is the floating placement toolbar now (the dock's
+    // "Armed" pill was retired with the toolbar refactor).
+    await expect(
+      page.locator('[data-testid="floating-placement-toolbar"]'),
+    ).toBeVisible({ timeout: 5_000 });
 
     // 3. Click the lot centre — one item placed. The perimeter strip holds
     //    the live B/I/S state (the identity chip is now the first glass
