@@ -384,6 +384,8 @@ export function WebGLStudioPreview({
   const seasonProgress = useStudioStore((s) => s.seasonProgress);
   const sunDatePreset = useStudioStore((s) => s.sunDatePreset);
   const setSunDatePreset = useStudioStore((s) => s.setSunDatePreset);
+  const suncastView = useStudioStore((s) => s.suncastView);
+  const setSuncastView = useStudioStore((s) => s.setSuncastView);
   const seasonMeta = useMemo(
     () => melbourneSeasonFromSun(sunDatePreset, sunMin),
     [sunDatePreset, sunMin],
@@ -2200,6 +2202,23 @@ export function WebGLStudioPreview({
                         {sunDatePresetLabel(p)}
                       </Button>
                     ))}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ display: "flex", gap: "var(--gs-space-2)", alignItems: "center", flexWrap: "wrap" }}>
+                    <Button
+                      variant="chip-preset"
+                      aria-pressed={suncastView}
+                      active={suncastView}
+                      onClick={() => setSuncastView(!suncastView)}
+                      data-testid="suncast-toggle"
+                      style={{ padding: "2px 6px" }}
+                    >
+                      Suncast overlay
+                    </Button>
+                    <span style={{ fontSize: "var(--gs-font-micro)", color: "var(--gs-ink-muted)" }}>
+                      Analytical shade footprint — scrub the sun to sweep it
+                    </span>
                   </div>
                 </div>
               </div>

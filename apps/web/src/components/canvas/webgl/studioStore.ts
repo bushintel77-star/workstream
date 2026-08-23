@@ -265,6 +265,10 @@ export interface StudioStoreState {
   // --- View / layer toggles ---
   /** Subsurface blueprint view toggle. */
   subsurfaceView: boolean;
+  /** Analytical suncast overlay (plan-sun-cast shadow footprints). DRAFTING
+   *  default ON — a shade study is the drafting sheet's job; the 3D VSM shadow
+   *  already carries the sunny look. Operator-toggleable for clean sheets. */
+  suncastView: boolean;
   /** 3D sketch capture mode — suppresses camera pan, drags become strokes. */
   sketchMode: boolean;
 
@@ -671,6 +675,7 @@ export interface StudioStoreState {
   setSunMin: (m: number) => void;
   setSunDatePreset: (p: SunDatePreset) => void;
   setSubsurfaceView: (v: boolean) => void;
+  setSuncastView: (v: boolean) => void;
   setSketchMode: (v: boolean) => void;
   setViewBlendTarget: (v: number) => void;
   /**
@@ -927,6 +932,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
 
   // View defaults
   subsurfaceView: false,
+  suncastView: true,
   sketchMode: false,
   // Plan view (ortho, CAD-accurate). This is now true of BOTH fields: the rig
   // default carried a 55° pitch until 2026-08-22, so the two disagreed at rest
@@ -1115,6 +1121,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       seasonProgress: seasonProgressFromSun(sunDatePreset, s.sunMin),
     })),
   setSubsurfaceView: (subsurfaceView) => set({ subsurfaceView }),
+  setSuncastView: (suncastView) => set({ suncastView }),
   setSketchMode: (sketchMode) =>
     set(
       sketchMode

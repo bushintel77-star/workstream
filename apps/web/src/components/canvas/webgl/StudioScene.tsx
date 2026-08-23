@@ -51,6 +51,7 @@ import { StitchSnapLayer } from "./StitchSnapLayer";
 import { PhotoTracePlane } from "./PhotoTracePlane";
 import { PlacementGizmo } from "./PlacementGizmo";
 import { TerrainMesh } from "./TerrainMesh";
+import { SuncastOverlay } from "./SuncastOverlay";
 import { DottedGroundField } from "./DottedGroundField";
 import { ElevationSliceLine } from "./ElevationSliceLine";
 import { DrainageFlowLayer } from "./DrainageFlowLayer";
@@ -943,6 +944,20 @@ export function StudioScene({
           opacity={buildingOpacity}
         />
       )}
+      {/* Analytical suncast — plan-sun-cast shadow footprints for the
+          building + placed canopies, swept by the Sun panel. The building
+          cast needs a massing height (never invented); tree casts use the
+          grown canopy dimensions and are always honest. */}
+      <SuncastOverlay
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        buildingPct={buildingPct}
+        items={items}
+        lat={lat}
+        lng={lng}
+        buildingHeightM={0}
+        growthFactor={growthFactor}
+      />
       <NeighbourBuildings
         buildings={neighbourBuildings}
         scaleM={scaleM}
