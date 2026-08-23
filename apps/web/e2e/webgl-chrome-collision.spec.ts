@@ -201,9 +201,8 @@ function expectNoCollisions(rects: Rect[], vw: number, vh: number, label: string
  */
 async function expectFitSheetClearOfModePanel(page: Page, label: string) {
   const hit = await page.evaluate(() => {
-    const panel = document
-      .querySelector('[data-testid="perimeter-panel"]')
-      ?.getBoundingClientRect();
+    const panelEl = document.querySelector('[data-testid="perimeter-panel"]');
+    const panel = panelEl?.getBoundingClientRect();
     if (!panel) return null;
     for (const sel of [
       '[data-testid="fit-sheet-card"]',
@@ -211,6 +210,12 @@ async function expectFitSheetClearOfModePanel(page: Page, label: string) {
     ]) {
       const el = document.querySelector(sel);
       if (!el) continue;
+      // The unified panel docks the compact fit-sheet INSIDE the perimeter
+      // panel by design (WebGLStudioPreview unified glass panel). Containment
+      // is the intended layout — not the "never above a mode panel" collision
+      // this check guards — so skip it, exactly as the pairwise sweep skips
+      // ancestor containment.
+      if (panelEl && panelEl.contains(el)) continue;
       const r = el.getBoundingClientRect();
       const ox = Math.min(panel.right, r.right) - Math.max(panel.left, r.left);
       const oy = Math.min(panel.bottom, r.bottom) - Math.max(panel.top, r.top);

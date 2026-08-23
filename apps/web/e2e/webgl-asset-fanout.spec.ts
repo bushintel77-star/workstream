@@ -17,6 +17,10 @@ test.describe("WebGL asset fan-out (place + persist)", () => {
     page,
     request,
   }) => {
+    // Two full studio mounts (initial + reload) plus the autosave round-trip
+    // — the 90s default blows on GPU-less shared runners (observed: reload
+    // ERR_ABORTED at the 90s ceiling).
+    test.setTimeout(180_000);
     const errors: string[] = [];
     page.on("console", (msg: ConsoleMessage) => {
       if (msg.type() === "error") errors.push(msg.text().slice(0, 300));

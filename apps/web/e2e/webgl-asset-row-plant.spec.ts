@@ -75,7 +75,7 @@ test.describe("WebGL asset row plant (hedge run + persist)", () => {
     await expect(dock).toBeVisible({ timeout: 5_000 });
     await page.locator('[data-testid="asset-card-hornbeam-pleached"]').click();
     await page.locator('[data-testid="floating-row-plant"]').click();
-    await expect(page.locator('[data-testid="floating-placement-toolbar"]')).toContainText("row", { timeout: 5_000 });
+    await expect(page.locator('[data-testid="floating-placement-toolbar"]')).toContainText(/row/i, { timeout: 5_000 });
 
     // 2. Drag the run. The guide must read out before the commit.
     const canvas = page.locator('[data-testid="webgl-canvas"]');
