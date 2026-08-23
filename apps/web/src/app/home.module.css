@@ -1,14 +1,14 @@
 /*
- * Operator dashboard — Gold Standard 2026 Studio Dark (2026-08-15 rebuild).
+ * Operator dashboard — Studio Paper (light) register.
  *
- * The register is a drafting sheet: full-bleed --gs-canvas, glass index
- * cards, Space Grotesk figures, Inter labels, GS signal colours for stage.
- * Every class name from the Swiss-era sheet is preserved — the components
- * and their behaviour (search / sort / delete / undo / planner) are
- * untouched; only the visual system changed.
+ * The register is a high-key workspace surface: full-bleed --gs-canvas,
+ * white glass index cards, Space Grotesk figures, Inter labels, GS signal
+ * colours for stage. Same token family as the WebGL studio, so the entry
+ * page and the drawing surface read as ONE product.
  *
- * Binding: docs/GOLD-STANDARD-2026.md §2 (Glass Cards, Studio Dark) and
- * GOLD-STANDARD-2026-TOKENS.md (type floor 11px+, ink tokens on glass).
+ * Behaviour (search / sort / delete / undo / planner) is untouched; only
+ * the visual system was unified onto the light Studio Paper ramp (the
+ * 2026-08-15 'Studio Dark' rebuild predated the paper pivot).
  */
 
 .page {
@@ -17,7 +17,7 @@
   background: var(--canvas-base);
   color: var(--ink-primary);
   font-family: var(--font-ui);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 /* Faint drafting grid behind the sheet */

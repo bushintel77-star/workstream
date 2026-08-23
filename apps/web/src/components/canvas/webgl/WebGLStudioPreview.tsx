@@ -71,8 +71,8 @@ import { computeLiveStudioData } from "./canvasBridges";
 import { SliceProfileCard } from "./SliceProfileCard";
 import { DrainageFlowCard } from "./DrainageFlowCard";
 import { EarthworksCard } from "./EarthworksCard";
-import { FitSheetCard } from "./FitSheetCard";
-import { SupplierFeedCard } from "./SupplierFeedCard";
+import { EstimatorPanel } from "./EstimatorPanel";
+import { AssetStudioOverlay } from "./AssetStudioOverlay";
 import { AssetFanOutDock } from "./AssetFanOutDock";
 import { FloatingPlacementToolbar } from "./FloatingPlacementToolbar";
 import { StudioToolRail } from "./StudioToolRail";
@@ -252,6 +252,7 @@ export function WebGLStudioPreview({
   /** The open photo elevation sheet (print artifact) — null = closed. */
   const [photoSheetId, setPhotoSheetId] = useState<string | null>(null);
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
+  const assetsOpenStudio = useStudioStore((s) => s.assetsOpen);
   const router = useRouter();
 
   // Escape closes the open surface panel (browser-tab behaviour).
@@ -315,6 +316,29 @@ export function WebGLStudioPreview({
       rotateDeg: viewpointYawDeg(look),
     });
   }, [writeLiveRig]);
+
+  // Estimator stage — the panel titles "Estimator" while the estimate is
+  // provisional and "Quote" once the operator commits it (signoff exists).
+  const [signedOff, setSignedOff] = useState(false);
+  const [signoffLoading, setSignoffLoading] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    import("../../../app/actions")
+      .then(({ getSignoffAction }) => getSignoffAction(projectId))
+      .then((res) => {
+        if (cancelled) return;
+        setSignedOff(res?.signoff != null);
+      })
+      .catch(() => {
+        if (!cancelled) setSignedOff(false);
+      })
+      .finally(() => {
+        if (!cancelled) setSignoffLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
 
   /**
    * Camera + instrument state for entering a mode. Shared by the tab/shortcut
@@ -2570,8 +2594,12 @@ export function WebGLStudioPreview({
             overflow when panel + card exceed the column. Toggled via the Fit
             tab; the flag stays mode-independent, only the expanded default is
             mode-gated. */}
+        {/* Estimator — ONE contextual tabbed glass panel (Estimate | Sourcing)
+            replacing the stacked fit-sheet + trade-sourcing cards. Titles
+            "Estimator" while provisional, "Quote" once signed off. Only the
+            active tab mounts, so the dock never stacks two cards. */}
         {!splitView && fitSheetOpen && items && items.length > 0 ? (
-          <FitSheetCard
+          <EstimatorPanel
             projectId={projectId}
             items={items ?? []}
             boundaryPct={boundaryPct}
@@ -2579,17 +2607,10 @@ export function WebGLStudioPreview({
             irrigationZones={irrigationZones}
             scaleM={scaleM}
             outdoorM2={outdoorM2}
-            allowExpanded={activeMode !== "survey"}
-            compact={activeMode === "survey"}
+            signedOff={signedOff}
+            signedOffLoading={signoffLoading}
           />
         ) : null}
-
-        {/* Trade sourcing — supplier price feeds + Melbourne trade catalog.
-            Costing-context companion (same tab as the Fit sheet): when the
-            estimation companion is open, show what the trade feed actually
-            contains — prices, feed mode/honesty, low stock. Loads GET
-            /suppliers via server action. */}
-        {!splitView && fitSheetOpen ? <SupplierFeedCard /> : null}
       </div>
 
 
@@ -2653,8 +2674,12 @@ export function WebGLStudioPreview({
         </div>
       ) : null}
 
-      {/* Asset discovery fan-out dock — bottom-centre, above the growth card */}
-      <AssetFanOutDock />
+      {/* Asset selection studio — floating frosted-glass overlay (the full
+          discovery/inspect/configure surface). The bottom fan-out dock is its
+          compact face and mounts only while the studio is closed, so the two
+          never double up. */}
+      <AssetStudioOverlay />
+      {!assetsOpenStudio && <AssetFanOutDock />}
 
       {/* Floating cursor toolbar — shows when an asset is armed */}
       <FloatingPlacementToolbar />
