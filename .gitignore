@@ -26,6 +26,7 @@ apps/web/playwright-report/
 apps/web/test-results/
 apps/web/e2e/artifacts/
 apps/web/preview-shots/
+apps/web/shots/
 
 # Agent workspaces (zcode plan artifacts + pipeline dock state)
 .zcode/
