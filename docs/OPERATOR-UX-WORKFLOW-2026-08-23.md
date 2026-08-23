@@ -401,8 +401,8 @@ pnpm --filter @workstream/web exec playwright test \
 rate limits — let Playwright start its own servers, or set `RATE_LIMIT_MAX=10000`
 on the API.
 
-GitLab runs three blocking e2e shards on `main`; Railway deploy starts only
-after the repository gate, secret scan, and all Playwright shards pass.
+GitHub Actions runs six Playwright e2e shards on every push (non-blocking);
+Railway deploy on `main` starts after the `gate` and `secret-scan` jobs pass.
 
 ---
 

@@ -98,16 +98,13 @@ production.
 
 ## CI
 
-`.gitlab-ci.yml` runs on every push to `main` (and merge requests):
+`.github/workflows/ci.yml` runs on every push to `main` (and pull requests):
 
 1. `gate` — `pnpm run ci` (frozen install + script gates + bundle-size +
    traceability + typecheck + lint + vitest)
 2. `secret-scan` — gitleaks
-3. `e2e` — Playwright, sharded 3-way (non-blocking)
-4. `build-api-image` / `build-web-image` — docker build smoke (no push)
-
-Railway handles the deploy from `main` automatically (once GitLab is
-connected) or via `railway up` CLI.
+3. `e2e` — Playwright, sharded 6-way (non-blocking signal)
+4. `deploy` — Railway CLI deploy after gate + secret-scan (blocking on `main`)
 
 Local mirror: `pnpm run ci` and `pnpm build:docker`. Full gap audit:
 [docs/GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md).

@@ -14,7 +14,7 @@ import { createAddressProject } from "./helpers";
  * Wiring (corrected 2026-08-22 — the previous note claimed this was "authored
  * but not yet wired into CI" and that it "skips if the WebGL studio is not
  * found"; neither was true). `playwright.config.ts` sets `testDir: ./e2e` with
- * no filter, so the GitLab `e2e` job runs this spec in its shard sweep. That
+ * no filter, so the GitHub Actions `e2e` job runs this spec in its shard sweep. That
  * job is `allow_failure: true` by design — GPU-less shared runners fall back to
  * software WebGL — so it reports without blocking. There is no skip path: the
  * spec hard-asserts the R3F canvas is visible and fails if the studio is

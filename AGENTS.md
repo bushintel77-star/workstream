@@ -24,7 +24,7 @@ Lint/test: `pnpm typecheck`, `pnpm test`, `pnpm lint` — see root `package.json
 pass/fail against stale domain code. (`pnpm typecheck` builds deps, so running it
 first also refreshes `dist`.)
 
-Continuous integration gate: `pnpm run ci` (installs frozen lockfile, checks mobile placeholders + distribution, portal edge runtime, handoff hex colors against the `--gs-*` token allowlist, `@workstream/ui` ↔ `apps/web` shared-token parity, studio dialect, Tier-1 spec gap, feature reachability, CSS scales, and bundle-size budget, then traceability, typecheck, lint, and vitest). CI runs in GitLab (`.gitlab-ci.yml`: `gate` = `pnpm run ci`, `secret-scan` = gitleaks, sharded `e2e`, docker image builds). Run `pnpm run ci` locally for the same gate. Migrated off GitHub 2026-08-19 — see `docs/MIGRATE-GITHUB-TO-GITLAB.md`.
+Continuous integration gate: `pnpm run ci` (installs frozen lockfile, checks mobile placeholders + distribution, portal edge runtime, handoff hex colors against the `--gs-*` token allowlist, `@workstream/ui` ↔ `apps/web` shared-token parity, studio dialect, Tier-1 spec gap, feature reachability, CSS scales, and bundle-size budget, then traceability, typecheck, lint, and vitest). CI runs in GitHub Actions (`.github/workflows/ci.yml`: `gate` = `pnpm run ci`, `secret-scan` = gitleaks, sharded `e2e`, `deploy` = Railway). Run `pnpm run ci` locally for the same gate.
 
 ### Canonical production (Railway)
 

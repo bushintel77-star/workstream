@@ -1,17 +1,15 @@
 name: ci
 
-# Workstream — GitHub Actions port of .gitlab-ci.yml (2026-08-23).
+# Workstream — GitHub Actions CI (2026-08-23).
 #
-# Public repo => GitHub Actions runs free + unlimited. Job mapping:
-#   GitLab `gate`          -> `gate`          (pnpm run ci — the static gate)
-#   GitLab `secret-scan`   -> `secret-scan`   (gitleaks)
-#   GitLab `e2e` (6 shards)-> `e2e` matrix    (Playwright, non-gating)
-#   GitLab `deploy-railway`-> `deploy`        (Railway CLI + live probe)
+# Jobs:
+#   `gate`         — pnpm run ci (static gate)
+#   `secret-scan`  — gitleaks
+#   `e2e`          — Playwright matrix (6 shards, non-blocking signal)
+#   `deploy`       — Railway CLI + live probe (main only; needs gate + secret-scan)
 #
-# Deploy is decoupled from e2e (needs only gate + secret-scan). e2e runs on
-# every push and PR as a signal, never blocks. The two docker image-smoke
-# jobs are omitted (they were manual + allow_failure in GitLab and add no
-# signal to the deploy path).
+# Deploy is decoupled from e2e. e2e runs on every push and PR as a signal,
+# never blocks deploy.
 
 on:
   push:
@@ -19,8 +17,8 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Cancel a superseded run when a new commit lands on the same ref (mirrors
-# GitLab's `interruptible`), so back-to-back pushes don't pile up runners.
+# Cancel a superseded run when a new commit lands on the same ref, so
+# back-to-back pushes don't pile up runners.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

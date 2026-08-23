@@ -2,22 +2,19 @@
 #
 # Why this file exists
 # --------------------
-# `railway up` uploads the whole working directory as one archive. In GitLab CI
-# the `deploy-railway` job inherited the top-level `default: cache:` block in
-# .gitlab-ci.yml, so the runner restored the pnpm store (~100k files) into
-# $CI_PROJECT_DIR/.pnpm-store before the deploy ran. The upload grew to
-# 867,494,894 bytes and Railway rejected it with HTTP 413 Payload Too Large,
-# which kept merged work on main from reaching production.
+# `railway up` uploads the whole working directory as one archive. In GitHub
+# Actions the deploy job can inherit a pnpm store from cache (~100k files) in
+# the workspace before deploy runs. The upload can grow past Railway's limit
+# and fail with HTTP 413 Payload Too Large, which keeps merged work on main
+# from reaching production.
 #
 # `railway up` already honours .gitignore and skips .git and node_modules on its
 # own, so every other large directory here (.turbo, .next, dist, coverage) was
 # already excluded. .pnpm-store is the one that was not: it is deliberately
 # absent from .gitignore, so nothing filtered it.
 #
-# The deploy job now also carries `cache: []`, so the store is never restored
-# into that job at all. The two fixes are deliberately redundant: `cache: []`
-# means there is nothing to ignore, and this file keeps the upload small no
-# matter what a future job or a local `railway up` leaves in the directory.
+# This file keeps the upload small no matter what a future job or a local
+# `railway up` leaves in the directory.
 #
 # Format: Railway documents .railwayignore as Railway-specific ignore patterns
 # honoured in addition to .gitignore (see docs.railway.com/cli/up, "File

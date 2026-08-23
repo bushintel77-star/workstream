@@ -12,13 +12,13 @@ new developer. Read ONBOARDING first, this file for the queue.
 
 ## Current ranked priorities (verified 2026-08-18, post photo-trace)
 
-1. CI live-verify on GitLab — push to `main` and confirm the `.gitlab-ci.yml` pipeline is green (migration: `docs/MIGRATE-GITHUB-TO-GITLAB.md`).
+1. CI live-verify on GitHub — push to `main` and confirm the `.github/workflows/ci.yml` workflow is green (gate + secret-scan + deploy).
 2. Premium assets — species depth, thumbnails, curated palettes.
 3. Foliage "murk" polish — lift foliage to the `l-*` ramp, neutralise the olive ground-bounce on the paper canvas.
 4. Signoff record trace — verify signoff freezes the accepted quote (operator `SignoffCard` vs portal deposit must share one record).
 5. ~~Classic-studio e2e debt~~ — resolved 2026-08-19: the SVG studio, its 63
-   classic e2e specs, and `?svg=1` routing were deleted in the GitLab migration
-   cleanup (single WebGL surface only).
+   classic e2e specs, and `?svg=1` routing were deleted in the 2026-08-19
+   WebGL-only cleanup (single WebGL surface only).
 6. Longer-tail stage gaps (`docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md` §3): Phase 4 Build Pack (not built), Phase 1 floating tool ribbon on the GL surface, Phase 3 Presentation Lens polish, Stage 2 CAD (product-gated), mobile offline-first sync (design only).
 
 (Photo-trace elevation capstone: shipped 2026-08-18 — **committed on `main`
@@ -57,8 +57,8 @@ P1 entry below and `docs/CAMERA-STATE-MACHINE.md`.)
       `docker-compose.yml`, CI smoke tests,
       `workflow_dispatch` deploy. Local CI now includes mobile placeholder,
       portal Edge, typecheck, lint, and Vitest gates (`0369689`).
-- [x] **Secret scanning** — gitleaks, now the `secret-scan` job in
-      [.gitlab-ci.yml](.gitlab-ci.yml) (was a GitHub Action pre-migration).
+- [x] **Secret scanning** — gitleaks, the `secret-scan` job in
+      [.github/workflows/ci.yml](.github/workflows/ci.yml).
 - [x] **Stripe key validation on save** — `GET /v1/balance` round-trip wired in
       [apps/api/src/routes/settings.ts](apps/api/src/routes/settings.ts) via
       `validateStripeKey()`; rejects bad keys with Stripe's own error message.
@@ -139,10 +139,9 @@ remains human-operated; the code now fails closed without it.
   14:01Z — #190/#191/#193 all failed; #194 web is deployed via manual
   `railway up` instead, which still works). Re-verify git deploys after the
   card clears.
-- [x] **Dependabot** — retired with the GitHub move; GitLab dependency scanning
-      is available as a pipeline job if wanted.
-- [ ] **Branch protection on `main`** — free on GitLab: Settings → Repository →
-      Protected branches → protect `main` (the GitHub-Pro requirement is gone).
+- [x] **Dependabot** — enabled on GitHub for dependency updates.
+- [ ] **Branch protection on `main`** — GitHub: Settings → Branches → protect
+      `main`; require status checks `gate` and `secret-scan` before merge.
 - [x] **Playwright e2e** — `design-studio.spec.ts` (load + save), `operator-happy-path.spec.ts`;
       CI job `playwright e2e` on PR + main.
 - [x] **Contract tests (extended smoke)** — Zod boundary tests +
@@ -492,7 +491,7 @@ re-measured, not quoted from the survey.
 - [x] **Classic-studio e2e debt — resolved 2026-08-19 by retirement.** The
       whole `?svg=1` SVG studio was deleted (295 files + 63 classic e2e specs
       incl. `quote-tier1`, `develop-loop`, `elevation-silhouettes`) in the
-      GitLab migration cleanup; there is no classic board left to keep in
+      WebGL-only cleanup; there is no classic board left to keep in
       sync. (Historical note retained: the specs were red because
       `?svg=1&mode=cad&svg=1` double-param mounted the WebGL studio, the
       develop-loop council tip never appeared, and the classic fit-sheet
@@ -1067,7 +1066,7 @@ Cross-check against build status below before treating any phase as shipped.
 | Stripe / portal / OTEL | Runbook Section 6: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `WORKSTREAM_PORTAL_SECRET`, `OTEL_EXPORTER_OTLP_ENDPOINT` |
 | EAS project | Runbook Section 5: `cd apps/mobile && npx eas-cli init` plus store credentials |
 | Litestream | Runbook Section 7 after SQLite migration |
-| Branch protection | Runbook Section 8, GitLab Settings → Repository → Protected branches (free) |
+| Branch protection | Runbook Section 8, GitHub Settings → Branches → Branch protection rules |
 
 ## Sandbox-blocked actions (need the user)
 

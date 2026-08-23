@@ -27,7 +27,7 @@ There is **one canvas studio** in `apps/web`:
 
 The legacy SVG studio (`HandoffDesignStudio` + `useStudioState` +
 `?svg=1` routing, ~295 SVG-only files and 63 classic e2e specs) was
-**deleted 2026-08-19** in the GitLab migration cleanup. The ~51 modules the
+**deleted 2026-08-19** in the SVG studio retirement. The ~51 modules the
 WebGL studio genuinely shares (catalog, canvas bridge, geometry, and the
 elevation/present/share/survey surfaces) were kept under
 `components/canvas/handoff/` pending their re-homing into the WebGL tree;

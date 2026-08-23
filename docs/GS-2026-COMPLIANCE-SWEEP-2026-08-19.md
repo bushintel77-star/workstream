@@ -129,14 +129,11 @@ ring's live model. No fabricated "direct sun" figures.
 
 ## Known remaining sweep items (next rounds)
 
-- GitLab CI compute is blocked at the account level (every pipeline —
-  including a one-job probe — fails instantly with zero jobs; runners are
-  online). Human step: validate a payment method under GitLab billing so
-  shared-runner compute unlocks, then the `gate`/`scan`/`e2e`/`docker`/
-  `deploy` pipeline will run as authored.
-- `RAILWAY_TOKEN` (project-scoped, Railway dashboard → Settings → Tokens)
-  must be added to GitLab CI/CD variables for the auto-deploy stage to arm;
-  it self-disables until then.
+- GitHub Actions runs on every push to `main` (gate, secret-scan, e2e signal,
+  deploy). Human step: confirm repository secret **`RAILWAY_TOKEN`**
+  (project-scoped, Railway dashboard → Settings → Tokens) is set under GitHub
+  → Settings → Secrets and variables → Actions — the deploy job self-disables
+  until then.
 - Periodic re-scan of new code for raw radii, sub-floor font sizes, and
   non-`--gs-*` accent hues — the colour gate now covers hex AND black
   scrims.

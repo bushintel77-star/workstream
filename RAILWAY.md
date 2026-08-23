@@ -1,10 +1,11 @@
 # Railway deployment
 
-Git hosting is GitLab. **GitLab CI gates every production deploy** — see
-`.gitlab-ci.yml`. Pushing to `main` runs `pnpm run ci`, gitleaks, Playwright
-(three shards), then `railway up` for API and web when all jobs are green.
-Set protected CI variable **`RAILWAY_TOKEN`** (project-scoped) in GitLab →
-Settings → CI/CD → Variables.
+Git hosting is GitHub. **GitHub Actions gates every production deploy** — see
+`.github/workflows/ci.yml`. Pushing to `main` runs `pnpm run ci`, gitleaks, then
+`railway up` for API and web when the blocking jobs are green. Playwright e2e
+runs in six shards as a signal job (non-blocking). Set repository secret
+**`RAILWAY_TOKEN`** (project-scoped) in GitHub → Settings → Secrets and
+variables → Actions.
 
 Manual deploy remains available for emergencies:
 
@@ -22,8 +23,8 @@ Do **not** set a Railway service root directory. The Dockerfiles build from the
 repo root so workspace packages (`packages/contracts`, `packages/domain`,
 `packages/db`, `packages/cad`) are available during the build.
 
-Do not wire Railway to a git source — deploy only through the CI `deploy-railway`
-job (or emergency manual `railway up` above).
+Do not wire Railway to a git source — deploy only through the GitHub Actions
+`deploy` job (or emergency manual `railway up` above).
 
 ## Service settings
 

@@ -23,8 +23,8 @@ architecture; this file wins on **run/deploy/journey**.
 | API `/healthz` | 200 |
 | Web deploy | `d6a99e68-9fe3-4d3e-9f27-0f32987a93c7` SUCCESS (CLI `railway up`) |
 | API deploy | `f660a53e-5f01-42c4-b4ca-5f16df05f0dc` SUCCESS |
-| Git `main` | GitLab `origin`; CI-gated |
-| GitLab CI | Blocking gate + secret scan + 3 Playwright shards before Railway deploy |
+| Git `main` | GitHub `origin`; CI-gated |
+| GitHub Actions | Blocking gate + secret scan before Railway deploy; e2e signal (6 shards) |
 
 Live URLs:
 
@@ -43,7 +43,7 @@ Live URLs:
                 │ git push                       │ railway up (upload)
                 ▼                                ▼
 ┌───────────────────────────┐    ┌──────────────────────────────┐
-│  GitLab (origin)          │    │  Railway production          │
+│  GitHub (origin)          │    │  Railway production          │
 │  Gate + e2e + deploy      │    │  web :3002  ·  api :3001     │
 └───────────────────────────┘    │  api-volume → SQLite WAL     │
                                  └──────────────────────────────┘
@@ -110,9 +110,9 @@ green hook ≠ green `pnpm run ci`.
 
 ### 3.4 Deploy to production
 
-**Primary path:** push `main`. GitLab runs `pnpm run ci`, the secret scan, and
-all three Playwright shards. Only after all blocking jobs pass does
-`deploy-railway` deploy API first, then web, and probe `/readyz` plus `/home`.
+**Primary path:** push `main`. GitHub Actions runs `pnpm run ci`, the secret
+scan, then deploys API and web via Railway when blocking jobs pass. Playwright
+e2e runs in six shards as a non-blocking signal.
 
 Manual fallback from repo root:
 
@@ -142,15 +142,10 @@ See `RAILWAY.md` for service variables and health paths.
 
 | Remote | URL | Role |
 |---|---|---|
-| `origin` | gitlab.com/77999-group1/77999-project | **Source of truth** |
-| `github` | github.com/Boringuy7799/workstream | Archive / legacy |
+| `origin` | github.com/Boringuy7799/workstream | **Source of truth** |
 
-GitLab CI gates production deployment. Pushing `main` runs the repository gate,
-secret scan, and Playwright shards before Railway deployment.
-
-Historical note: GitLab replaced GitHub Actions in Aug 2026 when GitHub billing
-froze CI (`docs/MIGRATE-GITHUB-TO-GITLAB.md`). CI was later turned off after
-pipeline minutes + auth-hardening deploy failures.
+GitHub Actions gates production deployment. Pushing `main` runs the repository
+gate and secret scan before the Railway deploy job.
 
 ---
 
@@ -286,13 +281,13 @@ Pipeline jobs (survey, CAD, costing) run **inline** unless `REDIS_URL` is set
 | Issue | Symptom | Mitigation |
 |---|---|---|
 | Auth hardening ignored `AUTH_REQUIRED=false` | API crash-loop, `/home` error boundary | Fixed in `9222626`; live via CLI deploy |
-| GitLab CI auto-deploy | Broken code shipped on green gate | CI disabled; manual `railway up` only |
+| GitHub Actions deploy | Broken code shipped on green gate | Gate + secret-scan block deploy; e2e is signal-only |
 
 ### P1 — operational confusion
 
 | Issue | Detail |
 |---|---|
-| **Stale docs** | AGENTS.md still describes GitLab CI gate + `/` → `/home` redirect |
+| **Stale docs** | Some historical docs still mention the Aug 2026 GitLab detour |
 | **`/readyz` clerk check** | Reports `clerk: true` when auth is waived — misleading for ops |
 | **`buildSha: unknown`** | CLI `railway up` deploys do not stamp git SHA (Dockerfile arg not passed) |
 | **No real sign-in** | Production is shared `dev-user` — not multi-tenant safe |

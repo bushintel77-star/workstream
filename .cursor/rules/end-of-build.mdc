@@ -108,7 +108,7 @@ layering.
 
 ## CI
 
-`pnpm run ci` is the authoritative gate and mirrors the GitLab `gate` job.
+`pnpm run ci` is the authoritative gate and mirrors the GitHub Actions `gate` job.
 
 Pre-commit (husky/lint-staged) covers typecheck, ESLint on the staged files at
 `--max-warnings 0`, `vitest related` on the staged set, the nine pure-file-reader

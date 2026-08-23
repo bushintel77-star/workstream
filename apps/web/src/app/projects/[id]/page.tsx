@@ -93,7 +93,7 @@ export default async function ProjectCanvasPage({
   const initialMode = resolveCanvasMode(sp.mode, progress) as StudioMode;
 
   /** The WebGL studio is the only canvas mount. The legacy SVG studio
-   * (?svg=1) was retired 2026-08-19 — see docs/MIGRATE-GITHUB-TO-GITLAB.md. */
+   * (?svg=1) was retired 2026-08-19 — see ONBOARDING.md. */
   const frame = canvas?.site_frame ?? null;
   const webglScaleM = frame?.board_width_m ?? 110;
   const webglBoardAspect =

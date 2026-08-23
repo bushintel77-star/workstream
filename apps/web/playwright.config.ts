@@ -30,7 +30,7 @@ export default defineConfig({
     baseURL: WEB_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    // Chromium no longer falls back to software WebGL automatically. GitLab
+    // Chromium no longer falls back to software WebGL automatically. CI
     // runners have no GPU, so opt into ANGLE + SwiftShader explicitly instead
     // of letting contexts migrate to Mesa llvmpipe and disappear under load.
     // Keep local browsers on their native renderer.
