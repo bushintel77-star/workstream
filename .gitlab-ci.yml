@@ -70,13 +70,12 @@ secret-scan:
   timeout: 10m
 
 # ---------------------------------------------------------------- e2e
-# Playwright — runs on MR and main as a SIGNAL, non-gating for deploy.
-# Six shards (was three): the WebGL specs render through SwiftShader on
-# GPU-less shared runners, so each spec takes minutes and the serial
-# per-shard wall clock was blowing the job timeout (shards 2/3 and 3/3 hit
-# job_execution_timeout). More shards spread that load across runner machines
-# and keep every shard under budget. allow_failure keeps a red shard from
-# blocking production (deploy needs only gate + secret-scan).
+# Playwright — runs on MERGE REQUESTS ONLY as a signal, non-gating for deploy.
+# Main pushes skip it: the WebGL specs render through SwiftShader on GPU-less
+# shared runners (each spec takes minutes, a full run ~2h of runner minutes),
+# and the account's CI quota cannot carry that on every push. Six shards
+# spread the MR run across machines. allow_failure keeps a red shard from
+# blocking anything (deploy needs only gate + secret-scan).
 e2e:
   stage: e2e
   needs: ["gate"]
@@ -106,8 +105,11 @@ e2e:
       - .playwright
     when: always
   rules:
+    # e2e is non-gating and the heavy consumer of CI compute (software-GL
+    # WebGL on GPU-less runners — a full run is ~2h of runner minutes).
+    # Scope it to merge requests only: main pushes deploy on the cheap
+    # static gate + secret scan, which fits the account's CI quota.
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "main"
   timeout: 90m
 
 # ---------------------------------------------------------------- docker
