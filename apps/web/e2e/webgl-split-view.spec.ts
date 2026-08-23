@@ -18,7 +18,7 @@ import { createAddressProject } from "./helpers";
 test.describe("WebGL split view (plan | 3D)", () => {
   // Two full WebGL canvases (context + shader compile + EffectComposer)
   // exceed the default budget on cold CI hardware.
-  test.setTimeout(240_000);
+  test.setTimeout(420_000); // TWO linked R3F canvases render per frame on software GL
   test("split tool mounts two linked halves and toggles back", async ({
     page,
     request,

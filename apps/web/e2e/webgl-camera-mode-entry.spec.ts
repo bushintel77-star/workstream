@@ -50,7 +50,7 @@ test.describe("WebGL camera state on mode entry", () => {
     page,
     request,
   }) => {
-    test.setTimeout(300_000);
+    test.setTimeout(420_000); // 5 sequential full studio mounts on software GL
     const { projectId } = await createAddressProject(request, {
       address: "9 Camera Entry Street, Melbourne VIC 3000",
     });

@@ -180,7 +180,7 @@ test.describe("WebGL precision drafting tools", () => {
     page,
     request,
   }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(300_000); // observed mouse.move hitting the 240s ceiling on software GL
     const errors: string[] = [];
     page.on("console", (m: ConsoleMessage) => {
       if (m.type() === "error") errors.push(m.text().slice(0, 300));
@@ -266,7 +266,7 @@ test.describe("WebGL precision drafting tools", () => {
     page,
     request,
   }) => {
-    test.setTimeout(300_000);
+    test.setTimeout(420_000); // observed mouse.move hitting the 300s ceiling on software GL
     const errors: string[] = [];
     page.on("console", (m: ConsoleMessage) => {
       if (m.type() === "error") errors.push(m.text().slice(0, 300));

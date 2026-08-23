@@ -11,7 +11,7 @@ test("active WebGL chrome keeps all visible text at or above AA", async ({
   page,
   request,
 }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(300_000); // full chrome sweep on software GL (observed 3.2m)
   const { projectId } = await createWrightsTier1Project(request, {
     seedCanvas: true,
   });

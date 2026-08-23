@@ -21,6 +21,9 @@ test.describe("WebGL placement gizmo (P1 spatial manipulator)", () => {
     page,
     request,
   }) => {
+    // Full studio mount + TransformControls drags — the 90s default blows
+    // on GPU-less shared runners (observed: mouse.move Test timeout).
+    test.setTimeout(240_000);
     const errors: string[] = [];
     page.on("console", (m: ConsoleMessage) => {
       if (m.type() === "error") errors.push(m.text().slice(0, 300));
