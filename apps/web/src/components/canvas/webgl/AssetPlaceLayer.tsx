@@ -20,19 +20,21 @@
  * Binding: docs/GOLD-STANDARD-2026.md §3 (Asset Discovery Fan-Out)
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { clampBoardPct } from "@workstream/contracts";
 import type { CatalogPlacement } from "@workstream/contracts";
+import { PALETTE } from "../../../styles/colorTokens";
 import { useStudioStore } from "./studioStore";
-import { worldToPct, type PctPoint } from "./coordTransform";
+import { worldToPct, pctToWorld, type PctPoint } from "./coordTransform";
 import { snapToGridMetres } from "../handoff/geometry/snap";
 import { mapSymbolToStudioType } from "../handoff/state/studioAiEngine";
 import { symbolToFloraForm } from "./floraWorld";
 import {
   gridInBox,
   massPlantSpacingM,
+  matureCanopyRadiusM,
   rowAlongLine,
   rowRotationDeg,
 } from "./fillAreaAssets";
@@ -104,6 +106,9 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
 
   const placedRef = useRef(false);
   const dragStart = useRef<PctPoint | null>(null);
+  // Live ghost preview position (snapped pct) — component-local, so the
+  // pointer-move path never writes the zustand store per event.
+  const [ghostPct, setGhostPct] = useState<PctPoint | null>(null);
   const massMode: "row" | "area" | null = rowPlantActive
     ? "row"
     : areaPlantActive
@@ -179,7 +184,15 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
   const setPointerClientPos = useStudioStore((s) => s.setPointerClientPos);
 
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
-    if (!massMode || !dragStart.current || !e.point) return;
+    if (!e.point) return;
+    // Single-place armed: track the snapped position for the live ghost so
+    // the operator sees the footprint under the cursor before committing.
+    if (armedSymbolId && !massMode) {
+      const pct = snapPct(worldToPct(e.point.x, e.point.z, scaleM, boardAspect), scaleM);
+      setGhostPct(pct);
+      return;
+    }
+    if (!massMode || !dragStart.current) return;
     e.stopPropagation();
     const pct = snapPct(worldToPct(e.point.x, e.point.z, scaleM, boardAspect), scaleM);
     setAssetPlantDraft({ mode: massMode, a: dragStart.current, b: pct });
@@ -196,6 +209,7 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
   const onPointerUp = (e: ThreeEvent<PointerEvent>) => {
     const start = dragStart.current;
     dragStart.current = null;
+    setGhostPct(null);
     if (!armedSymbolId || !massMode || !start || !e.point) {
       setAssetPlantDraft(null);
       return;
@@ -224,17 +238,91 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
   if (!armedSymbolId && !pendingDrop) return null;
 
   const planeSize = scaleM * 5;
+  // Ghost footprint preview — a snapped ring + disc under the cursor while
+  // armed (single-place). Sized from the catalog's mature spread; crimson
+  // when it would sit too close to an existing placement (conflict = the
+  // flora-ring language, so a hardscape ghost reads the same way).
+  let ghost = null;
+  if (armedSymbolId && ghostPct && !massMode) {
+    const radiusM = matureCanopyRadiusM(armedSymbolId) ?? 0.6;
+    const [gwx, gwz] = pctToWorld(ghostPct, scaleM, boardAspect);
+    const placements = useStudioStore.getState().placements;
+    const conflict = placements.some((p) => {
+      const [px, pz] = pctToWorld(
+        { x: p.x_pct, y: p.y_pct },
+        scaleM,
+        boardAspect,
+      );
+      const otherR = matureCanopyRadiusM(p.symbol_id) ?? 0.6;
+      return Math.hypot(px - gwx, pz - gwz) < radiusM + otherR + 0.4;
+    });
+    // Truth Anchor cobalt — the data-stroke colour on paper (8.22:1 on
+    // #F4F4F4), so the ghost reads on the drafting sheet; crimson on conflict
+    // (same vocabulary as the flora ring).
+    const ghostColor = conflict ? PALETTE.gsConflict : PALETTE.gsPrimaryInk;
+    // Centre crosshair is a fixed WORLD size — always legible regardless of
+    // footprint (a 0.6 m paver ring would vanish at fit zoom otherwise).
+    const cross = Math.max(0.5, radiusM * 0.18);
+    ghost = (
+      <group>
+        {/* Crosshair — the exact snapped placement point */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[gwx, 0.075, gwz]}>
+          <planeGeometry args={[cross * 2.4, 0.09]} />
+          <meshBasicMaterial
+            color={ghostColor}
+            transparent
+            opacity={1}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[gwx, 0.075, gwz]}>
+          <planeGeometry args={[0.09, cross * 2.4]} />
+          <meshBasicMaterial
+            color={ghostColor}
+            transparent
+            opacity={1}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+        {/* Footprint ring — honest mature-spread radius (crimson on conflict) */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[gwx, 0.06, gwz]}>
+          <ringGeometry args={[Math.max(0.15, radiusM - 0.12), Math.max(0.2, radiusM), 32]} />
+          <meshBasicMaterial
+            color={ghostColor}
+            transparent
+            opacity={0.95}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[gwx, 0.05, gwz]}>
+          <circleGeometry args={[Math.max(0.2, radiusM), 32]} />
+          <meshBasicMaterial
+            color={ghostColor}
+            transparent
+            opacity={0.15}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
+    );
+  }
 
   return (
-    <mesh
-      rotation={[-Math.PI / 2, 0, 0]}
-      position={[0, 0, 0]}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-    >
-      <planeGeometry args={[planeSize, planeSize]} />
-      <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-    </mesh>
+    <>
+      {ghost}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0, 0]}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      >
+        <planeGeometry args={[planeSize, planeSize]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+    </>
   );
 }
