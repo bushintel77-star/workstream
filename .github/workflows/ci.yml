@@ -17,6 +17,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 # Cancel a superseded run when a new commit lands on the same ref (mirrors
 # GitLab's `interruptible`), so back-to-back pushes don't pile up runners.
