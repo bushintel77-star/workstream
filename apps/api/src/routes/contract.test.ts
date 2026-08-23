@@ -13,7 +13,12 @@ function spanOf(uri: string): number {
   return maxLng - minLng;
 }
 
-describe("API contract — projects", { timeout: 20000 }, () => {
+// The smoke tests in this file hit live external services (Vicmap WFS, weather,
+// Nominatim geocode fallback) via `app.inject`. On slow/degraded shared CI
+// runners those round-trips can individually exceed the 20s default, and the
+// cumulative chain in the smoke suite blew it (observed gate flake). A 60s
+// ceiling gives a healthy run room without masking a genuine hang.
+describe("API contract — projects", { timeout: 60000 }, () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>["app"];
   let store: Awaited<ReturnType<typeof buildTestApp>>["store"];
 
