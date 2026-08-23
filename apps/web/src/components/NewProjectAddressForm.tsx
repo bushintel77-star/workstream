@@ -208,8 +208,8 @@ export function NewProjectAddressForm() {
 
       <KitButton
         type="button"
-        variant="default"
-        disabled={!canContinue || searching}
+        variant="accent"
+        disabled={searching}
         onClick={() => void goOpen()}
       >
         Locate property →

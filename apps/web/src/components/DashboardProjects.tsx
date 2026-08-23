@@ -42,10 +42,6 @@ function formatMoney(value: number): string {
   return MONEY_FORMAT.format(value);
 }
 
-function pad2(n: number): string {
-  return n < 10 ? `0${n}` : String(n);
-}
-
 export function DashboardProjects({
   projects,
   loadError,
@@ -196,15 +192,17 @@ export function DashboardProjects({
         </div>
       ) : (
         <ul className={home.cardGrid} aria-busy={isPending}>
-          {visibleProjects.map((project, i) => (
+          {visibleProjects.map((project) => (
             <li key={project.id} className={home.cardItem}>
               <Link
                 href={`/projects/${project.id}`}
                 className={`${home.card} ${home[`status_${project.status}`]}`}
               >
-                {/* Thumbnail — oversized index number on accent surface */}
+                {/* Thumbnail — stage tag as identity, not a giant index number */}
                 <div className={home.cardThumb}>
-                  <span className={home.cardIndex}>{pad2(i + 1)}</span>
+                  <span className={home.cardStageTag}>
+                    {project.stageLabel}
+                  </span>
                   <span
                     className={`${home.cardDot} ${home[`status_${project.status}`]}`}
                     aria-hidden
@@ -217,9 +215,8 @@ export function DashboardProjects({
                   <span className={home.cardAddress}>{project.address}</span>
                 </div>
 
-                {/* Footer — stage + cost + date */}
+                {/* Footer — cost + date */}
                 <div className={home.cardFooter}>
-                  <span className={home.cardStage}>{project.stageLabel}</span>
                   {project.costTotal != null ? (
                     <span className={home.cardCost}>
                       {formatMoney(project.costTotal)}
@@ -234,16 +231,8 @@ export function DashboardProjects({
                   </span>
                 </div>
               </Link>
+              {/* Quiet secondary actions — the card body is the open affordance. */}
               <div className={home.cardActions}>
-                {/* Keep both core doors visible so operators can jump directly
-                    into the drawing or into records from one scan pass. */}
-                <Link
-                  href={`/projects/${project.id}`}
-                  className={home.cardSurfaceLink}
-                  aria-label={`Open studio for ${project.projectName}`}
-                >
-                  Studio
-                </Link>
                 <Link
                   href={`/projects/${project.id}/outputs`}
                   className={home.cardSurfaceLinkSecondary}

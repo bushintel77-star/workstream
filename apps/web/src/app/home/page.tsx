@@ -79,19 +79,11 @@ export default async function HomePage() {
       <AppNav summary={summary} />
 
       <div className={home.layout}>
-        {/* Left column — masthead + address composer */}
+        {/* Left column — product masthead + address composer */}
         <aside className={home.aside}>
           <header className={home.masthead}>
-            <div className={home.titleBlock}>
-              <p className={home.mastheadMark}>Workstream · Melbourne</p>
-              <div className={home.titleBlockMeta}>
-                <span>DWG-001</span>
-                <span>1:200</span>
-                <span>{new Intl.DateTimeFormat("en-AU", { day: "2-digit", month: "short", year: "numeric" }).format(new Date())}</span>
-              </div>
-            </div>
+            <p className={home.mastheadMark}>Workstream · Melbourne</p>
             <h1 className={home.mastheadTitle}>Workstream</h1>
-            <div className={home.dimLine} aria-hidden />
           </header>
 
           {/* Workspace state — data chips, separated from the composer action. */}
@@ -141,21 +133,6 @@ export default async function HomePage() {
       <PlannerDock label="Planner" accent="blue">
         <HomePlanner projects={projects} />
       </PlannerDock>
-
-      {/* Drawing footer — north arrow + scale bar */}
-      <footer className={home.drawingFooter} aria-hidden>
-        <div className={home.northArrow}>
-          <span className={home.northN}>N</span>
-          <span className={home.northGlyph}>↑</span>
-        </div>
-        <div className={home.scaleBar}>
-          <span className={home.scaleSeg} />
-          <span className={`${home.scaleSeg} ${home.scaleSegAlt}`} />
-          <span className={home.scaleSeg} />
-          <span className={`${home.scaleSeg} ${home.scaleSegAlt}`} />
-          <span className={home.scaleLabel}>0 — 10m</span>
-        </div>
-      </footer>
     </main>
   );
 }

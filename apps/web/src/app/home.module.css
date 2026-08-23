@@ -69,22 +69,15 @@
   }
 }
 
-/* Masthead — architectural title block on the sheet corner */
+/* Masthead — clean product header (no drawing title-block theatre) */
 
 .masthead {
   margin: 0;
-  padding-bottom: 1.5rem;
-}
-
-.titleBlock {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
+  padding-bottom: 1rem;
 }
 
 .mastheadMark {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   font-family: var(--font-tech);
   font-size: 11px;
   font-weight: 500;
@@ -93,52 +86,13 @@
   color: var(--gs-primary);
 }
 
-.titleBlockMeta {
-  display: flex;
-  gap: 10px;
-  font-family: var(--font-tech);
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  color: var(--ink-tertiary);
-}
-
-.titleBlockMeta span + span::before {
-  content: "·";
-  margin-right: 10px;
-  color: var(--gs-line);
-}
-
 .mastheadTitle {
-  margin: 2px 0 0;
+  margin: 0;
   font-family: var(--font-tech);
-  font-size: clamp(30px, 4vw, 40px);
+  font-size: clamp(28px, 3.6vw, 36px);
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--ink-primary);
-}
-
-.dimLine {
-  height: 1px;
-  background: var(--ink-primary);
-  width: 100%;
-}
-
-.dimLine::before,
-.dimLine::after {
-  content: "";
-  position: absolute;
-  top: -3px;
-  width: 1px;
-  height: 7px;
-  background: var(--ink-primary);
-}
-
-.dimLine::before {
-  left: 0;
-}
-
-.dimLine::after {
-  right: 0;
 }
 
 /* --- Planner widget grid --- */
@@ -358,24 +312,7 @@
   outline-offset: 2px;
 }
 
-/* Stage signal — the drafting-sheet left rule */
-.card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 12px;
-  bottom: 12px;
-  width: 2px;
-  border-radius: var(--gs-radius-chip);
-  background: var(--gs-line);
-}
-
-.card.status_draft::before { background: var(--ink-tertiary); }
-.card.status_active::before { background: var(--gs-primary); }
-.card.status_review::before { background: var(--gs-warning); }
-.card.status_complete::before { background: var(--gs-success); }
-
-/* Thumbnail — oversized sheet index number */
+/* Thumbnail — stage tag as identity, with the status dot */
 
 .cardThumb {
   grid-row: 1 / span 2;
@@ -383,15 +320,21 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 6px;
   padding-top: 2px;
 }
 
-.cardIndex {
+.cardStageTag {
   font-family: var(--font-tech);
-  font-size: 26px;
+  font-size: 10px;
   font-weight: 600;
-  line-height: 1;
-  color: var(--gs-primary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--gs-radius-pill);
+  border: 1px solid color-mix(in srgb, var(--gs-line) 70%, transparent);
+  color: var(--ink-secondary);
+  white-space: nowrap;
 }
 
 .cardDot {
@@ -413,15 +356,12 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  /* The Records / Delete controls are absolutely positioned at the card's
-     top-right (`.cardActions`) and float over the body; reserve space so a
-     long project name/address never runs underneath them. */
-  padding-right: 118px;
+  padding-right: 8px;
 }
 
 .cardName {
   font-family: var(--font-ui);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--ink-primary);
   overflow: hidden;
@@ -446,19 +386,6 @@
   margin-top: 4px;
 }
 
-.cardStage {
-  font-family: var(--font-ui);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: var(--gs-radius-pill);
-  border: 1px solid color-mix(in srgb, var(--gs-line) 70%, transparent);
-  color: var(--ink-secondary);
-  white-space: nowrap;
-}
-
 .cardCost {
   margin-left: auto;
   font-family: var(--font-tech);
@@ -480,32 +407,15 @@
   white-space: nowrap;
 }
 
+/* Quiet secondary actions — the card body is the open affordance, so these
+   sit at the bottom-right as small, low-emphasis links (no heavy CTA look). */
 .cardActions {
   position: absolute;
-  top: 8px;
   right: 8px;
+  bottom: 8px;
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.cardSurfaceLink {
-  font-family: var(--font-ui);
-  font-size: 10.5px;
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--control-h);
-  padding: 3px 8px;
-  border-radius: var(--gs-radius-chip);
-  border: 1px solid color-mix(in srgb, var(--gs-primary) 40%, transparent);
-  background: color-mix(in srgb, var(--gs-primary) 10%, transparent);
-  color: var(--accent-ink);
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.cardSurfaceLink:hover {
-  background: color-mix(in srgb, var(--gs-primary) 20%, transparent);
 }
 
 .cardSurfaceLinkSecondary {
@@ -516,8 +426,8 @@
   min-height: var(--control-h);
   padding: 3px 8px;
   border-radius: var(--gs-radius-chip);
-  border: 1px solid color-mix(in srgb, var(--line-hairline) 90%, transparent);
-  background: color-mix(in srgb, var(--surface-base) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line-hairline) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-base) 45%, transparent);
   color: var(--ink-secondary);
   text-decoration: none;
   white-space: nowrap;
@@ -888,98 +798,5 @@
   margin: 0;
   font-family: var(--font-tech);
   font-size: 10.5px;
-  color: var(--ink-tertiary);
-}
-
-/* Reminders */
-
-.reminderList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.reminderRow {
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
-  font-size: 12px;
-  color: var(--ink-primary);
-}
-
-.reminderDot {
-  width: 6px;
-  height: 6px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--gs-warning);
-  transform: translateY(-1px);
-}
-
-.reminderText {
-  flex: 1;
-  min-width: 0;
-}
-
-/* --- Drawing footer — north arrow + scale bar --------------------------- */
-
-.drawingFooter {
-  position: fixed;
-  right: 18px;
-  bottom: 14px;
-  z-index: 2;
-  display: flex;
-  align-items: flex-end;
-  gap: 22px;
-  pointer-events: none;
-}
-
-.northArrow {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-}
-
-.northN {
-  font-family: var(--font-tech);
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--gs-truth-ink);
-}
-
-.northGlyph {
-  font-family: var(--font-tech);
-  font-size: 13px;
-  color: var(--gs-truth-ink);
-  line-height: 1;
-}
-
-.scaleBar {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  padding-bottom: 2px;
-}
-
-.scaleSeg {
-  width: 18px;
-  height: 5px;
-  background: color-mix(in srgb, var(--gs-truth-ink) 75%, transparent);
-}
-
-.scaleSegAlt {
-  background: transparent;
-  border-bottom: 1px solid color-mix(in srgb, var(--gs-truth-ink) 75%, transparent);
-}
-
-.scaleLabel {
-  margin-left: 8px;
-  font-family: var(--font-tech);
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
   color: var(--ink-tertiary);
 }
