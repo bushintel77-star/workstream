@@ -11,9 +11,17 @@ useDefault = true
 #     the value is fabricated in the test file itself.
 #   - docs/LITESTREAM-SETUP.md: `PASTE_B2_APPLICATION_KEY` is a placeholder
 #     telling the reader to paste their own key, not a credential.
+#   - *.test.ts / *.spec.ts: unit tests set dummy env secrets (e.g.
+#     CONSTRUCT_PORTAL_SECRET = "...") to exercise config parsing; newer
+#     gitleaks' generic-api-key rule flags them. Test files are fixtures,
+#     not credentials — allowlist them by path.
 [allowlist]
 description = "Test fixtures and documentation placeholders"
 regexes = [
   '''whsec_test_1234567890abcdef''',
   '''PASTE_B2_APPLICATION_KEY''',
+]
+paths = [
+  '''\.test\.ts$''',
+  '''\.spec\.ts$''',
 ]
