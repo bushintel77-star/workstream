@@ -413,6 +413,10 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  /* The Records / Delete controls are absolutely positioned at the card's
+     top-right (`.cardActions`) and float over the body; reserve space so a
+     long project name/address never runs underneath them. */
+  padding-right: 118px;
 }
 
 .cardName {
