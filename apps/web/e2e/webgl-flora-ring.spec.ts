@@ -37,13 +37,13 @@ test.describe("WebGL flora ring (ranked suggestions)", () => {
       timeout: 10_000,
     });
 
-    // Arm the canopy (olive) card — a flora form.
+    // Arm the canopy (olive) card — a flora form. Armed feedback is the
+    // floating placement toolbar (the dock "Armed" pill was retired).
     await page.getByRole("button", { name: "▸ Assets" }).click();
     await page.locator('[data-testid="asset-card-olive-standard"]').click();
-    await expect(page.locator('[data-testid="asset-dock"]')).toContainText(
-      "Armed",
-      { timeout: 5_000 },
-    );
+    await expect(
+      page.locator('[data-testid="floating-placement-toolbar"]'),
+    ).toBeVisible({ timeout: 5_000 });
 
     // Click the lot — the RING opens (not a placement).
     const canvas = page.locator('[data-testid="webgl-canvas"]');
