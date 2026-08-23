@@ -11,18 +11,12 @@
  * opens itself in the costing stages and only surfaces tabs that have
  * something to say.
  *
- * Composition: the Estimate tab embeds the existing FitSheetCard content
- * (its section/lines/total/testids and the exclude ticks are the same), the
- * Sourcing tab embeds SupplierFeedCard. Only the ACTIVE tab mounts, so the
- * dock never stacks two cards. The panel is the single surface; the cards
- * inside are its tab bodies.
- *
  * Coexistence: as a dock companion alongside a tall mode panel (survey, sketch,
  * cad, garden) the Estimate tab defaults to the COMPACT running-estimate
- * summary — total + item count, one row, expand affordance — so the ambient
- * estimate never fights the active mode panel for the dock's capped height.
- * The panel only opens the full itemized card when it is the primary surface
- * (quote mode, `defaultCollapsed=false`).
+ * summary — total + item count + provisional label, one row, expand affordance
+ * — so the ambient estimate never fights the active mode panel for the dock's
+ * capped height. Header and tabs stay hidden until the operator expands the
+ * summary on demand.
  */
 
 import { useEffect, useState } from "react";
@@ -69,27 +63,23 @@ export function EstimatorPanel({
   defaultCollapsed = false,
 }: EstimatorPanelProps) {
   const [tab, setTab] = useState<EstimatorTab>("estimate");
+  /** Companion mode: operator expanded the running-estimate summary. */
+  const [detailOpen, setDetailOpen] = useState(false);
 
-  // Contextual tabs: sourcing only makes sense when there is a live trade
-  // feed to consult; the estimate tab is the home tab.
   const hasItems = (items?.length ?? 0) > 0;
   const tabs: Array<{ id: EstimatorTab; label: string }> = [
     { id: "estimate", label: "Estimate" },
     ...(hasItems ? [{ id: "sourcing" as const, label: "Sourcing" }] : []),
   ];
 
-  // If the active tab stops being available (e.g. items deleted), fall back.
   useEffect(() => {
     if (tab === "sourcing" && !hasItems) setTab("estimate");
   }, [tab, hasItems]);
 
-  // Inside the panel, the estimate should open expanded (the itemized card),
-  // not as a collapsed pill — the panel IS the expanded surface. Preseed the
-  // existing preference so FitSheetCard's capsule opens expanded here. When
-  // the panel is a dock companion (defaultCollapsed), the estimate opens as
-  // the compact running-estimate summary instead — it is ambient information
-  // there, so the itemized card is always the user's on-demand choice and we
-  // never seed the expanded preference.
+  useEffect(() => {
+    if (!defaultCollapsed) setDetailOpen(false);
+  }, [defaultCollapsed]);
+
   useEffect(() => {
     if (defaultCollapsed) return;
     try {
@@ -108,99 +98,110 @@ export function EstimatorPanel({
       ? "Committed"
       : "Provisional";
 
+  const showFullChrome = !defaultCollapsed || detailOpen;
+
   return (
     <section
       data-testid="estimator-panel"
+      data-estimator-companion={
+        defaultCollapsed ? (detailOpen ? "expanded" : "compact") : "primary"
+      }
       data-gs-glass-card
       aria-label={`${title} panel`}
       style={{
         position: "relative",
         pointerEvents: "auto",
         width: "min(360px, calc(100vw - 32px))",
-        maxHeight: "min(640px, calc(100dvh - 200px))",
+        flex: showFullChrome ? "0 1 auto" : "0 0 auto",
+        minHeight: 0,
+        maxHeight: showFullChrome
+          ? "min(280px, calc(100dvh - 360px))"
+          : undefined,
         display: "flex",
         flexDirection: "column",
-        minHeight: 0,
         borderRadius: "var(--gs-radius-panel)",
         background: "var(--gs-panel-grad)",
         border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
         boxShadow: "var(--gs-shadow-2)",
-        padding: "10px 12px",
-        gap: "var(--gs-space-3)",
+        padding: showFullChrome ? "10px 12px" : "6px 8px",
+        gap: showFullChrome ? "var(--gs-space-3)" : 0,
         animation: "wsPanelIn 160ms cubic-bezier(0.22, 1, 0.36, 1)",
       }}
     >
-      {/* Header — title + status + close */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          gap: "var(--gs-space-2)",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-tech)",
-            fontSize: "var(--gs-font-xs)",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "var(--gs-ink-secondary)",
-          }}
-        >
-          {title}
-        </span>
-        <span
-          data-testid="estimator-status"
-          style={{
-            fontFamily: "var(--font-tech)",
-            fontSize: "var(--gs-font-micro)",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: signedOff ? "var(--gs-ink-success, var(--gs-ink-secondary))" : "var(--gs-ink-muted)",
-          }}
-        >
-          {statusWord}
-        </span>
-      </div>
-
-      {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Estimator sections"
-        style={{
-          display: "flex",
-          gap: "var(--gs-space-2)",
-        }}
-      >
-        {tabs.map((t) => (
-          <Button
-            key={t.id}
-            size="xs"
-            variant="chip"
-            role="tab"
-            aria-selected={tab === t.id}
-            aria-pressed={tab === t.id}
-            active={tab === t.id}
-            data-testid={`estimator-tab-${t.id}`}
-            onClick={() => setTab(t.id)}
+      {showFullChrome ? (
+        <>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              gap: "var(--gs-space-2)",
+            }}
           >
-            {t.label}
-          </Button>
-        ))}
-      </div>
+            <span
+              style={{
+                fontFamily: "var(--font-tech)",
+                fontSize: "var(--gs-font-xs)",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "var(--gs-ink-secondary)",
+              }}
+            >
+              {title}
+            </span>
+            <span
+              data-testid="estimator-status"
+              style={{
+                fontFamily: "var(--font-tech)",
+                fontSize: "var(--gs-font-micro)",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: signedOff
+                  ? "var(--gs-ink-success, var(--gs-ink-secondary))"
+                  : "var(--gs-ink-muted)",
+              }}
+            >
+              {statusWord}
+            </span>
+          </div>
 
-      {/* Active tab body — only the active one mounts (no stacked cards). */}
+          <div
+            role="tablist"
+            aria-label="Estimator sections"
+            style={{
+              display: "flex",
+              gap: "var(--gs-space-2)",
+            }}
+          >
+            {tabs.map((t) => (
+              <Button
+                key={t.id}
+                size="xs"
+                variant="chip"
+                role="tab"
+                aria-selected={tab === t.id}
+                aria-pressed={tab === t.id}
+                active={tab === t.id}
+                data-testid={`estimator-tab-${t.id}`}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </Button>
+            ))}
+          </div>
+        </>
+      ) : null}
+
       <div
         role="tabpanel"
         style={{
           display: "flex",
           flexDirection: "column",
-          flex: 1,
+          flex: showFullChrome ? 1 : undefined,
           minHeight: 0,
-          overflowY: "auto",
+          overflowY: showFullChrome && detailOpen ? "auto" : undefined,
           scrollbarWidth: "thin",
-          gap: "var(--gs-space-3)",
+          gap: showFullChrome ? "var(--gs-space-3)" : 0,
         }}
       >
         {tab === "estimate" ? (
@@ -214,6 +215,15 @@ export function EstimatorPanel({
             outdoorM2={outdoorM2}
             allowExpanded={!defaultCollapsed}
             compact={defaultCollapsed}
+            expanded={defaultCollapsed ? detailOpen : undefined}
+            onExpandedChange={
+              defaultCollapsed
+                ? (open) => {
+                    setDetailOpen(open);
+                  }
+                : undefined
+            }
+            statusLabel={statusWord === "…" ? "Provisional" : statusWord}
           />
         ) : (
           <SupplierFeedCard />

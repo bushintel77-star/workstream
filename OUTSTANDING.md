@@ -7,6 +7,8 @@ logs, and [`ONBOARDING.md`](ONBOARDING.md) is the current-state entry doc for a
 new developer. Read ONBOARDING first, this file for the queue.
 
 - [ONBOARDING.md](ONBOARDING.md) — single current-state entry doc (new-dev starting point)
+- [docs/UI-UX-GAP-2026-08-24.md](docs/UI-UX-GAP-2026-08-24.md) — ranked UX gap stack (P0–P2)
+- [docs/OPERATOR-UX-WORKFLOW-2026-08-23.md](docs/OPERATOR-UX-WORKFLOW-2026-08-23.md) — operator journey + e2e map
 - ~~WORKSTREAM-STATUS.md~~ — historical snapshot (2026-07-21), superseded
 - ~~GAP-ANALYSIS.md~~ — historical audit; current gap picture is `docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md` + this file
 

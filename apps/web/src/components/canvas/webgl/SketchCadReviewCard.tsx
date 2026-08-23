@@ -19,16 +19,7 @@ import { useMemo } from "react";
 import { useStudioStore } from "./studioStore";
 import { proposalLabel } from "./sketchCad";
 import { Button } from "./Button";
-
-const panel: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "var(--gs-space-4)",
-  width: 288,
-  maxHeight: "calc(100dvh - 220px)",
-  overflowY: "auto",
-  pointerEvents: "auto",
-};
+import { GlassCard } from "./GlassCard";
 
 const rowBase: React.CSSProperties = {
   display: "flex",
@@ -72,40 +63,107 @@ export function SketchCadReviewCard() {
   const photoScoped = notice != null && /photo-traced/.test(notice);
 
   return (
-    <div style={panel} data-testid="cad-review">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-tech)",
-            fontSize: "var(--gs-font-sm)",
-            fontWeight: 600,
-            letterSpacing: "0.06em",
-            color: "var(--gs-ink)",
-          }}
-        >
-          SKETCH → CAD · {sorted.length}
-        </span>
-        <Button
-          variant="text"
-          data-testid="cad-review-close"
-          aria-label="Close sketch CAD review"
-          onClick={() => close(false)}
-          style={{
-            color: "var(--gs-ink-muted)",
-            fontSize: "var(--gs-font-sm)",
-            padding: "2px 6px",
-          }}
-        >
-          ✕
-        </Button>
-      </div>
-
+    <GlassCard
+      position="top-right"
+      style={{ width: 288 }}
+      scrollBody={true}
+      header={
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <span
+            style={{
+              fontFamily: "var(--font-tech)",
+              fontSize: "var(--gs-font-sm)",
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              color: "var(--gs-ink)",
+            }}
+          >
+            SKETCH → CAD · {sorted.length}
+          </span>
+          <Button
+            variant="text"
+            data-testid="cad-review-close"
+            aria-label="Close sketch CAD review"
+            onClick={() => close(false)}
+            style={{
+              color: "var(--gs-ink-muted)",
+              fontSize: "var(--gs-font-sm)",
+              padding: "2px 6px",
+            }}
+          >
+            ✕
+          </Button>
+        </div>
+      }
+      footer={
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-3)" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "var(--gs-space-3)",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <Button
+              variant="cta"
+              data-testid="cad-accept"
+              onClick={() => accept(active.id)}
+              style={{ flex: 1 }}
+            >
+              Accept
+            </Button>
+            <Button
+              variant="ghost-line"
+              data-testid="cad-reject"
+              onClick={() => reject(active.id)}
+            >
+              Reject
+            </Button>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--gs-space-2)" }}>
+            <Button
+              variant="text"
+              data-testid="cad-accept-all"
+              onClick={acceptAll}
+              style={{
+                color: "var(--gs-primary)",
+                fontSize: "var(--gs-font-sm)",
+                padding: "4px 8px",
+              }}
+            >
+              Accept all {sorted.length}
+            </Button>
+            {sorted.some((p) => p.confidence >= 0.7) ? (
+              <Button
+                variant="text"
+                data-testid="cad-accept-confident"
+                onClick={() => acceptConfident(0.7)}
+                style={{
+                  color: "var(--gs-primary-ink)",
+                  fontSize: "var(--gs-font-sm)",
+                  padding: "4px 8px",
+                }}
+              >
+                Accept ≥70%
+              </Button>
+            ) : null}
+            <Button
+              variant="text"
+              data-testid="cad-reject-all"
+              onClick={rejectAll}
+              style={{
+                color: "var(--gs-ink-secondary)",
+                fontSize: "var(--gs-font-sm)",
+                padding: "4px 8px",
+              }}
+            >
+              Reject all
+            </Button>
+          </div>
+        </div>
+      }
+    >
       {photoScoped && (
         <p
           role="status"
@@ -206,71 +264,7 @@ export function SketchCadReviewCard() {
             }}
           />
         </div>
-        <div
-          style={{
-            display: "flex",
-            gap: "var(--gs-space-3)",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <Button
-            variant="cta"
-            data-testid="cad-accept"
-            onClick={() => accept(active.id)}
-            style={{ flex: 1 }}
-          >
-            Accept
-          </Button>
-          <Button
-            variant="ghost-line"
-            data-testid="cad-reject"
-            onClick={() => reject(active.id)}
-          >
-            Reject
-          </Button>
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--gs-space-2)" }}>
-          <Button
-            variant="text"
-            data-testid="cad-accept-all"
-            onClick={acceptAll}
-            style={{
-              color: "var(--gs-primary)",
-              fontSize: "var(--gs-font-sm)",
-              padding: "4px 8px",
-            }}
-          >
-            Accept all {sorted.length}
-          </Button>
-          {sorted.some((p) => p.confidence >= 0.7) ? (
-            <Button
-              variant="text"
-              data-testid="cad-accept-confident"
-              onClick={() => acceptConfident(0.7)}
-              style={{
-                color: "var(--gs-primary-ink)",
-                fontSize: "var(--gs-font-sm)",
-                padding: "4px 8px",
-              }}
-            >
-              Accept ≥70%
-            </Button>
-          ) : null}
-          <Button
-            variant="text"
-            data-testid="cad-reject-all"
-            onClick={rejectAll}
-            style={{
-              color: "var(--gs-ink-secondary)",
-              fontSize: "var(--gs-font-sm)",
-              padding: "4px 8px",
-            }}
-          >
-            Reject all
-          </Button>
-        </div>
       </div>
-    </div>
+    </GlassCard>
   );
 }

@@ -2553,6 +2553,8 @@ export function WebGLStudioPreview({
                 position: "relative",
                 pointerEvents: "auto",
                 width: "min(340px, calc(100vw - 32px))",
+                flex: "1 1 auto",
+                minHeight: 0,
                 maxHeight: "min(420px, calc(100dvh - 240px))",
                 overflowY: "auto",
                 scrollbarWidth: "thin",

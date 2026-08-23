@@ -62,16 +62,25 @@ async function toDashboardProject(project: Project): Promise<DashboardProject> {
 }
 
 /** Operator dashboard — Swiss grid planner + project register. */
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ e2eLoadError?: string }>;
+}) {
   await requireSignedIn();
+  const sp = await searchParams;
   let projects: DashboardProject[] = [];
   const summary = await getIntegrationSummary().catch(() => null);
   let loadError: string | null = null;
-  try {
-    const rawProjects = await listProjects();
-    projects = await Promise.all(rawProjects.map(toDashboardProject));
-  } catch (err) {
-    loadError = err instanceof Error ? err.message : "Could not reach the API.";
+  if (process.env.NODE_ENV !== "production" && sp.e2eLoadError === "1") {
+    loadError = "E2E simulated projects API failure";
+  } else {
+    try {
+      const rawProjects = await listProjects();
+      projects = await Promise.all(rawProjects.map(toDashboardProject));
+    } catch (err) {
+      loadError = err instanceof Error ? err.message : "Could not reach the API.";
+    }
   }
 
   return (

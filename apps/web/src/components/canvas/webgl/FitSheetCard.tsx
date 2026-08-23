@@ -100,6 +100,18 @@ const tickStyle: React.CSSProperties = {
 
 const STORAGE_KEY = "workstream.fitSheet.expanded";
 
+/** Same placement can surface in multiple estimate tiers — render once. */
+function dedupeEstimateLines(lines: StudioEstimateLine[]): StudioEstimateLine[] {
+  const seen = new Set<string>();
+  const out: StudioEstimateLine[] = [];
+  for (const line of lines) {
+    if (seen.has(line.id)) continue;
+    seen.add(line.id);
+    out.push(line);
+  }
+  return out;
+}
+
 function StockChip({ inStock, mode }: { inStock: boolean; mode: string }) {
   const text = mode !== "live_matched" ? "AI EST" : inStock ? "IN STOCK" : "LOW STOCK";
   const color =
@@ -148,6 +160,12 @@ export interface FitSheetCardProps {
   /** Compact mode: render as a plain summary toggle (no glass pill, no own
    *  border-radius) — used inside the unified glass panel. */
   compact?: boolean;
+  /** Controlled expand state (companion dock). Omit for uncontrolled + localStorage. */
+  expanded?: boolean;
+  /** Fires when the operator expands or collapses the itemized body. */
+  onExpandedChange?: (expanded: boolean) => void;
+  /** Provisional / committed label shown in the compact running-estimate row. */
+  statusLabel?: string;
 }
 
 export function FitSheetCard({
@@ -160,6 +178,9 @@ export function FitSheetCard({
   projectId,
   allowExpanded,
   compact = false,
+  expanded: expandedProp,
+  onExpandedChange,
+  statusLabel = "Provisional",
 }: FitSheetCardProps) {
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
   const excludedEstimateLineIds = useStudioStore(
@@ -243,6 +264,9 @@ export function FitSheetCard({
     <FitSheetCapsule
       allowExpanded={allowExpanded}
       compact={compact}
+      expanded={expandedProp}
+      onExpandedChange={onExpandedChange}
+      statusLabel={statusLabel}
       summary={summary}
       excludedLines={excludedLines}
       settling={settling}
@@ -265,6 +289,9 @@ export function FitSheetCard({
 function FitSheetCapsule({
   allowExpanded,
   compact,
+  expanded: expandedProp,
+  onExpandedChange,
+  statusLabel,
   summary,
   excludedLines,
   settling,
@@ -276,6 +303,9 @@ function FitSheetCapsule({
 }: {
   allowExpanded: boolean;
   compact: boolean;
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
+  statusLabel: string;
   summary: {
     sections: Array<{
       id: string;
@@ -306,7 +336,7 @@ function FitSheetCapsule({
   runBackendFetch: () => Promise<void>;
   driftPct: number | null;
 }) {
-  const [expanded, setExpanded] = useState<boolean>(() => {
+  const [expandedInternal, setExpandedInternal] = useState<boolean>(() => {
     if (typeof window === "undefined" || !allowExpanded) return false;
     try {
       return window.localStorage.getItem(STORAGE_KEY) === "1";
@@ -314,14 +344,22 @@ function FitSheetCapsule({
       return false;
     }
   });
+  const expanded = expandedProp ?? expandedInternal;
+  const setExpanded = useCallback(
+    (next: boolean) => {
+      if (expandedProp === undefined) setExpandedInternal(next);
+      onExpandedChange?.(next);
+    },
+    [expandedProp, onExpandedChange],
+  );
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !allowExpanded) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, expanded ? "1" : "0");
     } catch {
       /* private-mode etc — ignore */
     }
-  }, [expanded]);
+  }, [expanded, allowExpanded]);
 
   // Esc collapses. Document-level handler so it fires regardless of which
   // capsule sub-element has focus.
@@ -332,7 +370,7 @@ function FitSheetCapsule({
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [expanded]);
+  }, [expanded, setExpanded]);
 
   // A flow child of the right dock — the dock owns the position, the z-tier and
   // the overflow scroller. No `position: fixed`, no z-index of its own: that is
@@ -390,48 +428,49 @@ function FitSheetCapsule({
     // A real <button> gives focus/Space/Enter for free; the collapsed state
     // has no list to control, so aria-controls is omitted.
     if (compact) {
-      const itemCount = summary.stockLines.length + excludedLines.length;
+      const itemCount = dedupeEstimateLines(
+        summary.sections.flatMap((section) => section.lines),
+      ).length;
       return (
         <button
           type="button"
           data-testid="fit-sheet-pill"
-          aria-label={`Running estimate, total ${fmtAud(summary.total)}, ${itemCount} items`}
+          aria-label={`Running estimate ${statusLabel.toLowerCase()}, total ${fmtAud(summary.total)}, ${itemCount} items`}
           onClick={() => setExpanded(true)}
           style={{
-            ...surfaceStyle,
-            padding: "11px 12px",
+            padding: "4px 2px",
             display: "flex",
             alignItems: "center",
-            gap: 10,
+            gap: "var(--gs-space-3)",
             cursor: "pointer",
             width: "100%",
             border: "none",
-            borderTop: "0.5px solid var(--gs-line)",
+            background: "transparent",
+            color: "inherit",
+            font: "inherit",
+            textAlign: "left",
           }}
         >
-          <span
-            aria-hidden
-            style={{ fontSize: "var(--gs-font-h3)", color: "var(--gs-ink-secondary)", flexShrink: 0 }}
-          >
-            🧾
-          </span>
-          <span style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+          <span style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0, gap: 2 }}>
             <span
               style={{
-                fontFamily: "var(--font-ui)",
+                fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-xs)",
-                color: "var(--gs-ink-secondary)",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "var(--gs-ink-muted)",
               }}
             >
-              Running estimate · {itemCount} items
+              {statusLabel} · {itemCount} item{itemCount === 1 ? "" : "s"}
             </span>
             <span
               data-testid="fit-sheet-pill-total"
               style={{
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-h3)",
-                fontWeight: 500,
+                fontWeight: 600,
                 color: "var(--gs-ink)",
+                letterSpacing: "0.01em",
               }}
             >
               {fmtAud(summary.total)}
@@ -440,7 +479,8 @@ function FitSheetCapsule({
           <span
             aria-hidden
             style={{
-              fontSize: "var(--gs-font-sub)",
+              fontFamily: "var(--font-tech)",
+              fontSize: "var(--gs-font-sm)",
               color: "var(--gs-ink-secondary)",
               flexShrink: 0,
             }}
@@ -480,10 +520,7 @@ function FitSheetCapsule({
             e.currentTarget.style.boxShadow = "var(--gs-shadow-2)";
           }}
         >
-          <span aria-hidden style={{ fontSize: "var(--gs-font-md)" }}>
-            🧾
-          </span>
-          <span style={labelStyle}>Live Quote</span>
+          <span style={labelStyle}>Live quote</span>
           <span
             data-testid="fit-sheet-pill-total"
             style={{
@@ -547,7 +584,7 @@ function FitSheetCapsule({
           maxWidth: compact ? "100%" : "calc(100vw - 32px)",
           flex: "1 1 auto",
           minHeight: 0,
-          maxHeight: compact ? "min(300px, calc(100dvh - 340px))" : 600,
+          maxHeight: compact ? "min(240px, calc(100dvh - 380px))" : 600,
           borderRadius: "var(--gs-radius-panel)",
           borderTop: compact ? "0.5px solid var(--gs-line)" : undefined,
           padding: "10px 12px",
@@ -585,7 +622,7 @@ function FitSheetCapsule({
         >
           {/* Itemized lines */}
           <div data-testid="fit-sheet-lines">
-            {[...summary.sections.flatMap((s) => s.lines)]
+            {dedupeEstimateLines([...summary.sections.flatMap((s) => s.lines)])
               .sort((a, b) => b.total - a.total)
               .map((line) => {
                 const stock = summary.stockLines.find(

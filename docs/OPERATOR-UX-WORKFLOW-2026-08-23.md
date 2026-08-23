@@ -73,7 +73,9 @@ flowchart TD
 
 **E2e proof:** [`apps/web/e2e/landing.spec.ts`](../apps/web/e2e/landing.spec.ts)
 
-**UX gap:** spec stops at confirm-pin URL; it does not walk the locate loader into the studio.
+**E2e proof (full loader):** [`apps/web/e2e/operator-journey-gaps.spec.ts`](../apps/web/e2e/operator-journey-gaps.spec.ts) — confirm-pin → studio with `guide=1`.
+
+**UX gap:** ~~spec stops at confirm-pin URL~~ — covered by `operator-journey-gaps.spec.ts` (landing still stops at confirm-pin URL by design).
 
 ---
 
@@ -105,9 +107,9 @@ flowchart TD
 - **No projects yet** — *Start your first project with a Melbourne site address above.*
 - **Could not load projects** — API unreachable (inline banner, not error boundary)
 
-**E2e proof:** [`apps/web/e2e/dashboard-filter-sort.spec.ts`](../apps/web/e2e/dashboard-filter-sort.spec.ts), [`apps/web/e2e/verify-actions.spec.ts`](../apps/web/e2e/verify-actions.spec.ts)
+**E2e proof:** [`apps/web/e2e/dashboard-filter-sort.spec.ts`](../apps/web/e2e/dashboard-filter-sort.spec.ts), [`apps/web/e2e/verify-actions.spec.ts`](../apps/web/e2e/verify-actions.spec.ts), [`apps/web/e2e/operator-journey-gaps.spec.ts`](../apps/web/e2e/operator-journey-gaps.spec.ts) (composer UI path)
 
-**UX gap:** dashboard e2e seeds projects via API, not through the address composer UI.
+**UX gap:** ~~dashboard e2e seeds projects via API, not through the address composer UI~~ — composer path covered by `operator-journey-gaps.spec.ts`; dashboard sort/delete still API-seeded.
 
 ---
 
@@ -123,7 +125,7 @@ title boundary overlay, lot area when available.
 
 **Errors:** **Could not open site** + **Back to projects**; invalid params → **Missing address**.
 
-**E2e proof:** none end-to-end (landing only asserts navigation **to** this route).
+**E2e proof:** [`apps/web/e2e/operator-journey-gaps.spec.ts`](../apps/web/e2e/operator-journey-gaps.spec.ts)
 
 ---
 
@@ -347,6 +349,7 @@ Invalid token: **This link has expired. Contact your landscaper.**
 | `present-surface-state.spec.ts` | Stage 10 Present | Journey |
 | `project-surface-reachability.spec.ts` | Stage 11 Records | Journey |
 | `portal-deposit-flow.spec.ts` | Stage 12 Portal | Journey |
+| `operator-journey-gaps.spec.ts` | Stages 2–3 + error boundaries | Journey |
 | `portal-deposit-token.spec.ts` | Stage 12 Portal | Journey |
 | `settings-pages.spec.ts` | Stage 13 Settings | Journey |
 | `webgl-default-mount.spec.ts` | Stage 4 Shell | Chrome / perf |
@@ -361,20 +364,23 @@ Invalid token: **This link has expired. Contact your landscaper.**
 | `webgl-studio-shortcuts.spec.ts` | Stage 4 Shell | Chrome / perf |
 | `rail-drawer-hover.spec.ts` | Stage 2 Planner dock | Chrome / perf |
 
-**Not covered by any spec:** Stage 3 confirm-pin loader (full walkthrough), home address composer UI, all three error boundaries, auth sign-in UX in bootstrap mode.
+**Not covered by any spec:** auth sign-in UX in bootstrap mode (Clerk off → `dev-user`).
+
+See also [`docs/UI-UX-GAP-2026-08-24.md`](UI-UX-GAP-2026-08-24.md) for the ranked P0–P2 stack.
 
 ---
 
 ## Known UX / e2e gaps
 
-| Issue | UX impact |
-|-------|-----------|
-| No e2e for confirm-pin → studio | First-create loader unverified in browser |
-| No e2e for `/home` address composer | Main create path untested via UI |
-| No error-boundary e2e | **That didn't land** regression only caught in prod |
-| Production bootstrap = shared `dev-user` | No sign-in UX; `/sign-in` redirects to `/home` |
-| Landing at `/` vs docs saying redirect to `/home` | Two entry points — intentional |
-| 11 chrome/perf specs | Quality gates, not operator journey narrative |
+| Issue | UX impact | Status |
+|-------|-----------|--------|
+| ~~No e2e for confirm-pin → studio~~ | First-create loader | Covered — `operator-journey-gaps.spec.ts` |
+| ~~No e2e for `/home` address composer~~ | Main create path | Covered — same spec |
+| ~~No error-boundary e2e~~ | Regression only caught in prod | Covered — same spec |
+| Production bootstrap = shared `dev-user` | No sign-in UX; `/sign-in` redirects to `/home` | Open — human Clerk setup |
+| Landing at `/` vs docs saying redirect to `/home` | Two entry points — intentional | Documented |
+| 11 chrome/perf specs | Quality gates, not operator journey narrative | By design |
+| Survey + estimator dock collision | Tall survey panel clipped itemized quote | Fixed — compact companion default |
 
 ---
 
@@ -387,6 +393,7 @@ pnpm --filter @workstream/web test:e2e
 # UX-critical journey subset
 pnpm --filter @workstream/web exec playwright test \
   e2e/landing.spec.ts \
+  e2e/operator-journey-gaps.spec.ts \
   e2e/dashboard-filter-sort.spec.ts \
   e2e/webgl-survey-setup.spec.ts \
   e2e/webgl-sketch-to-cad.spec.ts \

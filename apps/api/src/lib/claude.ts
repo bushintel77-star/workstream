@@ -28,6 +28,7 @@ import type {
 } from "@workstream/contracts";
 import { getOwnerEnv } from "./owner-secrets";
 import { fetchWithRetry } from "./http";
+import { claudeBreaker } from "./circuit-breaker";
 import { setActiveTelemetryAttributes } from "./telemetry";
 import { dissectPlan } from "./plan-dissect";
 
@@ -258,24 +259,35 @@ export async function generateDesign(
     ],
   };
 
-  const res = await fetchWithRetry(MESSAGES_URL, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": ANTHROPIC_VERSION,
-    },
-    body: JSON.stringify(body),
-  }, {
-    telemetry: {
-      spanName: "anthropic.generate_design",
-      provider: "anthropic",
-      attributes: {
-        "pipeline.stage": "design",
-        "model.name": DESIGN_MODEL,
+  let res;
+  if (claudeBreaker.opened) {
+    console.warn('[CIRCUIT BREAKER] Claude circuit is open, using fallback');
+    return devFallbackDesign(ctx);
+  }
+
+  try {
+    res = await fetchWithRetry(MESSAGES_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": ANTHROPIC_VERSION,
       },
-    },
-  });
+      body: JSON.stringify(body),
+    }, {
+      telemetry: {
+        spanName: "anthropic.generate_design",
+        provider: "anthropic",
+        attributes: {
+          "pipeline.stage": "design",
+          "model.name": DESIGN_MODEL,
+        },
+      },
+    });
+  } catch (err) {
+    console.error('[CIRCUIT BREAKER] Claude request failed, opening circuit');
+    throw err; // Let the circuit breaker handle the failure count
+  }
 
   if (!res.ok) {
     throw new Error(`Anthropic /messages failed: ${res.status} ${await res.text()}`);

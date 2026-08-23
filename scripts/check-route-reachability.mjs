@@ -131,6 +131,10 @@ const ALLOW = new Map([
     "/sign-up/[[...sign-up]]",
     "Clerk owns this entry point — reached from the Clerk-rendered sign-in card, which is not in our source.",
   ],
+  [
+    "/e2e/root-error",
+    "E2e-only probe: Playwright navigates here in non-production to assert the app-level error boundary copy. Not linked from operator UI.",
+  ],
 ]);
 
 /**

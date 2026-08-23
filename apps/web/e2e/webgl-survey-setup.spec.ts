@@ -116,6 +116,18 @@ function existingTree() {
   };
 }
 
+/** Billable placement so the running-estimate companion has lines to summarize. */
+function billableTree() {
+  return {
+    id: randomUUID(),
+    symbol_id: "olive-standard",
+    x_pct: 55,
+    y_pct: 45,
+    rotation_deg: 0,
+    scale: 1,
+  };
+}
+
 async function openSurvey(page: import("@playwright/test").Page, projectId: string) {
   await page.goto(`/projects/${projectId}?mode=survey`, {
     waitUntil: "networkidle",
@@ -136,7 +148,7 @@ test.describe("Survey setup panel", () => {
     const { projectId } = await createAddressProject(request, {
       address: "1 Survey Setup Street, Prahran VIC 3181",
     });
-    await putCanvas(request, projectId, BOUNDARY_ONLY);
+    await putCanvas(request, projectId, BOUNDARY_ONLY, [billableTree()]);
     await openSurvey(page, projectId);
 
     // One consolidated panel — the old layout stacked an import block and a
@@ -144,7 +156,7 @@ test.describe("Survey setup panel", () => {
     await expect(page.getByTestId("perimeter-panel")).toHaveCount(1);
     await expect(page.getByTestId("survey-checklist")).toHaveCount(0);
 
-    // Progress is derived: a traced boundary and nothing else is exactly 1/5.
+    // Progress is derived: boundary only — existing trees row stays open.
     await expect(page.getByTestId("survey-setup-count")).toHaveText(
       "1 of 5 complete",
     );
@@ -165,12 +177,22 @@ test.describe("Survey setup panel", () => {
     // The import CTA is present and is the panel's primary action.
     await expect(page.getByTestId("import-site-truth")).toBeVisible();
 
+    // Running estimate stays visible as a compact companion — coexistence, not
+    // suppression — and must not open itemized by default.
+    await expect(page.getByTestId("estimator-panel")).toHaveAttribute(
+      "data-estimator-companion",
+      "compact",
+    );
+    await expect(page.getByTestId("fit-sheet-pill")).toBeVisible();
+    await expect(page.getByTestId("fit-sheet-card")).toHaveCount(0);
+    await expect(page.getByTestId("fit-sheet-pill")).toContainText("Provisional");
+
     // Rows are keyboard-operable: focus + Enter must route, not just click.
     const trees = page.getByTestId("survey-row-trees");
     await trees.focus();
     await expect(trees).toBeFocused();
     await page.keyboard.press("Enter");
-    await expect(page.getByTestId("asset-dock")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("asset-studio")).toBeVisible({ timeout: 10_000 });
   });
 
   test("shows the canvas locate state only while the boundary is missing", async ({

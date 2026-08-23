@@ -146,7 +146,7 @@ export function DashboardProjects({
       </div>
 
       {loadError ? (
-        <div className={home.errorCard} role="alert">
+        <div className={home.errorCard} role="alert" data-testid="home-load-error">
           <strong>Could not load projects</strong>
           <span>{loadError}</span>
         </div>

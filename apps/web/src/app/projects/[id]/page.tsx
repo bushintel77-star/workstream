@@ -61,11 +61,15 @@ export default async function ProjectCanvasPage({
     webgl?: string;
     svg?: string;
     tool?: string;
+    e2eStudioError?: string;
   }>;
 }) {
   await requireSignedIn();
   const { id } = await params;
   const sp = await searchParams;
+  if (process.env.NODE_ENV !== "production" && sp.e2eStudioError === "1") {
+    throw new Error("E2E studio error boundary probe");
+  }
   const project = await getProject(id);
   if (!project) notFound();
 

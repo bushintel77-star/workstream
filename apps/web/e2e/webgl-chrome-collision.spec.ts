@@ -64,6 +64,7 @@ interface Rect {
  */
 const CHROME_SELECTOR = [
   "[data-gs-glass-card]",
+  "[data-testid='estimator-panel']",
   "[data-testid='asset-dock']",
   "[data-testid='studio-tool-rail']",
   "[data-testid='nib-palette']",
@@ -367,6 +368,15 @@ test.describe("WebGL chrome collision", () => {
       expectNoCollisions(await chromeRects(page), vw, vh, `idle ${vw}x${vh}`);
       await expectFitSheetClearOfModePanel(page, `idle ${vw}x${vh}`);
 
+      // Companion default: one-row provisional summary, not the itemized card.
+      const companion = page.getByTestId("estimator-panel");
+      if (await companion.count()) {
+        await expect(companion).toHaveAttribute("data-estimator-companion", "compact");
+        await expect(page.getByTestId("fit-sheet-pill")).toBeVisible();
+        await expect(page.getByTestId("fit-sheet-card")).toHaveCount(0);
+        await expect(companion.getByTestId("estimator-status")).toHaveCount(0);
+      }
+
       // State 1.5: the estimate EXPANDED alongside the tall survey panel — the
       // reported collision state (a 320x600 itemized card hard against the
       // survey checklist, clipping "Survey communication"). The companion
@@ -376,6 +386,10 @@ test.describe("WebGL chrome collision", () => {
       if (await fitPill.count()) {
         await fitPill.click({ force: true });
         await page.waitForTimeout(600);
+        await expect(companion).toHaveAttribute(
+          "data-estimator-companion",
+          "expanded",
+        );
         expectNoCollisions(
           await chromeRects(page),
           vw,

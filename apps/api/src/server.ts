@@ -17,6 +17,8 @@ import { initTelemetry, registerRouteTelemetry, shutdownTelemetry } from './lib/
 import authPlugin from './plugins/auth';
 import requestIdPlugin from './plugins/request-id';
 import storePlugin from './plugins/store';
+import userRateLimitPlugin from './plugins/user-rate-limit';
+import { registerCircuitBreakerLogging } from './lib/circuit-breaker';
 import healthRoutes from './routes/health';
 import projectRoutes from './routes/projects';
 import recordingRoutes from './routes/recordings';
@@ -145,7 +147,7 @@ async function start() {
      * portal endpoints) are untouched and still apply in dev. */
     max: Number(
       process.env.RATE_LIMIT_MAX ??
-        (process.env.NODE_ENV === "production" ? 300 : 100_000),
+      (process.env.NODE_ENV === "production" ? 300 : 100_000),
     ),
     timeWindow: process.env.RATE_LIMIT_WINDOW ?? "1 minute",
     /* Auth runs after this plugin, so userId is rarely set here. With
@@ -168,6 +170,8 @@ async function start() {
   await server.register(requestIdPlugin);
   await server.register(authPlugin);
   await server.register(storePlugin);
+  await server.register(userRateLimitPlugin);
+  registerCircuitBreakerLogging(server);
   registerRouteTelemetry(server);
   await server.register(protectedFileRoutes);
   await server.register(healthRoutes);
