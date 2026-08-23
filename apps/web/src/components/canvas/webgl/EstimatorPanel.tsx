@@ -16,6 +16,13 @@
  * Sourcing tab embeds SupplierFeedCard. Only the ACTIVE tab mounts, so the
  * dock never stacks two cards. The panel is the single surface; the cards
  * inside are its tab bodies.
+ *
+ * Coexistence: as a dock companion alongside a tall mode panel (survey, sketch,
+ * cad, garden) the Estimate tab defaults to the COMPACT running-estimate
+ * summary — total + item count, one row, expand affordance — so the ambient
+ * estimate never fights the active mode panel for the dock's capped height.
+ * The panel only opens the full itemized card when it is the primary surface
+ * (quote mode, `defaultCollapsed=false`).
  */
 
 import { useEffect, useState } from "react";
@@ -37,6 +44,16 @@ export interface EstimatorPanelProps {
   signedOff: boolean;
   /** True while the signoff state is still loading (no confident label). */
   signedOffLoading: boolean;
+  /**
+   * Default the Estimate tab to the compact "running estimate" summary
+   * (total + item count, one row, expand affordance) instead of the itemized
+   * card. Set when the panel is a dock companion alongside a tall mode panel
+   * (survey/sketch/cad/garden) — the summary is ambient there, so the mode
+   * panel keeps the vertical space and the estimator never fights it for the
+   * dock's height. When false the estimator is the primary surface (quote) and
+   * opens the full itemized card.
+   */
+  defaultCollapsed?: boolean;
 }
 
 export function EstimatorPanel({
@@ -49,6 +66,7 @@ export function EstimatorPanel({
   outdoorM2,
   signedOff,
   signedOffLoading,
+  defaultCollapsed = false,
 }: EstimatorPanelProps) {
   const [tab, setTab] = useState<EstimatorTab>("estimate");
 
@@ -67,14 +85,19 @@ export function EstimatorPanel({
 
   // Inside the panel, the estimate should open expanded (the itemized card),
   // not as a collapsed pill — the panel IS the expanded surface. Preseed the
-  // existing preference so FitSheetCard's capsule opens expanded here.
+  // existing preference so FitSheetCard's capsule opens expanded here. When
+  // the panel is a dock companion (defaultCollapsed), the estimate opens as
+  // the compact running-estimate summary instead — it is ambient information
+  // there, so the itemized card is always the user's on-demand choice and we
+  // never seed the expanded preference.
   useEffect(() => {
+    if (defaultCollapsed) return;
     try {
       window.localStorage.setItem("workstream.fitSheet.expanded", "1");
     } catch {
       /* private mode — ignore */
     }
-  }, []);
+  }, [defaultCollapsed]);
 
   if (!hasItems) return null;
 
@@ -189,8 +212,8 @@ export function EstimatorPanel({
             irrigationZones={irrigationZones}
             scaleM={scaleM}
             outdoorM2={outdoorM2}
-            allowExpanded
-            compact={false}
+            allowExpanded={!defaultCollapsed}
+            compact={defaultCollapsed}
           />
         ) : (
           <SupplierFeedCard />

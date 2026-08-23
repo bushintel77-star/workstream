@@ -367,6 +367,32 @@ test.describe("WebGL chrome collision", () => {
       expectNoCollisions(await chromeRects(page), vw, vh, `idle ${vw}x${vh}`);
       await expectFitSheetClearOfModePanel(page, `idle ${vw}x${vh}`);
 
+      // State 1.5: the estimate EXPANDED alongside the tall survey panel — the
+      // reported collision state (a 320x600 itemized card hard against the
+      // survey checklist, clipping "Survey communication"). The companion
+      // default opens collapsed; expand it through the real control and prove
+      // the two boards coexist without overlap at every viewport.
+      const fitPill = page.getByTestId("fit-sheet-pill");
+      if (await fitPill.count()) {
+        await fitPill.click({ force: true });
+        await page.waitForTimeout(600);
+        expectNoCollisions(
+          await chromeRects(page),
+          vw,
+          vh,
+          `idle+fit-expanded ${vw}x${vh}`,
+        );
+        await expectFitSheetClearOfModePanel(
+          page,
+          `idle+fit-expanded ${vw}x${vh}`,
+        );
+        const fitCollapse = page.getByRole("button", {
+          name: "Collapse quotation back to summary pill",
+        });
+        if (await fitCollapse.count()) await fitCollapse.click();
+        await page.waitForTimeout(300);
+      }
+
       // State 2: maximum — every instrument toggled on.
       for (const tool of ["Section", "Flow", "Underground"]) {
         const name = new RegExp(`^▸ ${tool}$`);

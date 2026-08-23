@@ -2597,7 +2597,11 @@ export function WebGLStudioPreview({
         {/* Estimator — ONE contextual tabbed glass panel (Estimate | Sourcing)
             replacing the stacked fit-sheet + trade-sourcing cards. Titles
             "Estimator" while provisional, "Quote" once signed off. Only the
-            active tab mounts, so the dock never stacks two cards. */}
+            active tab mounts, so the dock never stacks two cards.
+            Alongside a tall mode panel (survey/sketch/cad/garden) it defaults
+            to the COMPACT running-estimate summary — the mode panel keeps the
+            dock's height and the estimate is the ambient companion, so the two
+            never compete for space (gold-standard 2026 coexistence). */}
         {!splitView && fitSheetOpen && items && items.length > 0 ? (
           <EstimatorPanel
             projectId={projectId}
@@ -2609,6 +2613,12 @@ export function WebGLStudioPreview({
             outdoorM2={outdoorM2}
             signedOff={signedOff}
             signedOffLoading={signoffLoading}
+            defaultCollapsed={
+              activeMode === "survey" ||
+              activeMode === "sketch" ||
+              activeMode === "cad" ||
+              activeMode === "garden"
+            }
           />
         ) : null}
       </div>
