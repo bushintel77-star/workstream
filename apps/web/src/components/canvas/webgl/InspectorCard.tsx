@@ -137,6 +137,15 @@ function PlacementInspector({ p }: { p: CatalogPlacement }) {
           >
             Rotate
           </Button>
+          <Button
+            size="xs"
+            data-testid="gizmo-scale"
+            aria-pressed={gizmoMode === "scale"}
+            active={gizmoMode === "scale"}
+            onClick={() => setGizmoMode(gizmoMode === "scale" ? null : "scale")}
+          >
+            Scale
+          </Button>
         </div>
       </Field>
       {notice && notice.refId === p.id ? (

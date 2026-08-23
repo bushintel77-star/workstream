@@ -757,8 +757,8 @@ export interface StudioStoreState {
 
   // --- Spatial gizmo (TransformControls) state ---
   /** Manipulator mode for a single selected placement (null = off). */
-  gizmoMode: "translate" | "rotate" | null;
-  setGizmoMode: (mode: "translate" | "rotate" | null) => void;
+  gizmoMode: "translate" | "rotate" | "scale" | null;
+  setGizmoMode: (mode: "translate" | "rotate" | "scale" | null) => void;
   /** True while the gizmo drag is in flight — camera gestures stand down. */
   gizmoDragging: boolean;
   setGizmoDragging: (dragging: boolean) => void;
@@ -775,7 +775,7 @@ export interface StudioStoreState {
    */
   setPlacementTransformTransient: (
     id: string,
-    patch: { x_pct?: number; y_pct?: number; rotation_deg?: number },
+    patch: { x_pct?: number; y_pct?: number; rotation_deg?: number; scale?: number },
   ) => void;
   /** End a gizmo drag (seam for future persist/merge). */
   endPlacementTransform: () => void;
@@ -1026,7 +1026,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   placements: [],
   // Spatial gizmo defaults — translate armed by default (single placement
   // selection mounts the manipulator), no drag in flight.
-  gizmoMode: "translate" as "translate" | "rotate" | null,
+  gizmoMode: "translate" as "translate" | "rotate" | "scale" | null,
   gizmoDragging: false,
   /** Undo/redo doc history — snapshots of {placements, strokes} (cap 50). */
   historyPast: [],
@@ -1542,11 +1542,14 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       const placements = s.placements.map((p) => {
         if (p.id !== id) return p;
         const merged = { ...p, ...patch };
-        // Rotation-only patches never touch the boundary (attribute edit);
-        // position patches re-clamp per frame so the gizmo "slips" along
-        // the title edge instead of crossing it.
+        // Rotation-only / scale-only patches never reposition (attribute edits);
+        // scale is floored at 0.1 to match the inspector's min. Position patches
+        // re-clamp per frame so the gizmo "slips" along the title edge instead
+        // of crossing it.
         if (patch.x_pct === undefined && patch.y_pct === undefined) {
-          return merged;
+          return patch.scale !== undefined
+            ? { ...merged, scale: Math.max(0.1, patch.scale) }
+            : merged;
         }
         const clamped = clampPlacementEdit(
           merged,

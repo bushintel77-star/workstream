@@ -92,6 +92,12 @@ export function PlacementGizmo({
         x_pct: clampBoardPct(pct.x),
         y_pct: clampBoardPct(pct.y),
       });
+    } else if (gizmoMode === "scale") {
+      // TransformControls "scale" mode is uniform by default in drei — read the
+      // XY scale delta and apply it as a single uniform factor, floored at 0.1
+      // by the store. Mirror to the other axes so the asset stays isotropic.
+      const sx = Math.abs(obj.scale.x);
+      setTransient(placement.id, { scale: sx });
     } else {
       let deg = ((obj.rotation.y * 180) / Math.PI) % 360;
       deg = ((deg % 360) + 360) % 360;
