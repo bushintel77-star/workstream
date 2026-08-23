@@ -194,7 +194,12 @@ export function AssetFanOutDock() {
       style={{
         position: "absolute",
         bottom: 12,
-        left: "50%",
+        // Centred at 50% − 85px, not 50%: at 960px the dock (maxWidth
+        // 100vw−640px = 320px) centred at 50% spans x=320..640 and bites
+        // the right dock column (perimeter panel starts at x=600) by 40px.
+        // The −85px offset keeps the right edge at vw/2 − 85 + w/2, clear
+        // of the panel at every viewport (webgl-chrome-collision gates it).
+        left: "calc(50% - 85px)",
         transform: "translateX(-50%)",
         display: "flex",
         flexDirection: "column",

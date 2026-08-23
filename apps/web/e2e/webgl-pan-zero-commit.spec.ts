@@ -24,6 +24,7 @@ test.describe("WebGL pan perf gate (zero React commits during drag)", () => {
       const renderers = new Map();
       let nextId = 1;
       (window as unknown as Record<string, unknown>).__reactCommits = 0;
+      (window as unknown as Record<string, unknown>).__commitStacks = [];
       (window as unknown as Record<string, unknown>).__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
         supportsFiber: true,
         renderers,
@@ -34,9 +35,16 @@ test.describe("WebGL pan perf gate (zero React commits during drag)", () => {
         },
         // React 19 fires this on every commit; errors inside are caught by React.
         onCommitFiberRoot() {
-          (window as unknown as Record<string, unknown>).__reactCommits =
-            (((window as unknown as Record<string, unknown>).__reactCommits as number) ??
-              0) + 1;
+          const w = window as unknown as Record<string, unknown>;
+          w.__reactCommits = ((w.__reactCommits as number) ?? 0) + 1;
+          // Capture the first few commit stacks so a red run pinpoints the
+          // committing component tree without a local repro.
+          const stacks = w.__commitStacks as string[];
+          if (stacks.length < 4) {
+            stacks.push(
+              (new Error().stack ?? "").split("\n").slice(2, 14).join("\n"),
+            );
+          }
         },
         onPostCommitFiberRoot() {},
         onCommitFiberUnmount() {},
@@ -87,6 +95,7 @@ test.describe("WebGL pan perf gate (zero React commits during drag)", () => {
     // Reset the counter, then drag-pan with several pointer moves.
     await page.evaluate(() => {
       (window as unknown as Record<string, unknown>).__reactCommits = 0;
+      (window as unknown as Record<string, unknown>).__commitStacks = [];
     });
     await page.mouse.move(cx, cy);
     await page.mouse.down();
@@ -100,9 +109,15 @@ test.describe("WebGL pan perf gate (zero React commits during drag)", () => {
       () =>
         ((window as unknown as Record<string, unknown>).__reactCommits as number) ?? 0,
     );
+    const stacks = await page.evaluate(
+      () =>
+        ((window as unknown as Record<string, unknown>).__commitStacks as string[]) ??
+        [],
+    );
     expect(
       commits,
-      `Pan drag caused ${commits} React commit(s) — the camera is writing React state per frame.`,
+      `Pan drag caused ${commits} React commit(s) — the camera is writing React state per frame.\n` +
+        `First commit stacks:\n${stacks.join("\n---\n")}`,
     ).toBe(0);
 
     // No fatal console errors.
