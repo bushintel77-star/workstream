@@ -14,15 +14,31 @@
  */
 
 import * as THREE from "three";
-export function createTerrainMaterial(baseColor: string): THREE.MeshStandardMaterial {
+
+/**
+ * Create the terrain material.
+ *
+ * @param baseColor    Resting albedo (--gs-canvas paper in drafting modes,
+ *                     groundOlive on site modes).
+ * @param drafting     Paper/drafting mode: the slope albedo goes NEUTRAL
+ *                     (a faint shade of the paper tone) so a contoured survey
+ *                     reads as a drawing on a sheet, not as a lit earth
+ *                     surface. Site mode keeps the warm earth-tone cut faces
+ *                     (batter/cut read differently from flat lawn).
+ */
+export function createTerrainMaterial(baseColor: string, drafting = false): THREE.MeshStandardMaterial {
   const mat = new THREE.MeshStandardMaterial({
     color: baseColor,
     roughness: 0.92,
     metalness: 0.02,
   });
 
+  // Slope shade only on drafting: a subtle neutral deepen of the paper itself,
+  // so relief reads via contour banding without dumping warm brown on the sheet.
+  const slopeColor = drafting ? "#DDDCD8" : "#4a4234";
+
   mat.onBeforeCompile = (shader) => {
-    shader.uniforms.uSlopeColor = { value: new THREE.Color("#4a4234") };
+    shader.uniforms.uSlopeColor = { value: new THREE.Color(slopeColor) };
 
     shader.vertexShader = shader.vertexShader
       .replace(

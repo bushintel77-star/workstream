@@ -190,11 +190,16 @@ function SunRig({
   boardAspect,
   lat,
   lng,
+  drafting,
 }: {
   scaleM: number;
   boardAspect: number;
   lat: number;
   lng: number;
+  /** Drafting (paper) mode — the ground must read as a flat neutral
+   *  drawing board, not a warm sunlit site. Switches the key to neutral
+   *  daylight and drops the olive ground-bounce so #F4F4F4 stays #F4F4F4. */
+  drafting?: boolean;
 }) {
   const sunDist = scaleM * 2.2;
   const half = Math.max(scaleM, scaleM * boardAspect) * 0.9;
@@ -216,24 +221,39 @@ function SunRig({
     // design must stay readable in autumn/winter light; season reads through
     // shadow length + canopy, not through murk. Winter noon is naturally
     // dimmer because the real altitude is lower (no extra seasonal dimming).
+    //
+    // Drafting mode caps the key much lower and keeps it even, so a #F4F4F4
+    // sheet stays neutral instead of being driven warm toward khaki. A
+    // drafting board is lit evenly, not by a low warm sun.
     const altClamped = Math.max(sun.altitudeDeg, 0);
-    const intensity =
-      0.9 + Math.min(altClamped / 60, 1) * 1.1;
+    const intensity = drafting
+      ? 0.55 + Math.min(altClamped / 60, 1) * 0.25
+      : 0.9 + Math.min(altClamped / 60, 1) * 1.1;
     light.intensity = intensity;
+    // Neutral white key in drafting mode — the warm cream tint is what turns
+    // paper khaki. Shadow shape still reads relief; colour stays neutral.
+    light.color.set(drafting ? "#FFFFFF" : PALETTE.sunWarm);
   });
 
   return (
     <>
-      {/* Cool ambient — lifts shadow areas without flattening (proven GrowthStudio value). */}
-      <ambientLight intensity={0.7} color={PALETTE.ambientCool} />
+      {/* Cool ambient — lifts shadow areas without flattening (proven GrowthStudio value).
+          Drafting mode neutralises it (white, slightly stronger) so paper holds its tone. */}
+      <ambientLight
+        intensity={drafting ? 0.95 : 0.7}
+        color={drafting ? "#FFFFFF" : PALETTE.ambientCool}
+      />
       {/* Sky-over-ground hemisphere — the olive ground-bounce is what makes canopy
-          undersides and upfacing surfaces read naturalistic (green bounce). */}
-      <hemisphereLight args={[PALETTE.skyCool, PALETTE.groundBounce, 0.85]} />
-      {/* Warm key light — position + intensity mutated per-frame by the useFrame above */}
+          undersides and upfacing surfaces read naturalistic (green bounce). Drafting
+          mode flattens it to neutral so the sheet does not pick up olive. */}
+      <hemisphereLight
+        args={drafting ? ["#FFFFFF", "#FFFFFF", 0.6] : [PALETTE.skyCool, PALETTE.groundBounce, 0.85]}
+      />
+      {/* Key light — position + intensity mutated per-frame by the useFrame above */}
       <directionalLight
         ref={keyRef}
-        intensity={1.4}
-        color={PALETTE.sunWarm}
+        intensity={drafting ? 0.8 : 1.4}
+        color={drafting ? "#FFFFFF" : PALETTE.sunWarm}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -246,18 +266,19 @@ function SunRig({
         shadow-bias={-0.0006}
         shadow-normalBias={0.02}
       />
-      {/* Cool fill — lifts shadowed sides without flattening form (no shadow) */}
+      {/* Cool fill — lifts shadowed sides without flattening form (no shadow).
+          Drafting mode neutralises it to keep the sheet even. */}
       <directionalLight
         position={[-scaleM * 0.5, scaleM * 0.6, -scaleM * 0.3]}
-        intensity={0.4}
-        color={PALETTE.skyCool}
+        intensity={drafting ? 0.35 : 0.4}
+        color={drafting ? "#FFFFFF" : PALETTE.skyCool}
       />
       {/* Rim / back-light — cool, from behind. Separates tree + building
           silhouettes from the fog, giving the scene edge definition. */}
       <directionalLight
         position={[0, scaleM * 0.7, -scaleM * 0.8]}
-        intensity={0.28}
-        color={PALETTE.rimCool}
+        intensity={drafting ? 0.2 : 0.28}
+        color={drafting ? "#FFFFFF" : PALETTE.rimCool}
       />
     </>
   );
@@ -773,6 +794,7 @@ export function StudioScene({
           boardAspect={boardAspect}
           lat={lat}
           lng={lng}
+          drafting={policy.groundAlbedo === "paper"}
         />
       ) : (
         <>

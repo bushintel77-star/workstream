@@ -87,9 +87,10 @@ export function TerrainMesh({ scaleM, boardAspect, heightmapPoints, groundAlbedo
 
   const restHex =
     groundAlbedo === "paper" ? PALETTE.gsCanvas : PALETTE.groundOlive;
+  const drafting = groundAlbedo === "paper";
   const material = useMemo(
-    () => createTerrainMaterial(restHex),
-    [restHex],
+    () => createTerrainMaterial(restHex, drafting),
+    [restHex, drafting],
   );
   useEffect(() => () => material.dispose(), [material]);
 

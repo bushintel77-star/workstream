@@ -50,6 +50,8 @@ import type {
   LandscapeFeature,
 } from "@workstream/contracts";
 import { PALETTE } from "../../../styles/colorTokens";
+import { canvasLayerPolicy } from "./layerPolicy";
+import { parseCanvasMode } from "../../../lib/canvas-mode";
 import { StudioScene } from "./StudioScene";
 import type { PctPoint, HeightmapPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
@@ -211,16 +213,22 @@ export function WebGLStudio({
   constructionTrenches,
   irrigationZones,
 }: WebGLStudioProps) {
+  // Drafting (paper) modes — survey/sketch/cad/elevation — render the ground
+  // as a flat neutral sheet (the drawing is the product). They drop the warm
+  // garden IBL + ACES exposure so #F4F4F4 stays paper; site/3D presentation
+  // modes keep the sunny daylight look.
+  const drafting =
+    canvasLayerPolicy(parseCanvasMode(mode) ?? "survey").groundAlbedo === "paper";
   const onCanvasCreated = useCallback(({ gl, scene }: { gl: WebGLRenderer; scene: THREE.Scene }) => {
     gl.setClearColor(PALETTE.gsCanvas);
     // ACES Filmic tone mapping — rolls off highlights smoothly instead of the
     // harsh linear clip (NoToneMapping) that makes the default render read as
     // flat/plastic. The single biggest "design render vs CG" lever.
     gl.toneMapping = THREE.ACESFilmicToneMapping;
-    /* ACES filmic compresses mid-tones hard — a daylight garden scene needs
-     * ~1.4 to read sunlit rather than dusk (calibrated on the Wrights Terrace
-     * demo for foliage legibility while keeping shadow shape). */
-    gl.toneMappingExposure = 1.55;
+    // Drafting (paper) modes flatten the exposure so a #F4F4F4 sheet reads
+    // neutral rather than being driven warm. Site/3D modes keep the sunny
+    // daylight exposure calibrated for foliage legibility.
+    gl.toneMappingExposure = drafting ? 1.0 : 1.55;
     gl.outputColorSpace = THREE.SRGBColorSpace;
     // Linear fog matching the canvas colour — fades distant geometry into the
     // void for depth, hides the ground-plane edge cliff. Same technique the
@@ -239,7 +247,7 @@ export function WebGLStudio({
       },
       { once: true },
     );
-  }, [onContextLost, scaleM]);
+  }, [onContextLost, scaleM, drafting]);
 
   return (
     <div
@@ -271,7 +279,7 @@ export function WebGLStudio({
           <Environment
             files="/hdri/rooitou_park_1k.hdr"
             background={false}
-            environmentIntensity={0.55}
+            environmentIntensity={drafting ? 0.15 : 0.55}
           />
         </StudioEnvironmentBoundary>
 
