@@ -145,6 +145,9 @@ export interface FitSheetCardProps {
    * stays mode-independent, only the default does not.
    */
   allowExpanded: boolean;
+  /** Compact mode: render as a plain summary toggle (no glass pill, no own
+   *  border-radius) — used inside the unified glass panel. */
+  compact?: boolean;
 }
 
 export function FitSheetCard({
@@ -156,6 +159,7 @@ export function FitSheetCard({
   outdoorM2,
   projectId,
   allowExpanded,
+  compact = false,
 }: FitSheetCardProps) {
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
   const excludedEstimateLineIds = useStudioStore(
@@ -238,6 +242,7 @@ export function FitSheetCard({
   return (
     <FitSheetCapsule
       allowExpanded={allowExpanded}
+      compact={compact}
       summary={summary}
       excludedLines={excludedLines}
       settling={settling}
@@ -259,6 +264,7 @@ export function FitSheetCard({
  */
 function FitSheetCapsule({
   allowExpanded,
+  compact,
   summary,
   excludedLines,
   settling,
@@ -269,6 +275,7 @@ function FitSheetCapsule({
   driftPct,
 }: {
   allowExpanded: boolean;
+  compact: boolean;
   summary: {
     sections: Array<{
       id: string;
@@ -337,32 +344,113 @@ function FitSheetCapsule({
   // Expanded, the wrapper takes the column's REMAINING height rather than a
   // fixed 600px, so a tall mode panel shrinks the card instead of pushing it out
   // of the dock's scroller. `min-height: 0` is what makes the shrink legal.
-  const outerStyle: React.CSSProperties = {
-    position: "relative",
-    pointerEvents: "none",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-end",
-    gap: "var(--gs-space-2)",
-    transition: "opacity var(--gs-base)",
-    ...(expanded
-      ? { flex: "1 1 auto", minHeight: 0, width: "100%" }
-      : { flex: "0 0 auto" }),
-  };
+  const outerStyle: React.CSSProperties = compact
+    ? {
+        pointerEvents: "auto",
+        width: "100%",
+      }
+    : {
+        position: "relative",
+        pointerEvents: "none",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-end",
+        gap: "var(--gs-space-2)",
+        transition: "opacity var(--gs-base)",
+        ...(expanded
+          ? { flex: "1 1 auto", minHeight: 0, width: "100%" }
+          : { flex: "0 0 auto" }),
+      };
 
-  const surfaceStyle: React.CSSProperties = {
-    pointerEvents: "auto",
-    background: "var(--gs-glass-veil)",
-    backdropFilter: "blur(var(--gs-blur))",
-    WebkitBackdropFilter: "blur(var(--gs-blur))",
-    border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-    boxShadow: "var(--gs-shadow-2)",
-    color: "var(--gs-ink)",
-    fontFamily: "var(--font-ui)",
-    overflow: "hidden",
-  };
+  const surfaceStyle: React.CSSProperties = compact
+    ? {
+        pointerEvents: "auto",
+        background: "var(--gs-panel)",
+        border: "0.5px solid var(--gs-line)",
+        borderRadius: "var(--gs-radius-panel)",
+        color: "var(--gs-ink)",
+        fontFamily: "var(--font-ui)",
+        overflow: "hidden",
+      }
+    : {
+        pointerEvents: "auto",
+        background: "var(--gs-glass-veil)",
+        backdropFilter: "blur(var(--gs-blur))",
+        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+        boxShadow: "var(--gs-shadow-2)",
+        color: "var(--gs-ink)",
+        fontFamily: "var(--font-ui)",
+        overflow: "hidden",
+      };
 
   if (!expanded) {
+    // Compact mode: clean toggle inside the unified glass panel — matches
+    // the mockup's "Running estimate · 6 items / $8,568.75" with chevron.
+    // A real <button> gives focus/Space/Enter for free; the collapsed state
+    // has no list to control, so aria-controls is omitted.
+    if (compact) {
+      const itemCount = summary.stockLines.length + excludedLines.length;
+      return (
+        <button
+          type="button"
+          data-testid="fit-sheet-pill"
+          aria-label={`Running estimate, total ${fmtAud(summary.total)}, ${itemCount} items`}
+          onClick={() => setExpanded(true)}
+          style={{
+            ...surfaceStyle,
+            padding: "11px 12px",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            cursor: "pointer",
+            width: "100%",
+            border: "none",
+            borderTop: "0.5px solid var(--gs-line)",
+          }}
+        >
+          <span
+            aria-hidden
+            style={{ fontSize: "var(--gs-font-h3)", color: "var(--gs-ink-secondary)", flexShrink: 0 }}
+          >
+            🧾
+          </span>
+          <span style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+            <span
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "var(--gs-font-xs)",
+                color: "var(--gs-ink-secondary)",
+              }}
+            >
+              Running estimate · {itemCount} items
+            </span>
+            <span
+              data-testid="fit-sheet-pill-total"
+              style={{
+                fontFamily: "var(--font-tech)",
+                fontSize: "var(--gs-font-h3)",
+                fontWeight: 500,
+                color: "var(--gs-ink)",
+              }}
+            >
+              {fmtAud(summary.total)}
+            </span>
+          </span>
+          <span
+            aria-hidden
+            style={{
+              fontSize: "var(--gs-font-sub)",
+              color: "var(--gs-ink-secondary)",
+              flexShrink: 0,
+            }}
+          >
+            ▾
+          </span>
+        </button>
+      );
+    }
+
     return (
       <div style={outerStyle}>
         <button
@@ -455,12 +543,13 @@ function FitSheetCapsule({
         data-testid="fit-sheet-card"
         style={{
           ...surfaceStyle,
-          width: 320,
-          maxWidth: "calc(100vw - 32px)",
+          width: compact ? "100%" : 320,
+          maxWidth: compact ? "100%" : "calc(100vw - 32px)",
           flex: "1 1 auto",
           minHeight: 0,
-          maxHeight: 600,
+          maxHeight: compact ? "min(300px, calc(100dvh - 340px))" : 600,
           borderRadius: "var(--gs-radius-panel)",
+          borderTop: compact ? "0.5px solid var(--gs-line)" : undefined,
           padding: "10px 12px",
           display: "flex",
           flexDirection: "column",

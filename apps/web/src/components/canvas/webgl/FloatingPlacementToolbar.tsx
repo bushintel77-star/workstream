@@ -11,6 +11,7 @@
  * Binding: docs/GOLD-STANDARD-2026.md §3 (Asset Discovery Fan-Out)
  */
 
+import { useEffect } from "react";
 import { useStudioStore } from "./studioStore";
 import { getCatalogSymbol } from "@workstream/domain";
 import { mapSymbolToStudioType } from "../handoff/state/studioAiEngine";
@@ -33,6 +34,17 @@ export function FloatingPlacementToolbar() {
   const rowPlantActive = useStudioStore((s) => s.rowPlantActive);
   const setRowPlantActive = useStudioStore((s) => s.setRowPlantActive);
   const massPlantPreviewCount = useStudioStore((s) => s.massPlantPreviewCount);
+
+  // Track cursor globally so the toolbar appears immediately on arm —
+  // before the pointer enters the R3F canvas.
+  useEffect(() => {
+    if (!armedSymbolId) return;
+    const onMove = (e: MouseEvent) => {
+      useStudioStore.getState().setPointerClientPos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => window.removeEventListener("mousemove", onMove);
+  }, [armedSymbolId]);
 
   if (!armedSymbolId || !pointerClientPos) return null;
 

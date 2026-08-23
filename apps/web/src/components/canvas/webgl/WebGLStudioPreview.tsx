@@ -2560,6 +2560,7 @@ export function WebGLStudioPreview({
             scaleM={scaleM}
             outdoorM2={outdoorM2}
             allowExpanded={activeMode !== "survey"}
+            compact={activeMode === "survey"}
           />
         ) : null}
       </div>

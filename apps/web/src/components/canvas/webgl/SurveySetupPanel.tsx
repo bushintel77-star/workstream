@@ -329,26 +329,40 @@ export function SurveySetupPanel({
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-2)" }}>
-          <Button
-            variant="primary"
-            active
+          <button
+            type="button"
             data-testid="import-site-truth"
             disabled={importBusy}
             onClick={onImport}
             style={{
-              justifyContent: "center",
-              padding: "7px 10px",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              background: "var(--gs-primary)",
+              color: "var(--gs-panel)",
+              border: "none",
+              borderRadius: "var(--gs-radius-md)",
+              padding: "9px 10px",
               cursor: importBusy ? "wait" : "pointer",
               opacity: importBusy ? 1 : undefined,
+              textAlign: "left",
+              width: "100%",
+              fontFamily: "var(--font-ui)",
             }}
           >
-            {importBusy ? "Tracing Vicmap…" : "Import site truth"}
-          </Button>
-          <p style={helperStyle}>
-            Pulls the title boundary, dwelling footprint, easements and
-            indicative levels from the Vicmap cadastre — four of the five
-            items below.
-          </p>
+            <span aria-hidden style={{ fontSize: "var(--gs-font-h2)", flexShrink: 0 }}>
+              ↓
+            </span>
+            <span style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+              <span style={{ fontSize: "var(--gs-font-lg)", fontWeight: 500 }}>
+                {importBusy ? "Tracing Vicmap…" : "Import site truth"}
+              </span>
+              <span style={{ fontSize: "var(--gs-font-xs)", opacity: 0.9, lineHeight: 1.3 }}>
+                Pulls title boundary, dwelling footprint, easements and
+                indicative levels from Vicmap — four of five below
+              </span>
+            </span>
+          </button>
           {importMessage ? (
             <p
               role="status"

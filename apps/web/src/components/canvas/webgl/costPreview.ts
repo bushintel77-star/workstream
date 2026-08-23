@@ -11,6 +11,7 @@
  * Binding: docs/GOLD-STANDARD-2026.md §3 (asset dock cost preview)
  */
 
+import { getCatalogSymbol } from "@workstream/domain";
 import { mapSymbolToStudioType } from "../handoff/state/studioAiEngine";
 
 /**
@@ -42,9 +43,12 @@ const ALL_IN_COST_PER_UNIT: Record<string, number> = {
 
 /**
  * Estimated cost (AUD, ex-GST) for placing one unit of this symbol.
- * Returns 0 for unknown or existing symbols.
+ * Returns 0 for unknown (non-catalog) or existing symbols. The catalog guard
+ * is required: `mapSymbolToStudioType` falls back to "canopy" for ids the
+ * catalog does not know, which would otherwise mint a phantom tree cost.
  */
 export function estimatedCostPerUnit(symbolId: string): number {
+  if (!getCatalogSymbol(symbolId)) return 0;
   const type = mapSymbolToStudioType(symbolId);
   return ALL_IN_COST_PER_UNIT[type] ?? 0;
 }
