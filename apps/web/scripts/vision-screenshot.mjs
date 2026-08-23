@@ -29,13 +29,15 @@ const VIEWPORTS = [
   [960, 640],
 ];
 
+// MODES env — comma-separated custom modes to capture (default survey/sketch/quote).
+const MODES = process.env.MODES ? process.env.MODES.split(",") : null;
+
 const routes = ["/home", "/settings"];
 if (PROJECT_ID) {
-  routes.push(
-    `/projects/${PROJECT_ID}?webgl=1&mode=survey`,
-    `/projects/${PROJECT_ID}?webgl=1&mode=sketch`,
-    `/projects/${PROJECT_ID}?webgl=1&mode=quote`,
-  );
+  const modes = MODES ?? ["survey", "sketch", "quote"];
+  for (const m of modes) {
+    routes.push(`/projects/${PROJECT_ID}?webgl=1&mode=${m}`);
+  }
 }
 
 fs.mkdirSync(OUT, { recursive: true });

@@ -55,7 +55,10 @@ export function interactionGuidance(args: {
     case "elevation":
       return { label: "Elevation mode", detail: "Inspect vertical relationships · Plan view is required for editing" };
     case "garden":
-      return { label: "Garden mode", detail: "Explore the design at eye level · Plan view is required for editing" };
+      return {
+        label: "Garden mode",
+        detail: "Explore at eye level — open Assets to place · click a plant to move or rotate · Wheel = zoom · Drag = pan",
+      };
     case "quote":
       return { label: "Quote mode", detail: "Review what is included in the live estimate" };
     case "present":

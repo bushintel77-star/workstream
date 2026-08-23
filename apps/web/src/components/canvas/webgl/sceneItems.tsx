@@ -25,7 +25,8 @@ import {
 } from "./seasonalStore";
 import { useStudioStore } from "./studioStore";
 import { layerScaleAlpha, viewScaleRatioForZoom } from "./layerPolicy";
-import { pctToWorld, type PctPoint } from "./coordTransform";
+import { pctToWorld, type PctPoint, type HeightmapPoint } from "./coordTransform";
+import { createElevationSampler } from "./terrainMath";
 
 /** Minimal StudioItem shape (the fields the renderer needs). */
 export interface RenderItem {
@@ -287,12 +288,14 @@ function TreeMesh({
   boardAspect,
   hideTpz = false,
   growthFactor = 1,
+  groundY = null,
 }: {
   item: RenderItem;
   scaleM: number;
   boardAspect: number;
   hideTpz?: boolean;
   growthFactor?: number;
+  groundY?: ((wx: number, wz: number) => number) | null;
 }) {
   const canopyScaleRef = useRef<THREE.Group>(null);
   const [wx, wz] = pctToWorld(item, scaleM, boardAspect);
@@ -301,6 +304,8 @@ function TreeMesh({
   const canopyRadius = (canopyM * item.scale) / 2;
   const trunkHeight = heightM * 0.42;
   const canopyY = trunkHeight + canopyRadius * 0.7;
+  // Snap-to-terrain: trunk base sits on the surface, not the flat plane.
+  const restY = groundY ? groundY(wx, wz) : 0;
 
   const tpzRadiusM = useMemo(() => {
     if (!isExist || !item.dbhM) return 0;
@@ -333,7 +338,7 @@ function TreeMesh({
   });
 
   return (
-    <group position={[wx, 0, wz]} rotation={[0, (item.rot * Math.PI) / 180, 0]}>
+    <group position={[wx, restY, wz]} rotation={[0, (item.rot * Math.PI) / 180, 0]}>
       {/* Trunk — tapered cylinder, matte bark (proven GrowthStudio material) */}
       <mesh position={[0, trunkHeight / 2, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[trunkTopR, trunkBotR, trunkHeight, 8]} />
@@ -363,15 +368,18 @@ function HedgeMesh({
   item,
   scaleM,
   boardAspect,
+  groundY = null,
 }: {
   item: RenderItem;
   scaleM: number;
   boardAspect: number;
+  groundY?: ((wx: number, wz: number) => number) | null;
 }) {
   const [wx, wz] = pctToWorld(item, scaleM, boardAspect);
   const heightM = (item.heightM ?? 1.4) * item.scale;
   const lengthM = 2.2 * item.scale;
   const color = item.ghost ? FOLIAGE.ghost : FOLIAGE.hedge;
+  const restY = groundY ? groundY(wx, wz) : 0;
 
   // Cluster of rounded lobes along the hedge length for a leafy top profile.
   const lobes = useMemo<Array<[number, number, number, number]>>(() => {
@@ -385,7 +393,7 @@ function HedgeMesh({
   }, [lengthM]);
 
   return (
-    <group position={[wx, 0, wz]} rotation={[0, (item.rot * Math.PI) / 180, 0]}>
+    <group position={[wx, restY, wz]} rotation={[0, (item.rot * Math.PI) / 180, 0]}>
       {/* Base box — the clipped hedge body */}
       <mesh position={[0, heightM / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[lengthM, heightM, heightM * 0.7]} />
@@ -581,19 +589,22 @@ function BollardLight({
   item,
   scaleM,
   boardAspect,
+  groundY = null,
 }: {
   item: RenderItem;
   scaleM: number;
   boardAspect: number;
+  groundY?: ((wx: number, wz: number) => number) | null;
 }) {
   const [wx, wz] = pctToWorld(item, scaleM, boardAspect);
   const height = (item.heightM ?? 0.9) * item.scale;
   const bodyR = 0.05 * item.scale;
   const capR = 0.07 * item.scale;
   const ghost = item.ghost;
+  const restY = groundY ? groundY(wx, wz) : 0;
 
   return (
-    <group position={[wx, 0, wz]} rotation={[0, (item.rot * Math.PI) / 180, 0]}>
+    <group position={[wx, restY, wz]} rotation={[0, (item.rot * Math.PI) / 180, 0]}>
       {/* Anodized metal body — cylinder, relies on env map for its shape */}
       <mesh position={[0, height / 2, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[bodyR, bodyR * 1.2, height, 12]} />
@@ -701,12 +712,16 @@ export function SceneItem({
   boardAspect,
   hideTpz = false,
   growthFactor = 1,
+  groundY = null,
 }: {
   item: RenderItem;
   scaleM: number;
   boardAspect: number;
   hideTpz?: boolean;
   growthFactor?: number;
+  /** Terrain height at a world (x, z) — lifts the item onto the surface.
+   *  Null on flat projects (items rest at y=0). */
+  groundY?: ((wx: number, wz: number) => number) | null;
 }) {
   if (SPECIES_TYPES.has(item.t)) {
     return (
@@ -716,11 +731,19 @@ export function SceneItem({
         boardAspect={boardAspect}
         hideTpz={hideTpz}
         growthFactor={growthFactor}
+        groundY={groundY}
       />
     );
   }
   if (item.t === "hedge") {
-    return <HedgeMesh item={item} scaleM={scaleM} boardAspect={boardAspect} />;
+    return (
+      <HedgeMesh
+        item={item}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        groundY={groundY}
+      />
+    );
   }
   // Hardscape (LA Specification): paving + deck build beveled/extruded geometry
   // with physical gaps; bollard is a light fixture. All react to IBL + VSM +
@@ -746,7 +769,14 @@ export function SceneItem({
     );
   }
   if (item.t === "bollard") {
-    return <BollardLight item={item} scaleM={scaleM} boardAspect={boardAspect} />;
+    return (
+      <BollardLight
+        item={item}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        groundY={groundY}
+      />
+    );
   }
   // Lawn + bed remain flat shape regions
   if (REGION_TYPES.has(item.t) && item.outlinePct) {
@@ -756,8 +786,9 @@ export function SceneItem({
   const [wx, wz] = pctToWorld(item, scaleM, boardAspect);
   const color = item.ghost ? FOLIAGE.ghost : FOLIAGE[item.t] ?? FOLIAGE.lawn;
   const radius = 0.5 * item.scale;
+  const restY = groundY ? groundY(wx, wz) + 0.01 : 0.01;
   return (
-    <mesh position={[wx, 0.01, wz]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+    <mesh position={[wx, restY, wz]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <circleGeometry args={[radius, 16]} />
       <meshStandardMaterial color={color} transparent opacity={0.4} roughness={0.9} />
     </mesh>
@@ -782,14 +813,31 @@ export function SceneItems({
   boardAspect,
   hideTpz = false,
   growthFactor = 1,
+  heightmapPoints = [],
 }: {
   items: RenderItem[];
   scaleM: number;
   boardAspect: number;
   hideTpz?: boolean;
   growthFactor?: number;
+  /** Spot-level samples — when present, placed items sit on the terrain
+   *  surface (snap-to-terrain) instead of the flat y=0 plane. */
+  heightmapPoints?: HeightmapPoint[];
 }) {
   const groupRef = useRef<THREE.Group>(null);
+
+  // Terrain sampler — same function TerrainMesh/PlacementGizmo use, so the
+  // resting height of every placed item matches the mesh exactly. Null on
+  // flat projects (the default flat-y=0 path is preserved).
+  const sampler = useMemo(
+    () =>
+      createElevationSampler(heightmapPoints, scaleM, boardAspect),
+    [heightmapPoints, scaleM, boardAspect],
+  );
+  const groundY = useMemo(() => {
+    if (!sampler) return null;
+    return (wx: number, wz: number) => sampler(wx, wz);
+  }, [sampler]);
 
   useFrame(() => {
     const grp = groupRef.current;
@@ -818,6 +866,7 @@ export function SceneItems({
           boardAspect={boardAspect}
           hideTpz={hideTpz}
           growthFactor={growthFactor}
+          groundY={groundY}
         />
       ))}
     </group>

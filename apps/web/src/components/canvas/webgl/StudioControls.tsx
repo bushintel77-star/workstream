@@ -477,7 +477,14 @@ export function StudioControls({
       }
       if (dragState.current.active && !dragState.current.moved && onGroundClick) {
         const world = raycastGround(e, groundRef);
-        if (world && !tiltLocked) {
+        // A click (pointer-up that never became a drag) fires selection even
+        // under the 3D/tilted blend. Selection is a click, not a camera
+        // gesture, and pan is already captured at pointer-down (beginPanDrag),
+        // so allowing the click here does not disturb the pan law — it is what
+        // lets an operator pick a placed asset and transform it in the 3D
+        // Garden view. (The old `!tiltLocked` gate was a carryover of the
+        // retired SVG `isTiltActive` rule.)
+        if (world) {
           onGroundClick(worldToPct(world[0], world[1], scaleM, boardAspect), {
             additive: e.nativeEvent.shiftKey,
           });
@@ -486,7 +493,7 @@ export function StudioControls({
       dragState.current.active = false;
       dragState.current.isPan = false;
     },
-    [onGroundClick, scaleM, boardAspect, tiltLocked],
+    [onGroundClick, scaleM, boardAspect],
   );
 
   const groundSize = scaleM * 5;

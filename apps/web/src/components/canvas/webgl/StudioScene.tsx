@@ -960,6 +960,7 @@ export function StudioScene({
         boardAspect={boardAspect}
         hideTpz={lens?.hideTpz}
         growthFactor={growthFactor}
+        heightmapPoints={heightmapPoints}
       />
       {/* Converted CAD linework — orphan LandscapeFeatures (ditch/path/wall/
           direct-converted beds). Mirrored polygons render via the placement
