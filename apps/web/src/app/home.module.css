@@ -96,26 +96,10 @@
 }
 
 /* --- Planner widget grid --- */
-
-.planner {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1px;
-  background: var(--line-hairline);
-  border: 1px solid var(--line-hairline);
-  box-shadow:
-    0 1px 1px rgba(255, 255, 255, 0.04) inset,
-    0 10px 30px rgba(0, 0, 0, 0.08),
-    0 28px 64px rgba(0, 0, 0, 0.06);
-  margin-top: 1rem;
-  background: linear-gradient(
-    90deg,
-    var(--gs-primary) 0,
-    var(--gs-primary) 48px,
-    color-mix(in srgb, var(--gs-line) 80%, transparent) 48px,
-    color-mix(in srgb, var(--gs-line) 80%, transparent) 100%
-  );
-}
+/* One .planner rule: the flex column defined with the widgets below
+ * (debt D2 — the old grid block here carried a 48px Signal-Blue gradient,
+ * 1px-gap hairline background, and dark-era raw rgba shadows that bled
+ * through the glass widgets under the later flex rule). */
 
 /* Composer — glass acquisition panel */
 
@@ -130,24 +114,10 @@
    0 12px 32px rgba(0, 0, 0, 0.05);
 }
 
-.widget[data-accent="blue"]::before,
-.widget[data-accent="red"]::before,
-.widget[data-accent="green"]::before,
-.widget[data-accent="yellow"]::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 32px;
-  height: 2px;
-  gap: 8px;
-  padding: 16px;
-  border-radius: var(--gs-radius-panel);
-  background: color-mix(in srgb, var(--gs-glass) 38%, transparent);
-  backdrop-filter: blur(var(--gs-blur));
-  -webkit-backdrop-filter: blur(var(--gs-blur));
-  border: 1px solid color-mix(in srgb, var(--gs-line) 40%, transparent);
-}
+/* (debt D2 — the widget accent ::before system was removed: the pseudo
+ * merged an accent bar with a card recipe and collapsed to a degenerate
+ * 32×2 glass sliver; no accent value was ever defined. The live accent
+ * expression is the border variant on .widget[data-accent] below.) */
 
 .composerLabel {
   font-family: var(--font-tech);
@@ -268,100 +238,125 @@
   white-space: nowrap;
 }
 
-/* Index cards — glass drafting tiles */
+/* Operator ledger — hairline rows grouped by workflow state. Dense by
+ * design: this is a trade schedule, not a marketing grid. Status is
+ * glyph + ink (§3.4); cost figures in charcoal Space Grotesk; Signal Blue
+ * stays reserved for the composer CTA. */
 
-.cardGrid {
-  list-style: none;
-  margin: 4px 0 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 12px;
+.ledgerGroup {
+  margin-top: 18px;
 }
 
-.cardItem {
-  position: relative;
+.ledgerGroup:first-of-type {
+  margin-top: 4px;
 }
 
-.card {
-  position: relative;
-  display: grid;
-  grid-template-columns: 56px 1fr;
-  grid-template-rows: auto auto;
-  gap: 4px 14px;
-  height: 100%;
-  padding: 14px;
-  text-decoration: none;
-  border-radius: var(--gs-radius-panel);
-  background: color-mix(in srgb, var(--gs-glass) 38%, transparent);
-  backdrop-filter: blur(var(--gs-blur));
-  -webkit-backdrop-filter: blur(var(--gs-blur));
-  border: 1px solid color-mix(in srgb, var(--gs-line) 35%, transparent);
-  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
-}
-
-.card:hover,
-.card:focus-visible {
-  background: color-mix(in srgb, var(--gs-glass-strong) 55%, transparent);
-  border-color: color-mix(in srgb, var(--gs-primary) 35%, transparent);
-  transform: translateY(-1px);
-}
-
-.card:focus-visible {
-  outline: 2px solid var(--gs-primary);
-  outline-offset: 2px;
-}
-
-/* Thumbnail — stage tag as identity, with the status dot */
-
-.cardThumb {
-  grid-row: 1 / span 2;
+.groupHead {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 6px;
-  padding-top: 2px;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 6px;
+  padding-bottom: 6px;
+  font-family: var(--font-tech);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-primary);
+  border-bottom: 1px solid color-mix(in srgb, var(--gs-line) 70%, transparent);
 }
 
-.cardStageTag {
+.groupGlyph {
+  font-size: 9px;
+  color: var(--gs-ink-secondary);
+}
+
+.groupGlyphConflict {
+  color: var(--gs-conflict-soft);
+}
+
+.groupCount {
+  margin-left: auto;
+  font-weight: 500;
+  color: var(--ink-tertiary);
+  letter-spacing: 0.06em;
+}
+
+.ledgerList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Loading skeleton rows (loading.tsx keyframes target this) */
+.ledgerSkeleton .row {
+  cursor: default;
+}
+
+.rowItem {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  border-bottom: 1px solid color-mix(in srgb, var(--gs-line) 38%, transparent);
+}
+
+.rowItem:last-child {
+  border-bottom: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto auto auto;
+  grid-template-areas: "glyph main stage cost date";
+  align-items: baseline;
+  column-gap: 14px;
+  padding: 10px 96px 10px 2px; /* right pad leaves room for quiet actions */
+  text-decoration: none;
+  min-width: 0;
+  transition: background 0.14s ease;
+}
+
+.row:hover {
+  background: color-mix(in srgb, var(--gs-glass) 30%, transparent);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--gs-primary);
+  outline-offset: -2px;
+  border-radius: var(--gs-radius-chip);
+}
+
+/* Attention rows carry the conflict only in the glyph — the row itself
+ * stays paper (crimson is a strike, never a wash). */
+.rowAttention .rowName {
+  color: var(--gs-ink-strong);
+}
+
+.rowGlyph {
+  grid-area: glyph;
   font-family: var(--font-tech);
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: var(--gs-radius-pill);
-  border: 1px solid color-mix(in srgb, var(--gs-line) 70%, transparent);
-  color: var(--ink-secondary);
-  white-space: nowrap;
+  line-height: 1;
+  color: var(--gs-ink-secondary);
+  text-align: center;
 }
 
-.cardDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--ink-tertiary);
+.rowAttention .rowGlyph {
+  color: var(--gs-conflict-soft);
 }
 
-.cardDot.status_draft { background: var(--ink-tertiary); }
-.cardDot.status_active { background: var(--gs-primary); }
-.cardDot.status_review { background: var(--gs-warning); }
-.cardDot.status_complete { background: var(--gs-success); }
-
-/* Body + footer */
-
-.cardBody {
+.rowMain {
+  grid-area: main;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  gap: 10px;
   min-width: 0;
-  padding-right: 8px;
 }
 
-.cardName {
+.rowName {
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--ink-primary);
   overflow: hidden;
@@ -369,56 +364,78 @@
   white-space: nowrap;
 }
 
-.cardAddress {
+.rowAddress {
   font-family: var(--font-ui);
-  font-size: 12px;
-  color: var(--ink-secondary);
+  font-size: 11.5px;
+  color: var(--ink-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.cardFooter {
-  grid-column: 2;
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.cardCost {
-  margin-left: auto;
+.rowStage {
+  grid-area: stage;
   font-family: var(--font-tech);
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 600;
-  color: var(--gs-primary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-secondary);
   white-space: nowrap;
 }
 
-.cardCostPending {
+.rowAttention .rowStage {
+  color: var(--gs-conflict-soft);
+}
+
+.rowCost {
+  grid-area: cost;
+  font-family: var(--font-tech);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--gs-ink-strong);
+  white-space: nowrap;
+}
+
+.rowCostPending {
   color: var(--ink-tertiary);
   font-weight: 400;
 }
 
-.cardDate {
+.rowDate {
+  grid-area: date;
   font-family: var(--font-tech);
   font-size: 10.5px;
   color: var(--ink-tertiary);
   white-space: nowrap;
 }
 
-/* Quiet secondary actions — the card body is the open affordance, so these
-   sit at the bottom-right as small, low-emphasis links (no heavy CTA look). */
-.cardActions {
+/* Quiet secondary actions — revealed on row hover/focus, always visible
+   on touch (no hover) via the coarse-pointer media query below. */
+.rowActions {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 6px;
+  opacity: 0;
+  transition: opacity 0.14s ease;
 }
 
-.cardSurfaceLinkSecondary {
+.rowItem:hover .rowActions,
+.rowItem:focus-within .rowActions {
+  opacity: 1;
+}
+
+@media (pointer: coarse) {
+  .rowActions {
+    opacity: 1;
+  }
+}
+
+.rowRecordsLink {
   font-family: var(--font-ui);
   font-size: 10.5px;
   display: inline-flex;
@@ -433,12 +450,12 @@
   white-space: nowrap;
 }
 
-.cardSurfaceLinkSecondary:hover {
+.rowRecordsLink:hover {
   color: var(--ink-primary);
   border-color: color-mix(in srgb, var(--line-strong) 55%, transparent);
 }
 
-.cardDeleteBtn {
+.rowDeleteBtn {
   display: inline-flex;
   align-items: center;
   min-height: var(--control-h);
@@ -452,8 +469,48 @@
   cursor: pointer;
 }
 
-.cardDeleteBtn:hover {
+.rowDeleteBtn:hover {
   background: color-mix(in srgb, var(--gs-conflict) 20%, transparent);
+}
+
+/* Narrow register — stage/date fold under the name, actions drop below. */
+@media (max-width: 860px) {
+  .row {
+    grid-template-columns: 18px minmax(0, 1fr);
+    grid-template-areas:
+      "glyph main"
+      "glyph meta";
+    row-gap: 3px;
+    padding: 10px 2px 34px;
+  }
+
+  .rowStage,
+  .rowCost,
+  .rowDate {
+    grid-area: meta;
+  }
+
+  .rowMain {
+    flex-direction: column;
+    gap: 1px;
+    align-items: flex-start;
+  }
+
+  .rowStage,
+  .rowCost,
+  .rowDate {
+    display: inline-flex;
+  }
+
+  .rowMain + .rowStage::before {
+    content: "";
+  }
+
+  .rowActions {
+    top: auto;
+    bottom: 6px;
+    right: 2px;
+  }
 }
 
 /* Empty / error states */

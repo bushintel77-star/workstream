@@ -6,6 +6,8 @@ import { API, waitForApiReady } from "./helpers";
  * Dashboard — seed N projects; hard-expect search empty / match, sort order,
  * and Dialog delete + undo. Status filter chips were removed from live /home
  * (editorial redesign); the sort control is back as a select, so it is covered.
+ * Register surface is the operator ledger: workflow-grouped hairline rows
+ * (rowName/rowAddress), not the retired card grid.
  */
 test.describe("Dashboard — search, sort, delete, undo", () => {
   test("seeded projects: search empty/match, Dialog delete, Undo restores", async ({
@@ -36,32 +38,37 @@ test.describe("Dashboard — search, sort, delete, undo", () => {
     const search = page.getByRole("searchbox", { name: "Search projects" });
     await expect(search).toBeVisible({ timeout: 15_000 });
 
-    const cardName = (label: string) =>
-      page.locator('[class*="cardName"]', { hasText: label });
+    /* Fresh seeds all sit in the Active-work ledger group. */
+    await expect(
+      page.getByRole("heading", { name: /Active work/ }),
+    ).toBeVisible({ timeout: 15_000 });
 
-    await expect(cardName(seeds[0]!.name)).toBeVisible();
-    await expect(cardName(seeds[1]!.name)).toBeVisible();
-    await expect(cardName(seeds[2]!.name)).toBeVisible();
+    const rowName = (label: string) =>
+      page.locator('[class*="rowName"]', { hasText: label });
+
+    await expect(rowName(seeds[0]!.name)).toBeVisible();
+    await expect(rowName(seeds[1]!.name)).toBeVisible();
+    await expect(rowName(seeds[2]!.name)).toBeVisible();
 
     await search.fill("zzz-nonexistent-project");
     await expect(
       page.getByRole("heading", { name: "No matching projects" }),
     ).toBeVisible({ timeout: 5_000 });
-    await expect(cardName(seeds[0]!.name)).toHaveCount(0);
+    await expect(rowName(seeds[0]!.name)).toHaveCount(0);
 
     await search.fill(seeds[0]!.street);
-    await expect(cardName(seeds[0]!.name)).toBeVisible({ timeout: 5_000 });
-    await expect(cardName(seeds[1]!.name)).toHaveCount(0);
-    await expect(cardName(seeds[2]!.name)).toHaveCount(0);
+    await expect(rowName(seeds[0]!.name)).toBeVisible({ timeout: 5_000 });
+    await expect(rowName(seeds[1]!.name)).toHaveCount(0);
+    await expect(rowName(seeds[2]!.name)).toHaveCount(0);
 
     // Sort — scope to this run's three seeds so the order is deterministic
     // against a store that already holds unrelated projects.
     await search.fill(run);
-    const runCards = page.locator('[class*="cardName"]');
-    await expect(runCards).toHaveCount(3, { timeout: 5_000 });
+    const runRows = page.locator('[class*="rowName"]');
+    await expect(runRows).toHaveCount(3, { timeout: 5_000 });
     const sortSelect = page.getByRole("combobox", { name: "Sort projects" });
     await sortSelect.selectOption("name");
-    await expect(runCards).toHaveText([
+    await expect(runRows).toHaveText([
       seeds[0]!.name,
       seeds[1]!.name,
       seeds[2]!.name,
@@ -69,7 +76,7 @@ test.describe("Dashboard — search, sort, delete, undo", () => {
     await sortSelect.selectOption("activity");
 
     await search.clear();
-    await expect(cardName(seeds[1]!.name)).toBeVisible({ timeout: 5_000 });
+    await expect(rowName(seeds[1]!.name)).toBeVisible({ timeout: 5_000 });
 
     const deleteBtn = page.getByRole("button", {
       name: `Delete ${seeds[1]!.name}`,
@@ -85,13 +92,13 @@ test.describe("Dashboard — search, sort, delete, undo", () => {
     ).toBeVisible();
     await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(dialog).toHaveCount(0);
-    await expect(cardName(seeds[1]!.name)).toBeVisible();
+    await expect(rowName(seeds[1]!.name)).toBeVisible();
 
     await deleteBtn.click();
     await expect(dialog).toBeVisible({ timeout: 5_000 });
     await dialog.getByRole("button", { name: "Delete" }).click();
     await expect(dialog).toHaveCount(0);
-    await expect(cardName(seeds[1]!.name)).toHaveCount(0);
+    await expect(rowName(seeds[1]!.name)).toHaveCount(0);
 
     const toastRegion = page.locator("[aria-live]").filter({
       hasText: "Project deleted",
@@ -102,7 +109,7 @@ test.describe("Dashboard — search, sort, delete, undo", () => {
     ).toBeVisible();
     await toastRegion.getByRole("button", { name: "Undo" }).click();
 
-    await expect(cardName(seeds[1]!.name)).toBeVisible({ timeout: 10_000 });
+    await expect(rowName(seeds[1]!.name)).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText("Project restored")).toBeVisible({
       timeout: 10_000,
     });

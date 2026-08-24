@@ -86,9 +86,13 @@ const figureStyle: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-/** Tiny per-line tick — checked = included in the quote. */
+/** Tiny per-line tick — checked = included in the quote. Explicit resets
+ * (not `all: "unset"`) keep the global :focus-visible ring alive. */
 const tickStyle: React.CSSProperties = {
-  all: "unset",
+  background: "transparent",
+  border: "none",
+  padding: 0,
+  margin: 0,
   cursor: "pointer",
   fontFamily: "var(--font-tech)",
   fontSize: "var(--gs-font-sm)",
@@ -861,12 +865,15 @@ function FitSheetCapsule({
                 onClick={() => void runBackendFetch()}
                 disabled={backendBusy}
                 style={{
-                  all: "unset",
+                  background: "transparent",
+                  border: "none",
+                  padding: "0 2px",
+                  margin: 0,
+                  font: "inherit",
                   cursor: backendBusy ? "wait" : "pointer",
                   fontFamily: "var(--font-tech)",
                   fontSize: "var(--gs-font-sm)",
                   color: "var(--gs-ink-secondary)",
-                  padding: "0 2px",
                 }}
               >
                 ⟳

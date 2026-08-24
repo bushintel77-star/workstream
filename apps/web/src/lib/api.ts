@@ -21,6 +21,7 @@ import type {
   SketchToCadResponse,
 } from "@workstream/contracts";
 import { clerkEnabled } from "./auth";
+import { loadOptional } from "./load-optional";
 import { operatorApiUrl } from "./public-env";
 
 const API_URL = operatorApiUrl();
@@ -191,18 +192,11 @@ async function apiDelete<T = void>(path: string): Promise<T> {
 
 /* -- Projects ---------------------------------------------------------- */
 
-export type ProjectStatus =
-  | "draft"
-  | "recording"
-  | "processing"
-  | "survey_review"
-  | "design_review"
-  | "cost_review"
-  | "audit"
-  | "outputs"
-  | "complete";
-
-export type CrmStage = "enquiry" | "quote_sent" | "won" | "lost";
+/* Single source of truth: the contract enum. The API writes 16 statuses
+ * (capture-pipeline failure states included); a locally narrowed copy here
+ * previously rendered those failures as "still processing". */
+import type { CrmStage, ProjectStatus } from "@workstream/contracts";
+export type { ProjectStatus, CrmStage };
 
 export type Project = {
   id: string;
@@ -1287,19 +1281,19 @@ export type AccountingStatus = {
 };
 
 export async function getMyobStatus(): Promise<AccountingStatus | null> {
-  try {
-    return await apiGet<AccountingStatus>("/myob/status");
-  } catch {
-    return null;
-  }
+  return (
+    await loadOptional("myob/status", () =>
+      apiGet<AccountingStatus>("/myob/status"),
+    )
+  ).data;
 }
 
 export async function getXeroStatus(): Promise<AccountingStatus | null> {
-  try {
-    return await apiGet<AccountingStatus>("/xero/status");
-  } catch {
-    return null;
-  }
+  return (
+    await loadOptional("xero/status", () =>
+      apiGet<AccountingStatus>("/xero/status"),
+    )
+  ).data;
 }
 
 /* -- Carbon ----------------------------------------------------------- */
@@ -1321,11 +1315,11 @@ export type CarbonReport = {
 };
 
 export async function getCarbon(projectId: string): Promise<CarbonReport | null> {
-  try {
-    return await apiGet<CarbonReport>(`/projects/${projectId}/carbon`);
-  } catch {
-    return null;
-  }
+  return (
+    await loadOptional(`projects/${projectId}/carbon`, () =>
+      apiGet<CarbonReport>(`/projects/${projectId}/carbon`),
+    )
+  ).data;
 }
 
 /* -- Site context (season, sun, planning badges) ----------------------- */
@@ -1377,18 +1371,17 @@ export async function getCadastralTitle(
   projectId: string,
   address?: string,
 ): Promise<import("@workstream/domain").ArchitecturalTitleBlock | null> {
-  try {
-    const q =
-      address && address.trim()
-        ? `?address=${encodeURIComponent(address.trim())}`
-        : "";
-    const body = await apiGet<{
-      titleBlock: import("@workstream/domain").ArchitecturalTitleBlock;
-    }>(`/projects/${projectId}/cadastral-title${q}`);
-    return body.titleBlock;
-  } catch {
-    return null;
-  }
+  const q =
+    address && address.trim()
+      ? `?address=${encodeURIComponent(address.trim())}`
+      : "";
+  return (
+    await loadOptional(`projects/${projectId}/cadastral-title`, () =>
+      apiGet<{ titleBlock: import("@workstream/domain").ArchitecturalTitleBlock }>(
+        `/projects/${projectId}/cadastral-title${q}`,
+      ),
+    )
+  ).data?.titleBlock ?? null;
 }
 
 /* -- Weather ----------------------------------------------------------- */
@@ -1417,14 +1410,13 @@ export type WeatherForecast = {
 export async function getWeather(
   projectId: string,
 ): Promise<WeatherForecast | null> {
-  try {
-    const body = await apiGet<{ forecast: WeatherForecast }>(
-      `/projects/${projectId}/weather`,
-    );
-    return body.forecast;
-  } catch {
-    return null;
-  }
+  return (
+    await loadOptional(`projects/${projectId}/weather`, () =>
+      apiGet<{ forecast: WeatherForecast }>(
+        `/projects/${projectId}/weather`,
+      ),
+    )
+  ).data?.forecast ?? null;
 }
 
 /* -- Crew -------------------------------------------------------------- */

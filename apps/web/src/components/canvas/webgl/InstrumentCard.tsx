@@ -40,7 +40,11 @@ export function InstrumentCard({
           aria-label={`Collapse ${label}`}
           onClick={() => setOpen(false)}
           style={{
-            all: "unset",
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            margin: 0,
+            font: "inherit",
             cursor: "pointer",
             display: "flex",
             justifyContent: "space-between",
@@ -67,13 +71,13 @@ export function InstrumentCard({
       aria-label={`Expand ${label}`}
       onClick={() => setOpen(true)}
       style={{
-        all: "unset",
         boxSizing: "border-box",
         cursor: "pointer",
         display: "inline-flex",
         alignItems: "baseline",
         gap: "var(--gs-space-4)",
         padding: "4px 9px",
+        margin: 0,
         borderRadius: "var(--gs-radius-pill)",
         background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
         backdropFilter: "blur(var(--gs-blur))",

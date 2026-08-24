@@ -21,6 +21,32 @@ export type DashboardProject = {
   costTotal: number | null;
 };
 
+/* Operator ledger — workflow groups, not one flat rank of cards. Failures
+ * surface at the top so a stalled pipeline can't hide three scrolls down. */
+type RowGroup = "attention" | "active" | "done";
+
+const GROUPS: Array<{ key: RowGroup; heading: string }> = [
+  { key: "attention", heading: "Needs attention" },
+  { key: "active", heading: "Active work" },
+  { key: "done", heading: "Shared & complete" },
+];
+
+function groupFor(project: DashboardProject): RowGroup {
+  if (project.stageLabel.startsWith("Attention")) return "attention";
+  if (project.status === "complete") return "done";
+  return "active";
+}
+
+/** Status = shape + ink (design-spec §3.4): ▲ conflict (crimson is reserved
+ *  for exactly this), ● active (the single accent), ○ draft, ✓ done. */
+function glyphFor(project: DashboardProject): string {
+  const group = groupFor(project);
+  if (group === "attention") return "▲";
+  if (project.status === "complete") return "✓";
+  if (project.status === "draft") return "○";
+  return "●";
+}
+
 const DATE_FORMAT = new Intl.DateTimeFormat("en-AU", {
   day: "numeric",
   month: "short",
@@ -56,7 +82,7 @@ export function DashboardProjects({
   const [isPending, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState<DashboardProject | null>(null);
 
-  const visibleProjects = useMemo(() => {
+  const grouped = useMemo(() => {
     const q = query.trim().toLowerCase();
     const filtered = items.filter((project) => {
       const matchesQuery =
@@ -65,13 +91,23 @@ export function DashboardProjects({
         project.address.toLowerCase().includes(q);
       return matchesQuery && project.status !== "deleted";
     });
-
-    return [...filtered].sort((a, b) => {
+    const by = (a: DashboardProject, b: DashboardProject) => {
       if (sort === "name") return a.projectName.localeCompare(b.projectName);
       if (sort === "cost") return (b.costTotal ?? -1) - (a.costTotal ?? -1);
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    };
+    const buckets: Record<RowGroup, DashboardProject[]> = {
+      attention: [],
+      active: [],
+      done: [],
+    };
+    for (const project of filtered) buckets[groupFor(project)].push(project);
+    for (const key of Object.keys(buckets) as RowGroup[]) buckets[key].sort(by);
+    return buckets;
   }, [items, query, sort]);
+
+  const visibleCount =
+    grouped.attention.length + grouped.active.length + grouped.done.length;
   const sortLabel =
     sort === "activity" ? "Recent activity" : sort === "name" ? "Project name" : "Estimated cost";
 
@@ -141,7 +177,7 @@ export function DashboardProjects({
           Projects register
         </p>
         <p className={home.indexCount} aria-live="polite">
-          {visibleProjects.length} shown
+          {visibleCount} shown
         </p>
       </div>
 
@@ -174,7 +210,7 @@ export function DashboardProjects({
             <option value="name">Name</option>
             <option value="cost">Cost</option>
           </KitSelect>
-          <span className={home.searchHint}>{visibleProjects.length} shown · {sortLabel}</span>
+          <span className={home.searchHint}>{visibleCount} shown · {sortLabel}</span>
         </div>
       ) : null}
 
@@ -185,77 +221,85 @@ export function DashboardProjects({
             Start your first project with a Melbourne site address above.
           </p>
         </div>
-      ) : visibleProjects.length === 0 ? (
+      ) : visibleCount === 0 ? (
         <div className={home.noResults}>
           <h3>No matching projects</h3>
           <p>Adjust your search to bring projects back into view.</p>
         </div>
       ) : (
-        <ul className={home.cardGrid} aria-busy={isPending}>
-          {visibleProjects.map((project) => (
-            <li key={project.id} className={home.cardItem}>
-              <Link
-                href={`/projects/${project.id}`}
-                className={`${home.card} ${home[`status_${project.status}`]}`}
-              >
-                {/* Thumbnail — stage tag as identity, not a giant index number */}
-                <div className={home.cardThumb}>
-                  <span className={home.cardStageTag}>
-                    {project.stageLabel}
-                  </span>
+        <div aria-busy={isPending}>
+          {GROUPS.map(({ key, heading }) => {
+            const rows = grouped[key];
+            if (rows.length === 0) return null;
+            return (
+              <section key={key} className={home.ledgerGroup} aria-label={heading}>
+                <h3 className={home.groupHead}>
                   <span
-                    className={`${home.cardDot} ${home[`status_${project.status}`]}`}
+                    className={`${home.groupGlyph} ${key === "attention" ? home.groupGlyphConflict : ""}`}
                     aria-hidden
-                  />
-                </div>
-
-                {/* Body — project name + address */}
-                <div className={home.cardBody}>
-                  <span className={home.cardName}>{project.projectName}</span>
-                  <span className={home.cardAddress}>{project.address}</span>
-                </div>
-
-                {/* Footer — cost + date */}
-                <div className={home.cardFooter}>
-                  {project.costTotal != null ? (
-                    <span className={home.cardCost}>
-                      {formatMoney(project.costTotal)}
-                    </span>
-                  ) : (
-                    <span className={`${home.cardCost} ${home.cardCostPending}`}>
-                      —
-                    </span>
-                  )}
-                  <span className={home.cardDate}>
-                    {formatDate(project.createdAt)}
+                  >
+                    {key === "attention" ? "▲" : key === "active" ? "●" : "✓"}
                   </span>
-                </div>
-              </Link>
-              {/* Quiet secondary actions — the card body is the open affordance. */}
-              <div className={home.cardActions}>
-                <Link
-                  href={`/projects/${project.id}/outputs`}
-                  className={home.cardSurfaceLinkSecondary}
-                  aria-label={`Records for ${project.projectName}`}
-                >
-                  Records
-                </Link>
-                <button
-                  type="button"
-                  className={home.cardDeleteBtn}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    deleteProject(project);
-                  }}
-                  aria-label={`Delete ${project.projectName}`}
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                  {heading}
+                  <span className={home.groupCount}>{rows.length}</span>
+                </h3>
+                <ul className={home.ledgerList}>
+                  {rows.map((project) => (
+                    <li key={project.id} className={home.rowItem}>
+                      <Link
+                        href={`/projects/${project.id}`}
+                        className={`${home.row} ${key === "attention" ? home.rowAttention : ""}`}
+                      >
+                        <span className={home.rowGlyph} aria-hidden>
+                          {glyphFor(project)}
+                        </span>
+                        <span className={home.rowMain}>
+                          <span className={home.rowName}>{project.projectName}</span>
+                          <span className={home.rowAddress}>{project.address}</span>
+                        </span>
+                        <span className={home.rowStage}>{project.stageLabel}</span>
+                        {project.costTotal != null ? (
+                          <span className={home.rowCost}>
+                            {formatMoney(project.costTotal)}
+                          </span>
+                        ) : (
+                          <span className={`${home.rowCost} ${home.rowCostPending}`}>
+                            not costed
+                          </span>
+                        )}
+                        <span className={home.rowDate}>
+                          {formatDate(project.createdAt)}
+                        </span>
+                      </Link>
+                      {/* Quiet secondary actions — the row is the open affordance. */}
+                      <div className={home.rowActions}>
+                        <Link
+                          href={`/projects/${project.id}/outputs`}
+                          className={home.rowRecordsLink}
+                          aria-label={`Records for ${project.projectName}`}
+                        >
+                          Records
+                        </Link>
+                        <button
+                          type="button"
+                          className={home.rowDeleteBtn}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            deleteProject(project);
+                          }}
+                          aria-label={`Delete ${project.projectName}`}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
       )}
 
       <Dialog

@@ -132,6 +132,15 @@ export async function createDepositSession(
   const depositAud = Math.round((args.costing.total * pct) / 100);
 
   if (!isStripeLive()) {
+    /* No key. Outside production the client renders an explicit
+     * "checkout preview — no payment taken" block. In production a missing
+     * key must never read as a noted deposit: fail the session so the
+     * portal shows its "checkout unavailable" state instead. */
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "Stripe is not configured on this environment — deposit checkout unavailable",
+      );
+    }
     return {
       session_id: `dev-cs-${Date.now()}`,
       checkout_url: `https://web-production-3c194.up.railway.app/portal/dev-checkout/${Date.now()}`,

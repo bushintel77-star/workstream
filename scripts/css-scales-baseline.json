@@ -7,8 +7,7 @@
     "zIndex": 1
   },
   "apps/web/src/app/home.module.css": {
-    "zIndex": 1,
-    "radius": 1
+    "zIndex": 1
   },
   "apps/web/src/app/portal/quote/[token]/quote.module.css": {
     "opacity": 1

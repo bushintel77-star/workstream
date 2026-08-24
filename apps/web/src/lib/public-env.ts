@@ -37,4 +37,15 @@ export function assertProductionPublicEnv(): void {
       "API_URL / NEXT_PUBLIC_API_URL must point at the production API (not localhost)",
     );
   }
+  /* Checkout success/cancel URLs are built from this base — a localhost
+   * default here would strand a paying customer after Stripe checkout. */
+  const webBase =
+    process.env.NEXT_PUBLIC_WEB_URL ??
+    process.env.PORTAL_BASE_URL ??
+    "http://localhost:3002";
+  if (/localhost|127\.0\.0\.1/i.test(webBase)) {
+    throw new Error(
+      "NEXT_PUBLIC_WEB_URL / PORTAL_BASE_URL must point at the production web app for checkout redirects (not localhost)",
+    );
+  }
 }

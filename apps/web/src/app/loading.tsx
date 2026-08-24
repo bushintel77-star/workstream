@@ -3,6 +3,7 @@ import home from "./home.module.css";
 /**
  * Register loading state. Uses the SAME full-bleed `/home` shell so no
  * responsive "compromise" frame flashes before the desktop register renders.
+ * Skeleton mirrors the operator ledger (hairline rows, not cards).
  */
 export default function DashboardLoading() {
   return (
@@ -26,33 +27,28 @@ export default function DashboardLoading() {
             <p className={home.indexLabel}>Projects</p>
             <p className={home.indexCount}>— entries</p>
           </div>
-          <ul className={home.cardGrid}>
-            {Array.from({ length: 6 }, (_, i) => (
-              <li key={i} className={home.cardItem}>
-                <div className={home.card}>
-                  <div className={home.cardThumb}>
-                    <span className={home.cardIndex}>
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                  </div>
-                  <div className={home.cardBody}>
-                    <span className={home.cardName} style={{ opacity: 0.3 }}>
+          <ul className={`${home.ledgerList} ${home.ledgerSkeleton}`}>
+            {Array.from({ length: 7 }, (_, i) => (
+              <li key={i} className={home.rowItem}>
+                <div className={home.row} aria-hidden>
+                  <span className={home.rowGlyph}>○</span>
+                  <span className={home.rowMain}>
+                    <span className={home.rowName} style={{ opacity: 0.3 }}>
                       Loading project
                     </span>
-                    <span className={home.cardAddress} style={{ opacity: 0.2 }}>
+                    <span className={home.rowAddress} style={{ opacity: 0.2 }}>
                       —
                     </span>
-                  </div>
-                  <div className={home.cardFooter}>
-                    <span className={home.cardStage}>—</span>
-                  </div>
+                  </span>
+                  <span className={home.rowStage}>—</span>
+                  <span className={home.rowCost}>—</span>
                 </div>
               </li>
             ))}
           </ul>
         </section>
       </div>
-      <style>{`@keyframes skelPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.7; } } .${home.card} { animation: skelPulse 1.4s ease infinite; } @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }`}</style>
+      <style>{`@keyframes skelPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 0.7; } } .${home.ledgerSkeleton} .${home.row} { animation: skelPulse 1.4s ease infinite; } @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }`}</style>
     </main>
   );
 }

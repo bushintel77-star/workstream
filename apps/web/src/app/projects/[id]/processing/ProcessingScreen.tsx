@@ -55,7 +55,22 @@ const STAGES: Stage[] = [
   },
 ];
 
+/* Pipeline failure states land here: which stage index failed. The API's
+ * capture-pipeline writes these; without this map they used to render as
+ * "still processing" until a generic timeout. */
+const FAILED_STAGE_INDEX: Partial<Record<ProjectStatus, number>> = {
+  transcription_failed: 0,
+  survey_failed: 1,
+  design_failed: 2,
+  costing_failed: 3,
+  audit_failed: 4,
+  outputs_failed: 5,
+};
+
 function completedCountFor(status: ProjectStatus): number {
+  const failedAt = FAILED_STAGE_INDEX[status];
+  if (failedAt != null) return failedAt;
+  if (status === "transcribed") return 1;
   if (status === "survey_review") return 2;
   if (status === "design_review") return 3;
   if (status === "cost_review") return 4;
@@ -98,32 +113,43 @@ export function ProcessingScreen({ projectId, address, status, progress }: Props
   const completeCount = stageFlags.filter(Boolean).length;
   const activeIndex = stageFlags.findIndex((flag) => !flag);
   const complete = progress ? progress.ready : completeCount >= STAGES.length;
-  const timedOut = !complete && pollCount >= 30;
+  const failedAt = FAILED_STAGE_INDEX[status] ?? null;
+  /* A failed pipeline never progresses on its own — stop polling and pin
+   * the error on the failed rung instead of waiting out the 60s timeout. */
+  const failed = failedAt != null;
+  const failedStageLabel =
+    failedAt != null && failedAt < STAGES.length
+      ? STAGES[failedAt].label
+      : "Outputs";
+  const timedOut = !complete && !failed && pollCount >= 30;
+  const stopped = timedOut || failed;
 
   const stageStates = useMemo(
-   () =>
-     STAGES.map((stage, index) => ({
-       ...stage,
-       complete: stageFlags[index],
-       active: !timedOut && index === (activeIndex >= 0 ? activeIndex : STAGES.length - 1),
-       error: timedOut && index === (activeIndex >= 0 ? activeIndex : STAGES.length - 1),
-     })),
-   [activeIndex, stageFlags, timedOut],
+    () =>
+      STAGES.map((stage, index) => ({
+        ...stage,
+        complete: stageFlags[index],
+        active: !stopped && index === (activeIndex >= 0 ? activeIndex : STAGES.length - 1),
+        error:
+          (timedOut && index === (activeIndex >= 0 ? activeIndex : STAGES.length - 1)) ||
+          (failed && index === Math.min(failedAt ?? 0, STAGES.length - 1)),
+      })),
+    [activeIndex, stageFlags, stopped, timedOut, failed, failedAt],
   );
 
   useEffect(() => {
-   if (complete) {
-     router.replace(`/projects/${projectId}?mode=sketch`);
+    if (complete) {
+      router.replace(`/projects/${projectId}?mode=sketch`);
       return;
     }
-    if (timedOut) return;
+    if (stopped) return;
 
     const timer = window.setInterval(() => {
       setPollCount((count) => count + 1);
       router.refresh();
     }, 2000);
     return () => window.clearInterval(timer);
-  }, [complete, projectId, router, timedOut]);
+  }, [complete, projectId, router, stopped]);
 
   const retry = () => {
     startTransition(async () => {
@@ -194,12 +220,27 @@ export function ProcessingScreen({ projectId, address, status, progress }: Props
         ))}
       </section>
 
-      {timedOut ? (
+      {stopped ? (
         <section className={styles.processingError} role="alert">
-          <h2>Processing needs attention</h2>
+          <h2>
+            {failed
+              ? `${failedStageLabel} failed`
+              : "Processing needs attention"}
+          </h2>
           <p>
-            The pipeline did not report progress after one minute. Retry now; if
-            it fails again, check the API worker logs before sending a client link.
+            {failed ? (
+              <>
+                The pipeline stopped at the {failedStageLabel.toLowerCase()} stage.
+                Retry now; if it fails again, check the API worker logs before
+                sending a client link.
+              </>
+            ) : (
+              <>
+                The pipeline did not report progress after one minute. Retry now;
+                if it fails again, check the API worker logs before sending a
+                client link.
+              </>
+            )}
           </p>
           <KitButton
             type="button"

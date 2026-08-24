@@ -31,17 +31,18 @@
   /* deep — same as base now; kept for portal/hero gradient compat */
   --surface-deep: var(--gs-canvas);
 
-  /* Client-presentation dark chrome (portal/quote/confirm-pin/share) — one
-     identity, aliased to the same brand tokens used everywhere else. No
-     separate blush/plum palette: --surface-deep + --accent are the only
-     dark-chrome + hero-colour vocabulary in the app. */
+  /* Client-presentation chrome (portal/quote/confirm-pin/share) — paper
+     identity since the Studio Paper pivot: light surfaces, charcoal ink.
+     `--portal-ink-inverted` is masthead/colophon ink; the old white value
+     rendered it invisible on the light surfaces. Hairlines are
+     charcoal-tinted to match. */
   --portal-surface-0: var(--surface-deep);
   --portal-surface-1: color-mix(in srgb, var(--surface-deep) 82%, white);
   --portal-surface-2: color-mix(in srgb, var(--surface-deep) 78%, black);
   --portal-glow-a: color-mix(in srgb, var(--accent-bright) 40%, transparent);
   --portal-glow-b: color-mix(in srgb, var(--accent-bright) 12%, transparent);
-  --portal-ink-inverted: var(--ink-inverted);
-  --portal-hairline: color-mix(in srgb, var(--ink-inverted) 16%, transparent);
+  --portal-ink-inverted: var(--gs-ink);
+  --portal-hairline: color-mix(in srgb, var(--gs-ink) 16%, transparent);
   --portal-accent: var(--accent-bright);
   --portal-accent-bright: var(--accent-bright);
   /* Portal sheet is the client document on paper — same ramp as the studio */
@@ -373,6 +374,15 @@ button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: var(--r-sm);
+}
+
+/* Canvas chrome inputs (Field.tsx Input/Select) — one accent focus ring,
+ * unified with the button ring. The shell styles are inline, so the
+ * :focus-visible pseudo lives here. */
+.webgl-field-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: color-mix(in srgb, var(--gs-primary) 55%, transparent);
 }
 
 ::selection {
@@ -709,7 +719,7 @@ button:focus-visible {
   --gs-space-4:  8px;
   --gs-space-6:  12px;
   --gs-space-8:  16px;
-  --gs-space-10: 10px;
+  --gs-space-5: 10px;   /* 5×2=10px — ladder is rung×2 (debt D7 rename) */
 
   /* Transition scale — three rungs. The slider/keyframe HUD already
      uses cubic-bezier(0.22, 1, 0.36, 1) (the "ease-out-quint" family);

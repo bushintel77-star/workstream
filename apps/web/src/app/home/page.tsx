@@ -18,17 +18,26 @@ import home from "../home.module.css";
 
 export const dynamic = "force-dynamic";
 
-/** Canvas-stage labels — not the old pipeline hub names. */
+/** Canvas-stage labels — not the old pipeline hub names. Failed pipelines
+ * get an attention label so a stall is visible on the register, not just
+ * inside the processing screen. */
 const STATUS_LABEL: Record<ProjectStatus, string> = {
   draft: "Survey",
   recording: "Survey",
   processing: "Survey",
+  transcribed: "Survey",
   survey_review: "Sketch",
   design_review: "CAD",
   cost_review: "Quote",
   audit: "Quote",
   outputs: "Share",
   complete: "Share",
+  transcription_failed: "Attention · Transcription failed",
+  survey_failed: "Attention · Survey failed",
+  design_failed: "Attention · Design failed",
+  costing_failed: "Attention · Costing failed",
+  audit_failed: "Attention · Audit failed",
+  outputs_failed: "Attention · Outputs failed",
 };
 
 function dashboardStatus(status: ProjectStatus): DashboardProject["status"] {
@@ -37,6 +46,7 @@ function dashboardStatus(status: ProjectStatus): DashboardProject["status"] {
   if (status === "design_review" || status === "cost_review" || status === "audit") {
     return "review";
   }
+  if (status.endsWith("_failed")) return "review";
   return "complete";
 }
 

@@ -104,6 +104,22 @@ describe("API contract — projects", { timeout: 60000 }, () => {
     expect(ProjectSchema.safeParse(projects[0]).success).toBe(true);
   });
 
+  it("trailing-slash variants resolve identically (shared mobile client)", async () => {
+    ({ app } = await buildTestApp());
+    await app.inject({
+      method: "POST",
+      url: "/projects/", // slashed form (web convention)
+      payload: { address: "1 Slash Test St, Carlton VIC 3053" },
+    });
+    // Slashless form — @workstream/client calls these; must not 404.
+    const res = await app.inject({ method: "GET", url: "/projects" });
+    expect(res.statusCode).toBe(200);
+    const projects = res.json().projects as unknown[];
+    expect(projects.length).toBeGreaterThan(0);
+    const crew = await app.inject({ method: "GET", url: "/crew" });
+    expect([200, 401, 403]).toContain(crew.statusCode);
+  });
+
   it("GET /projects/:id/survey returns 404 when project missing", async () => {
     ({ app } = await buildTestApp());
     const res = await app.inject({

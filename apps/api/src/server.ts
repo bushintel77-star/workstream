@@ -79,6 +79,10 @@ const server = Fastify({
   /* Railway (and most PaaS) terminate TLS at the edge — trust X-Forwarded-*
    * so req.ip / rate-limit keys reflect the client, not the proxy hop. */
   trustProxy: true,
+  /* Clients disagree on trailing slashes (web uses /projects/, the shared
+   * mobile client /projects) — be slash-agnostic instead of policing every
+   * consumer. */
+  ignoreTrailingSlash: true,
   logger: {
     redact: {
       paths: [
