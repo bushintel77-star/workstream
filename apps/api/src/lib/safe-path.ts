@@ -8,15 +8,14 @@ import path from "path";
  * other.
  */
 
-/** Filenames we will ever accept: no separators, no `..`, no NUL. */
+/** Filenames we will ever accept: no separators on ANY platform, no `..`,
+ * no NUL. (path.basename is platform-dependent — `\` is not a separator on
+ * posix — so separators are rejected explicitly.) */
 export function safeFileSegment(segment: string): string | null {
   if (!segment || segment.length > 255) return null;
-  if (segment.includes("\0")) return null;
-  if (/[\\/]$/.test(segment)) return null;
-  const base = path.basename(segment);
-  if (base !== segment) return null; // separators inside the segment
-  if (base === "." || base === "..") return null;
-  return base;
+  if (/[\0\\/]/.test(segment)) return null;
+  if (segment === "." || segment === "..") return null;
+  return segment;
 }
 
 /**
