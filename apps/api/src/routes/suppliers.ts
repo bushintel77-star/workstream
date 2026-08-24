@@ -21,6 +21,21 @@ const SupplierParamsSchema = z.object({
   ]),
 });
 
+/**
+ * Literal allowlist mapping route input → sheet id. The filesystem read is
+ * keyed off these literals only; a request parameter selects an entry, it
+ * never becomes part of the path itself.
+ */
+const SUPPLIER_SHEET_IDS: Readonly<Record<string, SupplierId>> = {
+  bunnings: "bunnings",
+  boral: "boral",
+  holcim: "holcim",
+  andersons: "andersons",
+  anl: "anl",
+  online_plants_au: "online_plants_au",
+  speciality_trees: "speciality_trees",
+};
+
 export default async function supplierRoutes(fastify: FastifyInstance) {
   fastify.get("/", { preHandler: requireAuth }, async (_request, reply) => {
     const lists = await Promise.all(
@@ -48,7 +63,11 @@ export default async function supplierRoutes(fastify: FastifyInstance) {
       if (!parsed.success) {
         return reply.code(404).send({ error: "Unknown supplier" });
       }
-      const prices = await fetchPrices(parsed.data.supplier as SupplierId);
+      const sheetId = SUPPLIER_SHEET_IDS[parsed.data.supplier];
+      if (!sheetId) {
+        return reply.code(404).send({ error: "Unknown supplier" });
+      }
+      const prices = await fetchPrices(sheetId);
       return reply.send(prices);
     },
   );

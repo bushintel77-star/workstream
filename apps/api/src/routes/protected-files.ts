@@ -3,6 +3,7 @@ import path from "path";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { requireAuth } from "../plugins/auth";
 import { verifyPortalToken } from "../lib/magic-link";
+import { containedPath } from "../lib/safe-path";
 
 type AssetKind = "uploads" | "outputs" | "photos" | "aerial" | "filings";
 
@@ -107,7 +108,14 @@ function sendAssetFile(
   filename: string,
   ext: string,
 ): FastifyReply | void {
-  const filePath = path.join(DATA_ROOT, kind, filename);
+  /* Never trust the raw URL param in the join — a decoded `%2F` traversal
+   * survives basename-based parsing upstream. Serve only the sanitized base
+   * name, and only when the resolved path stays inside the kind's root. */
+  const base = path.basename(filename);
+  const filePath = containedPath(DATA_ROOT, kind, base);
+  if (!filePath || base.includes("..")) {
+    return reply.code(400).send({ error: "Invalid filename" });
+  }
   if (!existsSync(filePath)) {
     return reply.code(404).send({ error: "File not found on disk" });
   }

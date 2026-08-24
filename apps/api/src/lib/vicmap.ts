@@ -566,7 +566,55 @@ function buildUrl(typeName: string, cqlFilter: string): string {
   return `${WFS_BASE}?${params.toString()}`;
 }
 
+/**
+ * Pin bounds — every lat/lng entering a CQL filter is checked at this choke
+ * point so request-derived data can only ever select a geographic window,
+ * never steer the fetch target itself. The value is re-derived from its
+ * plain-decimal string form: anything that is not a finite plain decimal
+ * (NaN, Infinity, exponent or hex forms) is rejected outright.
+ */
+export function assertVicmapPin(lat: number, lng: number): void {
+  for (const v of [lat, lng]) {
+    const s = String(v);
+    if (!/^-?\d{1,3}(\.\d+)?$/.test(s)) {
+      throw new RangeError(`Vicmap pin is not a plain decimal: ${s}`);
+    }
+  }
+  if (
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    throw new RangeError(`Vicmap pin out of EPSG:4326 range: lat=${lat} lng=${lng}`);
+  }
+}
+
+/** Ring → WKT with every coordinate bounds-checked (same invariant). */
+function wktPolygon(ring: Ring): string {
+  const closed = ensureClosedRing(ring);
+  for (const [x, y] of closed) {
+    if (
+      !/^-?\d{1,3}(\.\d+)?$/.test(String(x)) ||
+      !/^-?\d{1,3}(\.\d+)?$/.test(String(y)) ||
+      x < -180 ||
+      x > 180 ||
+      y < -90 ||
+      y > 90
+    ) {
+      throw new RangeError("Vicmap ring coordinate out of EPSG:4326 range");
+    }
+  }
+  return `POLYGON((${closed.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
+}
+
 async function wfsFetch(url: string): Promise<FeatureCollection> {
+  /* SSRF invariant: every Vicmap fetch targets the constant public GeoServer
+   * above. Filter text is URLSearchParams-encoded, so request data cannot
+   * break out of the query string — this assertion enforces that explicitly. */
+  if (!url.startsWith(`${WFS_BASE}?`)) {
+    throw new Error(`Vicmap fetch refused non-WFS URL: ${url.slice(0, 80)}`);
+  }
   const res = await fetch(url, {
     headers: { accept: "application/json" },
     signal: AbortSignal.timeout(WFS_TIMEOUT_MS),
@@ -800,6 +848,7 @@ export async function fetchTitleParcel(
   lat: number,
   lng: number,
 ): Promise<VicmapTitleParcel | null> {
+  assertVicmapPin(lat, lng);
   const { typeName, geomField } = await discoverPropertyLayer();
   const cql = `INTERSECTS(${geomField}, SRID=4326;POINT(${lng} ${lat}))`;
   const url = buildUrl(typeName, cql);
@@ -873,7 +922,7 @@ export async function fetchBuildingPolygon(
 ): Promise<GeoJsonPolygon | null> {
   const { typeName, geomField } = await discoverBuildingLayer();
   const closed = ensureClosedRing(titleRing);
-  const wkt = `POLYGON((${closed.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
+  const wkt = wktPolygon(closed);
   const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
   const url = buildUrl(typeName, cql);
   const fc = await wfsFetch(url);
@@ -976,7 +1025,7 @@ export async function fetchNeighbourBuildingPolygons(
 ): Promise<VicmapNeighbourBuilding[]> {
   const { typeName, geomField } = await discoverBuildingLayer();
   const buffered = bufferedTitleBboxRing(titleRing);
-  const wkt = `POLYGON((${buffered.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
+  const wkt = wktPolygon(buffered);
   const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
   const url = buildUrl(typeName, cql);
   const bumpCount = NEIGHBOUR_BUILDING_CAP * 3;
@@ -1055,7 +1104,7 @@ export async function fetchUrbanTreePointsForTitle(
   const layer = await discoverKeylessLayer("urban_tree");
   if (!layer) return [];
   const closed = ensureClosedRing(titleRing);
-  const wkt = `POLYGON((${closed.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
+  const wkt = wktPolygon(closed);
   const cql = `INTERSECTS(${layer.geomField}, SRID=4326;${wkt})`;
   const url = buildUrl(layer.typeName, cql);
   // Raise count for dense canopy lots (COMMON_PARAMS.count is 20).
@@ -1107,7 +1156,7 @@ export async function fetchEasementLinesForTitle(
 ): Promise<VicmapEasementLine[]> {
   const { typeName, geomField } = await discoverEasementLayer();
   const closed = ensureClosedRing(titleRing);
-  const wkt = `POLYGON((${closed.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
+  const wkt = wktPolygon(closed);
   const cql = `INTERSECTS(${geomField}, SRID=4326;${wkt})`;
   const url = buildUrl(typeName, cql);
   const fc = await wfsFetch(url);
@@ -1167,6 +1216,7 @@ export async function fetchKeylessRings(
   lat: number,
   lng: number,
 ): Promise<KeylessFetchResult | null> {
+  assertVicmapPin(lat, lng);
   const layer = await discoverKeylessLayer(kind);
   if (!layer) return null;
   const url = buildUrl(

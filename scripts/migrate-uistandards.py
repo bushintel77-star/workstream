@@ -39,6 +39,7 @@ Mapping (from docs/UI-ELEMENT-STANDARDS.md):
 
 import json, sys, subprocess, os, re
 from collections import defaultdict
+from pathlib import Path
 
 # Mapping table — value key (str, what appears in source) -> replacement.
 RADIUS = {
@@ -75,6 +76,19 @@ SPACE = {
 # Run ESLint and parse JSON output.
 REPO = "C:/Users/Tim/Downloads/CURTIS-CO/workstream"
 os.chdir(REPO)
+REPO_ROOT = os.path.realpath(REPO)
+
+def safe_repo_path(fp):
+    """ESLint filePath → contained absolute path under REPO_ROOT, or None.
+
+    The path is normalized, checked against the repo root, and re-anchored
+    from its repo-relative form — a doctored JSON report (../ or absolute
+    paths) can never steer a read or write outside the repo."""
+    rp = os.path.realpath(os.path.abspath(fp))
+    rel = os.path.relpath(rp, REPO_ROOT)
+    if rel == os.curdir or rel.startswith(".." + os.sep) or os.path.isabs(rel):
+        return None
+    return os.path.join(REPO_ROOT, rel)
 # Find pnpm via the npm shim (always present after a global npm install)
 PNPM = r"C:\Users\Tim\AppData\Roaming\npm\pnpm.cmd"
 proc = subprocess.run(
@@ -135,7 +149,12 @@ for r in data:
 total_subs = 0
 skipped = 0
 for fp, items in edits.items():
-    with open(fp, "r", encoding="utf-8") as f:
+    safe_fp = safe_repo_path(fp)
+    if not safe_fp:
+        print(f"SKIPPED (outside repo): {fp}")
+        skipped += len(items)
+        continue
+    with open(safe_fp, "r", encoding="utf-8") as f:
         src = f.read()
     lines = src.split("\n")
     # Group by line for stable ordering.
@@ -188,8 +207,11 @@ for fp, items in edits.items():
         new_lines[idx] = line
     new_src = "\n".join(new_lines)
     if new_src != src:
-        with open(fp, "w", encoding="utf-8") as f:
-            f.write(new_src)
+        # pathlib write to the contained path (see safe_repo_path) — target
+        # re-anchored under REPO_ROOT from its repo-relative form.
+        Path(os.path.join(REPO_ROOT, os.path.relpath(safe_fp, REPO_ROOT))).write_text(
+            new_src, encoding="utf-8"
+        )
 
 print(f"\n=== Migration complete ===")
 print(f"Substitutions applied: {total_subs}")

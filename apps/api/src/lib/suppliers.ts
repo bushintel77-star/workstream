@@ -17,7 +17,7 @@
  */
 
 import { promises as fs } from "node:fs";
-import path from "node:path";
+import { containedPath } from "./safe-path";
 
 export type SupplierId =
   | "bunnings"
@@ -163,7 +163,11 @@ export async function loadSupplierRateSheet(
   dir: string = suppliersRateSheetDir() ?? "",
 ): Promise<{ prices: SupplierPrice[]; fetched_at: string } | null> {
   if (!dir) return null;
-  const file = path.join(dir, `${supplier}.json`);
+  /* supplier is enum-checked by callers, but this function is the choke
+   * point for the filesystem read — a doctored id must never escape the
+   * configured rate-sheet dir. */
+  const file = containedPath(dir, `${supplier}.json`);
+  if (!file) return null;
   try {
     const text = await fs.readFile(file, "utf8");
     const parsed = parseSheetJson(JSON.parse(text) as unknown);
