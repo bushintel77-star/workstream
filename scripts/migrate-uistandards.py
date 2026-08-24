@@ -32,7 +32,7 @@ Mapping (from docs/UI-ELEMENT-STANDARDS.md):
     4      -> var(--gs-space-2)
     6      -> var(--gs-space-3)
     8      -> var(--gs-space-4)
-    10     -> var(--gs-space-10)
+    10     -> var(--gs-space-5)
     12     -> var(--gs-space-6)
     16     -> var(--gs-space-8)
 """
@@ -68,7 +68,7 @@ SPACE = {
     "4":    '"var(--gs-space-2)"',
     "6":    '"var(--gs-space-3)"',
     "8":    '"var(--gs-space-4)"',
-    "10":   '"var(--gs-space-10)"',
+    "10":   '"var(--gs-space-5)"',
     "12":   '"var(--gs-space-6)"',
     "16":   '"var(--gs-space-8)"',
 }

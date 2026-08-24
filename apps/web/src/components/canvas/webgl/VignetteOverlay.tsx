@@ -7,10 +7,8 @@
  * (offset=0.32, darkness=0.65). This ensures atmospheric cohesion across the
  * plan↔3D transition:
  *
- *   - Plan view (blend≈0): the DOM vignette is at full strength. The ortho
- *     projection makes the 3D post-processing vignette less perceptible (no
- *     perspective depth to frame), so the DOM layer carries the darkened-edge
- *     atmosphere. This matches the old sketch pad's radial vignette.
+ *   - Plan view (blend≈0): the DOM vignette rests at a quiet 0.25 strength —
+ *     depth from light, never darkness; the paper plane stays paper.
  *
  *   - 3D view (blend=1): the DOM vignette fades to ~30% strength. The
  *     post-processing Vignette effect now carries the full atmospheric weight
@@ -47,9 +45,11 @@ const VIGNETTE_INNER_GLOW =
 export const VignetteOverlay = memo(function VignetteOverlay() {
   const viewBlendTarget = useStudioStore((s) => s.viewBlendTarget);
 
-  // Plan view: full DOM vignette (opacity 1). 3D view: subtle (opacity 0.3).
-  // The post-processing Vignette carries the weight in 3D.
-  const vignetteOpacity = 1 - viewBlendTarget * 0.7;
+  // Plan view: quiet DOM vignette (opacity 0.25 — depth from light, never
+  // darkness; the paper plane stays paper, debt D9). 3D view: subtle
+  // reinforcement (opacity 0.3) — the post-processing Vignette carries the
+  // atmospheric weight in 3D.
+  const vignetteOpacity = 0.25 + viewBlendTarget * 0.05;
 
   return (
     <div

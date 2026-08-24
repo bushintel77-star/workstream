@@ -21,6 +21,7 @@ import {
   fetchTitlePolygon,
   fetchUrbanTreePointsForTitle,
 } from "./vicmap";
+import { searchTitleParcelByAddress } from "./vicmap-title-search";
 
 function toUpsert(
   draft: Omit<SiteBoundary, "id" | "updated_at">,
@@ -99,16 +100,35 @@ export async function autoTraceSiteBoundaryWithBuilding(
   let source: "GIS_PARCEL" | "AI_GENERATED" = "AI_GENERATED";
   let confidence: number | null = 0.84;
 
-  if (preferGis && project.lat != null && project.lng != null) {
-    try {
-      polygon = await fetchTitlePolygon(project.lat, project.lng);
-      if (polygon) {
-        sourceKind = "vicmap";
-        source = "GIS_PARCEL";
-        confidence = 0.97;
+  if (preferGis) {
+    // Title-search resolution first: address → property keys → parcel, the
+    // way a conveyancer looks it up. Only when the address does not resolve
+    // keyed (rural RMB, brand-new subdivision, service hiccup) do we gamble
+    // on the geocoded pin's containment.
+    if (project.address) {
+      try {
+        const keyed = await searchTitleParcelByAddress(project.address);
+        if (keyed) {
+          polygon = keyed.polygon;
+          sourceKind = "vicmap";
+          source = "GIS_PARCEL";
+          confidence = 0.98;
+        }
+      } catch (err) {
+        console.warn("[boundary] keyed title search failed:", err);
       }
-    } catch (err) {
-      console.warn("[boundary] Vicmap auto-trace failed:", err);
+    }
+    if (!polygon && project.lat != null && project.lng != null) {
+      try {
+        polygon = await fetchTitlePolygon(project.lat, project.lng);
+        if (polygon) {
+          sourceKind = "vicmap";
+          source = "GIS_PARCEL";
+          confidence = 0.97;
+        }
+      } catch (err) {
+        console.warn("[boundary] Vicmap auto-trace failed:", err);
+      }
     }
   }
 

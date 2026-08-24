@@ -301,6 +301,13 @@ export function WebGLStudioPreview({
 
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
+  /* Tablet tier (design-spec debt D4): below 1100px the right dock narrows
+   * and can be collapsed entirely — a fixed 360px column swallows ~half a
+   * 768px drawing. Collapsed state reclaims the full canvas behind a small
+   * reopen pill; the dock defaults open so the chrome-collision spec's
+   * visible-panels states are unchanged. */
+  const [dockCollapsed, setDockCollapsed] = useState(false);
+
   // Garden viewpoint — eye-level rig presets per cardinal look. The yaw
   // reuses the classic tiltMath mapping so N/E/S/W mean the same thing in
   // both studios.
@@ -1447,10 +1454,13 @@ export function WebGLStudioPreview({
               gap: "var(--gs-space-4)",
               padding: "5px 10px",
               borderRadius: "var(--gs-radius-pill)",
-              background: "var(--cf-glass-dark)",
-              backdropFilter: "blur(var(--cf-glass-dark-blur))",
-              WebkitBackdropFilter: "blur(var(--cf-glass-dark-blur))",
-              border: "1px solid var(--cf-glass-dark-border)",
+              /* Paper glass, not dark glass — the dark capsule is reserved
+               * for the presentation lens (design-spec §5 / debt D8). */
+              background: "var(--gs-glass-veil)",
+              backdropFilter: "blur(var(--gs-blur))",
+              WebkitBackdropFilter: "blur(var(--gs-blur))",
+              border:
+                "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
               boxShadow: "var(--gs-shadow-1)",
               flex: "0 0 auto",
               maxWidth: 260,
@@ -1464,7 +1474,7 @@ export function WebGLStudioPreview({
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-md)",
                 fontWeight: 600,
-                color: "var(--cf-glass-dark-ink)",
+                color: "var(--gs-ink)",
                 letterSpacing: "0.01em",
               }}
             >
@@ -1475,9 +1485,7 @@ export function WebGLStudioPreview({
                 fontFamily: "var(--font-technical-mono)",
                 fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.05em",
-                // Dim ink on --cf-glass-dark. 72% lands at 4.06:1 — under AA
-                // at this size; 88% clears it.
-                color: "color-mix(in srgb, #ffffff 88%, transparent)",
+                color: "var(--gs-ink-secondary)",
               }}
             >
               {projectAddress.split(",")[1]?.trim() ?? "VIC"}
@@ -1497,7 +1505,10 @@ export function WebGLStudioPreview({
                 fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                color: "#ffffff",
+                /* Charcoal on the paper veil — the old #ffffff belonged to
+                 * the dark capsule (debt D8 flip; caught by webgl-contrast-aa
+                 * at 1.01:1). */
+                color: "var(--gs-ink-secondary)",
               }}
             >
               {activeMode}
@@ -1679,14 +1690,54 @@ export function WebGLStudioPreview({
       {/* ---- Right dock — the single right-edge panel host. Mode/meta
           surfaces and the CAD review card dock here instead of hanging
           centred over the drawing (UI survey §1.3). ---- */}
+      {/* Tablet tier (debt D4): collapsed dock leaves only the reopen pill —
+          the drawing reclaims the full width. */}
+      {dockCollapsed ? (
+        <button
+          type="button"
+          data-testid="dock-reopen"
+          aria-label="Show panels"
+          onClick={() => setDockCollapsed(false)}
+          style={{
+            position: "absolute",
+            top: 152,
+            right: 12,
+            zIndex: "var(--cf-z-chrome)",
+            pointerEvents: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "5px 9px",
+            borderRadius: "var(--gs-radius-pill)",
+            background: "var(--gs-glass-veil)",
+            backdropFilter: "blur(var(--gs-blur))",
+            WebkitBackdropFilter: "blur(var(--gs-blur))",
+            border:
+              "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+            boxShadow: "var(--gs-shadow-1)",
+            color: "var(--gs-ink-secondary)",
+            fontFamily: "var(--font-tech)",
+            fontSize: "var(--gs-font-xs)",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase" as const,
+            cursor: "pointer",
+          }}
+        >
+          ◂ Panels
+        </button>
+      ) : null}
       <div
         style={{
           position: "absolute",
           top: 152,
           right: 20,
           bottom: 16,
-          width: 360,
-          display: "flex",
+          /* Tablet tier (debt D4): narrower column below 1100px —
+           * min() keeps it inside the viewport on a 768px tablet. */
+          width: narrowViewport
+            ? "min(300px, calc(100vw - 140px))"
+            : 360,
+          display: dockCollapsed ? "none" : "flex",
           flexDirection: "column",
           gap: "var(--gs-space-3)",
           alignItems: "flex-end",
@@ -1701,6 +1752,34 @@ export function WebGLStudioPreview({
           scrollbarWidth: "none",
         }}
       >
+        {/* Tablet tier (debt D4): collapse control — narrow viewports only. */}
+        {narrowViewport && !dockCollapsed ? (
+          <button
+            type="button"
+            data-testid="dock-collapse"
+            aria-label="Hide panels"
+            onClick={() => setDockCollapsed(true)}
+            style={{
+              pointerEvents: "auto",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "3px 8px",
+              borderRadius: "var(--gs-radius-pill)",
+              background: "var(--gs-glass-veil)",
+              border:
+                "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+              color: "var(--gs-ink-secondary)",
+              fontFamily: "var(--font-tech)",
+              fontSize: "var(--gs-font-micro)",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase" as const,
+              cursor: "pointer",
+            }}
+          >
+            Panels ▸
+          </button>
+        ) : null}
         {cadReviewOpen && cadProposals.length > 0 ? (
           <div
             data-gs-glass-card
@@ -2041,7 +2120,7 @@ export function WebGLStudioPreview({
                 />
                 <nav
                   aria-label="Project destinations"
-                  style={{ display: "flex", gap: "var(--gs-space-10)" }}
+                  style={{ display: "flex", gap: "var(--gs-space-5)" }}
                 >
                   <a
                     href="/home"
@@ -2158,7 +2237,7 @@ export function WebGLStudioPreview({
           } else if (metaTab === "sun") {
             dismiss = () => setMetaTab(null);
             body = (
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-10)" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-5)" }}>
                 <div
                   style={{
                     display: "flex",
@@ -2250,7 +2329,7 @@ export function WebGLStudioPreview({
           } else if (metaTab === "growth") {
             dismiss = () => setMetaTab(null);
             body = (
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-10)" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-5)" }}>
                 <div
                   style={{
                     display: "flex",
@@ -2863,10 +2942,12 @@ function InteractionGuidanceChip({
         maxWidth: "min(560px, calc(100vw - 560px))",
         padding: "6px 11px",
         borderRadius: "var(--gs-radius-pill)",
-        background: "var(--cf-glass-dark)",
-        backdropFilter: "blur(var(--cf-glass-dark-blur))",
-        WebkitBackdropFilter: "blur(var(--cf-glass-dark-blur))",
-        border: "1px solid var(--cf-glass-dark-border)",
+        /* Paper glass, not dark glass (design-spec §5 / debt D8) — the dark
+         * capsule is reserved for the presentation lens. */
+        background: "var(--gs-glass-veil)",
+        backdropFilter: "blur(var(--gs-blur))",
+        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
         boxShadow: "var(--gs-shadow-1)",
         // The first-run tail carries a dismiss button, so the chip opts into
         // pointer events only while that button exists.
@@ -2874,16 +2955,13 @@ function InteractionGuidanceChip({
         zIndex: "var(--cf-z-chrome)",
         fontFamily: "var(--font-ui)",
         fontSize: "var(--gs-font-xs)",
-        // Dark glass surface — the paper-era secondary ink reads as
-        // dark-on-dark here and fails webgl-contrast-aa. 88% white clears AA
-        // at this size; 72% does not.
-        color: "color-mix(in srgb, #ffffff 88%, transparent)",
+        color: "var(--gs-ink-secondary)",
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
       }}
     >
-              <strong style={{ color: "var(--cf-glass-dark-ink)" }}>{guidance.label}</strong>
+              <strong style={{ color: "var(--gs-ink-strong)" }}>{guidance.label}</strong>
       <span>{guidance.detail}</span>
       {showControls ? (
         <>
@@ -2898,7 +2976,7 @@ function InteractionGuidanceChip({
               setShowControls(false);
             }}
             style={{
-              color: "var(--cf-glass-dark-ink)",
+              color: "var(--gs-ink)",
               fontFamily: "var(--font-tech)",
               padding: "0 4px",
             }}

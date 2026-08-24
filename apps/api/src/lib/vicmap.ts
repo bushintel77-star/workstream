@@ -29,9 +29,8 @@ const COMMON_PARAMS = {
 const WFS_TIMEOUT_MS = 8000;
 
 type Coord = [number, number];
-type Ring = Coord[];
-
-type RawGeometry =
+export type Ring = Coord[];
+export type RawGeometry =
   | { type: "Polygon"; coordinates: Ring[] }
   | { type: "MultiPolygon"; coordinates: Ring[][] }
   | { type: "LineString"; coordinates: Coord[] }
@@ -39,7 +38,7 @@ type RawGeometry =
   | { type: "Point"; coordinates: Coord }
   | { type: "MultiPoint"; coordinates: Coord[] };
 
-type RawFeature = {
+export type RawFeature = {
   type: "Feature";
   geometry: RawGeometry;
   properties?: Record<string, unknown>;
@@ -608,6 +607,12 @@ function wktPolygon(ring: Ring): string {
   return `POLYGON((${closed.map(([x, y]) => `${x} ${y}`).join(", ")}))`;
 }
 
+/** Guarded WFS fetch shared with the keyed title-search module — refuses
+ * any URL that is not the constant public GeoServer (SSRF invariant). */
+export async function wfsFetchJson(url: string): Promise<FeatureCollection> {
+  return wfsFetch(url);
+}
+
 async function wfsFetch(url: string): Promise<FeatureCollection> {
   /* SSRF invariant: every Vicmap fetch targets the constant public GeoServer
    * above. Filter text is URLSearchParams-encoded, so request data cannot
@@ -718,7 +723,7 @@ function ensureClosedRing(ring: Ring): Ring {
   return [...ring, first];
 }
 
-function toGeoJsonPolygon(ring: Ring): GeoJsonPolygon {
+export function toGeoJsonPolygon(ring: Ring): GeoJsonPolygon {
   return { type: "Polygon", coordinates: [ensureClosedRing(ring)] };
 }
 

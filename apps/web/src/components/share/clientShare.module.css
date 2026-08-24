@@ -15,7 +15,7 @@
 
 .brand {
   margin: 0;
-  font-family: var(--font-serif, "Fraunces", Georgia, serif);
+  font-family: var(--font-editorial, "Fraunces", Georgia, serif);
   font-size: var(--text-xl);
   font-weight: 650;
   letter-spacing: -0.03em;

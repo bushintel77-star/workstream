@@ -8,6 +8,7 @@ import {
 import { aerialImageUrl, aerialImageUrlForRing } from "./aerial";
 import { geocodeAddress } from "./geocode";
 import { fetchBuildingPolygon, fetchTitleParcel } from "./vicmap";
+import { searchTitleParcelByAddress } from "./vicmap-title-search";
 
 type SurveyGeometry = {
   title_polygon: GeoJsonPolygon;
@@ -56,11 +57,20 @@ function buildMeasurements(
   }));
 }
 
-async function buildVicmapGeometry(center: {
-  lat: number;
-  lng: number;
-}): Promise<SurveyGeometry | null> {
-  const titleParcel = await fetchTitleParcel(center.lat, center.lng);
+async function buildVicmapGeometry(
+  center: {
+    lat: number;
+    lng: number;
+  },
+  address?: string,
+): Promise<SurveyGeometry | null> {
+  // Title-search resolution first (address → property keys → parcel); the
+  // geocoded pin's containment is the fallback, not the primary gamble.
+  const keyed = address
+    ? await searchTitleParcelByAddress(address).catch(() => null)
+    : null;
+  const titleParcel =
+    keyed ?? (await fetchTitleParcel(center.lat, center.lng).catch(() => null));
   const titlePoly = titleParcel?.polygon ?? null;
   if (!titlePoly) return null;
 
@@ -121,7 +131,7 @@ export async function runSurvey(
 
   let geometry: SurveyGeometry | null = null;
   try {
-    geometry = await buildVicmapGeometry(center);
+    geometry = await buildVicmapGeometry(center, project.address);
   } catch (err) {
     console.warn(
       "[survey] Vicmap WFS failed — aerial only (Trace title on the ortho):",

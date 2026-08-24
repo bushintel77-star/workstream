@@ -15,7 +15,8 @@ import { ClerkProvider } from "@clerk/nextjs";
  *
  * - Inter: UI labels, buttons, inputs, chrome text (--font-body + --font-ui)
  * - Space Grotesk: technical, numeric, coordinate data (--font-tech + --font-mono)
- * - Fraunces: display / presentation deck composition (--font-display + --font-serif)
+ * - Fraunces: client-deck composition — masthead brand, address hero,
+ *   client page headings (--font-editorial)
  * - Architects Daughter: hand-lettered plan annotations (--font-hand)
  * - Sora: legacy UI font variable (--font-inter, kept for compat with main's surfaces)
  */
@@ -43,16 +44,14 @@ const fontMono = Space_Grotesk({
   variable: "--font-mono",
   display: "swap",
 });
-const fontDisplay = Fraunces({
+const fontEditorial = Fraunces({
   subsets: ["latin"],
   weight: ["400", "700"],
-  variable: "--font-display",
-  display: "swap",
-});
-const fontSerif = Fraunces({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-serif",
+  // Fraunces owns --font-editorial outright (client-deck composition voice).
+  // The old double-definition loaded it into --font-display/--font-serif,
+  // which globals.css then re-pointed at Space Grotesk/Inter — so Fraunces
+  // could never actually render (design-spec debt D5).
+  variable: "--font-editorial",
   display: "swap",
 });
 const fontHand = Architects_Daughter({
@@ -114,7 +113,7 @@ export default function RootLayout({
   return (
     <html lang="en-AU">
       <body
-        className={`${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable} ${fontSerif.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable} ${fontTech.variable}`}
+        className={`${fontBody.variable} ${fontEditorial.variable} ${fontMono.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable} ${fontTech.variable}`}
         data-build={
           process.env.NEXT_PUBLIC_BUILD_SHA ??
           process.env.RAILWAY_GIT_COMMIT_SHA ??

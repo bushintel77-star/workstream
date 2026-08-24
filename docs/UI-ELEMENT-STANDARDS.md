@@ -131,7 +131,7 @@ varies; pick the cheap ones first.
 1. `borderRadius: {3,4,6,8,12,14,999,9999}` → matching `--gs-radius-{xs|sm|md|lg|xl|2xl|pill}` (21 sites total).
 2. `fontSize: {9.5,10.5,11,11.5,12,13,14,16,20}` → matching `--gs-font-{micro|xs|sm|md|lg|sub|h3|h2|h1}` (160 sites total).
 3. `gap: {2,4,6,8,10,12,16}` → matching `--gs-space-{1|2|3|4|10|6|8}` (71 sites total).
-4. New `--gs-space-10: 10px` rung added so `gap: 10` round-trips natively
+4. `--gs-space-5: 10px` rung (5×2px — ladder is rung×2) so `gap: 10` round-trips natively
    (3 sites in WebGLStudioPreview project destinations + meta-tab columns).
 5. 4 dark-surface `rgba(0,0,0,*)` sites → 2 dev-HUD tokens (`--cf-dark-chrome-bg` /
    `--cf-dark-panel-bg`); 2 content-meaningful rgba literals promoted to

@@ -54,11 +54,15 @@ const detailStyle: React.CSSProperties = {
   transform: "translateX(-50%)",
   width: 220,
   padding: "8px 10px",
-  background: "var(--cf-glass-dark)",
-  border: "1px solid var(--cf-glass-dark-border)",
+  /* Paper glass detail card, not dark glass (design-spec §5 / debt D8) —
+   * dark chrome is reserved for the presentation lens. */
+  background: "var(--gs-glass-veil)",
+  backdropFilter: "blur(var(--gs-blur))",
+  WebkitBackdropFilter: "blur(var(--gs-blur))",
+  border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
   borderRadius: "var(--gs-radius-panel)",
   boxShadow: "var(--gs-shadow-3)",
-  color: "var(--cf-glass-dark-ink)",
+  color: "var(--gs-ink)",
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-sm)",
   lineHeight: 1.45,

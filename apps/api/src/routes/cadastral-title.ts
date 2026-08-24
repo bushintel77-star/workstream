@@ -3,6 +3,7 @@ import { buildArchitecturalTitleBlock } from "@workstream/domain";
 import { requireAuth } from "../plugins/auth";
 import { geocodeAddress } from "../lib/geocode";
 import { fetchTitleParcel } from "../lib/vicmap";
+import { searchTitleParcelByAddress } from "../lib/vicmap-title-search";
 import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
 
 /**
@@ -29,13 +30,20 @@ export default async function cadastralTitleRoutes(fastify: FastifyInstance) {
       let vicmapHit = false;
 
       try {
-        const sameAsProject =
-          address.toLowerCase() === project.address.toLowerCase();
-        const center =
-          sameAsProject && project.lat != null && project.lng != null
-            ? { lat: project.lat, lng: project.lng }
-            : await geocodeAddress(address);
-        const hit = await fetchTitleParcel(center.lat, center.lng);
+        // Title-search resolution first (address → property keys → parcel);
+        // point containment remains the fallback for pins and odd addresses.
+        const keyed = await searchTitleParcelByAddress(address).catch(() => null);
+        let hit: (typeof keyed) | Awaited<ReturnType<typeof fetchTitleParcel>> =
+          keyed;
+        if (!hit) {
+          const sameAsProject =
+            address.toLowerCase() === project.address.toLowerCase();
+          const center =
+            sameAsProject && project.lat != null && project.lng != null
+              ? { lat: project.lat, lng: project.lng }
+              : await geocodeAddress(address);
+          hit = await fetchTitleParcel(center.lat, center.lng);
+        }
         if (hit) {
           parcel = hit.attrs;
           vicmapHit = true;
