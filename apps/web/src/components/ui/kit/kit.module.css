@@ -37,10 +37,11 @@
 }
 
 .btn:focus-visible {
-  outline: none;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--ink-primary, #fff) 40%, transparent),
-    0 0 0 2px color-mix(in srgb, var(--ink-primary, #fff) 20%, transparent);
+  /* Accent focus ring, unified with the global button ring (WCAG 2.2
+   * focus-appearance 3:1) — the old 20%-ink shadow ring was ~1.2:1 on
+   * paper, below perceptual. */
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .btn:disabled {
@@ -200,7 +201,9 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-family: var(--font-mono, monospace);
+  /* UI labels in the UI face (TOKENS §2.1) — the technical face is for
+   * numerals and data, not chrome copy. */
+  font-family: var(--font-body);
   font-size: var(--text-xs, 12px);
   font-weight: 700;
   letter-spacing: 0.06em;

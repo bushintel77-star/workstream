@@ -133,6 +133,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <input
       ref={ref}
       {...rest}
+      className="webgl-field-input"
       style={{ ...baseInputStyle, ...style }}
     />
   );
@@ -164,6 +165,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
     <select
       ref={ref}
       {...rest}
+      className="webgl-field-input"
       style={{ ...baseInputStyle, ...style }}
     >
       {children}

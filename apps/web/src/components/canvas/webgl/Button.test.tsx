@@ -104,7 +104,12 @@ describe("<Button> chrome-tier primitives", () => {
       ),
     );
     expect(html).toMatch(/<button[^>]*data-testid="x"/);
-    expect(html).toContain('all:unset');
+    /* Explicit resets, NOT all:unset — all:unset killed the inherited
+     * :focus-visible ring (design-spec debt D3). The reset set must stay
+     * enumerated so the global focus ring survives. */
+    expect(html).not.toContain('all:unset');
+    expect(html).toContain('background:transparent');
+    expect(html).toContain('border:none');
     expect(html).toContain('width:22');
     expect(html).toContain('height:22');
     expect(html).toContain('display:flex');
@@ -162,7 +167,9 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain(
       'background:color-mix(in srgb, var(--gs-primary) 14%, transparent)',
     );
-    expect(html).toContain('color:var(--gs-primary)');
+    /* Primary-ink on the wash (AA at body size) — bare --gs-primary over a
+     * 14% wash lands ~4.2:1. */
+    expect(html).toContain('color:var(--gs-primary-ink)');
   });
 
   it('variant="chip-tinted" + active=false renders the inactive cool-tinted shell', () => {
@@ -496,7 +503,8 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain(
       'background:color-mix(in srgb, var(--gs-primary) 14%, transparent)',
     );
-    expect(html).toContain('color:var(--gs-primary)');
+    /* Primary-ink on the wash — AA at body size (§4). */
+    expect(html).toContain('color:var(--gs-primary-ink)');
   });
 
   it("merges consumer style overrides on top of the variant shell (consumer wins)", () => {

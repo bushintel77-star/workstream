@@ -19,12 +19,15 @@
 }
 
 .brand {
-  font-family: var(--font-display);
+  /* Client-deck masthead — editorial voice (debt D5). */
+  font-family: var(--font-editorial, "Fraunces", Georgia, serif);
   font-size: clamp(28px, 6vw, 42px);
   font-weight: 700;
   letter-spacing: -0.035em;
   line-height: 1;
-  color: var(--surface-elevated);
+  /* Charcoal on the paper masthead — the old --surface-elevated (white)
+   * was ~1:1 against the light portal background. */
+  color: var(--gs-ink);
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
@@ -69,7 +72,9 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--portal-accent);
+  /* Primary-ink (7.97:1) — the portal accent at 11px/700 on paper was
+   * 4.32:1, under AA for body-size text. */
+  color: var(--gs-primary-ink);
 }
 
 .eyebrow {
@@ -102,7 +107,8 @@
 }
 
 .address {
-  font-family: var(--font-display);
+  /* Address hero — editorial composition voice (debt D5). */
+  font-family: var(--font-editorial, "Fraunces", Georgia, serif);
   font-size: clamp(26px, 5vw, 38px);
   letter-spacing: -0.03em;
   font-weight: 700;
@@ -310,6 +316,62 @@
   border-radius: var(--r-lg);
   text-align: center;
   color: var(--surface-elevated);
+}
+
+/* Sticky summary — appears once the investment total scrolls out of view
+ * and hands off to the accept section (never two CTAs at once). */
+.stickyBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--ws-z-dock);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  padding: 10px max(var(--s-4), env(safe-area-inset-left)) max(
+      10px,
+      env(safe-area-inset-bottom)
+    ) max(var(--s-4), env(safe-area-inset-right));
+  background: color-mix(in srgb, var(--portal-sheet) 88%, transparent);
+  backdrop-filter: blur(var(--blur-md, 8px));
+  -webkit-backdrop-filter: blur(var(--blur-md, 8px));
+  border-top: 1px solid color-mix(in srgb, var(--gs-ink) 16%, transparent);
+  box-shadow: 0 -8px 24px color-mix(in srgb, var(--gs-ink) 10%, transparent);
+  animation: stickyRise 220ms var(--ease) both;
+}
+
+@keyframes stickyRise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stickyBar {
+    animation: none;
+  }
+}
+
+.stickyKicker {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gs-ink-secondary);
+}
+
+.stickyAmount {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--gs-ink);
 }
 
 

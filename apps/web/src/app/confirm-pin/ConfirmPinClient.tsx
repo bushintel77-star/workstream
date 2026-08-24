@@ -257,7 +257,8 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
       {error ? (
         <div className={cp.errorPlate}>
           <p className={cp.error}>{error}</p>
-          <Link href="/" className={cp.errorLink}>
+          {/* /home is the dashboard — "/" only redirects there. */}
+          <Link href="/home" className={cp.errorLink}>
             Back to projects
           </Link>
         </div>

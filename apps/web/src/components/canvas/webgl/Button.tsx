@@ -168,12 +168,17 @@ const ghostBase: CSSProperties = {
 };
 
 /**
- * Icon-only button — `all: "unset"` then re-apply a square footprint
- * so the underlying button doesn't carry the browser-default border /
- * font / background. Matches FitSheetCard's × close button exactly.
+ * Icon-only button — explicit resets instead of `all: "unset"` so the
+ * global `button:focus-visible` outline (globals.css) survives and icon
+ * buttons stay trackable by keyboard. Re-applies a square footprint over
+ * the stripped defaults. Matches FitSheetCard's × close button exactly.
  */
 const iconBase: CSSProperties = {
-  all: "unset",
+  background: "transparent",
+  border: "none",
+  padding: 0,
+  margin: 0,
+  font: "inherit",
   cursor: "pointer",
   width: 22,
   height: 22,
@@ -201,7 +206,8 @@ const primaryBase: CSSProperties = {
   border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
   background:
     "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
-  color: "var(--gs-primary)",
+  /* Primary-ink text on the tinted wash — AA at body sizes (§4). */
+  color: "var(--gs-primary-ink)",
   cursor: "pointer",
 };
 
@@ -432,7 +438,9 @@ const activeOverride = (variant: ButtonVariant): CSSProperties => {
       border: "1px solid color-mix(in srgb, var(--gs-primary) 50%, transparent)",
       background:
         "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
-      color: "var(--gs-primary)",
+      /* Primary-ink on wash (7.97:1) — bare --gs-primary at 11px over a
+       * 14% wash lands ~4.2:1, under AA for body-size text (§4). */
+      color: "var(--gs-primary-ink)",
     };
   }
   if (variant === "primary") {

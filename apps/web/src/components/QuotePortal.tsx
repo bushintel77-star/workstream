@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Tier1SavingsLedger } from "./tier1";
 import { KitButton } from "./ui/kit";
 import styles from "../app/portal/quote/[token]/quote.module.css";
@@ -154,6 +154,48 @@ export function QuotePortal({
     [],
   );
 
+  /* Sticky summary bar — the number the client is deciding on stays in view
+   * while they scroll the schedule, and hands off to the accept section at
+   * the sheet's foot (never two CTAs at once). */
+  const totalRef = useRef<HTMLDivElement | null>(null);
+  const acceptRef = useRef<HTMLElement | null>(null);
+  const [stuckTotal, setStuckTotal] = useState(false);
+
+  useEffect(() => {
+    const total = totalRef.current;
+    const accept = acceptRef.current;
+    if (!total || !accept) return;
+    let totalOut = false;
+    let acceptIn = false;
+    const sync = () => setStuckTotal(totalOut && !acceptIn);
+    const totalObs = new IntersectionObserver(
+      ([entry]) => {
+        totalOut = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+        sync();
+      },
+      { threshold: 0 },
+    );
+    const acceptObs = new IntersectionObserver(
+      ([entry]) => {
+        acceptIn = entry.isIntersecting;
+        sync();
+      },
+      { threshold: 0.4 },
+    );
+    totalObs.observe(total);
+    acceptObs.observe(accept);
+    return () => {
+      totalObs.disconnect();
+      acceptObs.disconnect();
+    };
+  }, []);
+
+  const depositHref = active
+    ? data.deposit_url
+      ? `${data.deposit_url}${data.deposit_url.includes("?") ? "&" : "?"}scenario=${encodeURIComponent(active.scenario)}`
+      : `/portal/deposit/${token}?scenario=${encodeURIComponent(active.scenario)}`
+    : null;
+
   return (
     <main className={styles.page}>
       <header className={styles.masthead}>
@@ -290,7 +332,7 @@ export function QuotePortal({
                 aria-labelledby={scenarioDomId("quote-scenario-tab", active.scenario)}
                 tabIndex={0}
               >
-                <div className={styles.total}>
+                <div className={styles.total} ref={totalRef}>
                   <span className={styles.totalKicker}>
                     {active.scenario} · total incl. GST
                   </span>
@@ -349,16 +391,12 @@ export function QuotePortal({
           </section>
         )}
 
-        <section className={styles.acceptSection}>
+        <section className={styles.acceptSection} ref={acceptRef}>
           {active ? (
             <>
               <KitButton
                 as="a"
-                href={
-                  data.deposit_url
-                    ? `${data.deposit_url}${data.deposit_url.includes("?") ? "&" : "?"}scenario=${encodeURIComponent(active.scenario)}`
-                    : `/portal/deposit/${token}?scenario=${encodeURIComponent(active.scenario)}`
-                }
+                href={depositHref!}
                 variant="accent"
                 size="lg"
                 data-testid="portal-deposit-cta"
@@ -385,6 +423,27 @@ export function QuotePortal({
           )}
         </section>
       </div>
+
+      {stuckTotal && active && depositHref ? (
+        <div
+          className={styles.stickyBar}
+          role="complementary"
+          aria-label="Quote summary"
+        >
+          <span className={styles.stickyKicker}>
+            {active.scenario} · total incl. GST
+          </span>
+          <span className={styles.stickyAmount}>{aud2(active.total)}</span>
+          <KitButton
+            as="a"
+            href={depositHref}
+            variant="accent"
+            data-scenario={active.scenario}
+          >
+            Accept &amp; pay {aud2(active.total * 0.2)} deposit
+          </KitButton>
+        </div>
+      ) : null}
 
       <footer className={styles.colophon}>
         <span>Curtis &amp; Co · {project.address}</span>
