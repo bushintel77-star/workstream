@@ -39,14 +39,19 @@ Use these service settings:
 | Railway config file | `/apps/api/railway.toml` |
 | Healthcheck path | `/healthz` |
 
-Variables:
+Variables (as configured 2026-08-24; `WORKSTREAM_*` names are canonical —
+`CONSTRUCT_*` legacy names were removed from the services after the code
+grew `WORKSTREAM_*`-first fallbacks):
 
 ```bash
 NODE_ENV=production
-PORT=3001
-CLERK_SECRET_KEY=sk_live_...
+AUTH_REQUIRED=false            # demo mode until Clerk keys land (see below)
 PUBLIC_API_URL=https://<api-service-domain>
-CORS_ORIGIN=https://<web-service-domain>
+CORS_ORIGIN=https://<web-service-domain>   # allowlist, no wildcard
+PORTAL_BASE_URL=https://<web-service-domain>
+WORKSTREAM_PORTAL_SECRET=<32+ chars>       # required in production
+WORKSTREAM_PERSIST_PATH=/repo/apps/api/data/store.json      # api-volume mount
+WORKSTREAM_SQLITE_PATH=/repo/apps/api/data/store.sqlite3    # api-volume mount
 ```
 
 Unset `AUTH_REQUIRED` in production is fail-closed (API refuses to boot
@@ -59,6 +64,9 @@ Optional AI/geocode variables:
 ANTHROPIC_API_KEY=...
 OPENAI_API_KEY=...
 ```
+
+Vicmap cadastral is keyless (DELWP GeoServer WFS) — no `VICMAP_ENABLED`
+or API-key variable is needed or read.
 
 ### Web service
 

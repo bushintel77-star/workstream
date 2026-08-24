@@ -15,8 +15,15 @@ useDefault = true
 #     CONSTRUCT_PORTAL_SECRET = "...") to exercise config parsing; newer
 #     gitleaks' generic-api-key rule flags them. Test files are fixtures,
 #     not credentials — allowlist them by path.
+#   - .next/, node_modules/: machine-generated build output. Commit 4d0148f
+#     (2026-05-19) accidentally included apps/web/.next/dev/ caches carrying
+#     Next.js dev-server ephemeral keys (RSC/server-actions encryption with
+#     expire_at, previewModeSigningKey). Auto-generated locally by `next dev`,
+#     long expired, authenticate nothing external — flagged only on full-history
+#     scans (workflow_dispatch). Build artifacts must never be committed; if
+#     one ever is again, judge it by its source, not its generated tokens.
 [allowlist]
-description = "Test fixtures and documentation placeholders"
+description = "Test fixtures, documentation placeholders, build artifacts"
 regexes = [
   '''whsec_test_1234567890abcdef''',
   '''PASTE_B2_APPLICATION_KEY''',
@@ -24,4 +31,6 @@ regexes = [
 paths = [
   '''\.test\.ts$''',
   '''\.spec\.ts$''',
+  '''(^|[/\\])\.next[/\\]''',
+  '''(^|[/\\])node_modules[/\\]''',
 ]

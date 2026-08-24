@@ -42,11 +42,23 @@ P1 entry below and `docs/CAMERA-STATE-MACHINE.md`.)
       `webgl-cad-annotations` all green + a new unit test.
 - [x] **Persistence on Railway** — volume `api-volume` mounts at
       `/repo/apps/api/data`. Configured in the Railway dashboard.
+- [x] **Service variables modernized (2026-08-24)** — legacy `CONSTRUCT_*`
+      service variables retired on Railway: `WORKSTREAM_PORTAL_SECRET`,
+      `WORKSTREAM_PERSIST_PATH`, `WORKSTREAM_SQLITE_PATH` are the live names
+      (code read both; services now only carry `WORKSTREAM_*`). Also removed:
+      dead `VICMAP_ENABLED` (Vicmap is keyless + always-on), `MAPBOX_TOKEN`
+      (unread), and the stale `construct-web.fly.dev` CORS origin. Verified by
+      healthcheck-gated deploy SUCCESS + live `/geocode/preview` title ring.
+- [x] **Deploys re-wired to `bushintel77-star/workstream` (2026-08-24)** —
+      repo moved off the billing-frozen old GitHub account; `RAILWAY_TOKEN`
+      secret present on the new repo; CI dispatched green on the new account's
+      runners; push-to-main → deploy verified. The old freeze symptoms in the
+      2026-08-18 handover are historical.
 - [x] **SQLite write-through journal** — `packages/db/src/sqlite-persist.ts`
       (Node 22 `node:sqlite`, WAL). In-memory store retained for jobs/tests;
       JSON snapshot retired from the hot path (first-boot import +
       `exportSnapshot` escape hatch). Railway:
-      `CONSTRUCT_SQLITE_PATH=/repo/apps/api/data/store.sqlite3` on `api-volume`.
+      `WORKSTREAM_SQLITE_PATH=/repo/apps/api/data/store.sqlite3` on `api-volume`.
 - [ ] **Single API instance** — keep one API replica on Railway while
       SQLite is single-writer (the journal lives on `api-volume`).
 - [x] **Auth on (code)** — Clerk middleware + `<ClerkProvider>` + server-side
