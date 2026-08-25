@@ -1,4 +1,4 @@
-# Onboarding — current state of the build (2026-08-18)
+# Onboarding — current state of the build (2026-08-25)
 
 The single entry doc for a new developer. Everything else in the repo is
 either **binding** (normative, wins on conflict), **living** (kept current),
@@ -10,7 +10,7 @@ the disagreement instead of guessing.
 |---|---|
 | **Entry (this)** | `ONBOARDING.md` |
 | **Binding** | `docs/GOLD-STANDARD-2026.md` (supreme brief) · `docs/GOLD-STANDARD-2026-TOKENS.md` (tokens) · `docs/GOLD-STANDARD-2026-ARCHITECTURE.md` (WebGL architecture — corrected 2026-08-18) |
-| **Living** | `OUTSTANDING.md` (ranked punch list) · `docs/PRODUCTION-ROADMAP-2026-08-17.md` + `docs/FEATURE-LIST-CONCEPT-TO-SIGNOFF.md` (stages + feature coverage) · `docs/CAMERA-STATE-MACHINE.md` (shipped camera map) · `AGENTS.md` / `CLAUDE.md` (agent conventions) |
+| **Living** | `OUTSTANDING.md` (ranked punch list) · `docs/PRODUCTION-ROADMAP-2026-08-17.md` + `docs/FEATURE-LIST-CONCEPT-TO-SIGNOFF.md` (stages + feature coverage) · `docs/CAMERA-STATE-MACHINE.md` (shipped camera map) · `docs/AEC-2026-RESEARCH-ADOPTION.md` (AEC-2026 research decisions) · `AGENTS.md` / `CLAUDE.md` (agent conventions) |
 | **Historical** | `SESSION-HANDOVER-*.md` (session logs), `HANDOVER*.md` at repo root, `docs/WORKSTREAM-STATUS.md` (2026-07-21), `docs/GAP-ANALYSIS*.md`, `docs/archive/pre-gold-standard-2026/` |
 
 ---
@@ -44,6 +44,18 @@ Two consequences:
    document, unchanged.
 2. **`?mode=` only.** All 8 modes mount natively on WebGL
    (`lib/canvas-mode.ts`, `WEBGL_STUDIO_MODES`). `?svg=1` is inert.
+
+3. **2026-08-25 release — LA tokens + build packs (`87adeeb`, follow-up
+   `bc2ee70`).** Chrome migrated to the `--la-*` earth-tone family
+   (charcoal accent `--la-accent`; Signal Blue retired from chrome —
+   tokens doc §1.7 + amendment log); `GlassCard` is opaque (`--la-surface`,
+   no backdrop blur); the asset fan-out dock became `AssetLibraryPanel` +
+   `BottomAssetStrip` + `RightPanelTabs`; drafting modes render dead-neutral
+   `#F4F4F4` paper (no post-processing, `NoToneMapping`, IBL off); Client
+   (8 pp) + Subcontractor (12 pp) Build Packs shipped
+   (`buildPackTemplates.ts` — Phase 4 of the master brief). The adopted
+   AEC-2026 research scope (ResCode A2-6 compliance, chrome recede, ARIA)
+   is recorded in `docs/AEC-2026-RESEARCH-ADOPTION.md`.
 
 ## 2. Platform stages vs canvas modes
 
@@ -129,14 +141,25 @@ was the photo-trace capstone (`boundary_snap`, `snapPhotoPlaneToBoundary`).
 
 ## 6. Current ranked work (live in `OUTSTANDING.md`)
 
-1. CI live-verify on GitHub once the account billing hold clears (human).
-2. Premium assets (species depth, thumbnails, curated palettes).
-3. Foliage "murk" polish on the paper canvas.
+1. ~~AEC-2026 adopted scope~~ — **shipped 2026-08-25** (see
+   `docs/AEC-2026-ROLLOUT-PLAN.md` for the wave record): ResCode A2-6
+   canopy compliance threaded survey → sketch/cad → quote (domain kernel +
+   `a26-canopy` meta chip + fit-sheet row); motion-aware chrome recede
+   (`ChromeRecedeWatcher` + hold-H peek, opacity-only); ARIA graphics tree
+   (graphics roledescriptions on the canvas + human labels in the mirror
+   tree). Follow-up: verify the A2-6 rounding bracket table against the
+   VPP verbatim when accessible.
+2. CI live-verify on GitHub once the account billing hold clears (human).
+3. Premium assets (species depth, thumbnails, curated palettes).
 4. Signoff record trace (signoff must freeze the accepted quote).
-5. Classic-studio e2e debt (tracked in `OUTSTANDING.md`).
-6. Longer tail: Phase 4 Build Pack (not built), Phase 1 floating tool ribbon
-   on GL, Phase 3 Presentation Lens polish, Stage 2 CAD (product-gated),
-   mobile offline-first sync (design only).
+5. ~~Foliage "murk" polish~~ — resolved 2026-08-25 (`87adeeb`): drafting
+   modes skip post-processing + `NoToneMapping` + IBL off; the canvas is
+   dead-neutral `#F4F4F4` paper.
+6. ~~Classic-studio e2e debt~~ — resolved 2026-08-19 (SVG retirement).
+7. Longer tail: Phase 1 floating tool ribbon on GL, Phase 3 Presentation
+   Lens polish, Stage 2 CAD (product-gated), mobile offline-first sync
+   (design only). ~~Phase 4 Build Pack~~ — shipped 2026-08-25 (`87adeeb`:
+   Client 8 pp + Subcontractor 12 pp via `buildPackTemplates.ts`).
 
 ## 7. Known stale code comments — register
 

@@ -62,6 +62,8 @@ import {
   BoundaryProjectionProbe,
   BOUNDARY_PROBE_ENABLED,
 } from "./BoundaryProjectionProbe";
+import { buildCanopyCompliance } from "./canopyCompliance";
+import { buildStudioSiteEnvelope } from "./siteEnvelope";
 import { buildMetaChips } from "./metaChips";
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { DraftShapeLayer } from "./DraftShapeLayer";
@@ -762,6 +764,22 @@ export function StudioScene({
 
   // Ambient meta chip-set — derived from title/overlay/level records, never
   // invented (absent data → absent chips). Recomputed only when inputs change.
+  // The A2-6 canopy chip recomputes with placements — the site's canopy
+  // obligation is live from title hydrate through placed trees. The site
+  // envelope chip (sun × season × wetness × slope) recomputes with overlays
+  // and terrain — the growing conditions that pre-filter the planting palette.
+  const siteEnvelope = useMemo(
+    () =>
+      buildStudioSiteEnvelope({
+        lat,
+        lng,
+        overlays: keylessOverlays,
+        heightmapPoints,
+        scaleM,
+        boardAspect,
+      }),
+    [lat, lng, keylessOverlays, heightmapPoints, scaleM, boardAspect],
+  );
   const metaChips = useMemo(
     () =>
       buildMetaChips({
@@ -775,8 +793,16 @@ export function StudioScene({
         easementRingCount: easementsPct.length,
         heightmap: heightmapPoints,
         sunHours: siteMeta?.sunHours,
+        canopy: buildCanopyCompliance({
+          placements,
+          boundary: boundaryPct,
+          scaleM,
+          boardAspect,
+          lotAreaM2: siteMeta?.lotAreaM2,
+        }),
+        envelope: siteEnvelope,
       }),
-    [boundaryPct, scaleM, boardAspect, siteMeta, keylessOverlays, easementsPct, heightmapPoints],
+    [boundaryPct, scaleM, boardAspect, siteMeta, keylessOverlays, easementsPct, heightmapPoints, placements, siteEnvelope],
   );
 
   return (
@@ -922,6 +948,7 @@ export function StudioScene({
           boardAspect={boardAspect}
           lat={lat}
           lng={lng}
+          envelope={siteEnvelope}
         />
       ) : null}
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the

@@ -58,6 +58,7 @@ export const SHORTCUT_ROWS: Array<{
   { group: "View", keys: "2", action: "Orbit (perspective)" },
   { group: "View", keys: "3", action: "Garden eye-level" },
   { group: "View", keys: "4", action: "Elevation pitch" },
+  { group: "View", keys: "H (hold)", action: "Peek — fade chrome to read the drawing" },
   { group: "Mode", keys: "Shift+1", action: "Survey" },
   { group: "Mode", keys: "Shift+2", action: "Sketch" },
   { group: "Mode", keys: "Shift+3", action: "CAD" },

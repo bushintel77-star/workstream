@@ -44,6 +44,7 @@ import type {
   LandscapeFeature,
   PhotoElevation,
 } from "@workstream/contracts";
+import { getCatalogSymbol } from "@workstream/domain";
 import { VignetteOverlay } from "./VignetteOverlay";
 import { SaveStatusChip } from "./SaveStatusChip";
 import {
@@ -83,6 +84,7 @@ import { importSiteTruth } from "./siteTruthImport";
 import { StudioCommandPalette } from "./StudioCommandPalette";
 import { StudioElevationCard } from "./StudioElevationCard";
 import { StudioCadCard } from "./StudioCadCard";
+import { AiScanOverlay } from "./AiScanOverlay";
 import { InspectorCard } from "./InspectorCard";
 import { SitePhotoGallery } from "./SitePhotoGallery";
 import { PhotoTraceHud } from "./PhotoTraceHud";
@@ -91,6 +93,7 @@ import { SplitViewLens } from "./SplitViewLens";
 import { ViewportTransitionHUD } from "./ViewportTransitionHUD";
 import { StudioSurfaceErrorBoundary } from "./StudioSurfaceErrorBoundary";
 import { placementsToItems, featuresOntoItems } from "../handoff/state/canvasBridge";
+import { buildCanopyCompliance } from "./canopyCompliance";
 import { toRenderItems } from "./stateBridge";
 import { SketchCadReviewCard } from "./SketchCadReviewCard";
 import {
@@ -100,7 +103,7 @@ import {
 import { suggestedMode, unlockedModes, type CanvasMode, type CanvasProgress } from "../../../lib/canvas-mode";
 import { interactionGuidance } from "./interactionGuidance";
 import { StudioShortcutsHelp } from "./StudioShortcutsHelp";
-import { resolveStudioShortcut } from "./studioShortcuts";
+import { isTypingTarget, resolveStudioShortcut } from "./studioShortcuts";
 import { SiteContextBadges } from "../../SiteContextBadges";
 import { GardenViewpointStrip } from "../handoff/features/viewpoint/GardenViewpointStrip";
 import { viewpointYawDeg, type GardenViewpointLook } from "../handoff/features/tilt/tiltMath";
@@ -616,6 +619,11 @@ export function WebGLStudioPreview({
   // Site-truth import — the Vicmap bridge (survey mode owns it).
   const [truthBusy, setTruthBusy] = useState(false);
   const [truthMsg, setTruthMsg] = useState<string | null>(null);
+
+  // AI parsing-stage transition — the canvas-level scan overlay driven by
+  // the drafter panel's busy state (AI draft / assist). The research-backed
+  // parsing UX lives in AiScanOverlay; this is just its power switch.
+  const [aiScanKey, setAiScanKey] = useState<string | null>(null);
   const runSiteTruthImport = useCallback(async () => {
     setTruthBusy(true);
     setTruthMsg(null);
@@ -659,6 +667,50 @@ export function WebGLStudioPreview({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Motion-aware chrome recede (AEC-2026 §3.2) — the R3F watcher flips the
+  // store flag on camera-motion state change; this effect mirrors the flag
+  // (OR the hold-H peek) onto <body> imperatively, so receding chrome never
+  // re-renders the React tree. Opacity only — the CSS lives in globals.css.
+  useEffect(() => {
+    let receded = useStudioStore.getState().chromeReceded;
+    let peek = useStudioStore.getState().chromePeek;
+    const apply = () => {
+      document.body.classList.toggle("gs-chrome-receding", receded || peek);
+    };
+    const unsub = useStudioStore.subscribe((s) => {
+      if (s.chromeReceded === receded && s.chromePeek === peek) return;
+      receded = s.chromeReceded;
+      peek = s.chromePeek;
+      apply();
+    });
+    return () => {
+      unsub();
+      document.body.classList.remove("gs-chrome-receding");
+    };
+  }, []);
+
+  // Hold-H peek — fades the chrome while held so the operator can read the
+  // drawing underneath (site data, boundaries, canopies). Listed in the ?
+  // shortcut sheet; plain h only (no modifiers, not while typing).
+  useEffect(() => {
+    const isPeekKey = (e: KeyboardEvent) =>
+      !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === "h";
+    const down = (e: KeyboardEvent) => {
+      if (isPeekKey(e) && !isTypingTarget(e.target)) {
+        useStudioStore.getState().setChromePeek(true);
+      }
+    };
+    const up = (e: KeyboardEvent) => {
+      if (isPeekKey(e)) useStudioStore.getState().setChromePeek(false);
+    };
+    document.addEventListener("keydown", down);
+    document.addEventListener("keyup", up);
+    return () => {
+      document.removeEventListener("keydown", down);
+      document.removeEventListener("keyup", up);
+    };
   }, []);
 
   // Placements as classic StudioItems — the elevation board consumes the
@@ -1138,16 +1190,18 @@ export function WebGLStudioPreview({
       const layer = f.metadata?.layer ?? "feature";
       out.push({
         id: `feature:${f.id}`,
-        label: `${layer} ${f.id.slice(-4)}`,
+        label: f.metadata?.friendly_name?.trim() || `${layer} ${f.id.slice(-4)}`,
         level: 1,
+        graphicKind: "object",
       });
     }
     for (const p of livePlacements) {
       const sym = p.symbol_id ?? "asset";
       out.push({
         id: `placement:${p.id}`,
-        label: `${sym} ${p.id.slice(-4)}`,
+        label: getCatalogSymbol(sym)?.label ?? sym,
         level: 2,
+        graphicKind: "symbol",
       });
     }
     return out;
@@ -1247,6 +1301,30 @@ export function WebGLStudioPreview({
           background: "var(--gs-canvas)",
           animation: "gsModeFadeOut 150ms ease-out forwards",
         }}
+      />
+
+      {/* AI parsing-stage transitions — site-truth import (Survey) and the
+          drafter's ghost generation / assist (CAD). Null when idle; the
+          overlay is ambient (wash tier) so chrome stays interactive above. */}
+      <AiScanOverlay
+        active={truthBusy}
+        label="Importing site truth"
+        stages={[
+          "Reading cadastre",
+          "Tracing title boundary",
+          "Placing easements and levels",
+        ]}
+        testId="ai-scan-overlay-import"
+      />
+      <AiScanOverlay
+        active={aiScanKey === "generate" || aiScanKey === "assist"}
+        label={aiScanKey === "assist" ? "Thinking about this site" : "AI drafting ghosts"}
+        stages={
+          aiScanKey === "assist"
+            ? ["Parsing the question", "Checking site geometry"]
+            : ["Reading lot geometry", "Segmenting canopy", "Drafting proposals"]
+        }
+        testId="ai-scan-overlay-draft"
       />
     </div>
   );
@@ -1871,6 +1949,7 @@ export function WebGLStudioPreview({
                   <StudioCadCard
                     projectId={projectId}
                     onCadResult={(result) => setCadGhostCount(result.ghost_count)}
+                    onBusyChange={(key) => setAiScanKey(key)}
                   />
                 </StudioSurfaceErrorBoundary>
                 <SurveyCommunicationCard
@@ -2698,6 +2777,13 @@ export function WebGLStudioPreview({
               activeMode === "cad" ||
               activeMode === "garden"
             }
+            canopy={buildCanopyCompliance({
+              placements: storePlacements,
+              boundary: boundaryPct,
+              scaleM,
+              boardAspect,
+              lotAreaM2: siteMeta?.lotAreaM2,
+            })}
           />
         ) : null}
       </div>

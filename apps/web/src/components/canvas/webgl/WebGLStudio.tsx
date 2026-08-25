@@ -52,6 +52,7 @@ import type {
 import { PALETTE } from "../../../styles/colorTokens";
 import { canvasLayerPolicy } from "./layerPolicy";
 import { parseCanvasMode } from "../../../lib/canvas-mode";
+import { ChromeRecedeWatcher } from "./ChromeRecedeWatcher";
 import { StudioScene } from "./StudioScene";
 import type { PctPoint, HeightmapPoint } from "./coordTransform";
 import type { RenderItem } from "./sceneItems";
@@ -339,6 +340,9 @@ export function WebGLStudio({
         />
 
         <RenderFX drafting={drafting} />
+        {/* Camera-motion detector for the chrome recede — flips the store
+            flag on state change only (never per-frame). */}
+        <ChromeRecedeWatcher />
       </Canvas>
 
       <div

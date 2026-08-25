@@ -409,6 +409,17 @@ export interface StudioStoreState {
    */
   elevationFacadeAzimuth: number | null;
 
+  // --- Motion-aware chrome recede (AEC-2026 adoption §3.2) ---
+  /**
+   * True while the camera is orbiting/panning/zooming (+ ~150 ms rest
+   * decay). Written ONLY on state flip by ChromeRecedeWatcher inside the
+   * R3F loop — never per-frame. Drives the imperative `gs-chrome-receding`
+   * body class (opacity-only fade; full opaque paper at rest).
+   */
+  chromeReceded: boolean;
+  /** Hold-H peek: chrome fades while the key is held (user-initiated). */
+  chromePeek: boolean;
+
   // --- Shared ink layer ---
   /**
    * All sketch strokes in board-% space (the CanvasStroke contract schema).
@@ -689,6 +700,10 @@ export interface StudioStoreState {
    * field. Set once per gesture end together with the blend target.
    */
   setElevationActive: (v: boolean) => void;
+  /** Flip the motion-aware chrome recede flag (ChromeRecedeWatcher). */
+  setChromeReceded: (v: boolean) => void;
+  /** Hold-H peek flag — the chrome fades while the key is held. */
+  setChromePeek: (v: boolean) => void;
   /**
    * Set/clear the facade azimuth override (photo pin sets its plane bearing;
    * session exit clears it back to cardinals-only).
@@ -943,6 +958,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   liveRig: DEFAULT_CAMERA_RIG, // transient — StudioControls writes during a gesture
   elevationActive: false, // committed — StudioControls writes once on gesture end
   elevationFacadeAzimuth: null, // photo pins set the plane bearing; exit clears it
+  chromeReceded: false, // ChromeRecedeWatcher flips on camera-motion state change
+  chromePeek: false, // hold-H peek — keydown/keyup in WebGLStudioPreview
 
   // Elevation Slice defaults
   sliceActive: false,
@@ -1145,6 +1162,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       };
     }),
   setElevationActive: (elevationActive) => set({ elevationActive }),
+  setChromeReceded: (chromeReceded) => set({ chromeReceded }),
+  setChromePeek: (chromePeek) => set({ chromePeek }),
   setElevationFacadeAzimuth: (elevationFacadeAzimuth) =>
     set({ elevationFacadeAzimuth }),
   // Transient per-frame write — no DOM consumer should subscribe to viewBlend

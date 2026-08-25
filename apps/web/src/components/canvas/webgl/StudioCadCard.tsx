@@ -48,9 +48,13 @@ const label: React.CSSProperties = {
 export function StudioCadCard({
   projectId,
   onCadResult,
+  onBusyChange,
 }: {
   projectId: string;
   onCadResult?: (result: CadApiResult) => void;
+  /** Fires (key, label) when a run starts and (null, "") when it ends —
+   *  lets the studio drive the canvas-level AI scan overlay. */
+  onBusyChange?: (key: string | null, label: string) => void;
 }) {
   const [status, setStatus] = useState<Status>(null);
   const [instruction, setInstruction] = useState("");
@@ -59,6 +63,7 @@ export function StudioCadCard({
   const run = async (key: string, label: string, fn: () => Promise<unknown>) => {
     setBusy(key);
     setStatus({ tone: "busy", text: `${label}…` });
+    onBusyChange?.(key, label);
     try {
       const res = (await fn()) as Record<string, unknown> | null;
       if (
@@ -84,6 +89,7 @@ export function StudioCadCard({
       });
     } finally {
       setBusy(null);
+      onBusyChange?.(null, "");
     }
   };
 

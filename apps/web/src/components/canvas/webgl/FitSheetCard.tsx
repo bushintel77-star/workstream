@@ -47,6 +47,7 @@ import {
   type StudioEstimateLine,
 } from "@workstream/domain";
 import { Button } from "./Button";
+import type { CanopyComplianceResult } from "./canopyCompliance";
 import { useStudioStore } from "./studioStore";
 import { useStudioEstimate } from "../../../lib/use-studio-estimate";
 import type { RenderItem } from "./sceneItems";
@@ -170,6 +171,8 @@ export interface FitSheetCardProps {
   onExpandedChange?: (expanded: boolean) => void;
   /** Provisional / committed label shown in the compact running-estimate row. */
   statusLabel?: string;
+  /** ResCode A2-6 canopy assessment — one summary row (quote stage). */
+  canopy?: CanopyComplianceResult | null;
 }
 
 export function FitSheetCard({
@@ -185,6 +188,7 @@ export function FitSheetCard({
   expanded: expandedProp,
   onExpandedChange,
   statusLabel = "Provisional",
+  canopy = null,
 }: FitSheetCardProps) {
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
   const excludedEstimateLineIds = useStudioStore(
@@ -279,6 +283,7 @@ export function FitSheetCard({
       backendBusy={backendBusy}
       runBackendFetch={runBackendFetch}
       driftPct={driftPct}
+      canopy={canopy}
     />
   );
 }
@@ -304,6 +309,7 @@ function FitSheetCapsule({
   backendBusy,
   runBackendFetch,
   driftPct,
+  canopy,
 }: {
   allowExpanded: boolean;
   compact: boolean;
@@ -339,6 +345,7 @@ function FitSheetCapsule({
   backendBusy: boolean;
   runBackendFetch: () => Promise<void>;
   driftPct: number | null;
+  canopy: CanopyComplianceResult | null;
 }) {
   const [expandedInternal, setExpandedInternal] = useState<boolean>(() => {
     if (typeof window === "undefined" || !allowExpanded) return false;
@@ -743,6 +750,30 @@ function FitSheetCapsule({
               {fmtAud(summary.total)}
             </span>
           </div>
+
+          {/* ResCode A2-6 canopy compliance — one row, standard identity
+              stamped, never a permit claim. Reads the same assessment the
+              meta chip shows on the canvas. */}
+          {canopy && canopy.assessment.status !== "insufficient-data" ? (
+            <div
+              data-testid="fit-sheet-canopy"
+              role="status"
+              aria-label={`ResCode A2-6 tree canopy: ${canopy.assessment.matureProvided} of ${canopy.assessment.required} canopy trees provided${canopy.assessment.status === "shortfall" ? `, shortfall ${canopy.assessment.shortfall}` : ", compliant"}. Clause 54.02-6. Single-standard check — not a permit or VicSmart eligibility claim.`}
+              title={`Clause ${canopy.assessment.standard.clause} (Standard ${canopy.assessment.standard.standardId}, ${canopy.assessment.standard.amendment}) — single-standard check, not a permit or VicSmart eligibility claim.`}
+              style={rowStyle}
+            >
+              <span style={labelStyle}>
+                A2-6 Tree canopy
+                {canopy.assessment.status === "compliant"
+                  ? " — compliant"
+                  : ` — ${canopy.assessment.shortfall} more needed`}
+              </span>
+              <span style={figureStyle}>
+                {canopy.assessment.matureProvided}/{canopy.assessment.required} mature ·{" "}
+                {canopy.assessment.standard.clause}
+              </span>
+            </div>
+          ) : null}
 
           {/* Excluded lines */}
           {excludedLines.length > 0 && (

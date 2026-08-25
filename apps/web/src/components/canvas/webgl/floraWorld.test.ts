@@ -99,3 +99,76 @@ describe("placementScaleFor", () => {
     expect(placementScaleFor({ canopySpreadM: 1 } as never)).toBeCloseTo(0.45, 5); // floor
   });
 });
+
+// --- Site envelope consumption (planting becomes an aesthetic decision) ---
+
+function envelope(over: {
+  plantingSunClass?: "full_sun" | "part_shade" | "shade";
+  wetness?: "dry" | "moist" | "wet" | "flood_prone";
+  month?: number;
+}) {
+  return {
+    month: over.month ?? 9,
+    seasonalSun: [
+      { preset: "winter" as const, meanHours: 5.0, classFractions: { shade: 0.1, part_shade: 0.2, full_sun: 0.7 } },
+      { preset: "summer" as const, meanHours: 10.2, classFractions: { shade: 0.0, part_shade: 0.1, full_sun: 0.9 } },
+    ],
+    plantingSunClass: over.plantingSunClass ?? "full_sun",
+    wetness: { class: over.wetness ?? "dry", drivers: [] },
+    slope: null,
+    acidSulfate: false,
+    nativeVegetationLabel: null,
+    summaryLine: "Full sun · dry",
+  };
+}
+
+describe("rankAtPoint with the site envelope", () => {
+  it("without an envelope the legacy behaviour is unchanged", () => {
+    const r = rankAtPoint({
+      form: "bed",
+      xPct: 50,
+      yPct: 50,
+      items: [],
+      ...PRAHRAN,
+      sunMin: 12 * 60,
+      address: "36 Wrights Terrace, Prahran VIC 3181",
+    });
+    expect(r.candidates.length).toBeGreaterThan(0);
+    expect(r.candidates[0]!.why).not.toContain("Envelope");
+  });
+
+  it("blends envelope fit and cites it in every candidate's why", () => {
+    const r = rankAtPoint({
+      form: "bed",
+      xPct: 50,
+      yPct: 50,
+      items: [],
+      ...PRAHRAN,
+      sunMin: 12 * 60,
+      address: "1 Somewhere Street, Melbourne VIC",
+      envelope: envelope({}),
+    });
+    expect(r.candidates.length).toBeGreaterThan(0);
+    for (const c of r.candidates) {
+      expect(c.why).toMatch(/Envelope (fit|warning)/);
+      expect(c.score).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("a full-sun dry envelope and a shade-wet envelope rank differently", () => {
+    const args = {
+      form: "bed" as const,
+      xPct: 50,
+      yPct: 50,
+      items: [],
+      ...PRAHRAN,
+      sunMin: 12 * 60,
+      address: "1 Somewhere Street, Melbourne VIC",
+    };
+    const sunny = rankAtPoint({ ...args, envelope: envelope({ plantingSunClass: "full_sun", wetness: "dry" }) });
+    const shady = rankAtPoint({ ...args, envelope: envelope({ plantingSunClass: "shade", wetness: "wet" }) });
+    const sunnySig = JSON.stringify(sunny.candidates.map((c) => [c.symbolId, c.score.toFixed(3)]));
+    const shadySig = JSON.stringify(shady.candidates.map((c) => [c.symbolId, c.score.toFixed(3)]));
+    expect(sunnySig).not.toEqual(shadySig);
+  });
+});

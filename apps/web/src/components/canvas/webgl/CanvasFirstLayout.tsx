@@ -64,6 +64,13 @@ export interface SpatialGraphNode {
   level?: number;
   /** Treeitem disabled state — surfaces `aria-disabled` not `disabled`. */
   disabled?: boolean;
+  /**
+   * WAI-ARIA Graphics Module kind (AEC-2026 §3.3): "object" for multipart
+   * assemblies (drawn features), "symbol" for indivisible components
+   * (placed assets). Layers `aria-roledescription` onto the treeitem so
+   * the tree-navigation semantics stay intact.
+   */
+  graphicKind?: "object" | "symbol";
 }
 
 /** Shallow‑primitive bridge for layout → canvas communication. */
@@ -361,6 +368,11 @@ export const CanvasFirstLayout = forwardRef<
         tabIndex={0}
         aria-label={ariaLabel}
         aria-describedby={descriptionId}
+        /* WAI-ARIA Graphics Module (AEC-2026 §3.3): the drawing surface is a
+         * graphics document. role="application" keeps the keyboard contract
+         * (focus engine Module 3); the roledescription layers the graphics
+         * semantics without breaking it. */
+        aria-roledescription="design drawing canvas"
         onKeyDown={onCanvasKeyDown}
         onDoubleClick={triggerCameraReset}
         data-cf-layer="canvas"
@@ -440,6 +452,13 @@ export const CanvasFirstLayout = forwardRef<
               aria-level={node.level ?? 1}
               aria-selected={isActive}
               aria-disabled={node.disabled || undefined}
+              aria-roledescription={
+                node.graphicKind === "object"
+                  ? "graphics object"
+                  : node.graphicKind === "symbol"
+                    ? "graphics symbol"
+                    : undefined
+              }
               data-node-id={node.id}
               tabIndex={isActive ? 0 : -1}
               style={{

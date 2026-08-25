@@ -13,7 +13,8 @@
  *   terrain    — slope, sun, spot-level relief      (bright: elevation, garden)
  */
 
-import type { DesignKeylessOverlay } from "@workstream/contracts";
+import type { DesignKeylessOverlay, SiteEnvelope } from "@workstream/contracts";
+import type { CanopyComplianceResult } from "./canopyCompliance";
 import type { HeightmapPoint, PctPoint } from "./coordTransform";
 
 export type MetaChipGroup = "cadastral" | "planning" | "terrain";
@@ -44,6 +45,10 @@ export interface MetaChipSiteInput {
   easementRingCount?: number;
   heightmap?: HeightmapPoint[];
   sunHours?: number | null;
+  /** ResCode A2-6 canopy assessment (webgl/canopyCompliance); null = no chip. */
+  canopy?: CanopyComplianceResult | null;
+  /** Site envelope (sun × season × wetness × slope); null = no site truth. */
+  envelope?: SiteEnvelope | null;
 }
 
 /** SPI strings carry the plan\parcel form ("1\TP84291"); PFIs are plain. */
@@ -220,6 +225,53 @@ export function buildMetaChips(input: MetaChipSiteInput): MetaChip[] {
     });
   }
 
+  // ResCode A2-6 tree canopy — the site's canopy obligation, live from the
+  // title area and the placed trees. Standard identity always travels with
+  // the data; a single-standard check is never a permit claim.
+  if (input.canopy) {
+    const a = input.canopy.assessment;
+    if (a.status === "insufficient-data") {
+      chips.push({
+        id: "a26-canopy",
+        group: "planning",
+        label: "Site area unknown",
+        value: "A2-6",
+        detail:
+          "Clause 54.02-6 (Standard A2-6, VC298): 1 canopy tree per 100 m² of site area, ≥6 m height / ≥4 m canopy at maturity. The site area is not known yet — the requirement reads once the title hydrates. Single-standard check — not a permit or VicSmart eligibility claim.",
+        brightModes: CADASTRAL_MODES,
+      });
+    } else {
+      const bits = [
+        "Clause 54.02-6 (Standard A2-6, VC298): 1 canopy tree per 100 m² of site area, ≥6 m height / ≥4 m canopy at maturity.",
+        a.status === "compliant"
+          ? `Compliant: ${a.matureProvided} of ${a.required} canopy trees provided (${a.immature.length} below maturity minimums).`
+          : `Shortfall: ${a.matureProvided} of ${a.required} canopy trees provided — ${a.shortfall} more needed (${a.immature.length} placed below maturity minimums).`,
+      ];
+      if (input.canopy.overhangingCount > 0) {
+        bits.push(
+          `${input.canopy.overhangingCount} crown(s) cross the title line — advisory only; crowns may overhang the fence by design.`,
+        );
+      }
+      if (input.canopy.outsideCount > 0) {
+        bits.push(`${input.canopy.outsideCount} tree centre(s) sit outside the title boundary.`);
+      }
+      if (input.canopy.areaDisagreement) {
+        bits.push(
+          "Title lot area and the drawn boundary disagree — reconcile the trace before relying on this count.",
+        );
+      }
+      bits.push("Single-standard check — not a permit or VicSmart eligibility claim.");
+      chips.push({
+        id: "a26-canopy",
+        group: "planning",
+        label: `${a.matureProvided}/${a.required} canopy trees`,
+        value: "A2-6",
+        detail: bits.join(" "),
+        brightModes: CADASTRAL_MODES,
+      });
+    }
+  }
+
   // --- Terrain & environmental ------------------------------------------
   const fall = steepestFall(input.heightmap ?? []);
   if (fall) {
@@ -252,6 +304,40 @@ export function buildMetaChips(input: MetaChipSiteInput): MetaChip[] {
       value: "Relief",
       detail: "Terrain relief from site spot levels (IDW heightmap) — contour work and cut/fill ground truth.",
       brightModes: TERRESTRIAL_MODES,
+    });
+  }
+
+  // Site envelope — the fused growing conditions that pre-filter the
+  // planting palette (planting becomes an aesthetic decision). Bright in
+  // the modes where plants are chosen.
+  if (input.envelope) {
+    const e = input.envelope;
+    const [winter, summer] = e.seasonalSun;
+    const bits = [
+      `Sun: winter ${winter!.meanHours.toFixed(1)}h / summer ${summer!.meanHours.toFixed(1)}h (indicative solar model) → ${e.plantingSunClass.replace("_", " ")} palette bound.`,
+    ];
+    if (e.wetness.drivers.length > 0) {
+      bits.push(
+        `Wetness — ${e.wetness.class.replace("_", " ")}: ${e.wetness.drivers.map((d) => d.evidence).join("; ")}.`,
+      );
+    } else {
+      bits.push("Wetness — dry: no flood/wetland overlay and no terrain ponding detected.");
+    }
+    if (e.slope) bits.push(`Slope ${e.slope.slopeDeg.toFixed(1)}° facing ${e.slope.aspect}.`);
+    if (e.acidSulfate) bits.push("Acid-sulfate soils flagged — excavation and root-zone constraint (Vicmap).");
+    if (e.nativeVegetationLabel) {
+      bits.push(`Native vegetation class: ${e.nativeVegetationLabel} (NatureKit EVC) — soil/moisture context.`);
+    }
+    bits.push(
+      "Indicative model (Phase 1) — soil is overlay-derived, not a soil survey; verify on site before construction.",
+    );
+    chips.push({
+      id: "site-envelope",
+      group: "terrain",
+      label: e.summaryLine,
+      value: "Envelope",
+      detail: bits.join(" "),
+      brightModes: ["sketch", "cad", "garden"],
     });
   }
 

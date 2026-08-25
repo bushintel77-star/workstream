@@ -1,0 +1,196 @@
+/*
+ * AiScanOverlay — the AI parsing-stage transition (Gold Standard × LA tokens).
+ *
+ * Choreography (applied from the geospatial-scan UX research):
+ *   Phase 1  Contextual muting    — linen veil fades in over the canvas so the
+ *                                   drawing recedes and the scan reads as the
+ *                                   active layer (.veil).
+ *   Phase 2  Sweeping scan beam   — compositor-only transform translateX;
+ *                                   leading edge + trailing tail (.beam).
+ *   Phase 3  Progressive reveal   — faint sage wash clipped to the swept
+ *                                   region via clip-path inset synced to the
+ *                                   same easing as the beam (.reveal).
+ *   Phase 4  Agent action review  — staged micro-labels cycle so the operator
+ *                                   can read WHAT the model is doing, not just
+ *                                   that something is loading (.stages).
+ *
+ * Accessibility: colour is never the only signal (the staged labels carry the
+ * state verbally); prefers-reduced-motion drops the beam/reveal entirely and
+ * keeps the veil + labels. All layers are aria-hidden — the host component
+ * owns the single role="status" live region.
+ */
+
+.root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Ambient tier — above geometry/wash, below annotate/chrome/dock. */
+  z-index: var(--ws-z-wash);
+}
+
+/* ── Phase 1: contextual muting ─────────────────────────────────────── */
+.veil {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--la-surface-dim) 52%, transparent);
+  animation: veilIn var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes veilIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Phase 3: progressive sage reveal behind the beam ───────────────── */
+.reveal {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--la-success) 10%, transparent);
+  /* Hidden until the beam's leading edge passes: right inset 100% → 0. */
+  clip-path: inset(0 100% 0 0);
+  will-change: clip-path;
+  animation: revealSweep 3.2s cubic-bezier(0.77, 0, 0.175, 1) infinite both;
+}
+
+@keyframes revealSweep {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ── Phase 2: the scanning beam (compositor-only transform) ─────────── */
+.beam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 14%;
+  min-width: 90px;
+  will-change: transform;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in srgb, var(--la-success) 16%, transparent) 55%,
+    color-mix(in srgb, var(--la-success) 26%, transparent) 92%,
+    transparent 100%
+  );
+  border-right: 2px solid color-mix(in srgb, var(--la-success) 78%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--la-success) 30%, transparent);
+  animation: beamSweep 3.2s cubic-bezier(0.77, 0, 0.175, 1) infinite both;
+}
+
+@keyframes beamSweep {
+  /* translateX is relative to the beam's own width (14% of the container),
+   * so 820% ≈ one full pass plus exit — width-independent at any viewport. */
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(820%);
+  }
+}
+
+/* ── Phase 4: agent action review — staged micro-labels ─────────────── */
+.stages {
+  position: absolute;
+  top: max(var(--gs-space-6), 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--gs-space-3);
+  padding: var(--gs-space-2) var(--gs-space-4);
+  border-radius: var(--gs-radius-pill);
+  border: 1px solid var(--gs-line);
+  background: var(--gs-panel-frost);
+  font-family: var(--font-ui);
+  font-size: var(--gs-font-sm);
+  letter-spacing: 0.05em;
+  color: var(--gs-ink-secondary);
+  white-space: nowrap;
+}
+
+.pulseDot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: var(--gs-radius-pill);
+  background: var(--la-success);
+  animation: dotPulse 1.4s var(--ease) infinite;
+}
+
+@keyframes dotPulse {
+  /* Transform-only pulse — the opacity ratchet forbids new decimal steps. */
+  0%,
+  100% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+.stageTrack {
+  position: relative;
+  display: inline-grid;
+  /* Each stage gets an equal slice of the shared cycle; items stack. */
+}
+
+.stage {
+  grid-area: 1 / 1;
+  justify-self: center;
+  opacity: 0;
+  animation-name: stageIn;
+  animation-timing-function: var(--ease-emphasis);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  animation-duration: var(--scan-cycle, 6s);
+}
+
+@keyframes stageIn {
+  /* Each stage is opaque for its slice, cross-fades between slices. */
+  0%,
+  8% {
+    opacity: 0;
+  }
+  12%,
+  30% {
+    opacity: 1;
+  }
+  38%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ── Reduced motion: no sweep theatre, keep the honest status line ──── */
+@media (prefers-reduced-motion: reduce) {
+  .beam,
+  .reveal,
+  .pulseDot {
+    display: none;
+  }
+
+  .veil {
+    animation: none;
+  }
+
+  .stage {
+    animation-duration: 0ms;
+    animation-iteration-count: 1;
+    opacity: 0;
+  }
+
+  /* Show only the first stage statically. */
+  .stage:first-child {
+    opacity: 1;
+  }
+}

@@ -48,6 +48,8 @@ export interface EstimatorPanelProps {
    * opens the full itemized card.
    */
   defaultCollapsed?: boolean;
+  /** ResCode A2-6 canopy assessment — threaded to the fit-sheet row. */
+  canopy?: FitSheetCardProps["canopy"];
 }
 
 export function EstimatorPanel({
@@ -61,6 +63,7 @@ export function EstimatorPanel({
   signedOff,
   signedOffLoading,
   defaultCollapsed = false,
+  canopy = null,
 }: EstimatorPanelProps) {
   const [tab, setTab] = useState<EstimatorTab>("estimate");
   /** Companion mode: operator expanded the running-estimate summary. */
@@ -224,6 +227,7 @@ export function EstimatorPanel({
                 : undefined
             }
             statusLabel={statusWord === "…" ? "Provisional" : statusWord}
+            canopy={canopy}
           />
         ) : (
           <SupplierFeedCard />

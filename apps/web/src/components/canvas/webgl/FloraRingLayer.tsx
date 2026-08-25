@@ -26,6 +26,7 @@
 import { useMemo } from "react";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
+import type { SiteEnvelope } from "@workstream/contracts";
 import {
   assessPlantingPlacement,
   plantingConflictSummary,
@@ -76,6 +77,8 @@ export interface FloraRingLayerProps {
   boardAspect: number;
   lat: number;
   lng: number;
+  /** Site envelope — pre-filters the ring's candidates to what will thrive. */
+  envelope?: SiteEnvelope | null;
 }
 
 export function FloraRingLayer({
@@ -83,6 +86,7 @@ export function FloraRingLayer({
   boardAspect,
   lat,
   lng,
+  envelope = null,
 }: FloraRingLayerProps) {
   const session = useStudioStore((s) => s.floraSession);
   const setFloraSession = useStudioStore((s) => s.setFloraSession);
@@ -110,7 +114,8 @@ export function FloraRingLayer({
     [placements],
   );
 
-  // Ranked candidates — re-derive when the point, canopy, sun, or address move.
+  // Ranked candidates — re-derive when the point, canopy, sun, address, or
+  // site envelope move (the envelope pre-filters to thriving plants).
   const ranked = useMemo(() => {
     if (!session) return null;
     return rankAtPoint({
@@ -122,8 +127,9 @@ export function FloraRingLayer({
       lng,
       sunMin,
       address,
+      envelope,
     });
-  }, [session, guardItems, lat, lng, sunMin, address]);
+  }, [session, guardItems, lat, lng, sunMin, address, envelope]);
 
   if (!session || !ranked || ranked.candidates.length === 0) return null;
 

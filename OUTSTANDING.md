@@ -16,12 +16,65 @@ new developer. Read ONBOARDING first, this file for the queue.
 
 1. CI live-verify on GitHub — push to `main` and confirm the `.github/workflows/ci.yml` workflow is green (gate + secret-scan + deploy).
 2. Premium assets — species depth, thumbnails, curated palettes.
-3. Foliage "murk" polish — lift foliage to the `l-*` ramp, neutralise the olive ground-bounce on the paper canvas.
+3. ~~Foliage "murk" polish~~ — resolved 2026-08-25 (`87adeeb`): drafting
+   modes skip the EffectComposer entirely (N8AO/Vignette/Bloom off), use
+   `NoToneMapping` and `environmentIntensity: 0` — the olive ground-bounce
+   is gone; the canvas is dead-neutral `#F4F4F4` paper.
 4. Signoff record trace — verify signoff freezes the accepted quote (operator `SignoffCard` vs portal deposit must share one record).
 5. ~~Classic-studio e2e debt~~ — resolved 2026-08-19: the SVG studio, its 63
    classic e2e specs, and `?svg=1` routing were deleted in the 2026-08-19
    WebGL-only cleanup (single WebGL surface only).
-6. Longer-tail stage gaps (`docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md` §3): Phase 4 Build Pack (not built), Phase 1 floating tool ribbon on the GL surface, Phase 3 Presentation Lens polish, Stage 2 CAD (product-gated), mobile offline-first sync (design only).
+6. Longer-tail stage gaps (`docs/WIP-AND-GAP-ANALYSIS-2026-08-17.md` §3):
+   Phase 1 floating tool ribbon on the GL surface, Phase 3 Presentation Lens
+   polish, Stage 2 CAD (product-gated), mobile offline-first sync (design
+   only). ~~Phase 4 Build Pack~~ — shipped 2026-08-25 (`87adeeb`): Client
+   Build Pack (8 pages) + Subcontractor Build Pack (12 pages) via
+   `buildPackTemplates.ts`, optimistic API creation through Present mode.
+
+## AEC 2026 research adoption (2026-08-25)
+
+Adopted scope from the uploaded AEC-2026 design-plan research. Decision
+record with verified regulatory facts and reject reasons:
+[`docs/AEC-2026-RESEARCH-ADOPTION.md`](docs/AEC-2026-RESEARCH-ADOPTION.md).
+**Execution order: [`docs/AEC-2026-ROLLOUT-PLAN.md`](docs/AEC-2026-ROLLOUT-PLAN.md).**
+
+- [x] **ResCode A2-6 canopy compliance engine** — shipped 2026-08-25 (AEC
+      rollout Waves 1–2): pure kernel `packages/domain/src/rescode-canopy.ts`
+      (1 canopy tree per 100 m² site area, rounds UP; ≥ 6 m height /
+      ≥ 4 m canopy width at maturity per VC298; standard identity travels
+      with every result; insufficient-data never silently passes) + web
+      bridge `webgl/canopyCompliance.ts` (platform maturity resolvers with
+      measured Vicmap/arborist floors; overhang/outside counts are advisory
+      only). Surfaced stage-threaded: the `a26-canopy` meta chip (priority
+      tier with spi/easement) shows the lot's obligation from title hydrate
+      (survey, 0/N with no design) through live provided/required
+      (sketch/cad, immature callout in the aria-label detail), and the quote
+      fit-sheet carries one stamped row (`fit-sheet-canopy`, role=status).
+      Never a VicSmart/permit claim. Thresholds in one constant block until
+      the VPP bracket table is verbatim-verified.
+      Probes: `rescode-canopy.test.ts` (10), `canopyCompliance.test.ts` (6),
+      `e2e/webgl-canopy-compliance.spec.ts` (survey → cad → quote, green).
+- [x] **Motion-aware chrome recede** — shipped 2026-08-25 (Wave 3):
+      `ChromeRecedeWatcher` inside the R3F loop flips `chromeReceded` on
+      camera-motion state change only (~150 ms rest decay; disabled under
+      prefers-reduced-motion); hold-H peek (`chromePeek`) shares the same
+      imperative `body.gs-chrome-receding` class — opacity-only fade to
+      0.55 on `[data-gs-glass-card]` + `[data-cf-layer="chrome"]` (CSS in
+      globals.css; `var(--gs-chrome-recede-opacity)` keeps the css-scales
+      ratchet flat), full opaque paper at rest. No blur, no refraction, no
+      reintroduced frost. Peek listed in the `?` sheet.
+      Probes: `ChromeRecedeWatcher.test.ts`, `e2e/webgl-chrome-recede.spec.ts`
+      (hold → 0.55 → release → 1, green).
+- [x] **ARIA graphics tree** — shipped 2026-08-25 (Wave 4): the canvas
+      layer announces `aria-roledescription="design drawing canvas"`
+      (layered on the role="application" keyboard contract, not replacing
+      it); the off-screen mirror tree (`CanvasFirstLayout` Module 3) now
+      carries WAI-ARIA Graphics Module kinds — features as `graphics
+      object`, placements as `graphics symbol` — with human labels
+      (catalog label / feature friendly_name, honest symbol-id fallback).
+      The A2-6 chip and fit-sheet row ship their assessments as aria-labels
+      / role=status in the same commit.
+      Probe: `e2e/webgl-aria-graphics.spec.ts` (green).
 
 (Photo-trace elevation capstone: shipped 2026-08-18 — **committed on `main`
 (`0b37127`)**; earlier "working tree, PR pending" wording is stale. See the
@@ -952,7 +1005,10 @@ Cross-check against build status below before treating any phase as shipped.
       screens (grid-soil, recording). Remaining follow-up: mobile fonts are
       not yet bundled (expo-font + assets), and the unmounted
       `MobileFieldBridge` AR component still carries dark-era literals —
-      both tracked below.
+      both tracked below. **2026-08-25 amendment:** chrome accents migrated
+      again — Signal Blue → LA charcoal (`--la-*` family, release `87adeeb`);
+      see `GOLD-STANDARD-2026-TOKENS.md` §1.7 + amendment log. Cobalt/crimson
+      drawing-data tokens unchanged.
 - [x] **§3 Step 0 Site Truth** — landing page (`apps/web/src/app/page.tsx` +
       `landing.module.css`) has the geo search, staggered pipeline-status
       list, and a Signal Blue (0,0,0) origin crosshair. Real VicMap/title
@@ -1049,8 +1105,13 @@ Cross-check against build status below before treating any phase as shipped.
       rig — the dual-screen CAD/sketch workflow inside the one studio;
       e2e-verified `webgl-split-view.spec.ts`). Still open under Phase 3:
       Presentation Lens polish only.
-- [ ] **§3 Phase 4 Build Pack** — compliance audit + contractor CAD/spec
-      bundle export on this surface: **not built**.
+- [x] **§3 Phase 4 Build Pack** — shipped 2026-08-25 (`87adeeb`): Client
+      Build Pack (8 pages) + Subcontractor Build Pack (12 pages) via
+      `buildPackTemplates.ts` with optimistic API creation through Present
+      mode (`PresentSurface`). The **compliance-audit** clause of this phase
+      is the adopted ResCode A2-6 work (see "AEC 2026 research adoption"
+      above — not yet built); the contractor-bundle clause is the shipped
+      pack templates.
 - [ ] **§4 Mobile Field Bridge (AR)** — **explicitly not built, by design
       decision, not oversight.** Needs live RTK-GPS + device camera
       (WebXR or native AR). A fake AR camera overlay with invented

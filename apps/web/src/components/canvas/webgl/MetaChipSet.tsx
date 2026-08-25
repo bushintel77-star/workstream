@@ -87,7 +87,7 @@ export interface MetaChipSetProps {
 }
 
 function groupPriority(chip: MetaChip): number {
-  if (chip.id === "spi" || chip.id === "easement" || chip.id === "heritage" || chip.id === "flood") return 100;
+  if (chip.id === "spi" || chip.id === "easement" || chip.id === "heritage" || chip.id === "flood" || chip.id === "a26-canopy") return 100;
   if (chip.group === "cadastral") return 80;
   if (chip.group === "planning") return 70;
   return 40;

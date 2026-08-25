@@ -1012,3 +1012,20 @@ button:focus-visible {
 .vth-root.vth-dark .vth-preset:hover {
   background: color-mix(in srgb, #ffffff 8%, transparent);
 }
+
+/* ===================================================================
+ * Motion-aware chrome recede — AEC-2026 research adoption §3.2
+ * (docs/AEC-2026-RESEARCH-ADOPTION.md). While the camera moves (or the
+ * hold-H peek is active) the floating chrome drops opacity so the drawing
+ * reads beneath it; full opaque paper at rest. Opacity ONLY — no blur, no
+ * refraction, no dark; the resting frost the 2026-08-25 LA release removed
+ * stays removed. The class is toggled imperatively on <body> by the store
+ * flip (ChromeRecedeWatcher + WebGLStudioPreview) — never per-frame, never
+ * via React re-render.
+ * =================================================================== */
+body.gs-chrome-receding [data-gs-glass-card],
+body.gs-chrome-receding [data-cf-layer="chrome"] {
+  --gs-chrome-recede-opacity: 0.55;
+  opacity: var(--gs-chrome-recede-opacity);
+  transition: opacity 180ms ease-out;
+}

@@ -37,6 +37,14 @@ and neutral shadow tiers. Never darkness.
 
 ### 1.2 Semantic signal tokens — Signal Blue is the sole UI accent; crimson is conflict-only
 
+> **Amended 2026-08-25 (release `87adeeb`):** the sole-chrome-accent role of
+> Signal Blue is **superseded** by the LA material tokens (§1.7) — chrome
+> accents are now LA charcoal (`--la-accent` `#1C1917`). The `--gs-primary*`
+> tokens below remain defined (legacy aliases and dialect sources still
+> resolve to them) but are no longer the chrome accent. `--gs-truth*`
+> (cobalt) and `--gs-conflict*` are unchanged — drawing-data strokes keep
+> their colours.
+
 Reserved exclusively for: primary CTA, active tool state, focus rings.
 Crimson is demoted to **conflict/strike only** (the 2026-08-17 DeepSeek-blue
 accent pivot): utility and root zone collisions, critical warnings — never
@@ -78,6 +86,15 @@ are charcoal-filled chips — NOT accent-hued. The accent stays rare so it
 stays sharp.
 
 ### 1.4 Panel depth law (replaces the glass density law)
+
+> **Amended 2026-08-25 (release `87adeeb`):** floating HUD cards are now
+> **opaque** — `background: var(--la-surface)`, `backdrop-filter: none`
+> (`GlassCard.tsx`). The frost/blur CSS below remains valid for surfaces
+> that still opt into it, but it is no longer the default card treatment,
+> and per-frame blur animation is prohibited (perf). The adopted
+> motion-aware chrome recede
+> (`docs/AEC-2026-RESEARCH-ADOPTION.md` §3.2) rides **opacity only** and
+> restores full opaque paper at rest.
 
 Panels are ONE frosted layer floating above the drawing, lifted by light:
 
@@ -128,6 +145,38 @@ The planting palette (`--forest-*`, `--sprout-*`, `--sage-*`, `--hedge-*`,
 retained. They describe real-world material colors, not chrome. Earthworks
 cut/fill rides `--gs-earthworks-cut` (crimson) / `--gs-earthworks-fill`
 (`#C9A84C` muted drafting gold) — a data pair, never the UI accent.
+
+### 1.7 LA material tokens — the chrome accent + surface family (2026-08-25 amendment)
+
+The 2026-08-25 release (`87adeeb`) added the Landscape Architecture material
+family to `styles/color-tokens.css` (inspired by SCAPE / West 8 / OLIN — warm
+neutrals, earthy materials, charcoal accent, no tech-blue) and migrated 50+
+components onto it. The family is **sanctioned token vocabulary**: components
+reference `var(--la-*)` names, never raw hex (the handoff-color gate still
+rejects literals).
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--la-ink` | `#1C1917` | Stone charcoal — primary chrome text |
+| `--la-ink-secondary` | `#44403C` | Warm gray labels |
+| `--la-ink-muted` | `#78716C` | Stone gray |
+| `--la-ink-faint` | `#A8A29E` | Pale stone (AA-exempt glyphs) |
+| `--la-surface` | `#FAFAF9` | Warm white — the paper card fill |
+| `--la-surface-dim` | `#F5F5F4` | Linen |
+| `--la-surface-muted` | `#E7E5E4` | Warm gray border |
+| `--la-surface-deep` | `#D6D3D1` | Concrete |
+| `--la-accent` | `#1C1917` | **The chrome accent** (replaces Signal Blue) |
+| `--la-highlight` | `#A0522D` | Terracotta highlight — presentation decks |
+| `--la-success` / `--la-warning` / `--la-error` | `#6B7C5E` / `#D4A574` / `#991B1B` | LA-family status hues |
+
+Law: chrome accents and surfaces use `--la-*`; **drawing data keeps the GS
+tokens** (cobalt `--gs-truth`, crimson `--gs-conflict`, earthworks cut/fill)
+— chrome never borrows drawing hues and vice versa. The global
+`--accent`/`--signal` aliases resolve to LA charcoal. LA ink tiers must meet
+the same AA gates (§4) — the `contrast-aa` e2e gates enforce them. Material
+inspiration hues (`--la-stone/timber/concrete/sand/sage/clay/slate`) exist
+for LA-family surfaces; they do not relax the GS status law (`--gs-success`/
+`--gs-warning` stay ink + iconography on GS surfaces).
 
 ---
 
@@ -195,3 +244,17 @@ sunken `#EBEBEB` / pressed `#E4E4E4`):
 - `--gs-truth` (`#0030CF`) stroke on canvas: **8.22** ✅ (was 2.1 on dark — the pivot fixes Signal Blue)
 - `--gs-truth-ink` (`#2450C7`) on panel: **6.89** ✅
 - `--gs-line-strong` (`#8C8C8C`) boundary on panel: **3.36** ✅ non-text
+
+---
+
+## Amendment log
+
+- **2026-08-25 — LA material tokens** (release `87adeeb`): §1.7 added; the
+  sole Signal Blue chrome accent is superseded by `--la-accent` charcoal
+  (§1.2 note); HUD cards are opaque `--la-surface` with no backdrop blur
+  (§1.4 note); the asset fan-out carousel became the asset library panel +
+  bottom strip + right panel tabs; drafting modes render dead-neutral paper
+  (no post-processing, `NoToneMapping`, IBL off). Cobalt Truth and crimson
+  Conflict drawing-data tokens are unchanged. LA ink/surface pairs are
+  covered by the same `contrast-aa` e2e gates rather than a hand-computed
+  table — do not quote unaudited ratios for them.

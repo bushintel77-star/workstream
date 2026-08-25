@@ -100,16 +100,13 @@ export default async function ProjectCanvasPage({
    * (?svg=1) was retired 2026-08-19 — see ONBOARDING.md. */
   const frame = canvas?.site_frame ?? null;
   const webglScaleM = frame?.board_width_m ?? 110;
-  const webglBoardAspect =
-    frame && frame.boundary && frame.boundary.length > 0
-      ? (() => {
-          const ys = frame.boundary!.map((p) => p.y_pct);
-          const xs = frame.boundary!.map((p) => p.x_pct);
-          const w = Math.max(...xs) - Math.min(...xs) || 100;
-          const h = Math.max(...ys) - Math.min(...ys) || 100;
-          return h / w;
-        })()
-      : 1;
+  // The board is a SQUARE: site_truth_import fits the site with a uniform
+  // scale (8% margin), so board_width_m is the metres per 100 board-% on
+  // BOTH axes and the boundary's pct SHAPE already carries the lot's true
+  // aspect. Deriving an aspect from the bbox (h/w) squashed elongated lots
+  // ~5x in the world (a 350×71 m parcel rendered 350×14 m — live 2026-08-25,
+  // 10 Gisborne St) while square lots hid the defect. Aspect is 1 by law.
+  const webglBoardAspect = 1;
 
   return (
     <main aria-label="Design canvas" style={{ position: "fixed", inset: 0 }}>

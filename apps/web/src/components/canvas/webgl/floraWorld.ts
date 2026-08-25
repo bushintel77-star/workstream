@@ -22,13 +22,16 @@
 import {
   buildIndicativeShadeGrid,
   countNearbyCanopy,
+  CURTIS_DESIGN_ASSETS,
   FLORA_HEIGHT_BY_FORM,
   rankCurtisFloraCandidates,
+  rankPaletteForEnvelope,
   sunHoursAtPct,
   type FloraCandidate,
   type FloraStudioForm,
 } from "@workstream/domain";
 import { preferredSunForHours } from "@workstream/domain";
+import type { SiteEnvelope } from "@workstream/contracts";
 import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { TYPE_TO_SYMBOL } from "../handoff/state/canvasBridge";
 
@@ -58,10 +61,20 @@ export interface FloraItem {
   canopyM?: number;
 }
 
+/** Below this envelope fit a candidate will not thrive — dropped from the
+ * ring (unless it is the only one, which then carries the warning why). */
+const ENVELOPE_DROP_FIT = 0.25;
+
 /**
  * Rank candidates at a click point. `sunMin` is the live sun scrubber value
  * (minutes past midnight) — the same axis that drives the 3D sun rig, so
  * the ranking matches the shadows on screen.
+ *
+ * `envelope` (site envelope chip data) completes the automatic half of
+ * planting: the plant window uses the real month, and each candidate is
+ * blended with its envelope fit (sun × wetness) — anything below the
+ * will-not-thrive tier is filtered out before the operator sees the ring,
+ * so what remains is an aesthetic choice. Citations ride in `why`.
  */
 export function rankAtPoint(args: {
   form: FloraStudioForm;
@@ -72,6 +85,7 @@ export function rankAtPoint(args: {
   lng: number;
   sunMin: number;
   address: string;
+  envelope?: SiteEnvelope | null;
 }): { candidates: FloraCandidate[]; sunHours: number } {
   const cells = buildIndicativeShadeGrid(
     args.lat,
@@ -80,14 +94,39 @@ export function rankAtPoint(args: {
   );
   const sunHours = sunHoursAtPct(args.xPct, args.yPct, cells);
   const nearbyCanopyCount = countNearbyCanopy(args.xPct, args.yPct, args.items);
-  const candidates = rankCurtisFloraCandidates({
+  const ranked = rankCurtisFloraCandidates({
     address: args.address,
     sunHours,
     nearbyCanopyCount,
     maxHeightM: FLORA_HEIGHT_BY_FORM[args.form],
     preferredForm: args.form,
+    ...(args.envelope ? { month: args.envelope.month } : {}),
   });
-  return { candidates, sunHours };
+  if (!args.envelope) return { candidates: ranked, sunHours };
+
+  const fitById = new Map(
+    rankPaletteForEnvelope(
+      CURTIS_DESIGN_ASSETS,
+      args.envelope,
+    ).map((r) => [r.symbolId, r] as const),
+  );
+  const blended: FloraCandidate[] = [];
+  for (const c of ranked) {
+    const fit = fitById.get(c.symbolId);
+    if (!fit) {
+      blended.push(c);
+      continue;
+    }
+    if (fit.fit < ENVELOPE_DROP_FIT && ranked.length > 1) continue; // filtered
+    blended.push({
+      ...c,
+      score: Math.min(1, c.score * 0.75 + fit.fit * 0.25),
+      why: fit.fit < ENVELOPE_DROP_FIT
+        ? `${c.why} Envelope warning: ${fit.why}`
+        : `${c.why} Envelope fit ${(fit.fit * 100).toFixed(0)}%: ${fit.why}`,
+    });
+  }
+  return { candidates: blended, sunHours };
 }
 
 /** Exposure label from the shared thresholds (no local duplication). */

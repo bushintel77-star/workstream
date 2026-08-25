@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   createTaskAction,
   getWeatherAction,
@@ -85,6 +85,16 @@ function monthGrid(year: number, month: number): (Date | null)[] {
 
 export function HomePlanner({ projects }: Props) {
   const [now, setNow] = useState(() => new Date());
+  // Mounted gate for the rendered clock: the server stamps its request time
+  // (e.g. 08:35) while hydration re-renders the client's own now (08:38) —
+  // a text mismatch React flags as a hydration error. useSyncExternalStore
+  // is false on the server and true from the first client render (no
+  // setState-in-effect), so the time/date lines paint only client-side.
+  const clockMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [weather, setWeather] = useState<WeatherForecast | null>(null);
   const [taskInput, setTaskInput] = useState("");
   const [savingTask, setSavingTask] = useState(false);
@@ -237,8 +247,8 @@ export function HomePlanner({ projects }: Props) {
       {/* --- Date + Time --- */}
       <section className={home.widget} data-accent="blue">
         <p className={home.widgetLabel}>Today</p>
-        <p className={home.dateLine}>{DAY_FMT.format(now)}</p>
-        <p className={home.timeLine}>{TIME_FMT.format(now)}</p>
+        <p className={home.dateLine}>{clockMounted ? DAY_FMT.format(now) : ""}</p>
+        <p className={home.timeLine}>{clockMounted ? TIME_FMT.format(now) : ""}</p>
       </section>
 
       {/* --- Weather --- */}
