@@ -11,6 +11,8 @@
 
 import { fetchWithRetry } from "./http";
 
+const ADDRESS_TIMEOUT_MS = 5000;
+
 const WFS_BASE = "https://opendata.maps.vic.gov.au/geoserver/wfs";
 
 export type AddressSuggestion = {
@@ -67,6 +69,8 @@ async function queryAddresses(
     url,
     { headers: { Accept: "application/json" } },
     {
+      timeoutMs: ADDRESS_TIMEOUT_MS,
+      retries: 1,
       telemetry: {
         spanName: "vicmap.address_wfs",
         provider: "external",

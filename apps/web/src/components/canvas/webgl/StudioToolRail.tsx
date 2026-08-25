@@ -313,29 +313,24 @@ export function StudioToolRail({
       data-testid="studio-tool-rail"
       aria-label="Studio tools"
       style={{
+        /* FLUSH LEFT — full-height docked rail (DESIGN.md §4).
+         * No floating, no border-radius, no shadow — flush hairline border. */
         position: "absolute",
-        left: 8,
-        top: 152,
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 56,
         display: "flex",
         flexDirection: "column",
         gap: "var(--gs-space-1)",
         pointerEvents: "auto",
         zIndex: "var(--cf-z-chrome)",
-        // Floating element: the rail is a glass panel, not a naked column
-        // of buttons hovering over the drawing (GlassCard recipe — veil +
-        // blur + hairline + neutral shadow tier).
         background: "var(--la-surface)",
-        backdropFilter: "none",
-        WebkitBackdropFilter: "none",
-        borderRadius: "var(--gs-radius-panel)",
-        border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-        boxShadow: "var(--gs-shadow-2)",
-        padding: "6px",
-        // Short viewports: the rail scrolls internally instead of escaping
-        // the canvas edge (webgl-chrome-collision gate).
-        maxHeight: "calc(100dvh - 170px)",
+        borderRight: "1px solid var(--la-surface-muted)",
+        padding: "48px 0 12px",
         overflowY: "auto",
         scrollbarWidth: "none",
+        alignItems: "center",
       }}
     >
       {visible.map((t, i) => {

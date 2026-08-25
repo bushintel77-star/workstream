@@ -24,6 +24,7 @@ import {
   autumnFactor,
 } from "./seasonalStore";
 import { useStudioStore } from "./studioStore";
+import { scanReveal } from "./scanReveal";
 import { layerScaleAlpha, viewScaleRatioForZoom } from "./layerPolicy";
 import { pctToWorld, type PctPoint, type HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
@@ -334,7 +335,11 @@ function TreeMesh({
           : isExist
             ? 0.7
             : 0.05;
-    grp.scale.setScalar(1 - wFactor * (1 - retention));
+    // Seasonal canopy drop × the scan-reveal grow factor (the organic
+    // canopy mask grows in under the flora stage; ×1 when idle).
+    grp.scale.setScalar(
+      (1 - wFactor * (1 - retention)) * (0.04 + 0.96 * scanReveal.flora),
+    );
   });
 
   return (

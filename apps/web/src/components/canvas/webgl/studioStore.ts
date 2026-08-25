@@ -420,6 +420,16 @@ export interface StudioStoreState {
   /** Hold-H peek: chrome fades while the key is held (user-initiated). */
   chromePeek: boolean;
 
+  // --- Scan-choreographed site-truth reveal (AEC program) ---
+  /**
+   * The scan reveal stage: "idle" before/after, a ScanStageName while the
+   * choreography runs, "done" at the end. The scene director reads this via
+   * getState() per frame (transient doctrine); writes happen only on stage
+   * flips. scanStageStartedAt (performance.now) anchors each stage's 0→1.
+   */
+  scanStage: "idle" | "cadastre" | "parcels" | "services" | "terrain" | "flora" | "done";
+  scanStageStartedAt: number;
+
   // --- Shared ink layer ---
   /**
    * All sketch strokes in board-% space (the CanvasStroke contract schema).
@@ -704,6 +714,10 @@ export interface StudioStoreState {
   setChromeReceded: (v: boolean) => void;
   /** Hold-H peek flag — the chrome fades while the key is held. */
   setChromePeek: (v: boolean) => void;
+  /** Advance the scan reveal (stage name or "done"/"idle"); stamps the clock. */
+  setScanStage: (
+    stage: "idle" | "cadastre" | "parcels" | "services" | "terrain" | "flora" | "done",
+  ) => void;
   /**
    * Set/clear the facade azimuth override (photo pin sets its plane bearing;
    * session exit clears it back to cardinals-only).
@@ -960,6 +974,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   elevationFacadeAzimuth: null, // photo pins set the plane bearing; exit clears it
   chromeReceded: false, // ChromeRecedeWatcher flips on camera-motion state change
   chromePeek: false, // hold-H peek — keydown/keyup in WebGLStudioPreview
+  scanStage: "idle", // scan choreography director flips per stage
+  scanStageStartedAt: 0,
 
   // Elevation Slice defaults
   sliceActive: false,
@@ -1164,6 +1180,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setElevationActive: (elevationActive) => set({ elevationActive }),
   setChromeReceded: (chromeReceded) => set({ chromeReceded }),
   setChromePeek: (chromePeek) => set({ chromePeek }),
+  setScanStage: (scanStage) =>
+    set({ scanStage, scanStageStartedAt: performance.now() }),
   setElevationFacadeAzimuth: (elevationFacadeAzimuth) =>
     set({ elevationFacadeAzimuth }),
   // Transient per-frame write — no DOM consumer should subscribe to viewBlend

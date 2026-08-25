@@ -92,7 +92,7 @@ async function fetchWithRetryAttempt(
       return res;
     } catch (err) {
       lastErr = err;
-      if (attempt >= retries) break;
+      if (attempt >= retries || outerSignal?.aborted) break;
       await new Promise((r) => setTimeout(r, jitteredDelay(backoffMs, attempt)));
     } finally {
       clearTimeout(timer);

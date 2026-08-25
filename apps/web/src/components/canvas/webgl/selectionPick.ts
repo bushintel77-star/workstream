@@ -17,7 +17,7 @@ import type {
 import type { PctPoint } from "./coordTransform";
 
 export type SelectionRef = {
-  kind: "placement" | "feature" | "photoStroke";
+  kind: "placement" | "feature" | "photoStroke" | "boundary" | "building";
   id: string;
   /** Photo-elevation owner — required for photoStroke refs. */
   elevationId?: string;
@@ -159,6 +159,7 @@ export function dedupeSelection(refs: SelectionRef[]): SelectionRef[] {
  * Drop refs whose entity no longer exists in the document (undo / redo /
  * hydrate / entity removal). Entities that exist elsewhere — e.g. a
  * placement whose id also mirrors a feature — survive as their own ref.
+ * Site elements (boundary, building) persist while the ring exists.
  */
 export function pruneSelection(
   refs: SelectionRef[],
@@ -166,6 +167,8 @@ export function pruneSelection(
     placements: CatalogPlacement[];
     features: LandscapeFeature[];
     photoElevations: PhotoElevation[];
+    siteBoundary?: PctPoint[];
+    siteBuilding?: PctPoint[];
   },
 ): SelectionRef[] {
   const placementIds = new Set(doc.placements.map((p) => p.id));
@@ -174,10 +177,53 @@ export function pruneSelection(
   for (const e of doc.photoElevations) {
     for (const s of e.strokes) photoStrokeIds.add(s.id);
   }
+  const hasBoundary = (doc.siteBoundary ?? []).length >= 3;
+  const hasBuilding = (doc.siteBuilding ?? []).length >= 3;
   return refs.filter((r) => {
     if (r.kind === "placement") return placementIds.has(r.id);
     if (r.kind === "feature") return featureIds.has(r.id);
     if (r.kind === "photoStroke") return photoStrokeIds.has(r.id);
+    if (r.kind === "boundary") return hasBoundary;
+    if (r.kind === "building") return hasBuilding;
     return false;
   });
+}
+
+/** Boundary line grab radius in metres — wider than features: the title
+ * line is the site's anchor and a near-miss should still select it. */
+const BOUNDARY_PICK_M = 2.5;
+
+/** True when the board-% click is within the boundary line grab radius. */
+export function boundaryHitTest(
+  boundary: PctPoint[],
+  pct: PctPoint,
+  scaleM: number,
+): boolean {
+  if (boundary.length < 3) return false;
+  const maxPct = mToPct(BOUNDARY_PICK_M, scaleM);
+  for (let i = 0; i < boundary.length; i++) {
+    const a = boundary[i]!;
+    const b = boundary[(i + 1) % boundary.length]!;
+    if (pointSegDist(pct.x, pct.y, a.x, a.y, b.x, b.y) <= maxPct) return true;
+  }
+  return false;
+}
+
+/** Building footprint grab radius — same as boundary (it's also a mass). */
+const BUILDING_PICK_M = 2.5;
+
+/** True when the click is on/near the building footprint outline. */
+export function buildingHitTest(
+  building: PctPoint[],
+  pct: PctPoint,
+  scaleM: number,
+): boolean {
+  if (building.length < 3) return false;
+  const maxPct = mToPct(BUILDING_PICK_M, scaleM);
+  for (let i = 0; i < building.length; i++) {
+    const a = building[i]!;
+    const b = building[(i + 1) % building.length]!;
+    if (pointSegDist(pct.x, pct.y, a.x, a.y, b.x, b.y) <= maxPct) return true;
+  }
+  return false;
 }

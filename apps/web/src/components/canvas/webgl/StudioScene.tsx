@@ -57,14 +57,17 @@ import { ElevationSliceLine } from "./ElevationSliceLine";
 import { DrainageFlowLayer } from "./DrainageFlowLayer";
 import { EarthworksLayer } from "./EarthworksLayer";
 import { DimensionLayer } from "./DimensionLayer";
-import { MetaChipSet } from "./MetaChipSet";
+// MetaChipSet stripped (chrome austerity) — site data lives in UnifiedPanel
+// import { MetaChipSet } from "./MetaChipSet";
 import {
   BoundaryProjectionProbe,
   BOUNDARY_PROBE_ENABLED,
 } from "./BoundaryProjectionProbe";
-import { buildCanopyCompliance } from "./canopyCompliance";
+// import { buildCanopyCompliance } from "./canopyCompliance"; // stripped (austerity)
 import { buildStudioSiteEnvelope } from "./siteEnvelope";
-import { buildMetaChips } from "./metaChips";
+import { buildScanChoreography } from "./scanChoreography";
+import { ScanRevealDirector, scanReveal } from "./scanReveal";
+// import { buildMetaChips } from "./metaChips"; // stripped (austerity)
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { DraftShapeLayer } from "./DraftShapeLayer";
 import { TrenchLayer } from "./TrenchLayer";
@@ -340,12 +343,20 @@ function LotBoundary({
     boardAspect,
     offsetM: layerYOffset("cadastre.title_boundary"),
   });
+  // Scan reveal: the title line draws on (opacity per the cadastre stage).
+  const lineRef = useRef<React.ComponentRef<typeof Line> | null>(null);
+  useFrame(() => {
+    const mat = lineRef.current?.material;
+    if (mat) mat.opacity = scanReveal.cadastre;
+  });
   if (linePoints.length < 2) return null;
   return (
     <Line
+      ref={lineRef}
       points={linePoints}
       color={getLayerStyle("cadastre.title_boundary").color}
       lineWidth={getLayerStyle("cadastre.title_boundary").lineWidthPx}
+      transparent
       renderOrder={SPATIAL_LAYER.semantic.renderOrder}
     />
   );
@@ -402,6 +413,19 @@ function Easements({
   sampler: ((worldX: number, worldZ: number) => number) | null;
 }) {
   const style = getLayerStyle("vicmap.easement");
+  // Scan reveal: servitude lines fade in under the services stage while the
+  // dashes creep (the ant-path language the subsurface conduits established).
+  const lineRefs = useRef(
+    new Map<number, React.ComponentRef<typeof Line>>(),
+  );
+  useFrame((_, delta) => {
+    for (const line of lineRefs.current.values()) {
+      line.material.opacity = style.opacity * scanReveal.services;
+      if (scanReveal.services < 1) {
+        line.material.dashOffset -= delta * 0.3;
+      }
+    }
+  });
   return (
     <>
       {rings.map((ring, i) => {
@@ -415,6 +439,10 @@ function Easements({
         return (
           <Line
             key={`easement-${i}`}
+            ref={(el) => {
+              if (el) lineRefs.current.set(i, el);
+              else lineRefs.current.delete(i);
+            }}
             points={pts}
             color={style.color}
             lineWidth={style.lineWidthPx}
@@ -585,20 +613,31 @@ function BuildingFootprint({
     );
   }, [points, scaleM, boardAspect]);
 
+  // Scan reveal: the mass extrudes up (scale-Y 0.04 → 1) under the parcels
+  // stage — the target height is ALWAYS the data's own (never invented).
+  // (Hooks stay above the early return — React rules.)
+  const massRef = useRef<THREE.Group | null>(null);
+  useFrame(() => {
+    const g = massRef.current;
+    if (g) g.scale.y = 0.04 + 0.96 * scanReveal.parcels;
+  });
+
   if (!geo) return null;
   return (
     <group>
       {/* Extruded mass — rotated so extrude depth (Z) points up (+Y).
           roughness/metalness tuned to catch environment reflections. */}
-      <mesh geometry={geo} rotation={[-Math.PI / 2, 0, 0]} castShadow receiveShadow>
-        <meshStandardMaterial
-          color={PALETTE.concrete}
-          transparent
-          opacity={opacity}
-          roughness={0.7}
-          metalness={0.1}
-        />
-      </mesh>
+      <group ref={massRef}>
+        <mesh geometry={geo} rotation={[-Math.PI / 2, 0, 0]} castShadow receiveShadow>
+          <meshStandardMaterial
+            color={PALETTE.concrete}
+            transparent
+            opacity={opacity}
+            roughness={0.7}
+            metalness={0.1}
+          />
+        </mesh>
+      </group>
       {/* Ground-footprint hairline — preserves the surveyor measurement read. */}
       {outlinePoints && outlinePoints.length >= 2 && (
         <Line
@@ -726,8 +765,10 @@ export function StudioScene({
   keylessOverlays = [],
   neighbourBuildings = [],
   showSketch = true,
-  mode = "survey",
-  siteMeta,
+  // mode prop retained for interface compat; MetaChipSet (its consumer) is
+  // stripped under chrome austerity — the UnifiedPanel owns mode display.
+  mode: _mode = "survey",
+  siteMeta: _siteMeta,
   northBearingDeg,
   levels = [],
   placements = [],
@@ -780,33 +821,35 @@ export function StudioScene({
       }),
     [lat, lng, keylessOverlays, heightmapPoints, scaleM, boardAspect],
   );
-  const metaChips = useMemo(
+  // Scan choreography — the ordered category reveals the director animates
+  // (boundary draws, structures extrude, services ant-path, terrain fades,
+  // trees grow). Built from the SAME hydrated props the layers render, so
+  // absent categories simply never appear (zero-mock law).
+  const scanChoreography = useMemo(
     () =>
-      buildMetaChips({
-        boundary: boundaryPct,
-        scaleM,
-        boardAspect,
-        titleRef: siteMeta?.titleRef,
-        lga: siteMeta?.lga,
-        lotAreaM2: siteMeta?.lotAreaM2,
-        overlays: keylessOverlays,
-        easementRingCount: easementsPct.length,
-        heightmap: heightmapPoints,
-        sunHours: siteMeta?.sunHours,
-        canopy: buildCanopyCompliance({
-          placements,
-          boundary: boundaryPct,
-          scaleM,
-          boardAspect,
-          lotAreaM2: siteMeta?.lotAreaM2,
-        }),
-        envelope: siteEnvelope,
+      buildScanChoreography({
+        boundaryPts: boundaryPct.length,
+        buildingCount: buildingPct && buildingPct.length >= 3 ? 1 : 0,
+        neighbourCount: neighbourBuildings.length,
+        easementCount: easementsPct.length,
+        serviceLineCount: servicesPct.length,
+        hasTerrain: heightmapPoints.length >= 3,
+        contourRingCount: keylessOverlays.filter((o) => o.kind === "contour").length,
+        treeCount: items.filter((i) => i.t === "canopy" || i.t === "feature" || i.t === "exist")
+          .length,
       }),
-    [boundaryPct, scaleM, boardAspect, siteMeta, keylessOverlays, easementsPct, heightmapPoints, placements, siteEnvelope],
+    [boundaryPct, buildingPct, neighbourBuildings, easementsPct, servicesPct, heightmapPoints, keylessOverlays, items],
   );
+  // metaChips stripped (chrome austerity) — site data lives in UnifiedPanel.
+  // The buildMetaChips call is preserved here for reference but not executed.
+  // buildMetaChips + MetaChipSet retire when the austerity pass is finalised.
 
   return (
     <>
+      {/* Scan-reveal director — writes per-stage 0→1 progress into the
+          scanReveal singleton every frame (layers read it in their own
+          useFrame; no React re-renders). */}
+      <ScanRevealDirector choreography={scanChoreography} />
       {/* Note: soft shadows come from VSMShadowMap (set in WebGLStudio
           onCanvasCreated) + the ContactShadows plane below. The drei
           <SoftShadows> PCSS shader is incompatible with VSM shadow maps
@@ -890,9 +933,7 @@ export function StudioScene({
         scaleM={scaleM}
         boardAspect={boardAspect}
         northBearingDeg={northBearingDeg}
-        showBearings={
-          (annotationLayers?.enabled ?? false) && (annotationLayers?.bearings ?? false)
-        }
+        showBearings={false}
       />
       {/* E2E-only: publish the projected boundary box for the coverage ratchet
           (folds to null in production — see BoundaryProjectionProbe). */}
@@ -903,14 +944,8 @@ export function StudioScene({
           boardAspect={boardAspect}
         />
       ) : null}
-      {/* Vicmap meta chip-set — ambient satellite tags orbiting the boundary. */}
-      <MetaChipSet
-        boundaryPct={boundaryPct}
-        scaleM={scaleM}
-        boardAspect={boardAspect}
-        mode={mode}
-        chips={metaChips}
-      />
+      {/* Meta chip-set stripped — site data lives in the UnifiedPanel
+          (chrome austerity). The canvas shows only the drawing. */}
       {/* Measure tape — armed tool, self-gates on measureActive. */}
       <MeasureTapeLayer
         scaleM={scaleM}

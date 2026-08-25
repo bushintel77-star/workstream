@@ -62,7 +62,11 @@ const API = process.env.API_URL ?? "http://127.0.0.1:3001";
  */
 const COVERAGE_BASELINE: Record<string, number> = {
   survey: 2.9,
-  sketch: 3.0,
+  // Sketch +0.96pp (3.0 → 3.96, 2026-08-25): the release's asset library
+  // panel (87adeeb) added rail-docked discovery chrome over the drawing
+  // column. Re-measured against the boundary denominator on the
+  // E2E-enabled dev server after the square-board law landed.
+  sketch: 4.0,
   cad: 6.2,
   quote: 5.8,
 };

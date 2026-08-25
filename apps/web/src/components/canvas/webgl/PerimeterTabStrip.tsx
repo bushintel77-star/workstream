@@ -44,6 +44,27 @@ export interface MetaTabDef {
   onToggle: () => void;
 }
 
+/** Mode icons — one per canvas mode, the Windows 11 nested-icon pattern. */
+const MODE_ICON: Record<string, string> = {
+  survey: "⌖",
+  sketch: "✎",
+  cad: "⌗",
+  elevation: "⌐",
+  garden: "❀",
+  quote: "$",
+  present: "◉",
+  share: "⤴",
+};
+
+/** Entity icons for the inspector's history rail. */
+export const ENTITY_ICON: Record<string, string> = {
+  placement: "♣",
+  feature: "◆",
+  boundary: "◇",
+  building: "■",
+  photoStroke: "✎",
+};
+
 const chipBase: CSSProperties = {
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-sm)",
@@ -80,16 +101,16 @@ export function PerimeterTabStrip({
   trailing?: ReactNode;
 }) {
   const glassSegment: CSSProperties = {
+    /* Frosted-glass pill (DESIGN.md §5) — backdrop blur on the floating nav. */
     display: "flex",
     alignItems: "center",
     gap: "var(--gs-space-1)",
     padding: "3px 6px",
     borderRadius: "var(--gs-radius-pill)",
-    background: "var(--la-surface)",
-    backdropFilter: "none",
-    WebkitBackdropFilter: "none",
-    border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-    boxShadow: "var(--gs-shadow-1)",
+    background: "color-mix(in srgb, var(--la-surface) 80%, transparent)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    border: "1px solid var(--la-surface-muted)",
     whiteSpace: "nowrap",
   };
 
@@ -136,6 +157,9 @@ export function PerimeterTabStrip({
                   background: "transparent",
                 }}
               >
+                <span style={{ fontSize: "1.1em", marginRight: 3, opacity: 0.6 }}>
+                  {MODE_ICON[id] ?? "·"}
+                </span>
                 {label}
               </button>
             );
@@ -149,6 +173,9 @@ export function PerimeterTabStrip({
               onClick={() => onNativeMode(id)}
               active={active}
             >
+              <span style={{ fontSize: "1.1em", marginRight: 3, opacity: active ? 1 : 0.5 }}>
+                {MODE_ICON[id] ?? "·"}
+              </span>
               {label}
             </Button>
           );

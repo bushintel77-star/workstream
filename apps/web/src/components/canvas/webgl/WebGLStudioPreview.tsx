@@ -27,6 +27,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -77,12 +78,12 @@ import { AssetLibraryPanel } from "./AssetLibraryPanel";
 import { FloatingPlacementToolbar } from "./FloatingPlacementToolbar";
 import { StudioToolRail } from "./StudioToolRail";
 import { Button } from "./Button";
-import { NibPalette } from "./NibPalette";
+// import { NibPalette } from "./NibPalette"; // stripped (austerity)
 import { PerimeterTabStrip, type MetaTabId } from "./PerimeterTabStrip";
 import { canvasLayerPolicy } from "./layerPolicy";
 import { importSiteTruth } from "./siteTruthImport";
 import { StudioCommandPalette } from "./StudioCommandPalette";
-import { StudioElevationCard } from "./StudioElevationCard";
+// import { StudioElevationCard } from "./StudioElevationCard"; // stripped (austerity)
 import { StudioCadCard } from "./StudioCadCard";
 import { AiScanOverlay } from "./AiScanOverlay";
 import { InspectorCard } from "./InspectorCard";
@@ -90,15 +91,19 @@ import { SitePhotoGallery } from "./SitePhotoGallery";
 import { PhotoTraceHud } from "./PhotoTraceHud";
 import { PhotoElevationSheet } from "./PhotoElevationSheet";
 import { SplitViewLens } from "./SplitViewLens";
-import { ViewportTransitionHUD } from "./ViewportTransitionHUD";
+// import { ViewportTransitionHUD } from "./ViewportTransitionHUD"; // stripped (austerity)
 import { StudioSurfaceErrorBoundary } from "./StudioSurfaceErrorBoundary";
 import { placementsToItems, featuresOntoItems } from "../handoff/state/canvasBridge";
 import { buildCanopyCompliance } from "./canopyCompliance";
+import { buildScanChoreography } from "./scanChoreography";
 import { toRenderItems } from "./stateBridge";
 import { SketchCadReviewCard } from "./SketchCadReviewCard";
+import { UnifiedPanel } from "./UnifiedPanel";
 import {
   nearestFeatureId,
   nearestPlacementId,
+  boundaryHitTest,
+  buildingHitTest,
 } from "./selectionPick";
 import { suggestedMode, unlockedModes, type CanvasMode, type CanvasProgress } from "../../../lib/canvas-mode";
 import { interactionGuidance } from "./interactionGuidance";
@@ -253,7 +258,7 @@ export function WebGLStudioPreview({
   const [metaTab, setMetaTab] = useState<MetaTabId | null>(null);
   /** The open photo elevation sheet (print artifact) — null = closed. */
   const [photoSheetId, setPhotoSheetId] = useState<string | null>(null);
-  const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
+  const _fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
   const router = useRouter();
 
   // Escape closes the open surface panel (browser-tab behaviour).
@@ -561,6 +566,16 @@ export function WebGLStudioPreview({
         store.selectRef({ kind: "placement", id: placementId }, opts);
         return;
       }
+      // Site elements: the title boundary and the building footprint are
+      // selectable — the unified panel shows their inspector on click.
+      if (boundaryHitTest(store.siteBoundary, pct, scaleM)) {
+        store.selectRef({ kind: "boundary", id: "site-boundary" }, opts);
+        return;
+      }
+      if (buildingHitTest(store.siteBuilding ?? [], pct, scaleM)) {
+        store.selectRef({ kind: "building", id: "site-building" }, opts);
+        return;
+      }
       if (!opts.additive) store.clearSelection();
     },
     [scaleM],
@@ -649,6 +664,14 @@ export function WebGLStudioPreview({
           (r.overlays ? ` · ${r.overlays} overlays` : "") +
           (r.levels ? ` · ${r.levels} indicative levels` : ""),
       );
+      // Arm the scan-choreographed reveal: the reload rehydrates the studio
+      // from the server and the mount effect runs the category cascade.
+      try {
+        sessionStorage.setItem("gs-scan-reveal", "1");
+      } catch {
+        // sessionStorage unavailable (privacy mode) — the reveal simply
+        // doesn't run; entities appear settled, which is correct too.
+      }
       window.location.reload();
     } catch (e) {
       setTruthMsg(e instanceof Error ? e.message : "Site truth import failed");
@@ -771,7 +794,7 @@ export function WebGLStudioPreview({
     [progress, strokes, storePlacements, storeFeatures, boundaryPct],
   );
   const unlocked = useMemo(() => unlockedModes(liveProgress), [liveProgress]);
-  const nextMode = useMemo(() => suggestedMode(liveProgress), [liveProgress]);
+  const _nextMode = useMemo(() => suggestedMode(liveProgress), [liveProgress]);
 
   /*
    * The full projection capsule needs ~1021px of viewport to sit between the
@@ -781,7 +804,7 @@ export function WebGLStudioPreview({
    * which fits the remaining gap at every viewport the collision spec walks.
    */
   const narrowViewport = useMediaQuery("(max-width: 1100px)");
-  const hudCompact = narrowViewport;
+  const _hudCompact = narrowViewport;
   /*
    * Survey drops the projection capsule entirely. It already argued its own
    * case ("Survey mode has nothing to project yet, so the full capsule is dead
@@ -791,7 +814,7 @@ export function WebGLStudioPreview({
    * reachable from the keyboard (1/2/3), the command palette, and the Plan/3D
    * segmented control in the identity strip.
    */
-  const showProjectionHud = activeMode !== "survey";
+  const _showProjectionHud = activeMode !== "survey";
 
   // Survey capture progress — ONE derivation feeding both the setup panel and
   // the chrome pill, so the two can never disagree on "X of 5". Completion is
@@ -818,7 +841,7 @@ export function WebGLStudioPreview({
       }),
     [boundaryPct, buildingPct, studioItems, levels, bydaAssets, easementsPct],
   );
-  const guidance = interactionGuidance({
+  const _guidance = interactionGuidance({
     activeMode,
     sketchMode,
     measureActive,
@@ -1014,6 +1037,78 @@ export function WebGLStudioPreview({
     ],
   );
   const communicationProfile = communicationProfileForMode(activeMode);
+
+  // Scan choreography (mirror of StudioScene's build — same props, pure) —
+  // drives the post-import reveal clock and the overlay's REAL stage labels.
+  const scanChoreography = useMemo(
+    () =>
+      buildScanChoreography({
+        boundaryPts: boundaryPct.length,
+        buildingCount: buildingPct && buildingPct.length >= 3 ? 1 : 0,
+        neighbourCount: neighbourBuildings.length,
+        easementCount: easementsPct?.length ?? 0,
+        serviceLineCount: bydaAssets.length,
+        hasTerrain: liveData.heightmapPoints.length >= 3,
+        contourRingCount: keylessOverlays.filter((o) => o.kind === "contour").length,
+        treeCount: studioItems.filter(
+          (i) => i.t === "canopy" || i.t === "feature" || i.t === "exist",
+        ).length,
+      }),
+    [boundaryPct, buildingPct, neighbourBuildings, easementsPct, bydaAssets, liveData.heightmapPoints, keylessOverlays, studioItems],
+  );
+  // The reveal clock: the import armed `gs-scan-reveal` before its reload;
+  // on this mount, walk the choreography through the store so the scene
+  // director animates each category and the overlay shows true stages.
+  // Mount-once by design: the choreography memo's inputs churn identity
+  // during hydration, and a dep-driven effect would cancel its own timers
+  // before the first stage fires. The ref carries the latest plan; for the
+  // reveal path the data is already in the server props at mount.
+  const choreoRef = useRef(scanChoreography);
+  useEffect(() => {
+    choreoRef.current = scanChoreography;
+  }, [scanChoreography]);
+  useEffect(() => {
+    let armed: boolean;
+    try {
+      armed = sessionStorage.getItem("gs-scan-reveal") === "1";
+    } catch {
+      armed = false;
+    }
+    if (!armed) return;
+    const scanPlan = choreoRef.current;
+    if (!scanPlan) return;
+    // NOTE: the flag is consumed only when the reveal COMPLETES — a
+    // StrictMode double-mount cancels the first timer chain via cleanup,
+    // and the second mount must still find the flag armed.
+    const timers: number[] = [];
+    let at = 300;
+    for (const e of scanPlan.events) {
+      timers.push(
+        window.setTimeout(
+          () => useStudioStore.getState().setScanStage(e.stage),
+          at,
+        ),
+      );
+      at += e.durationMs;
+    }
+    timers.push(
+      window.setTimeout(() => {
+        useStudioStore.getState().setScanStage("done");
+        try {
+          sessionStorage.removeItem("gs-scan-reveal");
+        } catch {
+          // best effort only
+        }
+      }, at + 200),
+    );
+    return () => {
+      for (const t of timers) window.clearTimeout(t);
+    };
+  }, []);
+  // Live scan state (post-reload reveal) keeps the overlay up with real stages.
+  const scanRevealActive = useStudioStore(
+    (s) => s.scanStage !== "idle" && s.scanStage !== "done",
+  );
 
   // Scene props shared by the single studio and both split halves.
   const sceneProps = {
@@ -1307,13 +1402,18 @@ export function WebGLStudioPreview({
           drafter's ghost generation / assist (CAD). Null when idle; the
           overlay is ambient (wash tier) so chrome stays interactive above. */}
       <AiScanOverlay
-        active={truthBusy}
+        active={truthBusy || scanRevealActive}
         label="Importing site truth"
-        stages={[
-          "Reading cadastre",
-          "Tracing title boundary",
-          "Placing easements and levels",
-        ]}
+        stages={
+          scanChoreography
+            ? scanChoreography.events.map((e) => e.label)
+            : ["Reading cadastre", "Tracing title boundary", "Placing easements and levels"]
+        }
+        stageTestIds={
+          scanChoreography
+            ? scanChoreography.events.map((e) => `scan-stage-${e.stage}`)
+            : undefined
+        }
         testId="ai-scan-overlay-import"
       />
       <AiScanOverlay
@@ -1594,10 +1694,13 @@ export function WebGLStudioPreview({
         {!splitView ? (
         <div
           style={{
-            margin: "0 auto",
+            /* Floating top-center pill (DESIGN.md §5). */
+            position: "absolute",
+            top: 12,
+            left: "50%",
+            transform: "translateX(-50%)",
             pointerEvents: "none",
-            maxWidth: "calc(100% - 280px)",
-            minWidth: 0,
+            zIndex: "var(--cf-z-chrome)",
           }}
         >
         <PerimeterTabStrip
@@ -1609,159 +1712,15 @@ export function WebGLStudioPreview({
               ? null
               : { done: surveySetup.done, total: surveySetup.total }
           }
-          metaTabs={[
-            {
-              id: "studio",
-              label: "Studio",
-              active: metaTab === "studio",
-              onToggle: () => setMetaTab(metaTab === "studio" ? null : "studio"),
-            },
-            {
-              id: "sun",
-              label: "Sun",
-              active: metaTab === "sun",
-              onToggle: () => setMetaTab(metaTab === "sun" ? null : "sun"),
-            },
-            {
-              id: "growth",
-              label: "Growth",
-              active: metaTab === "growth",
-              onToggle: () => setMetaTab(metaTab === "growth" ? null : "growth"),
-            },
-            {
-              id: "layers",
-              label: "Layers",
-              active: metaTab === "layers",
-              onToggle: () => setMetaTab(metaTab === "layers" ? null : "layers"),
-            },
-            {
-              id: "site",
-              label: "Site",
-              active: metaTab === "site",
-              onToggle: () => setMetaTab(metaTab === "site" ? null : "site"),
-            },
-            {
-              id: "fit",
-              label: "Fit",
-              active: fitSheetOpen,
-              onToggle: () => {
-                const open = useStudioStore.getState().fitSheetOpen;
-                useStudioStore.getState().setFitSheetOpen(!open);
-              },
-            },
-            ...(liveData.heightmapPoints.length > 0
-              ? [
-                  {
-                    id: "terrain" as MetaTabId,
-                    label: "Terrain",
-                    active: metaTab === "terrain",
-                    onToggle: () =>
-                      setMetaTab(metaTab === "terrain" ? null : "terrain"),
-                  },
-                ]
-              : []),
-          ]}
-          trailing={
-            <>
-              <span
-                data-testid="strip-stats"
-                aria-label={`Canvas summary: ${stats.boundaryPoints} boundary points, ${stats.items} items, ${stats.strokes} strokes`}
-                style={{
-                  fontFamily: "var(--font-tech)",
-                  fontSize: "var(--gs-font-xs)",
-                  fontWeight: 500,
-                  letterSpacing: "0.02em",
-                  fontVariantNumeric: "tabular-nums",
-                  color: "var(--gs-ink-secondary)",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                B{stats.boundaryPoints} · I{stats.items} · S{stats.strokes}
-                {stats.strikes > 0 && (
-                  <span style={{ color: "var(--la-error)" }}>
-                    {" "}
-                    · ⚠{stats.strikes}
-                  </span>
-                )}
-                {" "}| {stats.scaleM.toFixed(0)}m
-              </span>
-              <SaveStatusChip
-                onRetry={retrySave}
-                onRefresh={() => window.location.reload()}
-              />
-              <MeasureReadoutChip scaleM={scaleM} boardAspect={boardAspect} />
-              <DraftReadoutChip />
-            </>
-          }
+          metaTabs={[]}
+          trailing={null}
         />
         </div>
       ) : null}
       </div>
 
-      {/* ---- Viewport transition HUD — fuses the Fused Rendering Context
-          (tilt axis + projection blend) into a single chrome capsule.
-          Lives in the right column between the tab strip and the right
-          dock; passes the local writeLiveRig bridge and activeMode so the
-          preset buttons can drive the camera and switch glass material. */}
-      {/* ---- Viewport transition HUD — fuses the Fused Rendering Context
-          (tilt axis + projection blend) into a single chrome capsule.
-          Lives in the right column between the tab strip and the right
-          dock; passes the local writeLiveRig bridge and activeMode so the
-          preset buttons can drive the camera and switch glass material.
-          Suppressed under SplitViewLens — the dual-canvas comparison
-          has its own per-half viewBlendLocked label, and a single
-          global HUD would misreport the locked half. */}
-      {!splitView && showProjectionHud ? (
-      <div
-        style={
-          hudCompact
-            ? {
-                /*
-                 * Compact capsule sits on the 152px content line the rail and
-                 * the right dock already use. Measured clear at 960x640: the
-                 * strip wraps to 101px tall (so top:70 lands inside it), the
-                 * nib palette ends at x=403, and the dock starts at x=580 —
-                 * this lands at x=440..560, y=152..196. The bottom-left corner
-                 * the brief suggested is not safe: the asset dock occupies it
-                 * whenever assets are open, including from the Survey panel's
-                 * own "existing trees" row.
-                 */
-                position: "absolute",
-                top: 152,
-                right: 400,
-                pointerEvents: "none",
-                zIndex: "var(--cf-z-chrome)",
-              }
-            : {
-                position: "absolute",
-                top: 70,
-                right: 400,
-                pointerEvents: "none",
-                zIndex: "var(--cf-z-chrome)",
-              }
-        }
-      >
-        <ViewportTransitionHUD
-          activeMode={activeMode}
-          writeLiveRig={writeLiveRig}
-          compact={hudCompact}
-        />
-      </div>
-      ) : null}
-
-      {/* ---- Elevation mode: the wide board sheet stays a centred overlay
-          (it cannot fit a dock) — centring is now against the full canvas,
-          fixing the old broken containing block (UI survey §1.1). ---- */}
-      {activeMode === "elevation" ? (
-        <StudioElevationCard
-          boundaryPct={boundaryPct}
-          buildingPct={buildingPct}
-          items={studioItems}
-          scaleM={scaleM}
-          onTraceInPlan={() => setActiveMode("sketch")}
-          onClose={() => setActiveMode("sketch")}
-        />
-      ) : null}
+      {/* Chrome austerity: viewport HUD + elevation card stripped — data
+          lives in the UnifiedPanel. */}
 
       {/* ---- Right dock — the single right-edge panel host. Mode/meta
           surfaces and the CAD review card dock here instead of hanging
@@ -1813,7 +1772,7 @@ export function WebGLStudioPreview({
           width: narrowViewport
             ? "min(300px, calc(100vw - 140px))"
             : 360,
-          display: dockCollapsed ? "none" : "flex",
+          display: "none", // Retired by the Unified Panel (AEC program wave 3)
           flexDirection: "column",
           gap: "var(--gs-space-3)",
           alignItems: "flex-end",
@@ -2760,7 +2719,64 @@ export function WebGLStudioPreview({
             to the COMPACT running-estimate summary — the mode panel keeps the
             dock's height and the estimate is the ambient companion, so the two
             never compete for space (gold-standard 2026 coexistence). */}
-        {!splitView && fitSheetOpen && items && items.length > 0 ? (
+        {/* EstimatorPanel moved to unified-panel companion mount below (wave 3) */}
+      </div>
+
+
+
+      {/* Left slim tool icons — bare (no container), border chrome per the
+          Stitch reference; the drawing owns the middle. */}
+      <StudioToolRail
+        showTerrainTools={liveData.heightmapPoints.length > 0}
+        showDims={boundaryPct.length >= 3}
+        showEarth={liveData.heightmapPoints.length > 0 && hasPads}
+        presentActive={presentationMode}
+        onPresentToggle={() => setPresentationMode((p) => !p)}
+        showTidy={sketchModeActive || strokes.length > 0}
+        tidyDisabled={strokes.length === 0}
+        onTidy={() => useStudioStore.getState().tidySketchToCad()}
+      />
+
+      {/* Nib palette stripped (austerity) — absorb into UnifiedPanel. */}
+
+      {/* Selection chip stripped — UnifiedPanel shows selection state. */}
+
+      {/* Asset library — rail-docked discovery palette (the single asset
+          surface; replaces the bottom fan-out dock and the full-screen
+          Asset Selection Studio, both removed 2026-08-25). Stays mounted
+          while closed so it owns the arm/disarm Esc ladder. */}
+      <AssetLibraryPanel />
+
+      {/* Unified floating panel — boundary-anchored, selection-driven.
+          Shows boundary/building inspectors (new) + mode bodies + estimator.
+          Coexists with the dock during migration; the dock retires as each
+          body moves in. */}
+      <UnifiedPanel
+        mode={activeMode}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        boundaryPct={boundaryPct}
+        buildingPct={buildingPct ?? null}
+        buildingSource={null}
+        lotAreaM2={siteMeta?.lotAreaM2}
+      />
+
+      {/* Estimator companion — floats independently. FitSheetCard self-gates
+          on its own items prop (renders null when empty, so the wrapper is
+          safe to always mount — no store hydration race). */}
+      {!splitView ? (
+        <div
+          data-testid="estimator-float"
+          style={{
+            position: "absolute",
+            /* Sit LEFT of the flush right inspector (320px + 16px gap). */
+            right: 336,
+            bottom: 16,
+            width: narrowViewport ? "min(300px, calc(100vw - 480px))" : 340,
+            pointerEvents: "none",
+            zIndex: "var(--cf-z-chrome)",
+          }}
+        >
           <EstimatorPanel
             projectId={projectId}
             items={items ?? []}
@@ -2785,75 +2801,8 @@ export function WebGLStudioPreview({
               lotAreaM2: siteMeta?.lotAreaM2,
             })}
           />
-        ) : null}
-      </div>
-
-
-
-      {/* Left slim tool icons — bare (no container), border chrome per the
-          Stitch reference; the drawing owns the middle. */}
-      <StudioToolRail
-        showTerrainTools={liveData.heightmapPoints.length > 0}
-        showDims={boundaryPct.length >= 3}
-        showEarth={liveData.heightmapPoints.length > 0 && hasPads}
-        presentActive={presentationMode}
-        onPresentToggle={() => setPresentationMode((p) => !p)}
-        showTidy={sketchModeActive || strokes.length > 0}
-        tidyDisabled={strokes.length === 0}
-        onTidy={() => useStudioStore.getState().tidySketchToCad()}
-      />
-
-      {/* Floating nib palette — docks beside the rail while Sketch is armed
-          (self-gates on sketchMode + photo-trace chrome ownership). */}
-      <NibPalette />
-
-      {/* Selection chip — the ONE selection state readout (placements,
-          features, photo-trace strokes). Esc clears; survives mode switches. */}
-      {selection.length > 0 ? (
-        <div
-          data-testid="selection-chip"
-          role="status"
-          aria-live="polite"
-          style={{
-            position: "absolute",
-            left: 60,
-            bottom: 12,
-            display: "flex",
-            alignItems: "center",
-            gap: "var(--gs-space-4)",
-            pointerEvents: "auto",
-            padding: "5px 10px",
-            borderRadius: "var(--gs-radius-pill)",
-            background: "var(--gs-chip-active)",
-            color: "var(--gs-chip-active-ink)",
-            fontFamily: "var(--font-ui)",
-            fontSize: "var(--gs-font-sm)",
-            boxShadow: "var(--gs-shadow-2)",
-          }}
-        >
-          <span data-testid="selection-count">
-            {selection.length} selected · Esc clears
-          </span>
-          <Button
-            variant="text"
-            data-testid="selection-clear"
-            aria-label="Clear selection"
-            onClick={() => useStudioStore.getState().clearSelection()}
-            style={{
-              color: "var(--gs-chip-active-ink)",
-              fontSize: "var(--gs-font-sm)",
-            }}
-          >
-            Clear
-          </Button>
         </div>
       ) : null}
-
-      {/* Asset library — rail-docked discovery palette (the single asset
-          surface; replaces the bottom fan-out dock and the full-screen
-          Asset Selection Studio, both removed 2026-08-25). Stays mounted
-          while closed so it owns the arm/disarm Esc ladder. */}
-      <AssetLibraryPanel />
 
       {/* Floating cursor toolbar — shows when an asset is armed */}
       <FloatingPlacementToolbar />
@@ -2884,13 +2833,7 @@ export function WebGLStudioPreview({
         <SurveyLocateState address={projectAddress} />
       ) : null}
 
-      <WorkflowGuideChip
-        activeMode={activeMode}
-        nextMode={nextMode}
-        unlocked={unlocked}
-        onMode={onNativeMode}
-      />
-      <InteractionGuidanceChip guidance={guidance} />
+      {/* Workflow guide + guidance chip stripped (austerity). */}
 
       {/* Dev-only z-tier hover HUD — renders NOTHING outside dev or
           without the `?cfz-inspect=1` URL flag. See CfzTierInspector.tsx
@@ -2982,6 +2925,7 @@ const WORKFLOW_STAGES: CanvasMode[] = ["survey", "sketch", "cad", "quote"];
  * carries the control scheme as a first-run tail, dismissed for the session —
  * `StudioShortcutsHelp` behind `?` is the durable home for the full scheme.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- stripped (austerity)
 function InteractionGuidanceChip({
   guidance,
 }: {
@@ -2991,6 +2935,14 @@ function InteractionGuidanceChip({
   useEffect(() => {
     if (!sessionStorage.getItem("gs-controls-hint-seen")) setShowControls(true);
   }, []);
+  // The asset library (release 87adeeb) is a tall dialog (top:152 to the
+  // viewport floor) that owns the left column at small viewports — the old
+  // bottom:288 clearance was computed for the retired 201px asset dock.
+  // While it is open the canvas-gesture guidance is stale anyway, so the
+  // chip stands down instead of overlapping the palette (chrome-collision
+  // gate: asset-library × interaction-guidance at ≤1280×720).
+  const assetsOpen = useStudioStore((s) => s.assetsOpen);
+  if (assetsOpen) return null;
   return (
     <div
       data-testid="interaction-guidance"
@@ -3072,6 +3024,7 @@ function InteractionGuidanceChip({
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- stripped (austerity)
 function WorkflowGuideChip({
   activeMode,
   nextMode,
@@ -3204,6 +3157,7 @@ function MetaChip({
  * tape exists. Subscribes to the store independently so pointer-move updates
  * re-render only this chip, not the whole HUD (SaveStatusChip pattern).
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- stripped (austerity)
 function MeasureReadoutChip({
   scaleM,
   boardAspect,
@@ -3242,6 +3196,7 @@ function MeasureReadoutChip({
  * announces the run for screen readers while the in-canvas chip carries the
  * live segment length + bearing.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- stripped (austerity)
 function DraftReadoutChip() {
   const draftSession = useStudioStore((s) => s.draftSession);
   if (!draftSession) return null;

@@ -97,6 +97,29 @@ thread through FloraRingLayer). Honest limits: Phase 1 indicative solar
 model (no obstacle raycasting yet — `boardShadowCast` exists for the
 upgrade); soil is overlay-indicator based, never a soil survey.
 
+## Track E — Scan-choreographed hydration (SHIPPED 2026-08-25)
+
+Category-aware site-truth reveal: when the import's reload rehydrates the
+studio, each data category reveals in its own visual language — the title
+boundary draws on, structures extrude up, easement/service lines ant-path,
+terrain fades in, existing trees grow canopy masks — synchronized with the
+overlay's REAL stage labels ("Tracing title boundary · 13 points",
+"Placing 31 existing trees"). Shipped: zod contract in
+`@workstream/contracts` (`scan-choreography.ts`), pure builder
+(`webgl/scanChoreography.ts` — absent categories emit no event), store
+machine (`scanStage`/`scanStageStartedAt`, flips only), a single
+`ScanRevealDirector` writing per-stage 0→1 into a module singleton (layers
+read it in their own useFrame — zero re-renders), drivers in
+LotBoundary/Easements/BuildingFootprint/TerrainMesh/sceneItems, the
+`gs-scan-reveal` arm-flag consumed only on completion (StrictMode
+double-mount safe), and `stageTestIds` on the overlay. Reduced motion
+resolves instantly. Gates: 18 unit tests, typecheck, lint, e2e
+`webgl-scan-reveal` (ordered stages → settle → live entities) + canopy
+regression. Honest gaps: rock outcrops, overhead lines, surface utilities,
+doors/floor levels, shrub segmentation have NO data source — no visuals;
+BYDA underground lines render-ready (schema + services/subsurface paths)
+awaiting a hydration wave.
+
 ## Order
 
 A1 → B1 → C1 (audit doc) → B2 → C2 → B3/B4/B5 → C3 → C4, with the C-track

@@ -31,6 +31,11 @@ export interface AiScanOverlayProps {
   stages?: string[];
   /** data-testid passthrough for e2e. */
   testId?: string;
+  /**
+   * Optional per-stage testids (`scan-stage-<name>`) — supplied when the
+   * stages come from a real choreography so e2e can assert the true order.
+   */
+  stageTestIds?: string[];
 }
 
 /** Shared cycle length for the stage track (ms) — one slice per stage. */
@@ -41,13 +46,20 @@ export function AiScanOverlay({
   label,
   stages = [],
   testId = "ai-scan-overlay",
+  stageTestIds,
 }: AiScanOverlayProps) {
   if (!active) return null;
 
   const cycle = `${STAGE_CYCLE_MS}ms`;
 
   return (
-    <div className={s.root} data-testid={testId}>
+    <div
+      className={s.root}
+      data-testid={testId}
+      data-graphic-transition="ai-site-parse"
+      data-api-neutral="true"
+      aria-label={label}
+    >
       {/* Phases 1–3: muting veil, sage reveal, scanning beam. Decorative. */}
       <div className={s.veil} aria-hidden />
       <div className={s.reveal} aria-hidden />
@@ -55,6 +67,11 @@ export function AiScanOverlay({
 
       {/* Phase 4: agent action review — the only live region. */}
       <div className={s.stages} role="status" aria-live="polite">
+        <span className={s.transitionMark} aria-hidden>
+          <span className={s.transitionMarkLine} />
+          <span className={s.transitionMarkNode} />
+          <span className={s.transitionMarkLine} />
+        </span>
         <span className={s.pulseDot} aria-hidden />
         {stages.length > 0 ? (
           <span className={s.stageTrack} style={{ ["--scan-cycle" as string]: cycle }}>
@@ -62,6 +79,7 @@ export function AiScanOverlay({
               <span
                 key={stage}
                 className={s.stage}
+                data-testid={stageTestIds?.[i]}
                 style={{ animationDelay: `${(i * STAGE_CYCLE_MS) / stages.length}ms` }}
               >
                 {stage}

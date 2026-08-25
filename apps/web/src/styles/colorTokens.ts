@@ -68,12 +68,12 @@ export const PALETTE = {
   waterD400: "#4098C4",
   warningL500: "#525252", // status = ink + iconography (crimson reserved for critical)
   warningD400: "#525252",
-  // Studio Paper chrome (--gs-* mirrors)
-  gsCanvas: "#F4F4F4", // canvas clear color + fog (--gs-canvas)
-  gsPanel: "#FFFFFF", // floating panel body (--gs-panel)
-  gsLine: "#D4D4D4", // decorative hairline (--gs-line)
-  gsLineStrong: "#8C8C8C", // interactive boundaries (--gs-line-strong)
-  gsInk: "#1A1A1A", // primary ink (--gs-ink)
+  // Dark Studio chrome (DESIGN.md §2 — 2026-08-26)
+  gsCanvas: "#0A0A0A", // canvas clear color + fog — deep void for drawing pop
+  gsPanel: "#121212", // floating panel body — dark grey chassis
+  gsLine: "#2D2D2D", // decorative hairline
+  gsLineStrong: "#737373", // interactive boundaries
+  gsInk: "#FFFFFF", // primary ink — high-contrast white
   gsInkStrong: "#111111", // emphasis ink (--gs-ink-strong)
   gsInkSecondary: "#525252", // secondary ink (--gs-ink-secondary)
   gsInkMuted: "#636363", // single muted value (--gs-ink-muted)

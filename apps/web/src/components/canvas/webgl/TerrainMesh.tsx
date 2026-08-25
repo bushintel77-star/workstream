@@ -27,6 +27,7 @@ import { useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { PALETTE } from "../../../styles/colorTokens";
+import { scanReveal } from "./scanReveal";
 import type { HeightmapPoint } from "./coordTransform";
 import {
   GRID_SEGMENTS,
@@ -114,6 +115,9 @@ export function TerrainMesh({ scaleM, boardAspect, heightmapPoints, groundAlbedo
     mat.roughness = THREE.MathUtils.lerp(mat.roughness, subsurfaceView ? 0.6 : 0.92, k);
     // Mode surface law: subsurface vellum > the mode's resting albedo.
     mat.color.lerp(subsurfaceView ? colorVellum : colorRest, k);
+    // Scan reveal: the landform fades in under the terrain stage (×1 when
+    // idle — no behaviour change outside a choreographed hydration).
+    mat.opacity *= scanReveal.terrain;
   });
 
   if (!geometry) return null;

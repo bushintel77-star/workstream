@@ -9,6 +9,7 @@ export * from "./schemas/verification";
 export * from "./schemas/cad";
 export * from "./schemas/site-boundary";
 export * from "./schemas/site-envelope";
+export * from "./schemas/scan-choreography";
 export * from "./schemas/signoff";
 export * from "./schemas/catalog-admin";
 export * from "./schemas/costing";
