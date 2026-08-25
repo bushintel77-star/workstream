@@ -1,6 +1,5 @@
 import fp from 'fastify-plugin';
 import type { FastifyInstance } from 'fastify';
-import Redis from 'ioredis';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -15,14 +14,13 @@ declare module 'fastify' {
  * Per-user rate limiting plugin.
  * 
  * Runs after authentication to enforce user-specific limits (100 req/min)
- * in addition to the global IP-based limit. Uses Redis for distributed
- * rate limiting across multiple API instances.
+ * in addition to the global IP-based limit. Uses the Redis connection created
+ * by the store plugin for distributed limiting across multiple API instances.
  */
 export default fp(async function userRateLimitPlugin(
   fastify: FastifyInstance,
-  options: { redis?: Redis },
 ) {
-  const redis = options.redis;
+  const redis = fastify.redis;
   const WINDOW_MS = 60 * 1000; // 1 minute
   const MAX_REQUESTS = 100;
 

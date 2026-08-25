@@ -12,7 +12,6 @@
   "dependencies": {
     "@babel/runtime": "^8.0.0",
     "@clerk/clerk-expo": "^2.9.0",
-    "@clerk/clerk-react": "^5.61.3",
     "@expo/log-box": "57.0.2",
     "@expo/metro-runtime": "~57.0.9",
     "@gorhom/bottom-sheet": "^5",
