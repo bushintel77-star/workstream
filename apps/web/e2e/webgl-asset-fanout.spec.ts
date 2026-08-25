@@ -5,7 +5,8 @@ import { createAddressProject } from "./helpers";
  * Asset Discovery Fan-Out e2e (Gap 5 part 2).
  *
  * Verifies the full place-and-persist loop on the WebGL studio:
- *   1. The Assets chip opens the fan-out dock with real catalog cards.
+ *   1. The Assets tool opens the rail-docked asset library with real
+ *      catalog rows.
  *   2. Picking a card arms it (gold active card + hint).
  *   3. Clicking the canvas places the item — stats Items increments to 1.
  *   4. Reloading the page rehydrates the placement (Items: 1 persists —
@@ -42,17 +43,17 @@ test.describe("WebGL asset fan-out (place + persist)", () => {
       timeout: 10_000,
     });
 
-    // 1. Open the dock.
+    // 1. Open the asset library (rail-docked palette).
     await page.getByRole("button", { name: "▸ Assets" }).click();
-    const dock = page.locator('[data-testid="asset-dock"]');
-    await expect(dock).toBeVisible({ timeout: 5_000 });
+    const library = page.locator('[data-testid="asset-library"]');
+    await expect(library).toBeVisible({ timeout: 5_000 });
     await expect(page.locator('[data-testid="asset-card-bluestone-paver"]')).toBeVisible();
 
     // 2. Arm the paver — a HARDSCAPE symbol (plants now open the flora ring,
     //    which has its own spec; this spec pins the direct-place + persist path).
     await page.locator('[data-testid="asset-card-bluestone-paver"]').click();
-    // Armed feedback is the floating placement toolbar now (the dock's
-    // "Armed" pill was retired with the toolbar refactor).
+    // Armed feedback is the floating placement toolbar plus the panel's
+    // armed footer.
     await expect(
       page.locator('[data-testid="floating-placement-toolbar"]'),
     ).toBeVisible({ timeout: 5_000 });

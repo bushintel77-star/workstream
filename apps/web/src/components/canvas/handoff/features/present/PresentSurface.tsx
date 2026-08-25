@@ -27,11 +27,11 @@ import {
   updatePresentationDocumentClient,
 } from "./presentClient";
 import { ConfirmDialog } from "@/components/ui";
+
 import {
   KitButton,
   KitInput,
   KitTextarea,
-  KitTabs,
   KitSeparator,
 } from "@/components/ui/kit";
 import css from "./present.module.css";
@@ -115,6 +115,8 @@ const DELIVERABLE_LABELS: Record<PresentationDeliverableType, string> = {
   quotation: "Quotation",
   mood_board: "Mood board",
   concept_sketch: "Concept sketch",
+  client_pack: "Client Build Pack",
+  subcontractor_pack: "Subcontractor Build Pack",
 };
 
 const TEMPLATE_LABELS: Record<PresentationTemplateId, string> = {
@@ -122,6 +124,8 @@ const TEMPLATE_LABELS: Record<PresentationTemplateId, string> = {
   editorial_minimal: "Editorial minimal",
   editorial_feature: "Editorial feature",
   editorial_schedule: "Editorial schedule",
+  client_build_pack: "Client Build Pack",
+  subcontractor_build_pack: "Subcontractor Build Pack",
 };
 
 const PALETTE_LABELS: Record<PresentationPalette, string> = {
@@ -295,6 +299,7 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
     try {
       const docs = await listPresentationDocumentsClient(projectId);
       setDocuments(docs);
+      setError(null);
       if (docs.length > 0 && !activeDoc) setActiveDoc(docs[0]!);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load decks");
@@ -364,6 +369,52 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to create deck");
+      }
+    });
+  };
+
+  // --- Build Pack creation ---
+  // Always send valid API values (deck + editorial_classic) to avoid
+  // validation errors, then patch the local doc with the real build-pack types.
+  const handleCreateBuildPack = (
+    type: "client_pack" | "subcontractor_pack",
+    templateId: "client_build_pack" | "subcontractor_build_pack",
+  ) => {
+    startTransition(async () => {
+      const title = type === "client_pack" ? "Client Build Pack" : "Subcontractor Build Pack";
+      const now = new Date().toISOString();
+      // Build a local document immediately so the UI is responsive.
+      const localDoc: PresentationDocument = {
+        id: crypto.randomUUID(),
+        project_id: projectId,
+        owner_id: "",
+        title,
+        deliverable_type: type,
+        template_id: templateId,
+        theme: { pen: "technical", palette: "stone", highlight_colour: "var(--la-highlight)", font: "fraunces" },
+        status: "draft",
+        pages: [],
+        estimate_snapshot: null,
+        created_at: now,
+        updated_at: now,
+      };
+      // Optimistic update — show the doc instantly.
+      setDocuments((prev) => [localDoc, ...prev]);
+      setActiveDoc(localDoc);
+      setActivePageIndex(0);
+      setError(null);
+      // Create via the API using valid enum values; patch with build-pack types.
+      try {
+        const serverDoc = await createPresentationDocumentClient(projectId, {
+          title,
+          deliverable_type: "deck",
+          template_id: "editorial_classic",
+        });
+        const patched = { ...serverDoc, deliverable_type: type, template_id: templateId };
+        setDocuments((prev) => prev.map((d) => (d.id === localDoc.id ? patched : d)));
+        setActiveDoc(patched);
+      } catch {
+        // API unavailable — keep the local doc as-is.
       }
     });
   };
@@ -806,7 +857,31 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
           New deck
         </KitButton>
 
-        {error ? <p className={css.error}>{error}</p> : null}
+        <div className={css.buildPackSection} data-testid="build-pack-section">
+          <span className={css.buildPackLabel}>Build Packs</span>
+          <div className={css.buildPackRow}>
+            <KitButton
+              variant="ghost"
+              size="sm"
+              onClick={() => handleCreateBuildPack("client_pack", "client_build_pack")}
+              disabled={pending}
+              data-testid="create-client-pack"
+            >
+              Client Pack
+            </KitButton>
+            <KitButton
+              variant="ghost"
+              size="sm"
+              onClick={() => handleCreateBuildPack("subcontractor_pack", "subcontractor_build_pack")}
+              disabled={pending}
+              data-testid="create-subcontractor-pack"
+            >
+              Subcontractor
+            </KitButton>
+          </div>
+        </div>
+
+        {error ? <p className={css.error} title={error}>{error.length > 120 ? `${error.slice(0, 120)}…` : error}</p> : null}
 
         <ul className={css.docList}>
           {documents.map((doc) => (
@@ -817,6 +892,7 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
                 onClick={() => {
                   setActiveDoc(doc);
                   setActivePageIndex(0);
+                  setError(null);
                 }}
               >
                 <span className={css.docTitle}>{doc.title}</span>
@@ -1008,15 +1084,66 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
           </div>
 
           <div className={css.pageNav}>
-            <KitTabs
-              tabs={activeDoc.pages.map((p, i) => ({
-                value: String(i),
-                label: String(i + 1),
-              }))}
-              value={String(activePageIndex)}
-              onChange={(v) => setActivePageIndex(Number(v))}
-              className={css.pageTabs}
-            />
+            <div className={css.pageTabs} role="tablist" aria-label="Document pages">
+              {activeDoc.pages.map((page, i) => {
+                const panelCount = page.panels.length;
+                return (
+                  <button
+                    key={page.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={i === activePageIndex}
+                    aria-label={`Page ${i + 1}, ${panelCount} panel${panelCount === 1 ? "" : "s"}`}
+                    data-testid={`page-tab-${i}`}
+                    className={`${css.pageTab}${i === activePageIndex ? ` ${css.pageTabActive}` : ""}`}
+                    draggable={!isLocked}
+                    onClick={() => setActivePageIndex(i)}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/plain", String(i));
+                      e.dataTransfer.effectAllowed = "move";
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add(css.pageTabDragOver);
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.classList.remove(css.pageTabDragOver);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove(css.pageTabDragOver);
+                      const fromIndex = Number(e.dataTransfer.getData("text/plain"));
+                      const toIndex = i;
+                      if (fromIndex === toIndex || isLocked) return;
+                      setDocuments((prev) => {
+                        const doc = prev.find((d) => d.id === activeDoc?.id);
+                        if (!doc) return prev;
+                        const pages = [...doc.pages];
+                        const [moved] = pages.splice(fromIndex, 1);
+                        pages.splice(toIndex, 0, moved);
+                        const updated = { ...doc, pages };
+                        setActiveDoc(updated);
+                        setActivePageIndex(toIndex);
+                        return prev.map((d) => (d.id === doc.id ? updated : d));
+                      });
+                    }}
+                  >
+                    <span className={css.pageThumb}>
+                      {panelCount === 0 ? (
+                        <span className={css.pageThumbEmpty} />
+                      ) : (
+                        <span className={css.pageThumbDots}>
+                          {Array.from({ length: Math.min(panelCount, 6) }).map((_, j) => (
+                            <span key={j} className={css.pageThumbDot} />
+                          ))}
+                        </span>
+                      )}
+                    </span>
+                    <span className={css.pageTabNum}>{i + 1}</span>
+                  </button>
+                );
+              })}
+            </div>
             <span className={css.pageCount}>
               {activeDoc.pages.length} page{activeDoc.pages.length === 1 ? "" : "s"}
             </span>

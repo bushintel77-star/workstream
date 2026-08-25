@@ -20,7 +20,7 @@ import { estimatedCostPerUnit, formatCostPreview } from "./costPreview";
 import { GLYPH_BY_TYPE } from "./assetPalette";
 import { Button } from "./Button";
 
-const GOLD = "var(--gs-primary)";
+const GOLD = "var(--la-accent)";
 
 /** Offset from cursor (px) so the toolbar doesn't obscure the click target. */
 const OFFSET_X = 16;
@@ -87,9 +87,9 @@ export function FloatingPlacementToolbar() {
         padding: "4px 10px",
         borderRadius: "var(--gs-radius-pill)",
         border: `1px solid color-mix(in srgb, ${GOLD} 40%, transparent)`,
-        background: "color-mix(in srgb, var(--gs-glass) 52%, transparent)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        background: "color-mix(in srgb, var(--la-surface) 52%, transparent)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
         pointerEvents: "auto",
         fontFamily: "var(--font-tech)",
         fontSize: "var(--gs-font-xs)",
@@ -116,7 +116,7 @@ export function FloatingPlacementToolbar() {
         style={{
           fontFamily: "var(--font-ui)",
           fontWeight: 600,
-          color: "var(--gs-ink)",
+          color: "var(--la-ink)",
           overflow: "hidden",
           textOverflow: "ellipsis",
           maxWidth: 120,
@@ -131,7 +131,7 @@ export function FloatingPlacementToolbar() {
           data-testid="floating-cost-preview"
           style={{
             fontFamily: "var(--font-tech)",
-            color: "var(--gs-ink-secondary)",
+            color: "var(--la-ink-secondary)",
             opacity: 0.85,
           }}
         >
@@ -146,7 +146,7 @@ export function FloatingPlacementToolbar() {
         style={{
           width: 1,
           height: 14,
-          background: "var(--gs-line)",
+          background: "var(--la-surface-muted)",
           flex: "0 0 auto",
         }}
       />
@@ -193,7 +193,7 @@ export function FloatingPlacementToolbar() {
         style={{
           fontFamily: "var(--font-tech)",
           fontSize: "var(--gs-font-xs)",
-          color: "var(--gs-ink-muted)",
+          color: "var(--la-ink-muted)",
           opacity: 0.6,
         }}
       >

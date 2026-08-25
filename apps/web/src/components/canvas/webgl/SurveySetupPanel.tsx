@@ -111,7 +111,7 @@ function ProgressBar({ percent, complete }: { percent: number; complete: boolean
           width: `${percent}%`,
           height: "100%",
           borderRadius: "var(--gs-radius-pill)",
-          background: complete ? "var(--gs-success)" : "var(--gs-primary)",
+          background: complete ? "var(--gs-success)" : "var(--la-accent)",
           transition: "width var(--gs-base)",
         }}
       />
@@ -205,7 +205,7 @@ function SetupRow({
           gap: "var(--gs-space-3)",
           padding: rowPadding,
           border: 0,
-          background: hot ? "var(--gs-primary-veil)" : "transparent",
+          background: hot ? "var(--la-surface)" : "transparent",
           textAlign: "left",
           cursor: "pointer",
           transition: "background var(--gs-fast)",
@@ -241,7 +241,7 @@ function SetupRow({
             flex: "0 0 auto",
             fontFamily: "var(--font-tech)",
             fontSize: "var(--gs-font-sm)",
-            color: "var(--gs-primary-ink)",
+            color: "var(--la-ink)",
             opacity: hot ? 1 : 0,
             transition: "opacity var(--gs-fast)",
           }}
@@ -338,7 +338,7 @@ export function SurveySetupPanel({
               display: "flex",
               alignItems: "center",
               gap: 8,
-              background: "var(--gs-primary)",
+              background: "var(--la-accent)",
               color: "var(--gs-panel)",
               border: "none",
               borderRadius: "var(--gs-radius-md)",

@@ -1228,6 +1228,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setAssetsOpen: (assetsOpen) => set({ assetsOpen }),
   // Mutual exclusion: the armed placement layer owns ground pointer events,
   // so sketch mode and the measure tape must stand down.
+  // Mass-plant modes are normalized on EVERY transition: they are only
+  // meaningful for the symbol they were armed with, so a stale Area/Row
+  // toggle must never silently resume when the next symbol arms (the
+  // toolbar defaults to single-place; every disarm path — Esc, tool and
+  // mode switches — clears them through here).
   setArmedSymbolId: (armedSymbolId) =>
     set(
       armedSymbolId
@@ -1238,8 +1243,17 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
             trenchTool: null,
             zoneTool: null,
             draftSession: null,
+            areaPlantActive: false,
+            rowPlantActive: false,
           }
-        : { armedSymbolId: null, assetPlantDraft: null, massPlantPreviewCount: 0, pointerClientPos: null },
+        : {
+            armedSymbolId: null,
+            assetPlantDraft: null,
+            massPlantPreviewCount: 0,
+            pointerClientPos: null,
+            areaPlantActive: false,
+            rowPlantActive: false,
+          },
     ),
   setPendingAssetDrop: (pendingAssetDrop) => set({ pendingAssetDrop }),
   // Box fill and row run compete for the same drag — arming one stands the

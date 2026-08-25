@@ -65,7 +65,7 @@ interface Rect {
 const CHROME_SELECTOR = [
   "[data-gs-glass-card]",
   "[data-testid='estimator-panel']",
-  "[data-testid='asset-dock']",
+  "[data-testid='asset-library']",
   "[data-testid='studio-tool-rail']",
   "[data-testid='nib-palette']",
   "[data-testid='viewport-transition-hud']",

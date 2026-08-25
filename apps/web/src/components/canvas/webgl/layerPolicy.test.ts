@@ -52,12 +52,13 @@ describe("canvasLayerPolicy (mode-driven layer law)", () => {
     }
   });
 
-  it("presentation contexts keep utilities and a site-material ground", () => {
+  it("presentation contexts keep utilities on paper ground", () => {
     for (const mode of ["garden", "quote", "present", "share"] as const) {
       const p = canvasLayerPolicy(mode);
       expect(p.utilities).toBe(true);
-      // Material contexts: the ground is a surface being specified.
-      expect(p.groundAlbedo).toBe("site");
+      // All modes now rest on paper (#F4F4F4) — the olive ground-bounce was
+      // shifting the perceived canvas colour away from the binding token.
+      expect(p.groundAlbedo).toBe("paper");
     }
   });
 

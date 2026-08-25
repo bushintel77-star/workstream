@@ -63,7 +63,7 @@ const readoutStyle: React.CSSProperties = {
   fontSize: "var(--gs-font-xs)",
   fontWeight: 600,
   color: "var(--gs-ink)",
-  background: "color-mix(in srgb, var(--gs-glass) 82%, transparent)",
+  background: "color-mix(in srgb, var(--la-surface) 82%, transparent)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
   borderRadius: "var(--gs-radius-md)",
   padding: "1px 8px",

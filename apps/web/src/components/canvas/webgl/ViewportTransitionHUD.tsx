@@ -231,7 +231,7 @@ export function ViewportTransitionHUD({
             width: `${markerPct}%`,
             borderRadius: "var(--gs-radius-xs)",
             background:
-              "linear-gradient(90deg, var(--gs-primary) 0%, var(--gs-truth) 100%)",
+              "linear-gradient(90deg, var(--la-accent) 0%, var(--gs-truth) 100%)",
             transition: "width 180ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
@@ -278,7 +278,7 @@ export function ViewportTransitionHUD({
             width: 10,
             height: 10,
             borderRadius: "50%",
-            background: "var(--gs-primary)",
+            background: "var(--la-accent)",
             boxShadow:
               "0 0 0 2px color-mix(in srgb, var(--gs-paper, #fff) 100%, transparent)",
             transition: "left 180ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -356,7 +356,7 @@ function PresetButton(props: {
         border: "1px solid color-mix(in srgb, currentColor 15%, transparent)",
         borderRadius: "var(--gs-radius-lg)",
         background: props.active
-          ? "color-mix(in srgb, var(--gs-primary) 12%, transparent)"
+          ? "color-mix(in srgb, var(--la-accent) 12%, transparent)"
           : "transparent",
         cursor: "pointer",
         fontFamily: "var(--font-tech)",
@@ -364,7 +364,7 @@ function PresetButton(props: {
         fontWeight: 500,
         letterSpacing: "0.08em",
         textTransform: "uppercase",
-        color: props.active ? "var(--gs-primary-ink)" : "inherit",
+        color: props.active ? "var(--la-ink)" : "inherit",
         transition: "all 140ms ease-out",
       }}
     >

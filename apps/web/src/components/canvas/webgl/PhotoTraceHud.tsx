@@ -68,8 +68,8 @@ export function PhotoTraceHud() {
         maxWidth: "min(560px, calc(100% - 48px))",
         padding: "10px 12px",
         borderRadius: "var(--gs-radius-panel)",
-        background: "var(--gs-panel-frost)",
-        backdropFilter: "blur(var(--gs-frost-blur))",
+        background: "var(--la-surface)",
+        backdropFilter: "none",
         border: "1px solid color-mix(in srgb, var(--gs-line) 70%, transparent)",
         boxShadow: "var(--gs-shadow-2)",
         pointerEvents: "auto",
@@ -224,10 +224,10 @@ export function PhotoTraceHud() {
               onClick={() => applyCalibrationRef.current?.()}
               style={{
                 background: canApply
-                  ? "var(--gs-primary)"
-                  : "color-mix(in srgb, var(--gs-primary) 8%, transparent)",
+                  ? "var(--la-accent)"
+                  : "color-mix(in srgb, var(--la-accent) 8%, transparent)",
                 border: canApply
-                  ? "1px solid var(--gs-primary)"
+                  ? "1px solid var(--la-accent)"
                   : "1px solid var(--gs-line)",
                 color: canApply ? "var(--gs-panel)" : "var(--gs-ink-muted)",
                 cursor: canApply ? "pointer" : "not-allowed",

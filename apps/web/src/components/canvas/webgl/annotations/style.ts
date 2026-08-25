@@ -106,7 +106,7 @@ function categoryStyles(
       stroke: "var(--gs-ink)",
       strokeWidth: hierarchy.annotationPx,
       text: "var(--gs-ink)",
-      fill: "color-mix(in srgb, var(--gs-glass) 84%, transparent)",
+      fill: "color-mix(in srgb, var(--la-surface) 84%, transparent)",
     },
     material_hatch: {
       stroke: `color-mix(in srgb, var(--gs-ink) ${HATCH_INK_MIX_PCT[dialect]}%, transparent)`,

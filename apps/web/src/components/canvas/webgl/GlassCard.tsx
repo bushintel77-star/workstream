@@ -102,9 +102,9 @@ export function GlassCard({
           pointerEvents: "auto",
           // Studio Paper depth law: frost panel + blur + neutral shadow tier —
           // the card floats above the drawing on light, not darkness.
-          background: "var(--gs-glass-veil)",
-          backdropFilter: "blur(var(--gs-blur))",
-          WebkitBackdropFilter: "blur(var(--gs-blur))",
+          background: "var(--la-surface)",
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
           borderRadius: "var(--gs-radius-panel)",
           border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
           boxShadow: "var(--gs-shadow-2)",
@@ -137,9 +137,9 @@ export function GlassCard({
       style={{
         position: "absolute",
         pointerEvents: "auto",
-        background: "var(--gs-glass-veil)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        background: "var(--la-surface)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
         borderRadius: "var(--gs-radius-panel)",
         border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
         boxShadow: "var(--gs-shadow-2)",

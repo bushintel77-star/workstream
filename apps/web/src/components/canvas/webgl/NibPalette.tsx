@@ -63,9 +63,9 @@ const glyphStyle: CSSProperties = {
  * graphite (#3B3B3B) on charcoal is invisible.
  */
 const nibActiveStyle: CSSProperties = {
-  background: "var(--gs-primary-veil)",
-  border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
-  color: "var(--gs-primary-ink)",
+  background: "var(--la-surface)",
+  border: "1px solid color-mix(in srgb, var(--la-accent) 45%, transparent)",
+  color: "var(--la-ink)",
 };
 
 /** The most recent closed ring in the ink array (the hatch-fill target). */
@@ -175,9 +175,9 @@ export function NibPalette() {
         gap: "var(--gs-space-2)",
         padding: 4,
         borderRadius: "var(--gs-radius-xl)",
-        background: "var(--gs-glass-veil)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        background: "var(--la-surface)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
         border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
         boxShadow: "var(--gs-shadow-2)",
         pointerEvents: "auto",

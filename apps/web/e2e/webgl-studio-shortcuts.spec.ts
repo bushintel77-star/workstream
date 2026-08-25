@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createAddressProject } from "./helpers";
 
 test.describe("WebGL studio keyboard map", () => {
-  test("? opens the shortcut list; A opens the asset dock", async ({
+  test("? opens the shortcut list; A opens the asset library", async ({
     page,
     request,
   }) => {
@@ -25,10 +25,9 @@ test.describe("WebGL studio keyboard map", () => {
     await expect(help).toHaveCount(0);
 
     await page.keyboard.press("a");
-    await expect(page.locator('[data-testid="asset-dock"]')).toBeVisible({
-      timeout: 5_000,
-    });
-    await expect(page.locator('[data-testid="asset-filter-tree"]')).toBeVisible();
-    await expect(page.locator('[data-testid="workflow-guide"]')).toBeVisible();
+    const library = page.locator('[data-testid="asset-library"]');
+    await expect(library).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('[data-testid="asset-filter-all"]')).toBeVisible();
+    await expect(page.locator('[data-testid="asset-search"]')).toBeVisible();
   });
 });

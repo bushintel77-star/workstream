@@ -134,11 +134,11 @@ export function EarthworksCard({
               {p.topRealM.toFixed(2)}m
             </span>
             <span style={{ fontSize: "var(--gs-font-xs)", fontFamily: "var(--font-tech)" }}>
-              <span style={{ color: "var(--gs-ink-conflict)" }}>
+              <span style={{ color: "var(--la-error)" }}>
                 −{fmtM3(p.result.cutM3)}
               </span>{" "}
               /{" "}
-              <span style={{ color: "var(--gs-primary)" }}>
+              <span style={{ color: "var(--la-accent)" }}>
                 +{fmtM3(p.result.fillM3)}
               </span>{" "}
               m³
@@ -149,11 +149,11 @@ export function EarthworksCard({
         <div style={rowStyle}>
           <span style={labelStyle}>Cut / Fill total</span>
           <span style={{ ...valueStyle, fontSize: "var(--gs-font-sub)" }}>
-            <span style={{ color: "var(--gs-ink-conflict)" }}>
+            <span style={{ color: "var(--la-error)" }}>
               {fmtM3(summary.totalCutM3)}
             </span>{" "}
             /{" "}
-            <span style={{ color: "var(--gs-primary)" }}>
+            <span style={{ color: "var(--la-accent)" }}>
               {fmtM3(summary.totalFillM3)}
             </span>{" "}
             m³
@@ -164,7 +164,7 @@ export function EarthworksCard({
           <span
             style={{
               ...valueStyle,
-              color: netM3 >= 0 ? "var(--gs-primary)" : "var(--gs-ink-conflict)",
+              color: netM3 >= 0 ? "var(--la-accent)" : "var(--la-error)",
             }}
           >
             {netM3 >= 0 ? "+" : ""}

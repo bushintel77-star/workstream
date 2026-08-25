@@ -76,7 +76,7 @@ const zoneLabelStyle: React.CSSProperties = {
   fontSize: "var(--gs-font-sm)",
   fontWeight: 600,
   color: "var(--gs-ink)",
-  background: "color-mix(in srgb, var(--gs-glass) 80%, transparent)",
+  background: "color-mix(in srgb, var(--la-surface) 80%, transparent)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
   borderRadius: "var(--gs-radius-md)",
   padding: "1px 8px",

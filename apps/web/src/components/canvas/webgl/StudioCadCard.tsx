@@ -31,11 +31,11 @@ const btn: React.CSSProperties = {
 
 const btnPrimary: React.CSSProperties = {
   ...btn,
-  border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
-  background: "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--la-accent) 45%, transparent)",
+  background: "color-mix(in srgb, var(--la-accent) 14%, transparent)",
   // --gs-primary on its own veil reads 4.17:1 at 11px — below AA; the
   // darker cobalt ink token clears 6:1 on the same veil.
-  color: "var(--gs-primary-ink)",
+  color: "var(--la-ink)",
 };
 
 const label: React.CSSProperties = {

@@ -292,9 +292,9 @@ export function StudioCommandPalette({
         // stack; a redundant zIndex:20 here would suggest chrome tier and
         // invite future tier-crossing bugs.
         borderRadius: "var(--gs-radius-panel)",
-        background: "color-mix(in srgb, var(--gs-glass) 55%, transparent)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        background: "color-mix(in srgb, var(--la-surface) 55%, transparent)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
         border: "1px solid color-mix(in srgb, var(--gs-line) 40%, transparent)",
         boxShadow: "0 12px 40px color-mix(in srgb, var(--gs-frame) 75%, transparent)",
         fontFamily: "var(--font-ui)",
@@ -364,9 +364,9 @@ export function StudioCommandPalette({
                 cursor: "pointer",
                 background:
                   i === activeIdx
-                    ? "color-mix(in srgb, var(--gs-primary) 14%, transparent)"
+                    ? "color-mix(in srgb, var(--la-accent) 14%, transparent)"
                     : "transparent",
-                color: i === activeIdx ? "var(--gs-primary)" : "var(--gs-ink)",
+                color: i === activeIdx ? "var(--la-accent)" : "var(--gs-ink)",
               }}
             >
               <span style={chip}>{a.group}</span>

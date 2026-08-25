@@ -72,8 +72,7 @@ import { SliceProfileCard } from "./SliceProfileCard";
 import { DrainageFlowCard } from "./DrainageFlowCard";
 import { EarthworksCard } from "./EarthworksCard";
 import { EstimatorPanel } from "./EstimatorPanel";
-import { AssetStudioOverlay } from "./AssetStudioOverlay";
-import { AssetFanOutDock } from "./AssetFanOutDock";
+import { AssetLibraryPanel } from "./AssetLibraryPanel";
 import { FloatingPlacementToolbar } from "./FloatingPlacementToolbar";
 import { StudioToolRail } from "./StudioToolRail";
 import { Button } from "./Button";
@@ -252,7 +251,6 @@ export function WebGLStudioPreview({
   /** The open photo elevation sheet (print artifact) — null = closed. */
   const [photoSheetId, setPhotoSheetId] = useState<string | null>(null);
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
-  const assetsOpenStudio = useStudioStore((s) => s.assetsOpen);
   const router = useRouter();
 
   // Escape closes the open surface panel (browser-tab behaviour).
@@ -1456,9 +1454,9 @@ export function WebGLStudioPreview({
               borderRadius: "var(--gs-radius-pill)",
               /* Paper glass, not dark glass — the dark capsule is reserved
                * for the presentation lens (design-spec §5 / debt D8). */
-              background: "var(--gs-glass-veil)",
-              backdropFilter: "blur(var(--gs-blur))",
-              WebkitBackdropFilter: "blur(var(--gs-blur))",
+              background: "var(--la-surface)",
+              backdropFilter: "none",
+              WebkitBackdropFilter: "none",
               border:
                 "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
               boxShadow: "var(--gs-shadow-1)",
@@ -1602,7 +1600,7 @@ export function WebGLStudioPreview({
               >
                 B{stats.boundaryPoints} · I{stats.items} · S{stats.strokes}
                 {stats.strikes > 0 && (
-                  <span style={{ color: "var(--gs-ink-conflict)" }}>
+                  <span style={{ color: "var(--la-error)" }}>
                     {" "}
                     · ⚠{stats.strikes}
                   </span>
@@ -1709,9 +1707,9 @@ export function WebGLStudioPreview({
             gap: 4,
             padding: "5px 9px",
             borderRadius: "var(--gs-radius-pill)",
-            background: "var(--gs-glass-veil)",
-            backdropFilter: "blur(var(--gs-blur))",
-            WebkitBackdropFilter: "blur(var(--gs-blur))",
+            background: "var(--la-surface)",
+            backdropFilter: "none",
+            WebkitBackdropFilter: "none",
             border:
               "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
             boxShadow: "var(--gs-shadow-1)",
@@ -1766,7 +1764,7 @@ export function WebGLStudioPreview({
               gap: 4,
               padding: "3px 8px",
               borderRadius: "var(--gs-radius-pill)",
-              background: "var(--gs-glass-veil)",
+              background: "var(--la-surface)",
               border:
                 "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
               color: "var(--gs-ink-secondary)",
@@ -1975,12 +1973,12 @@ export function WebGLStudioPreview({
                     title="Weld touching strokes into continuous polylines and closed polygons (0.15 m snap), ink kept as reference"
                     style={{
                       flex: 1,
-                      border: "1px solid color-mix(in srgb, var(--gs-primary) 55%, transparent)",
-                      background: "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--la-accent) 55%, transparent)",
+                      background: "color-mix(in srgb, var(--la-accent) 10%, transparent)",
                       // --gs-primary on its own veil reads 4.08:1 at 11px —
                       // below AA; the cobalt ink token clears 6:1 on the veil.
                       // White reads 1.26:1 on this light veil — do not use it.
-                      color: "var(--gs-primary-ink)",
+                      color: "var(--la-ink)",
                     }}
                   >
                     Stitch strokes
@@ -2005,7 +2003,7 @@ export function WebGLStudioPreview({
                       fontSize: "var(--gs-font-xs)",
                       lineHeight: 1.4,
                       color: /photo-traced/.test(sketchCadNotice)
-                        ? "var(--gs-ink-conflict)"
+                        ? "var(--la-error)"
                         : "var(--gs-ink-secondary)",
                     }}
                   >
@@ -2106,7 +2104,7 @@ export function WebGLStudioPreview({
                   >
                     B {stats.boundaryPoints} · I {stats.items} · S {stats.strokes}
                     {stats.strikes > 0 && (
-                      <span style={{ color: "var(--gs-ink-conflict)" }}>
+                      <span style={{ color: "var(--la-error)" }}>
                         {" "}
                         · ⚠ {stats.strikes}
                       </span>
@@ -2130,7 +2128,7 @@ export function WebGLStudioPreview({
                   </a>
                   <a
                     href={`/projects/${projectId}/outputs`}
-                    style={{ color: "var(--gs-primary)", fontSize: "var(--gs-font-xs)" }}
+                    style={{ color: "var(--la-accent)", fontSize: "var(--gs-font-xs)" }}
                   >
                     Outputs
                   </a>
@@ -2422,7 +2420,7 @@ export function WebGLStudioPreview({
                       href="https://mapshare.vic.gov.au/vicplan/"
                       target="_blank"
                       rel="noreferrer"
-                      style={{ color: "var(--gs-primary)" }}
+                      style={{ color: "var(--la-accent)" }}
                     >
                       Open VicPlan
                     </a>
@@ -2430,7 +2428,7 @@ export function WebGLStudioPreview({
                       href="https://www.vic.gov.au/find-my-local-council"
                       target="_blank"
                       rel="noreferrer"
-                      style={{ color: "var(--gs-primary)" }}
+                      style={{ color: "var(--la-accent)" }}
                     >
                       Council tools
                     </a>
@@ -2462,7 +2460,7 @@ export function WebGLStudioPreview({
                       href="https://achris.vic.gov.au/"
                       target="_blank"
                       rel="noreferrer"
-                      style={{ color: "var(--gs-primary)" }}
+                      style={{ color: "var(--la-accent)" }}
                     >
                       ACHRIS register
                     </a>
@@ -2470,7 +2468,7 @@ export function WebGLStudioPreview({
                       href="https://www.environment.vic.gov.au/biodiversity/naturekit"
                       target="_blank"
                       rel="noreferrer"
-                      style={{ color: "var(--gs-primary)" }}
+                      style={{ color: "var(--la-accent)" }}
                     >
                       NatureKit (EVC)
                     </a>
@@ -2478,7 +2476,7 @@ export function WebGLStudioPreview({
                       href="https://elevation.fsdf.org.au/"
                       target="_blank"
                       rel="noreferrer"
-                      style={{ color: "var(--gs-primary)" }}
+                      style={{ color: "var(--la-accent)" }}
                     >
                       ELVIS elevation
                     </a>
@@ -2486,7 +2484,7 @@ export function WebGLStudioPreview({
                       href="https://mapshare.vic.gov.au/vicplan/"
                       target="_blank"
                       rel="noreferrer"
-                      style={{ color: "var(--gs-primary)" }}
+                      style={{ color: "var(--la-accent)" }}
                     >
                       VicPlan report
                     </a>
@@ -2515,7 +2513,7 @@ export function WebGLStudioPreview({
                       href="https://www.byda.com.au/"
                       target="_blank"
                       rel="noreferrer"
-                      style={{ color: "var(--gs-primary)" }}
+                      style={{ color: "var(--la-accent)" }}
                     >
                       Request BYDA
                     </a>
@@ -2641,10 +2639,10 @@ export function WebGLStudioPreview({
                 background: "var(--gs-panel-grad)",
                 border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
                 boxShadow: "var(--gs-shadow-2)",
-                padding: "12px 14px",
+                padding: "10px 12px",
                 display: "flex",
                 flexDirection: "column",
-                gap: "var(--gs-space-3)",
+                gap: "var(--gs-space-2)",
                 animation: "wsPanelIn 160ms ease-out",
               }}
             >
@@ -2765,12 +2763,11 @@ export function WebGLStudioPreview({
         </div>
       ) : null}
 
-      {/* Asset selection studio — floating frosted-glass overlay (the full
-          discovery/inspect/configure surface). The bottom fan-out dock is its
-          compact face and mounts only while the studio is closed, so the two
-          never double up. */}
-      <AssetStudioOverlay />
-      {!assetsOpenStudio && <AssetFanOutDock />}
+      {/* Asset library — rail-docked discovery palette (the single asset
+          surface; replaces the bottom fan-out dock and the full-screen
+          Asset Selection Studio, both removed 2026-08-25). Stays mounted
+          while closed so it owns the arm/disarm Esc ladder. */}
+      <AssetLibraryPanel />
 
       {/* Floating cursor toolbar — shows when an asset is armed */}
       <FloatingPlacementToolbar />
@@ -2944,9 +2941,9 @@ function InteractionGuidanceChip({
         borderRadius: "var(--gs-radius-pill)",
         /* Paper glass, not dark glass (design-spec §5 / debt D8) — the dark
          * capsule is reserved for the presentation lens. */
-        background: "var(--gs-glass-veil)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        background: "var(--la-surface)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
         border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
         boxShadow: "var(--gs-shadow-1)",
         // The first-run tail carries a dismiss button, so the chip opts into
@@ -3015,9 +3012,9 @@ function WorkflowGuideChip({
         zIndex: "var(--cf-z-chrome)",
         padding: "3px 8px",
         borderRadius: "var(--gs-radius-pill)",
-        background: "color-mix(in srgb, var(--gs-glass) 40%, transparent)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        background: "color-mix(in srgb, var(--la-surface) 40%, transparent)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
         border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
         fontFamily: "var(--font-tech)",
         fontSize: "var(--gs-font-xs)",
@@ -3041,7 +3038,7 @@ function WorkflowGuideChip({
               style={{
                 padding: "0 2px",
                 color: here
-                  ? "var(--gs-primary-ink)"
+                  ? "var(--la-ink)"
                   : locked
                     ? "var(--gs-ink-muted)"
                     : "var(--gs-ink-secondary)",
@@ -3079,7 +3076,7 @@ const scrubberValueStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
   fontSize: "var(--gs-font-h3)",
   fontWeight: 500,
-  color: "var(--gs-primary)",
+  color: "var(--la-accent)",
 };
 
 /** A tiny meta chip — label + value in one pill (canvas-first chrome unit). */
@@ -3108,7 +3105,7 @@ function MetaChip({
       }}
     >
       <span style={{ letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</span>
-      <span style={{ color: accent ? "var(--gs-primary)" : "var(--gs-ink)", fontSize: "var(--gs-font-sm)" }}>
+      <span style={{ color: accent ? "var(--la-accent)" : "var(--gs-ink)", fontSize: "var(--gs-font-sm)" }}>
         {value}
       </span>
     </span>
@@ -3144,7 +3141,7 @@ function MeasureReadoutChip({
         marginTop: 4,
         fontFamily: "var(--font-tech)",
         fontSize: "var(--gs-font-sm)",
-        color: "var(--gs-primary)",
+        color: "var(--la-accent)",
       }}
     >
       Measure · {lengthM.toFixed(2)} m · Esc clears
@@ -3182,7 +3179,7 @@ function DraftReadoutChip() {
         marginTop: 4,
         fontFamily: "var(--font-tech)",
         fontSize: "var(--gs-font-sm)",
-        color: "var(--gs-primary)",
+        color: "var(--la-accent)",
       }}
     >
       {isArea ? "Area" : "Polyline"} · {count}{" "}
@@ -3233,7 +3230,7 @@ function ScrubberTrack({
             left: 0,
             height: "100%",
             width: `${pct}%`,
-            background: "var(--gs-primary)",
+            background: "var(--la-accent)",
             borderRadius: "var(--gs-radius-pill)",
           }}
         />
@@ -3263,7 +3260,7 @@ function ScrubberTrack({
             width: 10,
             height: 10,
             transform: "translate(-50%, -50%)",
-            background: "var(--gs-primary)",
+            background: "var(--la-accent)",
             border: "2px solid var(--gs-canvas)",
             borderRadius: "50%",
             boxShadow: "0 0 8px var(--gs-warning-amber)",
@@ -3289,7 +3286,7 @@ function ScrubberTrack({
           return (
             <span
               key={i}
-              style={{ color: isHighlight ? "var(--gs-primary)" : "var(--gs-ink-secondary)" }}
+              style={{ color: isHighlight ? "var(--la-accent)" : "var(--gs-ink-secondary)" }}
             >
               {label}
             </span>

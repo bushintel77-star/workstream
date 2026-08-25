@@ -54,9 +54,6 @@
  *   • swatch      — StudioToolRail's 42px icon column. Active goes
  *                   charcoal; disabled mutes to 55% + not-allowed;
  *                   hover lifts 1px with `--gs-shadow-1`.
- *   • asset-card  — AssetFanOutDock's discovery card: glass veil +
- *                   blur + radius-xl; the active card takes the gold
- *                   treatment (border, wash, glow, 108px wide).
  *
  * Sizes:
  *   • sm (default) — 3px 9px padding for chips, square for icons
@@ -88,8 +85,7 @@ export type ButtonVariant =
   | "glyph"
   | "text"
   | "capsule"
-  | "swatch"
-  | "asset-card";
+  | "swatch";
 export type ButtonSize = "xs" | "sm" | "md";
 
 /**
@@ -203,11 +199,11 @@ const primaryBase: CSSProperties = {
   fontSize: "var(--gs-font-sm)",
   padding: "5px 8px",
   borderRadius: "var(--gs-radius-chip)",
-  border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--la-accent) 45%, transparent)",
   background:
-    "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
+    "color-mix(in srgb, var(--la-accent) 14%, transparent)",
   /* Primary-ink text on the tinted wash — AA at body sizes (§4). */
-  color: "var(--gs-primary-ink)",
+  color: "var(--la-ink)",
   cursor: "pointer",
 };
 
@@ -224,9 +220,9 @@ const ctaBase: CSSProperties = {
   fontWeight: 600,
   padding: "5px 8px",
   borderRadius: "var(--gs-radius-chip)",
-  border: "1px solid var(--gs-primary)",
-  background: "var(--gs-primary)",
-  color: "var(--gs-panel)",
+  border: "1px solid var(--la-accent)",
+  background: "var(--la-accent)",
+  color: "var(--la-surface)",
   cursor: "pointer",
 };
 
@@ -288,7 +284,7 @@ const textBase: CSSProperties = {
 const chipPresetBase: CSSProperties = {
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-xs)",
-  padding: "3px 8px",
+  padding: "3px 6px",
   borderRadius: "var(--gs-radius-chip)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
   background: "transparent",
@@ -316,7 +312,7 @@ const capsuleBase: CSSProperties = {
   letterSpacing: "0.01em",
   fontVariantNumeric: "tabular-nums",
   whiteSpace: "nowrap",
-  background: "var(--gs-panel-frost)",
+  background: "var(--la-surface)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
   borderRadius: "var(--gs-radius-pill)",
   boxShadow: "var(--gs-shadow-1)",
@@ -352,31 +348,9 @@ const swatchBase: CSSProperties = {
 };
 
 /**
- * Asset card — AssetFanOutDock's discovery card: glass veil, blur,
- * radius-xl, hairline. The active state (gold border, gold wash,
- * glow shadow, 108px width) is the `active` override; the inactive
- * shell (92px) is the base. The gold accent bar / Place CTA children
- * stay with the consumer.
+ * Asset card — removed with AssetFanOutDock (2026-08-25): the rail-docked
+ * AssetLibraryPanel renders its own list rows.
  */
-const assetCardBase: CSSProperties = {
-  position: "relative",
-  display: "flex",
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "var(--gs-space-2)",
-  padding: "5px 8px",
-  borderRadius: "var(--gs-radius-lg)",
-  border: "1px solid var(--gs-line)",
-  background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-  backdropFilter: "blur(var(--gs-blur))",
-  WebkitBackdropFilter: "blur(var(--gs-blur))",
-  cursor: "pointer",
-  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-  pointerEvents: "auto",
-  width: 68,
-  minHeight: 48,
-};
 
 export type ButtonProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -418,7 +392,6 @@ const baseFor = (
   if (variant === "chip-preset") return chipPresetBase;
   if (variant === "capsule") return capsuleBase;
   if (variant === "swatch") return swatchBase;
-  if (variant === "asset-card") return assetCardBase;
   // ghost: scale padding by size
   if (size === "md") {
     return { ...ghostBase, padding: "7px 14px" };
@@ -435,36 +408,23 @@ const activeOverride = (variant: ButtonVariant): CSSProperties => {
   }
   if (variant === "chip-tinted") {
     return {
-      border: "1px solid color-mix(in srgb, var(--gs-primary) 50%, transparent)",
+      border: "1px solid color-mix(in srgb, var(--la-accent) 50%, transparent)",
       background:
-        "color-mix(in srgb, var(--gs-primary) 14%, transparent)",
-      /* Primary-ink on wash (7.97:1) — bare --gs-primary at 11px over a
-       * 14% wash lands ~4.2:1, under AA for body-size text (§4). */
-      color: "var(--gs-primary-ink)",
+        "color-mix(in srgb, var(--la-accent) 14%, transparent)",
+      /* Charcoal accent on wash — AA at body sizes. */
+      color: "var(--la-ink)",
     };
   }
   if (variant === "primary") {
     return {
-      background: "var(--gs-primary)",
-      color: "var(--gs-panel)",
+      background: "var(--la-accent)",
+      color: "var(--la-surface)",
     };
   }
   if (variant === "swatch") {
     return {
       background: "var(--gs-chip-active)",
       color: "var(--gs-chip-active-ink)",
-    };
-  }
-  if (variant === "asset-card") {
-    return {
-      width: 80,
-      minHeight: 56,
-      border:
-        "1px solid color-mix(in srgb, var(--gs-primary) 50%, transparent)",
-      background:
-        "color-mix(in srgb, var(--gs-primary) 6%, var(--gs-glass))",
-      boxShadow:
-        "0 0 12px color-mix(in srgb, var(--gs-primary) 10%, transparent)",
     };
   }
   return {};

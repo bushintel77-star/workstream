@@ -59,9 +59,9 @@ const SRC = "apps/web/src";
  * the entry when the component is wired up.
  */
 const ALLOW = new Map([
-  // Empty since 2026-08-19: the SVG studio retirement deleted the last
-  // deliberately-unmounted component (StudioCoachMarks). Keep the ratchet
-  // mechanism — new entries must carry a reason and an OUTSTANDING.md item.
+  // Alternate canvas-native layout prototypes — wiring pending user approval
+  ["BottomAssetStrip", "Alternate layout: bottom asset strip (not yet mounted)",],
+  ["RightPanelTabs", "Alternate layout: tabbed right panel (not yet mounted)",],
 ]);
 
 function walk(dir, out = []) {

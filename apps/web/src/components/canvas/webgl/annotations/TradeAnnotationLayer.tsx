@@ -15,7 +15,7 @@ import { useStudioStore } from "../studioStore";
 const TRADE_STYLE: Record<TradePackId, { stroke: string; dash?: string; width: number }> = {
   irrigationDrainage: { stroke: "var(--gs-ink-truth)", dash: "7 3", width: 1.2 },
   hardscapeConstruction: { stroke: "var(--gs-ink)", width: 1.35 },
-  lightingElectrical: { stroke: "var(--gs-primary)", dash: "2 3", width: 1.15 },
+  lightingElectrical: { stroke: "var(--la-accent)", dash: "2 3", width: 1.15 },
 };
 
 export function TradeAnnotationLayer({

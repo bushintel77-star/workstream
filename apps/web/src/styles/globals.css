@@ -13,8 +13,8 @@
   --canvas-base: var(--gs-canvas);
   --canvas-base-high: var(--gs-glass-sunken);
   --canvas-base-low: var(--gs-frame);
-  --gold-standard: var(--gs-primary);
-  --gold-standard-bright: var(--gs-primary-hover);
+  --gold-standard: var(--la-accent);
+  --gold-standard-bright: var(--la-ink-secondary);
   --gold-standard-ink: var(--gs-ink);
   --gold-standard-ink-bright: var(--gs-panel);
   --signal-blue: var(--gs-truth);
@@ -69,19 +69,18 @@
   /* accent — Gold Standard crimson. One accent identity app-wide: the studio's
      crimson is the operator chrome's crimson (canvas geometry keeps its own
      cobalt/crimson drawing tokens, which chrome never borrows). */
-  --accent: var(--gs-primary);
-  --accent-soft: color-mix(in srgb, var(--gs-primary) 14%, transparent);
-  /* accent-ink = accent as TEXT on paper surfaces (AA crimson) */
-  --accent-ink: var(--gs-primary-ink);
-  --accent-bright: var(--gs-primary-hover);
-  --accent-water: var(--gs-ink-secondary);
+  --accent: var(--la-accent);
+  --accent-soft: color-mix(in srgb, var(--la-accent) 8%, transparent);
+  /* accent-ink = accent as TEXT on paper surfaces */
+  --accent-ink: var(--la-ink);
+  --accent-bright: var(--la-ink-secondary);
+  --accent-water: var(--la-ink-secondary);
 
-  /* signal — the single critical/hero spark ("issued for permitting").
-     One hero element per surface, never on the canvas
-     (canvas keeps crimson=existing / cobalt=proposed). */
-  --signal: var(--gs-primary);
-  --signal-ink: var(--gs-panel);
-  --signal-soft: color-mix(in srgb, var(--gs-primary) 16%, transparent);
+  /* signal — the single critical/hero spark.
+     One hero element per surface, never on the canvas. */
+  --signal: var(--la-accent);
+  --signal-ink: var(--la-surface);
+  --signal-soft: color-mix(in srgb, var(--la-accent) 8%, transparent);
 
   /* semantic — the GS status set (ink + iconography; crimson = critical) */
   --ok: var(--gs-success);

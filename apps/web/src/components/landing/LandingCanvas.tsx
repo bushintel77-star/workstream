@@ -210,6 +210,9 @@ export function LandingCanvas({
             <Link href="/home" className={css.topbarLink}>
               Open the studio
             </Link>
+            <Link href="/sign-in" className={css.topbarLink}>
+              Sign in
+            </Link>
             <Link href="/settings" className={css.topbarLink}>
               Settings
             </Link>
@@ -225,9 +228,14 @@ export function LandingCanvas({
             true stylus telemetry, run live parametric takeoffs, and send
             clients a frosted-glass portal for instant deposit and approval.
           </p>
-          <Link href="/home" className={css.heroCta} data-testid="hero-open-studio">
-            Open the Studio
-          </Link>
+          <div className={css.heroCtaRow}>
+            <Link href="/home" className={css.heroCta} data-testid="hero-open-studio">
+              Open the Studio
+            </Link>
+            <Link href="/sign-in" className={css.heroSignIn} data-testid="hero-sign-in">
+              Sign in
+            </Link>
+          </div>
         </div>
 
         <HeroAddressEntry onPick={handlePick} onOpen={openSite} statusLabel={statusLabel} />
@@ -258,6 +266,7 @@ export function LandingCanvas({
           <p className={css.footerBrand}>Workstream — site truth, sketch, CAD and quote for landscape builders.</p>
           <nav className={css.footerLinks} aria-label="Apps">
             <Link href="/home" className={css.footerLink}>Desktop app — open the studio</Link>
+            <Link href="/sign-in" className={css.footerLink}>Sign in</Link>
             <span className={css.footerNote}>Mobile field app — EAS build, store release pending</span>
             <Link href="/settings" className={css.footerLink}>Settings</Link>
             <Link href="/legal/privacy" className={css.footerLink}>Privacy</Link>

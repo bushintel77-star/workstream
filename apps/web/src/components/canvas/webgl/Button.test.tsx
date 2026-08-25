@@ -145,8 +145,8 @@ describe("<Button> chrome-tier primitives", () => {
         "Confirm",
       ),
     );
-    expect(html).toContain('background:var(--gs-primary)');
-    expect(html).toContain('color:var(--gs-panel)');
+    expect(html).toContain('background:var(--la-accent)');
+    expect(html).toContain('color:var(--la-surface)');
   });
 
   it('variant="chip-tinted" + active=true renders the warm primary-tinted chip (PhotoTraceHud recipe)', () => {
@@ -162,14 +162,13 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain('border-radius:var(--gs-radius-pill)');
     // active override matches PhotoTraceHud's chipStyle(true)
     expect(html).toContain(
-      'border:1px solid color-mix(in srgb, var(--gs-primary) 50%, transparent)',
+      'border:1px solid color-mix(in srgb, var(--la-accent) 50%, transparent)',
     );
     expect(html).toContain(
-      'background:color-mix(in srgb, var(--gs-primary) 14%, transparent)',
+      'background:color-mix(in srgb, var(--la-accent) 14%, transparent)',
     );
-    /* Primary-ink on the wash (AA at body size) — bare --gs-primary over a
-     * 14% wash lands ~4.2:1. */
-    expect(html).toContain('color:var(--gs-primary-ink)');
+    /* Charcoal accent on the wash (AA at body size). */
+    expect(html).toContain('color:var(--la-ink)');
   });
 
   it('variant="chip-tinted" + active=false renders the inactive cool-tinted shell', () => {
@@ -200,7 +199,7 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain('font-family:var(--font-tech)');
     expect(html).toContain('font-size:var(--gs-font-xs)');
     expect(html).toContain('font-variant-numeric:tabular-nums');
-    expect(html).toContain('background:var(--gs-panel-frost)');
+    expect(html).toContain('background:var(--la-surface)');
     expect(html).toContain('border-radius:var(--gs-radius-pill)');
     expect(html).toContain('box-shadow:var(--gs-shadow-1)');
     expect(html).toContain('pointer-events:auto');
@@ -222,7 +221,7 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain('opacity:0.4');
     expect(html).toContain('transform:translateY(-1px)');
     // Shell untouched
-    expect(html).toContain('background:var(--gs-panel-frost)');
+    expect(html).toContain('background:var(--la-surface)');
   });
 
   it('variant="swatch" renders the StudioToolRail icon column shell', () => {
@@ -269,52 +268,14 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toMatch(/disabled/);
   });
 
-  it('variant="asset-card" renders the AssetFanOutDock glass card shell', () => {
-    const html = renderToStaticMarkup(
-      createElement(
-        Button,
-        { variant: "asset-card", "data-testid": "card" },
-        "Card",
-      ),
-    );
-    expect(html).toMatch(/<button[^>]*data-testid="card"/);
-    expect(html).toContain('width:68');
-    expect(html).toContain('min-height:48px');
-    expect(html).toContain('border-radius:var(--gs-radius-lg)');
-    expect(html).toContain(
-      'background:color-mix(in srgb, var(--gs-glass) 38%, transparent)',
-    );
-    expect(html).toContain('backdrop-filter:blur(var(--gs-blur))');
-    expect(html).toContain('pointer-events:auto');
-  });
-
-  it('variant="asset-card" + active=true takes the gold treatment (armed card)', () => {
-    const html = renderToStaticMarkup(
-      createElement(
-        Button,
-        { variant: "asset-card", active: true, "data-testid": "card-a" },
-        "Card",
-      ),
-    );
-    expect(html).toContain('width:80');
-    expect(html).toContain('min-height:56px');
-    expect(html).toContain(
-      'border:1px solid color-mix(in srgb, var(--gs-primary) 50%, transparent)',
-    );
-    expect(html).toContain(
-      'background:color-mix(in srgb, var(--gs-primary) 6%, var(--gs-glass))',
-    );    expect(html).toContain('box-shadow:0 0 12px color-mix(in srgb, var(--gs-primary) 10%, transparent)',
-    );
-  });
-
   it('variant="cta" renders the solid primary CTA (WebGLStudioPreview Import/Tidy)', () => {
     const html = renderToStaticMarkup(
       createElement(Button, { variant: "cta", "data-testid": "cta" }, "Tidy"),
     );
     expect(html).toMatch(/<button[^>]*data-testid="cta"/);
-    expect(html).toContain('border:1px solid var(--gs-primary)');
-    expect(html).toContain('background:var(--gs-primary)');
-    expect(html).toContain('color:var(--gs-panel)');
+    expect(html).toContain('border:1px solid var(--la-accent)');
+    expect(html).toContain('background:var(--la-accent)');
+    expect(html).toContain('color:var(--la-surface)');
     expect(html).toContain('font-weight:600');
     expect(html).toContain('border-radius:var(--gs-radius-chip)');
     expect(html).toContain('padding:5px 8px');
@@ -357,9 +318,9 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toMatch(/<button[^>]*data-testid="cad-accept"/);
     // byte-identical to the prior inline Accept button
     expect(html).toContain('flex:1');
-    expect(html).toContain('border:1px solid var(--gs-primary)');
-    expect(html).toContain('background:var(--gs-primary)');
-    expect(html).toContain('color:var(--gs-panel)');
+    expect(html).toContain('border:1px solid var(--la-accent)');
+    expect(html).toContain('background:var(--la-accent)');
+    expect(html).toContain('color:var(--la-surface)');
     expect(html).toContain('font-weight:600');
     expect(html).toContain('padding:5px 8px');
     expect(html).toContain('border-radius:var(--gs-radius-chip)');
@@ -432,7 +393,7 @@ describe("<Button> chrome-tier primitives", () => {
     );
     expect(html).toMatch(/<button[^>]*data-testid="cp"/);
     expect(html).toContain('font-size:var(--gs-font-xs)');
-    expect(html).toContain('padding:3px 8px');
+    expect(html).toContain('padding:3px 6px');
     expect(html).toContain('border-radius:var(--gs-radius-chip)');
     expect(html).toContain(
       'border:1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)',
@@ -498,13 +459,13 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain('padding:5px 8px');
     expect(html).toContain('border-radius:var(--gs-radius-chip)');
     expect(html).toContain(
-      'border:1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)',
+      'border:1px solid color-mix(in srgb, var(--la-accent) 45%, transparent)',
     );
     expect(html).toContain(
-      'background:color-mix(in srgb, var(--gs-primary) 14%, transparent)',
+      'background:color-mix(in srgb, var(--la-accent) 14%, transparent)',
     );
-    /* Primary-ink on the wash — AA at body size (§4). */
-    expect(html).toContain('color:var(--gs-primary-ink)');
+    /* Charcoal accent on the wash — AA at body size. */
+    expect(html).toContain('color:var(--la-ink)');
   });
 
   it("merges consumer style overrides on top of the variant shell (consumer wins)", () => {

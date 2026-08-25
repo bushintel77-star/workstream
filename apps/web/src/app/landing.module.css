@@ -387,6 +387,38 @@
   box-shadow: 0 8px 28px color-mix(in srgb, var(--gs-primary) 55%, transparent);
 }
 
+.heroCtaRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 6px;
+}
+
+.heroSignIn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--hero-copy);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--hero-copy) 26%, transparent);
+  border-radius: var(--r-xl);
+  text-decoration: none;
+  transition:
+    background 160ms var(--ws-ease),
+    border-color 160ms var(--ws-ease);
+}
+
+.heroSignIn:hover,
+.heroSignIn:focus-visible {
+  background: color-mix(in srgb, var(--gs-panel) 18%, transparent);
+  border-color: color-mix(in srgb, var(--hero-copy) 55%, transparent);
+}
+
 /* ---------------------------------------------------------------- entry */
 
 /* The address entry — the interactive half of the pitch: type an address,

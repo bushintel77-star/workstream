@@ -66,7 +66,7 @@ const labelStyle: React.CSSProperties = {
   fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
   textTransform: "uppercase",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
 };
 
 const rowStyle: React.CSSProperties = {
@@ -74,7 +74,7 @@ const rowStyle: React.CSSProperties = {
   justifyContent: "space-between",
   alignItems: "baseline",
   gap: "var(--gs-space-3)",
-  borderBottom: "1px solid var(--gs-line)",
+  borderBottom: "1px solid var(--la-surface-muted)",
   paddingBottom: 3,
   marginBottom: 3,
 };
@@ -82,7 +82,7 @@ const rowStyle: React.CSSProperties = {
 const figureStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
   fontSize: "var(--gs-font-xs)",
-  color: "var(--gs-ink)",
+  color: "var(--la-ink)",
   whiteSpace: "nowrap",
 };
 
@@ -96,7 +96,7 @@ const tickStyle: React.CSSProperties = {
   cursor: "pointer",
   fontFamily: "var(--font-tech)",
   fontSize: "var(--gs-font-sm)",
-  color: "var(--gs-ink-truth)",
+  color: "var(--la-ink)",
   width: 16,
   textAlign: "center",
   flex: "0 0 auto",
@@ -122,8 +122,8 @@ function StockChip({ inStock, mode }: { inStock: boolean; mode: string }) {
     mode !== "live_matched"
       ? "var(--gs-ink-secondary)"
       : inStock
-        ? "var(--gs-ink-truth)"
-        : "var(--gs-primary)";
+        ? "var(--la-ink)"
+        : "var(--la-accent)";
   return (
     <span
       data-testid="fit-sheet-stock-chip"
@@ -407,21 +407,21 @@ function FitSheetCapsule({
   const surfaceStyle: React.CSSProperties = compact
     ? {
         pointerEvents: "auto",
-        background: "var(--gs-panel)",
-        border: "0.5px solid var(--gs-line)",
+        background: "var(--la-surface)",
+        border: "0.5px solid var(--la-surface-muted)",
         borderRadius: "var(--gs-radius-panel)",
-        color: "var(--gs-ink)",
+        color: "var(--la-ink)",
         fontFamily: "var(--font-ui)",
         overflow: "hidden",
       }
     : {
         pointerEvents: "auto",
-        background: "var(--gs-glass-veil)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
-        border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+        background: "var(--la-surface)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
+        border: "1px solid var(--la-surface-muted)",
         boxShadow: "var(--gs-shadow-2)",
-        color: "var(--gs-ink)",
+        color: "var(--la-ink)",
         fontFamily: "var(--font-ui)",
         overflow: "hidden",
       };
@@ -462,7 +462,7 @@ function FitSheetCapsule({
                 fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                color: "var(--gs-ink-muted)",
+                color: "var(--la-ink-muted)",
               }}
             >
               {statusLabel} · {itemCount} item{itemCount === 1 ? "" : "s"}
@@ -473,7 +473,7 @@ function FitSheetCapsule({
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-h3)",
                 fontWeight: 600,
-                color: "var(--gs-ink)",
+                color: "var(--la-ink)",
                 letterSpacing: "0.01em",
               }}
             >
@@ -485,7 +485,7 @@ function FitSheetCapsule({
             style={{
               fontFamily: "var(--font-tech)",
               fontSize: "var(--gs-font-sm)",
-              color: "var(--gs-ink-secondary)",
+              color: "var(--la-ink-secondary)",
               flexShrink: 0,
             }}
           >
@@ -531,7 +531,7 @@ function FitSheetCapsule({
               fontFamily: "var(--font-tech)",
               fontSize: "var(--gs-font-h3)",
               fontWeight: 600,
-              color: "var(--gs-primary)",
+              color: "var(--la-accent)",
               letterSpacing: "0.01em",
             }}
           >
@@ -543,7 +543,7 @@ function FitSheetCapsule({
               style={{
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-xs)",
-                color: "var(--gs-primary)",
+                color: "var(--la-accent)",
               }}
             >
               ● pricing
@@ -557,7 +557,7 @@ function FitSheetCapsule({
               style={{
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-xs)",
-                color: "var(--gs-ink-muted)",
+                color: "var(--la-ink-muted)",
                 background:
                   "color-mix(in srgb, var(--gs-warning) 18%, transparent)",
                 border:
@@ -590,7 +590,7 @@ function FitSheetCapsule({
           minHeight: 0,
           maxHeight: compact ? "min(240px, calc(100dvh - 380px))" : 600,
           borderRadius: "var(--gs-radius-panel)",
-          borderTop: compact ? "0.5px solid var(--gs-line)" : undefined,
+          borderTop: compact ? "0.5px solid var(--la-surface-muted)" : undefined,
           padding: "10px 12px",
           display: "flex",
           flexDirection: "column",
@@ -649,7 +649,7 @@ function FitSheetCapsule({
                       <div
                         style={{
                           fontSize: "var(--gs-font-sm)",
-                          color: "var(--gs-ink)",
+                          color: "var(--la-ink)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -661,7 +661,7 @@ function FitSheetCapsule({
                       <div
                         style={{
                           fontSize: "var(--gs-font-xs)",
-                          color: "var(--gs-ink-secondary)",
+                          color: "var(--la-ink-secondary)",
                         }}
                       >
                         {section} · {line.qty.toFixed(1)} {line.unit} @{" "}
@@ -701,7 +701,7 @@ function FitSheetCapsule({
                 style={{
                   fontSize: "var(--gs-font-xs)",
                   fontFamily: "var(--font-tech)",
-                  color: "var(--gs-ink-secondary)",
+                  color: "var(--la-ink-secondary)",
                   border: "1px solid var(--gs-line)",
                   borderRadius: "var(--gs-radius-md)",
                   padding: "2px 6px",
@@ -737,7 +737,7 @@ function FitSheetCapsule({
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-h2)",
                 fontWeight: 600,
-                color: "var(--gs-primary)",
+                color: "var(--la-accent)",
               }}
             >
               {fmtAud(summary.total)}
@@ -780,7 +780,7 @@ function FitSheetCapsule({
                   <span
                     style={{
                       fontSize: "var(--gs-font-xs)",
-                      color: "var(--gs-ink-muted)",
+                      color: "var(--la-ink-muted)",
                       textDecoration: "line-through",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -798,7 +798,7 @@ function FitSheetCapsule({
                   <span
                     style={{
                       fontSize: "var(--gs-font-xs)",
-                      color: "var(--gs-ink-muted)",
+                      color: "var(--la-ink-muted)",
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -873,7 +873,7 @@ function FitSheetCapsule({
                   cursor: backendBusy ? "wait" : "pointer",
                   fontFamily: "var(--font-tech)",
                   fontSize: "var(--gs-font-sm)",
-                  color: "var(--gs-ink-secondary)",
+                  color: "var(--la-ink-secondary)",
                 }}
               >
                 ⟳
@@ -888,7 +888,7 @@ function FitSheetCapsule({
               justifyContent: "space-between",
               fontFamily: "var(--font-tech)",
               fontSize: "var(--gs-font-xs)",
-              color: "var(--gs-ink-secondary)",
+              color: "var(--la-ink-secondary)",
             }}
           >
             <span>{summary.stats.hardscapeM2.toFixed(0)} m² hardscape</span>
@@ -902,12 +902,12 @@ function FitSheetCapsule({
               data-testid="fit-sheet-alert"
               style={{
                 padding: "var(--gs-space-3) var(--gs-space-4) var(--gs-space-3) var(--gs-space-6)",
-                borderLeft: "2px solid var(--gs-primary)",
+                borderLeft: "2px solid var(--la-accent)",
                 background:
-                  "color-mix(in srgb, var(--gs-primary) 10%, transparent)",
+                  "color-mix(in srgb, var(--la-accent) 10%, transparent)",
                 borderRadius: "0 6px 6px 0",
                 fontSize: "var(--gs-font-xs)",
-                color: "var(--gs-ink)",
+                color: "var(--la-ink)",
                 lineHeight: 1.4,
               }}
             >
@@ -919,7 +919,7 @@ function FitSheetCapsule({
           <div
             style={{
               fontSize: "var(--gs-font-xs)",
-              color: "var(--gs-ink-secondary)",
+              color: "var(--la-ink-secondary)",
               letterSpacing: "0.04em",
             }}
           >

@@ -77,6 +77,10 @@ function templateSlots(
         { role: "drawing", rect: { x_pct: 5, y_pct: 61, w_pct: 43, h_pct: 35 } },
         { role: "drawing", rect: { x_pct: 52, y_pct: 61, w_pct: 43, h_pct: 35 } },
       ];
+
+    default:
+      // client_build_pack / subcontractor_build_pack — fall back to classic
+      return templateSlots("editorial_classic");
   }
 }
 
@@ -102,6 +106,10 @@ function slotPriority(
     case "concept_sketch":
       // Concept: hero sketch first, then blurb, then captions
       return { hero: 0, blurb: 1, caption: 2, drawing: 3, schedule: 4 };
+
+    default:
+      // client_pack / subcontractor_pack — fall back to deck priority
+      return slotPriority("deck");
   }
 }
 

@@ -36,7 +36,7 @@ const STATUS_CONFIG: Record<
   saving: { label: "Saving…", color: "var(--gs-ink)", pulse: true },
   retrying: { label: "Retrying…", color: "var(--gs-ink)", pulse: true },
   saved: { label: "Saved", color: "var(--gs-success)", pulse: false },
-  error: { label: "Save failed", color: "var(--gs-ink-conflict)", pulse: false },
+  error: { label: "Save failed", color: "var(--la-error)", pulse: false },
 };
 
 /** Fixed width — fits the longest label ("Retrying…") + dot + padding. */

@@ -84,6 +84,32 @@
   --gs-ink-primary: var(--gs-ink-strong); /* Emphasis ink — was gold, now charcoal */
   --gs-ink-conflict: #b91c1c;            /* Critical/strike label ink */
 
+  /* ================================================================
+   * Landscape Architecture Material Tokens (--la*)
+   * Inspired by SCAPE, West 8, OLIN — warm neutrals, earthy materials
+   * No tech-blue. Charcoal accent. Material-inspired palette.
+   * ================================================================ */
+  --la-ink: #1C1917;              /* Stone charcoal — warm, not cold */
+  --la-ink-secondary: #44403C;    /* Warm gray — concrete */
+  --la-ink-muted: #78716C;        /* Stone gray */
+  --la-ink-faint: #A8A29E;        /* Pale stone */
+  --la-surface: #FAFAF9;          /* Warm white — paper */
+  --la-surface-dim: #F5F5F4;      /* Linen */
+  --la-surface-muted: #E7E5E4;    /* Warm gray border */
+  --la-surface-deep: #D6D3D1;     /* Concrete */
+  --la-stone: #78716C;            /* Warm stone */
+  --la-timber: #92400E;           /* Rich timber brown */
+  --la-concrete: #57534E;         /* Cool concrete */
+  --la-sand: #D4A574;             /* Warm sand */
+  --la-sage: #6B7C5E;             /* Muted sage green */
+  --la-clay: #A0522D;             /* Terracotta clay */
+  --la-slate: #334155;            /* Deep slate */
+  --la-accent: #1C1917;           /* Charcoal accent (replaces blue) */
+  --la-highlight: #A0522D;        /* Terracotta highlight for presentation decks */
+  --la-success: #6B7C5E;          /* Sage green */
+  --la-warning: #D4A574;          /* Sand */
+  --la-error: #991B1B;            /* Terracotta red */
+
   /* Dialect-merge aliases — module-scoped Gold Standard names resolve
    * to the same values at root so var(--gs-glass) means one thing everywhere. */
   --gs-gold: var(--gs-primary);

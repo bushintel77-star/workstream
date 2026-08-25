@@ -130,6 +130,8 @@ export const PresentationTemplateIdSchema = z.enum([
   "editorial_minimal",
   "editorial_feature",
   "editorial_schedule",
+  "client_build_pack",
+  "subcontractor_build_pack",
 ]);
 export type PresentationTemplateId = z.infer<
   typeof PresentationTemplateIdSchema
@@ -142,6 +144,8 @@ export const PresentationDeliverableTypeSchema = z.enum([
   "quotation",
   "mood_board",
   "concept_sketch",
+  "client_pack",
+  "subcontractor_pack",
 ]);
 export type PresentationDeliverableType = z.infer<
   typeof PresentationDeliverableTypeSchema

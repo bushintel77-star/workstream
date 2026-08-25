@@ -127,7 +127,7 @@ export function SketchCadReviewCard() {
               data-testid="cad-accept-all"
               onClick={acceptAll}
               style={{
-                color: "var(--gs-primary)",
+                color: "var(--la-accent)",
                 fontSize: "var(--gs-font-sm)",
                 padding: "4px 8px",
               }}
@@ -140,7 +140,7 @@ export function SketchCadReviewCard() {
                 data-testid="cad-accept-confident"
                 onClick={() => acceptConfident(0.7)}
                 style={{
-                  color: "var(--gs-primary-ink)",
+                  color: "var(--la-ink)",
                   fontSize: "var(--gs-font-sm)",
                   padding: "4px 8px",
                 }}
@@ -172,8 +172,8 @@ export function SketchCadReviewCard() {
             margin: 0,
             fontSize: "var(--gs-font-xs)",
             lineHeight: 1.4,
-            color: "var(--gs-ink-conflict)",
-            border: "1px solid color-mix(in srgb, var(--gs-ink-conflict) 40%, transparent)",
+            color: "var(--la-error)",
+            border: "1px solid color-mix(in srgb, var(--la-error) 40%, transparent)",
             borderRadius: "var(--gs-radius-chip)",
             padding: "6px 8px",
           }}

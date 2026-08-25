@@ -87,7 +87,9 @@ describe("tier-1 stress · costing pipeline", { timeout: 20000 }, () => {
       expect(new Set(totals).size).toBe(1);
       expect(totals[0]).toBe(TARGET);
     },
-    60_000,
+    /* Address-keyed title search adds a live WFS round-trip per survey —
+     * 15 full pipelines legitimately exceed the old 60s budget. */
+    180_000,
   );
 
   it("re-costing the same project stays on the workbook lock", async () => {

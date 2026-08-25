@@ -26,13 +26,13 @@ const chipStyle = (active: boolean): React.CSSProperties => ({
   padding: "3px 10px",
   borderRadius: "var(--gs-radius-pill)",
   border: `1px solid ${active
-      ? "color-mix(in srgb, var(--gs-primary) 45%, transparent)"
+      ? "color-mix(in srgb, var(--la-accent) 45%, transparent)"
       : "color-mix(in srgb, var(--gs-line) 55%, transparent)"
     }`,
   background: active
-    ? "color-mix(in srgb, var(--gs-primary) 16%, transparent)"
+    ? "color-mix(in srgb, var(--la-accent) 16%, transparent)"
     : "transparent",
-  color: active ? "var(--gs-primary)" : "var(--gs-ink-secondary)",
+  color: active ? "var(--la-accent)" : "var(--gs-ink-secondary)",
   cursor: "pointer",
 });
 

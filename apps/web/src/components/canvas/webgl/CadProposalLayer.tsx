@@ -105,7 +105,7 @@ function ProposalMarker({
               fontSize: "var(--gs-font-sm)",
               fontWeight: 600,
               color: "var(--gs-panel)",
-              background: "var(--gs-primary)",
+              background: "var(--la-accent)",
               borderRadius: "var(--gs-radius-pill)",
               padding: "1px 8px",
               pointerEvents: "none",

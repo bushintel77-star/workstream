@@ -192,7 +192,7 @@ test.describe("Survey setup panel", () => {
     await trees.focus();
     await expect(trees).toBeFocused();
     await page.keyboard.press("Enter");
-    await expect(page.getByTestId("asset-studio")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("asset-library")).toBeVisible({ timeout: 10_000 });
   });
 
   test("shows the canvas locate state only while the boundary is missing", async ({

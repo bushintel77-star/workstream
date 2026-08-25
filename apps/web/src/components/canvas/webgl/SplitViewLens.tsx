@@ -55,9 +55,9 @@ const labelChip: CSSProperties = {
   padding: "2px 9px",
   borderRadius: "var(--gs-radius-pill)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
-  background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-  backdropFilter: "blur(var(--gs-blur))",
-  WebkitBackdropFilter: "blur(var(--gs-blur))",
+  background: "color-mix(in srgb, var(--la-surface) 38%, transparent)",
+  backdropFilter: "none",
+  WebkitBackdropFilter: "none",
   fontFamily: "var(--font-tech)",
   fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
@@ -92,7 +92,7 @@ export function SplitViewLens({ sceneProps }: SplitViewLensProps) {
         <WebGLStudio {...sceneProps}>
           <div
             data-testid="split-label-sketch"
-            style={{ ...labelChip, left: 12, color: "var(--gs-primary)" }}
+            style={{ ...labelChip, left: 12, color: "var(--la-accent)" }}
           >
             SKETCH · 3D
           </div>
@@ -109,7 +109,7 @@ export function SplitViewLens({ sceneProps }: SplitViewLensProps) {
           bottom: 0,
           width: 2,
           transform: "translateX(-50%)",
-          background: "var(--gs-primary)",
+          background: "var(--la-accent)",
           opacity: 0.5,
           pointerEvents: "none",
           zIndex: "var(--cf-z-chrome)",

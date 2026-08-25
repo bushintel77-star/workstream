@@ -147,7 +147,19 @@ export interface WebGLStudioProps {
  * subsurface tubes, window glow); N8AO adds real occlusion in foliage/building
  * crevices; Vignette + SMAA finish the cinematic frame.
  */
-function RenderFX() {
+function RenderFX({ drafting }: { drafting: boolean }) {
+  /* Paper modes: skip the EffectComposer entirely so the canvas renders
+     as clean #F4F4F4 paper. The N8AO screen-space algorithm darkens flat
+     surfaces (it treats the ground mesh as self-occluding), and the
+     Vignette/Bloom add further atmospheric darkening — all undesirable on
+     a drafting sheet. Site/3D modes keep the full cinematic stack. */
+  if (drafting) {
+    return (
+      <EffectComposer multisampling={0}>
+        <SMAA />
+      </EffectComposer>
+    );
+  }
   return (
     <EffectComposer multisampling={0} enableNormalPass>
       <N8AO
@@ -221,13 +233,10 @@ export function WebGLStudio({
     canvasLayerPolicy(parseCanvasMode(mode) ?? "survey").groundAlbedo === "paper";
   const onCanvasCreated = useCallback(({ gl, scene }: { gl: WebGLRenderer; scene: THREE.Scene }) => {
     gl.setClearColor(PALETTE.gsCanvas);
-    // ACES Filmic tone mapping — rolls off highlights smoothly instead of the
-    // harsh linear clip (NoToneMapping) that makes the default render read as
-    // flat/plastic. The single biggest "design render vs CG" lever.
-    gl.toneMapping = THREE.ACESFilmicToneMapping;
-    // Drafting (paper) modes flatten the exposure so a #F4F4F4 sheet reads
-    // neutral rather than being driven warm. Site/3D modes keep the sunny
-    // daylight exposure calibrated for foliage legibility.
+    // Drafting (paper) modes use NoToneMapping so #F4F4F4 stays dead-neutral
+    // — ACES Filmic's S-curve shifts bright whites warm even at exposure 1.0.
+    // Site/3D modes keep ACES + exposure 1.55 for the sunny daylight look.
+    gl.toneMapping = drafting ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
     gl.toneMappingExposure = drafting ? 1.0 : 1.55;
     gl.outputColorSpace = THREE.SRGBColorSpace;
     // Linear fog matching the canvas colour — fades distant geometry into the
@@ -260,6 +269,10 @@ export function WebGLStudio({
         camera={{ position: [0, 100, 0.001], fov: 30, near: 0.1, far: 500 }}
         gl={{ antialias: true, alpha: false }}
         onCreated={onCanvasCreated}
+        /* Force a full Canvas remount when drafting toggles so the
+           EffectComposer tree is rebuilt from scratch (R3F reconciler
+           does not hot-swap post-processing passes). */
+        key={drafting ? "paper" : "3d"}
         style={{ position: "absolute", inset: 0 }}
         data-testid="webgl-canvas"
       >
@@ -275,11 +288,17 @@ export function WebGLStudio({
          * StudioEnvironmentBoundary degrades to direct lights if this ever
          * fails to load again.
          */}
+        {/*
+         * Drafting modes: environmentIntensity = 0 eliminates IBL warm bounce
+         * so the #F4F4F4 paper canvas stays dead-neutral (the park HDRI's green
+         * ground-bounce was shifting the perceived clear colour olive). Site/3D
+         * modes keep 0.55 for the sunny daylight look.
+         */}
         <StudioEnvironmentBoundary>
           <Environment
             files="/hdri/rooitou_park_1k.hdr"
             background={false}
-            environmentIntensity={drafting ? 0.15 : 0.55}
+            environmentIntensity={drafting ? 0 : 0.55}
           />
         </StudioEnvironmentBoundary>
 
@@ -319,7 +338,7 @@ export function WebGLStudio({
           irrigationZones={irrigationZones}
         />
 
-        <RenderFX />
+        <RenderFX drafting={drafting} />
       </Canvas>
 
       <div

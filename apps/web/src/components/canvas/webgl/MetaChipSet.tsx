@@ -56,9 +56,9 @@ const detailStyle: React.CSSProperties = {
   padding: "8px 10px",
   /* Paper glass detail card, not dark glass (design-spec §5 / debt D8) —
    * dark chrome is reserved for the presentation lens. */
-  background: "var(--gs-glass-veil)",
-  backdropFilter: "blur(var(--gs-blur))",
-  WebkitBackdropFilter: "blur(var(--gs-blur))",
+  background: "var(--la-surface)",
+  backdropFilter: "none",
+  WebkitBackdropFilter: "none",
   border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
   borderRadius: "var(--gs-radius-panel)",
   boxShadow: "var(--gs-shadow-3)",
@@ -205,7 +205,7 @@ export function MetaChipSet({ boundaryPct, scaleM, boardAspect, mode, chips }: M
               style={{
                 fontFamily: "var(--font-hand), 'Architects Daughter', cursive",
                 opacity: bright ? 1 : expanded ? 0.95 : 0.4,
-                color: bright ? "var(--gs-primary-ink)" : "var(--gs-ink-muted)",
+                color: bright ? "var(--la-ink)" : "var(--gs-ink-muted)",
                 boxShadow: expanded ? "var(--gs-shadow-2)" : "var(--gs-shadow-1)",
               }}
             >

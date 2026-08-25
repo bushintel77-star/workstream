@@ -465,6 +465,26 @@ describe("mass plant (row / area) tool state", () => {
     expect(useStudioStore.getState().assetPlantDraft).toBeNull();
   });
 
+  it("mass-plant modes never survive a disarm/re-arm — setArmedSymbolId normalizes them", () => {
+    const store = useStudioStore.getState();
+    store.setArmedSymbolId("hornbeam-pleached");
+    store.setAreaPlantActive(true);
+    expect(useStudioStore.getState().areaPlantActive).toBe(true);
+    // Disarm (Esc / tool switch / mode switch all route through here) —
+    // a stale Area toggle must not silently resume for the next symbol.
+    useStudioStore.getState().setArmedSymbolId(null);
+    expect(useStudioStore.getState().areaPlantActive).toBe(false);
+    expect(useStudioStore.getState().rowPlantActive).toBe(false);
+    // Arming a fresh symbol also resets to single-place (toolbar default).
+    store.setArmedSymbolId("olive-standard");
+    store.setRowPlantActive(true);
+    store.setArmedSymbolId("bluestone-paver");
+    const s = useStudioStore.getState();
+    expect(s.armedSymbolId).toBe("bluestone-paver");
+    expect(s.rowPlantActive).toBe(false);
+    expect(s.areaPlantActive).toBe(false);
+  });
+
   it("arming an asset still stands down the other pointer tools", () => {
     const store = useStudioStore.getState();
     store.setSketchMode(true);

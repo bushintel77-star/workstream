@@ -27,7 +27,7 @@ export function InstrumentCard({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const colour = accent ? "var(--gs-primary)" : "var(--gs-ink-truth)";
+  const colour = accent ? "var(--la-accent)" : "var(--gs-ink-truth)";
 
   return open ? (
     <GlassCard style={{ position: "relative", padding: "8px 10px" }}>
@@ -79,9 +79,9 @@ export function InstrumentCard({
         padding: "4px 9px",
         margin: 0,
         borderRadius: "var(--gs-radius-pill)",
-        background: "color-mix(in srgb, var(--gs-glass) 38%, transparent)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        background: "color-mix(in srgb, var(--la-surface) 38%, transparent)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
         border: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
         fontFamily: "var(--font-ui)",
         fontSize: "var(--gs-font-xs)",

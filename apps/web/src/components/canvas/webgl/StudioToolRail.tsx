@@ -109,7 +109,7 @@ export function StudioToolRail({
         }
         setSketchMode(next);
       },
-      accent: "var(--gs-primary)",
+      accent: "var(--la-accent)",
       title: "Freehand ink (S)",
       group: "core",
     },
@@ -133,7 +133,7 @@ export function StudioToolRail({
         if (!next) setArmedSymbolId(null);
         setAssetsOpen(next);
       },
-      accent: "var(--gs-primary)",
+      accent: "var(--la-accent)",
       title: "Discovery fan-out (A)",
       group: "core",
     },
@@ -143,7 +143,7 @@ export function StudioToolRail({
       label: "Polyline",
       active: draftSession?.tool === "polyline",
       onToggle: () => toggleDraft("polyline"),
-      accent: "var(--gs-primary)",
+      accent: "var(--la-accent)",
       title:
         "Click exact vertices for a setout line — snaps to vertices, the title boundary and 45°. Enter finishes, Backspace steps back, Esc cancels",
       group: "core",
@@ -154,7 +154,7 @@ export function StudioToolRail({
       label: "Area",
       active: draftSession?.tool === "area",
       onToggle: () => toggleDraft("area"),
-      accent: "var(--gs-primary)",
+      accent: "var(--la-accent)",
       title:
         "Click exact vertices for a closed region — finishes on the origin snap and persists as a costable area",
       group: "core",
@@ -165,7 +165,7 @@ export function StudioToolRail({
       label: "Marquee",
       active: marqueeActive,
       onToggle: () => setMarqueeActive(!marqueeActive),
-      accent: "var(--gs-primary)",
+      accent: "var(--la-accent)",
       title: "Drag a box to select placements and features (shift adds)",
       group: "core",
     },
@@ -177,7 +177,7 @@ export function StudioToolRail({
             label: "Tidy",
             active: false,
             onToggle: onTidy,
-            accent: "var(--gs-primary)",
+            accent: "var(--la-accent)",
             title: tidyDisabled
               ? "Draw ink first — strokes become CAD proposals"
               : "Tidy strokes → confidence-scored CAD proposals (accept/reject review)",
@@ -235,7 +235,7 @@ export function StudioToolRail({
       label: "Present",
       active: presentActive,
       onToggle: onPresentToggle,
-      accent: "var(--gs-primary)",
+      accent: "var(--la-accent)",
       title: "Presentation lens (Shift+7)",
       group: "view",
     },
@@ -245,7 +245,7 @@ export function StudioToolRail({
       label: "Split",
       active: splitView,
       onToggle: () => setSplitView(!splitView),
-      accent: "var(--gs-primary)",
+      accent: "var(--la-accent)",
       title: "Plan | 3D split view (linked cameras)",
       group: "view",
     },
@@ -297,7 +297,7 @@ export function StudioToolRail({
             label: "Earth",
             active: earthworksView,
             onToggle: () => setEarthworksView(!earthworksView),
-            accent: "var(--gs-primary)",
+            accent: "var(--la-accent)",
             title: "Cut / fill earthworks (advanced)",
             group: "view" as const,
             advanced: true,
@@ -324,9 +324,9 @@ export function StudioToolRail({
         // Floating element: the rail is a glass panel, not a naked column
         // of buttons hovering over the drawing (GlassCard recipe — veil +
         // blur + hairline + neutral shadow tier).
-        background: "var(--gs-glass-veil)",
-        backdropFilter: "blur(var(--gs-blur))",
-        WebkitBackdropFilter: "blur(var(--gs-blur))",
+        background: "var(--la-surface)",
+        backdropFilter: "none",
+        WebkitBackdropFilter: "none",
         borderRadius: "var(--gs-radius-panel)",
         border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
         boxShadow: "var(--gs-shadow-2)",

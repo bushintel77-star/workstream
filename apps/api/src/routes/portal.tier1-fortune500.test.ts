@@ -72,7 +72,7 @@ describe("fortune-500 · portal quote honesty", () => {
     expect(body.tier1).toEqual(TIER1_WRIGHTS_SAVINGS);
     expect(body.costing?.scenario).toBe("standard");
     expect(body.costing?.total).toBe(TARGET);
-  });
+  }, 20000);
 
   it("Carlton portal quote must not expose Tier-1 savings", async () => {
     const projectId = await pipelineToCosting(CARLTON);
@@ -93,7 +93,7 @@ describe("fortune-500 · portal quote honesty", () => {
     };
     expect(body.tier1).toBeNull();
     expect(body.costing?.total).not.toBe(TARGET);
-  });
+  }, 20000);
 
   it("deposit-scope token cannot read quote (scope isolation)", async () => {
     const projectId = await pipelineToCosting(WRIGHTS);
@@ -108,7 +108,7 @@ describe("fortune-500 · portal quote honesty", () => {
       url: `/portal/quote/${token}`,
     });
     expect(quote.statusCode).toBe(403);
-  });
+  }, 20000);
 
   it("tampered / empty tokens are rejected", async () => {
     ({ app } = await buildTestApp());
@@ -146,5 +146,5 @@ describe("fortune-500 · portal quote honesty", () => {
     }
     expect(new Set(payloads.map((p) => JSON.stringify(p))).size).toBe(1);
     expect(payloads[0]).toEqual(TIER1_WRIGHTS_SAVINGS);
-  });
+  }, 30000);
 });

@@ -35,9 +35,9 @@ const chip: React.CSSProperties = {
 
 const primaryChip: React.CSSProperties = {
   ...chip,
-  border: "1px solid color-mix(in srgb, var(--gs-primary) 45%, transparent)",
-  background: "color-mix(in srgb, var(--gs-primary) 12%, transparent)",
-  color: "var(--gs-primary)",
+  border: "1px solid color-mix(in srgb, var(--la-accent) 45%, transparent)",
+  background: "color-mix(in srgb, var(--la-accent) 12%, transparent)",
+  color: "var(--la-accent)",
 };
 
 export function SitePhotoGallery({
@@ -257,7 +257,7 @@ export function SitePhotoGallery({
         <p
           role="alert"
           data-testid="site-photo-error"
-          style={{ margin: 0, color: "var(--gs-ink-conflict)", fontSize: "var(--gs-font-sm)" }}
+          style={{ margin: 0, color: "var(--la-error)", fontSize: "var(--gs-font-sm)" }}
         >
           {error}
         </p>
@@ -369,7 +369,7 @@ export function SitePhotoGallery({
                     data-testid="site-photo-delete"
                     disabled={busy}
                     onClick={() => void deletePhoto(photo)}
-                    style={{ ...chip, color: "var(--gs-ink-conflict)" }}
+                    style={{ ...chip, color: "var(--la-error)" }}
                   >
                     Delete
                   </button>

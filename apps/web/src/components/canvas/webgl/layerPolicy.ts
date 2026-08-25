@@ -113,13 +113,15 @@ export function canvasLayerPolicy(mode: CanvasMode): CanvasLayerPolicy {
         groundAlbedo: "paper",
       };
     default:
-      // garden | quote | present | share — presentation contexts, where the
-      // ground is a material being specified rather than a sheet to draw on.
+      // garden | quote | present | share — the paper ground reads clean in
+      // every mode (olive ground-bounce was shifting the perceived canvas
+      // colour away from #F4F4F4). IBL still adds environmental depth for
+      // site/presentation modes.
       return {
         subsurface: false,
         utilities: true,
         easements: true,
-        groundAlbedo: "site",
+        groundAlbedo: "paper",
       };
   }
 }

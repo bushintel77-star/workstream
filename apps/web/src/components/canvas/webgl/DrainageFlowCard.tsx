@@ -214,7 +214,7 @@ export function DrainageFlowCard({
             fontWeight: 600,
             color:
               ponds.length > 0
-                ? "var(--gs-ink-conflict)"
+                ? "var(--la-error)"
                 : "var(--gs-ink-truth)",
             background:
               ponds.length > 0

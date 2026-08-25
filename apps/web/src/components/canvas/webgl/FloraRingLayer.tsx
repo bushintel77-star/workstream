@@ -42,16 +42,16 @@ import {
   placementScaleFor,
 } from "./floraWorld";
 
-const GOLD = "var(--gs-primary)";
+const GOLD = "var(--la-accent)";
 
 const cardStyle: React.CSSProperties = {
   width: 238,
   padding: "9px 11px",
   borderRadius: "var(--gs-radius-2xl)",
   border: `1px solid color-mix(in srgb, ${GOLD} 40%, transparent)`,
-  background: "color-mix(in srgb, var(--gs-glass) 88%, transparent)",
-  backdropFilter: "blur(var(--gs-blur))",
-  WebkitBackdropFilter: "blur(var(--gs-blur))",
+  background: "color-mix(in srgb, var(--la-surface) 88%, transparent)",
+  backdropFilter: "none",
+  WebkitBackdropFilter: "none",
   fontFamily: "var(--font-ui)",
   color: "var(--gs-ink)",
   pointerEvents: "auto",
@@ -245,7 +245,7 @@ export function FloraRingLayer({
                       style={{
                         fontSize: "var(--gs-font-xs)",
                         fontFamily: "var(--font-tech)",
-                        color: "var(--gs-primary)",
+                        color: "var(--la-accent)",
                       }}
                     >
                       Spring hold
@@ -284,7 +284,7 @@ export function FloraRingLayer({
                 background: summary.blocked
                   ? "transparent"
                   : `color-mix(in srgb, ${GOLD} 20%, transparent)`,
-                color: summary.blocked ? "var(--gs-conflict)" : "var(--gs-primary)",
+                color: summary.blocked ? "var(--gs-conflict)" : "var(--la-accent)",
                 fontFamily: "var(--font-ui)",
                 fontSize: "var(--gs-font-sm)",
                 fontWeight: 600,

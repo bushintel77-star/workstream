@@ -71,8 +71,8 @@ test.describe("WebGL asset row plant (hedge run + persist)", () => {
 
     // 1. Open the dock, arm the hedge symbol, then switch to row-plant mode.
     await page.getByRole("button", { name: "▸ Assets" }).click();
-    const dock = page.locator('[data-testid="asset-dock"]');
-    await expect(dock).toBeVisible({ timeout: 5_000 });
+    const library = page.locator('[data-testid="asset-library"]');
+    await expect(library).toBeVisible({ timeout: 5_000 });
     await page.locator('[data-testid="asset-card-hornbeam-pleached"]').click();
     await page.locator('[data-testid="floating-row-plant"]').click();
     await expect(page.locator('[data-testid="floating-placement-toolbar"]')).toContainText(/row/i, { timeout: 5_000 });

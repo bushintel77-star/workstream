@@ -81,7 +81,7 @@ const COVERAGE_STALE_PP = 2;
  */
 const PAINTED_SELECTOR = [
   "[data-gs-glass-card]",
-  "[data-testid='asset-dock']",
+  "[data-testid='asset-library']",
   "[data-testid='studio-tool-rail']",
   "[data-testid='nib-palette']",
   "[data-testid='viewport-transition-hud']",
