@@ -41,11 +41,23 @@ const GS_PREFIXED = new Set([
 /** TS keys with no single CSS counterpart (TS-only derivations). */
 const TS_ONLY = new Set(["draftingGrey", "warningL500", "warningD400", "gsConflictInk"]);
 
+/**
+ * Dark-studio scene/DOM splits (DESIGN.md §2, 2026-08-26): the TS mirror
+ * feeds the WebGL SCENE (ink, hairlines and boundaries render over the
+ * dark canvas/panel chassis), while the CSS values serve DOM chrome —
+ * which is still Studio Paper where it matters (--gs-panel-grad is a
+ * white gradient, so DOM ink stays charcoal). The two media legitimately
+ * differ for these keys; every other entry must stay byte-identical.
+ * Scene-side AA for the split keys is asserted in colorTokens.test.ts.
+ */
+const DARK_STUDIO_SCENE_SPLIT = new Set(["gsInk", "gsLine", "gsLineStrong", "gsPanel"]);
+
 describe("colorTokens ↔ color-tokens.css sync", () => {
   it("mirrors every palette entry to an identical CSS declaration", () => {
     const mismatches: string[] = [];
     for (const [key, tsValue] of Object.entries(PALETTE)) {
       if (TS_ONLY.has(key)) continue;
+      if (DARK_STUDIO_SCENE_SPLIT.has(key)) continue; // declared split — see above
       const cssName = key === "renderBlueprintGround"
         ? "gs-blueprint-ground"
         : GS_PREFIXED.has(key)

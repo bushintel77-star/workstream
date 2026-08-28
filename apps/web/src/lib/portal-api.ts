@@ -46,7 +46,9 @@ export type DepositCheckout = {
 export async function fetchPortalQuote(
   token: string,
 ): Promise<PortalQuote | { error: string }> {
-  const res = await fetch(`${API_URL}/portal/quote/${token}`, {
+  // Encode the path segment — a token is opaque; unencoded characters
+  // (a future token format change) must not be able to reshape the URL.
+  const res = await fetch(`${API_URL}/portal/quote/${encodeURIComponent(token)}`, {
     cache: "no-store",
   });
   if (!res.ok) return { error: "This link has expired. Contact your landscaper." };
@@ -61,7 +63,7 @@ export async function createDepositCheckout(
     scenario && ["lean", "standard", "buffer"].includes(scenario)
       ? `?scenario=${encodeURIComponent(scenario)}`
       : "";
-  const res = await fetch(`${API_URL}/portal/deposit/${token}${qs}`, {
+  const res = await fetch(`${API_URL}/portal/deposit/${encodeURIComponent(token)}${qs}`, {
     method: "POST",
     cache: "no-store",
   });

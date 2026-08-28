@@ -38,7 +38,7 @@ const rowBase: React.CSSProperties = {
   textAlign: "left",
 };
 
-export function SketchCadReviewCard() {
+export function SketchCadReviewCard({ docked = false }: { docked?: boolean }) {
   const proposals = useStudioStore((s) => s.cadProposals);
   const open = useStudioStore((s) => s.cadReviewOpen);
   const activeId = useStudioStore((s) => s.cadActiveProposalId);
@@ -63,9 +63,14 @@ export function SketchCadReviewCard() {
   const photoScoped = notice != null && /photo-traced/.test(notice);
 
   return (
+    <div data-testid="cad-review">
     <GlassCard
-      position="top-right"
-      style={{ width: 288 }}
+      /* Docked — a flow child of the UnifiedPanel body (the floating
+       * top-right card retired with the hidden right dock: it would sit
+       * under the flush panel). Floating position stays available for any
+       * future standalone mount. */
+      position={docked ? undefined : "top-right"}
+      style={docked ? { position: "relative", width: "100%" } : { width: 288 }}
       scrollBody={true}
       header={
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -266,5 +271,6 @@ export function SketchCadReviewCard() {
         </div>
       </div>
     </GlassCard>
+    </div>
   );
 }

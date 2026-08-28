@@ -31,6 +31,22 @@ new developer. Read ONBOARDING first, this file for the queue.
    Build Pack (8 pages) + Subcontractor Build Pack (12 pages) via
    `buildPackTemplates.ts`, optimistic API creation through Present mode.
 
+## Gate and contract debt (2026-08-28 fusion pass)
+
+- **Classic elevation board family stranded**: ElevationBoard /
+  PlanThumbnail / GardenElevationGlyph / ElevationTextureDefs
+  (handoff/features/elevation) are SVG-era surfaces orphaned by the
+  WebGL migration — the photo-trace elevation (PhotoElevationSheet) is
+  the live surface. Allowlisted in scripts/check-feature-reachability.mjs;
+  decide re-home vs retirement with the handoff/ prune.
+- **Feature-ghost accept path**: aiGeneration can emit recipe-driven bed
+  features, but the ghost session is placement-typed end to end — needs
+  an accept path + overlay for a second entity family
+  (docs/AEC-GENERATIVE-FUSION-2026.md, deferred).
+- **Portal plant schedule**: fetchPortalQuote line items carry no symbol
+  ids; the costing API must pass species data before the quote portal
+  can render a plant schedule.
+
 ## AEC 2026 research adoption (2026-08-25)
 
 Adopted scope from the uploaded AEC-2026 design-plan research. Decision

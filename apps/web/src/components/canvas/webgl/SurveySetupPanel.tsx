@@ -41,10 +41,10 @@ export interface SurveySetupPanelProps {
   onOpenAssets: () => void;
   onContinue: () => void;
   /**
-   * Sketch is only reachable once the survey snapshot carries aerial/title
-   * (`hasAerial`, derived server-side). The checklist reaching 5/5 does not
-   * itself unlock it, so the CTA states the real blocker instead of failing
-   * silently.
+   * Sketch opens once the site carries traced site truth — a title boundary
+   * (the digital minimum) or an aerial/title imagery capture. The checklist
+   * reaching 5/5 does not itself unlock it, so the CTA states the real
+   * blocker instead of failing silently.
    */
   continueEnabled: boolean;
 }
@@ -323,7 +323,7 @@ export function SurveySetupPanel({
           </Button>
           {!continueEnabled ? (
             <p style={helperStyle}>
-              Sketch opens once the survey carries aerial and title imagery.
+              Sketch opens once the site truth import traces the title boundary.
             </p>
           ) : null}
         </div>
@@ -447,7 +447,7 @@ export function SurveySetupPanel({
       <p style={footStyle}>
         {complete
           ? "You can revisit these anytime from Site."
-          : "Sketch and CAD unlock once the survey carries aerial and title data."}
+          : "Sketch and CAD unlock once the title boundary is traced."}
       </p>
     </div>
   );

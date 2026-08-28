@@ -65,12 +65,10 @@ interface Rect {
 const CHROME_SELECTOR = [
   "[data-gs-glass-card]",
   "[data-testid='estimator-panel']",
+  "[data-testid='ai-prompt-bar']",
   "[data-testid='asset-library']",
   "[data-testid='studio-tool-rail']",
-  "[data-testid='nib-palette']",
-  "[data-testid='viewport-transition-hud']",
   "[data-testid='interaction-guidance']",
-  "[data-testid='workflow-guide']",
   "[data-testid='selection-chip']",
   "[data-testid='survey-locate-state']",
   "[data-testid='project-identity']",
@@ -202,7 +200,7 @@ function expectNoCollisions(rects: Rect[], vw: number, vh: number, label: string
  */
 async function expectFitSheetClearOfModePanel(page: Page, label: string) {
   const hit = await page.evaluate(() => {
-    const panelEl = document.querySelector('[data-testid="perimeter-panel"]');
+    const panelEl = document.querySelector('[data-testid="unified-panel"]');
     const panel = panelEl?.getBoundingClientRect();
     if (!panel) return null;
     for (const sel of [
@@ -235,7 +233,7 @@ async function expectFitSheetClearOfModePanel(page: Page, label: string) {
   expect
     .soft(
       hit,
-      `${label}: the estimation companion overlaps the mode panel by ${hit?.ox}x${hit?.oy}px (${hit?.sel} at ${hit?.fit}, perimeter-panel at ${hit?.panel}). FitSheetCard.tsx: "Never above a mode panel."`,
+      `${label}: the estimation companion overlaps the mode panel by ${hit?.ox}x${hit?.oy}px (${hit?.sel} at ${hit?.fit}, unified-panel at ${hit?.panel}). FitSheetCard.tsx: "Never above a mode panel."`,
     )
     .toBeNull();
 }
@@ -253,7 +251,7 @@ async function expectResolvedMode(page: Page, mode: string) {
   // `resolveCanvasMode` silently falls back to `suggestedMode(progress)` for a
   // locked mode, so a `?mode=` navigation is NOT proof the studio entered it.
   // The original spec navigated with no `?mode=` at all and landed in quote,
-  // where no perimeter-panel mounts and there was nothing to collide with.
+  // where no unified-panel mounts and there was nothing to collide with.
   await expect(
     page.getByTestId("interaction-guidance"),
     `?mode=${mode} did not resolve to ${mode} — progressive unlock rerouted it`,
@@ -354,7 +352,7 @@ test.describe("WebGL chrome collision", () => {
     ]) {
       await page.setViewportSize({ width: vw, height: vh });
       // Explicit mode: survey is Step 0, the mode the operator actually opens
-      // a new site in, and the one that mounts the tallest perimeter-panel.
+      // a new site in, and the one that mounts the tallest unified-panel.
       await page.goto(`/projects/${projectId}?webgl=1&mode=survey`, {
         waitUntil: "networkidle",
       });
@@ -385,6 +383,18 @@ test.describe("WebGL chrome collision", () => {
       const fitPill = page.getByTestId("fit-sheet-pill");
       if (await fitPill.count()) {
         await fitPill.click({ force: true });
+        // The costing/autosave round-trips re-create the pill between locate
+        // and dispatch on busy fixtures. Poll for the expansion first; the
+        // swallowed-retry only fires when it genuinely never landed, and it
+        // cannot hang when the pill already unmounted (expanded state).
+        const expanded = await expect
+          .poll(async () => companion.getAttribute("data-estimator-companion"))
+          .toBe("expanded", { timeout: 4_000 })
+          .then(() => true)
+          .catch(() => false);
+        if (!expanded) {
+          await fitPill.click({ force: true }).catch(() => {});
+        }
         await page.waitForTimeout(600);
         await expect(companion).toHaveAttribute(
           "data-estimator-companion",
@@ -452,7 +462,7 @@ test.describe("WebGL chrome collision", () => {
    * `resolveCanvasMode(undefined, progress)` fell through to
    * `suggestedMode(progress)`; with the fixture's placements + strokes +
    * boundary that resolves to `quote`, and in quote-with-items the mode-body
-   * IIFE reaches no branch — so no `perimeter-panel` mounted and there was
+   * IIFE reaches no branch — so no `unified-panel` mounted and there was
    * nothing for the fit sheet to collide with. (2) `FitSheetCapsule` reads its
    * expanded state from `localStorage["workstream.fitSheet.expanded"]`, so a
    * fresh Playwright context is ALWAYS collapsed while the operator's browser

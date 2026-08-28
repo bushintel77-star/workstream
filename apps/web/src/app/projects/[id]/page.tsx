@@ -61,6 +61,7 @@ export default async function ProjectCanvasPage({
     webgl?: string;
     svg?: string;
     tool?: string;
+    guide?: string;
     e2eStudioError?: string;
   }>;
 }) {
@@ -86,15 +87,25 @@ export default async function ProjectCanvasPage({
 
   const quoteOut = outputs.find((o) => o.kind === "quote") ?? null;
   const progress: CanvasProgress = {
-    hasAerial: Boolean(survey?.aerial_uri),
+    /* The aerial gate is really "site truth captured": a Vicmap-traced
+     * title boundary is the digital minimum, so boundary presence unlocks
+     * the stage even when no aerial photo exists (survey.aerial_uri is
+     * the legacy field name for the same stage). */
+    hasAerial:
+      Boolean(survey?.aerial_uri) ||
+      (canvas?.site_frame?.boundary?.length ?? 0) >= 3,
     hasSketch: (canvas?.strokes?.length ?? 0) > 0,
     hasCad:
       (canvas?.placements?.length ?? 0) > 0 ||
       Boolean(canvas?.site_frame?.boundary?.length),
     hasQuote: Boolean(quoteOut),
   };
-  /** Clamp locked deep-links before first paint — avoids cad→survey flash. */
-  const initialMode = resolveCanvasMode(sp.mode, progress) as StudioMode;
+  /** Clamp locked deep-links before first paint — avoids cad→survey flash.
+   *  `?guide=1` forces Survey for first-run onboarding: the UnifiedPanel
+   *  shows the setup checklist there, so new users land on the guided path. */
+  const initialMode = (
+    sp.guide === "1" ? "survey" : resolveCanvasMode(sp.mode, progress)
+  ) as StudioMode;
 
   /** The WebGL studio is the only canvas mount. The legacy SVG studio
    * (?svg=1) was retired 2026-08-19 — see ONBOARDING.md. */

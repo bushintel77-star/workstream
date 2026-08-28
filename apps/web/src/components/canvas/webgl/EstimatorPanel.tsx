@@ -114,7 +114,11 @@ export function EstimatorPanel({
       style={{
         position: "relative",
         pointerEvents: "auto",
-        width: "min(360px, calc(100vw - 32px))",
+        /* Fill the wrapper (which owns the right gutter beside the flush
+         * UnifiedPanel). A fixed 360px here overflowed the 340px wrapper
+         * and bled 20px under the panel (chrome-collision gate). */
+        width: "100%",
+        boxSizing: "border-box",
         flex: showFullChrome ? "0 1 auto" : "0 0 auto",
         minHeight: 0,
         maxHeight: showFullChrome

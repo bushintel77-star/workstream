@@ -153,7 +153,7 @@ test.describe("Survey setup panel", () => {
 
     // One consolidated panel — the old layout stacked an import block and a
     // separate checklist card inside the dock.
-    await expect(page.getByTestId("perimeter-panel")).toHaveCount(1);
+    await expect(page.getByTestId("unified-panel")).toHaveCount(1);
     await expect(page.getByTestId("survey-checklist")).toHaveCount(0);
 
     // Progress is derived: boundary only — existing trees row stays open.
@@ -266,7 +266,7 @@ test.describe("Survey setup panel", () => {
     } else {
       // Honest fallback: the panel must say why rather than fail silently.
       await expect(page.getByTestId("survey-setup-panel")).toContainText(
-        "aerial and title",
+        "title boundary",
       );
     }
   });

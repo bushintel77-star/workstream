@@ -427,7 +427,18 @@ export async function getDesignCanvas(
     canvas: DesignCanvas & { id: string | null };
   }>(`/projects/${projectId}/design-canvas`);
   if (!body.canvas?.id) return null;
-  return body.canvas as DesignCanvas;
+  // Contract-validate before the cast — canvas hydrate must fail CLOSED:
+  // a corrupt payload handed through as-is would hydrate the studio with
+  // garbage that autosave then persists. A parse failure throws (the page
+  // errors) rather than silently becoming an empty board.
+  const { DesignCanvasSchema } = await import("@workstream/contracts");
+  const parsed = DesignCanvasSchema.safeParse(body.canvas);
+  if (!parsed.success) {
+    throw new Error(
+      `Design canvas for project ${projectId} failed contract validation`,
+    );
+  }
+  return parsed.data;
 }
 
 export type SketchQuoteSummary = {

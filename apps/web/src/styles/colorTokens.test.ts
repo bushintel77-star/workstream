@@ -50,8 +50,9 @@ describe("colorTokens — Studio Paper", () => {
 
   it("meets AA (4.5:1) for every ink tier on every paper surface", () => {
     const surfaces = [PANEL, CANVAS, SUNKEN, PRESSED];
+    // Paper inks — DOM chrome stays Studio Paper (--gs-panel-grad is a
+    // white gradient), so these must read on every light surface.
     const inks = [
-      PALETTE.gsInk,
       PALETTE.gsInkStrong,
       PALETTE.gsInkSecondary,
       PALETTE.gsInkMuted,
@@ -63,6 +64,15 @@ describe("colorTokens — Studio Paper", () => {
       for (const surface of surfaces) {
         expect(contrast(ink, surface)).toBeGreaterThan(4.5);
       }
+    }
+  });
+
+  it("meets AA for the scene ink over the dark studio chassis", () => {
+    // gsInk is the SCENE value (white over the dark WebGL canvas — the
+    // dotted ground and sketch ink read it); the DOM paper ink is
+    // --gs-ink in color-tokens.css. Dark-studio split: DESIGN.md §2.
+    for (const surface of [PALETTE.gsCanvas, PALETTE.gsPanel]) {
+      expect(contrast(PALETTE.gsInk, surface)).toBeGreaterThan(4.5);
     }
   });
 

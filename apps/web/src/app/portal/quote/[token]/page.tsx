@@ -24,5 +24,15 @@ export default async function QuotePage({
     );
   }
 
-  return <QuotePortal data={data} token={token} />;
+  // Server-stamped issue date — QuotePortal renders it verbatim so the
+  // server and hydration passes agree (see the generatedDate prop).
+  const generatedDate = new Date().toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  return (
+    <QuotePortal data={data} token={token} generatedDate={generatedDate} />
+  );
 }

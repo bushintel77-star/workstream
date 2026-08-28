@@ -450,6 +450,8 @@ button:focus-visible {
   }
 }
 
+/* AI prompt bar thinking pulse — injected by AiPromptBar (SaveStatusChip pattern; keeps raw decimals out of globals.css). */
+
 @media (prefers-reduced-motion: reduce) {
 
   *,
@@ -974,44 +976,7 @@ button:focus-visible {
 }
 
 /* ---------------------------------------------------------------------- */
-/* ViewportTransitionHUD — capsule glass material (added with the component) */
-/* ---------------------------------------------------------------------- */
-.vth-root {
-  /* Frost (working modes) — white panel veil + light blur. */
-  background: color-mix(in srgb, var(--gs-glass-veil) 88%, transparent);
-  backdrop-filter: blur(var(--gs-blur));
-  -webkit-backdrop-filter: blur(var(--gs-blur));
-  border: 1px solid color-mix(in srgb, var(--gs-line) 45%, transparent);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--gs-paper) 100%, transparent) inset,
-    0 8px 24px color-mix(in srgb, var(--gs-frame) 18%, transparent);
-}
-.vth-root.vth-dark {
-  /* Dark glass (presentation lens modes) — explicit low-opacity overlay. */
-  background: var(--cf-glass-dark);
-  backdrop-filter: blur(var(--cf-glass-dark-blur));
-  -webkit-backdrop-filter: blur(var(--cf-glass-dark-blur));
-  border: 1px solid var(--cf-glass-dark-border);
-  color: var(--cf-glass-dark-ink);
-}
-.vth-root.vth-dark .vth-preset:not([data-active="true"]) {
-  color: color-mix(in srgb, #ffffff 78%, transparent);
-}
-.vth-root.vth-dark .vth-preset {
-  border-color: color-mix(in srgb, #ffffff 14%, transparent);
-}
-.vth-root.vth-dark .vth-track {
-  background: color-mix(in srgb, #ffffff 14%, transparent);
-}
-.vth-root.vth-dark .vth-marker {
-  box-shadow: 0 0 0 2px color-mix(in srgb, #1a1a1a 100%, transparent);
-}
-.vth-preset:hover {
-  background: color-mix(in srgb, var(--gs-primary) 8%, transparent);
-}
-.vth-root.vth-dark .vth-preset:hover {
-  background: color-mix(in srgb, #ffffff 8%, transparent);
-}
+/* ViewportTransitionHUD capsule styles removed with the retired component. */
 
 /* ===================================================================
  * Motion-aware chrome recede — AEC-2026 research adoption §3.2

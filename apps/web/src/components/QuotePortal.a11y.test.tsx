@@ -58,7 +58,7 @@ const DATA: PortalQuoteData = {
 describe("QuotePortal scenario controls", () => {
   it("wires tabs to an explicit tabpanel", () => {
     const html = renderToStaticMarkup(
-      createElement(QuotePortal, { data: DATA, token: "token-123" }),
+      createElement(QuotePortal, { data: DATA, token: "token-123", generatedDate: "26 August 2026" }),
     );
 
     expect(html).toContain('role="tablist"');
@@ -71,7 +71,7 @@ describe("QuotePortal scenario controls", () => {
 
   it("renders API-provided custom scenarios as valid tabs", () => {
     const html = renderToStaticMarkup(
-      createElement(QuotePortal, { data: DATA, token: "token-123" }),
+      createElement(QuotePortal, { data: DATA, token: "token-123", generatedDate: "26 August 2026" }),
     );
 
     expect(html).toContain('id="quote-scenario-tab-client-brief"');
@@ -81,7 +81,7 @@ describe("QuotePortal scenario controls", () => {
 
   it("keeps inactive tabs out of the tab order", () => {
     const html = renderToStaticMarkup(
-      createElement(QuotePortal, { data: DATA, token: "token-123" }),
+      createElement(QuotePortal, { data: DATA, token: "token-123", generatedDate: "26 August 2026" }),
     );
 
     expect(html).toMatch(

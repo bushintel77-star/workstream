@@ -9,30 +9,27 @@
  * examined. Selection-driven: click any entity on the canvas and its
  * full data appears here.
  *
- * Sections:
- *   ┌───────────────────────────────┐
- *   │ Header: context + clear       │
- *   ├───────────────────────────────┤
- *   │ History rail (prev. nodes)    │  ← clickable, most recent first
- *   ├───────────────────────────────┤
- *   │                               │
- *   │ Detailed body:                │  ← full data for current node
- *   │   · Identity section          │
- *   │   · Dimensions section        │
- *   │   · Position section          │
- *   │   · Provenance section        │
- *   │   · Compliance section        │
- *   │                               │
- *   ├───────────────────────────────┤
- *   │ Estimator companion           │  ← separate floating element
- *   └───────────────────────────────┘
+ * Since the hidden right dock was retired (its bodies were mounted but
+ * invisible behind `display:none`), this panel is also the home of the
+ * mode bodies (survey setup, CAD drafter, sketch actions, garden
+ * viewpoints) and the meta surfaces (sun / growth / layers / site /
+ * terrain / studio) — composed by the studio and passed in as ReactNode
+ * props so the context router decides what shows:
+ *
+ *   selection → editable inspector (detail tables + commit-on-blur fields)
+ *   meta tab  → the meta surface, dialog semantics (focus trap + Esc)
+ *   mode      → the mode body (survey checklist, CAD drafter, …)
+ *
+ * The bodies stack BELOW a live selection so picking a tree mid-survey
+ * never hides the import CTA — the panel scrolls, critical surfaces
+ * stay mounted.
  *
  * Binding: user directive — "the right hand panel can be more detailed
  * and longer and hold previous node data and dynamically display the
  * current."
  */
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useStudioStore } from "./studioStore";
 import type { SelectionRef } from "./selectionPick";
 import { buildCanopyCompliance } from "./canopyCompliance";
@@ -41,6 +38,11 @@ import { getCatalogSymbol } from "@workstream/domain";
 import type { CatalogPlacement, LandscapeFeature } from "@workstream/contracts";
 import type { PctPoint } from "./coordTransform";
 import { ENTITY_ICON } from "./PerimeterTabStrip";
+import { refLabel, placementSourceLabel } from "./selectionLabels";
+import { Button } from "./Button";
+import { Field, Input, Select } from "./Field";
+import { SketchCadReviewCard } from "./SketchCadReviewCard";
+import { useFocusTrap } from "../../../lib/use-focus-trap";
 
 // ---------------------------------------------------------------------------
 // Sizing — flush panel constants (DESIGN.md §3)
@@ -88,10 +90,23 @@ const dataValue: React.CSSProperties = {
   whiteSpace: "nowrap" as const,
 };
 
+const noticeCss: React.CSSProperties = {
+  fontFamily: "var(--font-ui)",
+  fontSize: "var(--gs-font-sm)",
+  color: "var(--gs-conflict)",
+  border: "1px solid color-mix(in srgb, var(--gs-conflict) 45%, transparent)",
+  borderRadius: "var(--gs-radius-chip)",
+  padding: "6px 8px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "var(--gs-space-4)",
+};
+
 function Section({ title, icon, children }: { title: string; icon?: string; children: ReactNode }) {
   return (
     <div>
-      <div style={{ ...sectionLabel, display: "flex", alignItems: "center", gap: 5 }}>
+      <div style={{ ...sectionLabel, display: "flex", alignItems: "center", gap: 4 }}>
         {icon && <span style={{ fontSize: "1.2em", opacity: 0.7 }}>{icon}</span>}
         {title}
       </div>
@@ -165,28 +180,8 @@ interface HistoryEntry {
   label: string;
 }
 
-function refLabel(
-  ref: SelectionRef,
-  placements: CatalogPlacement[],
-  features: LandscapeFeature[],
-): string {
-  if (ref.kind === "boundary") return "Boundary";
-  if (ref.kind === "building") return "Building";
-  if (ref.kind === "placement") {
-    const p = placements.find((x) => x.id === ref.id);
-    if (!p) return "Placement";
-    const sym = getCatalogSymbol(p.symbol_id);
-    return p.label?.split("·")[0]?.trim() || sym?.label || p.symbol_id;
-  }
-  if (ref.kind === "feature") {
-    const f = features.find((x) => x.id === ref.id);
-    return f?.metadata?.friendly_name || f?.metadata?.layer || "Feature";
-  }
-  return "Photo stroke";
-}
-
 // ---------------------------------------------------------------------------
-// Detailed inspector bodies
+// Detailed inspector bodies (read-only detail tables)
 // ---------------------------------------------------------------------------
 
 function PlacementDetail({
@@ -398,7 +393,361 @@ function BuildingDetail({
 }
 
 // ---------------------------------------------------------------------------
-// Mode body (fallback when nothing selected)
+// Editable inspector fields — ported from the retired InspectorCard.
+// Per-field commit (no OK/cancel); testids preserved so the e2e contract
+// survives the move.
+// ---------------------------------------------------------------------------
+
+function PlacementEditFields({ p }: { p: CatalogPlacement }) {
+  const update = useStudioStore((s) => s.updatePlacementField);
+  const notice = useStudioStore((s) => s.boundaryNotice);
+  const dismiss = useStudioStore((s) => s.dismissBoundaryNotice);
+  const gizmoMode = useStudioStore((s) => s.gizmoMode);
+  const setGizmoMode = useStudioStore((s) => s.setGizmoMode);
+  const source = placementSourceLabel(p.source);
+
+  return (
+    <Section title="Edit placement" icon="✎">
+      <Field labelText="Manipulator">
+        <div style={{ display: "flex", gap: "var(--gs-space-2)" }}>
+          <Button
+            size="xs"
+            data-testid="gizmo-move"
+            aria-pressed={gizmoMode === "translate"}
+            active={gizmoMode === "translate"}
+            onClick={() =>
+              setGizmoMode(gizmoMode === "translate" ? null : "translate")
+            }
+          >
+            Move
+          </Button>
+          <Button
+            size="xs"
+            data-testid="gizmo-rotate"
+            aria-pressed={gizmoMode === "rotate"}
+            active={gizmoMode === "rotate"}
+            onClick={() => setGizmoMode(gizmoMode === "rotate" ? null : "rotate")}
+          >
+            Rotate
+          </Button>
+          <Button
+            size="xs"
+            data-testid="gizmo-scale"
+            aria-pressed={gizmoMode === "scale"}
+            active={gizmoMode === "scale"}
+            onClick={() => setGizmoMode(gizmoMode === "scale" ? null : "scale")}
+          >
+            Scale
+          </Button>
+        </div>
+      </Field>
+      {notice && notice.refId === p.id ? (
+        <div style={noticeCss} data-testid="inspector-boundary-notice">
+          <span>{notice.reason}</span>
+          <Button
+            variant="ghost"
+            size="xs"
+            style={{
+              border: "none",
+              padding: 0,
+              color: "var(--gs-conflict)",
+              fontWeight: 600,
+            }}
+            onClick={dismiss}
+            data-testid="inspector-boundary-dismiss"
+          >
+            Dismiss
+          </Button>
+        </div>
+      ) : null}
+      {source ? (
+        <div
+          style={{ fontSize: "var(--gs-font-sm)", color: "var(--la-ink-muted)", margin: "4px 0" }}
+          data-testid="inspector-placement-source"
+        >
+          Source: {source}
+        </div>
+      ) : null}
+      <Field labelText="SKU / species">
+        <Input
+          key={`symbol-${p.id}`}
+          defaultValue={p.symbol_id}
+          data-testid="inspector-placement-symbol"
+          onBlur={(e) => {
+            const v = e.currentTarget.value.trim();
+            if (v && v !== p.symbol_id) update(p.id, { symbol_id: v });
+          }}
+        />
+      </Field>
+      <Field labelText="Scale">
+        <Input
+          key={`scale-${p.id}`}
+          type="number"
+          min="0.1"
+          step="0.1"
+          defaultValue={String(p.scale)}
+          data-testid="inspector-placement-scale"
+          onChange={(e) => {
+            const v = Number.parseFloat(e.currentTarget.value);
+            if (Number.isFinite(v) && v > 0 && v !== p.scale) {
+              update(p.id, { scale: v });
+            }
+          }}
+        />
+      </Field>
+      <Field labelText="Rotation (deg)">
+        <Input
+          key={`rotation-${p.id}`}
+          type="number"
+          min="0"
+          max="360"
+          step="1"
+          defaultValue={String(p.rotation_deg)}
+          data-testid="inspector-placement-rotation"
+          onChange={(e) => {
+            const v = Number.parseFloat(e.currentTarget.value);
+            if (
+              Number.isFinite(v) &&
+              v >= 0 &&
+              v <= 360 &&
+              v !== p.rotation_deg
+            ) {
+              update(p.id, { rotation_deg: v });
+            }
+          }}
+        />
+      </Field>
+      <Field labelText="Label">
+        <Input
+          key={`label-${p.id}`}
+          defaultValue={p.label ?? ""}
+          data-testid="inspector-placement-label"
+          onBlur={(e) => {
+            const v = e.currentTarget.value;
+            if (v !== (p.label ?? "")) update(p.id, { label: v });
+          }}
+        />
+      </Field>
+      <Field labelText="Height (m)">
+        <Input
+          key={`height-${p.id}`}
+          type="number"
+          min="0"
+          step="0.1"
+          defaultValue={p.height_m != null ? String(p.height_m) : ""}
+          data-testid="inspector-placement-height"
+          onChange={(e) => {
+            const v = Number.parseFloat(e.currentTarget.value);
+            if (Number.isFinite(v) && v > 0 && v !== (p.height_m ?? 0)) {
+              update(p.id, { height_m: v });
+            }
+          }}
+        />
+      </Field>
+      <Field labelText="Canopy radius (m)">
+        <Input
+          key={`canopy-${p.id}`}
+          type="number"
+          min="0"
+          step="0.1"
+          defaultValue={
+            p.canopy_radius_m != null ? String(p.canopy_radius_m) : ""
+          }
+          data-testid="inspector-placement-canopy"
+          onChange={(e) => {
+            const v = Number.parseFloat(e.currentTarget.value);
+            if (Number.isFinite(v) && v > 0 && v !== (p.canopy_radius_m ?? 0)) {
+              update(p.id, { canopy_radius_m: v });
+            }
+          }}
+        />
+      </Field>
+    </Section>
+  );
+}
+
+function FeatureEditFields({
+  f,
+  scaleM,
+  boardAspect,
+}: {
+  f: LandscapeFeature;
+  scaleM: number;
+  boardAspect: number;
+}) {
+  const update = useStudioStore((s) => s.updateFeatureField);
+  const stitchRecord = useStudioStore((s) => s.stitchRecords[f.id]);
+  const unstitchFeature = useStudioStore((s) => s.unstitchFeature);
+  const mf = f.material_fill;
+  const scatter = f.procedural_scatter_contents;
+  const labor = f.labor_profile;
+
+  return (
+    <Section title={`Edit · ${f.metadata.layer}`} icon="✎">
+      {stitchRecord ? (
+        <Button
+          variant="ghost"
+          data-testid="feature-unstitch"
+          onClick={() => unstitchFeature(f.id, scaleM, boardAspect)}
+          title="Split the stitched geometry back into its source strokes — non-destructive, one undo step"
+          style={{
+            width: "100%",
+            padding: "5px 8px",
+            marginBottom: 8,
+            border: "1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)",
+            borderRadius: "var(--gs-radius-chip)",
+          }}
+        >
+          Un-stitch ({stitchRecord.segments.length} source runs)
+        </Button>
+      ) : null}
+      <Field labelText="Name">
+        <Input
+          key={`name-${f.id}`}
+          defaultValue={f.metadata.friendly_name ?? ""}
+          data-testid="inspector-feature-name"
+          onBlur={(e) => {
+            const v = e.currentTarget.value;
+            if (v !== (f.metadata.friendly_name ?? "")) {
+              update(f.id, { friendly_name: v });
+            }
+          }}
+        />
+      </Field>
+      {mf ? (
+        <>
+          <Field labelText="Material SKU">
+            <Input
+              key={`sku-${f.id}`}
+              defaultValue={mf.sku}
+              data-testid="inspector-feature-sku"
+              onBlur={(e) => {
+                const v = e.currentTarget.value.trim();
+                if (v && v !== mf.sku) update(f.id, { material_fill: { sku: v } });
+              }}
+            />
+          </Field>
+          <Field labelText="Depth (m)">
+            <Input
+              key={`depth-${f.id}`}
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={String(mf.depth_m)}
+              data-testid="inspector-feature-depth"
+              onChange={(e) => {
+                const v = Number.parseFloat(e.currentTarget.value);
+                if (Number.isFinite(v) && v > 0 && v !== mf.depth_m) {
+                  update(f.id, { material_fill: { depth_m: v } });
+                }
+              }}
+            />
+          </Field>
+          <Field labelText="Waste (%)">
+            <Input
+              key={`waste-${f.id}`}
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              defaultValue={String(mf.waste_allocation_pct)}
+              data-testid="inspector-feature-waste"
+              onChange={(e) => {
+                const v = Number.parseFloat(e.currentTarget.value);
+                if (
+                  Number.isFinite(v) &&
+                  v >= 0 &&
+                  v <= 100 &&
+                  v !== mf.waste_allocation_pct
+                ) {
+                  update(f.id, { material_fill: { waste_allocation_pct: v } });
+                }
+              }}
+            />
+          </Field>
+        </>
+      ) : null}
+      {f.geometry.type === "Polygon" ? (
+        <Field labelText="Pad height (m)">
+          <Input
+            key={`pad-${f.id}`}
+            type="number"
+            min="0"
+            step="0.05"
+            defaultValue={
+              f.extrude_height_m != null ? String(f.extrude_height_m) : ""
+            }
+            data-testid="inspector-feature-pad-height"
+            title="Elevate the region into a cut/fill pad. Height is a property of a region, not a second way to draw one — 0 clears it."
+            onChange={(e) => {
+              const v = Number.parseFloat(e.currentTarget.value);
+              if (Number.isFinite(v) && v >= 0 && v !== (f.extrude_height_m ?? 0)) {
+                update(f.id, { extrude_height_m: v });
+              }
+            }}
+          />
+        </Field>
+      ) : null}
+      {scatter ? (
+        <Field labelText="Planting recipe">
+          <Input
+            key={`recipe-${f.id}`}
+            defaultValue={scatter.brush_recipe_id}
+            data-testid="inspector-feature-recipe"
+            onBlur={(e) => {
+              const v = e.currentTarget.value.trim();
+              if (v && v !== scatter.brush_recipe_id) {
+                update(f.id, { brush_recipe_id: v });
+              }
+            }}
+          />
+        </Field>
+      ) : null}
+      {labor ? (
+        <Field labelText="Labor tier">
+          <Select
+            key={`tier-${f.id}`}
+            defaultValue={labor.base_difficulty_tier}
+            data-testid="inspector-feature-tier"
+            onChange={(e) => {
+              const v = e.currentTarget.value as
+                | "easy"
+                | "standard_soil"
+                | "constrained"
+                | "rock";
+              if (v !== labor.base_difficulty_tier) {
+                update(f.id, { labor_tier: v });
+              }
+            }}
+          >
+            <option value="easy">easy</option>
+            <option value="standard_soil">standard_soil</option>
+            <option value="constrained">constrained</option>
+            <option value="rock">rock</option>
+          </Select>
+        </Field>
+      ) : null}
+    </Section>
+  );
+}
+
+function PhotoStrokeDetail({ ref: photoRef }: { ref: SelectionRef }) {
+  const elev = useStudioStore((s) =>
+    s.photoElevations.find((e) => e.id === photoRef.elevationId),
+  );
+  if (!elev) return null;
+  return (
+    <Section title="Photo trace stroke" icon="✎">
+      <Row label="Traced on" value={elev.name} />
+      <div style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-muted)", lineHeight: 1.5 }}>
+        Elevation-space stroke — not editable in plan view.
+      </div>
+    </Section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Mode body (fallback when nothing selected and the mode has no ported body)
 // ---------------------------------------------------------------------------
 
 function ModeBody({
@@ -484,6 +833,18 @@ export interface UnifiedPanelProps {
   buildingPct: PctPoint[] | null;
   buildingSource: string | null;
   lotAreaM2?: number | null;
+  /**
+   * Mode bodies ported from the retired right dock — survey setup, CAD
+   * drafter, sketch actions, garden viewpoints, the quote empty state.
+   * Rendered below any live selection so critical surfaces stay mounted.
+   */
+  modeBodies?: Partial<
+    Record<"survey" | "sketch" | "cad" | "garden" | "quote", ReactNode>
+  >;
+  /** Open meta surface (sun / growth / layers / site / terrain / studio).
+   *  Takes the dialog slot: focus trap + Esc/close via onCloseMeta. */
+  metaBody?: ReactNode;
+  onCloseMeta?: () => void;
 }
 
 export function UnifiedPanel({
@@ -494,6 +855,9 @@ export function UnifiedPanel({
   buildingPct,
   buildingSource,
   lotAreaM2,
+  modeBodies,
+  metaBody,
+  onCloseMeta,
 }: UnifiedPanelProps) {
   const selection = useStudioStore((s) => s.selection);
   const clearSelection = useStudioStore((s) => s.clearSelection);
@@ -501,10 +865,17 @@ export function UnifiedPanel({
   const sketchMode = useStudioStore((s) => s.sketchMode);
   const placements = useStudioStore((s) => s.placements);
   const features = useStudioStore((s) => s.features);
+  const photoElevations = useStudioStore((s) => s.photoElevations);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   const context = resolvePanelContext(selection, sketchMode, mode);
   const isSelection = context.kind.startsWith("selection-");
+
+  // Meta surfaces carry dialog semantics (the retired perimeter-panel's
+  // role="dialog" + close): trap Tab inside the panel while one is open.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const metaOpen = metaBody != null;
+  useFocusTrap(metaOpen, panelRef, onCloseMeta);
 
   // Track history: when a single-entity selection lands, push to the rail.
   const currentRef = selection.length === 1 ? selection[0] : null;
@@ -515,13 +886,90 @@ export function UnifiedPanel({
     setHistory((prev) => {
       const entry: HistoryEntry = {
         ref: currentRef!,
-        label: refLabel(currentRef!, placements, features),
+        label: refLabel(currentRef!, placements, features, photoElevations),
       };
       // Dedupe: if the same ref is already the most recent, don't re-add.
       if (prev[0] && `${prev[0].ref.kind}:${prev[0].ref.id}` === historyKey) return prev;
       return [entry, ...prev].slice(0, 12);
     });
   }
+
+  // Selection body — the detail tables plus the editable fields.
+  const selectionBody = useMemo(() => {
+    if (context.kind === "selection-boundary") {
+      return (
+        <BoundaryDetail
+          boundaryPct={boundaryPct}
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+          lotAreaM2={lotAreaM2}
+          placements={placements}
+        />
+      );
+    }
+    if (context.kind === "selection-building") {
+      return (
+        <BuildingDetail
+          buildingPct={buildingPct ?? []}
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+          buildingSource={buildingSource}
+        />
+      );
+    }
+    if (context.kind === "selection-placement" && currentRef) {
+      const p = placements.find((x) => x.id === currentRef.id);
+      if (!p) return null;
+      return (
+        <>
+          <PlacementDetail placement={p} scaleM={scaleM} boardAspect={boardAspect} />
+          <PlacementEditFields p={p} />
+        </>
+      );
+    }
+    if (context.kind === "selection-feature" && currentRef) {
+      const f = features.find((x) => x.id === currentRef.id);
+      if (!f) return null;
+      return (
+        <>
+          <FeatureDetail feature={f} />
+          <FeatureEditFields f={f} scaleM={scaleM} boardAspect={boardAspect} />
+        </>
+      );
+    }
+    if (context.kind === "selection-photoStroke" && currentRef) {
+      return <PhotoStrokeDetail ref={currentRef} />;
+    }
+    if (context.kind === "selection-multi") {
+      return (
+        <Section title="Selection">
+          <div style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-muted)", lineHeight: 1.5 }}>
+            {selection.length} entities selected. Shift-click to add, Esc to clear.
+          </div>
+          {selection.slice(0, 8).map((ref) => (
+            <Row key={`${ref.kind}:${ref.id}`} label={ref.kind} value={refLabel(ref, placements, features, photoElevations)} />
+          ))}
+          <div style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-muted)", marginTop: 4 }}>
+            Select one entity to edit its properties.
+          </div>
+        </Section>
+      );
+    }
+    return null;
+  }, [context.kind, currentRef, boundaryPct, scaleM, boardAspect, lotAreaM2, placements, features, photoElevations, buildingPct, buildingSource, selection]);
+
+  const modeBody =
+    mode === "survey"
+      ? modeBodies?.survey
+      : mode === "sketch"
+        ? modeBodies?.sketch
+        : mode === "cad"
+          ? modeBodies?.cad
+          : mode === "garden"
+            ? modeBodies?.garden
+            : mode === "quote"
+              ? modeBodies?.quote
+              : undefined;
 
   const headerLabel = isSelection
     ? context.kind === "selection-multi"
@@ -539,13 +987,27 @@ export function UnifiedPanel({
       ? "Sketch"
       : mode.charAt(0).toUpperCase() + mode.slice(1);
 
+  // The body column breathes: each surface is separated by a hairline and
+  // the column itself is the scroll container (full-height flush panel).
+  const bodyGap: React.CSSProperties = {
+    flex: "1 1 auto",
+    minHeight: 0,
+    overflowY: "auto",
+    scrollbarWidth: "thin",
+    display: "flex",
+    flexDirection: "column",
+    gap: "var(--gs-space-5)",
+    padding: "6px 14px 24px",
+  };
+
   return (
     <div
+      ref={panelRef}
       data-testid="unified-panel"
       data-context={context.kind}
       data-gs-glass-card
-      role="complementary"
-      aria-label={`${headerLabel} inspector`}
+      role={metaOpen ? "dialog" : "complementary"}
+      aria-label={metaOpen ? "Canvas surface panel" : `${headerLabel} inspector`}
       style={{
         /* FLUSH RIGHT — full-height docked panel (DESIGN.md §3).
          * No floating, no boundary anchoring, no animation. */
@@ -574,20 +1036,56 @@ export function UnifiedPanel({
           flexShrink: 0,
         }}
       >
-        <span
-          style={{
-            fontFamily: "var(--font-tech)",
-            fontSize: "var(--gs-font-sm)",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "var(--la-ink)",
-            fontWeight: 600,
-          }}
-        >
-          {headerLabel}
-        </span>
+        {isSelection ? (
+          <span
+            data-testid="selection-chip"
+            style={{
+              fontFamily: "var(--font-tech)",
+              fontSize: "var(--gs-font-sm)",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--la-ink)",
+              fontWeight: 600,
+            }}
+          >
+            {headerLabel}
+            {" · "}
+            <span data-testid="selection-count" style={{ fontWeight: 400 }}>
+              {selection.length} selected
+            </span>
+          </span>
+        ) : (
+          <span
+            style={{
+              fontFamily: "var(--font-tech)",
+              fontSize: "var(--gs-font-sm)",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "var(--la-ink)",
+              fontWeight: 600,
+            }}
+          >
+            {headerLabel}
+          </span>
+        )}
         <span style={{ flex: 1 }} />
-        {isSelection && (
+        {metaOpen && onCloseMeta ? (
+          <button
+            type="button"
+            aria-label="Close panel"
+            onClick={onCloseMeta}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--la-ink-muted)",
+              fontSize: "var(--gs-font-sm)",
+              padding: "0 4px",
+            }}
+          >
+            ×
+          </button>
+        ) : isSelection ? (
           <button
             type="button"
             aria-label="Clear selection"
@@ -603,7 +1101,7 @@ export function UnifiedPanel({
           >
             ×
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* History rail — previously inspected nodes */}
@@ -630,7 +1128,7 @@ export function UnifiedPanel({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 3,
+                  gap: 2,
                   padding: "2px 7px",
                   borderRadius: "var(--gs-radius-pill)",
                   border: `1px solid ${isCurrent ? "var(--la-accent)" : "var(--la-surface-muted)"}`,
@@ -653,52 +1151,17 @@ export function UnifiedPanel({
         </div>
       )}
 
-      {/* Detailed body */}
+      {/* Detailed body — review card (self-gated) + selection + meta/mode */}
       <div
         data-testid="unified-panel-body"
-        style={{
-          flex: "1 1 auto",
-          minHeight: 0,
-          overflowY: "auto",
-          scrollbarWidth: "thin",
-          padding: "6px 14px 12px",
-        }}
+        style={bodyGap}
       >
-        {context.kind === "selection-boundary" ? (
-          <BoundaryDetail
-            boundaryPct={boundaryPct}
-            scaleM={scaleM}
-            boardAspect={boardAspect}
-            lotAreaM2={lotAreaM2}
-            placements={placements}
-          />
-        ) : context.kind === "selection-building" ? (
-          <BuildingDetail
-            buildingPct={buildingPct ?? []}
-            scaleM={scaleM}
-            boardAspect={boardAspect}
-            buildingSource={buildingSource}
-          />
-        ) : context.kind === "selection-placement" && currentRef ? (
-          (() => {
-            const p = placements.find((x) => x.id === currentRef.id);
-            return p ? <PlacementDetail placement={p} scaleM={scaleM} boardAspect={boardAspect} /> : null;
-          })()
-        ) : context.kind === "selection-feature" && currentRef ? (
-          (() => {
-            const f = features.find((x) => x.id === currentRef.id);
-            return f ? <FeatureDetail feature={f} /> : null;
-          })()
-        ) : context.kind === "selection-multi" ? (
-          <Section title="Selection">
-            <div style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-muted)", lineHeight: 1.5 }}>
-              {selection.length} entities selected. Shift-click to add, Esc to clear.
-            </div>
-            {selection.slice(0, 8).map((ref) => (
-              <Row key={`${ref.kind}:${ref.id}`} label={ref.kind} value={refLabel(ref, placements, features)} />
-            ))}
-          </Section>
-        ) : (
+        {/* Sketch → CAD ghost review — store-gated (the card returns null
+            while closed, wrapper included); docked here since the floating
+            top-right card would sit under this flush panel. */}
+        <SketchCadReviewCard docked />
+        {selectionBody}
+        {metaBody ?? modeBody ?? (
           <ModeBody
             mode={mode}
             boundaryPct={boundaryPct}

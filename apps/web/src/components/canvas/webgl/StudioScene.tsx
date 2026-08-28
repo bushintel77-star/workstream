@@ -57,17 +57,16 @@ import { ElevationSliceLine } from "./ElevationSliceLine";
 import { DrainageFlowLayer } from "./DrainageFlowLayer";
 import { EarthworksLayer } from "./EarthworksLayer";
 import { DimensionLayer } from "./DimensionLayer";
-// MetaChipSet stripped (chrome austerity) — site data lives in UnifiedPanel
-// import { MetaChipSet } from "./MetaChipSet";
+import { MetaChipSet } from "./MetaChipSet";
 import {
   BoundaryProjectionProbe,
   BOUNDARY_PROBE_ENABLED,
 } from "./BoundaryProjectionProbe";
-// import { buildCanopyCompliance } from "./canopyCompliance"; // stripped (austerity)
+import { buildCanopyCompliance } from "./canopyCompliance";
 import { buildStudioSiteEnvelope } from "./siteEnvelope";
 import { buildScanChoreography } from "./scanChoreography";
 import { ScanRevealDirector, scanReveal } from "./scanReveal";
-// import { buildMetaChips } from "./metaChips"; // stripped (austerity)
+import { buildMetaChips } from "./metaChips";
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { DraftShapeLayer } from "./DraftShapeLayer";
 import { TrenchLayer } from "./TrenchLayer";
@@ -767,8 +766,8 @@ export function StudioScene({
   showSketch = true,
   // mode prop retained for interface compat; MetaChipSet (its consumer) is
   // stripped under chrome austerity — the UnifiedPanel owns mode display.
-  mode: _mode = "survey",
-  siteMeta: _siteMeta,
+  mode = "survey",
+  siteMeta,
   northBearingDeg,
   levels = [],
   placements = [],
@@ -840,9 +839,34 @@ export function StudioScene({
       }),
     [boundaryPct, buildingPct, neighbourBuildings, easementsPct, servicesPct, heightmapPoints, keylessOverlays, items],
   );
-  // metaChips stripped (chrome austerity) — site data lives in UnifiedPanel.
-  // The buildMetaChips call is preserved here for reference but not executed.
-  // buildMetaChips + MetaChipSet retire when the austerity pass is finalised.
+  // Vicmap meta chip-set — the in-drawing site data the scan-reveal spec
+  // asserts (meta-chip-a26-canopy) and the coverage ratchet measures as
+  // world-anchored annotation. Re-wired: the austerity strip orphaned a
+  // live spec contract (feature-reachability gate).
+  const metaChips = useMemo(
+    () =>
+      buildMetaChips({
+        boundary: boundaryPct,
+        scaleM,
+        boardAspect,
+        titleRef: siteMeta?.titleRef,
+        lga: siteMeta?.lga,
+        lotAreaM2: siteMeta?.lotAreaM2,
+        overlays: keylessOverlays,
+        easementRingCount: easementsPct.length,
+        heightmap: heightmapPoints,
+        sunHours: siteMeta?.sunHours,
+        canopy: buildCanopyCompliance({
+          placements,
+          boundary: boundaryPct,
+          scaleM,
+          boardAspect,
+          lotAreaM2: siteMeta?.lotAreaM2,
+        }),
+        envelope: siteEnvelope,
+      }),
+    [boundaryPct, scaleM, boardAspect, siteMeta, keylessOverlays, easementsPct, heightmapPoints, placements, siteEnvelope],
+  );
 
   return (
     <>
@@ -933,7 +957,11 @@ export function StudioScene({
         scaleM={scaleM}
         boardAspect={boardAspect}
         northBearingDeg={northBearingDeg}
-        showBearings={false}
+        /* Survey edge truth follows the mode's annotation layers (the CAD
+         * card's Bearings control) — it was hardcoded false, which unmounted
+         * the boundary chips entirely when Dims toggled off instead of
+         * keeping the metes-and-bounds chips the control promises. */
+        showBearings={annotationLayers?.bearings ?? false}
       />
       {/* E2E-only: publish the projected boundary box for the coverage ratchet
           (folds to null in production — see BoundaryProjectionProbe). */}
@@ -944,8 +972,16 @@ export function StudioScene({
           boardAspect={boardAspect}
         />
       ) : null}
-      {/* Meta chip-set stripped — site data lives in the UnifiedPanel
-          (chrome austerity). The canvas shows only the drawing. */}
+      {/* Vicmap meta chip-set — ambient satellite tags orbiting the
+          boundary (site data in the drawing; re-wired after the
+          austerity strip orphaned the scan-reveal spec contract). */}
+      <MetaChipSet
+        boundaryPct={boundaryPct}
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        mode={mode}
+        chips={metaChips}
+      />
       {/* Measure tape — armed tool, self-gates on measureActive. */}
       <MeasureTapeLayer
         scaleM={scaleM}

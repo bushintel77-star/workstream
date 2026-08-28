@@ -169,13 +169,15 @@ export function AssetLibraryPanel() {
       aria-label="Asset library"
       style={{
         position: "absolute",
-        // Flush to the tool rail's right edge (rail: left 8, top 152) — the
-        // palette lives where the pointer already is and never reaches the
-        // right dock column (cleared at every collision-gated viewport).
+        // Flush to the tool rail's right edge — the palette lives where the
+        // pointer already is and never reaches the UnifiedPanel column
+        // (cleared at every collision-gated viewport). Top 186 clears the
+        // perimeter tab strip's worst three-row wrap at 960x640 (54 + 114
+        // + gutter); maxHeight keeps it off the viewport floor.
         left: 68,
-        top: 152,
+        top: 186,
         width: "clamp(200px, calc(100vw - 800px), 270px)",
-        maxHeight: "calc(100dvh - 170px)",
+        maxHeight: "calc(100dvh - 204px)",
         display: "flex",
         flexDirection: "column",
         zIndex: "var(--cf-z-chrome)",

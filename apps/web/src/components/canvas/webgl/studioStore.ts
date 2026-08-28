@@ -341,13 +341,15 @@ export interface StudioStoreState {
   pointerClientPos: { x: number; y: number } | null;
   /** All canvas placements (CatalogPlacement contract schema). */
   placements: CatalogPlacement[];
-  /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features, stitchRecords} (cap 50). */
+  /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features, stitchRecords, trenches, zones} (cap 50). */
   historyPast: Array<{
     placements: CatalogPlacement[];
     strokes: CanvasStroke[];
     photoElevations: PhotoElevation[];
     features: LandscapeFeature[];
     stitchRecords: Record<string, StitchRecord>;
+    constructionTrenches: ConstructionTrench[];
+    irrigationZones: IrrigationZone[];
   }>;
   historyFuture: Array<{
     placements: CatalogPlacement[];
@@ -355,6 +357,8 @@ export interface StudioStoreState {
     photoElevations: PhotoElevation[];
     features: LandscapeFeature[];
     stitchRecords: Record<string, StitchRecord>;
+    constructionTrenches: ConstructionTrench[];
+    irrigationZones: IrrigationZone[];
   }>;
 
   // --- Flora ring (ranked planting suggestions at a click) ---
@@ -429,6 +433,17 @@ export interface StudioStoreState {
    */
   scanStage: "idle" | "cadastre" | "parcels" | "services" | "terrain" | "flora" | "done";
   scanStageStartedAt: number;
+
+  // --- AI-driven native canvas (AEC program phase 2) ---
+  /**
+   * The AI generation session. When active, ghost placements render on the
+   * canvas as translucent overlays awaiting accept/reject.
+   */
+  aiSession: {
+    prompt: string;
+    ghosts: CatalogPlacement[];
+    status: "idle" | "thinking" | "ready" | "accepted" | "rejected";
+  };
 
   // --- Shared ink layer ---
   /**
@@ -718,6 +733,14 @@ export interface StudioStoreState {
   setScanStage: (
     stage: "idle" | "cadastre" | "parcels" | "services" | "terrain" | "flora" | "done",
   ) => void;
+  /** Start an AI generation session (prompt → ghosts). */
+  startAiSession: (prompt: string) => void;
+  /** AI generation resolved — show the ghosts. */
+  setAiGhosts: (ghosts: CatalogPlacement[]) => void;
+  /** Accept the ghosts — commit as real placements (one undo). */
+  acceptAiGhosts: () => void;
+  /** Reject/cancel the AI session — ghosts vanish. */
+  clearAiSession: () => void;
   /**
    * Set/clear the facade azimuth override (photo pin sets its plane bearing;
    * session exit clears it back to cardinals-only).
@@ -900,7 +923,7 @@ export interface StudioStoreState {
   bumpSaveRevision: () => void;
 }
 
-/** Snapshot the undoable doc slices (placements + strokes + photo elevations + features + stitch records). */
+/** Snapshot the undoable doc slices (placements + strokes + photo elevations + features + stitch records + trenches + zones). */
 function docSnapshot(
   s: Pick<
     StudioStoreState,
@@ -909,6 +932,8 @@ function docSnapshot(
     | "photoElevations"
     | "features"
     | "stitchRecords"
+    | "constructionTrenches"
+    | "irrigationZones"
   >,
 ) {
   return {
@@ -917,6 +942,8 @@ function docSnapshot(
     photoElevations: [...s.photoElevations],
     features: [...s.features],
     stitchRecords: { ...s.stitchRecords },
+    constructionTrenches: [...s.constructionTrenches],
+    irrigationZones: [...s.irrigationZones],
   };
 }
 
@@ -976,6 +1003,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   chromePeek: false, // hold-H peek — keydown/keyup in WebGLStudioPreview
   scanStage: "idle", // scan choreography director flips per stage
   scanStageStartedAt: 0,
+  aiSession: { prompt: "", ghosts: [], status: "idle" },
 
   // Elevation Slice defaults
   sliceActive: false,
@@ -1182,6 +1210,22 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setChromePeek: (chromePeek) => set({ chromePeek }),
   setScanStage: (scanStage) =>
     set({ scanStage, scanStageStartedAt: performance.now() }),
+  startAiSession: (prompt) =>
+    set({ aiSession: { prompt, ghosts: [], status: "thinking" } }),
+  setAiGhosts: (ghosts) =>
+    set((s) => ({ aiSession: { ...s.aiSession, ghosts, status: "ready" } })),
+  acceptAiGhosts: () =>
+    set((s) => {
+      if (s.aiSession.ghosts.length > 0) {
+        // Commit ghosts as real placements (one undo via addPlacements).
+        const committed = s.aiSession.ghosts.map((g) => ({ ...g }));
+        // addPlacements handles the undo commit; we clear the session.
+        s.addPlacements(committed);
+      }
+      return { aiSession: { prompt: "", ghosts: [], status: "accepted" } };
+    }),
+  clearAiSession: () =>
+    set({ aiSession: { prompt: "", ghosts: [], status: "idle" } }),
   setElevationFacadeAzimuth: (elevationFacadeAzimuth) =>
     set({ elevationFacadeAzimuth }),
   // Transient per-frame write — no DOM consumer should subscribe to viewBlend
@@ -1643,6 +1687,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         photoElevations: prev.photoElevations,
         features: prev.features,
         stitchRecords: { ...prev.stitchRecords },
+        constructionTrenches: prev.constructionTrenches,
+        irrigationZones: prev.irrigationZones,
         selection: pruneSelection(s.selection, {
           placements: prev.placements,
           features: prev.features,
@@ -1662,6 +1708,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         photoElevations: next.photoElevations,
         features: next.features,
         stitchRecords: { ...next.stitchRecords },
+        constructionTrenches: next.constructionTrenches,
+        irrigationZones: next.irrigationZones,
         selection: pruneSelection(s.selection, {
           placements: next.placements,
           features: next.features,
@@ -1825,6 +1873,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set((s) => ({
       constructionTrenches: [...s.constructionTrenches, trench],
       trenchDraft: null,
+      // Trenches are durable doc slices (autosaved + strike-checked) — the
+      // draw commit is one undo step, same as a placement.
+      historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
+      historyFuture: [],
     })),
 
   setZoneTool: (zoneTool) =>
@@ -1846,6 +1898,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set((s) => ({
       irrigationZones: [...s.irrigationZones, zone],
       zoneDraft: null,
+      // Zones are durable doc slices (autosaved + hydraulic-fed) — the draw
+      // commit is one undo step, same as a placement.
+      historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
+      historyFuture: [],
     })),
 
   setProjectContext: (projectId, aerialUri, projectAddress) =>

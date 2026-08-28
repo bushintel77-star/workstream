@@ -915,7 +915,22 @@ export function PresentSurface({ projectId, imageLayers, planSnapshot, estimate,
           {loading && documents.length === 0 ? (
             <li className={css.empty}>Loading...</li>
           ) : null}
-          {!loading && documents.length === 0 ? (
+          {!loading && documents.length === 0 && error ? (
+            /* Load failure is NOT an empty library — offering "create one"
+               here is a ghost deck prompt that would fail for the same
+               reason. Name the failure and offer the retry. */
+            <li className={css.empty}>
+              <p>Could not load decks — {error}</p>
+              <KitButton
+                variant="ghost"
+                size="sm"
+                onClick={() => void loadDocuments()}
+              >
+                Retry
+              </KitButton>
+            </li>
+          ) : null}
+          {!loading && documents.length === 0 && !error ? (
             <li className={css.empty}>No decks yet. Create one to start.</li>
           ) : null}
         </ul>

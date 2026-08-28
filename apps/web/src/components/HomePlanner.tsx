@@ -119,9 +119,14 @@ export function HomePlanner({ projects }: Props) {
   useEffect(() => {
     if (!weatherProjectId) return;
     let cancelled = false;
-    void getWeatherAction(weatherProjectId).then((w) => {
-      if (!cancelled) setWeather(w);
-    });
+    void getWeatherAction(weatherProjectId)
+      .then((w) => {
+        if (!cancelled) setWeather(w);
+      })
+      .catch(() => {
+        // Action transport failure — the widget renders its own
+        // "Forecast unavailable" fallback either way.
+      });
     return () => {
       cancelled = true;
     };
@@ -327,9 +332,13 @@ export function HomePlanner({ projects }: Props) {
       </section>
 
       {/* --- Calendar --- */}
+      {/* Mounted gate — same law as the clock lines: the server stamps its
+          request-time month while hydration re-renders the client's, and a
+          month/day boundary between the two is a hydration mismatch. The
+          grid paints only client-side. */}
       <section className={home.widget} data-accent="blue">
         <p className={home.widgetLabel}>
-          {MONTH_NAME.format(now)} {now.getFullYear()}
+          {clockMounted ? `${MONTH_NAME.format(now)} ${now.getFullYear()}` : "Calendar"}
         </p>
         <div className={home.calGrid}>
           {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
@@ -337,33 +346,41 @@ export function HomePlanner({ projects }: Props) {
               {d}
             </span>
           ))}
-          {cells.map((date, i) => {
-            if (!date) return <span key={i} className={home.calCell} />;
-            const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-            const isToday = key === todayKey;
-            return (
-              <span
-                key={i}
-                className={`${home.calCell} ${isToday ? home.calToday : ""}`}
-              >
-                {date.getDate()}
-              </span>
-            );
-          })}
+          {clockMounted
+            ? cells.map((date, i) => {
+                if (!date) return <span key={i} className={home.calCell} />;
+                const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+                const isToday = key === todayKey;
+                return (
+                  <span
+                    key={i}
+                    className={`${home.calCell} ${isToday ? home.calToday : ""}`}
+                  >
+                    {date.getDate()}
+                  </span>
+                );
+              })
+            : null}
         </div>
       </section>
 
       {/* --- Season now --- */}
       <section className={home.widget} data-accent="green">
-        <p className={home.widgetLabel}>Season · {seasonInfo.label}</p>
-        <p className={home.seasonMonths}>{seasonInfo.months}</p>
-        <ul className={home.seasonList}>
-          {seasonPlantings.map((plant) => (
-            <li key={plant} className={home.seasonRow}>
-              {plant}
-            </li>
-          ))}
-        </ul>
+        <p className={home.widgetLabel}>
+          Season{clockMounted ? ` · ${seasonInfo.label}` : ""}
+        </p>
+        {clockMounted ? (
+          <>
+            <p className={home.seasonMonths}>{seasonInfo.months}</p>
+            <ul className={home.seasonList}>
+              {seasonPlantings.map((plant) => (
+                <li key={plant} className={home.seasonRow}>
+                  {plant}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
       </section>
 
       {/* --- To-do --- */}

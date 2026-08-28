@@ -1073,11 +1073,36 @@ export async function createOverrideAction(formData: FormData) {
 
 /* -- Tasks ------------------------------------------------------------ */
 
+/** Whitelists for form-driven enum fields — a raw `as TaskPriority` cast
+ *  forwards ANY string to the API (server-stored garbage that later fails
+ *  contract parsing). Unknown values fall back to the schema default. */
+const TASK_PRIORITIES: ReadonlySet<string> = new Set([
+  "low",
+  "medium",
+  "high",
+  "critical",
+]);
+const TASK_STATUSES: ReadonlySet<string> = new Set([
+  "pending",
+  "in_progress",
+  "blocked",
+  "done",
+  "cancelled",
+]);
+
+function parseTaskPriority(raw: string): TaskPriority {
+  return TASK_PRIORITIES.has(raw) ? (raw as TaskPriority) : "medium";
+}
+
+function parseTaskStatus(raw: string): TaskStatus | null {
+  return TASK_STATUSES.has(raw) ? (raw as TaskStatus) : null;
+}
+
 export async function createTaskAction(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
   const title = String(formData.get("title") ?? "").trim();
   const assignee = String(formData.get("assignee_name") ?? "").trim();
-  const priority = String(formData.get("priority") ?? "medium") as TaskPriority;
+  const priority = parseTaskPriority(String(formData.get("priority") ?? "medium"));
   const sourceRaw = String(formData.get("source") ?? "manual");
   const source =
     sourceRaw === "design" || sourceRaw === "dictation" ? sourceRaw : "manual";
@@ -1103,7 +1128,7 @@ export async function createTaskAction(formData: FormData) {
 export async function updateTaskStatusAction(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
   const taskId = String(formData.get("taskId") ?? "");
-  const status = String(formData.get("status") ?? "") as TaskStatus;
+  const status = parseTaskStatus(String(formData.get("status") ?? ""));
   if (!projectId || !taskId || !status) {
     throw new Error("Missing task update fields");
   }

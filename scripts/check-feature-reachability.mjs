@@ -61,7 +61,11 @@ const SRC = "apps/web/src";
 const ALLOW = new Map([
   // Alternate canvas-native layout prototypes — wiring pending user approval
   ["BottomAssetStrip", "Alternate layout: bottom asset strip (not yet mounted)",],
-  ["RightPanelTabs", "Alternate layout: tabbed right panel (not yet mounted)",],
+  // RightPanelTabs deleted 2026-08-28 with the hidden-dock retirement.
+  // Classic SVG-era elevation board — stranded by the WebGL migration; the
+  // photo-trace elevation (PhotoElevationSheet) is the live surface. Re-home
+  // or retire with the handoff/ prune (AGENTS.md migration note).
+  ["ElevationBoard", "Classic elevation board awaiting re-home decision under handoff/",],
 ]);
 
 function walk(dir, out = []) {

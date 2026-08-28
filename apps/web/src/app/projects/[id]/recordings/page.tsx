@@ -18,7 +18,7 @@ export default async function RecordingsPage({
     <ProjectUtilitySurface
       type="recordings"
       projectId={id}
-      recordings={await listRecordings(id)}
+      recordings={await listRecordings(id).catch(() => [])}
     />
   );
 }

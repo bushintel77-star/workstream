@@ -132,7 +132,7 @@ export function PerimeterTabStrip({
         data-gs-glass-card
         data-testid="studio-mode-tabs"
         aria-label="Studio modes"
-        style={{ ...glassSegment, flex: "0 0 auto" }}
+        style={{ ...glassSegment, flex: "0 1 auto", flexWrap: "wrap" }}
       >
         {CANVAS_MODES.map(({ id, label }) => {
           const locked = !unlocked.has(id);
@@ -186,7 +186,7 @@ export function PerimeterTabStrip({
         data-gs-glass-card
         role="group"
         aria-label="Canvas surfaces"
-        style={{ ...glassSegment, flex: "0 0 auto" }}
+        style={{ ...glassSegment, flex: "0 1 auto", flexWrap: "wrap" }}
       >
         {surveyProgress ? (
           <Button

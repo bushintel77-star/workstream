@@ -44,6 +44,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   sectionForEstimateTier,
   solveLiveTradeEstimate,
+  getCatalogSymbol,
   type StudioEstimateLine,
 } from "@workstream/domain";
 import { Button } from "./Button";
@@ -175,6 +176,100 @@ export interface FitSheetCardProps {
   canopy?: CanopyComplianceResult | null;
 }
 
+/**
+ * Plant schedule — the quote document's planting table (common name,
+ * botanical name, mature size, quantity). The PRO-Landscape-grade quote
+ * surface: operators price from it, clients approve from it. Derived live
+ * from the store placements joined to the domain catalog — the same chain
+ * as the canvas plant tags, so the schedule can never disagree with the
+ * drawing.
+ */
+function PlantSchedule() {
+  const placements = useStudioStore((s) => s.placements);
+  const rows = useMemo(() => {
+    const bySymbol = new Map<string, number>();
+    for (const p of placements) {
+      bySymbol.set(p.symbol_id, (bySymbol.get(p.symbol_id) ?? 0) + 1);
+    }
+    return [...bySymbol.entries()]
+      .map(([symbolId, qty]) => {
+        const sym = getCatalogSymbol(symbolId);
+        const h = sym?.mature_height_m;
+        const w = sym?.default_width_m;
+        return {
+          symbolId,
+          label: sym?.label ?? symbolId,
+          botanical: sym?.botanical_name ?? null,
+          mature: h != null || w != null ? `${h ?? "?"} m h × ${w ?? "?"} m` : null,
+          qty,
+        };
+      })
+      .sort((a, b) => b.qty - a.qty || a.label.localeCompare(b.label));
+  }, [placements]);
+
+  if (rows.length === 0) return null;
+  return (
+    <div
+      data-testid="plant-schedule"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        borderTop: "1px solid var(--la-surface-muted)",
+        paddingTop: "var(--gs-space-3)",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "var(--font-tech)",
+          fontSize: "var(--gs-font-xs)",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--la-ink-muted)",
+        }}
+      >
+        Plant schedule · {rows.length} species
+      </span>
+      {rows.map((r) => (
+        <div
+          key={r.symbolId}
+          data-testid="plant-schedule-row"
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: "var(--gs-space-3)",
+            fontSize: "var(--gs-font-xs)",
+            color: "var(--la-ink-secondary)",
+          }}
+        >
+          <span style={{ flex: 1, minWidth: 0, color: "var(--la-ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {r.label}
+            {r.botanical ? (
+              <span style={{ fontStyle: "italic", color: "var(--la-ink-muted)" }}>
+                {" "}· {r.botanical}
+              </span>
+            ) : null}
+          </span>
+          <span style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+            {r.mature ?? "—"}
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-tech)",
+              fontVariantNumeric: "tabular-nums",
+              color: "var(--la-ink)",
+              minWidth: 28,
+              textAlign: "right",
+            }}
+          >
+            ×{r.qty}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function FitSheetCard({
   items,
   boundaryPct,
@@ -251,6 +346,10 @@ export function FitSheetCard({
       const { fetchSketchEstimateAction } = await import("../../../app/actions");
       const res = await fetchSketchEstimateAction(projectId);
       setBackendTotal(res?.costing?.total ?? null);
+    } catch {
+      // Transport failure — the backend total simply stays unknown (the
+      // drift row hides) instead of surfacing as an unhandled rejection.
+      setBackendTotal(null);
     } finally {
       setBackendBusy(false);
     }
@@ -347,14 +446,23 @@ function FitSheetCapsule({
   driftPct: number | null;
   canopy: CanopyComplianceResult | null;
 }) {
-  const [expandedInternal, setExpandedInternal] = useState<boolean>(() => {
-    if (typeof window === "undefined" || !allowExpanded) return false;
+  /* Expanded preference — read localStorage AFTER mount, not in the
+   * initializer: the initializer runs during the server/hydration render,
+   * where a stored "1" makes the first client paint disagree with the
+   * server's collapsed default (a hydration mismatch on the very first
+   * visit-back). The hydrated flag also stops the persist effect below
+   * from writing the default over the stored value before it is read. */
+  const [expandedInternal, setExpandedInternal] = useState<boolean>(false);
+  const preferenceHydrated = useRef(false);
+  useEffect(() => {
+    if (!allowExpanded) return;
     try {
-      return window.localStorage.getItem(STORAGE_KEY) === "1";
+      setExpandedInternal(window.localStorage.getItem(STORAGE_KEY) === "1");
     } catch {
-      return false;
+      /* private-mode etc — ignore */
     }
-  });
+    preferenceHydrated.current = true;
+  }, [allowExpanded]);
   const expanded = expandedProp ?? expandedInternal;
   const setExpanded = useCallback(
     (next: boolean) => {
@@ -365,12 +473,13 @@ function FitSheetCapsule({
   );
   useEffect(() => {
     if (typeof window === "undefined" || !allowExpanded) return;
+    if (!preferenceHydrated.current && expandedProp === undefined) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, expanded ? "1" : "0");
     } catch {
       /* private-mode etc — ignore */
     }
-  }, [expanded, allowExpanded]);
+  }, [expanded, allowExpanded, expandedProp]);
 
   // Esc collapses. Document-level handler so it fires regardless of which
   // capsule sub-element has focus.
@@ -691,6 +800,11 @@ function FitSheetCapsule({
                 );
               })}
           </div>
+
+          {/* Plant schedule — PRO Landscape's durable quote surface: common
+              name, botanical name, mature size, quantity. Derived live from
+              the store placements + the domain catalog (no new data). */}
+          <PlantSchedule />
 
           {/* Section subtotals */}
           <div

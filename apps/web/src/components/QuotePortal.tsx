@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Tier1SavingsLedger } from "./tier1";
 import { KitButton } from "./ui/kit";
 import styles from "../app/portal/quote/[token]/quote.module.css";
@@ -90,9 +90,14 @@ const aud2 = (n: number) =>
 export function QuotePortal({
   data,
   token,
+  generatedDate,
 }: {
   data: PortalQuoteData;
   token: string;
+  /** Server-stamped issue date — computed by the edge page so the server
+   *  and client renders agree (a client-side `new Date()` is a hydration
+   *  mismatch waiting for a timezone or midnight boundary). */
+  generatedDate: string;
 }) {
   const { project, survey, design, tier1 } = data;
   const allCostings = data.costings?.length
@@ -144,15 +149,7 @@ export function QuotePortal({
     focusScenario(availableScenarios[next]!.id);
   }
 
-  const generated = useMemo(
-    () =>
-      new Date().toLocaleDateString("en-AU", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }),
-    [],
-  );
+  const generated = generatedDate;
 
   /* Sticky summary bar — the number the client is deciding on stays in view
    * while they scroll the schedule, and hands off to the accept section at

@@ -61,14 +61,19 @@ const API = process.env.API_URL ?? "http://127.0.0.1:3001";
  * instead of a `studio-board` element.
  */
 const COVERAGE_BASELINE: Record<string, number> = {
-  survey: 2.9,
+  // Re-measured 2026-08-28 after the UnifiedPanel port (the retired
+  // hidden dock's bodies moved into the flush right inspector and the
+  // interaction-guidance chip was re-mounted). The guidance chip remains
+  // the dominant contributor; the UnifiedPanel does not intersect the
+  // projected boundary box at 1600x950.
+  survey: 2.7,
   // Sketch +0.96pp (3.0 → 3.96, 2026-08-25): the release's asset library
   // panel (87adeeb) added rail-docked discovery chrome over the drawing
   // column. Re-measured against the boundary denominator on the
   // E2E-enabled dev server after the square-board law landed.
-  sketch: 4.0,
-  cad: 6.2,
-  quote: 5.8,
+  sketch: 2.6,
+  cad: 4.7,
+  quote: 4.4,
 };
 
 /** Rendering jitter between runs; a real regression is far larger than this. */
@@ -87,16 +92,13 @@ const PAINTED_SELECTOR = [
   "[data-gs-glass-card]",
   "[data-testid='asset-library']",
   "[data-testid='studio-tool-rail']",
-  "[data-testid='nib-palette']",
-  "[data-testid='viewport-transition-hud']",
   "[data-testid='controls-hint']",
   "[data-testid='interaction-guidance']",
-  "[data-testid='workflow-guide']",
   "[data-testid='selection-chip']",
   "[data-testid='survey-locate-state']",
   "[data-testid='perimeter-tab-strip']",
   "[data-testid='project-identity']",
-  "[data-testid='perimeter-panel']",
+  "[data-testid='unified-panel']",
   "[data-testid='fit-sheet-card']",
   "[data-testid='fit-sheet-pill']",
   "[data-testid^='meta-chip-']",

@@ -24,7 +24,11 @@
 
   /* Surface tokens */
   --gs-canvas: #0a0a0a;          /* Canvas base — deep void for drawing pop (DESIGN.md §2) */
-  --gs-panel: #121212;           /* Panel chassis — dark grey (DESIGN.md §2) */
+  /* DOM panels stay Studio Paper white (--gs-panel-grad is the card fill).
+   * The dark panel CHASSIS is --la-surface (DESIGN.md §2); the WebGL
+   * scene's dark panel value lives in the TS mirror (colorTokens.ts —
+   * the declared scene/DOM split in colorTokens-css-sync.test.ts). */
+  --gs-panel: #ffffff;
   --gs-glass: #ffffff;           /* Legacy alias of --gs-panel */
   --gs-glass-strong: #fafafa;    /* Elevated step / hovered panel fill */
   --gs-glass-sunken: #ebebeb;    /* Inset wells inside panels */
@@ -91,7 +95,7 @@
    * ================================================================ */
   --la-ink: #FFFFFF;              /* Primary text — high-contrast white */
   --la-ink-secondary: #A3A3A3;    /* Secondary text */
-  --la-ink-muted: #737373;        /* Labels, hints, inactive tabs */
+  --la-ink-muted: #8A8A8A;        /* Labels, hints, inactive tabs — 5.4:1 on --la-surface (AA) */
   --la-ink-faint: #525252;        /* Faintest text (AA-exempt glyphs) */
   --la-surface: #121212;          /* Main panel chassis (dark grey opaque) */
   --la-surface-dim: #1A1A1A;      /* Secondary surface / active tool bg */
