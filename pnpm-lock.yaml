@@ -518,10 +518,10 @@ importers:
         specifier: ^7946.0.16
         version: 7946.0.16
       open-crop-icons:
-        specifier: github:openfarmcc/open-crop-icons
+        specifier: github:openfarmcc/open-crop-icons#d41f1197a14bb82f12037dc47585152ae1e3074f
         version: https://codeload.github.com/openfarmcc/open-crop-icons/tar.gz/d41f1197a14bb82f12037dc47585152ae1e3074f
       osmic-source:
-        specifier: github:gmgeo/osmic
+        specifier: github:gmgeo/osmic#94b418619c72fd2caa0edfa08c7a959ac3f48b2a
         version: osmic@https://codeload.github.com/gmgeo/osmic/tar.gz/94b418619c72fd2caa0edfa08c7a959ac3f48b2a
       typescript:
         specifier: ^5.7.0

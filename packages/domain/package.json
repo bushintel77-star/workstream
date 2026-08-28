@@ -22,8 +22,8 @@
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",
-    "open-crop-icons": "github:openfarmcc/open-crop-icons",
-    "osmic-source": "github:gmgeo/osmic",
+    "open-crop-icons": "github:openfarmcc/open-crop-icons#d41f1197a14bb82f12037dc47585152ae1e3074f",
+    "osmic-source": "github:gmgeo/osmic#94b418619c72fd2caa0edfa08c7a959ac3f48b2a",
     "typescript": "^5.7.0"
   }
 }
