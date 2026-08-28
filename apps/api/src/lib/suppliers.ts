@@ -17,6 +17,7 @@
  */
 
 import { promises as fs } from "node:fs";
+import path from "node:path";
 import { containedPath } from "./safe-path";
 
 export type SupplierId =
@@ -163,10 +164,16 @@ export async function loadSupplierRateSheet(
   dir: string = suppliersRateSheetDir() ?? "",
 ): Promise<{ prices: SupplierPrice[]; fetched_at: string } | null> {
   if (!dir) return null;
+  /* Path-traversal invariant: the supplier id becomes a filename — only the
+   * literal ids pass (containedPath below is the second guard). */
+  if (!isSupplierIdLiteral(supplier)) return null;
   /* supplier is enum-checked by callers, but this function is the choke
    * point for the filesystem read — a doctored id must never escape the
    * configured rate-sheet dir. */
-  const file = containedPath(dir, `${supplier}.json`);
+  /* Sanitizer at the sink: basename strips any directory component before
+   * containment is even computed — a doctored id can never traverse. */
+  const leafname = path.basename(`${supplier}.json`);
+  const file = containedPath(dir, leafname);
   if (!file) return null;
   try {
     const text = await fs.readFile(file, "utf8");
@@ -193,9 +200,22 @@ function cannedList(supplier: SupplierId): SupplierPriceList {
   };
 }
 
+/** Literal-id allowlist — the SupplierId set as it exists in code. Every
+ * consumer that turns a supplier id into a filename or fetch key checks
+ * here first (path-traversal invariant; containedPath stays as the
+ * second guard at the filesystem). */
+export function isSupplierIdLiteral(value: string): boolean {
+  return (
+    /^[a-z0-9_-]{1,40}$/.test(value) &&
+    Object.prototype.hasOwnProperty.call(SUPPLIER_LABEL, value)
+  );
+}
 export async function fetchPrices(
   supplier: SupplierId,
 ): Promise<SupplierPriceList> {
+  if (!isSupplierIdLiteral(supplier)) {
+    return cannedList(supplier as SupplierId);
+  }
   if (isSuppliersLiveEnabled()) {
     const sheet = await loadSupplierRateSheet(supplier);
     if (sheet) {

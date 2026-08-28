@@ -616,11 +616,29 @@ export async function wfsFetchJson(url: string): Promise<FeatureCollection> {
 async function wfsFetch(url: string): Promise<FeatureCollection> {
   /* SSRF invariant: every Vicmap fetch targets the constant public GeoServer
    * above. Filter text is URLSearchParams-encoded, so request data cannot
-   * break out of the query string — this assertion enforces that explicitly. */
-  if (!url.startsWith(`${WFS_BASE}?`)) {
-    throw new Error(`Vicmap fetch refused non-WFS URL: ${url.slice(0, 80)}`);
-  }
-  const res = await fetch(url, {
+   * break out of the query string. The guard is STRUCTURAL at the fetch
+   * sink: parse the URL and require https + the constant GeoServer host —
+   * nothing request-derived can steer protocol, host, or path. */
+  const sinkUrl = ((): URL => {
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      throw new Error(`Vicmap fetch refused unparseable URL: ${url.slice(0, 80)}`);
+    }
+    const base = new URL(WFS_BASE);
+    if (
+      parsed.protocol !== base.protocol ||
+      parsed.hostname !== base.hostname ||
+      parsed.pathname !== base.pathname
+    ) {
+      throw new Error(
+        `Vicmap fetch refused non-WFS target: ${parsed.protocol}//${parsed.hostname}${parsed.pathname}`,
+      );
+    }
+    return parsed;
+  })();
+  const res = await fetch(sinkUrl, {
     headers: { accept: "application/json" },
     signal: AbortSignal.timeout(WFS_TIMEOUT_MS),
   });

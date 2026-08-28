@@ -5,7 +5,7 @@ import { runDesign } from "./design-job";
 import { runCosting } from "./cost-job";
 import { runProjectAudit } from "./audit-job";
 
-describe("runProjectAudit", { timeout: 20000 }, () => {
+describe("runProjectAudit", { timeout: 60_000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
   const owner = "audit-test";
 
@@ -14,16 +14,22 @@ describe("runProjectAudit", { timeout: 20000 }, () => {
     await store.seedDefaults();
   });
 
-  it("requires costing before audit", async () => {
-    const project = await store.createProject(owner, {
-      address: "5 Test St, Carlton VIC 3053",
-    });
-    await runSurvey(store, owner, project.id);
-    await runDesign(store, owner, project.id);
-    await expect(runProjectAudit(store, owner, project.id)).rejects.toThrow(
-      /Costing is required/,
-    );
-  });
+  it(
+    "requires costing before audit",
+    async () => {
+      const project = await store.createProject(owner, {
+        address: "5 Test St, Carlton VIC 3053",
+      });
+      await runSurvey(store, owner, project.id);
+      await runDesign(store, owner, project.id);
+      await expect(runProjectAudit(store, owner, project.id)).rejects.toThrow(
+        /Costing is required/,
+      );
+    },
+    /* survey→design pipeline before the rejection — headroom for parallel
+     * related-suite runs. */
+    60_000,
+  );
 
   it("persists audit findings after full prerequisites", async () => {
     const project = await store.createProject(owner, {

@@ -4,7 +4,10 @@ import { runSurvey } from "./survey-job";
 import { runDesign } from "./design-job";
 import { runCosting } from "./cost-job";
 
-describe("runCosting", { timeout: 20000 }, () => {
+/* Full survey→design→cost pipelines — 60s budget: tests run 12–18s in
+ * isolation but stretch past 20s when vitest schedules the related suite
+ * in parallel. */
+describe("runCosting", { timeout: 60_000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
   const owner = "test-user";
 

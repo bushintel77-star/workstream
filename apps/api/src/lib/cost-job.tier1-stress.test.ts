@@ -26,25 +26,31 @@ describe("tier-1 stress · costing pipeline", { timeout: 20000 }, () => {
     await store.seedDefaults();
   });
 
-  it("locks standard total for every Wrights address variant", async () => {
-    for (const address of WRIGHTS_VARIANTS) {
-      const project = await store.createProject(OWNER, {
-        address,
-        lat: -37.85,
-        lng: 145.0,
-      });
-      await runSurvey(store, OWNER, project.id);
-      await runDesign(store, OWNER, project.id);
-      const costings = await runCosting(store, OWNER, project.id);
-      const standard = costings.find((c) => c.scenario === "standard");
-      expect(standard, address).toBeTruthy();
-      expect(standard!.total, address).toBe(TARGET);
-      expect(
-        standard!.line_items.some((l) => l.sku === "ALW-TIER1-ALIGN"),
-        address,
-      ).toBe(true);
-    }
-  });
+  it(
+    "locks standard total for every Wrights address variant",
+    async () => {
+      for (const address of WRIGHTS_VARIANTS) {
+        const project = await store.createProject(OWNER, {
+          address,
+          lat: -37.85,
+          lng: 145.0,
+        });
+        await runSurvey(store, OWNER, project.id);
+        await runDesign(store, OWNER, project.id);
+        const costings = await runCosting(store, OWNER, project.id);
+        const standard = costings.find((c) => c.scenario === "standard");
+        expect(standard, address).toBeTruthy();
+        expect(standard!.total, address).toBe(TARGET);
+        expect(
+          standard!.line_items.some((l) => l.sku === "ALW-TIER1-ALIGN"),
+          address,
+        ).toBe(true);
+      }
+    },
+    /* One full pipeline per address variant — headroom for parallel
+     * related-suite runs (same law as the 15× repeat below). */
+    120_000,
+  );
 
   it("never locks non-tier-1 Carlton jobs onto the workbook total", async () => {
     const project = await store.createProject(OWNER, {

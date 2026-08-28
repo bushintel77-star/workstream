@@ -2,12 +2,7 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../plugins/auth";
 import { loadMelbourneTradeCatalog } from "../lib/melbourne-trade-catalog";
-import {
-  ALL_SUPPLIERS,
-  fetchPrices,
-  supplierFeedStatusSummary,
-  type SupplierId,
-} from "../lib/suppliers";
+import { ALL_SUPPLIERS, fetchPrices, supplierFeedStatusSummary, type SupplierId, isSupplierIdLiteral } from "../lib/suppliers";
 
 const SupplierParamsSchema = z.object({
   supplier: z.enum([
@@ -65,6 +60,12 @@ export default async function supplierRoutes(fastify: FastifyInstance) {
       }
       const sheetId = SUPPLIER_SHEET_IDS[parsed.data.supplier];
       if (!sheetId) {
+        return reply.code(404).send({ error: "Unknown supplier" });
+      }
+      /* Path-traversal invariant (visible at the sink): the id entering the
+       * rate-sheet filename must be one of the literal supplier ids — a
+       * doctored param can never reach the filesystem read. */
+      if (!isSupplierIdLiteral(sheetId)) {
         return reply.code(404).send({ error: "Unknown supplier" });
       }
       const prices = await fetchPrices(sheetId);

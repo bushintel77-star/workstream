@@ -3,7 +3,7 @@ import { createMemoryStore } from "@workstream/db";
 import { runSurvey } from "./survey-job";
 import { runDesign } from "./design-job";
 
-describe("runDesign", { timeout: 20000 }, () => {
+describe("runDesign", { timeout: 60_000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
   const owner = "design-test";
 
@@ -21,19 +21,25 @@ describe("runDesign", { timeout: 20000 }, () => {
     );
   });
 
-  it("returns tier-1 zones for Wrights Terrace without Claude", async () => {
-    const project = await store.createProject(owner, {
-      address: "36 Wrights Terrace, Prahran VIC 3181",
-      lat: -37.85,
-      lng: 145.0,
-    });
-    await runSurvey(store, owner, project.id);
-    const design = await runDesign(store, owner, project.id);
+  it(
+    "returns tier-1 zones for Wrights Terrace without Claude",
+    async () => {
+      const project = await store.createProject(owner, {
+        address: "36 Wrights Terrace, Prahran VIC 3181",
+        lat: -37.85,
+        lng: 145.0,
+      });
+      await runSurvey(store, owner, project.id);
+      const design = await runDesign(store, owner, project.id);
 
-    expect(design.proposal.zones.length).toBeGreaterThanOrEqual(2);
-    expect(design.proposal.zones.some((z) => z.name.includes("Front"))).toBe(
-      true,
-    );
-    expect(design.rationale).toMatch(/Tier-1|Wrights|proposal/i);
-  });
+      expect(design.proposal.zones.length).toBeGreaterThanOrEqual(2);
+      expect(design.proposal.zones.some((z) => z.name.includes("Front"))).toBe(
+        true,
+      );
+      expect(design.rationale).toMatch(/Tier-1|Wrights|proposal/i);
+    },
+    /* Full survey→design pipeline — needs headroom when vitest runs the
+     * related-suite files in parallel on slower machines. */
+    60_000,
+  );
 });

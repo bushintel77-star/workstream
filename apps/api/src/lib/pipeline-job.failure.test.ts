@@ -7,7 +7,7 @@ vi.mock("./design-job", () => ({
 
 import { runFullPipeline } from "./pipeline-job";
 
-describe("runFullPipeline failure states", { timeout: 20000 }, () => {
+describe("runFullPipeline failure states", { timeout: 60_000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
   const owner = "pipeline-failure-test";
 

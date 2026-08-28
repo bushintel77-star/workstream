@@ -53,7 +53,9 @@ async function seededProject() {
   return { app, store, projectId };
 }
 
-describe("API — site-photos gallery", { timeout: 20000 }, () => {
+/* Each test seeds a full survey project — 60s budget for parallel
+ * related-suite contention. */
+describe("API — site-photos gallery", { timeout: 60_000 }, () => {
   it("lists an empty gallery", async () => {
     const { app, projectId } = await seededProject();
     const res = await app.inject({
