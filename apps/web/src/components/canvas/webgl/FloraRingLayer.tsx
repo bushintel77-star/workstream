@@ -54,7 +54,7 @@ const cardStyle: React.CSSProperties = {
   backdropFilter: "none",
   WebkitBackdropFilter: "none",
   fontFamily: "var(--font-ui)",
-  color: "var(--gs-ink)",
+  color: "var(--la-ink)",
   pointerEvents: "auto",
   cursor: "default",
   userSelect: "none",
@@ -205,7 +205,7 @@ export function FloraRingLayer({
                 fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "var(--gs-ink-secondary)",
+                color: "var(--la-ink-secondary)",
               }}
             >
               Flora · indicative
@@ -215,7 +215,7 @@ export function FloraRingLayer({
               style={{
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-xs)",
-                color: "var(--gs-ink-truth)",
+                color: "var(--la-ink)",
                 border: "1px solid color-mix(in srgb, var(--gs-truth) 35%, transparent)",
                 borderRadius: "var(--gs-radius-pill)",
                 padding: "1px 7px",
@@ -262,14 +262,14 @@ export function FloraRingLayer({
                   style={{
                     fontFamily: "var(--font-tech)",
                     fontSize: "var(--gs-font-xs)",
-                    color: "var(--gs-ink-secondary)",
+                    color: "var(--la-ink-secondary)",
                     marginTop: 2,
                   }}
                 >
                   <em>{c.botanicalName}</em> · {c.matureHeightM.toFixed(1)} m ·{" "}
                   {c.sun}
                 </div>
-                <div style={{ fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)", marginTop: 2 }}>
+                <div style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)", marginTop: 2 }}>
                   {c.why}
                 </div>
               </button>
@@ -308,7 +308,7 @@ export function FloraRingLayer({
                 borderRadius: "var(--gs-radius-pill)",
                 border: "1px solid var(--gs-line)",
                 background: "transparent",
-                color: "var(--gs-ink-secondary)",
+                color: "var(--la-ink-secondary)",
                 fontFamily: "var(--font-ui)",
                 fontSize: "var(--gs-font-sm)",
                 cursor: "pointer",
@@ -322,7 +322,7 @@ export function FloraRingLayer({
             style={{
               marginTop: 5,
               fontSize: "var(--gs-font-xs)",
-              color: "var(--gs-ink-secondary)",
+              color: "var(--la-ink-secondary)",
             }}
           >
             Indicative suitability — confirm on site / soil / nursery lead time

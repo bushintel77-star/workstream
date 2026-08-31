@@ -79,15 +79,26 @@ test.describe("ARIA graphics tree", () => {
       "design drawing canvas",
     );
 
-    // 2. The mirror tree carries the placements as graphics symbols with
+    // 2. The mirror tree carries the site frame + the placements: the
+    //    title boundary as a graphics OBJECT (2026-08-29 — the keyboard
+    //    engine's Home key now lands on the boundary; click-selection
+    //    parity for a11y), then the placements as graphics symbols with
     //    human labels — the catalog label when known ("Olive standard"),
     //    the symbol id as the honest fallback ("tree-canopy").
     const treeitems = page.locator('[data-cf-mirror] li[role="treeitem"]');
-    await expect(treeitems).toHaveCount(2, { timeout: 15_000 });
-    await expect(treeitems).toContainText(["Olive standard", "tree-canopy"]);
+    await expect(treeitems).toHaveCount(3, { timeout: 15_000 });
+    await expect(treeitems).toContainText([
+      "Title boundary",
+      "Olive standard",
+      "tree-canopy",
+    ]);
     const roledescriptions = await treeitems.evaluateAll((nodes) =>
       nodes.map((n) => n.getAttribute("aria-roledescription")),
     );
-    expect(roledescriptions).toEqual(["graphics symbol", "graphics symbol"]);
+    expect(roledescriptions).toEqual([
+      "graphics object",
+      "graphics symbol",
+      "graphics symbol",
+    ]);
   });
 });

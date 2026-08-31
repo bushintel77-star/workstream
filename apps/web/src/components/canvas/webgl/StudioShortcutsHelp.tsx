@@ -76,7 +76,7 @@ export function StudioShortcutsHelp({
               fontSize: "var(--gs-font-sm)",
               fontWeight: 600,
               letterSpacing: "0.06em",
-              color: "var(--gs-ink)",
+              color: "var(--la-ink)",
             }}
           >
             SHORTCUTS
@@ -86,7 +86,7 @@ export function StudioShortcutsHelp({
             aria-label="Close shortcuts"
             data-testid="studio-shortcuts-close"
             onClick={onClose}
-            style={{ color: "var(--gs-ink-muted)", padding: "0 4px" }}
+            style={{ color: "var(--la-ink-muted)", padding: "0 4px" }}
           >
             ×
           </Button>
@@ -99,7 +99,7 @@ export function StudioShortcutsHelp({
                 fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "var(--gs-ink-secondary)",
+                color: "var(--la-ink-secondary)",
                 marginBottom: 4,
               }}
             >
@@ -115,7 +115,7 @@ export function StudioShortcutsHelp({
                   padding: "3px 0",
                   fontFamily: "var(--font-ui)",
                   fontSize: "var(--gs-font-sm)",
-                  color: "var(--gs-ink)",
+                  color: "var(--la-ink)",
                 }}
               >
                 <span>{r.action}</span>
@@ -124,7 +124,7 @@ export function StudioShortcutsHelp({
                     fontFamily: "var(--font-tech)",
                     fontSize: "var(--gs-font-xs)",
                     letterSpacing: "0.04em",
-                    color: "var(--gs-ink-secondary)",
+                    color: "var(--la-ink-secondary)",
                     whiteSpace: "nowrap",
                   }}
                 >

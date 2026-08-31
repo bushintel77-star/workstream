@@ -63,17 +63,15 @@ const API = process.env.API_URL ?? "http://127.0.0.1:3001";
 const COVERAGE_BASELINE: Record<string, number> = {
   // Re-measured 2026-08-28 after the UnifiedPanel port (the retired
   // hidden dock's bodies moved into the flush right inspector and the
-  // interaction-guidance chip was re-mounted). The guidance chip remains
-  // the dominant contributor; the UnifiedPanel does not intersect the
-  // projected boundary box at 1600x950.
-  survey: 2.7,
-  // Sketch +0.96pp (3.0 → 3.96, 2026-08-25): the release's asset library
-  // panel (87adeeb) added rail-docked discovery chrome over the drawing
-  // column. Re-measured against the boundary denominator on the
-  // E2E-enabled dev server after the square-board law landed.
-  sketch: 2.6,
-  cad: 4.7,
-  quote: 4.4,
+  // Re-measured 2026-08-29 after the interaction-guidance chip moved to
+  // its deterministic bottom-left slot (clear of the projected boundary
+  // box) and the AA ink sweep. The guidance chip WAS the dominant
+  // contributor — the drawing now carries almost no idle chrome; cad/quote
+  // keep only the dim-label ring.
+  survey: 0.2,
+  sketch: 0.1,
+  cad: 2.1,
+  quote: 2.1,
 };
 
 /** Rendering jitter between runs; a real regression is far larger than this. */

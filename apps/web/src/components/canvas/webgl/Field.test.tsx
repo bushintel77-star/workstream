@@ -37,7 +37,7 @@ describe("<Input> chrome-tier shell", () => {
     expect(html).toContain('padding:4px 6px');
     expect(html).toContain('border-radius:var(--gs-radius-chip)');
     expect(html).toContain('background:transparent');
-    expect(html).toContain('color:var(--gs-ink)');
+    expect(html).toContain('color:var(--la-ink)');
   });
 
   it("forwards type/min/max/step so number inputs keep their constraints", () => {

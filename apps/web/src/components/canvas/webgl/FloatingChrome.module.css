@@ -1,0 +1,385 @@
+/* Spatial Sketching — floating chrome (liquid glass).
+ * Per the design handoff §4: glass background with strong blur,
+ * light translucent border, pill-shaped buttons.
+ * The project uses CSS Modules + variables (no Tailwind); these classes
+ * implement the same frosted-glass effect with the existing token ramp. */
+
+.rail {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px;
+  border-radius: var(--r-2xl);
+  background: var(--cf-glass-dark);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(232, 230, 224, 0.14);
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+}
+
+.railRight {
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.railLeft {
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.railHeader {
+  font: 600 8.5px/1 "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  color: rgba(232, 230, 224, 0.4);
+  text-align: center;
+  padding: 2px 0 4px;
+  letter-spacing: 0.5px;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 34px;
+  border-radius: var(--r-lg);
+  font: 600 9px/1 "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  color: rgba(232, 230, 224, 0.55);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cell:hover {
+  background: rgba(232, 230, 224, 0.07);
+  color: rgba(232, 230, 224, 0.8);
+}
+
+.cellActive {
+  background: oklch(0.68 0.12 145);
+  color: #10120f;
+}
+
+.cellActive:hover {
+  background: oklch(0.68 0.12 145);
+  color: #10120f;
+}
+
+.cellAdd {
+  color: rgba(232, 230, 224, 0.4);
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Season tag — small cycle button below each canvas cell */
+.seasonTag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 18px;
+  border-radius: var(--r-md);
+  font: 600 7.5px/1 "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  color: rgba(232, 230, 224, 0.45);
+  background: transparent;
+  border: 1px solid rgba(232, 230, 224, 0.08);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+
+.seasonTag:hover {
+  background: rgba(232, 230, 224, 0.07);
+  color: rgba(232, 230, 224, 0.8);
+}
+
+.seasonTagSummer {
+  color: oklch(0.72 0.12 145);
+  border-color: oklch(0.72 0.12 145 / 30%);
+}
+
+.seasonTagWinter {
+  color: oklch(0.72 0.1 250);
+  border-color: oklch(0.72 0.1 250 / 30%);
+}
+
+.seasonTagAll {
+  color: rgba(232, 230, 224, 0.45);
+}
+
+/* Toggles bar — top corner, hand-opposite side */
+.toggles {
+  position: absolute;
+  top: 22px;
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+}
+
+.togglesRight {
+  right: 22px;
+}
+
+.togglesLeft {
+  left: 22px;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border-radius: var(--r-xl);
+  background: var(--cf-glass-dark);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(232, 230, 224, 0.14);
+  font: 500 10px/1 "IBM Plex Mono", monospace;
+  color: rgba(232, 230, 224, 0.55);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+
+.pill:hover {
+  background: rgba(20, 20, 20, 0.8);
+  color: rgba(232, 230, 224, 0.8);
+}
+
+.pillActive {
+  color: oklch(0.68 0.12 145);
+  border-color: oklch(0.68 0.12 145 / 30%);
+}
+
+.pillLabel {
+  font: 600 8.5px/1 "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(232, 230, 224, 0.4);
+}
+
+.pillValue {
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+}
+
+/* Readout — bottom corner */
+.readout {
+  position: absolute;
+  bottom: 22px;
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+  z-index: var(--cf-z-chrome);
+}
+
+.readoutRight {
+  right: 22px;
+}
+
+.readoutLeft {
+  left: 22px;
+}
+
+.readoutPill {
+  padding: 7px 11px;
+  border-radius: var(--r-xl);
+  background: var(--cf-glass-dark);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(232, 230, 224, 0.14);
+  font: 500 10px/1 "IBM Plex Mono", monospace;
+  color: rgba(232, 230, 224, 0.55);
+}
+
+.readoutPillAccent {
+  color: oklch(0.68 0.12 145);
+}
+
+/* Fly-through bar — bottom center, frosted glass */
+.flyBar {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px;
+  border-radius: var(--r-2xl);
+  background: var(--cf-glass-dark);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(232, 230, 224, 0.14);
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+}
+
+.flyBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--r-xl);
+  font: 600 9px/1 "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  color: rgba(232, 230, 224, 0.55);
+  background: transparent;
+  border: 1px solid rgba(232, 230, 224, 0.1);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.flyBtn:hover {
+  background: rgba(232, 230, 224, 0.07);
+  color: rgba(232, 230, 224, 0.8);
+}
+
+.flyBtnPlay {
+  color: #10120f;
+  background: oklch(0.68 0.12 145);
+  border-color: oklch(0.68 0.12 145);
+}
+
+.flyBtnPlay:hover {
+  background: oklch(0.72 0.12 145);
+  color: #10120f;
+}
+
+.flyBtnStop {
+  color: #10120f;
+  background: oklch(0.62 0.16 25);
+  border-color: oklch(0.62 0.16 25);
+}
+
+.flyBtnStop:hover {
+  background: oklch(0.66 0.16 25);
+  color: #10120f;
+}
+
+.flyDots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 4px;
+}
+
+.flyDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: rgba(232, 230, 224, 0.4);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+  padding: 0;
+}
+
+.flyDot:hover {
+  background: rgba(232, 230, 224, 0.55);
+  transform: scale(1.25);
+}
+
+.flyDotActive {
+  background: oklch(0.68 0.12 145);
+}
+
+/* Extrusion slider panel — appears when EXT tool is armed + a stroke is selected */
+.extPanel {
+  position: absolute;
+  bottom: 78px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--r-2xl);
+  background: var(--cf-glass-dark);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(232, 230, 224, 0.14);
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+}
+
+.extLabel {
+  font: 600 9px/1 "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  color: rgba(232, 230, 224, 0.55);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.extSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 140px;
+  height: 4px;
+  border-radius: var(--r-sm);
+  background: rgba(232, 230, 224, 0.14);
+  outline: none;
+  cursor: pointer;
+}
+
+.extSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--r-pill);
+  background: oklch(0.68 0.12 145);
+  cursor: pointer;
+  border: 2px solid rgba(20, 20, 20, 0.8);
+}
+
+.extSlider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--r-pill);
+  background: oklch(0.68 0.12 145);
+  cursor: pointer;
+  border: 2px solid rgba(20, 20, 20, 0.8);
+}
+
+.extValue {
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  color: oklch(0.68 0.12 145);
+  min-width: 48px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.extCommit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--r-lg);
+  font: 600 9px/1 "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  color: #10120f;
+  background: oklch(0.68 0.12 145);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.extCommit:hover {
+  background: oklch(0.72 0.12 145);
+}

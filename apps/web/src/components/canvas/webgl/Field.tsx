@@ -46,7 +46,7 @@ const baseInputStyle: CSSProperties = {
   borderRadius: "var(--gs-radius-chip)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
   background: "transparent",
-  color: "var(--gs-ink)",
+  color: "var(--la-ink)",
 };
 
 export interface FieldProps {
@@ -64,7 +64,7 @@ const fieldLabelStyle: CSSProperties = {
   fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.05em",
   textTransform: "uppercase",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   marginBottom: 2,
 };
 
@@ -72,7 +72,7 @@ const fieldHintStyle: CSSProperties = {
   display: "block",
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-xs)",
-  color: "var(--gs-ink-muted)",
+  color: "var(--la-ink-muted)",
   marginTop: 2,
 };
 

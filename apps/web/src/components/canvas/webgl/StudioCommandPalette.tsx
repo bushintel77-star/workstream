@@ -29,7 +29,7 @@ const chip: React.CSSProperties = {
   padding: "1px 7px",
   borderRadius: "var(--gs-radius-pill)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   whiteSpace: "nowrap",
 };
 
@@ -298,7 +298,7 @@ export function StudioCommandPalette({
         border: "1px solid color-mix(in srgb, var(--gs-line) 40%, transparent)",
         boxShadow: "0 12px 40px color-mix(in srgb, var(--gs-frame) 75%, transparent)",
         fontFamily: "var(--font-ui)",
-        color: "var(--gs-ink)",
+        color: "var(--la-ink)",
         overflow: "hidden",
       }}
       role="dialog"
@@ -333,7 +333,7 @@ export function StudioCommandPalette({
           padding: "10px 12px",
           fontFamily: "var(--font-ui)",
           fontSize: "var(--gs-font-sub)",
-          color: "var(--gs-ink)",
+          color: "var(--la-ink)",
           background: "transparent",
           border: "none",
           borderBottom: "1px solid color-mix(in srgb, var(--gs-line) 40%, transparent)",
@@ -342,7 +342,7 @@ export function StudioCommandPalette({
       <div role="listbox" aria-label="Commands" style={{ maxHeight: 300, overflowY: "auto" }}>
         {filtered.length === 0 ? (
           <p
-            style={{ padding: "10px 12px", fontSize: "var(--gs-font-md)", color: "var(--gs-ink-secondary)", margin: 0 }}
+            style={{ padding: "10px 12px", fontSize: "var(--gs-font-md)", color: "var(--la-ink-secondary)", margin: 0 }}
           >
             No commands match “{query}”.
           </p>
@@ -366,7 +366,7 @@ export function StudioCommandPalette({
                   i === activeIdx
                     ? "color-mix(in srgb, var(--la-accent) 14%, transparent)"
                     : "transparent",
-                color: i === activeIdx ? "var(--la-accent)" : "var(--gs-ink)",
+                color: i === activeIdx ? "var(--la-accent)" : "var(--la-ink)",
               }}
             >
               <span style={chip}>{a.group}</span>

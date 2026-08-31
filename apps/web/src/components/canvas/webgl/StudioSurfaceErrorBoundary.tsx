@@ -56,7 +56,7 @@ const fallbackCard: CSSProperties = {
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
   background: "var(--gs-panel-grad)",
   boxShadow: "var(--gs-shadow-2)",
-  color: "var(--gs-ink)",
+  color: "var(--la-ink)",
   fontFamily: "var(--font-ui)",
 };
 
@@ -81,7 +81,7 @@ function StudioSurfaceFallback({
             fontFamily: "var(--font-tech)",
             fontSize: "var(--gs-font-h3)",
             letterSpacing: "0.02em",
-            color: "var(--gs-ink)",
+            color: "var(--la-ink)",
           }}
         >
           {title}
@@ -89,7 +89,7 @@ function StudioSurfaceFallback({
         <p
           style={{
             margin: 0,
-            color: "var(--gs-ink-secondary)",
+            color: "var(--la-ink-secondary)",
             fontSize: "var(--gs-font-sm)",
             lineHeight: 1.5,
           }}

@@ -98,10 +98,36 @@ export function FusedCamera({
   const currentLookAtRef = useRef(new THREE.Vector3(0, 0, 0));
 
   useFrame((_, delta) => {
+    // Phase 5: If the fly-through is playing, skip the rig-driven camera —
+    // FlythroughRig (mounted after this component) takes over and directly
+    // sets camera.position + lookAt. We still write _liveCameraPosition below
+    // so bookmark capture works even during playback.
+    const { isPlayingFlythrough } = useStudioStore.getState();
+
     // Read the LIVE rig from the store each frame (transient — StudioControls
     // writes it during a pan/zoom drag with zero React re-renders). The rig
     // prop was removed: the store is the single source of truth for the camera.
     const rig = useStudioStore.getState().liveRig;
+
+    // Phase 5: When the fly-through is playing, skip the rig-driven camera
+    // computation entirely — FlythroughRig takes over. We still update
+    // _liveCameraPosition from the current camera (which FlythroughRig set)
+    // so bookmark capture reflects the actual view.
+    if (isPlayingFlythrough) {
+      const store = useStudioStore.getState();
+      store._liveCameraPosition.position[0] = camera.position.x;
+      store._liveCameraPosition.position[1] = camera.position.y;
+      store._liveCameraPosition.position[2] = camera.position.z;
+      // During playback, the look-at is whatever FlythroughRig set via
+      // camera.lookAt — we can't read it back directly, but the target spline
+      // point is what was passed. Approximate by projecting forward.
+      // This is only used for re-capture during playback (rare); the
+      // FlythroughRig's own target is the source of truth.
+      store._liveCameraPosition.target[0] = 0;
+      store._liveCameraPosition.target[1] = 0;
+      store._liveCameraPosition.target[2] = 0;
+      return;
+    }
 
     // Locked instances (split view's pinned half) spring toward their pin and
     // leave the store's viewBlend to the free instance. Otherwise the spring
@@ -121,9 +147,9 @@ export function FusedCamera({
     const blend = reducedMotion
       ? target
       : Math.min(
-          1,
-          Math.max(0, springStep(springRef.current, target, CAMERA_SPRING, delta)),
-        );
+        1,
+        Math.max(0, springStep(springRef.current, target, CAMERA_SPRING, delta)),
+      );
     if (reducedMotion) {
       springRef.current.position = target;
       springRef.current.velocity = 0;
@@ -146,17 +172,17 @@ export function FusedCamera({
     const elevationBlend = reducedMotion
       ? (elevationOn ? 1 : 0)
       : Math.min(
-          1,
-          Math.max(
-            0,
-            springStep(
-              elevationSpringRef.current,
-              elevationOn ? 1 : 0,
-              CAMERA_SPRING,
-              delta,
-            ),
+        1,
+        Math.max(
+          0,
+          springStep(
+            elevationSpringRef.current,
+            elevationOn ? 1 : 0,
+            CAMERA_SPRING,
+            delta,
           ),
-        );
+        ),
+      );
     if (reducedMotion) {
       elevationSpringRef.current.position = elevationOn ? 1 : 0;
       elevationSpringRef.current.velocity = 0;
@@ -274,6 +300,18 @@ export function FusedCamera({
     camera.lookAt(currentLookAtRef.current);
 
     camera.updateMatrixWorld(true);
+
+    // Phase 5: Write the live camera position + look-at to the store for
+    // bookmark capture. This is a transient (non-reactive) write — no set()
+    // call, so it never triggers a React re-render. The capture action reads
+    // it via getState()._liveCameraPosition.
+    const store = useStudioStore.getState();
+    store._liveCameraPosition.position[0] = camera.position.x;
+    store._liveCameraPosition.position[1] = camera.position.y;
+    store._liveCameraPosition.position[2] = camera.position.z;
+    store._liveCameraPosition.target[0] = currentLookAtRef.current.x;
+    store._liveCameraPosition.target[1] = currentLookAtRef.current.y;
+    store._liveCameraPosition.target[2] = currentLookAtRef.current.z;
   });
 
   return null;

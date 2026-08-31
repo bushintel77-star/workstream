@@ -27,7 +27,7 @@ const chip: React.CSSProperties = {
   padding: "2px 8px",
   borderRadius: "var(--gs-radius-pill)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   whiteSpace: "nowrap",
   background: "transparent",
   cursor: "pointer",
@@ -217,7 +217,7 @@ export function SitePhotoGallery({
             fontSize: "var(--gs-font-xs)",
             fontWeight: 600,
             letterSpacing: "0.06em",
-            color: "var(--gs-ink)",
+            color: "var(--la-ink)",
           }}
         >
           SITE PHOTOS
@@ -226,7 +226,7 @@ export function SitePhotoGallery({
           style={{
             fontFamily: "var(--font-tech)",
             fontSize: "var(--gs-font-xs)",
-            color: "var(--gs-ink-secondary)",
+            color: "var(--la-ink-secondary)",
           }}
         >
           {photos.length} uploaded
@@ -263,7 +263,7 @@ export function SitePhotoGallery({
         </p>
       ) : null}
       {photos.length === 0 ? (
-        <p style={{ margin: 0, color: "var(--gs-ink-secondary)", fontSize: "var(--gs-font-sm)" }}>
+        <p style={{ margin: 0, color: "var(--la-ink-secondary)", fontSize: "var(--gs-font-sm)" }}>
           No site photos yet. Upload the street frontage, rear fence or side
           boundary to trace an elevation from a photo.
         </p>
@@ -313,7 +313,7 @@ export function SitePhotoGallery({
                   <div
                     style={{
                       fontSize: "var(--gs-font-sm)",
-                      color: "var(--gs-ink)",
+                      color: "var(--la-ink)",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -327,8 +327,8 @@ export function SitePhotoGallery({
                       style={{
                         fontSize: "var(--gs-font-xs)",
                         color: elevation?.calibration
-                          ? "var(--gs-ink-secondary)"
-                          : "var(--gs-ink-muted)",
+                          ? "var(--la-ink-secondary)"
+                          : "var(--la-ink-muted)",
                       }}
                     >
                       {stamp}

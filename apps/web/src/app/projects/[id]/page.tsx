@@ -35,9 +35,9 @@ function resolveAreaM2(args: {
   const frame = args.canvas?.site_frame;
   const seedLot = survey
     ? isSeedSurveyLot({
-        lot_area_m2: survey.lot_area_m2,
-        measurements: survey.measurements,
-      })
+      lot_area_m2: survey.lot_area_m2,
+      measurements: survey.measurements,
+    })
     : false;
   const resolved = resolveOutdoorAreaM2({
     garden_area_m2: survey?.garden_area_m2,
@@ -149,6 +149,7 @@ export default async function ProjectCanvasPage({
         lng={project.lng ?? undefined}
         projectAddress={project.address}
         initialStrokes={canvas?.strokes ?? []}
+        initialCanvases={canvas?.canvases ?? []}
         placements={canvas?.placements ?? []}
         initialFeatures={canvas?.features ?? []}
         photoElevations={canvas?.photo_elevations ?? []}

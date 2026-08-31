@@ -74,7 +74,7 @@ export function PhotoTraceHud() {
         boxShadow: "var(--gs-shadow-2)",
         pointerEvents: "auto",
         zIndex: "var(--cf-z-chrome)",
-        color: "var(--gs-ink)",
+        color: "var(--la-ink)",
         fontFamily: "var(--font-ui)",
       }}
     >
@@ -89,14 +89,14 @@ export function PhotoTraceHud() {
         >
           PHOTO TRACE
         </span>
-        <span style={{ fontSize: "var(--gs-font-sm)", color: "var(--gs-ink-secondary)" }}>
+        <span style={{ fontSize: "var(--gs-font-sm)", color: "var(--la-ink-secondary)" }}>
           {elevation.name}
         </span>
         <span
           data-testid="photo-trace-stamp"
           style={{
             fontSize: "var(--gs-font-xs)",
-            color: elevation.calibration ? "var(--gs-ink-secondary)" : "var(--gs-ink-muted)",
+            color: elevation.calibration ? "var(--la-ink-secondary)" : "var(--la-ink-muted)",
           }}
         >
           {elevation.calibration
@@ -108,8 +108,8 @@ export function PhotoTraceHud() {
           style={{
             fontSize: "var(--gs-font-xs)",
             color: elevation.boundary_snap
-              ? "var(--gs-ink-secondary)"
-              : "var(--gs-ink-muted)",
+              ? "var(--la-ink-secondary)"
+              : "var(--la-ink-muted)",
           }}
         >
           {elevation.boundary_snap
@@ -120,7 +120,7 @@ export function PhotoTraceHud() {
 
       {session.mode === "trace" ? (
         <>
-          <p style={{ margin: 0, fontSize: "var(--gs-font-sm)", color: "var(--gs-ink-secondary)" }}>
+          <p style={{ margin: 0, fontSize: "var(--gs-font-sm)", color: "var(--la-ink-secondary)" }}>
             Draw on the photo — ink is stored in true metres on the plane.
             Swivel away and the pin releases; the trace stays on the sheet.
           </p>
@@ -145,7 +145,7 @@ export function PhotoTraceHud() {
         </>
       ) : (
         <>
-          <p style={{ margin: 0, fontSize: "var(--gs-font-sm)", color: "var(--gs-ink-secondary)" }}>
+          <p style={{ margin: 0, fontSize: "var(--gs-font-sm)", color: "var(--la-ink-secondary)" }}>
             Draw a line on the photo along a feature with a known length, then
             pick that length below. One known dimension calibrates the whole
             frame.
@@ -156,7 +156,7 @@ export function PhotoTraceHud() {
               style={{
                 fontFamily: "var(--font-tech)",
                 fontSize: "var(--gs-font-xs)",
-                color: "var(--gs-ink-secondary)",
+                color: "var(--la-ink-secondary)",
                 fontVariantNumeric: "tabular-nums",
               }}
             >
@@ -183,7 +183,7 @@ export function PhotoTraceHud() {
           </div>
           <div style={{ display: "flex", gap: "var(--gs-space-3)", alignItems: "center", flexWrap: "wrap" }}>
             <label
-              style={{ fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}
+              style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)" }}
               htmlFor="photo-calibrate-custom"
             >
               Custom (m)
@@ -213,7 +213,7 @@ export function PhotoTraceHud() {
                 borderRadius: "var(--gs-radius-chip)",
                 border: "1px solid var(--gs-line)",
                 background: "var(--gs-panel)",
-                color: "var(--gs-ink)",
+                color: "var(--la-ink)",
                 fontFamily: "var(--font-tech)",
               }}
             />
@@ -229,7 +229,7 @@ export function PhotoTraceHud() {
                 border: canApply
                   ? "1px solid var(--la-accent)"
                   : "1px solid var(--gs-line)",
-                color: canApply ? "var(--gs-panel)" : "var(--gs-ink-muted)",
+                color: canApply ? "var(--gs-panel)" : "var(--la-ink-muted)",
                 cursor: canApply ? "pointer" : "not-allowed",
               }}
             >

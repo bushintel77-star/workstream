@@ -37,7 +37,7 @@ import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import * as THREE from "three";
-import type { CanvasStroke } from "@workstream/contracts";
+import type { CanvasStroke, SketchCanvas } from "@workstream/contracts";
 import {
   collectSnapNodes,
   DEFAULT_STITCH_EPSILON_M,
@@ -48,6 +48,10 @@ import {
 import { PALETTE } from "../../../styles/colorTokens";
 import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { useStudioStore } from "./studioStore";
+import {
+  SketchCanvasGroup,
+  worldToCanvasPct,
+} from "./SketchCanvasGroup";
 import { cfZPair } from "../cfz";
 import { layerScaleAlpha, viewScaleRatioForZoom } from "./layerPolicy";
 import { pctToWorld, worldToPct, type PctPoint, type HeightmapPoint } from "./coordTransform";
@@ -72,6 +76,8 @@ import {
   strokeSegmentData,
 } from "./inkGeometry";
 import { NibInkMaterial, StippleMaterial } from "./inkMaterial";
+import { canvasWorldNormal, patchMaterialForAngleOpacity, seasonOpacityForCanvas } from "./AngleOpacityShader";
+import { winterFactor } from "./studioStore";
 
 /** Snap-close threshold in world metres. */
 const SNAP_CLOSE_M = 2.0;
@@ -110,6 +116,9 @@ export function FusedSketchLayer({
   const strokes = useStudioStore((s) => s.sketchStrokes);
   const addSketchStroke = useStudioStore((s) => s.addSketchStroke);
   const updateSketchStroke = useStudioStore((s) => s.updateSketchStroke);
+  // Spatial Sketching — the active canvas plane (null = ground plane).
+  const activeCanvasId = useStudioStore((s) => s.activeCanvasId);
+  const sketchCanvases = useStudioStore((s) => s.sketchCanvases);
   // The armed nib — committed strokes carry its telemetry mapping.
   const activeNib = useStudioStore((s) => s.activeNib);
   const setLiveTelemetry = useStudioStore((s) => s.setLiveTelemetry);
@@ -150,6 +159,9 @@ export function FusedSketchLayer({
   const pointsRef = useRef<THREE.Vector3[]>([]);
   // Per-point stylus telemetry — parallel to pointsRef (same index).
   const telemetryRef = useRef<StylusTelemetry[]>([]);
+  // The canvas plane the current stroke is being drawn on (null = ground).
+  // Set on pointer down, read on pointer up to stamp canvas_id on the stroke.
+  const activeStrokeCanvasIdRef = useRef<string | null>(null);
 
   // Vertex magnets — committed stroke endpoints in world metres.
   const snapVertices = useMemo(
@@ -205,6 +217,9 @@ export function FusedSketchLayer({
       const pt = e.point;
       if (!pt) return;
 
+      // Record which canvas this stroke is being drawn on (null = ground).
+      activeStrokeCanvasIdRef.current = activeCanvasId;
+
       // Check if the pointer landed inside a closed stroke → start extrude.
       // Convert committed strokes to world-space polygons for the point-in-poly test.
       const inside = strokes.find((s) => {
@@ -229,7 +244,7 @@ export function FusedSketchLayer({
       setLiveTelemetry(telemetryRef.current[0]!);
       setLivePoints(pointsRef.current);
     },
-    [sketchMode, strokes, scaleM, boardAspect, setHover, setLiveTelemetry],
+    [sketchMode, strokes, scaleM, boardAspect, setHover, setLiveTelemetry, activeCanvasId],
   );
 
   const onPointerMove = useCallback(
@@ -334,6 +349,8 @@ export function FusedSketchLayer({
       kind: "ink",
       nib: nib.kind,
       telemetry,
+      // Spatial Sketching — stamp the parent canvas plane id (null = ground).
+      canvas_id: activeStrokeCanvasIdRef.current,
     };
 
     addSketchStroke(stroke);
@@ -353,21 +370,112 @@ export function FusedSketchLayer({
     activeNib,
   ]);
 
+  // ---- Canvas-plane pointer handlers (Spatial Sketching) ----
+  // When a canvas plane is active, the SketchCanvasGroup's raycast mesh
+  // captures pointer events. The world point is localized to the canvas's
+  // board-% space, then converted back to world space for the live renderer.
+  const activeCanvas = useMemo(
+    () => sketchCanvases.find((c) => c.id === activeCanvasId) ?? null,
+    [sketchCanvases, activeCanvasId],
+  );
+
+  const onCanvasPointerDown = useCallback(
+    (canvasId: string, worldPoint: THREE.Vector3) => {
+      if (!sketchMode) return;
+      activeStrokeCanvasIdRef.current = canvasId;
+      isDrawingRef.current = true;
+      setSnapHint(null);
+      setHover(null);
+      // For canvas-plane strokes, the live point is the world point itself
+      // (the canvas transform is applied by the parent group on render).
+      pointsRef.current = [worldPoint];
+      telemetryRef.current = [NEUTRAL_TELEMETRY];
+      setLiveTelemetry(telemetryRef.current[0]!);
+      setLivePoints(pointsRef.current);
+    },
+    [sketchMode, setHover, setLiveTelemetry],
+  );
+
+  const onCanvasPointerMove = useCallback(
+    (canvasId: string, worldPoint: THREE.Vector3) => {
+      if (!sketchMode || !isDrawingRef.current) return;
+      const last = pointsRef.current[pointsRef.current.length - 1];
+      if (last && last.distanceTo(worldPoint) < 0.15) return;
+      pointsRef.current.push(worldPoint);
+      setLivePoints([...pointsRef.current]);
+    },
+    [sketchMode],
+  );
+
+  const onCanvasPointerUp = useCallback(
+    (canvasId: string) => {
+      if (!sketchMode || !isDrawingRef.current) return;
+      isDrawingRef.current = false;
+      setSnapHint(null);
+      setHover(null);
+
+      const worldPts = pointsRef.current;
+      if (worldPts.length < 2) {
+        setLivePoints([]);
+        return;
+      }
+
+      // Localize world points to the canvas's board-% space.
+      const canvas = sketchCanvases.find((c) => c.id === canvasId);
+      if (!canvas) {
+        setLivePoints([]);
+        return;
+      }
+      const pctPoints: PctPoint[] = worldPts.map((p) =>
+        worldToCanvasPct(p, canvas, scaleM, boardAspect),
+      );
+      const closed =
+        worldPts.length >= MIN_POLY_POINTS &&
+        worldPts[0]!.distanceTo(worldPts[worldPts.length - 1]!) < SNAP_CLOSE_M;
+      const finalPct = closed ? [...pctPoints, pctPoints[0]!] : pctPoints;
+
+      const nib = nibSpec(activeNib);
+      const stroke: CanvasStroke = {
+        id: crypto.randomUUID(),
+        points: finalPct.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+        color: nib.color,
+        width_px: nib.baseWidthPx,
+        kind: "ink",
+        nib: nib.kind,
+        canvas_id: canvasId,
+      };
+      addSketchStroke(stroke);
+      scheduleVectorize(stroke.id, finalPct, closed);
+      setLivePoints([]);
+    },
+    [sketchMode, sketchCanvases, scaleM, boardAspect, activeNib, addSketchStroke, setHover],
+  );
+
   // ---- Render ----
   if (!sketchMode || photoTraceSession) return null;
   return (
     <group>
-      {/* Invisible raycast plane — captures pointer events for sketching */}
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0, 0]}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-      >
-        <planeGeometry args={[planeSize, planeSize]} />
-        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-      </mesh>
+      {/* Spatial Sketching — when a canvas plane is active, its raycast mesh
+          captures pointer events. Otherwise the ground mesh handles sketching. */}
+      {activeCanvas ? (
+        <SketchCanvasGroup
+          scaleM={scaleM}
+          onCanvasPointerDown={onCanvasPointerDown}
+          onCanvasPointerMove={onCanvasPointerMove}
+          onCanvasPointerUp={onCanvasPointerUp}
+        />
+      ) : (
+        <mesh
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, 0, 0]}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+        >
+          <planeGeometry args={[planeSize, planeSize]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      )}
 
       {/* Committed strokes — rendered from the shared store, draped over terrain */}
       {strokes.map((s) => (
@@ -377,6 +485,7 @@ export function FusedSketchLayer({
           scaleM={scaleM}
           boardAspect={boardAspect}
           sampler={sampler}
+          sketchCanvases={sketchCanvases}
         />
       ))}
 
@@ -471,37 +580,142 @@ function drapedY(
   return FLAT_Y + blend * sampler(x, z);
 }
 
-/** Render a committed stroke — nib-dispatched (line ink vs stipple dots). */
+/** Render a committed stroke — nib-dispatched (line ink vs stipple dots).
+ *  Strokes with a canvas_id render inside their parent canvas group (the
+ *  group applies the canvas's position + rotation, so the stroke's board-%
+ *  coordinates map to the canvas's local world space). Ground strokes
+ *  (canvas_id absent) render flat on the ground as before. */
 function CommittedStrokeRenderer({
   stroke,
   scaleM,
   boardAspect,
   sampler,
+  sketchCanvases,
 }: {
   stroke: CanvasStroke;
   scaleM: number;
   boardAspect: number;
   sampler: ((x: number, z: number) => number) | null;
+  sketchCanvases: SketchCanvas[];
 }) {
   const nib = useMemo(() => nibSpecForStroke(stroke), [stroke]);
-  if (nib.kind === "stipple") {
-    return (
-      <StippleStrokeRenderer
-        stroke={stroke}
-        scaleM={scaleM}
-        boardAspect={boardAspect}
-        sampler={sampler}
-      />
-    );
-  }
-  return (
+  // Spatial Sketching — if the stroke belongs to a canvas plane, wrap it in
+  // the canvas's group so it inherits the plane's position + rotation.
+  const canvas = useMemo(
+    () =>
+      stroke.canvas_id
+        ? sketchCanvases.find((c) => c.id === stroke.canvas_id) ?? null
+        : null,
+    [stroke.canvas_id, sketchCanvases],
+  );
+
+  // Phase 3: Angle-Based Opacity — compute the canvas's world-space normal
+  // from its rotation quaternion. A plane facing up has local normal (0,1,0);
+  // applying the quaternion rotates it into world space. This normal is passed
+  // to the stroke material's uCanvasNormal uniform so the fragment shader can
+  // fade the stroke when viewed edge-on.
+  const canvasNormal = useMemo(
+    () => (canvas ? canvasWorldNormal(canvas.rotation) : null),
+    [canvas],
+  );
+
+  // Phase 4: Seasonal Canvas Filtering — read seasonProgress from the store
+  // and compute the winterFactor (0 = peak summer, 1 = deep winter). Then
+  // derive the canvas's seasonal opacity from its season_tag:
+  //   SUMMER → 1 - winterFactor (fades out in winter)
+  //   WINTER → winterFactor     (fades in in winter)
+  //   ALL    → 1.0              (always visible)
+  // The seasonOpacity is passed to the stroke material's uSeasonOpacity uniform
+  // and updated per-frame so the crossfade tracks the timeline slider live.
+  const seasonProgress = useStudioStore((s) => s.seasonProgress);
+  const seasonOpacity = useMemo(
+    () =>
+      canvas
+        ? seasonOpacityForCanvas(canvas.season_tag, winterFactor(seasonProgress))
+        : 1.0,
+    [canvas, seasonProgress],
+  );
+
+  // Phase 6: Sketch-to-CAD Extrusion — read the extrusion tool state.
+  const extrusionToolArmed = useStudioStore((s) => s.extrusionToolArmed);
+  const selectedExtrusionStrokeId = useStudioStore((s) => s.selectedExtrusionStrokeId);
+  const activeExtrusionDepth = useStudioStore((s) => s.activeExtrusionDepth);
+  const selectExtrusionStroke = useStudioStore((s) => s.selectExtrusionStroke);
+
+  // The extrusion mass to render:
+  // - Committed: stroke.extrude_height_m > 0 → render the persistent mass.
+  // - Live preview: extrusion tool armed + this stroke selected → render
+  //   with activeExtrusionDepth so the slider adjusts the depth in real-time.
+  const committedHeight = stroke.extrude_height_m ?? 0;
+  const isSelectedForExtrusion =
+    extrusionToolArmed && selectedExtrusionStrokeId === stroke.id;
+  const extrudeHeightM = isSelectedForExtrusion
+    ? activeExtrusionDepth
+    : committedHeight;
+
+  const inner = nib.kind === "stipple" ? (
+    <StippleStrokeRenderer
+      stroke={stroke}
+      scaleM={scaleM}
+      boardAspect={boardAspect}
+      sampler={canvas ? null : sampler}
+      canvasNormal={canvasNormal}
+      seasonOpacity={seasonOpacity}
+    />
+  ) : (
     <InkStrokeRenderer
       stroke={stroke}
       nib={nib}
       scaleM={scaleM}
       boardAspect={boardAspect}
-      sampler={sampler}
+      sampler={canvas ? null : sampler}
+      canvasNormal={canvasNormal}
+      seasonOpacity={seasonOpacity}
     />
+  );
+
+  // Phase 6: the extrusion mass mesh. Rendered alongside the stroke ink so
+  // both are visible — the ink is the provenance, the mass is the volume.
+  const extrudeMass = extrudeHeightM > 0.05 ? (
+    <ExtrudeMass
+      stroke={stroke}
+      heightM={extrudeHeightM}
+      scaleM={scaleM}
+      boardAspect={boardAspect}
+    />
+  ) : null;
+
+  if (!canvas) {
+    return (
+      <>
+        {inner}
+        {extrudeMass}
+      </>
+    );
+  }
+  // Render inside the canvas's group — the stroke's board-% → local world
+  // conversion (pctToWorld) produces ground-plane coordinates, and the group
+  // transforms them into the canvas's world space. Terrain draping is
+  // disabled (sampler=null) because canvas strokes sit on a plane, not ground.
+  return (
+    <group
+      position={canvas.position}
+      quaternion={canvas.rotation}
+      // Phase 6: clicking a stroke while the extrusion tool is armed selects
+      // it for extrusion. The group's pointer handler catches clicks on any
+      // child (stroke ink or mass).
+      onPointerDown={
+        extrusionToolArmed && !selectedExtrusionStrokeId
+          ? (e) => {
+            e.stopPropagation();
+            selectExtrusionStroke(stroke.id);
+          }
+          : undefined
+      }
+    >
+      {inner}
+      {extrudeMass}
+    </group>
   );
 }
 
@@ -509,6 +723,12 @@ interface InkRenderBase {
   scaleM: number;
   boardAspect: number;
   sampler: ((x: number, z: number) => number) | null;
+  /** Phase 3: the parent canvas's world-space normal. When non-null, the
+   *  stroke material is patched with angle-based opacity (fades edge-on). */
+  canvasNormal: THREE.Vector3 | null;
+  /** Phase 4: seasonal crossfade opacity (0-1). Multiplied into the final
+   *  alpha alongside the angle-opacity factor. 1.0 = always visible. */
+  seasonOpacity: number;
 }
 
 /**
@@ -523,6 +743,8 @@ function InkStrokeRenderer({
   scaleM,
   boardAspect,
   sampler,
+  canvasNormal,
+  seasonOpacity,
 }: { stroke: CanvasStroke; nib: NibSpec } & InkRenderBase) {
   // Base world points (XZ) — computed once. Y is updated per-frame below.
   const basePoints = useMemo(() => {
@@ -539,16 +761,27 @@ function InkStrokeRenderer({
     [stroke, nib, scaleM, boardAspect],
   );
   const material = useMemo(
-    () =>
-      new NibInkMaterial({
+    () => {
+      const m = new NibInkMaterial({
         color: nib.color,
         linewidth: stroke.width_px ?? nib.baseWidthPx,
         opacity: nib.opacity,
         grain: nib.grain,
         edgeSoft: nib.edgeSoft,
         bleed: nib.bleed,
-      }),
-    [nib, stroke.width_px],
+      });
+      // Phase 3+4: patch the material with angle-based opacity + seasonal
+      // crossfade for canvas strokes. This injects the view-direction varying
+      // + smoothstep alpha + uSeasonOpacity into the NibInkMaterial's shader
+      // via onBeforeCompile, preserving nib rendering.
+      if (canvasNormal) {
+        patchMaterialForAngleOpacity(m as unknown as THREE.Material & {
+          uniforms: Record<string, { value: unknown }>;
+        }, canvasNormal, seasonOpacity);
+      }
+      return m;
+    },
+    [nib, stroke.width_px, canvasNormal, seasonOpacity],
   );
   const line2 = useMemo(() => new Line2(geometry, material), [geometry, material]);
   // The Line2 ref — we mutate its geometry positions in place each frame.
@@ -570,6 +803,8 @@ function InkStrokeRenderer({
   // apply the sketchInk scale-band visibility cross-fade (macro zoom
   // dissolves detail ink instead of popping it), and lerp each vertex Y from
   // flat (plan) to terrain-draped (3D) in lockstep with the viewBlend.
+  // Phase 4: also update uSeasonOpacity per-frame so the seasonal crossfade
+  // tracks the timeline slider live without recreating the material.
   useFrame(({ size }) => {
     material.resolution.set(size.width, size.height);
     const alpha = layerScaleAlpha(
@@ -577,6 +812,10 @@ function InkStrokeRenderer({
       viewScaleRatioForZoom(useStudioStore.getState().liveRig.zoom),
     );
     material.opacity = nib.opacity * alpha;
+    // Phase 4: live-update the seasonal opacity uniform.
+    if (canvasNormal && material.uniforms.uSeasonOpacity) {
+      material.uniforms.uSeasonOpacity.value = seasonOpacity;
+    }
     if (!lineRef.current || basePoints.length === 0) return;
     const { viewBlend } = useStudioStore.getState();
     if (!sampler || viewBlend < 0.001) return;
@@ -606,6 +845,8 @@ function StippleStrokeRenderer({
   scaleM,
   boardAspect,
   sampler,
+  canvasNormal,
+  seasonOpacity,
 }: { stroke: CanvasStroke } & InkRenderBase) {
   const nib = useMemo(() => nibSpecForStroke(stroke), [stroke]);
   const points = useMemo(
@@ -614,8 +855,15 @@ function StippleStrokeRenderer({
   );
   const geometry = useMemo(() => buildStippleGeometry(points), [points]);
   const material = useMemo(
-    () => new StippleMaterial({ color: nib.color, opacity: nib.opacity }),
-    [nib.color, nib.opacity],
+    () => {
+      const m = new StippleMaterial({ color: nib.color, opacity: nib.opacity });
+      // Phase 3+4: patch with angle-based opacity + seasonal crossfade.
+      if (canvasNormal) {
+        patchMaterialForAngleOpacity(m, canvasNormal, seasonOpacity);
+      }
+      return m;
+    },
+    [nib.color, nib.opacity, canvasNormal, seasonOpacity],
   );
   const cloud = useMemo(() => new THREE.Points(geometry, material), [geometry, material]);
 
@@ -635,6 +883,10 @@ function StippleStrokeRenderer({
       viewScaleRatioForZoom(useStudioStore.getState().liveRig.zoom),
     );
     material.uniforms.uOpacity.value = nib.opacity * alpha;
+    // Phase 4: live-update the seasonal opacity uniform.
+    if (canvasNormal && material.uniforms.uSeasonOpacity) {
+      material.uniforms.uSeasonOpacity.value = seasonOpacity;
+    }
     if (!sampler || points.length === 0) return;
     const { viewBlend } = useStudioStore.getState();
     if (viewBlend < 0.001) return;

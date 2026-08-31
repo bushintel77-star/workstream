@@ -28,6 +28,10 @@ export function AiPromptBar({
   const aiSession = useStudioStore((s) => s.aiSession);
   const acceptAiGhosts = useStudioStore((s) => s.acceptAiGhosts);
   const clearAiSession = useStudioStore((s) => s.clearAiSession);
+  // Photo-trace law: the trace HUD is the ONLY chrome while a photo is
+  // pinned — this bar stood on the Calibrate button's click path
+  // (webgl-photo-trace-elevation spec).
+  const photoTraceActive = useStudioStore((s) => s.photoTraceSession != null);
   const [value, setValue] = useState("");
 
   const status = aiSession.status;
@@ -50,6 +54,8 @@ export function AiPromptBar({
       setValue("");
     }
   };
+
+  if (photoTraceActive) return null;
 
   return (
     <>

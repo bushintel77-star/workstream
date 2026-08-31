@@ -32,6 +32,8 @@ export async function saveDesignCanvasClient(
     construction_trenches?: DesignCanvas["construction_trenches"];
     presentation_pack?: DesignCanvas["presentation_pack"];
     lifecycle_phase?: DesignCanvas["lifecycle_phase"];
+    /** Spatial Sketching planes — see DesignCanvas.canvases. */
+    canvases?: DesignCanvas["canvases"];
     artboard_ids?: DesignCanvas["artboard_ids"];
     branch_id?: string;
   },

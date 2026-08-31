@@ -14,6 +14,7 @@ function makeCanvas(overrides: Partial<DesignCanvas> = {}): DesignCanvas {
     image_layers: [],
     photo_elevations: [],
     features: [],
+    canvases: [],
     updated_at: "2026-01-15T10:00:00.000Z",
     ...overrides,
   };

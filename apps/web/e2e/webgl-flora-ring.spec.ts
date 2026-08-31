@@ -61,10 +61,13 @@ test.describe("WebGL flora ring (ranked suggestions)", () => {
       /h · (Full sun|Partial shade|Shade)/,
     );
 
-    // Accept the active candidate — one item placed, ring closes.
+    // Accept the active candidate — one item placed, ring closes. The
+    // placement witness is the strip stats cell (the identity pill became
+    // the first glass card after the UnifiedPanel chrome reshuffle).
     await page.locator('[data-testid="flora-accept"]').click();
-    const stats = page.locator("[data-gs-glass-card]").first();
-    await expect(stats).toContainText("I1", { timeout: 10_000 });
+    await expect(page.getByTestId("strip-stats")).toContainText("I1", {
+      timeout: 10_000,
+    });
     await expect(ring).toHaveCount(0);
 
     // No fatal console errors.

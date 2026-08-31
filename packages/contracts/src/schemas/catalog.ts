@@ -216,8 +216,56 @@ export const CanvasStrokeSchema = z.object({
    * ink strokes. Optional / no migration.
    */
   extrude_height_m: z.number().positive().optional(),
+  /**
+   * Parent sketch canvas plane id — the Spatial Sketching primitive. Absent
+   * (or null) = the implicit ground plane (the legacy default). When set, the
+   * stroke lives on the named oriented plane and inherits its position +
+   * rotation transform in the WebGL studio. See SketchCanvasSchema.
+   */
+  canvas_id: z.string().uuid().nullable().optional(),
 });
 export type CanvasStroke = z.infer<typeof CanvasStrokeSchema>;
+
+/**
+ * Spatial Sketching — an oriented 2D plane situated in 3D world space.
+ *
+ * Strokes whose `canvas_id` references this plane render inside the plane's
+ * local coordinate system (board-% → world via the plane's position + rotation
+ * quaternion). The implicit ground plane (canvas_id absent) is the legacy
+ * default and needs no SketchCanvas row.
+ *
+ * Position is world metres [x, y, z]; rotation is a unit quaternion
+ * [x, y, z, w]. `season_range` is optional metadata for future seasonal
+ * canvas filtering (see studioStore winterFactor / growthYear).
+ */
+export const SketchCanvasSchema = z.object({
+  id: z.string().uuid(),
+  /** Friendly operator-facing label (e.g., "Ground", "Raised deck"). */
+  label: z.string().max(80).optional(),
+  /** World-space origin of the plane, metres [x, y, z]. */
+  position: z.tuple([z.number(), z.number(), z.number()]),
+  /** Rotation quaternion [x, y, z, w] — orients the plane's normal. */
+  rotation: z.tuple([z.number(), z.number(), z.number(), z.number()]),
+  /**
+   * Seasonal visibility filter — future use. When set, the plane (and its
+   * strokes) only render when the studio's active season falls inside the
+   * range. Absent = always visible.
+   */
+  season_range: z
+    .object({
+      start: z.enum(["winter", "spring", "summer", "autumn"]),
+      end: z.enum(["winter", "spring", "summer", "autumn"]),
+    })
+    .optional(),
+  /**
+   * Simplified seasonal tag for Phase 4 crossfade filtering.
+   * 'SUMMER' — visible when winterFactor is 0, fades to invisible at winter.
+   * 'WINTER' — visible when winterFactor is 1, fades to invisible at summer.
+   * 'ALL' (default) — always visible regardless of season.
+   */
+  season_tag: z.enum(["SUMMER", "WINTER", "ALL"]).default("ALL"),
+});
+export type SketchCanvas = z.infer<typeof SketchCanvasSchema>;
 
 /**
  * Percent point on the design studio aerial canvas — deliberately UNBOUNDED.
@@ -1045,6 +1093,12 @@ export const DesignCanvasSchema = z.object({
   /** Operator-set ASLA/SILA lifecycle phase for the board. */
   lifecycle_phase: DesignLifecyclePhaseSchema.optional(),
   /**
+   * Spatial Sketching — oriented 2D planes in 3D world space. Strokes with a
+   * `canvas_id` render on their parent plane. The implicit ground plane
+   * (canvas_id absent) needs no row here. Absent on legacy canvases = [].
+   */
+  canvases: z.array(SketchCanvasSchema).default([]),
+  /**
    * Persisted artboard set beyond session (plan / fit / elev-*).
    * Async VCS: lives on the branch tip with the rest of DesignCanvas.
    */
@@ -1068,6 +1122,8 @@ export const UpsertDesignCanvasSchema = z.object({
   site_frame: DesignSiteFrameSchema.optional(),
   presentation_pack: PresentationPackSchema.optional(),
   lifecycle_phase: DesignLifecyclePhaseSchema.optional(),
+  /** Spatial Sketching planes — see DesignCanvasSchema.canvases. */
+  canvases: z.array(SketchCanvasSchema).optional(),
   artboard_ids: z
     .array(z.enum(["plan", "fit", "elev-N", "elev-E", "elev-S", "elev-W"]))
     .max(8)

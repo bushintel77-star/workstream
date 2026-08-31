@@ -98,30 +98,30 @@ function categoryStyles(
     // Measured levels read as strong ink; proposed vs existing is carried by
     // ink weight at render time, not by hue.
     elevation_rl: {
-      stroke: "var(--gs-ink-secondary)",
+      stroke: "var(--la-ink-secondary)",
       strokeWidth: hierarchy.annotationPx,
-      text: "var(--gs-ink)",
+      text: "var(--la-ink)",
     },
     plant_tag: {
-      stroke: "var(--gs-ink)",
+      stroke: "var(--la-ink)",
       strokeWidth: hierarchy.annotationPx,
-      text: "var(--gs-ink)",
+      text: "var(--la-ink)",
       fill: "color-mix(in srgb, var(--la-surface) 84%, transparent)",
     },
     material_hatch: {
-      stroke: `color-mix(in srgb, var(--gs-ink) ${HATCH_INK_MIX_PCT[dialect]}%, transparent)`,
+      stroke: `color-mix(in srgb, var(--la-ink) ${HATCH_INK_MIX_PCT[dialect]}%, transparent)`,
       strokeWidth: hierarchy.guidePx,
-      text: "var(--gs-ink-secondary)",
+      text: "var(--la-ink-secondary)",
     },
     detail_callout: {
-      stroke: "var(--gs-ink)",
+      stroke: "var(--la-ink)",
       strokeWidth: hierarchy.annotationPx,
-      text: "var(--gs-ink)",
+      text: "var(--la-ink)",
     },
     scope_outline: {
-      stroke: "var(--gs-ink-secondary)",
+      stroke: "var(--la-ink-secondary)",
       strokeWidth: hierarchy.annotationPx,
-      text: "var(--gs-ink-secondary)",
+      text: "var(--la-ink-secondary)",
       dash: SCOPE_DASH[dialect],
     },
   };

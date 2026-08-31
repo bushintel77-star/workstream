@@ -32,6 +32,7 @@ import type {
   IrrigationZone,
   LandscapeFeature,
   PhotoElevation,
+  SketchCanvas,
 } from "@workstream/contracts";
 import {
   saveDesignCanvasClient,
@@ -56,6 +57,8 @@ export interface StudioAutosaveDoc {
   photoElevations?: PhotoElevation[];
   /** Converted CAD features (direct-converts + placement-outline mirrors). */
   features?: LandscapeFeature[];
+  /** Spatial Sketching planes (oriented 2D planes in 3D space). */
+  canvases?: SketchCanvas[];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -78,36 +81,32 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
   const strokeParts = doc.strokes.map(
     (s) =>
       `${s.id}:${s.width_px}:${s.color}:${s.extrude_height_m ?? 0}:${
-        // points is required by the schema, but legacy/handoff-authored strokes
-        // may predate the field — guard defensively rather than at the contract
-        // (changing the contract would risk the handoff stroke path).
-        (s.points ?? [])
-          .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
-          .join("|")
+      // points is required by the schema, but legacy/handoff-authored strokes
+      // may predate the field — guard defensively rather than at the contract
+      // (changing the contract would risk the handoff stroke path).
+      (s.points ?? [])
+        .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
+        .join("|")
       }`,
   );
   const placementParts = doc.placements.map(
     (p) =>
-      `${p.id}:${p.symbol_id}:${p.x_pct.toFixed(1)}:${p.y_pct.toFixed(1)}:${
-        p.scale.toFixed(2)
-      }:${p.rotation_deg}:${p.label ?? ""}:${(p.height_m ?? 0).toFixed(2)}:${
-        (p.canopy_radius_m ?? 0).toFixed(2)
+      `${p.id}:${p.symbol_id}:${p.x_pct.toFixed(1)}:${p.y_pct.toFixed(1)}:${p.scale.toFixed(2)
+      }:${p.rotation_deg}:${p.label ?? ""}:${(p.height_m ?? 0).toFixed(2)}:${(p.canopy_radius_m ?? 0).toFixed(2)
       }:${p.source ?? ""}`,
   );
   const trenchParts = (doc.constructionTrenches ?? []).map(
     (t) =>
-      `${t.id}:${t.kind}:${t.depth_mm}:${
-        t.points
-          .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
-          .join("|")
+      `${t.id}:${t.kind}:${t.depth_mm}:${t.points
+        .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
+        .join("|")
       }`,
   );
   const zoneParts = (doc.irrigationZones ?? []).map(
     (z) =>
-      `${z.id}:${z.kind}:${z.emitter_spacing_cm}:${z.emitter_flow_lph}:${
-        z.points
-          .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
-          .join("|")
+      `${z.id}:${z.kind}:${z.emitter_spacing_cm}:${z.emitter_flow_lph}:${z.points
+        .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
+        .join("|")
       }`,
   );
   const photoElevationParts = (doc.photoElevations ?? []).map((e) => {
@@ -117,9 +116,8 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
         st.points.map((p) => `${p.x_m.toFixed(2)},${p.y_m.toFixed(2)}`).join("|"),
       )
       .join("~");
-    return `${e.id}:${e.photo_id}:${e.azimuth_deg.toFixed(1)}:${
-      cal ? `${cal.plane_width_m.toFixed(2)}:${cal.reference_m.toFixed(2)}:${cal.label}` : "uncal"
-    }:${e.centre_x_m.toFixed(2)}:${e.centre_z_m.toFixed(2)}:${e.ground_offset_m.toFixed(2)}:${strokes}`;
+    return `${e.id}:${e.photo_id}:${e.azimuth_deg.toFixed(1)}:${cal ? `${cal.plane_width_m.toFixed(2)}:${cal.reference_m.toFixed(2)}:${cal.label}` : "uncal"
+      }:${e.centre_x_m.toFixed(2)}:${e.centre_z_m.toFixed(2)}:${e.ground_offset_m.toFixed(2)}:${strokes}`;
   });
   const featureParts = (doc.features ?? []).map((f) => {
     const pts = f.geometry.points
@@ -134,12 +132,15 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
     const labor = f.labor_profile
       ? f.labor_profile.base_difficulty_tier
       : "nolabor";
-    return `${f.id}:${f.geometry.type}:${f.metadata.layer}:${
-      f.metadata.friendly_name ?? ""
-    }:${f.metadata.user_modification_state}:${f.geometry.points.length}:${pts}:${mf}:${scatter}:${labor}:${(
-      f.extrude_height_m ?? 0
-    ).toFixed(2)}`;
+    return `${f.id}:${f.geometry.type}:${f.metadata.layer}:${f.metadata.friendly_name ?? ""
+      }:${f.metadata.user_modification_state}:${f.geometry.points.length}:${pts}:${mf}:${scatter}:${labor}:${(
+        f.extrude_height_m ?? 0
+      ).toFixed(2)}`;
   });
+  const canvasParts = (doc.canvases ?? []).map(
+    (c) =>
+      `${c.id}:${c.label ?? ""}:${c.position.join(",")}:${c.rotation.join(",")}`,
+  );
   return [
     `s${doc.strokes.length}:${strokeParts.join("~")}`,
     `p${doc.placements.length}:${placementParts.join("~")}`,
@@ -147,6 +148,7 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
     `z${(doc.irrigationZones ?? []).length}:${zoneParts.join("~")}`,
     `pe${(doc.photoElevations ?? []).length}:${photoElevationParts.join("~")}`,
     `f${(doc.features ?? []).length}:${featureParts.join("~")}`,
+    `c${(doc.canvases ?? []).length}:${canvasParts.join("~")}`,
   ].join("§");
 }
 
@@ -221,14 +223,15 @@ export function useStudioAutosave(
     const queuedSave = saveQueueRef.current
       .catch(() => undefined)
       .then(async () => {
-      await saveDesignCanvasClient(pid, {
-        placements: current.placements,
-        strokes: current.strokes,
-        construction_trenches: current.constructionTrenches,
-        irrigation_zones: current.irrigationZones,
-        photo_elevations: current.photoElevations,
-        features: current.features,
-      });
+        await saveDesignCanvasClient(pid, {
+          placements: current.placements,
+          strokes: current.strokes,
+          construction_trenches: current.constructionTrenches,
+          irrigation_zones: current.irrigationZones,
+          photo_elevations: current.photoElevations,
+          features: current.features,
+          canvases: current.canvases,
+        });
       });
     saveQueueRef.current = queuedSave.catch(() => undefined);
 

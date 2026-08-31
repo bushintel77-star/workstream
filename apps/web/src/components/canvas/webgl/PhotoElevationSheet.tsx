@@ -40,7 +40,7 @@ export function PhotoElevationSheet({
       <GlassCard
         style={{ position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)", width: "min(420px, 92vw)", padding: "12px 14px" }}
       >
-        <p style={{ margin: 0, fontSize: "var(--gs-font-lg)", color: "var(--gs-ink-secondary)" }}>
+        <p style={{ margin: 0, fontSize: "var(--gs-font-lg)", color: "var(--la-ink-secondary)" }}>
           This photo elevation is no longer on the board.
         </p>
         <button type="button" onClick={onClose} style={{ marginTop: 8 }}>
@@ -63,7 +63,7 @@ export function PhotoElevationSheet({
     <GlassCard
       style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(880px, 94vw)", maxHeight: "92vh", overflow: "auto", padding: "12px 14px" }}
     >
-      <div data-testid="photo-elevation-sheet" style={{ color: "var(--gs-ink)", fontFamily: "var(--font-ui)" }}>
+      <div data-testid="photo-elevation-sheet" style={{ color: "var(--la-ink)", fontFamily: "var(--font-ui)" }}>
         <div
           style={{
             display: "flex",
@@ -77,14 +77,14 @@ export function PhotoElevationSheet({
             PHOTO ELEVATION
           </span>
           <span style={{ fontSize: "var(--gs-font-lg)" }}>{elevation.name}</span>
-          <span style={{ fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)", fontVariantNumeric: "tabular-nums" }}>
+          <span style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)", fontVariantNumeric: "tabular-nums" }}>
             {widthM.toFixed(1)} m × {heightM.toFixed(1)} m · look {Math.round(elevation.azimuth_deg)}°
           </span>
           <span
             data-testid="photo-sheet-stamp"
             style={{
               fontSize: "var(--gs-font-xs)",
-              color: elevation.calibration ? "var(--gs-ink-secondary)" : "var(--gs-ink-muted)",
+              color: elevation.calibration ? "var(--la-ink-secondary)" : "var(--la-ink-muted)",
             }}
           >
             {elevation.calibration
@@ -96,8 +96,8 @@ export function PhotoElevationSheet({
             style={{
               fontSize: "var(--gs-font-xs)",
               color: elevation.boundary_snap
-                ? "var(--gs-ink-secondary)"
-                : "var(--gs-ink-muted)",
+                ? "var(--la-ink-secondary)"
+                : "var(--la-ink-muted)",
             }}
           >
             {elevation.boundary_snap
@@ -115,7 +115,7 @@ export function PhotoElevationSheet({
               borderRadius: "var(--gs-radius-pill)",
               border: "1px solid var(--gs-line)",
               background: "transparent",
-              color: "var(--gs-ink-secondary)",
+              color: "var(--la-ink-secondary)",
               cursor: "pointer",
             }}
           >
@@ -146,7 +146,7 @@ export function PhotoElevationSheet({
                 y1={vbH - PAD_PX}
                 x2={PAD_PX + m * PX_PER_M}
                 y2={vbH - PAD_PX + (m % 5 === 0 ? 8 : 4)}
-                stroke="var(--gs-ink-muted)"
+                stroke="var(--la-ink-muted)"
                 strokeWidth={m % 5 === 0 ? 1.2 : 0.6}
               />
               {m % 5 === 0 && (
@@ -154,7 +154,7 @@ export function PhotoElevationSheet({
                   x={PAD_PX + m * PX_PER_M}
                   y={vbH - PAD_PX + 18}
                   fontSize={9}
-                  fill="var(--gs-ink-secondary)"
+                  fill="var(--la-ink-secondary)"
                   textAnchor="middle"
                   fontFamily="Space Grotesk, monospace"
                 >
@@ -196,7 +196,7 @@ export function PhotoElevationSheet({
           })}
         </svg>
 
-        <p style={{ margin: "6px 0 0", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-muted)" }}>
+        <p style={{ margin: "6px 0 0", fontSize: "var(--gs-font-xs)", color: "var(--la-ink-muted)" }}>
           Photo elevation sheet — {elevation.strokes.length} trace strokes.
           {elevation.calibration
             ? " Traced in true metres against the calibrated plane."

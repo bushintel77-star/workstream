@@ -26,6 +26,7 @@ function normalizeCanvas(canvas: DesignCanvas): DesignCanvas {
     image_layers: canvas.image_layers ?? [],
     photo_elevations: canvas.photo_elevations ?? [],
     features: canvas.features ?? [],
+    canvases: canvas.canvases ?? [],
   };
 }
 
@@ -70,6 +71,8 @@ function applyUpsert(
       input.lifecycle_phase !== undefined
         ? input.lifecycle_phase
         : existing.lifecycle_phase,
+    canvases:
+      input.canvases !== undefined ? input.canvases : (existing.canvases ?? []),
     artboard_ids:
       input.artboard_ids !== undefined
         ? input.artboard_ids
@@ -113,18 +116,19 @@ export function ensureMainBranch(
   const canvas: DesignCanvas = legacy
     ? normalizeCanvas(legacy)
     : {
-        id: crypto.randomUUID(),
-        project_id: projectId,
-        placements: [],
-        strokes: [],
-        irrigation_zones: [],
-        construction_trenches: [],
-        annotations: [],
-        image_layers: [],
-        photo_elevations: [],
-        features: [],
-        updated_at: now,
-      };
+      id: crypto.randomUUID(),
+      project_id: projectId,
+      placements: [],
+      strokes: [],
+      irrigation_zones: [],
+      construction_trenches: [],
+      annotations: [],
+      image_layers: [],
+      photo_elevations: [],
+      features: [],
+      canvases: [],
+      updated_at: now,
+    };
 
   const branchId = crypto.randomUUID();
   const revisionId = crypto.randomUUID();
@@ -220,18 +224,19 @@ export function commitRevision(
   const baseCanvas = parent
     ? normalizeCanvas(parent.canvas)
     : {
-        id: crypto.randomUUID(),
-        project_id: branch.project_id,
-        placements: [],
-        strokes: [],
-        irrigation_zones: [],
-        construction_trenches: [],
-        annotations: [],
-        image_layers: [],
-        photo_elevations: [],
-        features: [],
-        updated_at: now,
-      };
+      id: crypto.randomUUID(),
+      project_id: branch.project_id,
+      placements: [],
+      strokes: [],
+      irrigation_zones: [],
+      construction_trenches: [],
+      annotations: [],
+      image_layers: [],
+      photo_elevations: [],
+      features: [],
+      canvases: [],
+      updated_at: now,
+    };
   const canvas = applyUpsert(baseCanvas, input, now);
   canvas.project_id = branch.project_id;
   const revision: DesignRevision = {

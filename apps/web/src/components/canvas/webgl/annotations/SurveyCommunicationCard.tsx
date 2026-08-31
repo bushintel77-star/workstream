@@ -76,7 +76,7 @@ export function SurveyCommunicationCard({
             fontFamily: "var(--font-tech)",
             fontSize: "var(--gs-font-sm)",
             letterSpacing: "0.05em",
-            color: "var(--gs-ink)",
+            color: "var(--la-ink)",
           }}
         >
           {labels.title}
@@ -166,7 +166,7 @@ export function SurveyCommunicationCard({
       >
         {groups.map((group) => (
           <div key={group.group} style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-2)" }}>
-            <strong style={{ fontFamily: "var(--font-tech)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
+            <strong style={{ fontFamily: "var(--font-tech)", fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)" }}>
               {GROUP_LABEL[group.group]}
             </strong>
             {group.entries.map((entry) => {
@@ -186,10 +186,10 @@ export function SurveyCommunicationCard({
                       borderTop: `${style.strokeWidth}px ${style.dash != null ? "dashed" : "solid"} ${style.stroke}`,
                     }}
                   />
-                  <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink)" }}>
+                  <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--la-ink)" }}>
                     {entry.label}
                   </span>
-                  <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
+                  <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)" }}>
                     {entry.value}
                   </span>
                 </div>
@@ -199,15 +199,15 @@ export function SurveyCommunicationCard({
         ))}
         {tradeLegend.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-2)" }}>
-            <strong style={{ fontFamily: "var(--font-tech)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
+            <strong style={{ fontFamily: "var(--font-tech)", fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)" }}>
               Trades
             </strong>
             {tradeLegend.map((entry) => (
               <div key={entry.id} style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "var(--gs-space-2)" }}>
-                <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink)" }}>
+                <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--la-ink)" }}>
                   {entry.label}
                 </span>
-                <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
+                <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)" }}>
                   {entry.value}
                 </span>
               </div>

@@ -54,7 +54,7 @@ function violations(
  * being enforced and the hierarchy can silently invert again.
  */
 const INVERTED_ARCHITECTURAL: Record<SurveyedAnnotationCategory, CategoryStyle> = {
-  property_line: { stroke: "var(--gs-ink)", strokeWidth: 2.1, text: "var(--gs-ink)" },
+  property_line: { stroke: "var(--la-ink)", strokeWidth: 2.1, text: "var(--la-ink)" },
   elevation_rl: {
     stroke: "var(--gs-primary)",
     strokeWidth: 1.35,
@@ -67,14 +67,14 @@ const INVERTED_ARCHITECTURAL: Record<SurveyedAnnotationCategory, CategoryStyle> 
     fill: "color-mix(in srgb, var(--gs-primary) 8%, var(--gs-canvas))",
   },
   material_hatch: {
-    stroke: "color-mix(in srgb, var(--gs-ink) 46%, transparent)",
+    stroke: "color-mix(in srgb, var(--la-ink) 46%, transparent)",
     strokeWidth: 0.9,
-    text: "var(--gs-ink-secondary)",
+    text: "var(--la-ink-secondary)",
   },
   detail_callout: {
     stroke: "var(--gs-primary-ink)",
     strokeWidth: 1.35,
-    text: "var(--gs-ink)",
+    text: "var(--la-ink)",
   },
   scope_outline: {
     stroke: "var(--gs-primary-ink)",

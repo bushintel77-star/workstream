@@ -421,7 +421,7 @@ export function AnnotationLayer({
                 fontSize: "11px",
                 // Proposed vs existing is carried by ink weight, not hue — the
                 // blues are reserved for surveyed truth (see annotations/style).
-                color: mark.source === "proposed" ? "var(--gs-ink)" : "var(--gs-ink-secondary)",
+                color: mark.source === "proposed" ? "var(--la-ink)" : "var(--la-ink-secondary)",
                 borderTop: `1px solid ${style.categories.elevation_rl.stroke}`,
                 borderBottom: `1px solid ${style.categories.elevation_rl.stroke}`,
                 background: "color-mix(in srgb, var(--gs-canvas) 78%, transparent)",
@@ -539,7 +539,7 @@ export function AnnotationLayer({
           }
           style={{
             position: "absolute",
-            color: "var(--gs-ink-secondary)",
+            color: "var(--la-ink-secondary)",
             fontFamily: "var(--font-tech)",
             fontSize: "12px",
             border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",

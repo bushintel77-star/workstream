@@ -39,7 +39,7 @@ const labelStyle: React.CSSProperties = {
   fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
   textTransform: "uppercase",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
 };
 
 const rowStyle: React.CSSProperties = {
@@ -55,7 +55,7 @@ const valueStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
   fontSize: "var(--gs-font-lg)",
   fontWeight: 500,
-  color: "var(--gs-ink)",
+  color: "var(--la-ink)",
 };
 
 function fmtM3(v: number): string {
@@ -105,7 +105,7 @@ export function EarthworksCard({
     <div style={{ width: 252 }}>
       <div
         data-testid="earthworks-card"
-        style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)" }}
+        style={{ fontFamily: "var(--font-ui)", color: "var(--la-ink)" }}
       >
         <div
           style={{
@@ -120,7 +120,7 @@ export function EarthworksCard({
             style={{
               fontFamily: "var(--font-tech)",
               fontSize: "var(--gs-font-xs)",
-              color: "var(--gs-ink-secondary)",
+              color: "var(--la-ink-secondary)",
             }}
           >
             ×{VERTICAL_SCALE.toFixed(0)} vert
@@ -129,7 +129,7 @@ export function EarthworksCard({
 
         {summary.perPad.map((p, i) => (
           <div key={p.id} style={rowStyle}>
-            <span style={{ fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
+            <span style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)" }}>
               Pad {i + 1} · {p.result.areaM2.toFixed(0)} m² · top +
               {p.topRealM.toFixed(2)}m
             </span>
@@ -176,7 +176,7 @@ export function EarthworksCard({
           style={{
             fontFamily: "var(--font-tech)",
             fontSize: "var(--gs-font-xs)",
-            color: "var(--gs-ink-secondary)",
+            color: "var(--la-ink-secondary)",
             marginTop: 4,
           }}
         >

@@ -41,7 +41,7 @@ const labelStyle: React.CSSProperties = {
   fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
   textTransform: "uppercase",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
 };
 
 const rowStyle: React.CSSProperties = {
@@ -57,7 +57,7 @@ const valueStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
   fontSize: "var(--gs-font-lg)",
   fontWeight: 500,
-  color: "var(--gs-ink)",
+  color: "var(--la-ink)",
 };
 
 export function DrainageFlowCard({
@@ -103,7 +103,7 @@ export function DrainageFlowCard({
     <div style={{ width: 252 }}>
       <div
         data-testid="drainage-flow-card"
-        style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)" }}
+        style={{ fontFamily: "var(--font-ui)", color: "var(--la-ink)" }}
       >
         <div
           style={{
@@ -118,7 +118,7 @@ export function DrainageFlowCard({
             style={{
               fontFamily: "var(--font-tech)",
               fontSize: "var(--gs-font-xs)",
-              color: "var(--gs-ink-secondary)",
+              color: "var(--la-ink-secondary)",
             }}
           >
             ×{VERTICAL_SCALE.toFixed(0)} vert
@@ -138,7 +138,7 @@ export function DrainageFlowCard({
           <span
             style={{
               ...valueStyle,
-              color: ponds.length > 0 ? "var(--gs-conflict)" : "var(--gs-ink)",
+              color: ponds.length > 0 ? "var(--gs-conflict)" : "var(--la-ink)",
             }}
           >
             {ponds.length}
@@ -155,7 +155,7 @@ export function DrainageFlowCard({
                   justifyContent: "space-between",
                   fontFamily: "var(--font-tech)",
                   fontSize: "var(--gs-font-xs)",
-                  color: "var(--gs-ink-secondary)",
+                  color: "var(--la-ink-secondary)",
                   lineHeight: 1.7,
                 }}
               >
@@ -179,13 +179,13 @@ export function DrainageFlowCard({
           <>
             <div style={rowStyle}>
               <span style={labelStyle}>Flow rate</span>
-              <span style={{ ...valueStyle, color: "var(--gs-ink-truth)" }}>
+              <span style={{ ...valueStyle, color: "var(--la-ink)" }}>
                 {telemetry.totalGpm.toFixed(1)} GPM
               </span>
             </div>
             <div style={rowStyle}>
               <span style={labelStyle}>Pressure drop</span>
-              <span style={{ ...valueStyle, color: "var(--gs-ink-truth)" }}>
+              <span style={{ ...valueStyle, color: "var(--la-ink)" }}>
                 {telemetry.maxKpa.toFixed(1)} kPa
               </span>
             </div>
@@ -194,7 +194,7 @@ export function DrainageFlowCard({
                 margin: 0,
                 fontSize: "var(--gs-font-xs)",
                 lineHeight: 1.4,
-                color: "var(--gs-ink-secondary)",
+                color: "var(--la-ink-secondary)",
               }}
             >
               Indicative model: 25 mm PVC, Hazen-Williams C=150 and
@@ -215,7 +215,7 @@ export function DrainageFlowCard({
             color:
               ponds.length > 0
                 ? "var(--la-error)"
-                : "var(--gs-ink-truth)",
+                : "var(--la-ink)",
             background:
               ponds.length > 0
                 ? "color-mix(in srgb, var(--gs-conflict) 14%, transparent)"

@@ -24,7 +24,7 @@ const btn: React.CSSProperties = {
   borderRadius: "var(--gs-radius-chip)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
   background: "transparent",
-  color: "var(--gs-ink)",
+  color: "var(--la-ink)",
   cursor: "pointer",
   whiteSpace: "nowrap",
 };
@@ -42,7 +42,7 @@ const label: React.CSSProperties = {
   fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.08em",
   textTransform: "uppercase",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
 };
 
 export function StudioCadCard({
@@ -97,11 +97,11 @@ export function StudioCadCard({
     <GlassCard style={{ position: "relative", width: 300, padding: "10px 12px" }}>
       <div
         data-testid="studio-cad-card"
-        style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)", display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}
+        style={{ fontFamily: "var(--font-ui)", color: "var(--la-ink)", display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <span style={label}>CAD · AI drafter</span>
-          <span style={{ ...label, color: "var(--gs-ink-muted)" }}>never silent-writes</span>
+          <span style={{ ...label, color: "var(--la-ink-muted)" }}>never silent-writes</span>
         </div>
 
         <div style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}>
@@ -164,7 +164,7 @@ export function StudioCadCard({
               minWidth: 0,
               fontFamily: "var(--font-ui)",
               fontSize: "var(--gs-font-sm)",
-              color: "var(--gs-ink)",
+              color: "var(--la-ink)",
               padding: "5px 8px",
               borderRadius: "var(--gs-radius-chip)",
               border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
@@ -214,8 +214,8 @@ export function StudioCadCard({
                 status.tone === "err"
                   ? "var(--gs-conflict-soft)"
                   : status.tone === "ok"
-                    ? "var(--gs-ink)"
-                    : "var(--gs-ink-secondary)",
+                    ? "var(--la-ink)"
+                    : "var(--la-ink-secondary)",
             }}
           >
             {status.text}
@@ -245,7 +245,7 @@ export function StudioCadCard({
                 minWidth: 0,
                 fontFamily: "var(--font-ui)",
                 fontSize: "var(--gs-font-sm)",
-                color: "var(--gs-ink)",
+                color: "var(--la-ink)",
                 padding: "5px 8px",
                 borderRadius: "var(--gs-radius-chip)",
                 border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",

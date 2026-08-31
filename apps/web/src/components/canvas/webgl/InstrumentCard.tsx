@@ -27,7 +27,7 @@ export function InstrumentCard({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const colour = accent ? "var(--la-accent)" : "var(--gs-ink-truth)";
+  const colour = accent ? "var(--la-accent)" : "var(--la-ink)";
 
   return open ? (
     <GlassCard style={{ position: "relative", padding: "8px 10px" }}>
@@ -53,11 +53,11 @@ export function InstrumentCard({
             fontSize: "var(--gs-font-xs)",
             letterSpacing: "0.06em",
             textTransform: "uppercase",
-            color: "var(--gs-ink-secondary)",
+            color: "var(--la-ink-secondary)",
           }}
         >
           <span>{label}</span>
-          <span style={{ fontFamily: "var(--font-tech)", color: "var(--gs-ink-muted)" }}>
+          <span style={{ fontFamily: "var(--font-tech)", color: "var(--la-ink-muted)" }}>
             collapse ▴
           </span>
         </button>
@@ -87,7 +87,7 @@ export function InstrumentCard({
         fontSize: "var(--gs-font-xs)",
         letterSpacing: "0.06em",
         textTransform: "uppercase",
-        color: "var(--gs-ink-secondary)",
+        color: "var(--la-ink-secondary)",
         whiteSpace: "nowrap",
       }}
     >

@@ -31,7 +31,7 @@ const rowBase: React.CSSProperties = {
   border: "1px solid transparent",
   borderRadius: "var(--gs-radius-chip)",
   background: "transparent",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-sm)",
   cursor: "pointer",
@@ -80,7 +80,7 @@ export function SketchCadReviewCard({ docked = false }: { docked?: boolean }) {
               fontSize: "var(--gs-font-sm)",
               fontWeight: 600,
               letterSpacing: "0.06em",
-              color: "var(--gs-ink)",
+              color: "var(--la-ink)",
             }}
           >
             SKETCH → CAD · {sorted.length}
@@ -91,7 +91,7 @@ export function SketchCadReviewCard({ docked = false }: { docked?: boolean }) {
             aria-label="Close sketch CAD review"
             onClick={() => close(false)}
             style={{
-              color: "var(--gs-ink-muted)",
+              color: "var(--la-ink-muted)",
               fontSize: "var(--gs-font-sm)",
               padding: "2px 6px",
             }}
@@ -158,7 +158,7 @@ export function SketchCadReviewCard({ docked = false }: { docked?: boolean }) {
               data-testid="cad-reject-all"
               onClick={rejectAll}
               style={{
-                color: "var(--gs-ink-secondary)",
+                color: "var(--la-ink-secondary)",
                 fontSize: "var(--gs-font-sm)",
                 padding: "4px 8px",
               }}
@@ -209,7 +209,7 @@ export function SketchCadReviewCard({ docked = false }: { docked?: boolean }) {
                   : "transparent",
                 color: isActive
                   ? "var(--gs-chip-active-ink)"
-                  : "var(--gs-ink-secondary)",
+                  : "var(--la-ink-secondary)",
                 borderColor: isActive
                   ? "transparent"
                   : "color-mix(in srgb, var(--gs-line) 55%, transparent)",
@@ -243,7 +243,7 @@ export function SketchCadReviewCard({ docked = false }: { docked?: boolean }) {
             margin: 0,
             fontSize: "var(--gs-font-xs)",
             lineHeight: 1.4,
-            color: "var(--gs-ink-secondary)",
+            color: "var(--la-ink-secondary)",
           }}
         >
           {active.reason}
@@ -265,7 +265,7 @@ export function SketchCadReviewCard({ docked = false }: { docked?: boolean }) {
             style={{
               width: `${pct}%`,
               height: "100%",
-              background: "var(--gs-ink)",
+              background: "var(--la-ink)",
             }}
           />
         </div>

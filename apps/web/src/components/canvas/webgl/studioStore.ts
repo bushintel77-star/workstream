@@ -39,6 +39,7 @@ import type {
   NibKind,
   PhotoElevation,
   PhotoTraceStroke,
+  SketchCanvas,
 } from "@workstream/contracts";
 import { PALETTE } from "../../../styles/colorTokens";
 import {
@@ -108,6 +109,20 @@ import {
 import type { TrenchPointPct } from "./trenchPath";
 import type { ZonePointPct } from "./irrigationZonePath";
 import type { PlanePoint } from "./photoTraceMath";
+
+/* -------------------------------------------------------------------------- */
+/* Cinematic Fly-Through (Phase 5)                                           */
+/* -------------------------------------------------------------------------- */
+
+/** A saved camera bookmark — world-space position + look-at target.
+ *  Captured during navigation, played back as a CatmullRomCurve3 spline. */
+export interface CameraBookmark {
+  id: string;
+  /** Camera position in world metres [x, y, z]. */
+  position: [number, number, number];
+  /** Look-at target in world metres [x, y, z]. */
+  target: [number, number, number];
+}
 
 /* -------------------------------------------------------------------------- */
 /* Save status types (the Ui slice of the studio store)                    */
@@ -341,7 +356,7 @@ export interface StudioStoreState {
   pointerClientPos: { x: number; y: number } | null;
   /** All canvas placements (CatalogPlacement contract schema). */
   placements: CatalogPlacement[];
-  /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features, stitchRecords, trenches, zones} (cap 50). */
+  /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features, stitchRecords, trenches, zones, canvases} (cap 50). */
   historyPast: Array<{
     placements: CatalogPlacement[];
     strokes: CanvasStroke[];
@@ -350,6 +365,7 @@ export interface StudioStoreState {
     stitchRecords: Record<string, StitchRecord>;
     constructionTrenches: ConstructionTrench[];
     irrigationZones: IrrigationZone[];
+    canvases: SketchCanvas[];
   }>;
   historyFuture: Array<{
     placements: CatalogPlacement[];
@@ -359,6 +375,7 @@ export interface StudioStoreState {
     stitchRecords: Record<string, StitchRecord>;
     constructionTrenches: ConstructionTrench[];
     irrigationZones: IrrigationZone[];
+    canvases: SketchCanvas[];
   }>;
 
   // --- Flora ring (ranked planting suggestions at a click) ---
@@ -453,6 +470,55 @@ export interface StudioStoreState {
    * never nearest-neighbour, when one is ever built).
    */
   sketchStrokes: CanvasStroke[];
+
+  // --- Spatial Sketching — oriented canvas planes ---
+  /**
+   * All persisted SketchCanvas planes (the Spatial Sketching primitive).
+   * Strokes whose `canvas_id` references a plane here render inside that
+   * plane's local coordinate system. The implicit ground plane (canvas_id
+   * absent / null) needs no row — it is the legacy default.
+   */
+  sketchCanvases: SketchCanvas[];
+  /**
+   * The active canvas plane id — the plane new strokes are drawn onto. null
+   * = the implicit ground plane (legacy behaviour). Set by the canvas
+   * picker / "new plane" action.
+   */
+  activeCanvasId: string | null;
+
+  // --- Spatial UI — workspace toggles (persisted per user) ---
+  /** Handedness — mirrors chrome anchors left/right. Default RIGHT. */
+  handedness: "RIGHT" | "LEFT";
+  /** Chrome scale multiplier (0.85 – 1.30). Default 1.0. */
+  uiScale: number;
+  /** Drafting mode — true = ruler + crosshair + snap on; false = sketching (zero chrome margin). */
+  draftingMode: boolean;
+
+  // --- Stroke Transfer (Phase 2) ---
+  /** The transfer tool is armed — click a stroke to select it as the source,
+   *  then click a canvas plane (or depth rail cell) to project it onto. */
+  transferToolArmed: boolean;
+  /** The source stroke id selected for transfer (null = none selected yet). */
+  transferSourceStrokeId: string | null;
+
+  // --- Sketch-to-CAD Extrusion (Phase 6) ---
+  /** The extrusion tool is armed — click a closed stroke to select it for
+   *  extrusion, then adjust the depth slider and commit. */
+  extrusionToolArmed: boolean;
+  /** The stroke id selected for extrusion (null = none selected yet). */
+  selectedExtrusionStrokeId: string | null;
+  /** The current depth slider value (metres) for the extrusion preview. */
+  activeExtrusionDepth: number;
+
+  // --- Cinematic Fly-Through (Phase 5) ---
+  /** Saved camera bookmarks — position + look-at target in world space.
+   *  Captured by the operator during navigation, played back as a spline. */
+  cameraBookmarks: CameraBookmark[];
+  /** True while the fly-through animation is playing. Gestures are paused. */
+  isPlayingFlythrough: boolean;
+  /** Transient camera state — written by FusedCamera each frame, read by
+   *  the capture-bookmark action. NOT React-reactive (no set() write). */
+  _liveCameraPosition: { position: [number, number, number]; target: [number, number, number] };
 
   // --- Photo-trace elevation (sketch capstone) ---
   /**
@@ -859,6 +925,52 @@ export interface StudioStoreState {
   /** Update a single stroke (e.g., extrude height metadata). */
   updateSketchStroke: (id: string, patch: Partial<CanvasStroke>) => void;
 
+  // --- Spatial Sketching — canvas plane actions ---
+  /** Replace the entire canvas-plane array (hydrate / undo / redo). */
+  setSketchCanvases: (canvases: SketchCanvas[]) => void;
+  /** Add a new canvas plane (undoable). Returns the new plane's id. */
+  addSketchCanvas: (canvas: SketchCanvas) => void;
+  /** Update a canvas plane by id (position, rotation, label — undoable). */
+  updateSketchCanvas: (id: string, patch: Partial<SketchCanvas>) => void;
+  /** Remove a canvas plane by id. Strokes referencing it fall back to ground. */
+  removeSketchCanvas: (id: string) => void;
+  /** Set the active canvas plane id (null = implicit ground plane). */
+  setActiveCanvasId: (id: string | null) => void;
+
+  // --- Spatial UI — workspace toggle actions ---
+  /** Set handedness (mirrors chrome anchors left/right). */
+  setHandedness: (h: "RIGHT" | "LEFT") => void;
+  /** Set chrome scale multiplier (0.85 – 1.30). */
+  setUiScale: (scale: number) => void;
+  /** Toggle drafting mode (ruler + crosshair + snap vs sketching). */
+  setDraftingMode: (on: boolean) => void;
+
+  // --- Stroke Transfer (Phase 2) ---
+  /** Arm/disarm the transfer tool. */
+  setTransferToolArmed: (on: boolean) => void;
+  /** Set the source stroke id for transfer (null = none). */
+  setTransferSourceStrokeId: (id: string | null) => void;
+
+  // --- Sketch-to-CAD Extrusion (Phase 6) ---
+  /** Toggle the extrusion tool on/off. When off, clears the selected stroke. */
+  toggleExtrusionTool: () => void;
+  /** Select a stroke for extrusion (called by clicking a stroke while armed). */
+  selectExtrusionStroke: (id: string | null) => void;
+  /** Set the active extrusion depth slider value (metres). */
+  setActiveExtrusionDepth: (depth: number) => void;
+  /** Commit the extrusion — saves extrude_height_m to the stroke and disarms. */
+  commitExtrusion: (id: string, depth: number) => void;
+
+  // --- Cinematic Fly-Through (Phase 5) ---
+  /** Add a camera bookmark (captured from the current camera position + target). */
+  addCameraBookmark: (bookmark: CameraBookmark) => void;
+  /** Capture the current camera position + look-at as a bookmark. */
+  captureCameraBookmark: () => void;
+  /** Remove a camera bookmark by id. */
+  removeCameraBookmark: (id: string) => void;
+  /** Toggle the fly-through animation playback. */
+  toggleFlythrough: () => void;
+
   /** Replace the whole photo-elevation list (hydrate / undo / redo). */
   setPhotoElevations: (elevations: PhotoElevation[]) => void;
   /** Insert or replace one photo elevation record (touch updated_at). */
@@ -934,6 +1046,7 @@ function docSnapshot(
     | "stitchRecords"
     | "constructionTrenches"
     | "irrigationZones"
+    | "sketchCanvases"
   >,
 ) {
   return {
@@ -944,6 +1057,7 @@ function docSnapshot(
     stitchRecords: { ...s.stitchRecords },
     constructionTrenches: [...s.constructionTrenches],
     irrigationZones: [...s.irrigationZones],
+    canvases: [...s.sketchCanvases],
   };
 }
 
@@ -1105,6 +1219,30 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Ink
   sketchStrokes: [],
 
+  // Spatial Sketching — no planes until the operator creates one. The
+  // implicit ground plane (activeCanvasId = null) is the legacy default.
+  sketchCanvases: [],
+  activeCanvasId: null,
+
+  // Spatial UI — workspace defaults (RIGHT-handed, 100% scale, drafting on).
+  handedness: "RIGHT",
+  uiScale: 1.0,
+  draftingMode: true,
+
+  // Stroke Transfer — tool starts disarmed, no source selected.
+  transferToolArmed: false,
+  transferSourceStrokeId: null,
+
+  // Sketch-to-CAD Extrusion — tool starts disarmed, no stroke selected.
+  extrusionToolArmed: false,
+  selectedExtrusionStrokeId: null,
+  activeExtrusionDepth: 1.0,
+
+  // Cinematic Fly-Through — no bookmarks, not playing.
+  cameraBookmarks: [],
+  isPlayingFlythrough: false,
+  _liveCameraPosition: { position: [0, 0, 0], target: [0, 0, 0] },
+
   // Site context — hydrated from the server-rendered site frame.
   siteBoundary: [],
   siteBuilding: [],
@@ -1187,11 +1325,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set(
       sketchMode
         ? {
-            sketchMode: true,
-            trenchTool: null,
-            zoneTool: null,
-            draftSession: null,
-          }
+          sketchMode: true,
+          trenchTool: null,
+          zoneTool: null,
+          draftSession: null,
+        }
         : { sketchMode: false },
     ),
   setViewBlendTarget: (viewBlendTarget) =>
@@ -1261,12 +1399,12 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set(
       measureActive
         ? {
-            measureActive: true,
-            sketchMode: false,
-            trenchTool: null,
-            zoneTool: null,
-            draftSession: null,
-          }
+          measureActive: true,
+          sketchMode: false,
+          trenchTool: null,
+          zoneTool: null,
+          draftSession: null,
+        }
         : { measureActive: false },
     ),
   setMeasureTape: (a, b) =>
@@ -1318,23 +1456,23 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set(
       armedSymbolId
         ? {
-            armedSymbolId,
-            sketchMode: false,
-            measureActive: false,
-            trenchTool: null,
-            zoneTool: null,
-            draftSession: null,
-            areaPlantActive: false,
-            rowPlantActive: false,
-          }
+          armedSymbolId,
+          sketchMode: false,
+          measureActive: false,
+          trenchTool: null,
+          zoneTool: null,
+          draftSession: null,
+          areaPlantActive: false,
+          rowPlantActive: false,
+        }
         : {
-            armedSymbolId: null,
-            assetPlantDraft: null,
-            massPlantPreviewCount: 0,
-            pointerClientPos: null,
-            areaPlantActive: false,
-            rowPlantActive: false,
-          },
+          armedSymbolId: null,
+          assetPlantDraft: null,
+          massPlantPreviewCount: 0,
+          pointerClientPos: null,
+          areaPlantActive: false,
+          rowPlantActive: false,
+        },
     ),
   setPendingAssetDrop: (pendingAssetDrop) => set({ pendingAssetDrop }),
   // Box fill and row run compete for the same drag — arming one stands the
@@ -1398,9 +1536,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         const scatter =
           patch.brush_recipe_id && f.procedural_scatter_contents
             ? {
-                ...f.procedural_scatter_contents,
-                brush_recipe_id: patch.brush_recipe_id,
-              }
+              ...f.procedural_scatter_contents,
+              brush_recipe_id: patch.brush_recipe_id,
+            }
             : f.procedural_scatter_contents;
         const labor =
           patch.labor_tier && f.labor_profile
@@ -1434,14 +1572,14 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set(
       active
         ? {
-            marqueeActive: true,
-            sketchMode: false,
-            armedSymbolId: null,
-            measureActive: false,
-            trenchTool: null,
-            zoneTool: null,
-            draftSession: null,
-          }
+          marqueeActive: true,
+          sketchMode: false,
+          armedSymbolId: null,
+          measureActive: false,
+          trenchTool: null,
+          zoneTool: null,
+          draftSession: null,
+        }
         : { marqueeActive: false },
     ),
   beginDraft: (tool) =>
@@ -1689,6 +1827,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         stitchRecords: { ...prev.stitchRecords },
         constructionTrenches: prev.constructionTrenches,
         irrigationZones: prev.irrigationZones,
+        sketchCanvases: prev.canvases,
         selection: pruneSelection(s.selection, {
           placements: prev.placements,
           features: prev.features,
@@ -1710,6 +1849,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         stitchRecords: { ...next.stitchRecords },
         constructionTrenches: next.constructionTrenches,
         irrigationZones: next.irrigationZones,
+        sketchCanvases: next.canvases,
         selection: pruneSelection(s.selection, {
           placements: next.placements,
           features: next.features,
@@ -1752,6 +1892,92 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         st.id === id ? { ...st, ...patch } : st,
       ),
     })),
+
+  // --- Spatial Sketching — canvas plane actions ---
+  setSketchCanvases: (sketchCanvases) => set({ sketchCanvases }),
+  addSketchCanvas: (canvas) =>
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      return {
+        sketchCanvases: [...s.sketchCanvases, canvas],
+        activeCanvasId: canvas.id,
+        historyPast: past,
+        historyFuture: [],
+      };
+    }),
+  updateSketchCanvas: (id, patch) =>
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      return {
+        sketchCanvases: s.sketchCanvases.map((c) =>
+          c.id === id ? { ...c, ...patch } : c,
+        ),
+        historyPast: past,
+        historyFuture: [],
+      };
+    }),
+  removeSketchCanvas: (id) =>
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      // Strokes referencing the removed plane fall back to the ground plane
+      // (canvas_id = null) — they are not deleted.
+      const sketchStrokes = s.sketchStrokes.map((st) =>
+        st.canvas_id === id ? { ...st, canvas_id: null } : st,
+      );
+      return {
+        sketchCanvases: s.sketchCanvases.filter((c) => c.id !== id),
+        sketchStrokes,
+        activeCanvasId: s.activeCanvasId === id ? null : s.activeCanvasId,
+        historyPast: past,
+        historyFuture: [],
+      };
+    }),
+  setActiveCanvasId: (id) => set({ activeCanvasId: id }),
+
+  // --- Spatial UI — workspace toggle actions ---
+  setHandedness: (handedness) => set({ handedness }),
+  setUiScale: (uiScale) => set({ uiScale: Math.max(0.85, Math.min(1.3, uiScale)) }),
+  setDraftingMode: (draftingMode) => set({ draftingMode }),
+
+  // --- Stroke Transfer (Phase 2) ---
+  setTransferToolArmed: (on) =>
+    set(on ? { transferToolArmed: true } : { transferToolArmed: false, transferSourceStrokeId: null }),
+  setTransferSourceStrokeId: (transferSourceStrokeId) => set({ transferSourceStrokeId }),
+
+  // --- Sketch-to-CAD Extrusion (Phase 6) ---
+  toggleExtrusionTool: () =>
+    set((s) => ({
+      extrusionToolArmed: !s.extrusionToolArmed,
+      selectedExtrusionStrokeId: null,
+    })),
+  selectExtrusionStroke: (id) => set({ selectedExtrusionStrokeId: id }),
+  setActiveExtrusionDepth: (depth) => set({ activeExtrusionDepth: depth }),
+  commitExtrusion: (id, depth) => {
+    const s = useStudioStore.getState();
+    const stroke = s.sketchStrokes.find((st) => st.id === id);
+    if (!stroke) return;
+    s.updateSketchStroke(id, {
+      extrude_height_m: depth > 0 ? depth : undefined,
+    });
+    set({ extrusionToolArmed: false, selectedExtrusionStrokeId: null });
+  },
+
+  // --- Cinematic Fly-Through (Phase 5) ---
+  addCameraBookmark: (bookmark) =>
+    set((s) => ({ cameraBookmarks: [...s.cameraBookmarks, bookmark] })),
+  captureCameraBookmark: () => {
+    const cam = useStudioStore.getState()._liveCameraPosition;
+    const bookmark: CameraBookmark = {
+      id: crypto.randomUUID(),
+      position: [cam.position[0], cam.position[1], cam.position[2]],
+      target: [cam.target[0], cam.target[1], cam.target[2]],
+    };
+    set((s) => ({ cameraBookmarks: [...s.cameraBookmarks, bookmark] }));
+  },
+  removeCameraBookmark: (id) =>
+    set((s) => ({ cameraBookmarks: s.cameraBookmarks.filter((b) => b.id !== id) })),
+  toggleFlythrough: () =>
+    set((s) => ({ isPlayingFlythrough: !s.isPlayingFlythrough })),
 
   setPhotoElevations: (photoElevations) => set({ photoElevations }),
   upsertPhotoElevation: (elevation) =>
@@ -1829,10 +2055,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       const photoElevations = s.photoElevations.map((e) =>
         e.id === elevationId
           ? {
-              ...e,
-              strokes: [...e.strokes, stroke],
-              updated_at: new Date().toISOString(),
-            }
+            ...e,
+            strokes: [...e.strokes, stroke],
+            updated_at: new Date().toISOString(),
+          }
           : e,
       );
       return { photoElevations, historyPast: past, historyFuture: [] };
@@ -1844,10 +2070,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       const photoElevations = s.photoElevations.map((e) =>
         e.id === elevationId
           ? {
-              ...e,
-              strokes: e.strokes.filter((st) => !idSet.has(st.id)),
-              updated_at: new Date().toISOString(),
-            }
+            ...e,
+            strokes: e.strokes.filter((st) => !idSet.has(st.id)),
+            updated_at: new Date().toISOString(),
+          }
           : e,
       );
       return { photoElevations, historyPast: past, historyFuture: [] };
@@ -1858,13 +2084,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set(
       trenchTool
         ? {
-            trenchTool,
-            sketchMode: false,
-            measureActive: false,
-            armedSymbolId: null,
-            zoneTool: null,
-            draftSession: null,
-          }
+          trenchTool,
+          sketchMode: false,
+          measureActive: false,
+          armedSymbolId: null,
+          zoneTool: null,
+          draftSession: null,
+        }
         : { trenchTool: null },
     ),
   setTrenchDraft: (trenchDraft) => set({ trenchDraft }),
@@ -1883,13 +2109,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set(
       zoneTool
         ? {
-            zoneTool,
-            sketchMode: false,
-            measureActive: false,
-            armedSymbolId: null,
-            trenchTool: null,
-            draftSession: null,
-          }
+          zoneTool,
+          sketchMode: false,
+          measureActive: false,
+          armedSymbolId: null,
+          trenchTool: null,
+          draftSession: null,
+        }
         : { zoneTool: null },
     ),
   setZoneDraft: (zoneDraft) => set({ zoneDraft }),
@@ -2136,16 +2362,16 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       selection: opts?.additive
         ? dedupeSelection([...s.selection, ref])
         : [ref],
-    })),  toggleSelectRef: (ref) =>
-    set((s) => ({
-      selection: dedupeSelection(
-        s.selection.some(
-          (r) =>
-            r.kind === ref.kind &&
-            r.id === ref.id &&
-            r.elevationId === ref.elevationId,
-        )
-          ? s.selection.filter(
+    })), toggleSelectRef: (ref) =>
+      set((s) => ({
+        selection: dedupeSelection(
+          s.selection.some(
+            (r) =>
+              r.kind === ref.kind &&
+              r.id === ref.id &&
+              r.elevationId === ref.elevationId,
+          )
+            ? s.selection.filter(
               (r) =>
                 !(
                   r.kind === ref.kind &&
@@ -2153,9 +2379,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
                   r.elevationId === ref.elevationId
                 ),
             )
-          : [...s.selection, ref],
-      ),
-    })),
+            : [...s.selection, ref],
+        ),
+      })),
   clearSelection: () => set({ selection: [] }),
   setSelection: (selection) => set({ selection: dedupeSelection(selection) }),
 }));

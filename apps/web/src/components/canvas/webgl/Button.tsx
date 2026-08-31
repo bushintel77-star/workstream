@@ -105,7 +105,7 @@ const chipBase: CSSProperties = {
   gap: "var(--gs-space-2)",
   cursor: "pointer",
   background: "transparent",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   transition: "background 0.15s, color 0.15s",
 };
 
@@ -122,7 +122,7 @@ const chipBaseXs: CSSProperties = {
   borderRadius: "var(--gs-radius-pill)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
   background: "transparent",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   cursor: "pointer",
 };
 
@@ -142,7 +142,7 @@ const chipTintedBase: CSSProperties = {
   border:
     "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
   background: "transparent",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   cursor: "pointer",
 };
 
@@ -158,7 +158,7 @@ const ghostBase: CSSProperties = {
   borderRadius: "var(--gs-radius-pill)",
   border: "1px solid var(--gs-line)",
   background: "transparent",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   cursor: "pointer",
   whiteSpace: "nowrap",
 };
@@ -181,7 +181,7 @@ const iconBase: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   fontSize: "var(--gs-font-h3)",
   lineHeight: 1,
   borderRadius: "var(--gs-radius-pill)",
@@ -238,7 +238,7 @@ const ghostLineBase: CSSProperties = {
   borderRadius: "var(--gs-radius-chip)",
   border: "1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)",
   background: "transparent",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   cursor: "pointer",
 };
 
@@ -254,7 +254,7 @@ const glyphBase: CSSProperties = {
   border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
   borderRadius: "var(--gs-radius-chip)",
   background: "transparent",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   fontFamily: "var(--font-tech)",
   fontSize: "var(--gs-font-lg)",
   cursor: "pointer",
@@ -272,7 +272,7 @@ const textBase: CSSProperties = {
   cursor: "pointer",
   padding: 0,
   fontFamily: "var(--font-ui)",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
 };
 
 /**
@@ -288,7 +288,7 @@ const chipPresetBase: CSSProperties = {
   borderRadius: "var(--gs-radius-chip)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
   background: "transparent",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   cursor: "pointer",
 };
 
@@ -316,7 +316,7 @@ const capsuleBase: CSSProperties = {
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
   borderRadius: "var(--gs-radius-pill)",
   boxShadow: "var(--gs-shadow-1)",
-  color: "var(--gs-ink-muted)",
+  color: "var(--la-ink-muted)",
   cursor: "pointer",
   pointerEvents: "auto",
   transition:
@@ -341,7 +341,7 @@ const swatchBase: CSSProperties = {
   borderRadius: "var(--gs-radius-lg)",
   border: "1px solid transparent",
   background: "transparent",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   cursor: "pointer",
   transition:
     "background 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -460,7 +460,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       !active && rest.disabled
         ? variant === "swatch"
           ? {
-              color: "var(--gs-ink-muted)",
+              color: "var(--la-ink-muted)",
               cursor: "not-allowed",
               opacity: 0.55,
             }
@@ -468,7 +468,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             ? { opacity: 0.5, cursor: "not-allowed" }
             : variant === "glyph"
               ? {
-                  color: "var(--gs-ink-muted)",
+                  color: "var(--la-ink-muted)",
                   cursor: "not-allowed",
                 }
               : {}
@@ -483,11 +483,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant === "chip" && !active
         ? {
             onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
-              e.currentTarget.style.color = "var(--gs-ink)";
+              e.currentTarget.style.color = "var(--la-ink)";
               rest.onMouseEnter?.(e);
             },
             onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
-              e.currentTarget.style.color = "var(--gs-ink-secondary)";
+              e.currentTarget.style.color = "var(--la-ink-secondary)";
               rest.onMouseLeave?.(e);
             },
           }
@@ -495,7 +495,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ? {
               onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
                 if (rest.disabled) return;
-                if (!active) e.currentTarget.style.color = "var(--gs-ink)";
+                if (!active) e.currentTarget.style.color = "var(--la-ink)";
                 e.currentTarget.style.transform = "translateY(-1px)";
                 e.currentTarget.style.boxShadow = "var(--gs-shadow-1)";
                 rest.onMouseEnter?.(e);
@@ -503,7 +503,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
                 if (rest.disabled) return;
                 if (!active)
-                  e.currentTarget.style.color = "var(--gs-ink-secondary)";
+                  e.currentTarget.style.color = "var(--la-ink-secondary)";
                 e.currentTarget.style.transform = "translateY(0)";
                 e.currentTarget.style.boxShadow = "none";
                 rest.onMouseLeave?.(e);

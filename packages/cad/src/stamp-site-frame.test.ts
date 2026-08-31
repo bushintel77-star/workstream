@@ -35,6 +35,7 @@ function canvasWithFrame(
     image_layers: [],
     photo_elevations: [],
     features: [],
+    canvases: [],
     site_frame: frame,
     updated_at: new Date().toISOString(),
   };

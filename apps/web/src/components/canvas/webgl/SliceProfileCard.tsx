@@ -105,7 +105,7 @@ export function SliceProfileCard({
   return (
     <InstrumentCard label="Section" value={heightmapPoints.length ? "Δ" + (Math.max(...heightmapPoints.map((p) => p.y)) - Math.min(...heightmapPoints.map((p) => p.y))).toFixed(1) + " m" : "—"}>
     <div style={{ width: W + 12 }}>
-      <div style={{ fontFamily: "var(--font-ui)", color: "var(--gs-ink)" }}>
+      <div style={{ fontFamily: "var(--font-ui)", color: "var(--la-ink)" }}>
         <div
           style={{
             display: "flex",
@@ -119,7 +119,7 @@ export function SliceProfileCard({
               fontSize: "var(--gs-font-xs)",
               letterSpacing: "0.08em",
               textTransform: "uppercase",
-              color: "var(--gs-ink-secondary)",
+              color: "var(--la-ink-secondary)",
             }}
           >
             Section · {axisLabel}
@@ -146,10 +146,10 @@ export function SliceProfileCard({
             strokeDasharray="3 3"
           />
           {/* Y-axis tick labels (min/max) */}
-          <text x={padL - 6} y={padT + 4} textAnchor="end" fontSize={9} fill="var(--gs-ink-secondary)" fontFamily="var(--font-tech)">
+          <text x={padL - 6} y={padT + 4} textAnchor="end" fontSize={9} fill="var(--la-ink-secondary)" fontFamily="var(--font-tech)">
             {yMax.toFixed(1)}
           </text>
-          <text x={padL - 6} y={padT + plotH + 3} textAnchor="end" fontSize={9} fill="var(--gs-ink-secondary)" fontFamily="var(--font-tech)">
+          <text x={padL - 6} y={padT + plotH + 3} textAnchor="end" fontSize={9} fill="var(--la-ink-secondary)" fontFamily="var(--font-tech)">
             {yMin.toFixed(1)}
           </text>
           {/* Surface profile */}
@@ -161,10 +161,10 @@ export function SliceProfileCard({
             strokeLinejoin="round"
           />
           {/* X-axis labels (distance) */}
-          <text x={padL} y={H - 6} textAnchor="start" fontSize={9} fill="var(--gs-ink-secondary)" fontFamily="var(--font-tech)">
+          <text x={padL} y={H - 6} textAnchor="start" fontSize={9} fill="var(--la-ink-secondary)" fontFamily="var(--font-tech)">
             0m
           </text>
-          <text x={W - padR} y={H - 6} textAnchor="end" fontSize={9} fill="var(--gs-ink-secondary)" fontFamily="var(--font-tech)">
+          <text x={W - padR} y={H - 6} textAnchor="end" fontSize={9} fill="var(--la-ink-secondary)" fontFamily="var(--font-tech)">
             {cutLen.toFixed(0)}m
           </text>
         </svg>
@@ -175,7 +175,7 @@ export function SliceProfileCard({
             marginTop: 4,
             fontFamily: "var(--font-tech)",
             fontSize: "var(--gs-font-xs)",
-            color: "var(--gs-ink-secondary)",
+            color: "var(--la-ink-secondary)",
           }}
         >
           <span>

@@ -83,14 +83,12 @@ export function EstimatorPanel({
     if (!defaultCollapsed) setDetailOpen(false);
   }, [defaultCollapsed]);
 
-  useEffect(() => {
-    if (defaultCollapsed) return;
-    try {
-      window.localStorage.setItem("workstream.fitSheet.expanded", "1");
-    } catch {
-      /* private mode — ignore */
-    }
-  }, [defaultCollapsed]);
+  // No storage seeding here: this panel used to force-write
+  // workstream.fitSheet.expanded="1" on primary mounts, which polluted a
+  // fresh context and made the capsule re-mount expanded — contradicting
+  // its own persistence contract (empty storage = collapsed pill). The
+  // capsule owns the preference end to end (read-on-mount + persist on
+  // change only).
 
   if (!hasItems) return null;
 
@@ -151,7 +149,7 @@ export function EstimatorPanel({
                 fontSize: "var(--gs-font-xs)",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "var(--gs-ink-secondary)",
+                color: "var(--la-ink-secondary)",
               }}
             >
               {title}
@@ -164,8 +162,8 @@ export function EstimatorPanel({
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 color: signedOff
-                  ? "var(--gs-ink-success, var(--gs-ink-secondary))"
-                  : "var(--gs-ink-muted)",
+                  ? "var(--gs-ink-success, var(--la-ink-secondary))"
+                  : "var(--la-ink-muted)",
               }}
             >
               {statusWord}

@@ -46,7 +46,9 @@ import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
 import { FusedCamera } from "./FusedCamera";
+import { FlythroughRig } from "./FlythroughRig";
 import { FusedSketchLayer } from "./FusedSketchLayer";
+import { StrokeTransferLayer } from "./StrokeTransferLayer";
 import { StitchSnapLayer } from "./StitchSnapLayer";
 import { PhotoTracePlane } from "./PhotoTracePlane";
 import { PlacementGizmo } from "./PlacementGizmo";
@@ -286,6 +288,51 @@ function SunRig({
         color={drafting ? "#FFFFFF" : PALETTE.rimCool}
       />
     </>
+  );
+}
+
+/**
+ * Spatial Sketching — anti-void ground shadow. A subtle dark radial gradient
+ * mesh flat on the world ground (Y=0.004, just above the ground plane). This
+ * anchors the user's peripheral vision and establishes a horizon floor without
+ * adding heavy grid lines. Per the design handoff §5.1: "ground shadow under
+ * the plane stack" as a "down" cue.
+ */
+function GroundShadow({ scaleM }: { scaleM: number }) {
+  const size = scaleM * 3;
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        uniforms: {
+          uColor: { value: new THREE.Color("#000000") },
+          uOpacity: { value: 0.3 },
+        },
+        vertexShader: /* glsl */ `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: /* glsl */ `
+          varying vec2 vUv;
+          uniform vec3 uColor;
+          uniform float uOpacity;
+          void main() {
+            float dist = distance(vUv, vec2(0.5));
+            float alpha = smoothstep(0.5, 0.0, dist) * uOpacity;
+            gl_FragColor = vec4(uColor, alpha);
+          }
+        `,
+      }),
+    [],
+  );
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.004, 0]} material={material}>
+      <circleGeometry args={[size, 64]} />
+    </mesh>
   );
 }
 
@@ -901,6 +948,10 @@ export function StudioScene({
         boardAspect={boardAspect}
         viewBlendLocked={viewBlendLocked}
       />
+      {/* Phase 5: Cinematic Fly-Through — spline-based camera animation.
+          Mounts after FusedCamera so its useFrame runs later and overrides
+          the camera during playback. Self-gates on isPlayingFlythrough. */}
+      <FlythroughRig />
 
       {/* Input capture — invisible ground plane for raycasting.
           Editing is locked in 3D (viewBlend > 0.5) and re-enabled only at
@@ -1022,6 +1073,9 @@ export function StudioScene({
           envelope={siteEnvelope}
         />
       ) : null}
+      {/* Spatial Sketching — anti-void ground shadow (subtle dark radial
+          gradient at Y=0, anchors peripheral vision without heavy grids). */}
+      <GroundShadow scaleM={scaleM} />
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the
           drawing surface, complementing the directional sun shadows. */}
       <GroundContactShadows scaleM={scaleM} boardAspect={boardAspect} />
@@ -1104,6 +1158,10 @@ export function StudioScene({
           lng={lng}
         />
       ) : null}
+      {/* Stroke Transfer — projects a stroke from one canvas plane onto
+          another via forward perspective projection. Self-gates on
+          transferToolArmed in the store. */}
+      <StrokeTransferLayer scaleM={scaleM} boardAspect={boardAspect} />
       {/* Stitch ε-snap highlights — pulsing dots at weld nodes when the
           drawing cursor / unwarped stroke endpoint enters the snap radius.
           Self-gates on sketch mode + proximity; the drawing layers push

@@ -42,10 +42,10 @@ function PriceRow({ p }: { p: SupplierPrice }) {
       <span style={{ minWidth: 0, flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>
         {p.sku} · {p.label}
       </span>
-      <span style={{ fontFamily: "var(--font-tech)", color: "var(--gs-ink-secondary)", whiteSpace: "nowrap" }}>
+      <span style={{ fontFamily: "var(--font-tech)", color: "var(--la-ink-secondary)", whiteSpace: "nowrap" }}>
         {AUD(p.rate)}/{p.unit}
         {p.in_stock != null ? (
-          <span style={{ marginLeft: 6, color: p.in_stock ? "var(--gs-ink-secondary)" : "var(--gs-conflict)" }}>
+          <span style={{ marginLeft: 6, color: p.in_stock ? "var(--la-ink-secondary)" : "var(--gs-conflict)" }}>
             {p.in_stock ? "· in stock" : "· low stock"}
           </span>
         ) : null}
@@ -77,19 +77,19 @@ function SupplierBlock({
           cursor: "pointer",
           fontFamily: "var(--font-ui)",
           fontSize: "var(--gs-font-xs)",
-          color: "var(--gs-ink)",
+          color: "var(--la-ink)",
           textAlign: "left",
         }}
       >
         <span>{supplier.supplier_label}</span>
-        <span style={{ fontFamily: "var(--font-tech)", color: "var(--gs-ink-muted)" }}>
+        <span style={{ fontFamily: "var(--font-tech)", color: "var(--la-ink-muted)" }}>
           {open ? "▾" : "▸"} {supplier.prices.length} SKUs ·{" "}
           {supplier.mode === "live" ? "live" : "dev"}
         </span>
       </button>
       {open && (
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: "var(--gs-font-micro)", color: "var(--gs-ink-muted)", padding: "2px 0 4px" }}>
+          <div style={{ fontSize: "var(--gs-font-micro)", color: "var(--la-ink-muted)", padding: "2px 0 4px" }}>
             {supplier.honesty}
           </div>
           {supplier.prices.map((p) => (
@@ -136,22 +136,22 @@ export function SupplierFeedCard() {
   return (
     <div data-testid="supplier-feed-card" style={{ pointerEvents: "none" }}>
       <GlassCard style={{ position: "relative", width: 280, padding: 12 }}>
-        <div style={{ fontSize: "var(--gs-font-xs)", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--gs-ink-secondary)", marginBottom: 8 }}>
+        <div style={{ fontSize: "var(--gs-font-xs)", letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--la-ink-secondary)", marginBottom: 8 }}>
           Trade sourcing
         </div>
         {busy ? (
-          <div style={{ fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-muted)" }}>Loading supplier feeds…</div>
+          <div style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-muted)" }}>Loading supplier feeds…</div>
         ) : error ? (
           <div style={{ fontSize: "var(--gs-font-xs)", color: "var(--gs-conflict)" }}>Feed unavailable: {error}</div>
         ) : feed ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", fontSize: "var(--gs-font-xs)" }}>
               <span>{feed.status.live_count}/{feed.suppliers.length} suppliers live</span>
-              <span data-testid="supplier-stock-risk" style={{ fontFamily: "var(--font-tech)", color: stockRisk > 0 ? "var(--gs-conflict)" : "var(--gs-ink-secondary)" }}>
+              <span data-testid="supplier-stock-risk" style={{ fontFamily: "var(--font-tech)", color: stockRisk > 0 ? "var(--gs-conflict)" : "var(--la-ink-secondary)" }}>
                 {stockRisk > 0 ? `${stockRisk} low-stock SKU${stockRisk === 1 ? "" : "s"}` : "all stocked"}
               </span>
             </div>
-            <div style={{ fontSize: "var(--gs-font-micro)", color: "var(--gs-ink-muted)" }}>
+            <div style={{ fontSize: "var(--gs-font-micro)", color: "var(--la-ink-muted)" }}>
               {feed.status.honesty}
             </div>
             <div style={{ display: "flex", flexDirection: "column", marginTop: 4 }}>
@@ -160,9 +160,9 @@ export function SupplierFeedCard() {
               ))}
             </div>
             {feed.melbourne_trade_catalog.offer_count > 0 && (
-              <div style={{ borderTop: "1px solid var(--gs-line)", marginTop: 6, paddingTop: 6, fontSize: "var(--gs-font-xs)", color: "var(--gs-ink-secondary)" }}>
+              <div style={{ borderTop: "1px solid var(--gs-line)", marginTop: 6, paddingTop: 6, fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)" }}>
                 Melbourne trade catalog · {feed.melbourne_trade_catalog.offer_count} offers
-                <div style={{ fontSize: "var(--gs-font-micro)", color: "var(--gs-ink-muted)" }}>
+                <div style={{ fontSize: "var(--gs-font-micro)", color: "var(--la-ink-muted)" }}>
                   {feed.melbourne_trade_catalog.honesty}
                 </div>
               </div>

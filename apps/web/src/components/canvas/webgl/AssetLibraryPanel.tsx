@@ -180,6 +180,10 @@ export function AssetLibraryPanel() {
         maxHeight: "calc(100dvh - 204px)",
         display: "flex",
         flexDirection: "column",
+        /* The chrome slot is pointer-transparent by contract — a panel must
+         * opt back in. Without this every card click fell through to the
+         * WebGL canvas (the flora-ring spec caught it). */
+        pointerEvents: "auto",
         zIndex: "var(--cf-z-chrome)",
         borderRadius: "var(--gs-radius-panel)",
         background: "var(--la-surface)",

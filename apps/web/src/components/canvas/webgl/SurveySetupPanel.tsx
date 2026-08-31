@@ -55,14 +55,14 @@ const headingStyle: CSSProperties = {
   fontSize: "var(--gs-font-h3)",
   fontWeight: 600,
   letterSpacing: "0.01em",
-  color: "var(--gs-ink)",
+  color: "var(--la-ink)",
 };
 
 const countStyle: CSSProperties = {
   fontFamily: "var(--font-tech)",
   fontSize: "var(--gs-font-xs)",
   letterSpacing: "0.04em",
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
   fontVariantNumeric: "tabular-nums",
 };
 
@@ -71,7 +71,7 @@ const helperStyle: CSSProperties = {
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-xs)",
   lineHeight: 1.4,
-  color: "var(--gs-ink-secondary)",
+  color: "var(--la-ink-secondary)",
 };
 
 const footStyle: CSSProperties = {
@@ -79,7 +79,7 @@ const footStyle: CSSProperties = {
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-xs)",
   lineHeight: 1.4,
-  color: "var(--gs-ink-muted)",
+  color: "var(--la-ink-muted)",
 };
 
 const listStyle: CSSProperties = {
@@ -134,7 +134,7 @@ function Mark({ done }: { done: boolean }) {
         borderRadius: "var(--gs-radius-pill)",
         border: done ? "1px solid var(--gs-success)" : "1px solid var(--gs-line-strong)",
         background: done ? "var(--gs-success)" : "transparent",
-        color: "var(--gs-panel)",
+        color: "var(--la-surface)",
         fontFamily: "var(--font-tech)",
         fontSize: "var(--gs-font-micro)",
         lineHeight: 1,
@@ -176,7 +176,7 @@ function SetupRow({
           style={{
             fontFamily: "var(--font-ui)",
             fontSize: "var(--gs-font-sm)",
-            color: "var(--gs-ink-muted)",
+            color: "var(--la-ink-muted)",
             textDecoration: "line-through",
           }}
         >
@@ -218,7 +218,7 @@ function SetupRow({
               display: "block",
               fontFamily: "var(--font-ui)",
               fontSize: "var(--gs-font-sm)",
-              color: "var(--gs-ink)",
+              color: "var(--la-ink)",
             }}
           >
             {item.label}
@@ -229,7 +229,7 @@ function SetupRow({
               fontFamily: "var(--font-ui)",
               fontSize: "var(--gs-font-xs)",
               lineHeight: 1.35,
-              color: "var(--gs-ink-secondary)",
+              color: "var(--la-ink-secondary)",
             }}
           >
             {item.helper}
@@ -339,7 +339,7 @@ export function SurveySetupPanel({
               alignItems: "center",
               gap: 8,
               background: "var(--la-accent)",
-              color: "var(--gs-panel)",
+              color: "var(--la-surface)",
               border: "none",
               borderRadius: "var(--gs-radius-md)",
               padding: "9px 10px",
@@ -367,7 +367,7 @@ export function SurveySetupPanel({
             <p
               role="status"
               data-testid="site-truth-result"
-              style={{ ...helperStyle, color: "var(--gs-ink)" }}
+              style={{ ...helperStyle, color: "var(--la-ink)" }}
             >
               {importMessage}
             </p>
@@ -403,7 +403,7 @@ export function SurveySetupPanel({
                   flex: 1,
                   fontFamily: "var(--font-ui)",
                   fontSize: "var(--gs-font-sm)",
-                  color: "var(--gs-ink)",
+                  color: "var(--la-ink)",
                 }}
               >
                 Site details · {setup.done} of {setup.total}
@@ -413,7 +413,7 @@ export function SurveySetupPanel({
                 style={{
                   fontFamily: "var(--font-tech)",
                   fontSize: "var(--gs-font-sm)",
-                  color: "var(--gs-ink-secondary)",
+                  color: "var(--la-ink-secondary)",
                 }}
               >
                 {expanded ? "▾" : "▸"}

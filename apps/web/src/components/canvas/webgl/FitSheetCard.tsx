@@ -122,7 +122,7 @@ function StockChip({ inStock, mode }: { inStock: boolean; mode: string }) {
   const text = mode !== "live_matched" ? "AI EST" : inStock ? "IN STOCK" : "LOW STOCK";
   const color =
     mode !== "live_matched"
-      ? "var(--gs-ink-secondary)"
+      ? "var(--la-ink-secondary)"
       : inStock
         ? "var(--la-ink)"
         : "var(--la-accent)";
@@ -450,10 +450,12 @@ function FitSheetCapsule({
    * initializer: the initializer runs during the server/hydration render,
    * where a stored "1" makes the first client paint disagree with the
    * server's collapsed default (a hydration mismatch on the very first
-   * visit-back). The hydrated flag also stops the persist effect below
-   * from writing the default over the stored value before it is read. */
+   * visit-back). The persist effect below NEVER writes on its mount run:
+   * in the same commit the read effect may restore "1" while this effect
+   * still sees the stale collapsed state, which would clobber the stored
+   * preference before the restore lands (caught by the capsule e2e). */
   const [expandedInternal, setExpandedInternal] = useState<boolean>(false);
-  const preferenceHydrated = useRef(false);
+  const firstPersist = useRef(true);
   useEffect(() => {
     if (!allowExpanded) return;
     try {
@@ -461,7 +463,6 @@ function FitSheetCapsule({
     } catch {
       /* private-mode etc — ignore */
     }
-    preferenceHydrated.current = true;
   }, [allowExpanded]);
   const expanded = expandedProp ?? expandedInternal;
   const setExpanded = useCallback(
@@ -473,13 +474,17 @@ function FitSheetCapsule({
   );
   useEffect(() => {
     if (typeof window === "undefined" || !allowExpanded) return;
-    if (!preferenceHydrated.current && expandedProp === undefined) return;
+    // Skip the mount run — only real preference CHANGES persist.
+    if (firstPersist.current) {
+      firstPersist.current = false;
+      return;
+    }
     try {
       window.localStorage.setItem(STORAGE_KEY, expanded ? "1" : "0");
     } catch {
       /* private-mode etc — ignore */
     }
-  }, [expanded, allowExpanded, expandedProp]);
+  }, [expanded, allowExpanded]);
 
   // Esc collapses. Document-level handler so it fires regardless of which
   // capsule sub-element has focus.
@@ -850,7 +855,7 @@ function FitSheetCapsule({
               alignItems: "baseline",
             }}
           >
-            <span style={{ ...labelStyle, color: "var(--gs-ink)" }}>
+            <span style={{ ...labelStyle, color: "var(--la-ink)" }}>
               Total incl GST
             </span>
             <span
@@ -918,7 +923,7 @@ function FitSheetCapsule({
                     aria-label={`Include ${line.label} in quote`}
                     data-testid={`fit-line-tick-${line.id}`}
                     onClick={() => toggleEstimateLineExcluded(line.id)}
-                    style={{ ...tickStyle, color: "var(--gs-ink-muted)" }}
+                    style={{ ...tickStyle, color: "var(--la-ink-muted)" }}
                   >
                     ◌
                   </button>
@@ -937,7 +942,7 @@ function FitSheetCapsule({
                   >
                     {line.label}
                   </span>
-                  <span style={{ ...figureStyle, color: "var(--gs-ink-muted)" }}>
+                  <span style={{ ...figureStyle, color: "var(--la-ink-muted)" }}>
                     {fmtAud(line.total)}
                   </span>
                   <span
@@ -984,11 +989,11 @@ function FitSheetCapsule({
                     color:
                       Math.abs(driftPct) > 10
                         ? "var(--gs-warning)"
-                        : "var(--gs-ink-truth)",
+                        : "var(--la-ink)",
                     border: `1px solid color-mix(in srgb, ${
                       Math.abs(driftPct) > 10
                         ? "var(--gs-warning)"
-                        : "var(--gs-ink-truth)"
+                        : "var(--la-ink)"
                     } 45%, transparent)`,
                   }}
                 >
@@ -996,7 +1001,7 @@ function FitSheetCapsule({
                   {Math.abs(driftPct).toFixed(0)}% studio vs backend
                 </span>
               ) : null}
-              <span style={{ ...figureStyle, color: "var(--gs-ink-secondary)" }}>
+              <span style={{ ...figureStyle, color: "var(--la-ink-secondary)" }}>
                 {backendBusy
                   ? "…"
                   : backendTotal != null

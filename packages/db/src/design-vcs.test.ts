@@ -32,6 +32,7 @@ describe("design-vcs tip resolution", () => {
       image_layers: [],
       photo_elevations: [],
       features: [],
+      canvases: [],
       updated_at: "2026-08-01T00:00:00.000Z",
     };
     const arrays = {

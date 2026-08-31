@@ -51,7 +51,7 @@ describe("<Button> chrome-tier primitives", () => {
     );
     expect(html).toMatch(/<button[^>]*data-testid="chip-i"/);
     expect(html).toContain('background:transparent');
-    expect(html).toContain('color:var(--gs-ink-secondary)');
+    expect(html).toContain('color:var(--la-ink-secondary)');
     // Hover-lightup handlers are wired (the function bodies are emitted
     // by SSR but renderToStaticMarkup does not include them — we assert
     // the consumer-styling contract only).
@@ -113,7 +113,7 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain('width:22');
     expect(html).toContain('height:22');
     expect(html).toContain('display:flex');
-    expect(html).toContain('color:var(--gs-ink-secondary)');
+    expect(html).toContain('color:var(--la-ink-secondary)');
     expect(html).toContain('font-size:var(--gs-font-h3)');
     expect(html).toContain('border-radius:var(--gs-radius-pill)');
     expect(html).toMatch(/aria-label="Close"/);
@@ -127,7 +127,7 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain('padding:5px 12px');
     expect(html).toContain('border-radius:var(--gs-radius-pill)');
     expect(html).toContain('background:transparent');
-    expect(html).toContain('color:var(--gs-ink-secondary)');
+    expect(html).toContain('color:var(--la-ink-secondary)');
   });
 
   it('variant="ghost" + size="md" scales the padding', () => {
@@ -180,7 +180,7 @@ describe("<Button> chrome-tier primitives", () => {
       ),
     );
     expect(html).toContain('background:transparent');
-    expect(html).toContain('color:var(--gs-ink-secondary)');
+    expect(html).toContain('color:var(--la-ink-secondary)');
     // base border should be present (cool-tinted, not transparent)
     expect(html).toContain(
       'border:1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)',
@@ -237,7 +237,7 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain('flex-direction:column');
     expect(html).toContain('border-radius:var(--gs-radius-lg)');
     expect(html).toContain('background:transparent');
-    expect(html).toContain('color:var(--gs-ink-secondary)');
+    expect(html).toContain('color:var(--la-ink-secondary)');
     expect(html).toContain('padding:5px 0 4px');
   });
 
@@ -263,7 +263,7 @@ describe("<Button> chrome-tier primitives", () => {
     );
     expect(html).toContain('cursor:not-allowed');
     expect(html).toContain('opacity:0.55');
-    expect(html).toContain('color:var(--gs-ink-muted)');
+    expect(html).toContain('color:var(--la-ink-muted)');
     // The native disabled attribute is still forwarded
     expect(html).toMatch(/disabled/);
   });
@@ -302,7 +302,7 @@ describe("<Button> chrome-tier primitives", () => {
       'border:1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)',
     );
     expect(html).toContain('background:transparent');
-    expect(html).toContain('color:var(--gs-ink-secondary)');
+    expect(html).toContain('color:var(--la-ink-secondary)');
     expect(html).toContain('border-radius:var(--gs-radius-chip)');
     expect(html).toContain('padding:5px 8px');
   });
@@ -339,7 +339,7 @@ describe("<Button> chrome-tier primitives", () => {
       'border:1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)',
     );
     expect(html).toContain('background:transparent');
-    expect(html).toContain('color:var(--gs-ink-secondary)');
+    expect(html).toContain('color:var(--la-ink-secondary)');
     expect(html).toContain('padding:5px 8px');
     expect(html).toContain('border-radius:var(--gs-radius-chip)');
   });
@@ -350,7 +350,7 @@ describe("<Button> chrome-tier primitives", () => {
         Button,
         {
           variant: "text",
-          style: { color: "var(--gs-ink-muted)", fontSize: "var(--gs-font-sm)", padding: "2px 6px" },
+          style: { color: "var(--la-ink-muted)", fontSize: "var(--gs-font-sm)", padding: "2px 6px" },
           "data-testid": "cad-review-close",
         },
         "✕",
@@ -359,7 +359,7 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toMatch(/<button[^>]*data-testid="cad-review-close"/);
     expect(html).toContain('border:none');
     expect(html).toContain('background:transparent');
-    expect(html).toContain('color:var(--gs-ink-muted)');
+    expect(html).toContain('color:var(--la-ink-muted)');
     expect(html).toContain('padding:2px 6px');
   });
 
@@ -427,7 +427,7 @@ describe("<Button> chrome-tier primitives", () => {
         "↶",
       ),
     );
-    expect(html).toContain('color:var(--gs-ink-muted)');
+    expect(html).toContain('color:var(--la-ink-muted)');
     expect(html).toContain('cursor:not-allowed');
     // glyph disabled does NOT dim opacity (row reads disabled from ink only)
     expect(html).not.toContain('opacity:');

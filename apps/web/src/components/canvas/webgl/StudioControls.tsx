@@ -78,7 +78,8 @@ export function StudioControls({
   onGroundClick,
   onCursorMove,
   tiltLocked,
-}: StudioControlsProps) {  const { gl } = useThree();
+}: StudioControlsProps) {
+  const { gl } = useThree();
 
   // Coalesce hover cursor reports to one write per animation frame — pointer
   // events fire at hundreds of Hz and each report would otherwise re-render
@@ -259,6 +260,8 @@ export function StudioControls({
   const onWheel = useCallback(
     (e: ThreeEvent<WheelEvent>) => {
       e.stopPropagation();
+      // Phase 5: Pause zoom during fly-through playback.
+      if (useStudioStore.getState().isPlayingFlythrough) return;
       if (tiltLocked) return; // zoom frozen under tilt (matches old behaviour)
 
       // Capture the event data synchronously and schedule a single update
@@ -296,6 +299,8 @@ export function StudioControls({
    *  those layers see it. */
   const onPointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
+      // Phase 5: Pause all camera gestures during fly-through playback.
+      if (useStudioStore.getState().isPlayingFlythrough) return;
       if (twoFingerRef.current) return; // two-finger touch owns the camera
       // The spatial gizmo owns its pointer events while a drag is in flight —
       // the ground plane must never start a pan/orbit under the gizmo.
@@ -459,9 +464,9 @@ export function StudioControls({
         const box =
           start && world
             ? normalizeBox(
-                start,
-                worldToPct(world[0], world[1], scaleM, boardAspect),
-              )
+              start,
+              worldToPct(world[0], world[1], scaleM, boardAspect),
+            )
             : null;
         dragState.current.active = false;
         dragState.current.isPan = false;

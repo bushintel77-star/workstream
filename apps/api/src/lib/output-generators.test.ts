@@ -71,6 +71,7 @@ const baseArgs = (): GeneratorArgs => ({
     image_layers: [],
     photo_elevations: [],
     features: [],
+    canvases: [],
     updated_at: new Date().toISOString(),
   },
   catalogSymbols: [],

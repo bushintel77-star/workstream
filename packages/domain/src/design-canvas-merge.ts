@@ -11,15 +11,15 @@ export type MergeConflict = {
 
 export type MergeResult =
   | {
-      ok: true;
-      canvas: DesignCanvas;
-      autoMerged: number;
-      conflictsResolved: number;
-    }
+    ok: true;
+    canvas: DesignCanvas;
+    autoMerged: number;
+    conflictsResolved: number;
+  }
   | {
-      ok: false;
-      conflicts: MergeConflict[];
-    };
+    ok: false;
+    conflicts: MergeConflict[];
+  };
 
 type IdRow = { id: string };
 
@@ -225,6 +225,16 @@ export function mergeDesignCanvas(args: {
     (e) => e.name || e.photo_id || e.id.slice(0, 8),
     newId,
   );
+  const canvases = mergeEntityArray(
+    args.base.canvases ?? [],
+    args.ours.canvases ?? [],
+    args.theirs.canvases ?? [],
+    resolutions,
+    conflicts,
+    "canvas",
+    (c) => c.label || c.id.slice(0, 8),
+    newId,
+  );
 
   if (conflicts.length > 0) {
     return { ok: false, conflicts };
@@ -242,6 +252,7 @@ export function mergeDesignCanvas(args: {
     image_layers,
     photo_elevations,
     features,
+    canvases,
     site_frame: args.theirs.site_frame ?? args.ours.site_frame ?? args.base.site_frame,
     presentation_pack:
       args.theirs.presentation_pack ??

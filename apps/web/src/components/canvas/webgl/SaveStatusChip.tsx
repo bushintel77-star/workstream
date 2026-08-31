@@ -32,10 +32,10 @@ const STATUS_CONFIG: Record<
   SaveStatus,
   { label: string; color: string; pulse: boolean }
 > = {
-  idle: { label: "Idle", color: "var(--gs-ink-secondary)", pulse: false },
-  saving: { label: "Saving…", color: "var(--gs-ink)", pulse: true },
-  retrying: { label: "Retrying…", color: "var(--gs-ink)", pulse: true },
-  saved: { label: "Saved", color: "var(--gs-success)", pulse: false },
+  idle: { label: "Idle", color: "var(--la-ink-secondary)", pulse: false },
+  saving: { label: "Saving…", color: "var(--la-ink)", pulse: true },
+  retrying: { label: "Retrying…", color: "var(--la-ink)", pulse: true },
+  saved: { label: "Saved", color: "var(--la-ink-secondary)", pulse: false },
   error: { label: "Save failed", color: "var(--la-error)", pulse: false },
 };
 

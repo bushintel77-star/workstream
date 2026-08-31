@@ -74,7 +74,7 @@ const dimLabelStyle: React.CSSProperties = {
   fontWeight: 500,
   fontVariantNumeric: "tabular-nums",
   letterSpacing: "-0.01em",
-  color: "var(--gs-ink-truth, #1A1A1A)",
+  color: "var(--la-ink)",
   background: "color-mix(in srgb, var(--la-surface) 80%, transparent)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
   borderRadius: "var(--gs-radius-md)",

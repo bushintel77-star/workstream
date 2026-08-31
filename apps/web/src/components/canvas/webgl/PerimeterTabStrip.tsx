@@ -151,7 +151,7 @@ export function PerimeterTabStrip({
                 onClick={() => lock && onNativeMode(lock.destination)}
                 style={{
                   ...chipBase,
-                  color: "var(--gs-ink-secondary)",
+                  color: "var(--la-ink-secondary)",
                   border: "1px solid var(--gs-line-soft)",
                   cursor: "help",
                   background: "transparent",

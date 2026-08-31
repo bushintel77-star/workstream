@@ -62,7 +62,7 @@ const detailStyle: React.CSSProperties = {
   border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
   borderRadius: "var(--gs-radius-panel)",
   boxShadow: "var(--gs-shadow-3)",
-  color: "var(--gs-ink)",
+  color: "var(--la-ink)",
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-sm)",
   lineHeight: 1.45,
@@ -205,7 +205,7 @@ export function MetaChipSet({ boundaryPct, scaleM, boardAspect, mode, chips }: M
               style={{
                 fontFamily: "var(--font-hand), 'Architects Daughter', cursive",
                 opacity: bright ? 1 : expanded ? 0.95 : 0.4,
-                color: bright ? "var(--la-ink)" : "var(--gs-ink-muted)",
+                color: bright ? "var(--la-ink)" : "var(--la-ink-muted)",
                 boxShadow: expanded ? "var(--gs-shadow-2)" : "var(--gs-shadow-1)",
               }}
             >
