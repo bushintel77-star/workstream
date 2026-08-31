@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import {
   Architects_Daughter,
+  Archivo,
   Fraunces,
+  IBM_Plex_Mono,
   Inter,
   Space_Grotesk,
 } from "next/font/google";
@@ -66,6 +68,24 @@ const fontInter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
+/**
+ * Landscape Canvas v2 chrome typography (handoff §4).
+ * - Archivo: UI labels, panel headers, body text (--font-lc-ui)
+ * - IBM Plex Mono: numeric, labels, codes, tool tiles (--font-lc-mono)
+ *   9.5px floor for outdoor legibility.
+ */
+const fontLcUi = Archivo({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-lc-ui",
+  display: "swap",
+});
+const fontLcMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-lc-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Workstream",
@@ -113,7 +133,7 @@ export default function RootLayout({
   return (
     <html lang="en-AU">
       <body
-        className={`${fontBody.variable} ${fontEditorial.variable} ${fontMono.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable} ${fontTech.variable}`}
+        className={`${fontBody.variable} ${fontEditorial.variable} ${fontMono.variable} ${fontHand.variable} ${fontUi.variable} ${fontInter.variable} ${fontTech.variable} ${fontLcUi.variable} ${fontLcMono.variable}`}
         data-build={
           process.env.NEXT_PUBLIC_BUILD_SHA ??
           process.env.RAILWAY_GIT_COMMIT_SHA ??

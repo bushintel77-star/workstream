@@ -72,6 +72,10 @@ const CHROME_SELECTOR = [
   "[data-testid='selection-chip']",
   "[data-testid='survey-locate-state']",
   "[data-testid='project-identity']",
+  // Landscape Canvas v2 chrome surfaces (handoff §5/§6).
+  "[data-testid='tool-ribbon']",
+  "[data-testid='camera-dock']",
+  "[data-testid='wfs-chip-bar']",
 ].join(", ");
 /*
  * Also NOT here: `perimeter-tab-strip`. It is a transparent wrapping flex band
@@ -393,7 +397,7 @@ test.describe("WebGL chrome collision", () => {
           .then(() => true)
           .catch(() => false);
         if (!expanded) {
-          await fitPill.click({ force: true }).catch(() => {});
+          await fitPill.click({ force: true }).catch(() => { });
         }
         await page.waitForTimeout(600);
         await expect(companion).toHaveAttribute(

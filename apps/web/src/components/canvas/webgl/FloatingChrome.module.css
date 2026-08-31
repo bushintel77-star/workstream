@@ -1,184 +1,36 @@
-/* Spatial Sketching -- FloatingChrome (Bento redesign).
- * Premium frosted-glass docks -- Apple Vision Pro / high-end fintech style.
- * Substantial, legible, feature-rich. No microscopic text. */
+/* Spatial Sketching -- FloatingChrome (Landscape Canvas v2 chrome composition).
+ * Composes: WfsChips, ToolRibbon, CameraDock, DepthRail, readouts, ext panel.
+ * The Stage One bottom tool dock and top corner chips are retired — tools
+ * live in the vertical ribbon, camera in the bottom-centre dock, context
+ * in the top bar. */
 
 /* ---- Perimeter track ---- 1px inset border framing the viewport. */
 .perimeterTrack {
   position: absolute;
   inset: 22px;
-  border: 1px solid rgba(232, 230, 224, 0.08);
-  border-radius: var(--r-2xl);
+  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--lc-ribbon-radius);
   pointer-events: none;
   z-index: var(--cf-z-chrome);
 }
 
-/* ---- Primary chip (top-left) ---- project name + scale info. */
-.primaryChip {
-  position: absolute;
-  top: 22px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  border-radius: var(--r-2xl);
-  background: rgba(20, 22, 26, 0.72);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-  border: 1px solid rgba(232, 230, 224, 0.12);
-  pointer-events: auto;
-  z-index: var(--cf-z-chrome);
-  max-width: 420px;
-  box-shadow: var(--gs-shadow-3);
-}
-
-.primaryChipRight {
-  left: 22px;
-}
-
-.primaryChipLeft {
-  right: 22px;
-}
-
-.primaryAccentSquare {
-  width: 10px;
-  height: 10px;
-  border-radius: var(--r-sm);
-  background: oklch(0.68 0.12 145);
-  flex-shrink: 0;
-  box-shadow: 0 0 8px oklch(0.68 0.12 145 / 40%);
-}
-
-.primaryName {
-  font: 600 15px/1.3 "Inter", sans-serif;
-  color: rgba(232, 230, 224, 0.92);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 240px;
-  letter-spacing: -0.01em;
-}
-
-.primaryMeta {
-  font: 500 11px/1 "IBM Plex Mono", monospace;
-  text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.45);
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  border-left: 1px solid rgba(232, 230, 224, 0.1);
-  padding-left: 12px;
-}
-
-/* ---- Context bar (top-right) ---- unified glass panel.
- * Replaces scattered status pills with a single cohesive Bento panel.
- * Houses: theme toggle, UI scale slider, drafting/snap readout, tilt. */
-.contextBar {
-  position: absolute;
-  top: 22px;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  border-radius: var(--r-2xl);
-  background: rgba(20, 22, 26, 0.72);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-  border: 1px solid rgba(232, 230, 224, 0.12);
-  pointer-events: auto;
-  z-index: var(--cf-z-chrome);
-  box-shadow: var(--gs-shadow-3);
-  overflow: hidden;
-}
-
-.contextBarRight {
-  right: 22px;
-}
-
-.contextBarLeft {
-  left: 22px;
-}
-
-.contextCell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 18px;
-  font: 600 11px/1 "IBM Plex Mono", monospace;
-  text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.6);
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-  user-select: none;
-}
-
-.contextCell:hover {
-  background: rgba(232, 230, 224, 0.06);
-  color: rgba(232, 230, 224, 0.85);
-}
-
-.contextCellAccent {
-  color: oklch(0.68 0.12 145);
-}
-
-.contextCellAccent:hover {
-  color: oklch(0.72 0.12 145);
-}
-
-.contextDivider {
-  width: 1px;
-  height: 24px;
-  background: rgba(232, 230, 224, 0.1);
-  flex-shrink: 0;
-}
-
-.contextSlider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 80px;
-  height: 4px;
-  border-radius: var(--r-sm);
-  background: rgba(232, 230, 224, 0.14);
-  outline: none;
-  cursor: pointer;
-}
-
-.contextSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  border-radius: var(--r-pill);
-  background: oklch(0.68 0.12 145);
-  cursor: pointer;
-  border: 2px solid rgba(20, 22, 26, 0.8);
-}
-
-.contextSlider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: var(--r-pill);
-  background: oklch(0.68 0.12 145);
-  cursor: pointer;
-  border: 2px solid rgba(20, 22, 26, 0.8);
-}
-
-/* ---- Depth Rail (side edge) ---- wider, more legible. */
+/* ---- Depth Rail (side edge) ---- Landscape Canvas v2: two-way bands.
+ * Positive z (planes) above the ground line, subsurface utility depths below.
+ * Uses --lc-* tokens. Radius per --lc-depth-rail-radius. */
 .rail {
   position: absolute;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 12px;
-  border-radius: var(--r-2xl);
-  background: rgba(20, 22, 26, 0.72);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-  border: 1px solid rgba(232, 230, 224, 0.12);
+  border-radius: var(--lc-depth-rail-radius);
+  background: var(--lc-glass-grad);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
+  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
-  box-shadow: var(--gs-shadow-3);
 }
 
 .railRight {
@@ -194,12 +46,50 @@
 }
 
 .railHeader {
-  font: 700 10px/1 "IBM Plex Mono", monospace;
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 700;
   text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.35);
+  color: var(--lc-ink-30);
   text-align: center;
   padding: 4px 0 6px;
-  letter-spacing: 1px;
+  letter-spacing: 0.08em;
+}
+
+/* Ground-line divider — separates positive planes from subsurface utilities */
+.railGroundLine {
+  height: 1px;
+  background: var(--lc-accent-terrain);
+  opacity: var(--lc-op-ground-line);
+  margin: 4px 2px;
+  position: relative;
+}
+
+.railGroundLine::after {
+  content: "0.0";
+  position: absolute;
+  right: -2px;
+  top: -7px;
+  font-family: var(--lc-font-mono);
+  font-size: 7px;
+  font-weight: 600;
+  color: var(--lc-accent-terrain);
+  letter-spacing: 0.05em;
+  background: var(--lc-glass-bg);
+  padding: 0 3px;
+  border-radius: var(--gs-radius-xs);
+}
+
+/* Subsurface section label */
+.railSubsurfaceLabel {
+  font-family: var(--lc-font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--lc-ink-30);
+  text-align: center;
+  padding: 2px 0;
+  letter-spacing: 0.08em;
 }
 
 .cell {
@@ -208,34 +98,49 @@
   justify-content: center;
   width: 52px;
   height: 44px;
-  border-radius: var(--r-lg);
-  font: 700 12px/1 "IBM Plex Mono", monospace;
-  text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.55);
+  border-radius: var(--gs-radius-lg);
   background: transparent;
+  color: var(--lc-ink-60);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   border: none;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .cell:hover {
-  background: rgba(232, 230, 224, 0.07);
-  color: rgba(232, 230, 224, 0.85);
+  background: var(--lc-surface-tint);
+  color: var(--lc-ink);
 }
 
 .cellActive {
-  background: oklch(0.68 0.12 145);
-  color: #10120f;
-  box-shadow: 0 0 12px oklch(0.68 0.12 145 / 35%);
+  background: var(--lc-accent-terrain);
+  color: var(--lc-accent-terrain-on);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--lc-accent-terrain) 35%, transparent);
 }
 
 .cellActive:hover {
-  background: oklch(0.72 0.12 145);
-  color: #10120f;
+  background: var(--lc-accent-terrain-hi);
+  color: var(--lc-accent-terrain-on);
+}
+
+/* Subsurface utility cells — redline accent for below-ground services.
+ * No opacity dimming: the redline color is already distinct from the
+ * terrain-green active cells, and dimming kills text contrast on dark glass. */
+.cellSubsurface {
+  color: var(--lc-accent-redline);
+}
+
+.cellSubsurface:hover {
+  background: color-mix(in srgb, var(--lc-accent-redline) 10%, transparent);
+  color: var(--lc-accent-redline);
 }
 
 .cellAdd {
-  color: rgba(232, 230, 224, 0.4);
+  color: var(--lc-ink-40);
   font-size: 18px;
   line-height: 1;
 }
@@ -247,109 +152,41 @@
   justify-content: center;
   width: 52px;
   height: 22px;
-  border-radius: var(--r-md);
-  font: 700 9px/1 "IBM Plex Mono", monospace;
-  text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.45);
+  border-radius: var(--gs-radius-md);
   background: transparent;
-  border: 1px solid rgba(232, 230, 224, 0.08);
+  color: var(--lc-ink-40);
+  font-family: var(--lc-font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--lc-track-border);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   margin-top: 3px;
-  letter-spacing: 0.5px;
 }
 
 .seasonTag:hover {
-  background: rgba(232, 230, 224, 0.07);
-  color: rgba(232, 230, 224, 0.85);
+  background: var(--lc-surface-tint);
+  color: var(--lc-ink);
 }
 
 .seasonTagSummer {
-  color: oklch(0.72 0.12 145);
-  border-color: oklch(0.72 0.12 145 / 30%);
+  color: var(--lc-accent-terrain);
+  border-color: color-mix(in srgb, var(--lc-accent-terrain) 30%, transparent);
 }
 
 .seasonTagWinter {
-  color: oklch(0.72 0.1 250);
-  border-color: oklch(0.72 0.1 250 / 30%);
+  color: #73a9e1;
+  border-color: color-mix(in srgb, #73a9e1 30%, transparent);
 }
 
 .seasonTagAll {
-  color: rgba(232, 230, 224, 0.45);
+  color: var(--lc-ink-40);
 }
 
-/* ---- Tool dock (bottom centre) ---- premium frosted glass dock.
- * Apple Vision Pro style -- substantial pucks with clear labels. */
-.toolDock {
-  position: absolute;
-  bottom: 22px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 10px;
-  border-radius: var(--r-2xl);
-  background: rgba(20, 22, 26, 0.78);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-  border: 1px solid rgba(232, 230, 224, 0.12);
-  pointer-events: auto;
-  z-index: var(--cf-z-chrome);
-  box-shadow: var(--gs-shadow-4);
-}
-
-.puck {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 64px;
-  height: 56px;
-  border-radius: var(--r-lg);
-  font: 700 10px/1 "IBM Plex Mono", monospace;
-  text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.6);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-  letter-spacing: 0.5px;
-}
-
-.puck:hover {
-  background: rgba(232, 230, 224, 0.07);
-  color: rgba(232, 230, 224, 0.9);
-}
-
-.puckLight {
-  background: rgba(232, 230, 224, 0.07);
-  color: rgba(232, 230, 224, 0.9);
-}
-
-.puckActive {
-  background: oklch(0.68 0.12 145);
-  color: #10120f;
-  box-shadow: 0 0 16px oklch(0.68 0.12 145 / 40%);
-}
-
-.puckActive:hover {
-  background: oklch(0.72 0.12 145);
-  color: #10120f;
-}
-
-.puckIcon {
-  font-size: 18px;
-  line-height: 1;
-}
-
-.puckLabel {
-  font-size: 9px;
-  letter-spacing: 0.5px;
-}
-
-/* ---- Readouts (bottom corners) ---- cut/fill + anchor state. */
+/* ---- Readouts (bottom corners) ---- cut/fill + anchor state.
+ * Uses --lc-* tokens. */
 .readoutGroup {
   position: absolute;
   bottom: 22px;
@@ -369,32 +206,34 @@
 
 .readoutPillCut {
   padding: 12px 18px;
-  border-radius: var(--r-xl);
-  background: rgba(20, 22, 26, 0.72);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-  border: 1px solid rgba(232, 230, 224, 0.12);
-  font: 700 11px/1 "IBM Plex Mono", monospace;
+  border-radius: var(--lc-ribbon-tile-radius);
+  background: var(--lc-glass-bg);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-readout);
+  font-weight: 700;
   text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.6);
-  letter-spacing: 0.5px;
+  color: var(--lc-ink-60);
+  letter-spacing: 0.05em;
   white-space: nowrap;
-  box-shadow: var(--gs-shadow-3);
+  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
 }
 
 .readoutValueCut {
-  color: oklch(0.68 0.12 145);
+  color: var(--lc-accent-terrain);
   font-weight: 700;
   font-size: 13px;
 }
 
 .readoutValueFill {
-  color: oklch(0.72 0.11 55);
+  color: var(--lc-accent-mass);
   font-weight: 700;
   font-size: 13px;
 }
 
-/* ---- Extrusion slider panel ---- appears when MAS tool is armed. */
+/* ---- Extrusion slider panel ---- appears when MASS tool is armed. */
 .extPanel {
   position: absolute;
   bottom: 100px;
@@ -404,21 +243,23 @@
   align-items: center;
   gap: 14px;
   padding: 14px 20px;
-  border-radius: var(--r-2xl);
-  background: rgba(20, 22, 26, 0.78);
-  backdrop-filter: blur(28px) saturate(1.4);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-  border: 1px solid rgba(232, 230, 224, 0.12);
+  border-radius: var(--lc-ribbon-radius);
+  background: var(--lc-glass-grad);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
-  box-shadow: var(--gs-shadow-4);
+  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
 }
 
 .extLabel {
-  font: 700 11px/1 "IBM Plex Mono", monospace;
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-readout);
+  font-weight: 700;
   text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.6);
-  letter-spacing: 0.5px;
+  color: var(--lc-ink-60);
+  letter-spacing: 0.05em;
   white-space: nowrap;
 }
 
@@ -427,8 +268,8 @@
   appearance: none;
   width: 180px;
   height: 6px;
-  border-radius: var(--r-sm);
-  background: rgba(232, 230, 224, 0.14);
+  border-radius: var(--gs-radius-xs);
+  background: var(--lc-track-border);
   outline: none;
   cursor: pointer;
 }
@@ -438,24 +279,26 @@
   appearance: none;
   width: 20px;
   height: 20px;
-  border-radius: var(--r-pill);
-  background: oklch(0.68 0.12 145);
+  border-radius: var(--gs-radius-pill);
+  background: var(--lc-accent-terrain);
   cursor: pointer;
-  border: 2px solid rgba(20, 22, 26, 0.8);
+  border: 2px solid var(--lc-canvas-bg);
 }
 
 .extSlider::-moz-range-thumb {
   width: 20px;
   height: 20px;
-  border-radius: var(--r-pill);
-  background: oklch(0.68 0.12 145);
+  border-radius: var(--gs-radius-pill);
+  background: var(--lc-accent-terrain);
   cursor: pointer;
-  border: 2px solid rgba(20, 22, 26, 0.8);
+  border: 2px solid var(--lc-canvas-bg);
 }
 
 .extValue {
-  font: 700 13px/1 "IBM Plex Mono", monospace;
-  color: oklch(0.68 0.12 145);
+  font-family: var(--lc-font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--lc-accent-terrain);
   min-width: 56px;
   text-align: right;
   white-space: nowrap;
@@ -467,18 +310,20 @@
   justify-content: center;
   height: 40px;
   padding: 0 18px;
-  border-radius: var(--r-lg);
-  font: 700 11px/1 "IBM Plex Mono", monospace;
+  border-radius: var(--lc-ribbon-tile-radius);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-readout);
+  font-weight: 700;
   text-transform: uppercase;
-  color: #10120f;
-  background: oklch(0.68 0.12 145);
+  color: var(--lc-accent-terrain-on);
+  background: var(--lc-accent-terrain);
   border: none;
   cursor: pointer;
   transition: background 0.15s ease;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
   white-space: nowrap;
 }
 
 .extCommit:hover {
-  background: oklch(0.72 0.12 145);
+  background: var(--lc-accent-terrain-hi);
 }

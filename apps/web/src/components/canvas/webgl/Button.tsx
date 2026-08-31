@@ -293,13 +293,17 @@ const chipPresetBase: CSSProperties = {
 };
 
 /**
- * Capsule — MetaChipSet's boundary-marker pill: `--gs-panel-frost`
- * veil + hairline + `--gs-shadow-1` + tabular-nums tech numerals.
- * Rendered inside a 3D Html overlay, so it keeps `pointerEvents:
- * "auto"` (the overlay nulls them otherwise). The per-chip dynamic
- * state (bright / expanded opacity, color, translateY, shadow) is
- * passed by the consumer as style overrides, exactly as the prior
- * `...capsuleBase` + overrides spread did.
+ * Capsule — MetaChipSet's boundary-marker pill: frosted paper veil
+ * + hairline + `--gs-shadow-1` + tabular-nums tech numerals. Rendered
+ * inside a 3D Html overlay, so it keeps `pointerEvents: "auto"` (the
+ * overlay nulls them otherwise). The per-chip dynamic state (bright /
+ * expanded opacity, color, translateY, shadow) is passed by the
+ * consumer as style overrides, exactly as the prior `...capsuleBase`
+ * + overrides spread did.
+ *
+ * Paper-on-dark: these are scene-anchored map labels, not chrome
+ * controls — they read as light capsules against the dark canvas, not
+ * as dark glass that blends into the ground.
  */
 const capsuleBase: CSSProperties = {
   display: "inline-flex",
@@ -312,11 +316,11 @@ const capsuleBase: CSSProperties = {
   letterSpacing: "0.01em",
   fontVariantNumeric: "tabular-nums",
   whiteSpace: "nowrap",
-  background: "var(--la-surface)",
+  background: "var(--gs-panel-frost)",
   border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
   borderRadius: "var(--gs-radius-pill)",
   boxShadow: "var(--gs-shadow-1)",
-  color: "var(--la-ink-muted)",
+  color: "var(--gs-ink-secondary)",
   cursor: "pointer",
   pointerEvents: "auto",
   transition:
@@ -460,17 +464,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       !active && rest.disabled
         ? variant === "swatch"
           ? {
-              color: "var(--la-ink-muted)",
-              cursor: "not-allowed",
-              opacity: 0.55,
-            }
+            color: "var(--la-ink-muted)",
+            cursor: "not-allowed",
+            opacity: 0.55,
+          }
           : variant === "cta" || variant === "ghost-line"
             ? { opacity: 0.5, cursor: "not-allowed" }
             : variant === "glyph"
               ? {
-                  color: "var(--la-ink-muted)",
-                  cursor: "not-allowed",
-                }
+                color: "var(--la-ink-muted)",
+                cursor: "not-allowed",
+              }
               : {}
         : {};
     // Hover behavior was implemented per-variant via onMouseEnter /
@@ -482,33 +486,33 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const hoverHandlers =
       variant === "chip" && !active
         ? {
+          onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
+            e.currentTarget.style.color = "var(--la-ink)";
+            rest.onMouseEnter?.(e);
+          },
+          onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
+            e.currentTarget.style.color = "var(--la-ink-secondary)";
+            rest.onMouseLeave?.(e);
+          },
+        }
+        : variant === "swatch"
+          ? {
             onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
-              e.currentTarget.style.color = "var(--la-ink)";
+              if (rest.disabled) return;
+              if (!active) e.currentTarget.style.color = "var(--la-ink)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "var(--gs-shadow-1)";
               rest.onMouseEnter?.(e);
             },
             onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
-              e.currentTarget.style.color = "var(--la-ink-secondary)";
+              if (rest.disabled) return;
+              if (!active)
+                e.currentTarget.style.color = "var(--la-ink-secondary)";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
               rest.onMouseLeave?.(e);
             },
           }
-        : variant === "swatch"
-          ? {
-              onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
-                if (rest.disabled) return;
-                if (!active) e.currentTarget.style.color = "var(--la-ink)";
-                e.currentTarget.style.transform = "translateY(-1px)";
-                e.currentTarget.style.boxShadow = "var(--gs-shadow-1)";
-                rest.onMouseEnter?.(e);
-              },
-              onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
-                if (rest.disabled) return;
-                if (!active)
-                  e.currentTarget.style.color = "var(--la-ink-secondary)";
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
-                rest.onMouseLeave?.(e);
-              },
-            }
           : {};
 
     return (

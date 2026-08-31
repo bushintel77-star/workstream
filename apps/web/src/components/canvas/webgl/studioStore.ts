@@ -156,6 +156,27 @@ export type RenderMode = "TECHNICAL" | "IMMERSIVE";
  * PEDESTRIAN: 1.7m first-person walk-through (PedestrianCamera).
  */
 export type CameraPosture = "ORBIT" | "PEDESTRIAN";
+
+/**
+ * Landscape Canvas v2 — unified tool ids (handoff §5.1).
+ * The vertical ribbon's 13 tools + 2 utility tiles, one active at a time.
+ * Maps to the legacy tool flags via setActiveTool's bridge logic.
+ */
+export type ToolId =
+  | "pen" | "line" | "spline"           // DRAW
+  | "contour" | "slope" | "cutfill"     // GRADE
+  | "tree" | "bed"                      // PLANT
+  | "mass" | "path"                     // BUILD
+  | "dim" | "section"                   // MEASURE
+  | "layers" | "history"               // utility row
+  | "none";                             // no tool active (default)
+
+/**
+ * Landscape Canvas v2 — camera presets (handoff §6.1).
+ * The four-button view dock: PLAN (ortho 0°), AXO (ortho 22°),
+ * SEC (ortho 90° elevation/cross-section), 3D (perspective blend).
+ */
+export type CameraPreset = "plan" | "axo" | "sec" | "3d";
 export interface SurveyedPlanLayers {
   enabled: boolean;
   /**
@@ -559,6 +580,29 @@ export interface StudioStoreState {
   canvasTheme: "LIGHT" | "DARK";
   /** Toggle between DARK and LIGHT canvas themes. */
   toggleCanvasTheme: () => void;
+
+  // --- Landscape Canvas v2 — tool ribbon + pen-down quiet state ---
+  /** The unified active tool id (handoff §5.1). One tool active at a time.
+   *  Maps to the legacy tool flags (sketchMode, measureActive, etc.) via
+   *  the ribbon's tool-to-store bridge. */
+  activeTool: ToolId;
+  /** Set the active tool — also updates the legacy tool flags. */
+  setActiveTool: (tool: ToolId) => void;
+  /** True while the pen/stylus is in contact (pen-down quiet state, §5.5).
+   *  Written by FusedSketchLayer on pointer down/up. Drives the ribbon →
+   *  rail width and the opacity-only quiet choreography. */
+  penDown: boolean;
+  /** Set the pen-down flag (FusedSketchLayer writes this). */
+  setPenDown: (down: boolean) => void;
+  /** The ribbon's named-width dwell is open (400ms pointer dwell or ⌘K).
+   *  Standard width at rest, rail while pen is down. */
+  ribbonDwellOpen: boolean;
+  /** Open/close the ribbon named-width dwell. */
+  setRibbonDwellOpen: (open: boolean) => void;
+  /** The active camera preset (handoff §6.1). PLAN / AXO / SEC / 3D. */
+  cameraPreset: CameraPreset;
+  /** Set the camera preset — writes the rig tilt + blend target. */
+  setCameraPreset: (preset: CameraPreset) => void;
 
   // --- Phase 8: Living Diorama & Spatial Presence ---
   /** Render quality — TECHNICAL (clean drafting) or IMMERSIVE (AAA post-FX). */
@@ -2106,6 +2150,45 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setAnchorVisibility: (anchorVisibility) => set({ anchorVisibility }),
   toggleCanvasTheme: () =>
     set((s) => ({ canvasTheme: s.canvasTheme === "DARK" ? "LIGHT" : "DARK" })),
+
+  // --- Landscape Canvas v2 — tool ribbon + pen-down quiet state ---
+  activeTool: "none",
+  setActiveTool: (tool) => {
+    const s = useStudioStore.getState();
+    // Bridge: the unified tool id drives the legacy tool flags so the
+    // existing scene layers (FusedSketchLayer, MeasureLayer, etc.) respond
+    // without each one needing to know about the ribbon.
+    const patch: Partial<StudioStoreState> = { activeTool: tool };
+    // Clear all tool flags first, then set the ones for the active tool.
+    patch.sketchMode = tool === "pen";
+    patch.measureActive = tool === "dim";
+    patch.sliceActive = tool === "section";
+    patch.earthworksView = tool === "cutfill";
+    patch.extrusionToolArmed = tool === "mass";
+    patch.transferToolArmed = tool === "path";
+    patch.trenchTool = null;
+    patch.zoneTool = null;
+    patch.armedSymbolId = tool === "tree" ? (s.armedSymbolId ?? "canopy") : tool === "bed" ? (s.armedSymbolId ?? "bed") : null;
+    patch.areaPlantActive = tool === "bed";
+    patch.draftingMode = tool === "line" || tool === "spline" ? true : s.draftingMode;
+    set(patch);
+  },
+  penDown: false,
+  setPenDown: (down) => set({ penDown: down }),
+  ribbonDwellOpen: false,
+  setRibbonDwellOpen: (ribbonDwellOpen) => set({ ribbonDwellOpen }),
+  cameraPreset: "plan",
+  setCameraPreset: (preset) => {
+    const live = useStudioStore.getState().liveRig;
+    const OBLIQUE = 22; // AXO tilt per handoff §6.1
+    const GARDEN = 76;  // 3D perspective per existing GARDEN_PITCH_DEG
+    const rig = { ...live };
+    if (preset === "plan") { rig.tiltDeg = 0; }
+    else if (preset === "axo") { rig.tiltDeg = OBLIQUE; }
+    else if (preset === "sec") { rig.tiltDeg = 90; }
+    else if (preset === "3d") { rig.tiltDeg = GARDEN; rig.zoom = Math.max(rig.zoom, 1.45); }
+    set({ cameraPreset: preset, liveRig: rig, viewBlendTarget: preset === "3d" ? 1 : 0 });
+  },
 
   // --- Phase 8: Living Diorama & Spatial Presence ---
   toggleRenderMode: () =>

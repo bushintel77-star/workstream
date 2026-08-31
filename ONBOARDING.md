@@ -57,6 +57,40 @@ Two consequences:
    AEC-2026 research scope (ResCode A2-6 compliance, chrome recede, ARIA)
    is recorded in `docs/AEC-2026-RESEARCH-ADOPTION.md`.
 
+4. **Landscape Canvas v2 chrome redesign (Stage Two).** The Stage One
+   horizontal bottom tool dock is retired. The chrome is restructured per
+   the Landscape Canvas v2 handoff:
+   - **ToolRibbon** (`webgl/ToolRibbon.tsx`) — categorical vertical glass
+     panel on the hand-opposite edge. Five groups (DRAW, GRADE, PLANT,
+     BUILD, MEASURE) + a utility row (Layers, History). Three widths:
+     RAIL 56px (pen down), STANDARD 88px (rest), NAMED 236px (400ms
+     pointer dwell). Active tool has accent fill; active group header
+     turns accent for wayfinding.
+   - **CameraDock** (`webgl/CameraDock.tsx`) — bottom centre, exclusively
+     the camera. Four presets: PLAN (ortho 0), AXO (ortho 22), SEC
+     (ortho 90), 3D (perspective). Hotkeys 1-4. CAM/ORTHO status cap +
+     Time/Sun pill.
+   - **WfsChips** (`webgl/WfsChips.tsx`) — top bar primary chip (project
+     name + camera + north + scale) + translucent overlay pills for
+     active WFS layers (GRZ10, BAL-12.5, easements, canopy). Hazard
+     colour for bushfire overlays.
+   - **DepthRail** — updated to two-way bands: positive z planes above
+     the ground line, subsurface utility depths (GAS, H2O, ELEC, SEW,
+     TEL) below in redline accent.
+   - **Pen-down quiet state** — pen contact drives `studioStore.penDown`,
+     which fades the ribbon to rail width (opacity-only, never position),
+     chips to 20%, and camera dock to hidden. Restore after 240ms.
+   - **Tokens** — `--lc-*` namespace in `color-tokens.css` for the dark
+     glass chrome. Archivo (`--font-lc-ui`) + IBM Plex Mono
+     (`--font-lc-mono`) loaded in `layout.tsx`. Opacity scale (`--lc-op-*`)
+     and geometry tokens (`--lc-ribbon-*`, `--lc-camera-dock-*`,
+     `--lc-depth-rail-*`).
+   - **Store bridge** — `activeTool: ToolId` in `studioStore` maps to the
+     legacy tool flags (`sketchMode`, `measureActive`, `sliceActive`, etc.)
+     so existing scene layers respond without each knowing about the
+     ribbon. `cameraPreset: CameraPreset` writes the rig tilt + blend
+     target.
+
 ## 2. Platform stages vs canvas modes
 
 The product is defined by **four platform stages** (concept → signoff,

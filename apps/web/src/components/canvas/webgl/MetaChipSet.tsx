@@ -54,15 +54,16 @@ const detailStyle: React.CSSProperties = {
   transform: "translateX(-50%)",
   width: 220,
   padding: "8px 10px",
-  /* Paper glass detail card, not dark glass (design-spec §5 / debt D8) —
-   * dark chrome is reserved for the presentation lens. */
-  background: "var(--la-surface)",
+  /* Paper detail card — light surface with dark ink, reads as a map
+   * label against the dark canvas. Dark chrome is reserved for the
+   * presentation lens. */
+  background: "var(--gs-panel)",
   backdropFilter: "none",
   WebkitBackdropFilter: "none",
   border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
   borderRadius: "var(--gs-radius-panel)",
   boxShadow: "var(--gs-shadow-3)",
-  color: "var(--la-ink)",
+  color: "var(--gs-ink-strong)",
   fontFamily: "var(--font-ui)",
   fontSize: "var(--gs-font-sm)",
   lineHeight: 1.45,
@@ -164,7 +165,7 @@ export function MetaChipSet({ boundaryPct, scaleM, boardAspect, mode, chips }: M
             stroke="var(--gs-line-strong)"
             strokeWidth={1}
             strokeDasharray="4 3"
-            opacity={0.7}
+            opacity={0.85}
           />
         ))}
       </svg>
@@ -205,7 +206,7 @@ export function MetaChipSet({ boundaryPct, scaleM, boardAspect, mode, chips }: M
               style={{
                 fontFamily: "var(--font-hand), 'Architects Daughter', cursive",
                 opacity: bright ? 1 : expanded ? 0.95 : 0.4,
-                color: bright ? "var(--la-ink)" : "var(--la-ink-muted)",
+                color: bright ? "var(--gs-ink-strong)" : "var(--gs-ink-secondary)",
                 boxShadow: expanded ? "var(--gs-shadow-2)" : "var(--gs-shadow-1)",
               }}
             >

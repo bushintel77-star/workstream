@@ -54,7 +54,6 @@ import { FloatingChrome } from "./FloatingChrome";
 import {
   DEFAULT_CAMERA_RIG,
   GARDEN_PITCH_DEG,
-  OBLIQUE_PITCH_DEG,
   modeArmsDims,
   modeEntryPitchDeg,
   type StudioCameraRig,
@@ -801,14 +800,10 @@ export function WebGLStudioPreview({
       if (!hit) return;
       if (hit.kind === "viewport") {
         if (useStudioStore.getState().splitView) return;
-        const live = useStudioStore.getState().liveRig;
         e.preventDefault();
-        if (hit.preset === "plan") writeLiveRig({ ...live, tiltDeg: 0 });
-        else if (hit.preset === "orbit")
-          writeLiveRig({ ...live, tiltDeg: OBLIQUE_PITCH_DEG });
-        else if (hit.preset === "garden")
-          writeLiveRig({ ...live, tiltDeg: GARDEN_PITCH_DEG, zoom: 1.45 });
-        else useStudioStore.getState().setPitchDeg(90);
+        // Landscape Canvas v2 — camera dock presets (handoff §6.1).
+        // The store's setCameraPreset writes the rig tilt + blend target.
+        useStudioStore.getState().setCameraPreset(hit.preset);
         return;
       }
       if (hit.kind === "mode") {

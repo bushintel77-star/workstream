@@ -8,7 +8,7 @@
 
 import type { CanvasMode } from "../../../lib/canvas-mode";
 
-export type ViewportPreset = "plan" | "orbit" | "garden" | "elevation";
+export type ViewportPreset = "plan" | "axo" | "sec" | "3d";
 export type ToolAction =
   | "assets"
   | "measure"
@@ -35,9 +35,9 @@ export const MODE_BY_SHIFT_DIGIT: Record<string, CanvasMode> = {
 
 export const VIEWPORT_BY_DIGIT: Record<string, ViewportPreset> = {
   "1": "plan",
-  "2": "orbit",
-  "3": "garden",
-  "4": "elevation",
+  "2": "axo",
+  "3": "sec",
+  "4": "3d",
 };
 
 export const TOOL_BY_KEY: Record<string, ToolAction> = {
@@ -54,31 +54,31 @@ export const SHORTCUT_ROWS: Array<{
   keys: string;
   action: string;
 }> = [
-  { group: "View", keys: "1", action: "Plan (orthographic)" },
-  { group: "View", keys: "2", action: "Orbit (perspective)" },
-  { group: "View", keys: "3", action: "Garden eye-level" },
-  { group: "View", keys: "4", action: "Elevation pitch" },
-  { group: "View", keys: "H (hold)", action: "Peek — fade chrome to read the drawing" },
-  { group: "Mode", keys: "Shift+1", action: "Survey" },
-  { group: "Mode", keys: "Shift+2", action: "Sketch" },
-  { group: "Mode", keys: "Shift+3", action: "CAD" },
-  { group: "Mode", keys: "Shift+4", action: "Elevation" },
-  { group: "Mode", keys: "Shift+5", action: "Garden" },
-  { group: "Mode", keys: "Shift+6", action: "Quote" },
-  { group: "Mode", keys: "Shift+7", action: "Present" },
-  { group: "Mode", keys: "Shift+8", action: "Share" },
-  { group: "Tool", keys: "A", action: "Asset dock" },
-  { group: "Tool", keys: "S", action: "Sketch ink" },
-  { group: "Tool", keys: "M", action: "Measure tape" },
-  { group: "Tool", keys: "U", action: "Underground" },
-  { group: "Tool", keys: "D", action: "Working-drawing dims" },
-  { group: "Tool", keys: "?", action: "This shortcut list" },
-  { group: "Edit", keys: "Ctrl+K", action: "Command palette" },
-  { group: "Edit", keys: "Ctrl+Z", action: "Undo" },
-  { group: "Edit", keys: "Ctrl+Shift+Z", action: "Redo" },
-  { group: "Edit", keys: "Esc", action: "Clear / cancel" },
-  { group: "Edit", keys: "Delete", action: "Remove selection" },
-];
+    { group: "View", keys: "1", action: "PLAN (orthographic top-down)" },
+    { group: "View", keys: "2", action: "AXO (22° axonometric)" },
+    { group: "View", keys: "3", action: "SEC (elevation / cross-section)" },
+    { group: "View", keys: "4", action: "3D (perspective drone orbit)" },
+    { group: "View", keys: "H (hold)", action: "Peek — fade chrome to read the drawing" },
+    { group: "Mode", keys: "Shift+1", action: "Survey" },
+    { group: "Mode", keys: "Shift+2", action: "Sketch" },
+    { group: "Mode", keys: "Shift+3", action: "CAD" },
+    { group: "Mode", keys: "Shift+4", action: "Elevation" },
+    { group: "Mode", keys: "Shift+5", action: "Garden" },
+    { group: "Mode", keys: "Shift+6", action: "Quote" },
+    { group: "Mode", keys: "Shift+7", action: "Present" },
+    { group: "Mode", keys: "Shift+8", action: "Share" },
+    { group: "Tool", keys: "A", action: "Asset dock" },
+    { group: "Tool", keys: "S", action: "Sketch ink" },
+    { group: "Tool", keys: "M", action: "Measure tape" },
+    { group: "Tool", keys: "U", action: "Underground" },
+    { group: "Tool", keys: "D", action: "Working-drawing dims" },
+    { group: "Tool", keys: "?", action: "This shortcut list" },
+    { group: "Edit", keys: "Ctrl+K", action: "Command palette" },
+    { group: "Edit", keys: "Ctrl+Z", action: "Undo" },
+    { group: "Edit", keys: "Ctrl+Shift+Z", action: "Redo" },
+    { group: "Edit", keys: "Esc", action: "Clear / cancel" },
+    { group: "Edit", keys: "Delete", action: "Remove selection" },
+  ];
 
 export function isTypingTarget(target: EventTarget | null): boolean {
   if (!target || typeof target !== "object") return false;

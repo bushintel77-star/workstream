@@ -157,6 +157,8 @@ export function FusedSketchLayer({
   const isExtrudingRef = useRef(false);
   const extrudeStartYRef = useRef(0);
   const pointsRef = useRef<THREE.Vector3[]>([]);
+  // Pen-down quiet state timeout — restores chrome 240ms after pen-up (§5.5).
+  const penUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Per-point stylus telemetry — parallel to pointsRef (same index).
   const telemetryRef = useRef<StylusTelemetry[]>([]);
   // The canvas plane the current stroke is being drawn on (null = ground).
@@ -237,6 +239,9 @@ export function FusedSketchLayer({
       // Otherwise start a new freehand stroke. Seed the first point at FLAT_Y —
       // the live-stroke renderer will drape it as the camera tilts.
       isDrawingRef.current = true;
+      // Pen-down quiet state — ribbon → rail, chips → 20%, dock hidden (§5.5).
+      if (penUpTimerRef.current) { clearTimeout(penUpTimerRef.current); penUpTimerRef.current = null; }
+      useStudioStore.getState().setPenDown(true);
       setSnapHint(null);
       setHover(null);
       pointsRef.current = [new THREE.Vector3(pt.x, FLAT_Y, pt.z)];
@@ -306,6 +311,11 @@ export function FusedSketchLayer({
 
     if (!isDrawingRef.current) return;
     isDrawingRef.current = false;
+    // Pen-up: restore chrome after 240ms delay (§5.5 — animate opacity only).
+    penUpTimerRef.current = setTimeout(() => {
+      useStudioStore.getState().setPenDown(false);
+      penUpTimerRef.current = null;
+    }, 240);
     setSnapHint(null);
     setHover(null);
 
@@ -384,6 +394,9 @@ export function FusedSketchLayer({
       if (!sketchMode) return;
       activeStrokeCanvasIdRef.current = canvasId;
       isDrawingRef.current = true;
+      // Pen-down quiet state — ribbon → rail, chips → 20%, dock hidden (§5.5).
+      if (penUpTimerRef.current) { clearTimeout(penUpTimerRef.current); penUpTimerRef.current = null; }
+      useStudioStore.getState().setPenDown(true);
       setSnapHint(null);
       setHover(null);
       // For canvas-plane strokes, the live point is the world point itself
@@ -411,6 +424,11 @@ export function FusedSketchLayer({
     (canvasId: string) => {
       if (!sketchMode || !isDrawingRef.current) return;
       isDrawingRef.current = false;
+      // Pen-up: restore chrome after 240ms delay (§5.5).
+      penUpTimerRef.current = setTimeout(() => {
+        useStudioStore.getState().setPenDown(false);
+        penUpTimerRef.current = null;
+      }, 240);
       setSnapHint(null);
       setHover(null);
 

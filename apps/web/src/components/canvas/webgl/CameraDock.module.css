@@ -1,0 +1,168 @@
+/* Landscape Canvas v2 — Camera Dock (handoff §6.1).
+ * Bottom centre, exclusively the camera. Four buttons: PLAN / AXO / SEC / 3D.
+ * Dark glass chrome with terrain-green accent. */
+
+/* ---- Dock container ---- */
+.dock {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 9px;
+  border-radius: var(--lc-camera-dock-radius);
+  background: var(--lc-glass-grad);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
+  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+  transition: opacity 120ms ease;
+}
+
+/* Pen-down quiet state — camera dock hidden (§5.5) */
+.dockHidden {
+  opacity: var(--lc-op-hidden);
+  pointer-events: none;
+}
+
+/* ---- Status cap (left end) — CAM / ORTHO ---- */
+.statusCap {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+}
+
+.statusCapLabel {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lc-ink-30);
+}
+
+/* ---- Divider between sections ---- */
+.statusDivider {
+  width: 1px;
+  height: 28px;
+  background: var(--lc-glass-border);
+  flex-shrink: 0;
+}
+
+/* ---- Button group ---- */
+.buttonGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---- Camera button ---- */
+.button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 80px;
+  height: 56px;
+  border-radius: var(--gs-radius-2xl);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--lc-ink-60);
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  position: relative;
+}
+
+.button:hover {
+  background: var(--lc-surface-tint);
+  color: var(--lc-ink);
+}
+
+/* ---- Active button — wider (86px), accent fill ---- */
+.buttonActive {
+  width: 86px;
+  background: var(--lc-accent-terrain);
+  color: var(--lc-accent-terrain-on);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--lc-accent-terrain) 35%, transparent);
+}
+
+.buttonActive:hover {
+  background: var(--lc-accent-terrain-hi);
+  color: var(--lc-accent-terrain-on);
+}
+
+/* ---- Active pip — 18x2px at top (§4 geometry) ---- */
+.activePip {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 2px;
+  border-radius: var(--gs-radius-xs);
+  background: var(--lc-accent-terrain-hi);
+}
+
+/* ---- Button glyph ---- */
+.buttonGlyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.buttonGlyph svg {
+  display: block;
+}
+
+/* ---- Button label ---- */
+.buttonLabel {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+/* ---- Time/Sun pill (right end) ---- */
+.timePill {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.timePill:hover {
+  opacity: var(--lc-op-80);
+}
+
+.timePillLabel {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-readout);
+  font-weight: 600;
+  color: var(--lc-ink-60);
+  letter-spacing: 0.02em;
+}
+
+/* ---- Rig caption (drafting mode indicator) ---- */
+.rigCaption {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 500;
+  color: var(--lc-ink-30);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}

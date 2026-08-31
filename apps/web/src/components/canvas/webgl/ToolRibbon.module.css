@@ -1,0 +1,264 @@
+/* Landscape Canvas v2 — Tool Ribbon (handoff §5).
+ * Vertical glass panel, hand-opposite edge, top-aligned at inset 30px.
+ * Three widths: RAIL 56px (pen down), STANDARD 88px (rest), NAMED 236px (dwell/CmdK).
+ * Dark glass chrome with terrain-green accent. */
+
+/* ---- Ribbon container ---- */
+.ribbon {
+  position: absolute;
+  top: 30px;
+  display: flex;
+  flex-direction: column;
+  padding: var(--lc-ribbon-padding);
+  border-radius: var(--lc-ribbon-radius);
+  background: var(--lc-glass-grad);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
+  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+  transition: width 160ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 120ms ease;
+}
+
+/* Handedness — ribbon sits on the hand-opposite edge */
+.ribbonLeft {
+  right: 22px;
+}
+
+.ribbonRight {
+  left: 22px;
+}
+
+/* ---- Three widths ---- */
+.ribbonStandard {
+  width: var(--lc-ribbon-width);
+}
+
+.ribbonRail {
+  width: var(--lc-ribbon-width-rail);
+  opacity: var(--lc-op-quiet);
+}
+
+.ribbonNamed {
+  width: var(--lc-ribbon-width-named);
+}
+
+/* ---- Header ---- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0 6px;
+}
+
+.headerLabel {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lc-ink-30);
+}
+
+/* ---- Group pips (3 dots under header) ---- */
+.groupPips {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 0 8px;
+}
+
+.pip {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--lc-ink-30);
+}
+
+.pipActive {
+  background: var(--lc-accent-terrain);
+  box-shadow: 0 0 6px var(--lc-accent-terrain);
+}
+
+/* ---- Group divider ---- */
+.groupDivider {
+  height: 1px;
+  background: var(--lc-glass-border);
+  margin: 7px 2px 6px;
+  flex-shrink: 0;
+}
+
+/* ---- Group ---- */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lc-ribbon-tile-gap);
+}
+
+/* ---- Group header ---- */
+.groupHeader {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lc-ink-30);
+  padding: 2px 0 4px;
+  transition: color 160ms ease;
+}
+
+.groupHeaderActive {
+  color: var(--lc-accent-terrain);
+}
+
+/* ---- Tool tile ---- */
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  padding: 5px 0 4px;
+  border-radius: var(--lc-ribbon-tile-radius);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--lc-ink-60);
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  position: relative;
+  overflow: visible;
+}
+
+.tile:hover {
+  background: var(--lc-surface-tint);
+  color: var(--lc-ink);
+}
+
+/* ---- Active tile — accent fill, dark glyph/label ---- */
+.tileActive {
+  background: var(--lc-accent-terrain);
+  color: var(--lc-accent-terrain-on);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--lc-accent-terrain) 35%, transparent);
+}
+
+.tileActive:hover {
+  background: var(--lc-accent-terrain-hi);
+  color: var(--lc-accent-terrain-on);
+}
+
+/* ---- Rail width tiles — glyph-only, 38px tall ---- */
+.tileRail {
+  height: 38px;
+  padding: 0;
+  border-radius: var(--gs-radius-lg);
+}
+
+/* ---- Compact utility tiles — 28px square ---- */
+.tileCompact {
+  flex-direction: row;
+  justify-content: center;
+  height: 28px;
+  padding: 0;
+  border-radius: var(--gs-radius-lg);
+}
+
+/* ---- Tile glyph ---- */
+.tileGlyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.tileGlyph svg {
+  display: block;
+}
+
+/* ---- Tile label (standard + named widths) ---- */
+.tileLabel {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ---- Tile hotkey (named width only) ---- */
+.tileHotkey {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 500;
+  color: var(--lc-ink-30);
+  line-height: 1;
+  margin-left: auto;
+}
+
+.tileActive .tileHotkey {
+  color: var(--lc-accent-terrain-on);
+  opacity: var(--lc-op-60);
+}
+
+/* ---- Corner triangle — active tool with a flyout (§5.1) ---- */
+.tileCornerTriangle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 4px 4px 0;
+  border-color: transparent var(--lc-accent-terrain-on) transparent transparent;
+}
+
+/* ---- Utility row — two 28px tiles side by side ---- */
+.utilityRow {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.utilityRow .tile {
+  flex: 1;
+}
+
+/* ---- Named width — rows become horizontal with glyph + name + hotkey ---- */
+.ribbonNamed .tile {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 7px 8px;
+}
+
+.ribbonNamed .tileGlyph {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.ribbonNamed .tileLabel {
+  font-family: var(--lc-font-ui);
+  font-size: var(--lc-fs-body);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.ribbonNamed .tileCompact {
+  flex-direction: row;
+  justify-content: flex-start;
+  height: auto;
+  padding: 7px 8px;
+}
+
+/* ---- Pen-down quiet state (§5.5) — opacity only, never position ---- */
+.ribbonRail {
+  opacity: var(--lc-op-quiet);
+}

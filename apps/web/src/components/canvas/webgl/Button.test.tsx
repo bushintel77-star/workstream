@@ -199,7 +199,7 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain('font-family:var(--font-tech)');
     expect(html).toContain('font-size:var(--gs-font-xs)');
     expect(html).toContain('font-variant-numeric:tabular-nums');
-    expect(html).toContain('background:var(--la-surface)');
+    expect(html).toContain('background:var(--gs-panel-frost)');
     expect(html).toContain('border-radius:var(--gs-radius-pill)');
     expect(html).toContain('box-shadow:var(--gs-shadow-1)');
     expect(html).toContain('pointer-events:auto');
@@ -221,7 +221,7 @@ describe("<Button> chrome-tier primitives", () => {
     expect(html).toContain('opacity:0.4');
     expect(html).toContain('transform:translateY(-1px)');
     // Shell untouched
-    expect(html).toContain('background:var(--la-surface)');
+    expect(html).toContain('background:var(--gs-panel-frost)');
   });
 
   it('variant="swatch" renders the StudioToolRail icon column shell', () => {

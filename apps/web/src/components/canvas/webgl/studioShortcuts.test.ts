@@ -20,22 +20,22 @@ function key(
 }
 
 describe("resolveStudioShortcut", () => {
-  it("maps 1–4 to viewport presets (HUD contract)", () => {
+  it("maps 1–4 to camera dock presets (handoff §6.1)", () => {
     expect(resolveStudioShortcut(key("1"))).toEqual({
       kind: "viewport",
       preset: "plan",
     });
     expect(resolveStudioShortcut(key("2"))).toEqual({
       kind: "viewport",
-      preset: "orbit",
+      preset: "axo",
     });
     expect(resolveStudioShortcut(key("3"))).toEqual({
       kind: "viewport",
-      preset: "garden",
+      preset: "sec",
     });
     expect(resolveStudioShortcut(key("4"))).toEqual({
       kind: "viewport",
-      preset: "elevation",
+      preset: "3d",
     });
   });
 
