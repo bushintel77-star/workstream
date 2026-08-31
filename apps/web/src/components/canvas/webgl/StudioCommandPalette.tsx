@@ -1,18 +1,36 @@
 "use client";
 
 /**
- * Gold Standard 2026 — Studio Command Palette (Cmd/Ctrl+K).
+ * Gold Standard 2026 — Spatial Command Palette (Cmd/Ctrl+K).
  *
- * The power-operator surface for the WebGL mount: every mode, tool, and
- * camera action reachable by keyboard. Glass chrome per the zero-chrome law
- * — summoned, never parked. Listbox semantics for the a11y gate.
+ * A global teleporter. Searches existing projects by address and pings
+ * Nominatim for new sites. Selecting an existing project jumps to its canvas;
+ * selecting an address creates a new project, routes to it, and appends
+ * ?setup=1 so the WebGL mount triggers the Phase 7 auto-generation.
+ *
+ * Commands (modes/tools/views) remain as a fallback filter group.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 import { useStudioStore } from "./studioStore";
 import { OBLIQUE_PITCH_DEG } from "./cameraRig";
 import type { CanvasMode } from "../../../lib/canvas-mode";
+import type { Project } from "@workstream/contracts";
+import {
+  listProjectsAction,
+  geocodeSearchAction,
+  createProjectAction,
+} from "../../../app/actions";
+
+type Suggestion = {
+  id: string;
+  place_name: string;
+  text: string;
+  lat: number;
+  lng: number;
+};
 
 type PaletteAction = {
   id: string;
@@ -21,6 +39,11 @@ type PaletteAction = {
   hint?: string;
   run: () => void;
 };
+
+type PaletteItem =
+  | { kind: "project"; id: string; project: Project }
+  | { kind: "address"; id: string; suggestion: Suggestion }
+  | { kind: "command"; id: string; command: PaletteAction };
 
 const chip: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
@@ -32,6 +55,21 @@ const chip: React.CSSProperties = {
   color: "var(--la-ink-secondary)",
   whiteSpace: "nowrap",
 };
+
+const chipAccent = (colour: string): React.CSSProperties => ({
+  ...chip,
+  color: colour,
+  border: `1px solid color-mix(in srgb, ${colour} 45%, transparent)`,
+});
+
+function labelForSuggestion(item: Suggestion): string {
+  const first = item.place_name.split(",").slice(0, 3).join(",").trim();
+  if (!item.text || /^\d+$/.test(item.text.trim())) return first || item.place_name;
+  if (item.place_name.toLowerCase().startsWith(item.text.toLowerCase())) {
+    return first || item.place_name;
+  }
+  return `${item.text} — ${first}`;
+}
 
 export function StudioCommandPalette({
   open,
@@ -46,25 +84,23 @@ export function StudioCommandPalette({
   onClose: () => void;
   onMode: (mode: CanvasMode) => void;
   onZoom: (direction: 1 | -1) => void;
-  /** Open the site-photo gallery meta tab (photo-trace elevation source). */
   onOpenSitePhotos: () => void;
   projectId: string;
   unlocked: ReadonlySet<CanvasMode>;
 }) {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [activeIdx, setActiveIdx] = useState(0);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [addresses, setAddresses] = useState<Suggestion[]>([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestIdRef = useRef(0);
   useFocusTrap(open, panelRef, onClose);
-
-  useEffect(() => {
-    if (open) {
-      setQuery("");
-      setActiveIdx(0);
-      // Focus after mount so the input is typeable immediately.
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
-  }, [open]);
 
   const actions = useMemo<PaletteAction[]>(() => {
     const modes: Array<[CanvasMode, string]> = [
@@ -256,26 +292,153 @@ export function StudioCommandPalette({
     ];
   }, [onMode, onOpenSitePhotos, onZoom, projectId, unlocked]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return actions;
-    return actions.filter(
-      (a) =>
-        a.label.toLowerCase().includes(q) ||
-        a.group.toLowerCase().includes(q),
-    );
-  }, [actions, query]);
+  useEffect(() => {
+    if (!open) return;
+    setQuery("");
+    setActiveIdx(0);
+    setAddresses([]);
+    setProjects([]);
+    setProjectsLoading(true);
+    requestAnimationFrame(() => inputRef.current?.focus());
 
-  useEffect(() => setActiveIdx(0), [query]);
+    let cancelled = false;
+    listProjectsAction()
+      .then((list) => {
+        if (cancelled) return;
+        const sorted = list
+          .slice()
+          .sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+          )
+          .slice(0, 5);
+        setProjects(sorted);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[palette] list projects failed", err);
+      })
+      .finally(() => setProjectsLoading(false));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 3) {
+      setAddresses([]);
+      setAddressesLoading(false);
+      return;
+    }
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setAddressesLoading(true);
+    const requestId = ++requestIdRef.current;
+
+    debounceRef.current = setTimeout(() => {
+      geocodeSearchAction(trimmed)
+        .then((results) => {
+          if (requestId !== requestIdRef.current) return;
+          setAddresses(results);
+        })
+        .catch((err) => {
+          if (requestId !== requestIdRef.current) return;
+          console.error("[palette] geocode failed", err);
+        })
+        .finally(() => setAddressesLoading(false));
+    }, 280);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query]);
+
+  useEffect(() => setActiveIdx(0), [query, projects, addresses]);
+
+  const items = useMemo<PaletteItem[]>(() => {
+    const q = query.trim().toLowerCase();
+    const out: PaletteItem[] = [];
+
+    const projectMatch = (project: Project) => {
+      if (!q) return true;
+      const hay = [
+        project.address,
+        project.client_name ?? "",
+        project.status,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    };
+
+    const projectItems = q
+      ? projects.filter(projectMatch)
+      : projects.slice(0, 5);
+    for (const project of projectItems) {
+      out.push({ kind: "project", id: `project-${project.id}`, project });
+    }
+
+    for (const suggestion of addresses) {
+      out.push({ kind: "address", id: `address-${suggestion.id}`, suggestion });
+    }
+
+    const filteredCommands = q
+      ? actions.filter(
+        (a) =>
+          a.label.toLowerCase().includes(q) ||
+          a.group.toLowerCase().includes(q),
+      )
+      : actions;
+    for (const command of filteredCommands) {
+      out.push({ kind: "command", id: command.id, command });
+    }
+
+    return out;
+  }, [actions, addresses, projects, query]);
+
+  useEffect(() => {
+    if (activeIdx >= items.length && items.length > 0) {
+      setActiveIdx(items.length - 1);
+    }
+  }, [activeIdx, items.length]);
+
+  const runAt = (i: number) => {
+    const item = items[i];
+    if (!item) return;
+    if (item.kind === "command") {
+      item.command.run();
+      onClose();
+    } else if (item.kind === "project") {
+      router.push(`/projects/${item.project.id}`);
+      onClose();
+    } else if (item.kind === "address") {
+      void createFromAddress(item.suggestion);
+    }
+  };
+
+  async function createFromAddress(suggestion: Suggestion) {
+    if (creating) return;
+    setCreating(true);
+    try {
+      const formData = new FormData();
+      formData.set("address", suggestion.place_name);
+      formData.set("lat", String(suggestion.lat));
+      formData.set("lng", String(suggestion.lng));
+      const project = await createProjectAction(formData);
+      router.push(`/projects/${project.id}?setup=1`);
+    } catch (err) {
+      console.error("[palette] create project failed", err);
+    } finally {
+      setCreating(false);
+      onClose();
+    }
+  }
 
   if (!open) return null;
 
-  const runAt = (i: number) => {
-    const a = filtered[i];
-    if (!a) return;
-    a.run();
-    onClose();
-  };
+  const busy = projectsLoading || addressesLoading || creating;
 
   return (
     <div
@@ -285,16 +448,12 @@ export function StudioCommandPalette({
         top: 110,
         left: "50%",
         transform: "translateX(-50%)",
-        width: "min(460px, 92vw)",
+        width: "min(520px, 92vw)",
         pointerEvents: "auto",
-        // No inline z-index — this surface now mounts inside
-        // CanvasFirstLayout's `app` slot (z=30). The wrapper owns the
-        // stack; a redundant zIndex:20 here would suggest chrome tier and
-        // invite future tier-crossing bugs.
         borderRadius: "var(--gs-radius-panel)",
         background: "color-mix(in srgb, var(--la-surface) 55%, transparent)",
-        backdropFilter: "none",
-        WebkitBackdropFilter: "none",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
         border: "1px solid color-mix(in srgb, var(--gs-line) 40%, transparent)",
         boxShadow: "0 12px 40px color-mix(in srgb, var(--gs-frame) 75%, transparent)",
         fontFamily: "var(--font-ui)",
@@ -310,15 +469,20 @@ export function StudioCommandPalette({
         ref={inputRef}
         type="text"
         value={query}
-        aria-label="Search commands"
+        aria-label="Search projects, addresses or commands"
         data-testid="command-palette-input"
-        placeholder="Search modes, tools, actions…"
+        placeholder={
+          busy && creating
+            ? "Creating new site…"
+            : "Search projects, type an address, or run a command…"
+        }
+        disabled={creating}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Escape") onClose();
           else if (e.key === "ArrowDown") {
             e.preventDefault();
-            setActiveIdx((i) => Math.min(i + 1, filtered.length - 1));
+            setActiveIdx((i) => Math.min(i + 1, items.length - 1));
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
             setActiveIdx((i) => Math.max(i - 1, 0));
@@ -337,44 +501,113 @@ export function StudioCommandPalette({
           background: "transparent",
           border: "none",
           borderBottom: "1px solid color-mix(in srgb, var(--gs-line) 40%, transparent)",
+          opacity: creating ? 0.6 : 1,
         }}
       />
-      <div role="listbox" aria-label="Commands" style={{ maxHeight: 300, overflowY: "auto" }}>
-        {filtered.length === 0 ? (
+      <div role="listbox" aria-label="Palette results" style={{ maxHeight: 360, overflowY: "auto" }}>
+        {items.length === 0 ? (
           <p
-            style={{ padding: "10px 12px", fontSize: "var(--gs-font-md)", color: "var(--la-ink-secondary)", margin: 0 }}
+            style={{
+              padding: "10px 12px",
+              fontSize: "var(--gs-font-md)",
+              color: "var(--la-ink-secondary)",
+              margin: 0,
+            }}
           >
-            No commands match “{query}”.
+            {busy && !query ? "Loading projects…" : "No matches."}
           </p>
         ) : (
-          filtered.map((a, i) => (
-            <div
-              key={a.id}
-              role="option"
-              aria-selected={i === activeIdx}
-              data-testid={`command-${a.id}`}
-              onMouseEnter={() => setActiveIdx(i)}
-              onClick={() => runAt(i)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "var(--gs-space-4)",
-                padding: "6px 12px",
-                fontSize: "var(--gs-font-md)",
-                cursor: "pointer",
-                background:
-                  i === activeIdx
-                    ? "color-mix(in srgb, var(--la-accent) 14%, transparent)"
-                    : "transparent",
-                color: i === activeIdx ? "var(--la-accent)" : "var(--la-ink)",
-              }}
-            >
-              <span style={chip}>{a.group}</span>
-              <span style={{ flex: 1 }}>{a.label}</span>
-              {a.hint ? <span style={chip}>{a.hint}</span> : null}
-            </div>
-          ))
+          items.map((item, i) => {
+            const active = i === activeIdx;
+            const baseStyle: React.CSSProperties = {
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--gs-space-4)",
+              padding: "6px 12px",
+              fontSize: "var(--gs-font-md)",
+              cursor: "pointer",
+              background: active
+                ? "color-mix(in srgb, var(--la-accent) 14%, transparent)"
+                : "transparent",
+              color: active ? "var(--la-accent)" : "var(--la-ink)",
+            };
+
+            if (item.kind === "project") {
+              return (
+                <div
+                  key={item.id}
+                  role="option"
+                  aria-selected={active}
+                  data-testid={`palette-project-${item.project.id}`}
+                  onMouseEnter={() => setActiveIdx(i)}
+                  onClick={() => runAt(i)}
+                  style={baseStyle}
+                >
+                  <span style={chipAccent("var(--la-accent)")}>Project</span>
+                  <span style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <span>{item.project.client_name || item.project.address}</span>
+                    <span
+                      style={{
+                        fontSize: "var(--gs-font-sm)",
+                        color: "var(--la-ink-secondary)",
+                      }}
+                    >
+                      {item.project.address}
+                    </span>
+                  </span>
+                  <span style={chip}>
+                    {new Date(item.project.created_at).toLocaleDateString("en-AU")}
+                  </span>
+                </div>
+              );
+            }
+
+            if (item.kind === "address") {
+              return (
+                <div
+                  key={item.id}
+                  role="option"
+                  aria-selected={active}
+                  data-testid={`palette-address-${item.suggestion.id}`}
+                  onMouseEnter={() => setActiveIdx(i)}
+                  onClick={() => runAt(i)}
+                  style={baseStyle}
+                >
+                  <span style={chipAccent("var(--la-success)")}>Create site</span>
+                  <span style={{ flex: 1 }}>{labelForSuggestion(item.suggestion)}</span>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={item.id}
+                role="option"
+                aria-selected={active}
+                data-testid={`command-${item.command.id}`}
+                onMouseEnter={() => setActiveIdx(i)}
+                onClick={() => runAt(i)}
+                style={baseStyle}
+              >
+                <span style={chip}>{item.command.group}</span>
+                <span style={{ flex: 1 }}>{item.command.label}</span>
+                {item.command.hint ? <span style={chip}>{item.command.hint}</span> : null}
+              </div>
+            );
+          })
         )}
+        {addressesLoading || projectsLoading ? (
+          <p
+            style={{
+              padding: "8px 12px",
+              fontSize: "var(--gs-font-sm)",
+              color: "var(--la-ink-secondary)",
+              margin: 0,
+            }}
+          >
+            {addressesLoading ? "Searching addresses…" : "Loading projects…"}
+          </p>
+        ) : null}
       </div>
     </div>
   );

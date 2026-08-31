@@ -18,6 +18,7 @@ import {
   saveDesignCanvasApi,
   type CatalogPlacement,
   type DesignCanvas,
+  type Project,
   listCostings,
   listRecordings,
   runAudit,
@@ -149,18 +150,19 @@ export async function createProjectWithSurveyAction(formData: FormData) {
   }
 }
 
-export async function createProjectAction(formData: FormData) {
+export async function createProjectAction(formData: FormData): Promise<Project> {
   const address = String(formData.get("address") ?? "").trim();
   if (address.length < 5) {
     throw new Error("Enter a full site address (at least 5 characters)");
   }
   const { lat, lng } = parseProjectCoords(formData);
   try {
-    await createProjectApi({ address, lat, lng });
+    const project = await createProjectApi({ address, lat, lng });
+    revalidatePath("/");
+    return project;
   } catch (err) {
     throw wrapApiError(err, "Could not create project");
   }
-  revalidatePath("/");
 }
 
 export async function pollProjectProgressAction(projectId: string) {

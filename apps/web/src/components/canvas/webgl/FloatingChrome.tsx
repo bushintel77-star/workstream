@@ -18,9 +18,10 @@
  * tokens for glass background and border colour.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { SketchCanvas } from "@workstream/contracts";
 import { useStudioStore } from "./studioStore";
+import { SiteSetupModal } from "./SiteSetupModal";
 import styles from "./FloatingChrome.module.css";
 
 /** The three season tags, in cycle order. */
@@ -63,7 +64,11 @@ function createCanvas(z: number): SketchCanvas {
   };
 }
 
-export function FloatingChrome() {
+export function FloatingChrome({
+  onOpenPalette,
+}: {
+  onOpenPalette: () => void;
+}) {
   const canvases = useStudioStore((s) => s.sketchCanvases);
   const activeCanvasId = useStudioStore((s) => s.activeCanvasId);
   const handedness = useStudioStore((s) => s.handedness);
@@ -87,6 +92,13 @@ export function FloatingChrome() {
   const toggleExtrusionTool = useStudioStore((s) => s.toggleExtrusionTool);
   const setActiveExtrusionDepth = useStudioStore((s) => s.setActiveExtrusionDepth);
   const commitExtrusion = useStudioStore((s) => s.commitExtrusion);
+  const aiProcessingState = useStudioStore((s) => s.aiProcessingState);
+  const processSiteDocuments = useStudioStore((s) => s.processSiteDocuments);
+  const renderMode = useStudioStore((s) => s.renderMode);
+  const cameraPosture = useStudioStore((s) => s.cameraPosture);
+  const toggleRenderMode = useStudioStore((s) => s.toggleRenderMode);
+  const setCameraPosture = useStudioStore((s) => s.setCameraPosture);
+  const [siteSetupOpen, setSiteSetupOpen] = useState(false);
 
   const isLeft = handedness === "LEFT";
 
@@ -217,6 +229,61 @@ export function FloatingChrome() {
               : "OFF"}
           </span>
         </button>
+        <button
+          className={`${styles.pill} ${aiProcessingState !== "IDLE" ? styles.pillActive : ""}`}
+          onClick={() => void processSiteDocuments()}
+          disabled={aiProcessingState !== "IDLE"}
+          title="Sync site truth — fetch Vicmap GIS data to auto-generate the 3D topographic stack, legal setback lines, and building mass"
+        >
+          <span className={styles.pillLabel}>GIS</span>
+          <span className={styles.pillValue}>
+            {aiProcessingState === "ANALYZING_SURVEY"
+              ? "FETCHING…"
+              : aiProcessingState === "GENERATING_SITE"
+                ? "GENERATING…"
+                : aiProcessingState === "SUCCESS"
+                  ? "DONE"
+                  : "SYNC"}
+          </span>
+        </button>
+        <button
+          className={styles.pill}
+          onClick={() => setSiteSetupOpen(true)}
+          title="AI site setup — upload a survey PDF to auto-generate the 3D topographic stack + legal setback lines + building mass"
+        >
+          <span className={styles.pillLabel}>AI</span>
+          <span className={styles.pillValue}>SETUP</span>
+        </button>
+        <button
+          className={`${styles.pill} ${renderMode === "IMMERSIVE" ? styles.pillActive : ""}`}
+          onClick={() => toggleRenderMode()}
+          title="Render mode — TECHNICAL (clean drafting) or IMMERSIVE (AAA post-processing with contact shadows + depth of field)"
+        >
+          <span className={styles.pillLabel}>RENDER</span>
+          <span className={styles.pillValue}>
+            {renderMode === "IMMERSIVE" ? "IMMRSV" : "TECH"}
+          </span>
+        </button>
+        <button
+          className={`${styles.pill} ${cameraPosture === "PEDESTRIAN" ? styles.pillActive : ""}`}
+          onClick={() =>
+            setCameraPosture(cameraPosture === "ORBIT" ? "PEDESTRIAN" : "ORBIT")
+          }
+          title="Camera posture — ORBIT (fused rig) or WALK (1.7m first-person pedestrian, WASD to move)"
+        >
+          <span className={styles.pillLabel}>VIEW</span>
+          <span className={styles.pillValue}>
+            {cameraPosture === "PEDESTRIAN" ? "WALK" : "ORBIT"}
+          </span>
+        </button>
+        <button
+          className={styles.pill}
+          onClick={() => onOpenPalette()}
+          title="Open spatial command palette (Cmd/Ctrl+K)"
+        >
+          <span className={styles.pillLabel}>JUMP</span>
+          <span className={styles.pillValue}>⌘K</span>
+        </button>
       </div>
 
       {/* Readout — active plane + mode (bottom corner) */}
@@ -300,6 +367,11 @@ export function FloatingChrome() {
           {isPlayingFlythrough ? "STOP" : "PLAY"}
         </button>
       </div>
+
+      {/* AI site setup modal — frosted-glass ingestion overlay (Phase 7). */}
+      {siteSetupOpen && (
+        <SiteSetupModal onClose={() => setSiteSetupOpen(false)} />
+      )}
     </>
   );
 }

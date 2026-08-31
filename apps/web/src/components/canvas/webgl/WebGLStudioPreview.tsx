@@ -34,6 +34,7 @@ import {
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type {
+  BuildingFootprint,
   CanvasStroke,
   CatalogPlacement,
   ConstructionTrench,
@@ -44,6 +45,7 @@ import type {
   IrrigationZone,
   LandscapeFeature,
   PhotoElevation,
+  SetbackLine,
   SketchCanvas,
 } from "@workstream/contracts";
 import { getCatalogSymbol } from "@workstream/domain";
@@ -175,6 +177,10 @@ export interface WebGLStudioPreviewProps {
   initialStrokes?: CanvasStroke[];
   /** Persisted Spatial Sketching planes (hydrated into the store on mount). */
   initialCanvases?: SketchCanvas[];
+  /** Persisted legal setback lines (hydrated into the store on mount). */
+  initialSetbackLines?: SetbackLine[];
+  /** Persisted building footprints (hydrated into the store on mount). */
+  initialBuildingFootprints?: BuildingFootprint[];
   /** Persisted placements — hydrated into the store on mount; the store is
    *  the live source thereafter (items + autosave derive from it). */
   placements?: CatalogPlacement[];
@@ -232,6 +238,8 @@ export function WebGLStudioPreview({
   projectAddress = "",
   initialStrokes,
   initialCanvases = [],
+  initialSetbackLines = [],
+  initialBuildingFootprints = [],
   placements: initialPlacements = [],
   initialFeatures: initialFeaturesProp = [],
   photoElevations: initialPhotoElevations = [],
@@ -287,6 +295,7 @@ export function WebGLStudioPreview({
   const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
   const setFitSheetOpen = useStudioStore((s) => s.setFitSheetOpen);
   const router = useRouter();
+  const setupRanFor = useRef<string | null>(null);
 
   // Escape closes the open surface panel (browser-tab behaviour).
   useEffect(() => {
@@ -497,6 +506,8 @@ export function WebGLStudioPreview({
     const store = useStudioStore.getState();
     store.setSketchStrokes(initialStrokes ?? []);
     store.setSketchCanvases(initialCanvases);
+    store.setSetbackLines(initialSetbackLines);
+    store.setBuildingFootprints(initialBuildingFootprints);
     store.setPlacements(initialPlacements);
     store.setConstructionTrenches(constructionTrenches);
     store.setIrrigationZones(irrigationZones);
@@ -507,7 +518,27 @@ export function WebGLStudioPreview({
     store.setSelection([]);
     store.setProjectContext(projectId, null, projectAddress);
     if (initialSketchMode) store.setSketchMode(true);
-  }, [initialStrokes, initialCanvases, initialPlacements, initialFeaturesProp, constructionTrenches, irrigationZones, initialPhotoElevations, projectId, projectAddress, initialSketchMode, boundaryPct, buildingPct, hydratedRef]);
+  }, [initialStrokes, initialCanvases, initialSetbackLines, initialBuildingFootprints, initialPlacements, initialFeaturesProp, constructionTrenches, irrigationZones, initialPhotoElevations, projectId, projectAddress, initialSketchMode, boundaryPct, buildingPct, hydratedRef]);
+
+  // Phase 9: auto-site setup from the spatial command palette. When a new
+  // project is created via JUMP, the URL carries ?setup=1; run the mock
+  // WFS/AI pipeline once after the store has the new project context.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("setup") !== "1") return;
+    if (!projectId || setupRanFor.current === projectId) return;
+    setupRanFor.current = projectId;
+
+    params.delete("setup");
+    const queryString = params.toString();
+    const newUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ""}`;
+    window.history.replaceState(null, "", newUrl);
+
+    const store = useStudioStore.getState();
+    store.setAiProcessingState("IDLE");
+    void store.processSiteDocuments();
+  }, [projectId]);
 
   // Quiet site-truth bootstrap — the canvas foundation is the authoritative
   // Vicmap boundary + building envelope, not an aerial photo. When a
@@ -981,6 +1012,8 @@ export function WebGLStudioPreview({
 
   // --- Autosave (debounced + retry + backoff) ---
   const storePhotoElevations = useStudioStore((s) => s.photoElevations);
+  const storeSetbackLines = useStudioStore((s) => s.setbackLines);
+  const storeBuildingFootprints = useStudioStore((s) => s.buildingFootprints);
   const autosaveDoc = useMemo(
     () => ({
       placements: storePlacements,
@@ -990,8 +1023,10 @@ export function WebGLStudioPreview({
       photoElevations: storePhotoElevations,
       features: storeFeatures,
       canvases: storeCanvases,
+      setbackLines: storeSetbackLines,
+      buildingFootprints: storeBuildingFootprints,
     }),
-    [storePlacements, strokes, storeCanvases, storeTrenches, storeZones, storePhotoElevations, storeFeatures],
+    [storePlacements, strokes, storeCanvases, storeTrenches, storeZones, storePhotoElevations, storeFeatures, storeSetbackLines, storeBuildingFootprints],
   );
   const { retrySave } = useStudioAutosave(projectId, autosaveDoc);
   useBeforeUnloadGuard();
@@ -2466,7 +2501,7 @@ export function WebGLStudioPreview({
 
         {/* Spatial Sketching — floating liquid-glass chrome (depth rail,
             handedness/mode toggles, readout). Mirrors with handedness. */}
-        <FloatingChrome />
+        <FloatingChrome onOpenPalette={() => setPaletteOpen(true)} />
 
         {/* ---- Perimeter tab strip — the single chrome anchor. One
           browser-tab chip strip hugs the top edge; modes on the left,
