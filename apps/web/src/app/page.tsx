@@ -1,35 +1,60 @@
-import type { Metadata } from "next";
-import { buildHeroAerialUrl } from "../lib/landingGeo";
-import { LandingCanvas } from "../components/landing/LandingCanvas";
+import { redirect } from "next/navigation";
+import { listProjects } from "../lib/api";
+import { requireSignedIn } from "../lib/auth";
+import { NewProjectAddressForm } from "../components/NewProjectAddressForm";
+import home from "./home.module.css";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Workstream — From GIS ingest to client sign-off",
-  description:
-    "From GIS ingest to client sign-off. Drop an address — Vicmap boundaries, stylus sketching, live takeoffs, and a client portal follow from it. Skip the CAD.",
-};
+/** Canvas-first root. Signed-in operators never see a marketing landing or a
+ * dashboard register — they land straight in the most recent project canvas.
+ * Unsigned visitors get the address composer (the only surface that creates
+ * a project and thus a canvas to land on). */
+export default async function RootPage() {
+  await requireSignedIn();
 
-/**
- * Canvas-first landing — a real sub-metre aerial of a Stonnington block,
- * graded to dusk, with a live Vicmap title boundary drawn over it, one
- * address entry, and the studio's pitch: from GIS ingest to client sign-off.
- * Type an address, pick the GNAF match, and the hero re-centres on that
- * property and draws its live boundary. The product demonstrates itself —
- * every claim on the page is a feature the studio ships.
- */
-export default function LandingPage() {
+  let rawProjects: Awaited<ReturnType<typeof listProjects>> = [];
+  try {
+    rawProjects = await listProjects();
+  } catch {
+    /* fail open — let the address composer create the first project */
+  }
+
+  const mostRecent = rawProjects
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    )[0];
+
+  if (mostRecent) {
+    redirect(`/projects/${mostRecent.id}`);
+  }
+
   return (
-    <>
-      <link
-        rel="preconnect"
-        href="https://services.arcgisonline.com"
-        crossOrigin="anonymous"
-      />
-      <LandingCanvas
-        aerialUrl={buildHeroAerialUrl()}
-        aerialLowUrl={buildHeroAerialUrl(64, 40)}
-      />
-    </>
+    <main className={home.page}>
+      <div className={home.layout}>
+        <aside className={home.aside}>
+          <header className={home.masthead}>
+            <p className={home.mastheadMark}>Workstream · Melbourne</p>
+            <h1 className={home.mastheadTitle}>Workstream</h1>
+          </header>
+
+          <section className={home.composer} id="new-project">
+            <label className={home.composerLabel} htmlFor="project-address">
+              New address
+            </label>
+            <NewProjectAddressForm />
+          </section>
+        </aside>
+
+        <section className={home.index}>
+          <div className={home.emptyState}>
+            <h3>No projects yet</h3>
+            <p>Start your first project with a Melbourne site address.</p>
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }
