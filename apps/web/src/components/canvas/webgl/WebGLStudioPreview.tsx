@@ -640,7 +640,33 @@ export function WebGLStudioPreview({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Motion-aware chrome recede (AEC-2026 §3.2) — the R3F watcher flips the
+  // Workspace hotkeys (pack S6.2): Opt+H = handedness, Opt+F = anchor
+  // visibility cycle, Opt+R = drafting/sketching toggle.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!e.altKey) return;
+      const store = useStudioStore.getState();
+      switch (e.key.toLowerCase()) {
+        case "h":
+          e.preventDefault();
+          store.setHandedness(store.handedness === "LEFT" ? "RIGHT" : "LEFT");
+          break;
+        case "f":
+          e.preventDefault();
+          store.setAnchorVisibility(
+            store.anchorVisibility === "ALL" ? "DIMMED" :
+              store.anchorVisibility === "DIMMED" ? "FOCUS" : "ALL",
+          );
+          break;
+        case "r":
+          e.preventDefault();
+          store.setDraftingMode(!store.draftingMode);
+          break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   // store flag on camera-motion state change; this effect mirrors the flag
   // (OR the hold-H peek) onto <body> imperatively, so receding chrome never
   // re-renders the React tree. Opacity only — the CSS lives in globals.css.
@@ -1491,9 +1517,14 @@ export function WebGLStudioPreview({
         {/* Atmospheric vignette — matches the 3D post-processing, fades with blend */}
         <VignetteOverlay />
 
-        {/* Spatial Sketching — floating liquid-glass chrome (depth rail,
+        {/* Spatial Sketching -- floating liquid-glass chrome (depth rail,
             handedness/mode toggles, readout). Mirrors with handedness. */}
-        <FloatingChrome onOpenPalette={() => setPaletteOpen(true)} />
+        <FloatingChrome
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+          northBearingDeg={northBearingDeg}
+          heightmapPoints={liveData.heightmapPoints}
+        />
 
         {/* Floating cursor toolbar — shows when an asset is armed */}
         <FloatingPlacementToolbar />

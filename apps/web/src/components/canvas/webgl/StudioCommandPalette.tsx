@@ -35,7 +35,7 @@ type Suggestion = {
 type PaletteAction = {
   id: string;
   label: string;
-  group: "Mode" | "Tool" | "View" | "Edit";
+  group: "Mode" | "Tool" | "View" | "Edit" | "Records";
   hint?: string;
   run: () => void;
 };
@@ -288,6 +288,54 @@ export function StudioCommandPalette({
         group: "View",
         hint: "opens",
         run: () => window.location.assign(`/subsurface-studio/${projectId}`),
+      },
+      /* Records + studios — the palette is the ONLY inbound link to these
+       * now that the legacy ProjectSurfaceRail is deleted. Hrefs are written
+       * out in full at the navigation site because
+       * scripts/check-route-reachability.mjs can only see a route in a
+       * literal; assembling them from a table is what let the Growth studio
+       * ship with no reachable link in the first place. */
+      {
+        id: "records-growth-studio",
+        label: "Growth studio — ten-year maturity of the planted design",
+        group: "Records",
+        hint: "opens",
+        run: () => window.location.assign(`/growth-studio/${projectId}`),
+      },
+      {
+        id: "records-outputs",
+        label: "Outputs — documents generated from the design",
+        group: "Records",
+        hint: "opens",
+        run: () => window.location.assign(`/projects/${projectId}/outputs`),
+      },
+      {
+        id: "records-audit",
+        label: "Audit — design assurance findings and overrides",
+        group: "Records",
+        hint: "opens",
+        run: () => window.location.assign(`/projects/${projectId}/audit`),
+      },
+      {
+        id: "records-carbon",
+        label: "Carbon — embodied carbon ledger for the priced scenario",
+        group: "Records",
+        hint: "opens",
+        run: () => window.location.assign(`/projects/${projectId}/carbon`),
+      },
+      {
+        id: "records-measurements",
+        label: "Measurements — vision-measured quantities from site photos",
+        group: "Records",
+        hint: "opens",
+        run: () => window.location.assign(`/projects/${projectId}/measurements`),
+      },
+      {
+        id: "records-recordings",
+        label: "Recordings — site voice notes and their transcripts",
+        group: "Records",
+        hint: "opens",
+        run: () => window.location.assign(`/projects/${projectId}/recordings`),
       },
     ];
   }, [onMode, onOpenSitePhotos, onZoom, projectId, unlocked]);

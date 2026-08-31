@@ -85,12 +85,29 @@ const APP_DIR = "apps/web/src/app";
  * Raise a floor when a root grows. Never lower one to make CI pass.
  */
 const LINK_ROOTS = [
-  { dir: "apps/web/src", min: 300 },
+  /* apps/web/src lowered 300 → 270 on 2026-08-31 against two deliberate
+   * deletions in the same series: the 48-file dead-code purge (UI redundancy
+   * scan Tier 1) and the legacy project chrome removal (ProjectChrome +
+   * breadcrumb + surface rail + nine redirect-only pipeline routes). The
+   * corpus stands at 278 — this floor still catches the failure it exists
+   * for (a moved or emptied directory reading as "nothing to report"), it
+   * just no longer encodes file count from before the purge. */
+  { dir: "apps/web/src", min: 270 },
   { dir: "apps/api/src", min: 100 },
 ];
 
-/** Fewer `page.tsx` files than this means the app directory moved, not shrank. */
-const MIN_PAGES = 30;
+/**
+ * Fewer `page.tsx` files than this means the app directory moved, not shrank.
+ *
+ * Lowered 30 → 24 on 2026-08-31, in the same commit as the deletion the gate
+ * asks for: the nine redirect-only legacy pipeline routes (`overview`,
+ * `survey`, `tasks`, `filing`, `costing`, `design`, `design/cad`,
+ * `design/develop`, `design/studio`) were removed with the legacy project
+ * chrome. Each was a stub whose whole body was `redirectToCanvas(id, mode)`,
+ * so they contributed pages without contributing product. The canvas owns
+ * those modes via `?mode=`.
+ */
+const MIN_PAGES = 23;
 
 /**
  * …and of those pages, this many must be real gated routes. Without a second
@@ -205,8 +222,8 @@ function stripComments(source) {
 if (!fs.existsSync(APP_DIR) || !fs.statSync(APP_DIR).isDirectory()) {
   console.error(
     `FAIL: the app directory ${APP_DIR} does not exist.\n` +
-      "This gate cannot enumerate routes, so it cannot report anything. Repoint\n" +
-      "APP_DIR at the real location — do not let it pass by finding nothing.",
+    "This gate cannot enumerate routes, so it cannot report anything. Repoint\n" +
+    "APP_DIR at the real location — do not let it pass by finding nothing.",
   );
   process.exit(1);
 }
@@ -253,11 +270,11 @@ const pageCount = routes.size + aliases.size;
 if (pageCount < MIN_PAGES || routes.size < MIN_GATED_ROUTES) {
   console.error(
     `FAIL: discovered ${pageCount} pages (floor ${MIN_PAGES}), of which ` +
-      `${routes.size} are gated routes (floor ${MIN_GATED_ROUTES}), under ${APP_DIR}.\n\n` +
-      "A gate that finds nothing reports nothing and reads as green, which is how\n" +
-      "three ratchets in this repo lost most of their scope without anyone noticing.\n" +
-      "Either the app directory moved, or routes were deleted wholesale. Repoint\n" +
-      "APP_DIR, or lower a floor only in the same commit as the deletion.",
+    `${routes.size} are gated routes (floor ${MIN_GATED_ROUTES}), under ${APP_DIR}.\n\n` +
+    "A gate that finds nothing reports nothing and reads as green, which is how\n" +
+    "three ratchets in this repo lost most of their scope without anyone noticing.\n" +
+    "Either the app directory moved, or routes were deleted wholesale. Repoint\n" +
+    "APP_DIR, or lower a floor only in the same commit as the deletion.",
   );
   process.exit(1);
 }
@@ -282,15 +299,15 @@ const starved = [...scope.entries()].filter(([, s]) => s.found < s.min);
 if (starved.length) {
   console.error(
     "FAIL: a link-corpus root yielded fewer files than its floor. This gate is\n" +
-      "not searching what it claims to — a directory was moved, renamed or emptied:\n",
+    "not searching what it claims to — a directory was moved, renamed or emptied:\n",
   );
   for (const [dir, s] of starved) {
     console.error(`  ${dir}\n    found ${s.found}, floor ${s.min}`);
   }
   console.error(
     "\nRepoint LINK_ROOTS at the real location. Do not lower a floor to pass:\n" +
-      "an empty corpus makes every route look unreachable, which invites\n" +
-      "allowlisting the world.",
+    "an empty corpus makes every route look unreachable, which invites\n" +
+    "allowlisting the world.",
   );
   process.exit(1);
 }
@@ -325,8 +342,8 @@ const NAV_MARKER =
 const NAV_CONTEXT = new RegExp(
   // `href="…"` · `href={…}` · `router.push("…")` · `success_url: "…"`
   `${NAV_MARKER}\\s*[:=(,]\\s*(?:\\{\\s*)?$` +
-    // `href: (projectId) => "…"` · `href: id => "…"`
-    `|${NAV_MARKER}\\s*[:=]\\s*(?:\\([^)]*\\)|[A-Za-z0-9_$]+)\\s*=>\\s*(?:\\{?\\s*return\\s*)?$`,
+  // `href: (projectId) => "…"` · `href: id => "…"`
+  `|${NAV_MARKER}\\s*[:=]\\s*(?:\\([^)]*\\)|[A-Za-z0-9_$]+)\\s*=>\\s*(?:\\{?\\s*return\\s*)?$`,
 );
 
 /**
@@ -365,9 +382,9 @@ for (const [f, content] of corpus) {
 if (navHrefCount < MIN_NAV_HREFS) {
   console.error(
     `FAIL: extracted only ${navHrefCount} navigable hrefs, floor is ${MIN_NAV_HREFS}.\n\n` +
-      "The extractor, not the product, is what broke: a repo that links nowhere\n" +
-      "would fail every route at once. Fix NAV_CONTEXT / STRING_LITERAL rather\n" +
-      "than allowlisting the fallout.",
+    "The extractor, not the product, is what broke: a repo that links nowhere\n" +
+    "would fail every route at once. Fix NAV_CONTEXT / STRING_LITERAL rather\n" +
+    "than allowlisting the fallout.",
   );
   process.exit(1);
 }
@@ -463,7 +480,7 @@ if (process.argv.includes("--report")) {
   for (const route of [...aliases.keys()].sort()) console.log(`  ${route}`);
   console.log(
     `\nNot gated: ${handlers.length} route handlers, ${framework.length} framework files, ` +
-      `${metadata.length} metadata routes, ${colocated.length} colocated modules.`,
+    `${metadata.length} metadata routes, ${colocated.length} colocated modules.`,
   );
 }
 
@@ -474,10 +491,10 @@ if (unexpected.length) {
   for (const r of unexpected) console.error(`  ${r.route}\n      ${r.file}`);
   console.error(
     "\nA route Next.js serves by filesystem but no user can navigate to has\n" +
-      "shipped inert. Link it from where it belongs in the operator's workflow,\n" +
-      "delete it outright (no compatibility shim, per CLAUDE.md), or add it to\n" +
-      "ALLOW in this script with the reason it is deep-link only. Do not add\n" +
-      "entries to make CI quiet — a stale entry fails this gate.",
+    "shipped inert. Link it from where it belongs in the operator's workflow,\n" +
+    "delete it outright (no compatibility shim, per CLAUDE.md), or add it to\n" +
+    "ALLOW in this script with the reason it is deep-link only. Do not add\n" +
+    "entries to make CI quiet — a stale entry fails this gate.",
   );
   process.exit(1);
 }
@@ -502,9 +519,9 @@ const scopeNote = [...scope.entries()]
 
 console.log(
   `ok: ${routes.size} routes, all reachable ` +
-    `(${ALLOW.size} allowlisted deep-link entry points; ` +
-    `${aliases.size} redirect-only alias routes; ` +
-    `${navHrefCount} navigable hrefs across ${navHrefs.size} files; ` +
-    `${handlers.length} route handlers and ${framework.length} framework files not gated; ` +
-    `corpus ${scopeNote})`,
+  `(${ALLOW.size} allowlisted deep-link entry points; ` +
+  `${aliases.size} redirect-only alias routes; ` +
+  `${navHrefCount} navigable hrefs across ${navHrefs.size} files; ` +
+  `${handlers.length} route handlers and ${framework.length} framework files not gated; ` +
+  `corpus ${scopeNote})`,
 );

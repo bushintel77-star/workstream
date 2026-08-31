@@ -84,6 +84,7 @@ import { type PresentationLensFilter } from "./PresentationLens";
 import { AnnotationLayer } from "./annotations/AnnotationLayer";
 import type { AnnotationDialect } from "./annotations/model";
 import type { SurveyedPlanLayers } from "./studioStore";
+import { useStudioStore } from "./studioStore";
 import { TradeAnnotationLayer } from "./annotations/TradeAnnotationLayer";
 
 export interface StudioSceneProps {
@@ -335,6 +336,40 @@ function GroundShadow({ scaleM }: { scaleM: number }) {
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.004, 0]} material={material}>
       <circleGeometry args={[size, 64]} />
     </mesh>
+  );
+}
+
+/**
+ * Horizon line (pack S5.1 / card 2d) -- a thin scene-space ring at the
+ * board perimeter that reads as the horizon when the camera tilts to
+ * oblique/perspective. Fades to invisible in plan view (tiltDeg < 5).
+ * Scene-space: lives inside the R3F canvas, not the DOM overlay.
+ */
+function HorizonLine({ scaleM, boardAspect }: { scaleM: number; boardAspect: number }) {
+  const tiltDeg = useStudioStore((s) => s.liveRig.tiltDeg);
+  const opacity = Math.max(0, Math.min(0.25, (tiltDeg - 5) / 50 * 0.25));
+  const halfW = scaleM / 2;
+  const halfH = (scaleM * boardAspect) / 2;
+  const points = useMemo(() => {
+    const r = Math.max(halfW, halfH) * 1.4;
+    const pts: [number, number, number][] = [];
+    for (let i = 0; i <= 64; i++) {
+      const a = (i / 64) * Math.PI * 2;
+      pts.push([Math.cos(a) * r, 0.006, Math.sin(a) * r]);
+    }
+    return pts;
+  }, [halfW, halfH]);
+
+  if (opacity < 0.01) return null;
+
+  return (
+    <Line
+      points={points}
+      color="#1C1917"
+      transparent
+      opacity={opacity}
+      lineWidth={1}
+    />
   );
 }
 
@@ -1083,6 +1118,8 @@ export function StudioScene({
       {/* Spatial Sketching — anti-void ground shadow (subtle dark radial
           gradient at Y=0, anchors peripheral vision without heavy grids). */}
       <GroundShadow scaleM={scaleM} />
+      {/* Horizon line -- thin scene-space ring, fades in with camera tilt. */}
+      <HorizonLine scaleM={scaleM} boardAspect={boardAspect} />
       {/* Soft AO-style grounding — blurred contact shadows anchor geometry to the
           drawing surface, complementing the directional sun shadows. */}
       <GroundContactShadows scaleM={scaleM} boardAspect={boardAspect} />

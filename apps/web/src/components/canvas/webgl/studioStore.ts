@@ -548,6 +548,12 @@ export interface StudioStoreState {
   uiScale: number;
   /** Drafting mode — true = ruler + crosshair + snap on; false = sketching (zero chrome margin). */
   draftingMode: boolean;
+  /** Anchor visibility — ALL (1.0), DIMMED (0.32), FOCUS (0). Per pack §6.2.
+   *  In FOCUS the anchors are gone but still functional on hover/pen-approach;
+   *  tools remain reachable via ⌘K. */
+  anchorVisibility: "ALL" | "DIMMED" | "FOCUS";
+  /** Set the anchor visibility mode (pack §6.2, ⌥F). */
+  setAnchorVisibility: (v: "ALL" | "DIMMED" | "FOCUS") => void;
 
   // --- Phase 8: Living Diorama & Spatial Presence ---
   /** Render quality — TECHNICAL (clean drafting) or IMMERSIVE (AAA post-FX). */
@@ -1303,6 +1309,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   handedness: "RIGHT",
   uiScale: 1.0,
   draftingMode: true,
+  anchorVisibility: "ALL",
 
   // Phase 8 — default to technical rendering + orbit camera.
   renderMode: "TECHNICAL",
@@ -2090,6 +2097,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setHandedness: (handedness) => set({ handedness }),
   setUiScale: (uiScale) => set({ uiScale: Math.max(0.85, Math.min(1.3, uiScale)) }),
   setDraftingMode: (draftingMode) => set({ draftingMode }),
+  setAnchorVisibility: (anchorVisibility) => set({ anchorVisibility }),
 
   // --- Phase 8: Living Diorama & Spatial Presence ---
   toggleRenderMode: () =>
