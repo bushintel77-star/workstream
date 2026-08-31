@@ -59,13 +59,9 @@ const SRC = "apps/web/src";
  * the entry when the component is wired up.
  */
 const ALLOW = new Map([
-  // Alternate canvas-native layout prototypes — wiring pending user approval
-  ["BottomAssetStrip", "Alternate layout: bottom asset strip (not yet mounted)",],
   // RightPanelTabs deleted 2026-08-28 with the hidden-dock retirement.
-  // Classic SVG-era elevation board — stranded by the WebGL migration; the
-  // photo-trace elevation (PhotoElevationSheet) is the live surface. Re-home
-  // or retire with the handoff/ prune (AGENTS.md migration note).
-  ["ElevationBoard", "Classic elevation board awaiting re-home decision under handoff/",],
+  // BottomAssetStrip + ElevationBoard family deleted 2026-08-31 in the
+  // dead-code purge (Tier 1 of the UI redundancy scan).
 ]);
 
 function walk(dir, out = []) {

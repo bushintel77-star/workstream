@@ -69,12 +69,11 @@
     "radius": 2
   },
   "apps/web/src/components/ui/kit/kit.module.css": {
-    "zIndex": 3,
-    "radius": 3,
-    "opacity": 5
+    "radius": 1,
+    "opacity": 2
   },
   "apps/web/src/components/ui/ui.module.css": {
-    "zIndex": 2
+    "zIndex": 1
   },
   "apps/web/src/styles/app.module.css": {
     "zIndex": 2

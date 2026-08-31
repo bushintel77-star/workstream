@@ -33,16 +33,14 @@ new developer. Read ONBOARDING first, this file for the queue.
 
 ## Gate and contract debt (2026-08-28 fusion pass)
 
-- **Classic elevation board family stranded**: ElevationBoard /
-  PlanThumbnail / GardenElevationGlyph / ElevationTextureDefs
-  (handoff/features/elevation) are SVG-era surfaces orphaned by the
-  WebGL migration — the photo-trace elevation (PhotoElevationSheet) is
-  the live surface. Allowlisted in scripts/check-feature-reachability.mjs;
-  decide re-home vs retirement with the handoff/ prune.
-- **Feature-ghost accept path**: aiGeneration can emit recipe-driven bed
-  features, but the ghost session is placement-typed end to end — needs
-  an accept path + overlay for a second entity family
-  (docs/AEC-GENERATIVE-FUSION-2026.md, deferred).
+- **Classic elevation board family deleted 2026-08-31**: ElevationBoard /
+  PlanThumbnail / GardenElevationGlyph / ElevationTextureDefs were SVG-era
+  surfaces orphaned by the WebGL migration. Deleted in the dead-code purge
+  (Tier 1 of the UI redundancy scan). The photo-trace elevation
+  (PhotoElevationSheet) is the live surface.
+- **Feature-ghost accept path**: aiGeneration.ts was deleted 2026-08-31
+  (dead code — no non-test imports). The ghost accept path for recipe-driven
+  bed features remains deferred (docs/AEC-GENERATIVE-FUSION-2026.md).
 - **Portal plant schedule**: fetchPortalQuote line items carry no symbol
   ids; the costing API must pass species data before the quote portal
   can render a plant schedule.
