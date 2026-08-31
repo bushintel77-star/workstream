@@ -150,6 +150,8 @@ export default async function ProjectCanvasPage({
         projectAddress={project.address}
         initialStrokes={canvas?.strokes ?? []}
         initialCanvases={canvas?.canvases ?? []}
+        initialSetbackLines={canvas?.setback_lines ?? []}
+        initialBuildingFootprints={canvas?.building_footprints ?? []}
         placements={canvas?.placements ?? []}
         initialFeatures={canvas?.features ?? []}
         photoElevations={canvas?.photo_elevations ?? []}

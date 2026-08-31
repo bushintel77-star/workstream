@@ -47,6 +47,7 @@ import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
 import { FusedCamera } from "./FusedCamera";
 import { FlythroughRig } from "./FlythroughRig";
+import { PedestrianCamera } from "./PedestrianCamera";
 import { FusedSketchLayer } from "./FusedSketchLayer";
 import { StrokeTransferLayer } from "./StrokeTransferLayer";
 import { StitchSnapLayer } from "./StitchSnapLayer";
@@ -78,6 +79,7 @@ import { PlantSpacingGuideLayer } from "./PlantSpacingGuideLayer";
 import { FloraRingLayer } from "./FloraRingLayer";
 import { FeatureLayer } from "./FeatureLayer";
 import { CadProposalLayer } from "./CadProposalLayer";
+import { SetbackBoundaryLayer } from "./SetbackBoundaryLayer";
 import { type PresentationLensFilter } from "./PresentationLens";
 import { AnnotationLayer } from "./annotations/AnnotationLayer";
 import type { AnnotationDialect } from "./annotations/model";
@@ -953,6 +955,11 @@ export function StudioScene({
           the camera during playback. Self-gates on isPlayingFlythrough. */}
       <FlythroughRig />
 
+      {/* Phase 8: Pedestrian Camera — 1.7m first-person walk-through.
+          Mounts after FusedCamera + FlythroughRig so its useFrame runs last
+          and overrides the camera when cameraPosture === 'PEDESTRIAN'. */}
+      <PedestrianCamera sampler={elevationSampler} />
+
       {/* Input capture — invisible ground plane for raycasting.
           Editing is locked in 3D (viewBlend > 0.5) and re-enabled only at
           the exact orthographic elevation snap (φ=90° + facade normal). */}
@@ -1081,6 +1088,13 @@ export function StudioScene({
       <GroundContactShadows scaleM={scaleM} boardAspect={boardAspect} />
       <OriginPeg sampler={elevationSampler} />
       <LotBoundary points={boundaryPct} scaleM={scaleM} boardAspect={boardAspect} sampler={elevationSampler} />
+      {/* Legal setback lines — red dashed non-build zones on the ground plane
+          (AI site-setup pipeline, Phase 7). Reads from the store directly. */}
+      <SetbackBoundaryLayer
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        sampler={elevationSampler}
+      />
       <MarqueeBoxLayer scaleM={scaleM} boardAspect={boardAspect} />
       <GovernmentOverlays
         overlays={keylessOverlays}

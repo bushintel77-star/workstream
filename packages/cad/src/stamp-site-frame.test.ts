@@ -36,6 +36,8 @@ function canvasWithFrame(
     photo_elevations: [],
     features: [],
     canvases: [],
+    setback_lines: [],
+    building_footprints: [],
     site_frame: frame,
     updated_at: new Date().toISOString(),
   };

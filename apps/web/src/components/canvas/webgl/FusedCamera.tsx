@@ -102,7 +102,20 @@ export function FusedCamera({
     // FlythroughRig (mounted after this component) takes over and directly
     // sets camera.position + lookAt. We still write _liveCameraPosition below
     // so bookmark capture works even during playback.
-    const { isPlayingFlythrough } = useStudioStore.getState();
+    //
+    // Phase 8: If the pedestrian camera is active, skip — PedestrianCamera
+    // (mounted after this component) takes over at 1.7m eye level.
+    const { isPlayingFlythrough, cameraPosture } = useStudioStore.getState();
+
+    if (cameraPosture === "PEDESTRIAN") {
+      // Let PedestrianCamera own the camera — just update the live position
+      // ref so bookmark capture still works.
+      const store = useStudioStore.getState();
+      store._liveCameraPosition.position[0] = camera.position.x;
+      store._liveCameraPosition.position[1] = camera.position.y;
+      store._liveCameraPosition.position[2] = camera.position.z;
+      return;
+    }
 
     // Read the LIVE rig from the store each frame (transient — StudioControls
     // writes it during a pan/zoom drag with zero React re-renders). The rig

@@ -30,14 +30,17 @@ import {
   N8AO,
   Vignette,
   SMAA,
+  DepthOfField,
 } from "@react-three/postprocessing";
 import { BlendFunction, KernelSize } from "postprocessing";
 import {
   Component,
   useCallback,
+  useRef,
   type CSSProperties,
   type ReactNode,
 } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { WebGLRenderer } from "three";
 import type {
@@ -59,7 +62,7 @@ import type { RenderItem } from "./sceneItems";
 import type { SubsurfaceUtility, StrikeAlertData } from "./features/SubsurfaceEngine";
 import type { PresentationLensFilter } from "./PresentationLens";
 import type { AnnotationDialect } from "./annotations/model";
-import type { SurveyedPlanLayers } from "./studioStore";
+import { useStudioStore, type SurveyedPlanLayers } from "./studioStore";
 
 /**
  * Image-based lighting must never take the drawing down: a failed
@@ -147,8 +150,15 @@ export interface WebGLStudioProps {
  * Bloom only catches bright/emissive surfaces (gold HUD, strike alerts,
  * subsurface tubes, window glow); N8AO adds real occlusion in foliage/building
  * crevices; Vignette + SMAA finish the cinematic frame.
+ *
+ * Phase 8: IMMERSIVE mode adds DepthOfField with dynamic autofocus — a
+ * raycaster from the screen center drives the focus distance every frame,
+ * smoothly damped to avoid jitter. N8AO intensity + quality are also boosted.
  */
 function RenderFX({ drafting }: { drafting: boolean }) {
+  const renderMode = useStudioStore((s) => s.renderMode);
+  const immersive = renderMode === "IMMERSIVE";
+
   /* Paper modes: skip the EffectComposer entirely so the canvas renders
      as clean #F4F4F4 paper. The N8AO screen-space algorithm darkens flat
      surfaces (it treats the ground mesh as self-occluding), and the
@@ -165,11 +175,12 @@ function RenderFX({ drafting }: { drafting: boolean }) {
     <EffectComposer multisampling={0} enableNormalPass>
       <N8AO
         aoRadius={4}
-        intensity={1.15}
+        intensity={immersive ? 1.6 : 1.15}
         distanceFalloff={0.8}
-        quality="medium"
+        quality={immersive ? "high" : "medium"}
         color="black"
       />
+      {immersive && <DynamicDoF />}
       <Bloom
         intensity={0.25}
         luminanceThreshold={0.85}
@@ -180,11 +191,67 @@ function RenderFX({ drafting }: { drafting: boolean }) {
       />
       <Vignette
         offset={0.4}
-        darkness={0.12}
+        darkness={immersive ? 0.2 : 0.12}
         blendFunction={BlendFunction.NORMAL}
       />
       <SMAA />
     </EffectComposer>
+  );
+}
+
+/**
+ * Dynamic Depth of Field — fires a raycaster from the screen center (NDC 0,0)
+ * every frame, measures the distance to the first hit, and smoothly damps the
+ * DoF focusDistance to match. Creates a cinematic autofocus effect that draws
+ * the eye to whatever the camera is looking at.
+ */
+function DynamicDoF() {
+  const { camera, scene, raycaster } = useThree();
+  const dofRef = useRef<{ focusDistance: number; focusRange: number } | null>(
+    null,
+  );
+  const currentFocus = useRef(10);
+  const targetFocus = useRef(10);
+  const tempNdc = useRef(new THREE.Vector2(0, 0));
+
+  useFrame((_, delta) => {
+    // Raycast from the screen center (NDC 0,0) straight forward.
+    raycaster.setFromCamera(tempNdc.current, camera);
+    const hits = raycaster.intersectObjects(scene.children, true);
+    if (hits.length > 0 && hits[0]) {
+      targetFocus.current = hits[0].distance;
+    }
+
+    // Smoothly damp toward the target focus distance (avoid jitter).
+    const dampFactor = 1 - Math.exp(-delta * 4);
+    currentFocus.current = THREE.MathUtils.lerp(
+      currentFocus.current,
+      targetFocus.current,
+      dampFactor,
+    );
+
+    // The DepthOfField effect's focusDistance is normalized 0–1 relative to
+    // the camera's far plane. We use a pragmatic normalization: focus distance
+    // in metres divided by a reference far distance of 100m.
+    const normalized = Math.min(currentFocus.current / 100, 1);
+    if (dofRef.current) {
+      dofRef.current.focusDistance = normalized;
+    }
+  });
+
+  return (
+    <DepthOfField
+      ref={(ref) => {
+        dofRef.current = ref as unknown as {
+          focusDistance: number;
+          focusRange: number;
+        } | null;
+      }}
+      focusDistance={0.1}
+      focusRange={0.3}
+      bokehScale={3}
+      height={480}
+    />
   );
 }
 

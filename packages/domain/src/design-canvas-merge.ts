@@ -235,6 +235,26 @@ export function mergeDesignCanvas(args: {
     (c) => c.label || c.id.slice(0, 8),
     newId,
   );
+  const setback_lines = mergeEntityArray(
+    args.base.setback_lines ?? [],
+    args.ours.setback_lines ?? [],
+    args.theirs.setback_lines ?? [],
+    resolutions,
+    conflicts,
+    "setback_line",
+    (l) => l.label || l.id.slice(0, 8),
+    newId,
+  );
+  const building_footprints = mergeEntityArray(
+    args.base.building_footprints ?? [],
+    args.ours.building_footprints ?? [],
+    args.theirs.building_footprints ?? [],
+    resolutions,
+    conflicts,
+    "building_footprint",
+    (f) => f.label || f.id.slice(0, 8),
+    newId,
+  );
 
   if (conflicts.length > 0) {
     return { ok: false, conflicts };
@@ -253,6 +273,8 @@ export function mergeDesignCanvas(args: {
     photo_elevations,
     features,
     canvases,
+    setback_lines,
+    building_footprints,
     site_frame: args.theirs.site_frame ?? args.ours.site_frame ?? args.base.site_frame,
     presentation_pack:
       args.theirs.presentation_pack ??

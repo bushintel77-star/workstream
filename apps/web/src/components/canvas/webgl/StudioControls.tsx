@@ -262,6 +262,8 @@ export function StudioControls({
       e.stopPropagation();
       // Phase 5: Pause zoom during fly-through playback.
       if (useStudioStore.getState().isPlayingFlythrough) return;
+      // Phase 8: Pedestrian camera owns zoom (no orbit zoom in walk mode).
+      if (useStudioStore.getState().cameraPosture === "PEDESTRIAN") return;
       if (tiltLocked) return; // zoom frozen under tilt (matches old behaviour)
 
       // Capture the event data synchronously and schedule a single update
@@ -301,6 +303,8 @@ export function StudioControls({
     (e: ThreeEvent<PointerEvent>) => {
       // Phase 5: Pause all camera gestures during fly-through playback.
       if (useStudioStore.getState().isPlayingFlythrough) return;
+      // Phase 8: Pedestrian camera owns pointer events for mouselook.
+      if (useStudioStore.getState().cameraPosture === "PEDESTRIAN") return;
       if (twoFingerRef.current) return; // two-finger touch owns the camera
       // The spatial gizmo owns its pointer events while a drag is in flight —
       // the ground plane must never start a pan/orbit under the gizmo.

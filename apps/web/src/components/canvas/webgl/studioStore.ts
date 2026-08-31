@@ -27,6 +27,7 @@
 
 import { create } from "zustand";
 import type {
+  BuildingFootprint,
   CanvasStroke,
   CatalogPlacement,
   ConstructionTrench,
@@ -39,6 +40,7 @@ import type {
   NibKind,
   PhotoElevation,
   PhotoTraceStroke,
+  SetbackLine,
   SketchCanvas,
 } from "@workstream/contracts";
 import { PALETTE } from "../../../styles/colorTokens";
@@ -130,6 +132,30 @@ export interface CameraBookmark {
 
 export type SaveStatus = "idle" | "saving" | "retrying" | "saved" | "error";
 export type SaveErrorKind = "unreachable" | "stale_client" | "rejected" | null;
+
+/**
+ * AI site-setup pipeline state machine.
+ * IDLE → ANALYZING_SURVEY → GENERATING_SITE → SUCCESS (auto-resets to IDLE).
+ */
+export type AiProcessingState =
+  | "IDLE"
+  | "ANALYZING_SURVEY"
+  | "GENERATING_SITE"
+  | "SUCCESS";
+
+/**
+ * Phase 8 — render quality mode.
+ * TECHNICAL: clean drafting (no DoF, standard materials).
+ * IMMERSIVE: AAA post-processing (N8AO + dynamic DoF + NPR outlines).
+ */
+export type RenderMode = "TECHNICAL" | "IMMERSIVE";
+
+/**
+ * Phase 8 — camera posture.
+ * ORBIT: the standard fused ortho↔perspective rig (FusedCamera).
+ * PEDESTRIAN: 1.7m first-person walk-through (PedestrianCamera).
+ */
+export type CameraPosture = "ORBIT" | "PEDESTRIAN";
 export interface SurveyedPlanLayers {
   enabled: boolean;
   /**
@@ -356,7 +382,7 @@ export interface StudioStoreState {
   pointerClientPos: { x: number; y: number } | null;
   /** All canvas placements (CatalogPlacement contract schema). */
   placements: CatalogPlacement[];
-  /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features, stitchRecords, trenches, zones, canvases} (cap 50). */
+  /** Undo/redo doc history — snapshots of {placements, strokes, photoElevations, features, stitchRecords, trenches, zones, canvases, setbackLines, buildingFootprints} (cap 50). */
   historyPast: Array<{
     placements: CatalogPlacement[];
     strokes: CanvasStroke[];
@@ -366,6 +392,8 @@ export interface StudioStoreState {
     constructionTrenches: ConstructionTrench[];
     irrigationZones: IrrigationZone[];
     canvases: SketchCanvas[];
+    setbackLines: SetbackLine[];
+    buildingFootprints: BuildingFootprint[];
   }>;
   historyFuture: Array<{
     placements: CatalogPlacement[];
@@ -376,6 +404,8 @@ export interface StudioStoreState {
     constructionTrenches: ConstructionTrench[];
     irrigationZones: IrrigationZone[];
     canvases: SketchCanvas[];
+    setbackLines: SetbackLine[];
+    buildingFootprints: BuildingFootprint[];
   }>;
 
   // --- Flora ring (ranked planting suggestions at a click) ---
@@ -486,6 +516,31 @@ export interface StudioStoreState {
    */
   activeCanvasId: string | null;
 
+  // --- AI Automated Site Setup (Phase 7) ---
+  /** Legal setback lines — red dashed non-build zones on the ground plane. */
+  setbackLines: SetbackLine[];
+  /** Replace all setback lines (hydrate / undo / redo / AI generate). */
+  setSetbackLines: (lines: SetbackLine[]) => void;
+  /** Building footprints — uneditable 3D house masses framing the garden. */
+  buildingFootprints: BuildingFootprint[];
+  /** Replace all building footprints (hydrate / undo / redo / AI generate). */
+  setBuildingFootprints: (footprints: BuildingFootprint[]) => void;
+  /** AI site-setup processing state machine (drives the modal UI). */
+  aiProcessingState: AiProcessingState;
+  /** Set the AI processing state (drives the modal's loading stages). */
+  setAiProcessingState: (state: AiProcessingState) => void;
+  /**
+   * Process uploaded site documents (survey PDF + title) through the AI
+   * pipeline. Calls the mock auto-setup endpoint, then populates the store
+   * with the returned topographic canvases + setback lines + building
+   * footprints. The mock is the seam — swap the endpoint for a real
+   * vision-model call later.
+   */
+  processSiteDocuments: (
+    surveyFile?: File,
+    titleFile?: File,
+  ) => Promise<void>;
+
   // --- Spatial UI — workspace toggles (persisted per user) ---
   /** Handedness — mirrors chrome anchors left/right. Default RIGHT. */
   handedness: "RIGHT" | "LEFT";
@@ -493,6 +548,16 @@ export interface StudioStoreState {
   uiScale: number;
   /** Drafting mode — true = ruler + crosshair + snap on; false = sketching (zero chrome margin). */
   draftingMode: boolean;
+
+  // --- Phase 8: Living Diorama & Spatial Presence ---
+  /** Render quality — TECHNICAL (clean drafting) or IMMERSIVE (AAA post-FX). */
+  renderMode: RenderMode;
+  /** Camera posture — ORBIT (fused rig) or PEDESTRIAN (1.7m walk-through). */
+  cameraPosture: CameraPosture;
+  /** Toggle between TECHNICAL and IMMERSIVE render modes. */
+  toggleRenderMode: () => void;
+  /** Set the camera posture (ORBIT or PEDESTRIAN). */
+  setCameraPosture: (posture: CameraPosture) => void;
 
   // --- Stroke Transfer (Phase 2) ---
   /** The transfer tool is armed — click a stroke to select it as the source,
@@ -1035,7 +1100,7 @@ export interface StudioStoreState {
   bumpSaveRevision: () => void;
 }
 
-/** Snapshot the undoable doc slices (placements + strokes + photo elevations + features + stitch records + trenches + zones). */
+/** Snapshot the undoable doc slices (placements + strokes + photo elevations + features + stitch records + trenches + zones + canvases + setback lines + building footprints). */
 function docSnapshot(
   s: Pick<
     StudioStoreState,
@@ -1047,6 +1112,8 @@ function docSnapshot(
     | "constructionTrenches"
     | "irrigationZones"
     | "sketchCanvases"
+    | "setbackLines"
+    | "buildingFootprints"
   >,
 ) {
   return {
@@ -1058,6 +1125,8 @@ function docSnapshot(
     constructionTrenches: [...s.constructionTrenches],
     irrigationZones: [...s.irrigationZones],
     canvases: [...s.sketchCanvases],
+    setbackLines: [...s.setbackLines],
+    buildingFootprints: [...s.buildingFootprints],
   };
 }
 
@@ -1224,10 +1293,20 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   sketchCanvases: [],
   activeCanvasId: null,
 
+  // AI Automated Site Setup (Phase 7) — no setback lines or building
+  // footprints until generated; processing state starts idle.
+  setbackLines: [],
+  buildingFootprints: [],
+  aiProcessingState: "IDLE",
+
   // Spatial UI — workspace defaults (RIGHT-handed, 100% scale, drafting on).
   handedness: "RIGHT",
   uiScale: 1.0,
   draftingMode: true,
+
+  // Phase 8 — default to technical rendering + orbit camera.
+  renderMode: "TECHNICAL",
+  cameraPosture: "ORBIT",
 
   // Stroke Transfer — tool starts disarmed, no source selected.
   transferToolArmed: false,
@@ -1828,6 +1907,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         constructionTrenches: prev.constructionTrenches,
         irrigationZones: prev.irrigationZones,
         sketchCanvases: prev.canvases,
+        setbackLines: prev.setbackLines,
+        buildingFootprints: prev.buildingFootprints,
         selection: pruneSelection(s.selection, {
           placements: prev.placements,
           features: prev.features,
@@ -1850,6 +1931,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         constructionTrenches: next.constructionTrenches,
         irrigationZones: next.irrigationZones,
         sketchCanvases: next.canvases,
+        setbackLines: next.setbackLines,
+        buildingFootprints: next.buildingFootprints,
         selection: pruneSelection(s.selection, {
           placements: next.placements,
           features: next.features,
@@ -1934,10 +2017,86 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     }),
   setActiveCanvasId: (id) => set({ activeCanvasId: id }),
 
+  // --- AI Automated Site Setup (Phase 7) ---
+  setSetbackLines: (setbackLines) => set({ setbackLines }),
+  setBuildingFootprints: (buildingFootprints) => set({ buildingFootprints }),
+  setAiProcessingState: (aiProcessingState) => set({ aiProcessingState }),
+  processSiteDocuments: async (surveyFile, titleFile) => {
+    const store = useStudioStore.getState();
+    if (store.aiProcessingState !== "IDLE") return;
+    const projectId = store.projectId;
+    if (!projectId) return;
+
+    store.setAiProcessingState("ANALYZING_SURVEY");
+
+    const formData = new FormData();
+    if (surveyFile) formData.append("survey", surveyFile);
+    if (titleFile) formData.append("title", titleFile);
+
+    let res: Response;
+    try {
+      res = await fetch(
+        `/api/projects/${projectId}/design-canvas/auto-setup`,
+        {
+          method: "POST",
+          body: formData,
+          cache: "no-store",
+        },
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[processSiteDocuments] fetch failed", msg);
+      store.setAiProcessingState("IDLE");
+      return;
+    }
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      console.error("[processSiteDocuments] API error", res.status, detail);
+      store.setAiProcessingState("IDLE");
+      return;
+    }
+
+    const payload = (await res.json()) as {
+      canvases: SketchCanvas[];
+      setback_lines: SetbackLine[];
+      building_footprints: BuildingFootprint[];
+    };
+
+    store.setAiProcessingState("GENERATING_SITE");
+
+    // Commit the AI-generated canvases + setback lines + building footprints
+    // in ONE undo step.
+    set((s) => ({
+      sketchCanvases: payload.canvases,
+      setbackLines: payload.setback_lines,
+      buildingFootprints: payload.building_footprints,
+      activeCanvasId: payload.canvases[0]?.id ?? s.activeCanvasId,
+      aiProcessingState: "SUCCESS",
+      historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
+      historyFuture: [],
+    }));
+
+    // Auto-reset to IDLE after a brief success flash (the modal closes on
+    // SUCCESS; the reset lets a future run start cleanly).
+    window.setTimeout(() => {
+      if (useStudioStore.getState().aiProcessingState === "SUCCESS") {
+        useStudioStore.setState({ aiProcessingState: "IDLE" });
+      }
+    }, 1500);
+  },
+
   // --- Spatial UI — workspace toggle actions ---
   setHandedness: (handedness) => set({ handedness }),
   setUiScale: (uiScale) => set({ uiScale: Math.max(0.85, Math.min(1.3, uiScale)) }),
   setDraftingMode: (draftingMode) => set({ draftingMode }),
+
+  // --- Phase 8: Living Diorama & Spatial Presence ---
+  toggleRenderMode: () =>
+    set((s) => ({
+      renderMode: s.renderMode === "TECHNICAL" ? "IMMERSIVE" : "TECHNICAL",
+    })),
+  setCameraPosture: (cameraPosture) => set({ cameraPosture }),
 
   // --- Stroke Transfer (Phase 2) ---
   setTransferToolArmed: (on) =>

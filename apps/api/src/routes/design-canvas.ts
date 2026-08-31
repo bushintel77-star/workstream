@@ -31,6 +31,8 @@ export default async function designCanvasRoutes(fastify: FastifyInstance) {
             image_layers: [],
             features: [],
             canvases: [],
+            setback_lines: [],
+            building_footprints: [],
             site_frame: null,
             presentation_pack: null,
             updated_at: null,

@@ -34,6 +34,10 @@ export async function saveDesignCanvasClient(
     lifecycle_phase?: DesignCanvas["lifecycle_phase"];
     /** Spatial Sketching planes — see DesignCanvas.canvases. */
     canvases?: DesignCanvas["canvases"];
+    /** Legal setback lines — see DesignCanvas.setback_lines. */
+    setback_lines?: DesignCanvas["setback_lines"];
+    /** Building footprints — see DesignCanvas.building_footprints. */
+    building_footprints?: DesignCanvas["building_footprints"];
     artboard_ids?: DesignCanvas["artboard_ids"];
     branch_id?: string;
   },

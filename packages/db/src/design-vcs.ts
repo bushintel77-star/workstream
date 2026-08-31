@@ -27,6 +27,8 @@ function normalizeCanvas(canvas: DesignCanvas): DesignCanvas {
     photo_elevations: canvas.photo_elevations ?? [],
     features: canvas.features ?? [],
     canvases: canvas.canvases ?? [],
+    setback_lines: canvas.setback_lines ?? [],
+    building_footprints: canvas.building_footprints ?? [],
   };
 }
 
@@ -73,6 +75,14 @@ function applyUpsert(
         : existing.lifecycle_phase,
     canvases:
       input.canvases !== undefined ? input.canvases : (existing.canvases ?? []),
+    setback_lines:
+      input.setback_lines !== undefined
+        ? input.setback_lines
+        : (existing.setback_lines ?? []),
+    building_footprints:
+      input.building_footprints !== undefined
+        ? input.building_footprints
+        : (existing.building_footprints ?? []),
     artboard_ids:
       input.artboard_ids !== undefined
         ? input.artboard_ids
@@ -127,6 +137,8 @@ export function ensureMainBranch(
       photo_elevations: [],
       features: [],
       canvases: [],
+      setback_lines: [],
+      building_footprints: [],
       updated_at: now,
     };
 
@@ -235,6 +247,8 @@ export function commitRevision(
       photo_elevations: [],
       features: [],
       canvases: [],
+      setback_lines: [],
+      building_footprints: [],
       updated_at: now,
     };
   const canvas = applyUpsert(baseCanvas, input, now);

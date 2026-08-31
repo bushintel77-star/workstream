@@ -26,12 +26,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
+  BuildingFootprint,
   CatalogPlacement,
   CanvasStroke,
   ConstructionTrench,
   IrrigationZone,
   LandscapeFeature,
   PhotoElevation,
+  SetbackLine,
   SketchCanvas,
 } from "@workstream/contracts";
 import {
@@ -59,6 +61,10 @@ export interface StudioAutosaveDoc {
   features?: LandscapeFeature[];
   /** Spatial Sketching planes (oriented 2D planes in 3D space). */
   canvases?: SketchCanvas[];
+  /** Legal setback lines (red dashed non-build zones on the ground plane). */
+  setbackLines?: SetbackLine[];
+  /** Building footprints (extruded 3D house masses framing the garden). */
+  buildingFootprints?: BuildingFootprint[];
 }
 
 /* -------------------------------------------------------------------------- */
@@ -141,6 +147,18 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
     (c) =>
       `${c.id}:${c.label ?? ""}:${c.position.join(",")}:${c.rotation.join(",")}`,
   );
+  const setbackParts = (doc.setbackLines ?? []).map(
+    (l) =>
+      `${l.id}:${l.label ?? ""}:${l.points
+        .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
+        .join("|")}`,
+  );
+  const footprintParts = (doc.buildingFootprints ?? []).map(
+    (f) =>
+      `${f.id}:${f.label ?? ""}:${f.height_m.toFixed(2)}:${f.points
+        .map((p) => `${p.x_pct.toFixed(1)},${p.y_pct.toFixed(1)}`)
+        .join("|")}`,
+  );
   return [
     `s${doc.strokes.length}:${strokeParts.join("~")}`,
     `p${doc.placements.length}:${placementParts.join("~")}`,
@@ -149,6 +167,8 @@ export function buildPersistKey(doc: StudioAutosaveDoc): string {
     `pe${(doc.photoElevations ?? []).length}:${photoElevationParts.join("~")}`,
     `f${(doc.features ?? []).length}:${featureParts.join("~")}`,
     `c${(doc.canvases ?? []).length}:${canvasParts.join("~")}`,
+    `sb${(doc.setbackLines ?? []).length}:${setbackParts.join("~")}`,
+    `bf${(doc.buildingFootprints ?? []).length}:${footprintParts.join("~")}`,
   ].join("§");
 }
 
@@ -231,6 +251,8 @@ export function useStudioAutosave(
           photo_elevations: current.photoElevations,
           features: current.features,
           canvases: current.canvases,
+          setback_lines: current.setbackLines,
+          building_footprints: current.buildingFootprints,
         });
       });
     saveQueueRef.current = queuedSave.catch(() => undefined);
