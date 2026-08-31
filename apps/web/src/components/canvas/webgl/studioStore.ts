@@ -554,6 +554,11 @@ export interface StudioStoreState {
   anchorVisibility: "ALL" | "DIMMED" | "FOCUS";
   /** Set the anchor visibility mode (pack §6.2, ⌥F). */
   setAnchorVisibility: (v: "ALL" | "DIMMED" | "FOCUS") => void;
+  /** Canvas theme — DARK (deep charcoal void) or LIGHT (architectural vellum).
+   *  Drives the R3F scene clear color, ground plane albedo, and grid dot color. */
+  canvasTheme: "LIGHT" | "DARK";
+  /** Toggle between DARK and LIGHT canvas themes. */
+  toggleCanvasTheme: () => void;
 
   // --- Phase 8: Living Diorama & Spatial Presence ---
   /** Render quality — TECHNICAL (clean drafting) or IMMERSIVE (AAA post-FX). */
@@ -1310,6 +1315,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   uiScale: 1.0,
   draftingMode: true,
   anchorVisibility: "ALL",
+  canvasTheme: "DARK",
 
   // Phase 8 — default to technical rendering + orbit camera.
   renderMode: "TECHNICAL",
@@ -2098,6 +2104,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setUiScale: (uiScale) => set({ uiScale: Math.max(0.85, Math.min(1.3, uiScale)) }),
   setDraftingMode: (draftingMode) => set({ draftingMode }),
   setAnchorVisibility: (anchorVisibility) => set({ anchorVisibility }),
+  toggleCanvasTheme: () =>
+    set((s) => ({ canvasTheme: s.canvasTheme === "DARK" ? "LIGHT" : "DARK" })),
 
   // --- Phase 8: Living Diorama & Spatial Presence ---
   toggleRenderMode: () =>

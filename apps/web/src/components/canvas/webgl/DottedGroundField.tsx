@@ -18,8 +18,8 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore } from "./seasonalStore";
+import { useStudioStore } from "./studioStore";
 import { gridFocal, gridTierFor } from "./dottedGrid";
 
 const VERT = /* glsl */ `
@@ -69,6 +69,9 @@ export function DottedGroundField({
   h: number;
 }) {
   const matRef = useRef<THREE.ShaderMaterial>(null);
+  const canvasTheme = useStudioStore((s) => s.canvasTheme);
+  // Theme-aware dot color: white on dark, charcoal on light.
+  const dotColor = canvasTheme === "DARK" ? "#FFFFFF" : "#1C1917";
 
   const uniforms = useMemo(
     () => ({
@@ -79,9 +82,9 @@ export function DottedGroundField({
       uFadeRadius: { value: Math.max(w, h) / 2.4 },
       uFadeFloor: { value: 0.22 },
       uOpacity: { value: 0.6 },
-      uColor: { value: new THREE.Color(PALETTE.gsInk) },
+      uColor: { value: new THREE.Color(dotColor) },
     }),
-    [w, h],
+    [w, h, dotColor],
   );
 
   useFrame((state, delta) => {

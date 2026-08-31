@@ -1,39 +1,34 @@
-/* Spatial Sketching — floating chrome (liquid glass).
- * Per the design handoff §4: glass background with strong blur,
- * light translucent border, pill-shaped buttons.
- * The project uses CSS Modules + variables (no Tailwind); these classes
- * implement the same frosted-glass effect with the existing token ramp. */
+/* Spatial Sketching -- FloatingChrome (Bento redesign).
+ * Premium frosted-glass docks -- Apple Vision Pro / high-end fintech style.
+ * Substantial, legible, feature-rich. No microscopic text. */
 
-/* ---- Perimeter track (pack S5.1 / card 2d) ----
- * 1px inset border, 22px in from viewport edge, 16px radius.
- * pointer-events: none -- frames the canvas, never intercepts. */
+/* ---- Perimeter track ---- 1px inset border framing the viewport. */
 .perimeterTrack {
   position: absolute;
   inset: 22px;
-  border: 1px solid rgba(232, 230, 224, 0.1);
+  border: 1px solid rgba(232, 230, 224, 0.08);
   border-radius: var(--r-2xl);
   pointer-events: none;
   z-index: var(--cf-z-chrome);
 }
 
-/* ---- Primary chip (pack S5.1) ----
- * Project name + AXO tilt / N-up / 1:200 + 8px accent square.
- * Top corner, hand-side-opposite (left for right-hander). */
+/* ---- Primary chip (top-left) ---- project name + scale info. */
 .primaryChip {
   position: absolute;
   top: 22px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 13px;
-  border-radius: var(--r-xl);
-  background: var(--cf-glass-dark);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(232, 230, 224, 0.14);
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: var(--r-2xl);
+  background: rgba(20, 22, 26, 0.72);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(232, 230, 224, 0.12);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
-  max-width: 340px;
+  max-width: 420px;
+  box-shadow: var(--gs-shadow-3);
 }
 
 .primaryChipRight {
@@ -45,201 +40,145 @@
 }
 
 .primaryAccentSquare {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: var(--r-sm);
   background: oklch(0.68 0.12 145);
   flex-shrink: 0;
+  box-shadow: 0 0 8px oklch(0.68 0.12 145 / 40%);
 }
 
 .primaryName {
-  font: 600 11px/1.3 "IBM Plex Mono", monospace;
-  color: rgba(232, 230, 224, 0.85);
+  font: 600 15px/1.3 "Inter", sans-serif;
+  color: rgba(232, 230, 224, 0.92);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: 240px;
+  letter-spacing: -0.01em;
 }
 
 .primaryMeta {
-  font: 500 9px/1 "IBM Plex Mono", monospace;
+  font: 500 11px/1 "IBM Plex Mono", monospace;
   text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.4);
+  color: rgba(232, 230, 224, 0.45);
   letter-spacing: 0.5px;
   white-space: nowrap;
   border-left: 1px solid rgba(232, 230, 224, 0.1);
-  padding-left: 8px;
+  padding-left: 12px;
 }
 
-/* ---- Status pills (pack S5.1) ----
- * Read-only: RIGHT-HANDED / UI % / DRAFTING+SNAP / TILT.
- * Top corner, hand-side (right for right-hander). */
-.statusPills {
+/* ---- Context bar (top-right) ---- unified glass panel.
+ * Replaces scattered status pills with a single cohesive Bento panel.
+ * Houses: theme toggle, UI scale slider, drafting/snap readout, tilt. */
+.contextBar {
   position: absolute;
   top: 22px;
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 0;
+  border-radius: var(--r-2xl);
+  background: rgba(20, 22, 26, 0.72);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(232, 230, 224, 0.12);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
+  box-shadow: var(--gs-shadow-3);
+  overflow: hidden;
 }
 
-.statusPillsRight {
+.contextBarRight {
   right: 22px;
 }
 
-.statusPillsLeft {
+.contextBarLeft {
   left: 22px;
 }
 
-.statusPill {
+.contextCell {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 11px;
-  border-radius: var(--r-xl);
-  background: var(--cf-glass-dark);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(232, 230, 224, 0.14);
-  font: 600 9px/1 "IBM Plex Mono", monospace;
+  gap: 8px;
+  padding: 14px 18px;
+  font: 600 11px/1 "IBM Plex Mono", monospace;
   text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.55);
+  color: rgba(232, 230, 224, 0.6);
   letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
-  user-select: none;
   white-space: nowrap;
-}
-
-.statusPill:hover {
-  color: rgba(232, 230, 224, 0.8);
-  border-color: rgba(232, 230, 224, 0.22);
-}
-
-.statusPillAccent {
-  color: oklch(0.68 0.12 145);
-  border-color: oklch(0.68 0.12 145 / 30%);
-}
-
-.statusPillAccent:hover {
-  color: oklch(0.72 0.12 145);
-  border-color: oklch(0.72 0.12 145 / 40%);
-}
-
-/* ---- Tool dock (pack S5.1 / card 2d) ----
- * 5 pucks (46x46), bottom centre. PEN GRD MAS CUT REF. */
-.toolDock {
-  position: absolute;
-  bottom: 22px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px;
-  border-radius: var(--r-2xl);
-  background: rgba(26, 28, 30, 0.9);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(232, 230, 224, 0.14);
-  pointer-events: auto;
-  z-index: var(--cf-z-chrome);
-}
-
-.puck {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 46px;
-  border-radius: var(--r-lg);
-  font: 600 9.5px/1 "IBM Plex Mono", monospace;
-  text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.55);
-  background: transparent;
   border: none;
+  background: transparent;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
-  letter-spacing: 0.5px;
+  user-select: none;
 }
 
-.puck:hover {
-  background: rgba(232, 230, 224, 0.07);
-  color: rgba(232, 230, 224, 0.8);
+.contextCell:hover {
+  background: rgba(232, 230, 224, 0.06);
+  color: rgba(232, 230, 224, 0.85);
 }
 
-.puckLight {
-  background: rgba(232, 230, 224, 0.07);
-  color: rgba(232, 230, 224, 0.8);
-}
-
-.puckActive {
-  background: oklch(0.68 0.12 145);
-  color: #10120f;
-}
-
-.puckActive:hover {
-  background: oklch(0.72 0.12 145);
-  color: #10120f;
-}
-
-/* ---- Readouts (pack S5.1) ----
- * cut/fill (bottom-left) + anchor state (bottom-right). */
-.readoutGroup {
-  position: absolute;
-  bottom: 22px;
-  display: flex;
-  gap: 6px;
-  pointer-events: none;
-  z-index: var(--cf-z-chrome);
-}
-
-.readoutGroupLeft {
-  left: 22px;
-}
-
-.readoutGroupRight {
-  right: 22px;
-}
-
-.readoutPillCut {
-  padding: 7px 11px;
-  border-radius: var(--r-xl);
-  background: var(--cf-glass-dark);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(232, 230, 224, 0.14);
-  font: 600 9px/1 "IBM Plex Mono", monospace;
-  text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.55);
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-}
-
-.readoutValueCut {
+.contextCellAccent {
   color: oklch(0.68 0.12 145);
-  font-weight: 600;
 }
 
-.readoutValueFill {
-  color: oklch(0.72 0.11 55);
-  font-weight: 600;
+.contextCellAccent:hover {
+  color: oklch(0.72 0.12 145);
 }
 
-/* ---- Depth rail (existing) ---- */
+.contextDivider {
+  width: 1px;
+  height: 24px;
+  background: rgba(232, 230, 224, 0.1);
+  flex-shrink: 0;
+}
+
+.contextSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 80px;
+  height: 4px;
+  border-radius: var(--r-sm);
+  background: rgba(232, 230, 224, 0.14);
+  outline: none;
+  cursor: pointer;
+}
+
+.contextSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--r-pill);
+  background: oklch(0.68 0.12 145);
+  cursor: pointer;
+  border: 2px solid rgba(20, 22, 26, 0.8);
+}
+
+.contextSlider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--r-pill);
+  background: oklch(0.68 0.12 145);
+  cursor: pointer;
+  border: 2px solid rgba(20, 22, 26, 0.8);
+}
+
+/* ---- Depth Rail (side edge) ---- wider, more legible. */
 .rail {
   position: absolute;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 7px;
+  gap: 6px;
+  padding: 12px;
   border-radius: var(--r-2xl);
-  background: var(--cf-glass-dark);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(232, 230, 224, 0.14);
+  background: rgba(20, 22, 26, 0.72);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(232, 230, 224, 0.12);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
+  box-shadow: var(--gs-shadow-3);
 }
 
 .railRight {
@@ -255,22 +194,22 @@
 }
 
 .railHeader {
-  font: 600 8.5px/1 "IBM Plex Mono", monospace;
+  font: 700 10px/1 "IBM Plex Mono", monospace;
   text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.4);
+  color: rgba(232, 230, 224, 0.35);
   text-align: center;
-  padding: 2px 0 4px;
-  letter-spacing: 0.5px;
+  padding: 4px 0 6px;
+  letter-spacing: 1px;
 }
 
 .cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 34px;
+  width: 52px;
+  height: 44px;
   border-radius: var(--r-lg);
-  font: 600 9px/1 "IBM Plex Mono", monospace;
+  font: 700 12px/1 "IBM Plex Mono", monospace;
   text-transform: uppercase;
   color: rgba(232, 230, 224, 0.55);
   background: transparent;
@@ -281,47 +220,48 @@
 
 .cell:hover {
   background: rgba(232, 230, 224, 0.07);
-  color: rgba(232, 230, 224, 0.8);
+  color: rgba(232, 230, 224, 0.85);
 }
 
 .cellActive {
   background: oklch(0.68 0.12 145);
   color: #10120f;
+  box-shadow: 0 0 12px oklch(0.68 0.12 145 / 35%);
 }
 
 .cellActive:hover {
-  background: oklch(0.68 0.12 145);
+  background: oklch(0.72 0.12 145);
   color: #10120f;
 }
 
 .cellAdd {
   color: rgba(232, 230, 224, 0.4);
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1;
 }
 
-/* Season tag — small cycle button below each canvas cell */
+/* Season tag -- small cycle button below each canvas cell */
 .seasonTag {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 18px;
+  width: 52px;
+  height: 22px;
   border-radius: var(--r-md);
-  font: 600 7.5px/1 "IBM Plex Mono", monospace;
+  font: 700 9px/1 "IBM Plex Mono", monospace;
   text-transform: uppercase;
   color: rgba(232, 230, 224, 0.45);
   background: transparent;
   border: 1px solid rgba(232, 230, 224, 0.08);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  margin-top: 2px;
+  margin-top: 3px;
   letter-spacing: 0.5px;
 }
 
 .seasonTag:hover {
   background: rgba(232, 230, 224, 0.07);
-  color: rgba(232, 230, 224, 0.8);
+  color: rgba(232, 230, 224, 0.85);
 }
 
 .seasonTagSummer {
@@ -338,29 +278,146 @@
   color: rgba(232, 230, 224, 0.45);
 }
 
-/* Extrusion slider panel -- appears when MAS tool is armed + a stroke is selected */
-.extPanel {
+/* ---- Tool dock (bottom centre) ---- premium frosted glass dock.
+ * Apple Vision Pro style -- substantial pucks with clear labels. */
+.toolDock {
   position: absolute;
-  bottom: 78px;
+  bottom: 22px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 4px;
+  padding: 10px;
   border-radius: var(--r-2xl);
-  background: var(--cf-glass-dark);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(232, 230, 224, 0.14);
+  background: rgba(20, 22, 26, 0.78);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(232, 230, 224, 0.12);
   pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+  box-shadow: var(--gs-shadow-4);
+}
+
+.puck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 64px;
+  height: 56px;
+  border-radius: var(--r-lg);
+  font: 700 10px/1 "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  color: rgba(232, 230, 224, 0.6);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  letter-spacing: 0.5px;
+}
+
+.puck:hover {
+  background: rgba(232, 230, 224, 0.07);
+  color: rgba(232, 230, 224, 0.9);
+}
+
+.puckLight {
+  background: rgba(232, 230, 224, 0.07);
+  color: rgba(232, 230, 224, 0.9);
+}
+
+.puckActive {
+  background: oklch(0.68 0.12 145);
+  color: #10120f;
+  box-shadow: 0 0 16px oklch(0.68 0.12 145 / 40%);
+}
+
+.puckActive:hover {
+  background: oklch(0.72 0.12 145);
+  color: #10120f;
+}
+
+.puckIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.puckLabel {
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+
+/* ---- Readouts (bottom corners) ---- cut/fill + anchor state. */
+.readoutGroup {
+  position: absolute;
+  bottom: 22px;
+  display: flex;
+  gap: 8px;
+  pointer-events: none;
   z-index: var(--cf-z-chrome);
 }
 
-.extLabel {
-  font: 600 9px/1 "IBM Plex Mono", monospace;
+.readoutGroupLeft {
+  left: 22px;
+}
+
+.readoutGroupRight {
+  right: 22px;
+}
+
+.readoutPillCut {
+  padding: 12px 18px;
+  border-radius: var(--r-xl);
+  background: rgba(20, 22, 26, 0.72);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(232, 230, 224, 0.12);
+  font: 700 11px/1 "IBM Plex Mono", monospace;
   text-transform: uppercase;
-  color: rgba(232, 230, 224, 0.55);
+  color: rgba(232, 230, 224, 0.6);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: var(--gs-shadow-3);
+}
+
+.readoutValueCut {
+  color: oklch(0.68 0.12 145);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.readoutValueFill {
+  color: oklch(0.72 0.11 55);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ---- Extrusion slider panel ---- appears when MAS tool is armed. */
+.extPanel {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-radius: var(--r-2xl);
+  background: rgba(20, 22, 26, 0.78);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(232, 230, 224, 0.12);
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+  box-shadow: var(--gs-shadow-4);
+}
+
+.extLabel {
+  font: 700 11px/1 "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  color: rgba(232, 230, 224, 0.6);
   letter-spacing: 0.5px;
   white-space: nowrap;
 }
@@ -368,8 +425,8 @@
 .extSlider {
   -webkit-appearance: none;
   appearance: none;
-  width: 140px;
-  height: 4px;
+  width: 180px;
+  height: 6px;
   border-radius: var(--r-sm);
   background: rgba(232, 230, 224, 0.14);
   outline: none;
@@ -379,27 +436,27 @@
 .extSlider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border-radius: var(--r-pill);
   background: oklch(0.68 0.12 145);
   cursor: pointer;
-  border: 2px solid rgba(20, 20, 20, 0.8);
+  border: 2px solid rgba(20, 22, 26, 0.8);
 }
 
 .extSlider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border-radius: var(--r-pill);
   background: oklch(0.68 0.12 145);
   cursor: pointer;
-  border: 2px solid rgba(20, 20, 20, 0.8);
+  border: 2px solid rgba(20, 22, 26, 0.8);
 }
 
 .extValue {
-  font: 600 10px/1 "IBM Plex Mono", monospace;
+  font: 700 13px/1 "IBM Plex Mono", monospace;
   color: oklch(0.68 0.12 145);
-  min-width: 48px;
+  min-width: 56px;
   text-align: right;
   white-space: nowrap;
 }
@@ -408,10 +465,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
-  padding: 0 14px;
+  height: 40px;
+  padding: 0 18px;
   border-radius: var(--r-lg);
-  font: 600 9px/1 "IBM Plex Mono", monospace;
+  font: 700 11px/1 "IBM Plex Mono", monospace;
   text-transform: uppercase;
   color: #10120f;
   background: oklch(0.68 0.12 145);

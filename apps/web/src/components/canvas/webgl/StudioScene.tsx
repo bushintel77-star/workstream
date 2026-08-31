@@ -769,54 +769,27 @@ function NeighbourBuildings({
 function GroundPlane({
   scaleM,
   boardAspect,
-  groundAlbedo = "site",
 }: {
   scaleM: number;
   boardAspect: number;
   groundAlbedo?: CanvasLayerPolicy["groundAlbedo"];
 }) {
-  const w = scaleM * GROUND_CONTEXT_EXTENT;
-  const h = scaleM * boardAspect * GROUND_CONTEXT_EXTENT;
-  const matRef = useRef<THREE.MeshStandardMaterial>(null);
-
-  // Target colours (memoized so we don't allocate THREE.Color per frame).
-  const colorOlive = useMemo(() => new THREE.Color(PALETTE.groundOlive), []);
-  const colorPaper = useMemo(() => new THREE.Color(PALETTE.gsCanvas), []);
-  const colorVellum = useMemo(() => new THREE.Color(PALETTE.renderBlueprintGround), []);
-  const restColor = groundAlbedo === "paper" ? colorPaper : colorOlive;
-
-  useFrame((_, delta) => {
-    const mat = matRef.current;
-    if (!mat) return;
-    const { subsurfaceView } = useSeasonalStore.getState();
-    const k = Math.min(1, delta * 4); // smooth transition speed
-
-    const targetOpacity = subsurfaceView ? 0.88 : 1.0;
-    const targetRoughness = subsurfaceView ? 0.6 : 0.92;
-    const targetColor = subsurfaceView ? colorVellum : restColor;
-
-    mat.opacity = THREE.MathUtils.lerp(mat.opacity, targetOpacity, k);
-    mat.roughness = THREE.MathUtils.lerp(mat.roughness, targetRoughness, k);
-    mat.color.lerp(targetColor, k);
-  });
+  // Infinite ground — 10x the context extent so zoom-out never hits an edge.
+  const w = scaleM * GROUND_CONTEXT_EXTENT * 10;
+  const h = scaleM * boardAspect * GROUND_CONTEXT_EXTENT * 10;
 
   return (
     <>
+      {/* Invisible shadow-catching plane -- ShadowMaterial renders only the
+          shadows cast by the sun rig, never an albedo. The brown box is gone;
+          the ground blends seamlessly into the scene background. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[w, h]} />
-        <meshStandardMaterial
-          ref={matRef}
-          // Start AT the resting albedo — a lerp-in from olive would flash a
-          // warm ground across the whole frame on every drafting-mode mount.
-          color={groundAlbedo === "paper" ? PALETTE.gsCanvas : PALETTE.groundOlive}
-          roughness={0.92}
-          metalness={0.02}
-          transparent
-          opacity={1}
-        />
+        <shadowMaterial transparent opacity={0.35} />
       </mesh>
       {/* Dotted infinity field — world-space procedural dots replace the
-          old line grid (hard intersections, zoom flicker, carpet edges). */}
+          old line grid (hard intersections, zoom flicker, carpet edges).
+          Scaled to match the infinite ground. */}
       <DottedGroundField w={w} h={h} />
     </>
   );
@@ -1010,7 +983,7 @@ export function StudioScene({
       {heightmapPoints.length > 0 ? (
         <TerrainMesh scaleM={scaleM} boardAspect={boardAspect} heightmapPoints={heightmapPoints} groundAlbedo={policy.groundAlbedo} />
       ) : (
-        <GroundPlane scaleM={scaleM} boardAspect={boardAspect} groundAlbedo={policy.groundAlbedo} />
+        <GroundPlane scaleM={scaleM} boardAspect={boardAspect} />
       )}
       {/* Elevation Slice — draggable section-cut line (Vertical Truth). Only
           mounts when terrain exists; the DOM profile panel is in WebGLStudioPreview. */}

@@ -36,6 +36,7 @@ import { BlendFunction, KernelSize } from "postprocessing";
 import {
   Component,
   useCallback,
+  useEffect,
   useRef,
   type CSSProperties,
   type ReactNode,
@@ -52,7 +53,6 @@ import type {
   IrrigationZone,
   LandscapeFeature,
 } from "@workstream/contracts";
-import { PALETTE } from "../../../styles/colorTokens";
 import { canvasLayerPolicy } from "./layerPolicy";
 import { parseCanvasMode } from "../../../lib/canvas-mode";
 import { ChromeRecedeWatcher } from "./ChromeRecedeWatcher";
@@ -299,18 +299,25 @@ export function WebGLStudio({
   // modes keep the sunny daylight look.
   const drafting =
     canvasLayerPolicy(parseCanvasMode(mode) ?? "survey").groundAlbedo === "paper";
+  const canvasTheme = useStudioStore((s) => s.canvasTheme);
+  // Refs for live theme updates without remounting the Canvas.
+  const glRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  // Theme-aware clear color: DARK = deep charcoal void, LIGHT = vellum.
+  const clearColor = canvasTheme === "DARK" ? "#0f1115" : "#f3f4f6";
   const onCanvasCreated = useCallback(({ gl, scene }: { gl: WebGLRenderer; scene: THREE.Scene }) => {
-    gl.setClearColor(PALETTE.gsCanvas);
-    // Drafting (paper) modes use NoToneMapping so #F4F4F4 stays dead-neutral
-    // — ACES Filmic's S-curve shifts bright whites warm even at exposure 1.0.
+    glRef.current = gl;
+    sceneRef.current = scene;
+    gl.setClearColor(clearColor);
+    // Drafting (paper) modes use NoToneMapping so the clear color stays
+    // dead-neutral — ACES Filmic's S-curve shifts bright whites warm.
     // Site/3D modes keep ACES + exposure 1.55 for the sunny daylight look.
     gl.toneMapping = drafting ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
     gl.toneMappingExposure = drafting ? 1.0 : 1.55;
     gl.outputColorSpace = THREE.SRGBColorSpace;
     // Linear fog matching the canvas colour — fades distant geometry into the
-    // void for depth, hides the ground-plane edge cliff. Same technique the
-    // GrowthStudio reference uses.
-    scene.fog = new THREE.Fog(PALETTE.gsCanvas, scaleM * 4, scaleM * 10);
+    // void for depth, hides the ground-plane edge cliff.
+    scene.fog = new THREE.Fog(clearColor, scaleM * 4, scaleM * 10);
     gl.domElement.addEventListener(
       "webglcontextlost",
       (event) => {
@@ -324,7 +331,18 @@ export function WebGLStudio({
       },
       { once: true },
     );
-  }, [onContextLost, scaleM, drafting]);
+  }, [onContextLost, scaleM, drafting, clearColor]);
+
+  // Live theme toggle — update clear color + fog without remounting the Canvas.
+  useEffect(() => {
+    const gl = glRef.current;
+    const scene = sceneRef.current;
+    if (!gl || !scene) return;
+    gl.setClearColor(clearColor);
+    if (scene.fog) {
+      (scene.fog as THREE.Fog).color.set(clearColor);
+    }
+  }, [clearColor]);
 
   return (
     <div
