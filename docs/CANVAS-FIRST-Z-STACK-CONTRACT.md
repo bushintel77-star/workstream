@@ -115,20 +115,11 @@ not compete visually.
 
 ## 7. Dev tools
 
-A dev-only hover-tier HUD lives at
-`apps/web/src/components/canvas/webgl/CfzTierInspector.tsx`. Activate on
-any client route by appending `?cfz-inspect=1` to the URL. The HUD
-walks `pointermove` events, samples the resolved `z-index` of the
-nearest `[data-cf-layer]` ancestor, and reports the live delta against
-`readCfZ(tier)`. Disabled in `NODE_ENV === "production"`; URL flag is
-the positive control.
-
-Mount it once anywhere inside the WebGL studio route to wire it up:
-```tsx
-import { CfzTierInspector } from "./CfzTierInspector";
-// somewhere inside the studio tree:
-<CfzTierInspector />
-```
+The dev-only hover-tier HUD (`CfzTierInspector.tsx`) was removed in the
+2026 chrome purge — the zero-chrome WebGL studio no longer mounts a
+z-tier inspector. The `?cfz-inspect=1` URL flag is inert. The four-tier
+z-ladder itself (`--cf-z-canvas|spatial|chrome|app`) and its enforcement
+via `cfZPair()` + the ESLint `no-restricted-syntax` rule remain in force.
 
 ## 8. Files in this contract
 
@@ -140,7 +131,6 @@ import { CfzTierInspector } from "./CfzTierInspector";
 | `apps/web/src/components/canvas/cfz.parity.test.ts` | CSS ↔ JS mirror pin |
 | `apps/web/src/components/canvas/cfz.registry.test.ts` | Closed `data-cf-layer` registry guard |
 | `apps/web/src/components/canvas/webgl/CanvasFirstLayout.tsx` | The four-slot publisher |
-| `apps/web/src/components/canvas/webgl/CfzTierInspector.tsx` | Dev-only hover-tier HUD |
 | `apps/web/e2e/canvas-first-z-stack.spec.ts` | Runtime regression (Survey/Sketch/CAD/Garden) |
 | `eslint.config.mjs` | `no-restricted-syntax` rule for raw zIndex and `cfZPair("...")` registry |
 | `docs/CANVAS-FIRST-Z-STACK-CONTRACT.md` | This document |

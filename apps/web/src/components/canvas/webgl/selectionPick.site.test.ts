@@ -5,7 +5,6 @@ import {
   pruneSelection,
   type SelectionRef,
 } from "./selectionPick";
-import { resolvePanelContext } from "./UnifiedPanel";
 
 const RING = [
   { x: 20, y: 15 },
@@ -80,37 +79,5 @@ describe("pruneSelection with site elements", () => {
       siteBoundary: [],
     });
     expect(pruned).toHaveLength(0);
-  });
-});
-
-describe("resolvePanelContext (the context router)", () => {
-  it("selection wins over everything", () => {
-    expect(resolvePanelContext([{ kind: "boundary", id: "b" }], true, "cad"))
-      .toEqual({ kind: "selection-boundary", ref: { kind: "boundary", id: "b" } });
-    expect(resolvePanelContext([{ kind: "placement", id: "p1" }], false, "survey"))
-      .toEqual({ kind: "selection-placement", ref: { kind: "placement", id: "p1" } });
-  });
-
-  it("multi-select returns selection-multi", () => {
-    expect(
-      resolvePanelContext(
-        [
-          { kind: "placement", id: "a" },
-          { kind: "feature", id: "b" },
-        ],
-        false,
-        "cad",
-      ).kind,
-    ).toBe("selection-multi");
-  });
-
-  it("tool-armed wins over mode when no selection", () => {
-    expect(resolvePanelContext([], true, "survey").kind).toBe("tool-sketch");
-  });
-
-  it("mode is the default", () => {
-    expect(resolvePanelContext([], false, "survey").kind).toBe("mode-survey");
-    expect(resolvePanelContext([], false, "cad").kind).toBe("mode-cad");
-    expect(resolvePanelContext([], false, "quote").kind).toBe("mode-quote");
   });
 });

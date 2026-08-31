@@ -29,7 +29,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -50,8 +49,8 @@ import type {
 } from "@workstream/contracts";
 import { getCatalogSymbol } from "@workstream/domain";
 import { VignetteOverlay } from "./VignetteOverlay";
+import type { PctPoint } from "./coordTransform";
 import { FloatingChrome } from "./FloatingChrome";
-import { SaveStatusChip } from "./SaveStatusChip";
 import {
   DEFAULT_CAMERA_RIG,
   GARDEN_PITCH_DEG,
@@ -60,47 +59,25 @@ import {
   modeEntryPitchDeg,
   type StudioCameraRig,
 } from "./cameraRig";
-import { pctToWorld, type PctPoint } from "./coordTransform";
 import { PRESENTATION_LENS, TECHNICAL_LENS } from "./PresentationLens";
 import {
   useStudioStore,
-  leafStatus,
-  melbourneSeasonFromSun,
 } from "./studioStore";
-import {
-  SUN_DATE_PRESETS,
-  sunDatePresetLabel,
-} from "../handoff/features/sunGrowth/sunDatePreset";
-import { draftAreaM2, draftRunLengthM } from "./draftShape";
 import { useStudioAutosave, useBeforeUnloadGuard } from "./useStudioAutosave";
 import { computeLiveStudioData } from "./canvasBridges";
-import { SliceProfileCard } from "./SliceProfileCard";
-import { DrainageFlowCard } from "./DrainageFlowCard";
-import { EarthworksCard } from "./EarthworksCard";
-import { EstimatorPanel } from "./EstimatorPanel";
-import { AssetLibraryPanel } from "./AssetLibraryPanel";
 import { FloatingPlacementToolbar } from "./FloatingPlacementToolbar";
-import { StudioToolRail } from "./StudioToolRail";
 import { Button } from "./Button";
-import { PerimeterTabStrip, type MetaTabDef, type MetaTabId } from "./PerimeterTabStrip";
 import { canvasLayerPolicy } from "./layerPolicy";
 import { importSiteTruth } from "./siteTruthImport";
 import { StudioCommandPalette } from "./StudioCommandPalette";
-import { StudioCadCard } from "./StudioCadCard";
 import { AiScanOverlay } from "./AiScanOverlay";
-import { SitePhotoGallery } from "./SitePhotoGallery";
 import { PhotoTraceHud } from "./PhotoTraceHud";
 import { PhotoElevationSheet } from "./PhotoElevationSheet";
 import { SplitViewLens } from "./SplitViewLens";
 import { StudioSurfaceErrorBoundary } from "./StudioSurfaceErrorBoundary";
 import { placementsToItems, featuresOntoItems } from "../handoff/state/canvasBridge";
-import { buildCanopyCompliance } from "./canopyCompliance";
 import { buildScanChoreography } from "./scanChoreography";
 import { toRenderItems } from "./stateBridge";
-import { UnifiedPanel } from "./UnifiedPanel";
-import { AiPromptBar } from "./AiPromptBar";
-import { generateGhosts } from "./aiGeneration";
-import { buildStudioSiteEnvelope } from "./siteEnvelope";
 import { GhostOverlay } from "./GhostOverlay";
 import {
   nearestFeatureId,
@@ -109,25 +86,14 @@ import {
   buildingHitTest,
 } from "./selectionPick";
 import { unlockedModes, type CanvasMode, type CanvasProgress } from "../../../lib/canvas-mode";
-import { interactionGuidance } from "./interactionGuidance";
 import { StudioShortcutsHelp } from "./StudioShortcutsHelp";
 import { isTypingTarget, resolveStudioShortcut } from "./studioShortcuts";
-import { SiteContextBadges } from "../../SiteContextBadges";
-import { GardenViewpointStrip } from "../handoff/features/viewpoint/GardenViewpointStrip";
 import { viewpointYawDeg, type GardenViewpointLook } from "../handoff/features/tilt/tiltMath";
-import { SurveySetupPanel } from "./SurveySetupPanel";
-import { buildSurveySetup } from "./surveySetup";
 import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { ShareSurface } from "../handoff/features/share/ShareSurface";
 import { PresentSurface } from "../handoff/features/present/PresentSurface";
-import { deriveSurveyedPlanModel } from "./annotations/derive";
-import { deriveTradePackModel } from "./annotations/tradeDerive";
-import { SurveyCommunicationCard } from "./annotations/SurveyCommunicationCard";
-import { communicationProfileForMode } from "./annotations/modeProfile";
 
 /** Day arc bounds — same as the 2D SunGrowthDock (~06:20 → ~19:40). */
-const DAY_START = 6 * 60 + 20;
-const DAY_END = 19 * 60 + 40;
 
 /**
  * Validate a GET /design-canvas payload against the contract schema before
@@ -158,7 +124,6 @@ const WebGLStudio = dynamic(() => import("./WebGLStudio").then((m) => m.WebGLStu
 });
 import { CanvasFirstLayout } from "./CanvasFirstLayout";
 import type { CanvasBridge, SpatialGraphNode } from "./CanvasFirstLayout";
-import { CfzTierInspector } from "./CfzTierInspector";
 import type { SelectionRef } from "./selectionPick";
 
 export interface WebGLStudioPreviewProps {
@@ -202,6 +167,7 @@ export interface WebGLStudioPreviewProps {
   /** Vicmap neighbouring footprints for real overshadowing context. */
   neighbourBuildings?: DesignNeighbourBuilding[];
   /** Outdoor area m² (page-computed from survey/title/site_frame) → fit-sheet. */
+  /** @deprecated — kept for API compat, unused after chrome purge. */
   outdoorM2?: number;
   /** Activate sketch mode on mount (from ?tool=sketch deep link). */
   initialSketchMode?: boolean;
@@ -249,7 +215,7 @@ export function WebGLStudioPreview({
   levels = [],
   keylessOverlays = [],
   neighbourBuildings = [],
-  outdoorM2 = 0,
+  outdoorM2: _outdoorM2 = 0,
   initialSketchMode = false,
   initialMode = "sketch",
   progress = {
@@ -287,30 +253,20 @@ export function WebGLStudioPreview({
   const [presentationMode, setPresentationMode] = useState(false);
   const [activeMode, setActiveMode] = useState<CanvasMode>(initialMode);
   /** Open meta surface panel (null = none). Mode surfaces open by mode. */
-  const [metaTab, setMetaTab] = useState<MetaTabId | null>(null);
   /** The open photo elevation sheet (print artifact) — null = closed. */
   const [photoSheetId, setPhotoSheetId] = useState<string | null>(null);
   /** Fit companion visibility — the Fit meta tab's pressed state (rides the
    *  store, not the metaTab state; restored with the meta tabs). */
-  const fitSheetOpen = useStudioStore((s) => s.fitSheetOpen);
-  const setFitSheetOpen = useStudioStore((s) => s.setFitSheetOpen);
   const router = useRouter();
   const setupRanFor = useRef<string | null>(null);
 
-  // Escape closes the open surface panel (browser-tab behaviour).
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && metaTab) setMetaTab(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [metaTab]);
-  const [cadGhostCount, setCadGhostCount] = useState<number | null>(
+  // Escape closes the open surface panel (browser-tab behaviour).  }, [metaTab]);
+  const [cadGhostCount] = useState<number | null>(
     initialCadGhostCount,
   );
   const [quotePersisted, setQuotePersisted] = useState(hasQuote);
   const [portalUri, setPortalUri] = useState<string | null>(quotePortalUri);
-  const [visibleLayers, setVisibleLayers] = useState({
+  const [visibleLayers] = useState({
     sketch: true,
     siteTruth: true,
     design: true,
@@ -367,27 +323,6 @@ export function WebGLStudioPreview({
 
   // Estimator stage — the panel titles "Estimator" while the estimate is
   // provisional and "Quote" once the operator commits it (signoff exists).
-  const [signedOff, setSignedOff] = useState(false);
-  const [signoffLoading, setSignoffLoading] = useState(true);
-  useEffect(() => {
-    let cancelled = false;
-    import("../../../app/actions")
-      .then(({ getSignoffAction }) => getSignoffAction(projectId))
-      .then((res) => {
-        if (cancelled) return;
-        setSignedOff(res?.signoff != null);
-      })
-      .catch(() => {
-        if (!cancelled) setSignedOff(false);
-      })
-      .finally(() => {
-        if (!cancelled) setSignoffLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId]);
-
   /**
    * Camera + instrument state for entering a mode. Shared by the tab/shortcut
    * path (`onNativeMode`) and the deep-link mount effect below, so `?mode=cad`
@@ -427,7 +362,6 @@ export function WebGLStudioPreview({
 
   const onNativeMode = useCallback((mode: CanvasMode) => {
     setActiveMode(mode);
-    setMetaTab(null);
     if (mode !== "present") setPresentationMode(false);
     const store = useStudioStore.getState();
     applyModeCamera(mode);
@@ -466,34 +400,12 @@ export function WebGLStudioPreview({
 
   // --- Store subscriptions (DOM HUD re-renders; 3D reads via getState) ---
   const year = useStudioStore((s) => s.growthYear);
-  const setYear = useStudioStore((s) => s.setGrowthYear);
   const growthFactor = year / 10;
   const sunMin = useStudioStore((s) => s.sunMin);
-  const setSunMin = useStudioStore((s) => s.setSunMin);
-  const seasonProgress = useStudioStore((s) => s.seasonProgress);
-  const sunDatePreset = useStudioStore((s) => s.sunDatePreset);
-  const setSunDatePreset = useStudioStore((s) => s.setSunDatePreset);
-  const suncastView = useStudioStore((s) => s.suncastView);
-  const setSuncastView = useStudioStore((s) => s.setSuncastView);
-  const seasonMeta = useMemo(
-    () => melbourneSeasonFromSun(sunDatePreset, sunMin),
-    [sunDatePreset, sunMin],
-  );
   const viewBlendTarget = useStudioStore((s) => s.viewBlendTarget);
-  const setPitchDeg = useStudioStore((s) => s.setPitchDeg);
-  const canUndo = useStudioStore((s) => s.historyPast.length > 0);
-  const canRedo = useStudioStore((s) => s.historyFuture.length > 0);
-  const subsurfaceView = useStudioStore((s) => s.subsurfaceView);
   const strokes = useStudioStore((s) => s.sketchStrokes);
   const storeCanvases = useStudioStore((s) => s.sketchCanvases);
-  const sketchModeActive = useStudioStore((s) => s.sketchMode);
   // Sketch → CAD — the tidy proposal set + review state (Part A).
-  const cadProposals = useStudioStore((s) => s.cadProposals);
-  const cadReviewOpen = useStudioStore((s) => s.cadReviewOpen);
-  const sketchCadNotice = useStudioStore((s) => s.sketchCadNotice);
-  const stitchNotice = useStudioStore((s) => s.stitchNotice);
-  const dismissStitchNotice = useStudioStore((s) => s.dismissStitchNotice);
-  const setCadReviewOpen = useStudioStore((s) => s.setCadReviewOpen);
   // Save status is rendered by <SaveStatusChip /> which subscribes independently
   // (so only the chip re-renders on status change, not the whole HUD).
 
@@ -571,7 +483,6 @@ export function WebGLStudioPreview({
   const storePlacements = useStudioStore((s) => s.placements);
   const storeFeatures = useStudioStore((s) => s.features);
   const splitView = useStudioStore((s) => s.splitView);
-  const marqueeActive = useStudioStore((s) => s.marqueeActive);
   const surveyedPlanLayers = useStudioStore((s) => s.surveyedPlanLayers);
   const setSurveyedPlanLayers = useStudioStore((s) => s.setSurveyedPlanLayers);
   const surveyAnnotationDialect = useStudioStore((s) => s.surveyAnnotationDialect);
@@ -654,6 +565,8 @@ export function WebGLStudioPreview({
     },
     [scaleM],
   );
+
+  // Studio keyboard map — viewport 1–4, Shift+digit modes, letter tools, ?.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -706,50 +619,13 @@ export function WebGLStudioPreview({
   // foundation is Vicmap vectors, not photo underlays.
 
   // Site-truth import — the Vicmap bridge (survey mode owns it).
-  const [truthBusy, setTruthBusy] = useState(false);
-  const [truthMsg, setTruthMsg] = useState<string | null>(null);
+  const [truthBusy] = useState(false);
+  const [,] = useState<string | null>(null);
 
   // AI parsing-stage transition — the canvas-level scan overlay driven by
   // the drafter panel's busy state (AI draft / assist). The research-backed
   // parsing UX lives in AiScanOverlay; this is just its power switch.
-  const [aiScanKey, setAiScanKey] = useState<string | null>(null);
-  const runSiteTruthImport = useCallback(async () => {
-    setTruthBusy(true);
-    setTruthMsg(null);
-    try {
-      const canvasRes = await fetch(`/api/projects/${projectId}/design-canvas`);
-      if (!canvasRes.ok) {
-        const payload = (await canvasRes.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-        throw new Error(
-          payload?.error ?? `Could not load the current drawing (${canvasRes.status})`,
-        );
-      }
-      const canvas = await parseDesignCanvasPayload(await canvasRes.json());
-      const r = await importSiteTruth(projectId, canvas);
-      setTruthMsg(
-        `Traced: boundary ${r.boundaryPts} pts` +
-        (r.buildingPts ? ` · dwelling ${r.buildingPts} pts` : "") +
-        (r.trees ? ` · ${r.trees} trees` : "") +
-        (r.easements ? ` · ${r.easements} easements` : "") +
-        (r.overlays ? ` · ${r.overlays} overlays` : "") +
-        (r.levels ? ` · ${r.levels} indicative levels` : ""),
-      );
-      // Arm the scan-choreographed reveal: the reload rehydrates the studio
-      // from the server and the mount effect runs the category cascade.
-      try {
-        sessionStorage.setItem("gs-scan-reveal", "1");
-      } catch {
-        // sessionStorage unavailable (privacy mode) — the reveal simply
-        // doesn't run; entities appear settled, which is correct too.
-      }
-      window.location.reload();
-    } catch (e) {
-      setTruthMsg(e instanceof Error ? e.message : "Site truth import failed");
-      setTruthBusy(false);
-    }
-  }, [projectId]);
+  const [aiScanKey] = useState<string | null>(null);
 
   // Command palette — Cmd/Ctrl+K summons; Esc closes (handled inside).
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -892,41 +768,7 @@ export function WebGLStudioPreview({
 
   // Survey capture progress — ONE derivation feeding both the setup panel and
   // the chrome pill, so the two can never disagree on "X of 5". Completion is
-  // read off real project data (see surveySetup.ts), never a manual tick.
-  const surveySetup = useMemo(
-    () =>
-      buildSurveySetup({
-        boundary: boundaryPct.map((p) => ({ x: p.x, y: p.y })),
-        building: (buildingPct ?? []).map((p) => ({ x: p.x, y: p.y })),
-        items: studioItems,
-        levels: levels.map((l) => ({
-          x: l.x_pct,
-          y: l.y_pct,
-          z: l.z_m,
-          provenance:
-            l.source === "vicmap_contour" ? "vicmap_contour" : "authored",
-        })),
-        services: bydaAssets.map((a) =>
-          a.ring.map((p) => ({ x: p.x_pct, y: p.y_pct })),
-        ),
-        easements: (easementsPct ?? []).map((ring) =>
-          ring.map((p) => ({ x: p.x, y: p.y })),
-        ),
-      }),
-    [boundaryPct, buildingPct, studioItems, levels, bydaAssets, easementsPct],
-  );
-  const guidance = interactionGuidance({
-    activeMode,
-    sketchMode,
-    measureActive,
-    armedSymbolId,
-    marqueeActive,
-    trenchTool,
-    zoneTool,
-    splitView,
-  });
-
-  // Studio keyboard map — viewport 1–4, Shift+digit modes, letter tools, ?.
+  // read off real project data (see surveySetup.ts), never a manual tick.  );  // Studio keyboard map — viewport 1–4, Shift+digit modes, letter tools, ?.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const hit = resolveStudioShortcut(e);
@@ -1028,22 +870,8 @@ export function WebGLStudioPreview({
     }),
     [storePlacements, strokes, storeCanvases, storeTrenches, storeZones, storePhotoElevations, storeFeatures, storeSetbackLines, storeBuildingFootprints],
   );
-  const { retrySave } = useStudioAutosave(projectId, autosaveDoc);
+  useStudioAutosave(projectId, autosaveDoc);
   useBeforeUnloadGuard();
-
-  const stats = useMemo(
-    () => ({
-      boundaryPoints: boundaryPct.length,
-      buildingPoints: buildingPct?.length ?? 0,
-      easements: easementsPct?.length ?? 0,
-      items: items?.length ?? 0,
-      strokes: strokes.length,
-      utilities: liveData.subsurfaceUtilities.length,
-      strikes: liveData.strikeAlerts.length,
-      scaleM,
-    }),
-    [boundaryPct, buildingPct, easementsPct, items, strokes, liveData, scaleM],
-  );
 
   const is3D = viewBlendTarget > 0.5;
   /* Quantised to 5-degree steps — the same trick ViewportTransitionHUD uses to
@@ -1056,13 +884,6 @@ export function WebGLStudioPreview({
   // extrusion height — gates the Earth toggle + EarthworksCard. Both sources
   // are pads by cutFill's single definition (spec §8.1), so the gate must see
   // both or an elevated Area would analyse with no way to view it.
-  const hasPads = useMemo(
-    () =>
-      strokes.some((s) => (s.extrude_height_m ?? 0) > 0) ||
-      storeFeatures.some((f) => (f.extrude_height_m ?? 0) > 0),
-    [strokes, storeFeatures],
-  );
-
   const annotationControl = useMemo(
     () =>
       activeMode === "survey"
@@ -1115,7 +936,6 @@ export function WebGLStudioPreview({
       setSketchTradePacks,
     ],
   );
-  const communicationProfile = communicationProfileForMode(activeMode);
 
   // Scan choreography (mirror of StudioScene's build — same props, pure) —
   // drives the post-import reveal clock and the overlay's REAL stage labels.
@@ -1258,50 +1078,6 @@ export function WebGLStudioPreview({
       );
     },
   } as const;
-
-  const surveyLegendModel = useMemo(
-    () =>
-      deriveSurveyedPlanModel({
-        dialect: annotationControl?.dialect ?? "technical",
-        boundaryPct,
-        scaleM,
-        boardAspect,
-        northBearingDeg,
-        levels,
-        placements: storePlacements,
-        features: storeFeatures,
-        density: "full",
-      }),
-    [
-      annotationControl,
-      boundaryPct,
-      scaleM,
-      boardAspect,
-      northBearingDeg,
-      levels,
-      storePlacements,
-      storeFeatures,
-    ],
-  );
-
-  const tradeLegendModel = useMemo(
-    () =>
-      deriveTradePackModel({
-        dialect: annotationControl?.dialect ?? "technical",
-        packs:
-          annotationControl?.tradePacks ?? {
-            irrigationDrainage: false,
-            hardscapeConstruction: false,
-            lightingElectrical: false,
-          },
-        trenches: storeTrenches,
-        zones: storeZones,
-        features: storeFeatures,
-        placements: storePlacements,
-        density: "full",
-      }),
-    [annotationControl, storeTrenches, storeZones, storeFeatures, storePlacements],
-  );
 
   useEffect(() => {
     const loadDialect = (
@@ -1553,7 +1329,7 @@ export function WebGLStudioPreview({
         unlocked={unlocked}
         onMode={(m) => onNativeMode(m as Parameters<typeof onNativeMode>[0])}
         onZoom={(dir) => zoomBy(dir === 1 ? 1 : -1)}
-        onOpenSitePhotos={() => setMetaTab("studio")}
+        onOpenSitePhotos={() => { }}
       />
       <StudioShortcutsHelp
         open={shortcutsOpen}
@@ -1622,791 +1398,7 @@ export function WebGLStudioPreview({
    * here (the studio scope owns the state they read) and rendered by
    * the UnifiedPanel's context router: an open meta surface owns the
    * dialog slot, mode bodies stack below any live selection.
-   * ------------------------------------------------------------------ */
-  const modeBodyStack: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: "var(--gs-space-4)",
-  };
-
-  const surveyModeBody = (
-    <div style={modeBodyStack}>
-      <SurveySetupPanel
-        setup={surveySetup}
-        importBusy={truthBusy}
-        importMessage={truthMsg}
-        onImport={() => void runSiteTruthImport()}
-        onOpenAssets={() => {
-          useStudioStore.getState().setAssetsOpen(true);
-        }}
-        onContinue={() => onNativeMode("sketch")}
-        continueEnabled={unlocked.has("sketch")}
-      />
-      <SurveyCommunicationCard
-        dialect={surveyAnnotationDialect}
-        onDialect={setSurveyAnnotationDialect}
-        toggles={surveyedPlanLayers}
-        onToggle={(patch) =>
-          setSurveyedPlanLayers(patch as Partial<typeof surveyedPlanLayers>)
-        }
-        model={surveyLegendModel}
-        tradePacks={surveyTradePacks}
-        onTradePacks={(patch) => setSurveyTradePacks(patch)}
-        tradeLegend={tradeLegendModel.legend.filter(
-          (entry) => surveyTradePacks[entry.pack],
-        )}
-        modes={communicationProfile?.modes}
-        labels={{
-          title: communicationProfile?.title ?? "Survey communication",
-          technical: communicationProfile?.labels.technical ?? "Surveyed plan",
-          architectural:
-            communicationProfile?.labels.architectural ?? "Design sketch",
-          creative: communicationProfile?.labels.creative ?? "Creative",
-          hybrid: communicationProfile?.labels.hybrid ?? "Hybrid",
-        }}
-      />
-    </div>
-  );
-
-  const gardenModeBody = (
-    <GardenViewpointStrip
-      activeLook={gardenLook}
-      elevLook={null}
-      mode="plan"
-      onSelect={applyGardenLook}
-    />
-  );
-
-  const cadModeBody = (
-    <div style={modeBodyStack}>
-      <StudioSurfaceErrorBoundary
-        areaLabel="Design assist panel"
-        title="Design assist unavailable"
-        detail="The AI drafter panel crashed and was isolated. Annotation and canvas tools are still active."
-        testId="design-assist-boundary-fallback"
-      >
-        <StudioCadCard
-          projectId={projectId}
-          onCadResult={(result) => setCadGhostCount(result.ghost_count)}
-          onBusyChange={(key) => setAiScanKey(key)}
-        />
-      </StudioSurfaceErrorBoundary>
-      <SurveyCommunicationCard
-        dialect={cadAnnotationDialect}
-        onDialect={setCadAnnotationDialect}
-        toggles={cadAnnotationLayers}
-        onToggle={(patch) =>
-          setCadAnnotationLayers(patch as Partial<typeof cadAnnotationLayers>)
-        }
-        model={surveyLegendModel}
-        tradePacks={cadTradePacks}
-        onTradePacks={(patch) => setCadTradePacks(patch)}
-        tradeLegend={tradeLegendModel.legend.filter(
-          (entry) => cadTradePacks[entry.pack],
-        )}
-        modes={communicationProfile?.modes}
-        labels={{
-          title: communicationProfile?.title ?? "CAD communication",
-          technical: communicationProfile?.labels.technical ?? "Technical",
-          architectural:
-            communicationProfile?.labels.architectural ?? "Architectural",
-          creative: communicationProfile?.labels.creative ?? "Creative",
-          hybrid: communicationProfile?.labels.hybrid ?? "Presentation blend",
-        }}
-      />
-    </div>
-  );
-
-  const sketchModeBody = (
-    <div style={modeBodyStack}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-tech)",
-            fontSize: "var(--gs-font-sm)",
-            fontWeight: 600,
-            letterSpacing: "0.06em",
-            color: "var(--la-ink)",
-          }}
-        >
-          SKETCH
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-tech)",
-            fontSize: "var(--gs-font-xs)",
-            color: "var(--la-ink-secondary)",
-          }}
-        >
-          {strokes.length} stroke{strokes.length === 1 ? "" : "s"}
-        </span>
-      </div>
-      <div style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}>
-        <Button
-          variant="cta"
-          data-testid="sketch-tidy"
-          disabled={strokes.length === 0}
-          onClick={() => useStudioStore.getState().tidySketchToCad()}
-          title={
-            strokes.length === 0
-              ? "Draw ink first — strokes become CAD proposals"
-              : "Classify strokes into confidence-scored CAD proposals"
-          }
-          style={{ flex: 1 }}
-        >
-          Tidy → CAD proposals
-        </Button>
-        <Button
-          variant="ghost-line"
-          data-testid="sketch-convert-cad"
-          disabled={strokes.length === 0}
-          onClick={() =>
-            useStudioStore.getState().convertStrokesToCadFeatures()
-          }
-          title="One-click convert — ditch/path/wall/bed CAD linework, ink kept as reference"
-          style={{ flex: 1 }}
-        >
-          Convert to CAD features
-        </Button>
-        <Button
-          variant="cta"
-          data-testid="sketch-stitch"
-          disabled={strokes.length === 0}
-          onClick={() =>
-            useStudioStore
-              .getState()
-              .stitchSketchStrokes(scaleM, boardAspect)
-          }
-          title="Weld touching strokes into continuous polylines and closed polygons (0.15 m snap), ink kept as reference"
-          style={{
-            flex: 1,
-            border: "1px solid color-mix(in srgb, var(--la-accent) 55%, transparent)",
-            background: "color-mix(in srgb, var(--la-accent) 10%, transparent)",
-            // --gs-primary on its own veil reads 4.08:1 at 11px — below
-            // AA; the cobalt ink token clears 6:1 on the veil. White reads
-            // 1.26:1 on this light veil — do not use it.
-            color: "var(--la-ink)",
-          }}
-        >
-          Stitch strokes
-        </Button>
-      </div>
-      {cadProposals.length > 0 && !cadReviewOpen ? (
-        <Button
-          variant="primary"
-          data-testid="cad-review-open"
-          onClick={() => setCadReviewOpen(true)}
-        >
-          Review {cadProposals.length} CAD proposal
-          {cadProposals.length === 1 ? "" : "s"}
-        </Button>
-      ) : null}
-      {sketchCadNotice ? (
-        <p
-          role="status"
-          data-testid="sketch-cad-notice"
-          style={{
-            margin: 0,
-            fontSize: "var(--gs-font-xs)",
-            lineHeight: 1.4,
-            color: /photo-traced/.test(sketchCadNotice)
-              ? "var(--la-error)"
-              : "var(--la-ink-secondary)",
-          }}
-        >
-          {sketchCadNotice}
-        </p>
-      ) : null}
-      {stitchNotice ? (
-        <div
-          role="status"
-          data-testid="stitch-notice"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "var(--gs-space-3)",
-            fontSize: "var(--gs-font-xs)",
-            lineHeight: 1.4,
-            color: "var(--la-ink-secondary)",
-          }}
-        >
-          <span style={{ flex: 1 }}>{stitchNotice}</span>
-          <Button
-            variant="text"
-            aria-label="Dismiss stitch notice"
-            onClick={() => dismissStitchNotice()}
-            style={{
-              fontSize: "var(--gs-font-sub)",
-              lineHeight: 1,
-              padding: "0 2px",
-            }}
-          >
-            ×
-          </Button>
-        </div>
-      ) : null}
-      <SurveyCommunicationCard
-        dialect={sketchAnnotationDialect}
-        onDialect={setSketchAnnotationDialect}
-        toggles={sketchAnnotationLayers}
-        onToggle={(patch) =>
-          setSketchAnnotationLayers(patch as Partial<typeof sketchAnnotationLayers>)
-        }
-        model={surveyLegendModel}
-        tradePacks={sketchTradePacks}
-        onTradePacks={(patch) => setSketchTradePacks(patch)}
-        tradeLegend={tradeLegendModel.legend.filter(
-          (entry) => sketchTradePacks[entry.pack],
-        )}
-        modes={communicationProfile?.modes}
-        labels={{
-          title: communicationProfile?.title ?? "Sketch communication",
-          technical: communicationProfile?.labels.technical ?? "Technical",
-          architectural:
-            communicationProfile?.labels.architectural ?? "Architectural",
-          creative: communicationProfile?.labels.creative ?? "Creative",
-          hybrid: communicationProfile?.labels.hybrid ?? "Hybrid",
-        }}
-      />
-    </div>
-  );
-
-  const quoteEmptyBody =
-    activeMode === "quote" && (items?.length ?? 0) === 0 ? (
-      <div
-        data-testid="quote-empty-state"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "var(--gs-space-4)",
-          color: "var(--la-ink)",
-          fontFamily: "var(--font-ui)",
-          fontSize: "var(--gs-font-sm)",
-          lineHeight: 1.45,
-        }}
-      >
-        <strong>Build the concept before pricing</strong>
-        <span style={{ color: "var(--la-ink-secondary)" }}>
-          Add accepted planting or hardscape items to create a live fit-sheet.
-        </span>
-        <Button
-          variant="primary"
-          onClick={() => onNativeMode("cad")}
-          style={{
-            minHeight: 32,
-            borderRadius: "var(--gs-radius-chip)",
-            // The quote-empty-state container sets font-size sm; the prior
-            // inline button had no padding, so it inherited UA padding
-            // (1px 6px). Null the primary base padding so the UA default
-            // is restored exactly.
-            padding: undefined,
-          }}
-        >
-          Open CAD drafter
-        </Button>
-      </div>
-    ) : null;
-
-  /**
-   * Meta surfaces (studio / sun / growth / layers / site / terrain) — one
-   * body per open tab. These own the UnifiedPanel's dialog slot while
-   * open (focus trap + close), fixing the retired dock's routing quirk
-   * where a meta tab opened in cad/survey mode never actually showed.
-   */
-  const metaSurfaceBody: ReactNode =
-    metaTab == null
-      ? null
-      : metaTab === "studio" ? (
-        <div style={modeBodyStack}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "var(--font-tech)",
-                fontSize: "var(--gs-font-sm)",
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                color: "var(--la-ink)",
-              }}
-            >
-              STUDIO
-            </span>
-            <span
-              style={{
-                fontFamily: "var(--font-tech)",
-                fontSize: "var(--gs-font-xs)",
-                color: "var(--la-ink-secondary)",
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              B {stats.boundaryPoints} · I {stats.items} · S {stats.strokes}
-              {stats.strikes > 0 && (
-                <span style={{ color: "var(--la-error)" }}>
-                  {" "}
-                  · ⚠ {stats.strikes}
-                </span>
-              )}{" "}
-              | {stats.scaleM.toFixed(0)} m
-            </span>
-          </div>
-          <nav
-            aria-label="Project destinations"
-            style={{ display: "flex", gap: "var(--gs-space-5)" }}
-          >
-            <a
-              href="/home"
-              style={{ color: "var(--la-ink-secondary)", fontSize: "var(--gs-font-xs)" }}
-            >
-              Sites
-            </a>
-            <a
-              href={`/projects/${projectId}/outputs`}
-              style={{ color: "var(--la-accent)", fontSize: "var(--gs-font-xs)" }}
-            >
-              Outputs
-            </a>
-          </nav>
-          <div
-            style={{
-              display: "flex",
-              borderRadius: "var(--gs-radius-md)",
-              border: "1px solid var(--gs-line)",
-              overflow: "hidden",
-            }}
-          >
-            <Button
-              variant="chip-preset"
-              aria-pressed={!is3D}
-              active={!is3D}
-              onClick={() => setPitchDeg(0)}
-              style={{
-                flex: 1,
-                padding: "2px 10px",
-                border: "none",
-                // Null the chip-preset pill radius so the segmented
-                // halves stay square (the clipped container owns the
-                // corners) — same undefined-null pattern as the
-                // alert card's font reset.
-                borderRadius: undefined,
-                fontSize: "var(--gs-font-sm)",
-                fontWeight: 600,
-              }}
-            >
-              Plan
-            </Button>
-            <Button
-              variant="chip-preset"
-              aria-pressed={is3D}
-              active={is3D}
-              onClick={() => setPitchDeg(OBLIQUE_PITCH_DEG)}
-              style={{
-                flex: 1,
-                padding: "2px 10px",
-                border: "none",
-                borderRadius: undefined,
-                fontSize: "var(--gs-font-sm)",
-                fontWeight: 600,
-              }}
-            >
-              3D
-            </Button>
-          </div>
-          <div
-            style={{ display: "flex", gap: "var(--gs-space-2)" }}
-            role="group"
-            aria-label="Camera and history"
-          >
-            {(
-              [
-                ["−", "Zoom out", () => zoomBy(-1)],
-                ["+", "Zoom in", () => zoomBy(1)],
-                ["↶", "Undo (Ctrl+Z)", () => useStudioStore.getState().undo()],
-                ["↷", "Redo (Ctrl+Shift+Z)", () => useStudioStore.getState().redo()],
-              ] as Array<[string, string, () => void]>
-            ).map(([glyph, label, fn]) => {
-              const disabled = label.startsWith("Undo")
-                ? !canUndo
-                : label.startsWith("Redo")
-                  ? !canRedo
-                  : false;
-              return (
-                <Button
-                  key={label}
-                  variant="glyph"
-                  aria-label={label}
-                  data-testid={
-                    label.startsWith("Zoom out")
-                      ? "zoom-out"
-                      : label.startsWith("Zoom in")
-                        ? "zoom-in"
-                        : label.startsWith("Undo")
-                          ? "undo-btn"
-                          : "redo-btn"
-                  }
-                  disabled={disabled}
-                  onClick={fn}
-                >
-                  {glyph}
-                </Button>
-              );
-            })}
-          </div>
-          <SitePhotoGallery
-            projectId={projectId}
-            boundaryPct={boundaryPct}
-            scaleM={scaleM}
-            boardAspect={boardAspect}
-            onViewSheet={(elevationId) => setPhotoSheetId(elevationId)}
-            onClose={() => setMetaTab(null)}
-          />
-        </div>
-      ) : metaTab === "sun" ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-5)" }}>
-          <div
-            style={{
-              display: "flex",
-              gap: "var(--gs-space-2)",
-              flexWrap: "wrap",
-            }}
-          >
-            <MetaChip label="Season" value={seasonMeta.label} />
-            <MetaChip
-              label="Leaf"
-              value={leafStatus(seasonProgress, year)}
-              accent
-            />
-            <MetaChip label="Sun" value={`${sunMin}m`} />
-          </div>
-          <div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                marginBottom: 6,
-              }}
-            >
-              <span style={scrubberLabelStyle}>Sun</span>
-              <span style={{ ...scrubberValueStyle, fontSize: "var(--gs-font-h3)" }}>
-                {String(Math.floor(sunMin / 60)).padStart(2, "0")}:
-                {String(sunMin % 60).padStart(2, "0")}
-              </span>
-            </div>
-            <ScrubberTrack
-              value={(sunMin - DAY_START) / (DAY_END - DAY_START)}
-              min={DAY_START}
-              max={DAY_END}
-              step={5}
-              onChange={setSunMin}
-              ariaLabel="Time of day"
-              labels={["06:20", "13:00", "19:40"]}
-            />
-          </div>
-          <div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                marginBottom: 6,
-              }}
-            >
-              <span style={scrubberLabelStyle}>Season · {seasonMeta.label}</span>
-              <span style={{ ...scrubberValueStyle, fontSize: "var(--gs-font-h3)" }}>
-                {seasonMeta.month}
-              </span>
-            </div>
-            <div style={{ display: "flex", gap: "var(--gs-space-2)", flexWrap: "wrap" }}>
-              {SUN_DATE_PRESETS.map((p) => (
-                <Button
-                  key={p}
-                  variant="chip-preset"
-                  aria-pressed={sunDatePreset === p}
-                  active={sunDatePreset === p}
-                  onClick={() => setSunDatePreset(p)}
-                  style={{ padding: "2px 6px" }}
-                >
-                  {sunDatePresetLabel(p)}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div style={{ display: "flex", gap: "var(--gs-space-2)", alignItems: "center", flexWrap: "wrap" }}>
-              <Button
-                variant="chip-preset"
-                aria-pressed={suncastView}
-                active={suncastView}
-                onClick={() => setSuncastView(!suncastView)}
-                data-testid="suncast-toggle"
-                style={{ padding: "2px 6px" }}
-              >
-                Suncast overlay
-              </Button>
-              <span style={{ fontSize: "var(--gs-font-micro)", color: "var(--la-ink-muted)" }}>
-                Analytical shade footprint — scrub the sun to sweep it
-              </span>
-            </div>
-          </div>
-        </div>
-      ) : metaTab === "growth" ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-5)" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-            }}
-          >
-            <span style={scrubberLabelStyle}>Growth Simulation</span>
-            <span style={scrubberValueStyle}>Year {year}</span>
-          </div>
-          <ScrubberTrack
-            value={growthFactor}
-            min={0}
-            max={10}
-            step={1}
-            onChange={setYear}
-            ariaLabel="Growth simulation year"
-            labels={["Year 0", "Year 5", "Year 10"]}
-            highlightValues={[0, 5, 10]}
-            currentHighlight={year}
-          />
-        </div>
-      ) : metaTab === "layers" ? (
-        <div
-          role="group"
-          aria-label="Canvas layers"
-          style={{ display: "flex", gap: "var(--gs-space-2)", flexWrap: "wrap" }}
-        >
-          {(
-            [
-              ["sketch", "Ink"],
-              ["siteTruth", "Site truth"],
-              ["design", "Design"],
-            ] as const
-          ).map(([layer, label]) => (
-            <Button
-              key={layer}
-              variant="chip-preset"
-              aria-pressed={visibleLayers[layer]}
-              active={visibleLayers[layer]}
-              onClick={() =>
-                setVisibleLayers((current) => ({
-                  ...current,
-                  [layer]: !current[layer],
-                }))
-              }
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
-      ) : metaTab === "site" ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--gs-space-4)" }}>
-          <SiteContextBadges
-            projectId={projectId}
-            variant="glass"
-            showSeason={false}
-          />
-          {keylessOverlays.length > 0 ? (
-            <div
-              data-testid="government-overlay-legend"
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "var(--gs-space-2)",
-                padding: "5px 7px",
-                borderRadius: "var(--gs-radius-chip)",
-                background: "var(--gs-surface-fill)",
-                border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
-                color: "var(--la-ink-secondary)",
-                fontFamily: "var(--font-ui)",
-                fontSize: "var(--gs-font-xs)",
-              }}
-            >
-              <strong style={{ color: "var(--la-ink)" }}>
-                Government layers
-              </strong>
-              {[...new Set(keylessOverlays.map((overlay) => overlay.kind))].map(
-                (kind) => (
-                  <span key={kind}>{kind.replaceAll("_", " ")}</span>
-                ),
-              )}
-              <a
-                href="https://mapshare.vic.gov.au/vicplan/"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: "var(--la-accent)" }}
-              >
-                Open VicPlan
-              </a>
-              <a
-                href="https://www.vic.gov.au/find-my-local-council"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: "var(--la-accent)" }}
-              >
-                Council tools
-              </a>
-            </div>
-          ) : null}
-          <div
-            role="note"
-            data-testid="site-truth-official-sources"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "var(--gs-space-2)",
-              padding: "6px 9px",
-              borderRadius: "var(--gs-radius-chip)",
-              background: "var(--gs-surface-fill)",
-              border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
-              color: "var(--la-ink-secondary)",
-              fontFamily: "var(--font-ui)",
-              fontSize: "var(--gs-font-xs)",
-              lineHeight: 1.45,
-            }}
-          >
-            <span style={{ color: "var(--la-ink)" }}>
-              Aboriginal cultural heritage (ACHRIS) is not part of the
-              public overlay washes — check the register before design.
-            </span>
-            <span style={{ display: "flex", flexWrap: "wrap", gap: "var(--gs-space-3)" }}>
-              <a
-                href="https://achris.vic.gov.au/"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: "var(--la-accent)" }}
-              >
-                ACHRIS register
-              </a>
-              <a
-                href="https://www.environment.vic.gov.au/biodiversity/naturekit"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: "var(--la-accent)" }}
-              >
-                NatureKit (EVC)
-              </a>
-              <a
-                href="https://elevation.fsdf.org.au/"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: "var(--la-accent)" }}
-              >
-                ELVIS elevation
-              </a>
-              <a
-                href="https://mapshare.vic.gov.au/vicplan/"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: "var(--la-accent)" }}
-              >
-                VicPlan report
-              </a>
-            </span>
-          </div>
-          {(easementsPct?.length ?? 0) > 0 || subsurfaceView ? (
-            <div
-              role="note"
-              data-testid="site-truth-honesty"
-              style={{
-                padding: "6px 9px",
-                borderRadius: "var(--gs-radius-chip)",
-                background: "var(--gs-surface-fill)",
-                border: "1px solid color-mix(in srgb, var(--gs-warning) 45%, transparent)",
-                color: "var(--la-ink)",
-                fontFamily: "var(--font-ui)",
-                fontSize: "var(--gs-font-sm)",
-                lineHeight: 1.4,
-              }}
-            >
-              Easements are legal title constraints, not underground assets.
-              {subsurfaceView
-                ? " Utility depths and strike checks are indicative until surveyed."
-                : null}{" "}
-              <a
-                href="https://www.byda.com.au/"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: "var(--la-accent)" }}
-              >
-                Request BYDA
-              </a>
-            </div>
-          ) : null}
-          {lat == null || lng == null ? (
-            <div
-              role="status"
-              style={{
-                padding: "5px 8px",
-                borderRadius: "var(--gs-radius-chip)",
-                background: "var(--gs-surface-fill)",
-                color: "var(--la-ink-secondary)",
-                fontFamily: "var(--font-ui)",
-                fontSize: "var(--gs-font-sm)",
-              }}
-            >
-              Solar analysis unavailable until the property pin is verified.
-            </div>
-          ) : null}
-          {subsurfaceView ? (
-            <a
-              href={`/subsurface-studio/${projectId}`}
-              data-testid="open-subsurface-studio"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "var(--gs-space-2)",
-                padding: "4px 8px",
-                borderRadius: "var(--gs-radius-pill)",
-                background: "color-mix(in srgb, var(--gs-truth-ink) 12%, transparent)",
-                border: "1px solid color-mix(in srgb, var(--gs-truth-ink) 40%, transparent)",
-                color: "var(--gs-ink-truth)",
-                fontFamily: "var(--font-ui)",
-                fontSize: "var(--gs-font-xs)",
-                textDecoration: "none",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Open full subsurface studio →
-            </a>
-          ) : null}
-        </div>
-      ) : metaTab === "terrain" ? (
-        <div style={modeBodyStack}>
-          <SliceProfileCard
-            scaleM={scaleM}
-            boardAspect={boardAspect}
-            heightmapPoints={liveData.heightmapPoints}
-          />
-          <DrainageFlowCard
-            scaleM={scaleM}
-            boardAspect={boardAspect}
-            heightmapPoints={liveData.heightmapPoints}
-            hydraulicResults={liveData.hydraulicResults}
-          />
-          <EarthworksCard
-            scaleM={scaleM}
-            boardAspect={boardAspect}
-            heightmapPoints={liveData.heightmapPoints}
-          />
-        </div>
-      ) : null;
-
-  if (webglAvailable === false || webglLost) {
+   * ------------------------------------------------------------------ */  if (webglAvailable === false || webglLost) {
     return (
       <div
         role="alert"
@@ -2503,301 +1495,6 @@ export function WebGLStudioPreview({
             handedness/mode toggles, readout). Mirrors with handedness. */}
         <FloatingChrome onOpenPalette={() => setPaletteOpen(true)} />
 
-        {/* ---- Perimeter tab strip — the single chrome anchor. One
-          browser-tab chip strip hugs the top edge; modes on the left,
-          meta surfaces on the right, live stats as the trailing status
-          cell. Panels drop into the right dock, not beneath it. ---- */}
-        <div
-          style={{
-            position: "absolute",
-            top: 16,
-            /* Left edge clears the full-height tool rail (56px + 16px gutter)
-             * — the identity pill sat at left:16 straight over it. */
-            left: 72,
-            right: 16,
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "var(--gs-space-4)",
-            pointerEvents: "none",
-            zIndex: "var(--cf-z-chrome)",
-          }}
-        >
-          {/* Project identity — tier-1 format: file identity left, actions
-            centre, states right, one band. */}
-          {projectAddress ? (
-            <div
-              data-testid="project-identity"
-              data-gs-glass-card
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                gap: "var(--gs-space-4)",
-                padding: "5px 10px",
-                borderRadius: "var(--gs-radius-pill)",
-                /* Paper glass, not dark glass — the dark capsule is reserved
-                 * for the presentation lens (design-spec §5 / debt D8). */
-                background: "var(--la-surface)",
-                backdropFilter: "none",
-                WebkitBackdropFilter: "none",
-                border:
-                  "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-                boxShadow: "var(--gs-shadow-1)",
-                flex: "0 0 auto",
-                maxWidth: 260,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "var(--font-tech)",
-                  fontSize: "var(--gs-font-md)",
-                  fontWeight: 600,
-                  color: "var(--la-ink)",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                {projectAddress.split(",")[0]?.trim() ?? projectAddress}
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-technical-mono)",
-                  fontSize: "var(--gs-font-xs)",
-                  letterSpacing: "0.05em",
-                  color: "var(--la-ink-secondary)",
-                }}
-              >
-                {projectAddress.split(",")[1]?.trim() ?? "VIC"}
-              </span>
-              <span
-                aria-hidden
-                style={{
-                  width: 1,
-                  height: 12,
-                  background:
-                    "color-mix(in srgb, var(--gs-line) 70%, transparent)",
-                }}
-              />
-              <span
-                style={{
-                  fontFamily: "var(--font-technical-mono)",
-                  fontSize: "var(--gs-font-xs)",
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  /* The dark chassis flips the secondary greys to the la
-                   * family (caught by webgl-contrast-aa at 2.4:1). */
-                  color: "var(--la-ink-secondary)",
-                }}
-              >
-                {activeMode}
-              </span>
-            </div>
-          ) : null}
-          {!splitView ? (
-            <div
-              style={{
-                /* Floating top-center pill (DESIGN.md §5) — centred on the FREE
-                 * canvas between the tool rail (72) and the flush UnifiedPanel
-                 * (320 + gutter), so the wrapping tab/stats rows can never
-                 * slide under the panel at narrow viewports. It sits BELOW the
-                 * identity pill on its own band: with the panel taking the
-                 * right 320px there is no centre band wide enough to clear the
-                 * identity at any operator viewport. */
-                position: "absolute",
-                top: 54,
-                left: 72,
-                right: 336,
-                display: "flex",
-                justifyContent: "center",
-                pointerEvents: "none",
-                zIndex: "var(--cf-z-chrome)",
-              }}
-            >
-              {/* Meta tabs — the reachable handle for the UnifiedPanel's meta
-            surfaces. The retired dock orphaned these surfaces (mounted,
-            invisible, no tab to open them). */}
-              {(() => {
-                const metaDefs: Array<{ id: MetaTabId; label: string }> = [
-                  { id: "sun", label: "Sun" },
-                  { id: "growth", label: "Growth" },
-                  { id: "layers", label: "Layers" },
-                  { id: "site", label: "Site" },
-                  { id: "terrain", label: "Terrain" },
-                  { id: "studio", label: "Studio" },
-                ];
-                const metaTabs: MetaTabDef[] = metaDefs.map((t) => ({
-                  id: t.id,
-                  label: t.label,
-                  active: metaTab === t.id,
-                  onToggle: () => setMetaTab(metaTab === t.id ? null : t.id),
-                }));
-                // Fit rides the STORE (fitSheetOpen), not the metaTab state — it
-                // toggles the estimator companion directly (the retired dock's
-                // "Toggled via the Fit tab" law).
-                metaTabs.push({
-                  id: "fit",
-                  label: "Fit",
-                  active: fitSheetOpen,
-                  onToggle: () => setFitSheetOpen(!fitSheetOpen),
-                });
-                return (
-                  <PerimeterTabStrip
-                    activeMode={activeMode}
-                    unlocked={unlocked}
-                    onNativeMode={onNativeMode}
-                    surveyProgress={
-                      surveySetup.complete
-                        ? null
-                        : { done: surveySetup.done, total: surveySetup.total }
-                    }
-                    metaTabs={metaTabs}
-                    trailing={
-                      <>
-                        {/* Live stats — the strip's status witness (B/I/S + strikes). */}
-                        <span
-                          data-testid="strip-stats"
-                          style={{
-                            fontFamily: "var(--font-technical-mono)",
-                            fontSize: "var(--gs-font-xs)",
-                            letterSpacing: "0.05em",
-                            color: "var(--la-ink-secondary)",
-                            fontVariantNumeric: "tabular-nums",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          B{stats.boundaryPoints} · I{stats.items} · S{stats.strokes}
-                          {stats.strikes > 0 ? (
-                            <span style={{ color: "var(--la-error)" }}> · ⚠ {stats.strikes}</span>
-                          ) : null}
-                        </span>
-                        <SaveStatusChip
-                          onRetry={retrySave}
-                          onRefresh={() => window.location.reload()}
-                        />
-                      </>
-                    }
-                  />
-                );
-              })()}
-            </div>
-          ) : null}
-        </div>
-
-        {/* ---- Unified panel — THE flush-right inspector. Mode bodies, meta
-          surfaces, the sketch-to-CAD review card and the editable
-          selection fields all live here; the retired hidden dock's
-          bodies were ported in so nothing critical stays invisible. ---- */}
-        <UnifiedPanel
-          mode={activeMode}
-          scaleM={scaleM}
-          boardAspect={boardAspect}
-          boundaryPct={boundaryPct}
-          buildingPct={buildingPct ?? null}
-          buildingSource={null}
-          lotAreaM2={siteMeta?.lotAreaM2}
-          modeBodies={{
-            survey: surveyModeBody,
-            sketch: sketchModeBody,
-            cad: cadModeBody,
-            garden: gardenModeBody,
-            quote: quoteEmptyBody,
-          }}
-          metaBody={metaSurfaceBody}
-          onCloseMeta={metaTab != null ? () => setMetaTab(null) : undefined}
-        />
-
-        {/* Drafting readouts — the DOM twins of the in-canvas tape and draft
-          labels, bottom-left clear of the tool rail and the centre prompt
-          bar. Subscribing independently keeps pointer-move re-renders out
-          of the studio HUD (SaveStatusChip pattern). */}
-        <div
-          style={{
-            position: "absolute",
-            left: 76,
-            bottom: 20,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: 2,
-            pointerEvents: "none",
-            zIndex: "var(--cf-z-chrome)",
-          }}
-        >
-          <MeasureReadoutChip scaleM={scaleM} boardAspect={boardAspect} />
-          <DraftReadoutChip />
-        </div>
-
-
-
-
-        {/* Left slim tool icons — bare (no container), border chrome per the
-          Stitch reference; the drawing owns the middle. */}
-        <StudioToolRail
-          showTerrainTools={liveData.heightmapPoints.length > 0}
-          showDims={boundaryPct.length >= 3}
-          showEarth={liveData.heightmapPoints.length > 0 && hasPads}
-          presentActive={presentationMode}
-          onPresentToggle={() => setPresentationMode((p) => !p)}
-          showTidy={sketchModeActive || strokes.length > 0}
-          tidyDisabled={strokes.length === 0}
-          onTidy={() => useStudioStore.getState().tidySketchToCad()}
-        />
-
-        {/* Nib palette stripped (austerity) — absorb into UnifiedPanel. */}
-
-        {/* Selection chip stripped — UnifiedPanel shows selection state. */}
-
-        {/* Asset library — rail-docked discovery palette (the single asset
-          surface; replaces the bottom fan-out dock and the full-screen
-          Asset Selection Studio, both removed 2026-08-25). Stays mounted
-          while closed so it owns the arm/disarm Esc ladder. */}
-        <AssetLibraryPanel />
-
-
-        {/* Estimator companion — floats independently. FitSheetCard self-gates
-          on its own items prop (renders null when empty, so the wrapper is
-          safe to always mount — no store hydration race). */}
-        {!splitView ? (
-          <div
-            data-testid="estimator-float"
-            style={{
-              position: "absolute",
-              /* Sit LEFT of the flush right inspector (320px + 16px gap). */
-              right: 336,
-              bottom: 16,
-              width: narrowViewport ? "min(300px, calc(100vw - 480px))" : 340,
-              pointerEvents: "none",
-              zIndex: "var(--cf-z-chrome)",
-            }}
-          >
-            <EstimatorPanel
-              projectId={projectId}
-              items={items ?? []}
-              boundaryPct={boundaryPct}
-              constructionTrenches={constructionTrenches}
-              irrigationZones={irrigationZones}
-              scaleM={scaleM}
-              outdoorM2={outdoorM2}
-              signedOff={signedOff}
-              signedOffLoading={signoffLoading}
-              defaultCollapsed={
-                activeMode === "survey" ||
-                activeMode === "sketch" ||
-                activeMode === "cad" ||
-                activeMode === "garden"
-              }
-              canopy={buildCanopyCompliance({
-                placements: storePlacements,
-                boundary: boundaryPct,
-                scaleM,
-                boardAspect,
-                lotAreaM2: siteMeta?.lotAreaM2,
-              })}
-            />
-          </div>
-        ) : null}
-
         {/* Floating cursor toolbar — shows when an asset is armed */}
         <FloatingPlacementToolbar />
 
@@ -2806,61 +1503,6 @@ export function WebGLStudioPreview({
 
         {/* Photo-trace HUD — the only chrome while a photo is pinned. */}
         <PhotoTraceHud />
-
-        {/* AI prompt bar — the primary input for the AI-driven native canvas.
-          Natural language → ghost placements on the canvas. */}
-        {/* Site envelope for AI generation context (same chain as StudioScene). */}
-        {(() => {
-          const envelope = buildStudioSiteEnvelope({
-            lat,
-            lng,
-            overlays: keylessOverlays,
-            heightmapPoints: liveData.heightmapPoints,
-            scaleM,
-            boardAspect,
-          });
-          return (
-            <AiPromptBar
-              onGenerate={(prompt) => {
-                useStudioStore.getState().startAiSession(prompt);
-                /* Compliance as generative substrate (AEC-GENERATIVE-FUSION
-                 * §3): a compliance intent generates exactly the A2-6
-                 * shortfall, and easements are keep-out rings during
-                 * generation — constraints applied BY CONSTRUCTION, the
-                 * pattern Higharc proved beats post-hoc correction. */
-                const compliance = buildCanopyCompliance({
-                  placements: storePlacements,
-                  boundary: boundaryPct,
-                  scaleM,
-                  boardAspect,
-                  lotAreaM2: siteMeta?.lotAreaM2,
-                });
-                const ghosts = generateGhosts({
-                  prompt,
-                  boundary: boundaryPct,
-                  building: buildingPct ?? [],
-                  existingTrees: storePlacements
-                    .filter((p) => p.source === "vicmap_tree")
-                    .map((p) => ({
-                      x_pct: p.x_pct,
-                      y_pct: p.y_pct,
-                      canopy_radius_m: p.canopy_radius_m ?? undefined,
-                    })),
-                  envelope,
-                  canopyShortfall:
-                    compliance && compliance.assessment.status !== "insufficient-data"
-                      ? compliance.assessment.shortfall
-                      : 0,
-                  easements: easementsPct ?? [],
-                });
-                useStudioStore.getState().setAiGhosts(
-                  ghosts.map((g) => g.placement),
-                );
-              }}
-            />
-          );
-        })()}
-
         {/* Photo elevation sheet — the trace's print artifact. */}
         {photoSheetId ? (
           <div
@@ -2883,17 +1525,6 @@ export function WebGLStudioPreview({
         {activeMode === "survey" && boundaryPct.length < 3 ? (
           <SurveyLocateState address={projectAddress} />
         ) : null}
-
-        {/* Interaction guidance — the bottom slot's ONE chip (mode witness
-          for the chrome specs; carries the first-run control scheme).
-          The workflow-guide nav was retired: the perimeter tab strip is
-          the durable mode surface. */}
-        <InteractionGuidanceChip guidance={guidance} />
-
-        {/* Dev-only z-tier hover HUD — renders NOTHING outside dev or
-          without the `?cfz-inspect=1` URL flag. See CfzTierInspector.tsx
-          and docs/CANVAS-FIRST-Z-STACK-CONTRACT.md §7. */}
-        <CfzTierInspector />
       </div>
     </CanvasFirstLayout>
   );
@@ -2967,341 +1598,4 @@ function SurveyLocateState({ address }: { address?: string | null }) {
   );
 }
 
-/**
- * The bottom slot — ONE chip.
- *
- * `FirstRunHint` used to render a second, separate chip horizontally co-located
- * with this one, with vertical offsets hand-tuned against each other ("stacked
- * below the guidance line, which claims 288"). The content was redundant: this
- * line already said "Survey mode · Review site truth and constraints before
- * designing" while the hint said "Wheel = zoom · Drag = pan · choose a tool to
- * draw or place · ? = shortcuts". The guidance line owns the slot now and
- * carries the control scheme as a first-run tail, dismissed for the session —
- * `StudioShortcutsHelp` behind `?` is the durable home for the full scheme.
- */
-function InteractionGuidanceChip({
-  guidance,
-}: {
-  guidance: { label: string; detail: string };
-}) {
-  const [showControls, setShowControls] = useState(false);
-  useEffect(() => {
-    if (!sessionStorage.getItem("gs-controls-hint-seen")) setShowControls(true);
-  }, []);
-  // The asset library (release 87adeeb) is a tall dialog (top:152 to the
-  // viewport floor) that owns the left column at small viewports — the old
-  // bottom:288 clearance was computed for the retired 201px asset dock.
-  // While it is open the canvas-gesture guidance is stale anyway, so the
-  // chip stands down instead of overlapping the palette (chrome-collision
-  // gate: asset-library × interaction-guidance at ≤1280×720).
-  const assetsOpen = useStudioStore((s) => s.assetsOpen);
-  if (assetsOpen) return null;
-  return (
-    <div
-      data-testid="interaction-guidance"
-      role="status"
-      aria-live="polite"
-      style={{
-        position: "absolute",
-        /*
-         * Deterministic bottom-LEFT slot (72px column, just above the AI
-         * prompt bar's band). Every centred/bottom-offset home this chip
-         * had was eventually claimed by another surface at some viewport —
-         * the last one (bottom:304, centred) sat exactly under drafting
-         * click four at 1440x900 and ate the marquee drag path. The left
-         * column is clear of: the tool rail (0-56), the asset dock (top
-         * 186, left 68, ≤270 wide — this chip sits below it), the prompt
-         * bar (centred in its own band, ≥16px lower), and the estimator
-         * float (right column).
-         */
-        left: 72,
-        bottom: 66,
-        display: "flex",
-        alignItems: "baseline",
-        gap: "var(--gs-space-3)",
-        /* 240 keeps the pill clear of the estimator column at 960x640
-         * (free left band is ~250px there) and readable at every size. */
-        maxWidth: 240,
-        padding: "6px 11px",
-        borderRadius: "var(--gs-radius-pill)",
-        background: "var(--la-surface)",
-        backdropFilter: "none",
-        WebkitBackdropFilter: "none",
-        border: "1px solid var(--la-surface-muted)",
-        boxShadow: "var(--gs-shadow-1)",
-        // The first-run tail carries a dismiss button, so the chip opts into
-        // pointer events only while that button exists.
-        pointerEvents: showControls ? "auto" : "none",
-        zIndex: "var(--cf-z-chrome)",
-        fontFamily: "var(--font-ui)",
-        fontSize: "var(--gs-font-xs)",
-        color: "var(--la-ink-secondary)",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-      }}
-    >
-      <strong style={{ color: "var(--la-ink)" }}>{guidance.label}</strong>
-      <span>{guidance.detail}</span>
-      {showControls ? (
-        <>
-          <span aria-hidden style={{ opacity: 0.45 }}>|</span>
-          <span>Wheel = zoom · Drag = pan · ? = shortcuts</span>
-          <Button
-            variant="text"
-            aria-label="Dismiss controls hint"
-            data-testid="controls-hint-dismiss"
-            onClick={() => {
-              sessionStorage.setItem("gs-controls-hint-seen", "1");
-              setShowControls(false);
-            }}
-            style={{
-              color: "var(--la-ink)",
-              fontFamily: "var(--font-tech)",
-              padding: "0 4px",
-            }}
-          >
-            ✕
-          </Button>
-        </>
-      ) : null}
-    </div>
-  );
-}
-
-/* Shared UI primitives                                                       */
-/* -------------------------------------------------------------------------- */
-
-const scrubberLabelStyle: React.CSSProperties = {
-  fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-xs)",
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: "var(--la-ink-secondary)",
-};
-
-const scrubberValueStyle: React.CSSProperties = {
-  fontFamily: "var(--font-tech)",
-  fontSize: "var(--gs-font-h3)",
-  fontWeight: 500,
-  color: "var(--la-accent)",
-};
-
-/** A tiny meta chip — label + value in one pill (canvas-first chrome unit). */
-function MetaChip({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "baseline",
-        gap: "var(--gs-space-2)",
-        padding: "2px 7px",
-        borderRadius: "var(--gs-radius-pill)",
-        border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
-        fontFamily: "var(--font-tech)",
-        fontSize: "var(--gs-font-xs)",
-        color: "var(--la-ink-secondary)",
-        whiteSpace: "nowrap",
-      }}
-    >
-      <span style={{ letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</span>
-      <span style={{ color: accent ? "var(--la-accent)" : "var(--la-ink)", fontSize: "var(--gs-font-sm)" }}>
-        {value}
-      </span>
-    </span>
-  );
-}
-
-/**
- * Measure tape readout — the DOM twin of the in-canvas tape label. Renders
- * the live/last measurement in true metres while the tool is armed and a
- * tape exists. Subscribes to the store independently so pointer-move updates
- * re-render only this chip, not the whole HUD (SaveStatusChip pattern).
- */
-function MeasureReadoutChip({
-  scaleM,
-  boardAspect,
-}: {
-  scaleM: number;
-  boardAspect: number;
-}) {
-  const measureActive = useStudioStore((s) => s.measureActive);
-  const tape = useStudioStore((s) => s.measureTape);
-
-  if (!measureActive || !tape) return null;
-
-  const [ax, az] = pctToWorld(tape.a, scaleM, boardAspect);
-  const [bx, bz] = pctToWorld(tape.b, scaleM, boardAspect);
-  const lengthM = Math.hypot(bx - ax, bz - az);
-
-  return (
-    <div
-      data-testid="measure-readout"
-      style={{
-        marginTop: 4,
-        fontFamily: "var(--font-tech)",
-        fontSize: "var(--gs-font-sm)",
-        color: "var(--la-accent)",
-      }}
-    >
-      Measure · {lengthM.toFixed(2)} m · Esc clears
-    </div>
-  );
-}
-
-/**
- * Precision drafting readout — the DOM twin of the in-canvas cursor label.
- * Subscribes to the draft session alone, so it re-renders once per placed
- * vertex rather than per pointer move (the MeasureReadoutChip pattern), and
- * announces the run for screen readers while the in-canvas chip carries the
- * live segment length + bearing.
- */
-function DraftReadoutChip() {
-  const draftSession = useStudioStore((s) => s.draftSession);
-  if (!draftSession) return null;
-
-  const { tool, vertices } = draftSession;
-  const count = vertices.length;
-  const isArea = tool === "area";
-  const figure = isArea
-    ? `${draftAreaM2(vertices).toFixed(1)} m²`
-    : `${draftRunLengthM(vertices, false).toFixed(2)} m`;
-  const closeHint = isArea
-    ? "click the origin to close"
-    : "Enter finishes · Backspace steps back";
-
-  return (
-    <div
-      data-testid="draft-status"
-      role="status"
-      aria-live="polite"
-      style={{
-        marginTop: 4,
-        fontFamily: "var(--font-tech)",
-        fontSize: "var(--gs-font-sm)",
-        color: "var(--la-accent)",
-      }}
-    >
-      {isArea ? "Area" : "Polyline"} · {count}{" "}
-      {count === 1 ? "vertex" : "vertices"}
-      {count >= 2 ? ` · ${figure}` : ""} · {closeHint}
-    </div>
-  );
-}
-
-/** A reusable scrubber track with a progress fill + range input overlay (compact). */
-function ScrubberTrack({
-  value,
-  min,
-  max,
-  step,
-  onChange,
-  ariaLabel,
-  labels,
-  highlightValues,
-  currentHighlight,
-}: {
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (v: number) => void;
-  ariaLabel: string;
-  labels: string[];
-  highlightValues?: number[];
-  currentHighlight?: number;
-}) {
-  const pct = ((value - min) / (max - min)) * 100;
-  return (
-    <>
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          height: 3,
-          background: "var(--gs-line)",
-          borderRadius: "var(--gs-radius-pill)",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            height: "100%",
-            width: `${pct}%`,
-            background: "var(--la-accent)",
-            borderRadius: "var(--gs-radius-pill)",
-          }}
-        />
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          aria-label={ariaLabel}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            margin: 0,
-            opacity: 0,
-            cursor: "pointer",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: `${pct}%`,
-            width: 10,
-            height: 10,
-            transform: "translate(-50%, -50%)",
-            background: "var(--la-accent)",
-            border: "2px solid var(--gs-canvas)",
-            borderRadius: "50%",
-            boxShadow: "0 0 8px var(--gs-warning-amber)",
-            pointerEvents: "none",
-          }}
-        />
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginTop: 4,
-          fontFamily: "var(--font-tech)",
-          fontSize: "var(--gs-font-xs)",
-          color: "var(--la-ink-secondary)",
-        }}
-      >
-        {labels.map((label, i) => {
-          const isHighlight =
-            highlightValues && currentHighlight !== undefined
-              ? label.includes(String(currentHighlight))
-              : false;
-          return (
-            <span
-              key={i}
-              style={{ color: isHighlight ? "var(--la-accent)" : "var(--la-ink-secondary)" }}
-            >
-              {label}
-            </span>
-          );
-        })}
-      </div>
-    </>
-  );
-}
 
