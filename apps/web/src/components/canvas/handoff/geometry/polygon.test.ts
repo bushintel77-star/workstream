@@ -3,6 +3,7 @@ import { WRIGHTS_SEED } from "../studioCatalog";
 import { snapTracePointer } from "./snap";
 import {
   buildSiteSchedule,
+  clipPolygonToRect,
   edgeSegments,
   normalizeRing,
   pointInPolygon,
@@ -172,5 +173,51 @@ describe("trace close → valid B1–B4 ring", () => {
       "B3",
       "B4",
     ]);
+  });
+});
+
+describe("clipPolygonToRect", () => {
+  const SQUARE = [
+    { x: 0, y: 0 },
+    { x: 10, y: 0 },
+    { x: 10, y: 10 },
+    { x: 0, y: 10 },
+  ];
+
+  it("returns a fully-contained polygon unchanged", () => {
+    const clipped = clipPolygonToRect(SQUARE, { x0: -1, y0: -1, x1: 11, y1: 11 });
+    expect(clipped).toEqual(SQUARE);
+  });
+
+  it("returns empty when the polygon is fully outside the rect", () => {
+    expect(
+      clipPolygonToRect(SQUARE, { x0: 20, y0: 20, x1: 30, y1: 30 }),
+    ).toEqual([]);
+  });
+
+  it("keeps only the portion that overlaps the rect", () => {
+    const clipped = clipPolygonToRect(SQUARE, { x0: 5, y0: 5, x1: 15, y1: 15 });
+    // Corners that fall inside the rect are retained; outside corners are
+    // clipped off, so no vertex sits outside x>5 / y>5.
+    expect(clipped.length).toBeGreaterThan(0);
+    for (const p of clipped) {
+      expect(p.x).toBeGreaterThanOrEqual(5 - 1e-9);
+      expect(p.y).toBeGreaterThanOrEqual(5 - 1e-9);
+    }
+  });
+
+  it("clips a wide ring to a narrow vertical band", () => {
+    const wide = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 50 },
+      { x: 0, y: 50 },
+    ];
+    const clipped = clipPolygonToRect(wide, { x0: 40, y0: 0, x1: 60, y1: 50 });
+    expect(clipped.length).toBeGreaterThan(0);
+    for (const p of clipped) {
+      expect(p.x).toBeGreaterThanOrEqual(40 - 1e-9);
+      expect(p.x).toBeLessThanOrEqual(60 + 1e-9);
+    }
   });
 });

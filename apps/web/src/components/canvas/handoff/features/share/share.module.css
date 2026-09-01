@@ -70,11 +70,19 @@
 }
 
 .primary {
-  /* --hc-* lives in the classic studio scope; the global fallbacks keep the
-   * button correct on the WebGL mount (dark-on-light inversion either way). */
+  /* Outlined primary: ink text + 1px ink border on the light card. The old
+   * fill (`--hc-ink`) and text (`--canvas`) BOTH resolve to near-black in
+   * the dark theme, so the label was dark-on-dark — the "blacked out"
+   * button. Best-practice contrast for a primary CTA is a clearly readable
+   * reachable button; an outline keeps it distinct from the secondary while
+   * never inverting into an invisible slab. */
   border: 1px solid var(--hc-ink, var(--ink-primary));
-  background: var(--hc-ink, var(--ink-primary));
-  color: var(--canvas, var(--gs-canvas));
+  background: transparent;
+  color: var(--hc-ink, var(--ink-primary));
+}
+
+.primary:hover {
+  background: color-mix(in srgb, var(--hc-ink, var(--ink-primary)) 8%, transparent);
 }
 
 .primary:disabled {

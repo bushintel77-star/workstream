@@ -215,3 +215,71 @@ export function pointInPolygon(p: PctPoint, poly: PctPoint[]): boolean {
   }
   return inside;
 }
+
+/** Axis-aligned clip rectangle in board-% space. */
+export interface PctRect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+/**
+ * Sutherland–Hodgman clip of a closed polygon against an axis-aligned rect.
+ * Used to bound the Vicmap government-overlay washes to the lot's context
+ * (bbox + margin) so authoritative ring rings don't run across the whole
+ * canvas — the full data stays in the model; this only trims the drawn
+ * linework to the neighbourhood of the property. Returns the polygon portion
+ * inside the rect (may be empty when fully outside).
+ */
+export function clipPolygonToRect(pts: PctPoint[], rect: PctRect): PctPoint[] {
+  if (pts.length < 3) return pts;
+
+  const clipEdge = (
+    poly: PctPoint[],
+    keep: (p: PctPoint) => boolean,
+    intersect: (a: PctPoint, b: PctPoint) => PctPoint,
+  ): PctPoint[] => {
+    const out: PctPoint[] = [];
+    for (let i = 0; i < poly.length; i++) {
+      const cur = poly[i]!;
+      const prev = poly[(i + poly.length - 1) % poly.length]!;
+      const curIn = keep(cur);
+      const prevIn = keep(prev);
+      if (curIn) {
+        if (!prevIn) out.push(intersect(prev, cur));
+        out.push(cur);
+      } else if (prevIn) {
+        out.push(intersect(prev, cur));
+      }
+    }
+    return out;
+  };
+
+  let out = pts;
+  // left (x >= x0)
+  out = clipEdge(out, (p) => p.x >= rect.x0, (a, b) => {
+    const denom = b.x - a.x;
+    const t = denom === 0 ? 0 : (rect.x0 - a.x) / denom;
+    return { x: rect.x0, y: a.y + t * (b.y - a.y) };
+  });
+  // right (x <= x1)
+  out = clipEdge(out, (p) => p.x <= rect.x1, (a, b) => {
+    const denom = b.x - a.x;
+    const t = denom === 0 ? 0 : (rect.x1 - a.x) / denom;
+    return { x: rect.x1, y: a.y + t * (b.y - a.y) };
+  });
+  // bottom (y >= y0)
+  out = clipEdge(out, (p) => p.y >= rect.y0, (a, b) => {
+    const denom = b.y - a.y;
+    const t = denom === 0 ? 0 : (rect.y0 - a.y) / denom;
+    return { x: a.x + t * (b.x - a.x), y: rect.y0 };
+  });
+  // top (y <= y1)
+  out = clipEdge(out, (p) => p.y <= rect.y1, (a, b) => {
+    const denom = b.y - a.y;
+    const t = denom === 0 ? 0 : (rect.y1 - a.y) / denom;
+    return { x: a.x + t * (b.x - a.x), y: rect.y1 };
+  });
+  return out;
+}

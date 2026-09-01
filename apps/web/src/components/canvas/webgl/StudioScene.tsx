@@ -41,6 +41,7 @@ import { resolveSunLightPosition } from "./sunLight";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore } from "./seasonalStore";
 import { pctToWorld, type PctPoint, type HeightmapPoint } from "./coordTransform";
+import { clipPolygonToRect, type PctRect } from "../handoff/geometry/polygon";
 import { normalizeBox } from "./marqueeSelect";
 import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
@@ -602,25 +603,31 @@ function GovernmentOverlays({
   scaleM,
   boardAspect,
   sampler,
+  lotClip,
 }: {
   overlays: DesignKeylessOverlay[];
   scaleM: number;
   boardAspect: number;
   sampler: ((worldX: number, worldZ: number) => number) | null;
+  /** Bounded context rect (lot bbox + margin) that trims the washes to the
+   *  property's neighbourhood — authoritative rings otherwise run across the
+   *  whole canvas. Null = no site frame, draw as-is. */
+  lotClip?: PctRect | null;
 }) {
   return (
     <>
       {overlays.flatMap((overlay, overlayIndex) =>
         overlay.rings.map((ring, ringIndex) => {
           if (ring.length < 2) return null;
-          const points = drapeRingToSurface(
-            ring.map((point) => ({ x: point.x_pct, y: point.y_pct })),
-            {
-              sampler,
-              scaleM,
-              boardAspect,
-              offsetM: layerYOffset("vicmap.gov_overlay"),
-            },
+          const ringPct = ring.map((point) => ({ x: point.x_pct, y: point.y_pct }));
+          const clipped = lotClip ? clipPolygonToRect(ringPct, lotClip) : ringPct;
+          if (clipped.length < 2) return null;
+          const points = drapeRingToSurface(clipped, {
+            sampler,
+            scaleM,
+            boardAspect,
+            offsetM: layerYOffset("vicmap.gov_overlay"),
+          },
           );
           return (
             <Line
@@ -930,6 +937,27 @@ export function StudioScene({
     [boundaryPct, scaleM, boardAspect, siteMeta, keylessOverlays, easementsPct, heightmapPoints, placements, siteEnvelope],
   );
 
+  // Bounded context rect for the Vicmap overlay washes — the lot's bounding
+  // box expanded by a margin, so authoritative overlay rings are trimmed to
+  // the property's neighbourhood instead of running across the whole canvas.
+  const lotClip = useMemo<PctRect | null>(() => {
+    if (boundaryPct.length < 3) return null;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const p of boundaryPct) {
+      minX = Math.min(minX, p.x);
+      minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x);
+      maxY = Math.max(maxY, p.y);
+    }
+    const w = maxX - minX;
+    const h = maxY - minY;
+    const m = Math.max(w, h) * 0.5;
+    return { x0: minX - m, y0: minY - m, x1: maxX + m, y1: maxY + m };
+  }, [boundaryPct]);
+
   return (
     <>
       {/* Scan-reveal director — writes per-stage 0→1 progress into the
@@ -1120,6 +1148,7 @@ export function StudioScene({
         scaleM={scaleM}
         boardAspect={boardAspect}
         sampler={elevationSampler}
+        lotClip={lotClip}
       />
       {buildingPct && buildingPct.length >= 3 && (
         <BuildingFootprint
