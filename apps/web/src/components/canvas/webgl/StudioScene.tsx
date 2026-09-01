@@ -1076,6 +1076,7 @@ export function StudioScene({
         boardAspect={boardAspect}
         heightmapPoints={heightmapPoints}
         noDigRingsPct={easementsPct}
+        boundaryPct={boundaryPct}
       />
       {/* Irrigation zones — armed tool; a drag closes a ring that commits as
           an IrrigationZone with live area + flow readout. */}

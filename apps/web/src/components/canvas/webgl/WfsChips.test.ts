@@ -51,9 +51,9 @@ describe("buildWfsOverlayChips", () => {
   });
 
   it("labels the planning zone from the overlay label", () => {
-    expect(buildWfsOverlayChips([ov("planning", "GRZ10")], 0)).toEqual([
-      { id: "planning", label: "GRZ10 Zone" },
-    ]);
+    const chips = buildWfsOverlayChips([ov("planning", "GRZ10")], 0);
+    expect(chips).toMatchObject([{ id: "planning", label: "GRZ10 Zone" }]);
+    expect(chips[0]!.title).toContain("Vicmap");
   });
 
   it("marks dig/life-safety overlays as hazards with the triangle glyph", () => {
@@ -79,10 +79,12 @@ describe("buildWfsOverlayChips", () => {
   });
 
   it("counts title easement rings into one dig-safety pill", () => {
-    expect(buildWfsOverlayChips([], 2)).toEqual([
+    const two = buildWfsOverlayChips([], 2);
+    expect(two).toMatchObject([
       { id: "easement", label: "2 Easements", glyph: "▲", hazard: true },
     ]);
-    expect(buildWfsOverlayChips([], 1)).toEqual([
+    expect(two[0]!.title).toContain("Vicmap");
+    expect(buildWfsOverlayChips([], 1)).toMatchObject([
       { id: "easement", label: "1 Easement", glyph: "▲", hazard: true },
     ]);
   });
@@ -110,8 +112,20 @@ describe("buildWfsOverlayChips", () => {
       "canopy",
     ]);
     expect(chips.every((c) => !c.hazard)).toBe(true);
-    expect(chips[0]).toEqual({ id: "heritage", label: "HO128 Heritage" });
-    expect(chips[3]).toEqual({ id: "canopy", label: "Canopy A2–6" });
+    expect(chips[0]).toMatchObject({ id: "heritage", label: "HO128 Heritage" });
+    expect(chips[3]).toMatchObject({ id: "canopy", label: "Canopy A2–6" });
+  });
+
+  it("stamps every derived overlay pill with the Vicmap provenance + boundary caveat", () => {
+    const chips = buildWfsOverlayChips(
+      [ov("planning", "GRZ10"), ov("bushfire", "BAL-12.5"), ov("easement")],
+      0,
+    );
+    expect(chips.length).toBeGreaterThan(0);
+    for (const c of chips) {
+      expect(c.title).toContain("Vicmap authoritative overlay");
+      expect(c.title).toContain("beyond the title line");
+    }
   });
 
   it("emits no chip for contour washes (rendered as scene line work)", () => {

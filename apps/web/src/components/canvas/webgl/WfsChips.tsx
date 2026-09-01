@@ -19,6 +19,16 @@ export interface OverlayChip {
   title?: string;
 }
 
+/**
+ * Provenance stamp for keyless (Vicmap) overlay pills. These are external
+ * authority that MAY extend beyond the title line — they are not snapped to
+ * the boundary (clipping an authoritative overlay to the lot would hide real
+ * cadastral/regulatory conditions), so the boundary relationship is stated
+ * here rather than left silent.
+ */
+const OVERLAY_PROVENANCE_TITLE =
+  "Vicmap authoritative overlay — may extend beyond the title line";
+
 export function buildCanopyObligationChip(
   canopy: CanopyComplianceResult | null | undefined,
 ): OverlayChip | null {
@@ -55,21 +65,22 @@ export function buildWfsOverlayChips(
       label: planning.label?.trim()
         ? `${planning.label.trim()} Zone`
         : "Planning Zone",
+      title: OVERLAY_PROVENANCE_TITLE,
     });
   }
 
   const bushfire = overlays.find((o) => o.kind === "bushfire");
   if (bushfire) {
-    chips.push({ id: "bushfire", label: bushfire.label?.trim() || "BAL", glyph: "▲", hazard: true });
+    chips.push({ id: "bushfire", label: bushfire.label?.trim() || "BAL", glyph: "▲", hazard: true, title: OVERLAY_PROVENANCE_TITLE });
   }
 
   const flood = overlays.find((o) => o.kind === "flood");
   if (flood) {
-    chips.push({ id: "flood", label: flood.label?.trim() || "Overland Flow", glyph: "▲", hazard: true });
+    chips.push({ id: "flood", label: flood.label?.trim() || "Overland Flow", glyph: "▲", hazard: true, title: OVERLAY_PROVENANCE_TITLE });
   }
 
   if (overlays.some((o) => o.kind === "water_corp")) {
-    chips.push({ id: "water_corp", label: "Water Corp", glyph: "▲", hazard: true });
+    chips.push({ id: "water_corp", label: "Water Corp", glyph: "▲", hazard: true, title: OVERLAY_PROVENANCE_TITLE });
   }
 
   const easementCount =
@@ -82,11 +93,12 @@ export function buildWfsOverlayChips(
       label: easementCount === 1 ? "1 Easement" : `${easementCount} Easements`,
       glyph: "▲",
       hazard: true,
+      title: OVERLAY_PROVENANCE_TITLE,
     });
   }
 
   if (overlays.some((o) => o.kind === "acid_sulfate")) {
-    chips.push({ id: "acid_sulfate", label: "Acid Sulfate", glyph: "▲", hazard: true });
+    chips.push({ id: "acid_sulfate", label: "Acid Sulfate", glyph: "▲", hazard: true, title: OVERLAY_PROVENANCE_TITLE });
   }
 
   const heritage = overlays.find((o) => o.kind === "heritage");
@@ -94,22 +106,23 @@ export function buildWfsOverlayChips(
     chips.push({
       id: "heritage",
       label: heritage.label?.trim() ? `${heritage.label.trim()} Heritage` : "Heritage",
+      title: OVERLAY_PROVENANCE_TITLE,
     });
   }
 
   if (overlays.some((o) => o.kind === "road_casement")) {
-    chips.push({ id: "road_casement", label: "Road Casement" });
+    chips.push({ id: "road_casement", label: "Road Casement", title: OVERLAY_PROVENANCE_TITLE });
   }
 
   if (overlays.some((o) => o.kind === "wetland")) {
-    chips.push({ id: "wetland", label: "Wetland" });
+    chips.push({ id: "wetland", label: "Wetland", title: OVERLAY_PROVENANCE_TITLE });
   }
 
   const canopyWash = overlays.find(
     (o) => o.kind === "urban_tree" || o.kind === "native_vegetation",
   );
   if (canopyWash) {
-    chips.push({ id: "canopy", label: canopyWash.label?.trim() || "Canopy" });
+    chips.push({ id: "canopy", label: canopyWash.label?.trim() || "Canopy", title: OVERLAY_PROVENANCE_TITLE });
   }
 
   const obligation = buildCanopyObligationChip(canopy);

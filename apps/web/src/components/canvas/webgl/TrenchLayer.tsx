@@ -36,7 +36,9 @@ import { createElevationSampler } from "./terrainMath";
 import {
   buildTracedTrench,
   shouldAppendTrenchPoint,
+  snapPolylineToBoundary,
   trenchConflictsWithRings,
+  trenchLeavesBoundary,
   type TrenchPointPct,
 } from "./trenchPath";
 
@@ -117,6 +119,10 @@ export interface TrenchLayerProps {
   heightmapPoints?: HeightmapPoint[];
   /** Closed no-dig rings in board-% (easements / TPZ / utility corridors). */
   noDigRingsPct?: PctPoint[][];
+  /** Title boundary ring (board-%) — the single source of truth for site
+   *  geometry. A traced run is snapped onto it on commit and strikes live
+   *  when the draft leaves the lot. */
+  boundaryPct?: PctPoint[];
 }
 
 export function TrenchLayer({
@@ -124,6 +130,7 @@ export function TrenchLayer({
   boardAspect,
   heightmapPoints = [],
   noDigRingsPct = [],
+  boundaryPct = [],
 }: TrenchLayerProps) {
   const trenchTool = useStudioStore((s) => s.trenchTool);
   const trenchDraft = useStudioStore((s) => s.trenchDraft);
@@ -202,15 +209,23 @@ export function TrenchLayer({
         id: makeTrenchId(),
         name: trenchKindLabel(trenchTool),
         kind: trenchTool,
-        points,
+        // Title-boundary reconciliation: snap any vertex that left the lot
+        // back onto the boundary ring so the committed run never persists
+        // off-lot (the operator still sees the live off-lot strike while the
+        // draft is open).
+        points: snapPolylineToBoundary(points, boundaryPct),
         why: "Traced by operator on canvas",
       }),
     );
   };
 
-  const draftConflict = trenchDraft
+  const noDigConflict = trenchDraft
     ? trenchConflictsWithRings(trenchDraft.points, noDig)
     : false;
+  const boundaryConflict = trenchDraft
+    ? trenchLeavesBoundary(trenchDraft.points, boundaryPct)
+    : false;
+  const draftConflict = noDigConflict || boundaryConflict;
   const draftLengthM =
     trenchDraft && trenchDraft.points.length >= 2
       ? worldLengthM(trenchDraft.points, scaleM, boardAspect)
@@ -298,7 +313,7 @@ export function TrenchLayer({
                 >
                   <span data-testid="trench-draft-label" style={draftLabelStyle}>
                     {trenchKindLabel(trenchDraft.kind)} · {draftLengthM.toFixed(2)} m
-                    {draftConflict ? " · strike" : ""}
+                    {boundaryConflict ? " · off-lot" : noDigConflict ? " · strike" : ""}
                   </span>
                 </Html>
               )}

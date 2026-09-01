@@ -3,7 +3,9 @@ import type { CanvasGroundScale } from "@workstream/domain";
 import {
   buildTracedTrench,
   shouldAppendTrenchPoint,
+  snapPolylineToBoundary,
   trenchConflictsWithRings,
+  trenchLeavesBoundary,
   trenchLengthM,
   TRENCH_DEPTH_MM,
 } from "./trenchPath";
@@ -47,6 +49,63 @@ describe("trenchConflictsWithRings", () => {
       { x: 100, y: 100 },
     ];
     expect(trenchConflictsWithRings([{ x: 50, y: 50 }], [open])).toBe(false);
+  });
+});
+
+describe("trenchLeavesBoundary", () => {
+  it("flags a vertex outside the title boundary", () => {
+    expect(trenchLeavesBoundary([{ x: 10, y: 10 }], SQUARE_RING)).toBe(true);
+  });
+
+  it("passes a path fully inside the lot", () => {
+    expect(
+      trenchLeavesBoundary(
+        [
+          { x: 45, y: 45 },
+          { x: 55, y: 55 },
+        ],
+        SQUARE_RING,
+      ),
+    ).toBe(false);
+  });
+
+  it("passes when there is no boundary to reconcile against", () => {
+    expect(trenchLeavesBoundary([{ x: 10, y: 10 }], [])).toBe(false);
+  });
+});
+
+describe("snapPolylineToBoundary", () => {
+  it("leaves in-boundary vertices untouched", () => {
+    const pts = [
+      { x: 45, y: 45 },
+      { x: 55, y: 55 },
+    ];
+    expect(snapPolylineToBoundary(pts, SQUARE_RING)).toEqual(pts);
+  });
+
+  it("projects an off-lot vertex onto the nearest boundary edge", () => {
+    const snapped = snapPolylineToBoundary(
+      [
+        { x: 45, y: 50 },
+        { x: 10, y: 50 },
+      ],
+      SQUARE_RING,
+    );
+    expect(snapped[0]).toEqual({ x: 45, y: 50 });
+    expect(snapped[1]).toEqual({ x: 40, y: 50 }); // pulled onto the left edge
+  });
+
+  it("snaps a far corner onto the nearest ring corner", () => {
+    const snapped = snapPolylineToBoundary([{ x: 70, y: 70 }], SQUARE_RING);
+    expect(snapped[0]).toEqual({ x: 60, y: 60 });
+  });
+
+  it("returns the path unchanged without a boundary (locational-indicative)", () => {
+    const pts = [
+      { x: 10, y: 10 },
+      { x: 20, y: 20 },
+    ];
+    expect(snapPolylineToBoundary(pts, [])).toEqual(pts);
   });
 });
 
