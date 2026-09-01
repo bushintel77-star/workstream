@@ -18,7 +18,6 @@
 
 import { useMemo, useState } from "react";
 import type {
-  ConstructionTrenchKind,
   DesignKeylessOverlay,
   SketchCanvas,
 } from "@workstream/contracts";
@@ -96,21 +95,23 @@ function useCutFill(
 /**
  * Subsurface utility depth bands (handoff §5.3). Standard Melbourne
  * service depths — the depth rail shows these below the ground line in
- * redline accent. Each cell arms the trench tool at its construction
- * kind (the read-out side of the depth rail; the rail cells are the
- * arm-in). Re-click the active kind to disarm.
+ * redline accent. Read-only reference.
+ *
+ * These cells deliberately do NOT arm the trench tool. The trench tool
+ * persists `ConstructionTrench`s whose kinds are landscape build runs
+ * (irrig/lights/drainage) — there is no gas/elec/telco kind, and mapping
+ * GAS onto `lighting_conduit` would write misleading conduit geometry
+ * into the client quote. Utility services are DBYD territory, not
+ * landscape construction ("Vicmap easements ≠ underground assets —
+ * dig needs BYDA"). The trench tool arms only from the command palette,
+ * where every kind is honest.
  */
-const SUBSURFACE_DEPTHS: Array<{
-  id: string;
-  label: string;
-  depth: number;
-  kind: ConstructionTrenchKind;
-}> = [
-  { id: "gas", label: "GAS", depth: 0.6, kind: "lighting_conduit" },
-  { id: "water", label: "H2O", depth: 0.75, kind: "irrig_main" },
-  { id: "elec", label: "ELEC", depth: 0.9, kind: "lighting_conduit" },
-  { id: "sewer", label: "SEW", depth: 1.5, kind: "drainage" },
-  { id: "telco", label: "TEL", depth: 0.45, kind: "lighting_conduit" },
+const SUBSURFACE_DEPTHS: Array<{ id: string; label: string; depth: number }> = [
+  { id: "gas", label: "GAS", depth: 0.6 },
+  { id: "water", label: "H2O", depth: 0.75 },
+  { id: "elec", label: "ELEC", depth: 0.9 },
+  { id: "sewer", label: "SEW", depth: 1.5 },
+  { id: "telco", label: "TEL", depth: 0.45 },
 ];
 
 export interface FloatingChromeProps {
@@ -140,8 +141,6 @@ export function FloatingChrome({
   const handedness = useStudioStore((s) => s.handedness);
   const anchorVisibility = useStudioStore((s) => s.anchorVisibility);
   const extrusionToolArmed = useStudioStore((s) => s.extrusionToolArmed);
-  const trenchTool = useStudioStore((s) => s.trenchTool);
-  const setTrenchTool = useStudioStore((s) => s.setTrenchTool);
   const selectedExtrusionStrokeId = useStudioStore((s) => s.selectedExtrusionStrokeId);
   const activeExtrusionDepth = useStudioStore((s) => s.activeExtrusionDepth);
   const setActiveCanvasId = useStudioStore((s) => s.setActiveCanvasId);
@@ -268,21 +267,19 @@ export function FloatingChrome({
         {/* Ground-line divider — separates positive planes from subsurface */}
         <div className={styles.railGroundLine} />
 
-        {/* Subsurface utility depths — redline accent (handoff §5.3) */}
+        {/* Subsurface utility depths — redline accent (handoff §5.3).
+            Read-only reference; see SUBSURFACE_DEPTHS for why these never
+            arm the trench tool. */}
         <div className={styles.railSubsurfaceLabel}>SUB</div>
-        {SUBSURFACE_DEPTHS.map((u) => {
-          const active = trenchTool === u.kind;
-          return (
-            <button
-              key={u.id}
-              className={`${styles.cell} ${styles.cellSubsurface} ${active ? styles.cellActive : ""}`}
-              onClick={() => setTrenchTool(active ? null : u.kind)}
-              title={`${u.label} — ${u.depth}m below ground · click to arm the ${u.kind} trench trace`}
-            >
-              {u.label}
-            </button>
-          );
-        })}
+        {SUBSURFACE_DEPTHS.map((u) => (
+          <div
+            key={u.id}
+            className={`${styles.cell} ${styles.cellSubsurface}`}
+            title={`${u.label} — ${u.depth}m below ground (DBYD reference)`}
+          >
+            {u.label}
+          </div>
+        ))}
       </div>
 
       {/* Readout -- cut/fill volumes (bottom-left) */}

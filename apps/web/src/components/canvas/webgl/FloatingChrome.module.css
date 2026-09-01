@@ -129,9 +129,12 @@
 
 /* Subsurface utility cells — redline accent for below-ground services.
  * No opacity dimming: the redline color is already distinct from the
- * terrain-green active cells, and dimming kills text contrast on dark glass. */
+ * terrain-green active cells, and dimming kills text contrast on dark glass.
+ * These are read-only reference divs (never click targets), so the shared
+ * pointer affordance from `.cell` is withdrawn. */
 .cellSubsurface {
   color: var(--lc-accent-redline);
+  cursor: default;
 }
 
 .cellSubsurface:hover {

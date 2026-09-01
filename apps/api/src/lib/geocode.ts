@@ -41,7 +41,9 @@ async function nominatimSearch(
     },
     {
       // Nominatim's public API rate-limits aggressively; a hung lookup must
-      // not stall the survey pipeline for the default 30s × 3 retries.
+      // not stall the survey pipeline for the http wrapper default
+      // (30 s × 3 attempts). One 8 s attempt matches the vicmap-address
+      // precedent — fail fast and let the caller fall back.
       timeoutMs: 8_000,
       retries: 1,
       telemetry: {
