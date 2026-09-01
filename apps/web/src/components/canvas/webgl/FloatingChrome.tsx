@@ -30,6 +30,7 @@ import { padStrokes, padCutFill, CUT_FILL_CELL_M } from "./cutFill";
 import { ToolRibbon } from "./ToolRibbon";
 import { CameraDock } from "./CameraDock";
 import { WfsChips } from "./WfsChips";
+import { OverlayLegend } from "./OverlayLegend";
 import styles from "./FloatingChrome.module.css";
 
 /* ---- helpers ---- */
@@ -141,6 +142,7 @@ export function FloatingChrome({
   const handedness = useStudioStore((s) => s.handedness);
   const anchorVisibility = useStudioStore((s) => s.anchorVisibility);
   const extrusionToolArmed = useStudioStore((s) => s.extrusionToolArmed);
+  const activeTool = useStudioStore((s) => s.activeTool);
   const selectedExtrusionStrokeId = useStudioStore((s) => s.selectedExtrusionStrokeId);
   const activeExtrusionDepth = useStudioStore((s) => s.activeExtrusionDepth);
   const setActiveCanvasId = useStudioStore((s) => s.setActiveCanvasId);
@@ -209,6 +211,9 @@ export function FloatingChrome({
 
       {/* Tool ribbon — vertical glass panel, hand-opposite edge (handoff §5) */}
       <ToolRibbon />
+
+      {/* Overlay Layers legend — drops below the chip bar while LAYERS is armed */}
+      {activeTool === "layers" && <OverlayLegend overlays={keylessOverlays} />}
 
       {/* Camera dock — bottom centre, 4 presets (handoff §6.1) */}
       <CameraDock />

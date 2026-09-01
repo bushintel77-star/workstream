@@ -42,6 +42,7 @@ import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore } from "./seasonalStore";
 import { pctToWorld, type PctPoint, type HeightmapPoint } from "./coordTransform";
 import { clipPolygonToRect, type PctRect } from "../handoff/geometry/polygon";
+import { OVERLAY_COLORS, isOverlayVisible } from "./overlayMeta";
 import { normalizeBox } from "./marqueeSelect";
 import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
@@ -583,21 +584,6 @@ function Services({
   );
 }
 
-const OVERLAY_COLORS: Record<DesignKeylessOverlay["kind"], string> = {
-  planning: PALETTE.cobaltL600,
-  bushfire: PALETTE.warningL500,
-  contour: PALETTE.grayL300,
-  flood: PALETTE.waterL500,
-  heritage: PALETTE.autumnOrange,
-  easement: PALETTE.slateL500,
-  urban_tree: PALETTE.forestL600,
-  water_corp: PALETTE.apwaWater,
-  road_casement: PALETTE.bluestoneL400,
-  acid_sulfate: PALETTE.warningL500,
-  wetland: PALETTE.waterL500,
-  native_vegetation: PALETTE.sproutL500,
-};
-
 function GovernmentOverlays({
   overlays,
   scaleM,
@@ -614,10 +600,12 @@ function GovernmentOverlays({
    *  whole canvas. Null = no site frame, draw as-is. */
   lotClip?: PctRect | null;
 }) {
+  const hiddenOverlayKinds = useStudioStore((s) => s.hiddenOverlayKinds);
   return (
     <>
       {overlays.flatMap((overlay, overlayIndex) =>
         overlay.rings.map((ring, ringIndex) => {
+          if (!isOverlayVisible(hiddenOverlayKinds, overlay.kind)) return null;
           if (ring.length < 2) return null;
           const ringPct = ring.map((point) => ({ x: point.x_pct, y: point.y_pct }));
           const clipped = lotClip ? clipPolygonToRect(ringPct, lotClip) : ringPct;
@@ -627,8 +615,7 @@ function GovernmentOverlays({
             scaleM,
             boardAspect,
             offsetM: layerYOffset("vicmap.gov_overlay"),
-          },
-          );
+          });
           return (
             <Line
               key={`${overlay.kind}-${overlayIndex}-${ringIndex}`}

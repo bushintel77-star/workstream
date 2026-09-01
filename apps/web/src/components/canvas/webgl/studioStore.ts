@@ -34,6 +34,7 @@ import type {
   ConstructionTrenchKind,
   IrrigationZone,
   IrrigationZoneKind,
+  KeylessOverlayKind,
   LaborProfile,
   LandscapeFeature,
   MaterialFill,
@@ -607,6 +608,11 @@ export interface StudioStoreState {
   cameraPreset: CameraPreset;
   /** Set the camera preset — writes the rig tilt + blend target. */
   setCameraPreset: (preset: CameraPreset) => void;
+  /** Overlay kinds the operator has hidden in the Layers legend (absent =
+   *  visible). Shared by the scene washes (GovernmentOverlays) and the legend. */
+  hiddenOverlayKinds: KeylessOverlayKind[];
+  /** Toggle an overlay kind's visibility in the legend. */
+  toggleOverlayKind: (kind: KeylessOverlayKind) => void;
 
   // --- Phase 8: Living Diorama & Spatial Presence ---
   /** Render quality — TECHNICAL (clean drafting) or IMMERSIVE (AAA post-FX). */
@@ -2190,6 +2196,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   ribbonDwellOpen: false,
   setRibbonDwellOpen: (ribbonDwellOpen) => set({ ribbonDwellOpen }),
   cameraPreset: "plan",
+  hiddenOverlayKinds: [],
+  toggleOverlayKind: (kind) =>
+    set((s) => ({
+      hiddenOverlayKinds: s.hiddenOverlayKinds.includes(kind)
+        ? s.hiddenOverlayKinds.filter((k) => k !== kind)
+        : [...s.hiddenOverlayKinds, kind],
+    })),
   /**
    * Landscape Canvas v2 — camera dock presets (handoff §6.1). PLAN/AXO/SEC
    * are orthographic drafting views; 3D is the perspective blend.

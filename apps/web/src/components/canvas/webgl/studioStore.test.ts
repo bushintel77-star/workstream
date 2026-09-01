@@ -1185,3 +1185,20 @@ describe("studioStore draft session", () => {
     expect(f.metadata.friendly_name).toBe("Terrace pad");
   });
 });
+
+describe("hiddenOverlayKinds / toggleOverlayKind", () => {
+  it("toggles an overlay kind in and out of the hidden set", () => {
+    useStudioStore.setState({ hiddenOverlayKinds: [] });
+    expect(useStudioStore.getState().hiddenOverlayKinds).toEqual([]);
+    useStudioStore.getState().toggleOverlayKind("easement");
+    expect(useStudioStore.getState().hiddenOverlayKinds).toEqual(["easement"]);
+    useStudioStore.getState().toggleOverlayKind("easement");
+    expect(useStudioStore.getState().hiddenOverlayKinds).toEqual([]);
+    useStudioStore.getState().toggleOverlayKind("easement");
+    useStudioStore.getState().toggleOverlayKind("contour");
+    expect(useStudioStore.getState().hiddenOverlayKinds).toEqual([
+      "easement",
+      "contour",
+    ]);
+  });
+});
