@@ -7,12 +7,12 @@
  */
 
 import type { CanvasMode } from "../../../lib/canvas-mode";
+import type { ToolId } from "./studioStore";
 
 export type ViewportPreset = "plan" | "axo" | "sec" | "3d";
 export type ToolAction =
   | "assets"
   | "measure"
-  | "sketch-ink"
   | "underground"
   | "dims"
   | "help";
@@ -20,7 +20,8 @@ export type ToolAction =
 export type StudioShortcut =
   | { kind: "viewport"; preset: ViewportPreset }
   | { kind: "mode"; mode: CanvasMode }
-  | { kind: "tool"; tool: ToolAction };
+  | { kind: "tool"; tool: ToolAction }
+  | { kind: "ribbon-tool"; tool: ToolId };
 
 export const MODE_BY_SHIFT_DIGIT: Record<string, CanvasMode> = {
   "1": "survey",
@@ -43,10 +44,23 @@ export const VIEWPORT_BY_DIGIT: Record<string, ViewportPreset> = {
 export const TOOL_BY_KEY: Record<string, ToolAction> = {
   a: "assets",
   m: "measure",
-  s: "sketch-ink",
   u: "underground",
   d: "dims",
   "?": "help",
+};
+
+/**
+ * Landscape Canvas v2 — ribbon tool hotkeys (handoff §5.1).
+ * These resolve to the ribbon's unified ToolId and dispatch through
+ * setActiveTool (the legacy tool-flag bridge), so the keyboard and the
+ * ribbon always agree on which tool is active.
+ */
+export const RIBBON_TOOL_BY_KEY: Record<string, ToolId> = {
+  p: "pen",
+  l: "line",
+  s: "spline",
+  c: "contour",
+  g: "slope",
 };
 
 export const SHORTCUT_ROWS: Array<{
@@ -68,7 +82,11 @@ export const SHORTCUT_ROWS: Array<{
     { group: "Mode", keys: "Shift+7", action: "Present" },
     { group: "Mode", keys: "Shift+8", action: "Share" },
     { group: "Tool", keys: "A", action: "Asset dock" },
-    { group: "Tool", keys: "S", action: "Sketch ink" },
+    { group: "Tool", keys: "P", action: "Pen sketch" },
+    { group: "Tool", keys: "L", action: "Line" },
+    { group: "Tool", keys: "S", action: "Spline" },
+    { group: "Tool", keys: "C", action: "Contour" },
+    { group: "Tool", keys: "G", action: "Slope" },
     { group: "Tool", keys: "M", action: "Measure tape" },
     { group: "Tool", keys: "U", action: "Underground" },
     { group: "Tool", keys: "D", action: "Working-drawing dims" },
@@ -108,6 +126,12 @@ export function resolveStudioShortcut(e: KeyboardEvent): StudioShortcut | null {
   }
 
   const letter = e.key.toLowerCase();
+  // Ribbon tools first — the letter keys P/L/S/C/G own the ribbon's unified
+  // tool state. Their legacy flag equivalents (e.g. S = sketch-ink) were
+  // removed so the keyboard can never disagree with the ribbon.
+  if (!e.shiftKey && RIBBON_TOOL_BY_KEY[letter]) {
+    return { kind: "ribbon-tool", tool: RIBBON_TOOL_BY_KEY[letter]! };
+  }
   if (!e.shiftKey && TOOL_BY_KEY[letter]) {
     return { kind: "tool", tool: TOOL_BY_KEY[letter]! };
   }

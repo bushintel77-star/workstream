@@ -38,6 +38,12 @@ export interface StudioCameraRig {
 export const OBLIQUE_PITCH_DEG = 55;
 /** Garden eye-level preset — the "Garden" viewport, keyboard 3. */
 export const GARDEN_PITCH_DEG = 76;
+/**
+ * Landscape Canvas v2 — AXO preset tilt (handoff §6.1): orthographic
+ * axonometric at 22°. Rendered via the ortho crossfade in FusedCamera —
+ * the fused projection alone would render this pitch as perspective.
+ */
+export const AXO_PITCH_DEG = 22;
 
 /**
  * Default rig: fit, top-down PLAN view, north up, no tilt.
@@ -151,6 +157,18 @@ export function facadeNormalAzimuthDeg(
     Math.round(w / FACADE_NORMAL_STEP_DEG) * FACADE_NORMAL_STEP_DEG;
   const delta = Math.min(Math.abs(w - nearest), 360 - Math.abs(w - nearest));
   return delta <= tolDeg ? nearest % 360 : null;
+}
+
+/**
+ * Nearest facade-normal azimuth WITHOUT tolerance — unconditional snap.
+ * `facadeNormalAzimuthDeg` only snaps within ELEVATION_SNAP_AZIMUTH_DEG
+ * (orbit-release settle); the SEC camera preset must land on a clean
+ * cardinal from ANY azimuth, so it uses this.
+ */
+export function nearestFacadeNormalDeg(rotateDeg: number): number {
+  if (!Number.isFinite(rotateDeg)) return 0;
+  const w = ((rotateDeg % 360) + 360) % 360;
+  return (Math.round(w / FACADE_NORMAL_STEP_DEG) * FACADE_NORMAL_STEP_DEG) % 360;
 }
 
 /**

@@ -6,7 +6,7 @@
 /* ---- Ribbon container ---- */
 .ribbon {
   position: absolute;
-  top: 30px;
+  top: 76px;
   display: flex;
   flex-direction: column;
   padding: var(--lc-ribbon-padding);

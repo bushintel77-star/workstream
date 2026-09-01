@@ -138,6 +138,10 @@
   padding: 0 8px;
   cursor: pointer;
   transition: opacity 0.15s ease;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
 }
 
 .timePill:hover {

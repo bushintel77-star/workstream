@@ -73,6 +73,34 @@ describe("resolveStudioShortcut", () => {
     });
   });
 
+  it("maps P/L/S/C/G to the ribbon tools (handoff §5.1)", () => {
+    expect(resolveStudioShortcut(key("p"))).toEqual({
+      kind: "ribbon-tool",
+      tool: "pen",
+    });
+    expect(resolveStudioShortcut(key("L"))).toEqual({
+      kind: "ribbon-tool",
+      tool: "line",
+    });
+    expect(resolveStudioShortcut(key("s"))).toEqual({
+      kind: "ribbon-tool",
+      tool: "spline",
+    });
+    expect(resolveStudioShortcut(key("c"))).toEqual({
+      kind: "ribbon-tool",
+      tool: "contour",
+    });
+    expect(resolveStudioShortcut(key("G"))).toEqual({
+      kind: "ribbon-tool",
+      tool: "slope",
+    });
+  });
+
+  it("reserves H for the hold-peek and never steals it from the ribbon", () => {
+    expect(resolveStudioShortcut(key("h"))).toBeNull();
+    expect(resolveStudioShortcut(key("H"))).toBeNull();
+  });
+
   it("ignores typing targets and modifier chords (Ctrl+K stays the palette)", () => {
     expect(
       resolveStudioShortcut(
@@ -89,6 +117,11 @@ describe("resolveStudioShortcut", () => {
     expect(keys).toContain("1");
     expect(keys).toContain("Shift+2");
     expect(keys).toContain("A");
+    expect(keys).toContain("P");
+    expect(keys).toContain("L");
+    expect(keys).toContain("S");
+    expect(keys).toContain("C");
+    expect(keys).toContain("G");
     expect(keys).toContain("?");
     expect(keys).toContain("Ctrl+K");
   });

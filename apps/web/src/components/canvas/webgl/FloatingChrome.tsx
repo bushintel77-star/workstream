@@ -17,7 +17,12 @@
  */
 
 import { useMemo, useState } from "react";
-import type { SketchCanvas } from "@workstream/contracts";
+import type {
+  ConstructionTrenchKind,
+  DesignKeylessOverlay,
+  SketchCanvas,
+} from "@workstream/contracts";
+import type { CanopyComplianceResult } from "./canopyCompliance";
 import { useStudioStore } from "./studioStore";
 import { SiteSetupModal } from "./SiteSetupModal";
 import type { HeightmapPoint } from "./coordTransform";
@@ -89,17 +94,23 @@ function useCutFill(
 /* ---- component ---- */
 
 /**
- * Subsurface utility depth bands (handoff §5.3).
- * Standard Melbourne service depths — the depth rail shows these below
- * the ground line in redline accent. Read-only reference; the trench
- * tool is the editor.
+ * Subsurface utility depth bands (handoff §5.3). Standard Melbourne
+ * service depths — the depth rail shows these below the ground line in
+ * redline accent. Each cell arms the trench tool at its construction
+ * kind (the read-out side of the depth rail; the rail cells are the
+ * arm-in). Re-click the active kind to disarm.
  */
-const SUBSURFACE_DEPTHS: Array<{ id: string; label: string; depth: number }> = [
-  { id: "gas", label: "GAS", depth: 0.6 },
-  { id: "water", label: "H2O", depth: 0.75 },
-  { id: "elec", label: "ELEC", depth: 0.9 },
-  { id: "sewer", label: "SEW", depth: 1.5 },
-  { id: "telco", label: "TEL", depth: 0.45 },
+const SUBSURFACE_DEPTHS: Array<{
+  id: string;
+  label: string;
+  depth: number;
+  kind: ConstructionTrenchKind;
+}> = [
+  { id: "gas", label: "GAS", depth: 0.6, kind: "lighting_conduit" },
+  { id: "water", label: "H2O", depth: 0.75, kind: "irrig_main" },
+  { id: "elec", label: "ELEC", depth: 0.9, kind: "lighting_conduit" },
+  { id: "sewer", label: "SEW", depth: 1.5, kind: "drainage" },
+  { id: "telco", label: "TEL", depth: 0.45, kind: "lighting_conduit" },
 ];
 
 export interface FloatingChromeProps {
@@ -107,6 +118,12 @@ export interface FloatingChromeProps {
   boardAspect: number;
   northBearingDeg: number | null;
   heightmapPoints: HeightmapPoint[];
+  /** KEYLESS Vicmap/DELWP site-frame overlays → WFS chip pills (§5.4). */
+  keylessOverlays?: DesignKeylessOverlay[];
+  /** Title-plan easement ring count → the dig-safety easement pill. */
+  easementRingCount?: number;
+  /** ResCode A2-6 canopy compliance → the A2-6 obligation pill. */
+  canopy?: CanopyComplianceResult | null;
 }
 
 export function FloatingChrome({
@@ -114,12 +131,17 @@ export function FloatingChrome({
   boardAspect,
   northBearingDeg,
   heightmapPoints,
+  keylessOverlays = [],
+  easementRingCount = 0,
+  canopy = null,
 }: FloatingChromeProps) {
   const canvases = useStudioStore((s) => s.sketchCanvases);
   const activeCanvasId = useStudioStore((s) => s.activeCanvasId);
   const handedness = useStudioStore((s) => s.handedness);
   const anchorVisibility = useStudioStore((s) => s.anchorVisibility);
   const extrusionToolArmed = useStudioStore((s) => s.extrusionToolArmed);
+  const trenchTool = useStudioStore((s) => s.trenchTool);
+  const setTrenchTool = useStudioStore((s) => s.setTrenchTool);
   const selectedExtrusionStrokeId = useStudioStore((s) => s.selectedExtrusionStrokeId);
   const activeExtrusionDepth = useStudioStore((s) => s.activeExtrusionDepth);
   const setActiveCanvasId = useStudioStore((s) => s.setActiveCanvasId);
@@ -181,6 +203,9 @@ export function FloatingChrome({
       <WfsChips
         northBearingDeg={northBearingDeg}
         scaleRatio={scaleRatio}
+        keylessOverlays={keylessOverlays}
+        easementRingCount={easementRingCount}
+        canopy={canopy}
       />
 
       {/* Tool ribbon — vertical glass panel, hand-opposite edge (handoff §5) */}
@@ -245,15 +270,19 @@ export function FloatingChrome({
 
         {/* Subsurface utility depths — redline accent (handoff §5.3) */}
         <div className={styles.railSubsurfaceLabel}>SUB</div>
-        {SUBSURFACE_DEPTHS.map((u) => (
-          <button
-            key={u.id}
-            className={`${styles.cell} ${styles.cellSubsurface}`}
-            title={`${u.label} — ${u.depth}m below ground`}
-          >
-            {u.label}
-          </button>
-        ))}
+        {SUBSURFACE_DEPTHS.map((u) => {
+          const active = trenchTool === u.kind;
+          return (
+            <button
+              key={u.id}
+              className={`${styles.cell} ${styles.cellSubsurface} ${active ? styles.cellActive : ""}`}
+              onClick={() => setTrenchTool(active ? null : u.kind)}
+              title={`${u.label} — ${u.depth}m below ground · click to arm the ${u.kind} trench trace`}
+            >
+              {u.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Readout -- cut/fill volumes (bottom-left) */}

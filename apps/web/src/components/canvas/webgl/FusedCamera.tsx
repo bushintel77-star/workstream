@@ -47,7 +47,11 @@ import {
   type SpringState,
 } from "./cameraAnimation";
 import { easeInOutCubic, useStudioStore } from "./studioStore";
-import { blendTargetForPitch, isElevationRig, pitchRadians } from "./cameraRig";
+import {
+  blendTargetForPitch,
+  isElevationRig,
+  pitchRadians,
+} from "./cameraRig";
 import { useReducedMotion } from "./useReducedMotion";
 
 export interface FusedCameraProps {
@@ -168,20 +172,29 @@ export function FusedCamera({
       springRef.current.velocity = 0;
     }
 
-    // Elevation crossfade — when the live rig sits at the exact φ=90° +
-    // facade-normal snap, spring a second weight that crossfades the fused
-    // projection into the orthographic facade frustum. Driven per-frame from
-    // the live rig, so it needs no React writes and no store round-trip.
-    // A pinned photo plane's bearing (rarely cardinal) is an elevation
-    // facade in its own right — the store override widens the snap.
-    // Locked split-view halves (viewBlendLocked) never enter elevation —
-    // their camera stays overhead, where a facade frustum would be garbage.
-    const elevationOn =
-      viewBlendLocked == null &&
+    // Ortho crossfade — when the view must render ORTHOGRAPHIC at a tilt,
+    // spring a second weight that crossfades the fused projection into the
+    // pure orthographic frustum. Two triggers:
+    //   1. The v2 camera presets AXO (22° axonometric) and SEC (90° section):
+    //      handoff §6.1 promises ortho at tilt — the fused projection alone
+    //      would render those pitches as perspective.
+    //   2. The exact elevation snap (φ=90° + facade normal) from a free
+    //      orbit — the pre-existing behaviour, unchanged.
+    // Driven per-frame from the live rig + preset, so it needs no React
+    // writes and no store round-trip. A pinned photo plane's bearing (rarely
+    // cardinal) is an elevation facade in its own right — the store override
+    // widens the snap. Locked split-view halves (viewBlendLocked) never
+    // crossfade — their camera stays overhead, where a tilted ortho frustum
+    // would be garbage.
+    const preset = useStudioStore.getState().cameraPreset;
+    const orthoAtTilt =
+      preset === "axo" ||
+      preset === "sec" ||
       isElevationRig(
         rig,
         useStudioStore.getState().elevationFacadeAzimuth,
       );
+    const elevationOn = viewBlendLocked == null && orthoAtTilt;
     const elevationBlend = reducedMotion
       ? (elevationOn ? 1 : 0)
       : Math.min(

@@ -68,9 +68,13 @@ import {
 import type { AnnotationDialect } from "./annotations/model";
 import type { PctPoint } from "./coordTransform";
 import {
+  AXO_PITCH_DEG,
   blendTargetForPitch,
   clampPitchDeg,
   DEFAULT_CAMERA_RIG,
+  GARDEN_PITCH_DEG,
+  isElevationRig,
+  nearestFacadeNormalDeg,
   type StudioCameraRig,
 } from "./cameraRig";
 import {
@@ -2168,8 +2172,16 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     patch.transferToolArmed = tool === "path";
     patch.trenchTool = null;
     patch.zoneTool = null;
+    patch.trenchDraft = null;
+    patch.zoneDraft = null;
     patch.armedSymbolId = tool === "tree" ? (s.armedSymbolId ?? "canopy") : tool === "bed" ? (s.armedSymbolId ?? "bed") : null;
     patch.areaPlantActive = tool === "bed";
+    patch.rowPlantActive = false;
+    patch.assetPlantDraft = null;
+    patch.pendingAssetDrop = null;
+    patch.marqueeActive = false;
+    patch.marqueeDraft = null;
+    patch.draftSession = null;
     patch.draftingMode = tool === "line" || tool === "spline" ? true : s.draftingMode;
     set(patch);
   },
@@ -2178,16 +2190,50 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   ribbonDwellOpen: false,
   setRibbonDwellOpen: (ribbonDwellOpen) => set({ ribbonDwellOpen }),
   cameraPreset: "plan",
+  /**
+   * Landscape Canvas v2 — camera dock presets (handoff §6.1). PLAN/AXO/SEC
+   * are orthographic drafting views; 3D is the perspective blend.
+   *
+   * The committed plan/3D target and the elevation flag are DERIVED from the
+   * rig exactly as the orbit-gesture path commits them — never hardcoded per
+   * preset. Hardcoding `viewBlendTarget: 0` for AXO (tilt 22°) left the
+   * camera rendering perspective while the studio believed it was plan:
+   * FusedCamera springs on `blendTargetForPitch(pitch)` every frame and
+   * ignores the stored target, and StudioScene computed `tiltLocked` from the
+   * target — so editing stayed unlocked under a 3D view (the same bug class
+   * the pitch-collapse refactor fixed for mode entry, see the
+   * webgl-camera-mode-entry spec).
+   *
+   * SEC (tilt 90°) snaps the azimuth to the nearest facade normal — the
+   * exact elevation snap, so `isElevationRig` is true and the CAD convention
+   * re-enables editing at the orthographic horizon. The store is the single
+   * commit point for every preset writer (dock click, keyboard 1–4, HUD hit).
+   */
   setCameraPreset: (preset) => {
     const live = useStudioStore.getState().liveRig;
-    const OBLIQUE = 22; // AXO tilt per handoff §6.1
-    const GARDEN = 76;  // 3D perspective per existing GARDEN_PITCH_DEG
     const rig = { ...live };
-    if (preset === "plan") { rig.tiltDeg = 0; }
-    else if (preset === "axo") { rig.tiltDeg = OBLIQUE; }
-    else if (preset === "sec") { rig.tiltDeg = 90; }
-    else if (preset === "3d") { rig.tiltDeg = GARDEN; rig.zoom = Math.max(rig.zoom, 1.45); }
-    set({ cameraPreset: preset, liveRig: rig, viewBlendTarget: preset === "3d" ? 1 : 0 });
+    if (preset === "plan") {
+      rig.tiltDeg = 0;
+    } else if (preset === "axo") {
+      rig.tiltDeg = AXO_PITCH_DEG;
+    } else if (preset === "sec") {
+      rig.tiltDeg = 90;
+      rig.rotateDeg = nearestFacadeNormalDeg(rig.rotateDeg);
+    } else {
+      // 3D — the garden-eye perspective blend. Floor the zoom to the dock's
+      // documented drone-orbit framing (zoom in stays untouched).
+      rig.tiltDeg = GARDEN_PITCH_DEG;
+      rig.zoom = Math.max(rig.zoom, 1.45);
+    }
+    set({
+      cameraPreset: preset,
+      liveRig: rig,
+      viewBlendTarget: blendTargetForPitch(rig.tiltDeg),
+      elevationActive: isElevationRig(
+        rig,
+        useStudioStore.getState().elevationFacadeAzimuth,
+      ),
+    });
   },
 
   // --- Phase 8: Living Diorama & Spatial Presence ---

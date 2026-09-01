@@ -12,14 +12,20 @@
  *   SEC  — ortho, tilt 90°, elevation / cross-section when a cut line is set
  *   3D   — perspective blend, free drone orbit, drafting tools grey out
  *
- * Hotkeys Cmd1–4, 320ms blend on the projection matrix (never a cut).
- * Long-press reverts to the last state. CAM/ORTHO status cap at the dock's
- * left end; Time/Sun pill at the right, wired to sun azimuth.
+ * Hotkeys 1–4 (no modifier — see VIEWPORT_BY_DIGIT), 320ms blend on the
+ * projection matrix (never a cut). Long-press reverts to the last state.
+ * CAM/ORTHO status cap at the dock's left end; Time/Sun pill at the right,
+ * wired to sun azimuth.
  */
 
 import { useCallback } from "react";
 import { useStudioStore, type CameraPreset } from "./studioStore";
 import styles from "./CameraDock.module.css";
+
+/** Sun-time step (minutes) — the time pill cycles the sun azimuth in this
+ *  increment per click (24-hour loop). */
+const SUN_TIME_STEP_MIN = 30;
+const MIN_PER_DAY = 24 * 60;
 
 /* ---- camera button definitions (handoff §6.1) ---- */
 
@@ -98,6 +104,7 @@ export function CameraDock() {
   const setCameraPreset = useStudioStore((s) => s.setCameraPreset);
   const penDown = useStudioStore((s) => s.penDown);
   const sunMin = useStudioStore((s) => s.sunMin);
+  const setSunMin = useStudioStore((s) => s.setSunMin);
   const draftingMode = useStudioStore((s) => s.draftingMode);
 
   const onPreset = useCallback(
@@ -106,6 +113,14 @@ export function CameraDock() {
     },
     [setCameraPreset],
   );
+
+  // Cycle the sun time forward by one step, wrapping past 24:00. Clicking the
+  // time pill is the only chrome affordance on the sun azimuth — the light
+  // rig + shadow footprints update live from sunMin (seasonProgressFromSun).
+  const onCycleSunTime = useCallback(() => {
+    const next = (sunMin + SUN_TIME_STEP_MIN) % MIN_PER_DAY;
+    setSunMin(next);
+  }, [sunMin, setSunMin]);
 
   // CAM / ORTHO status cap (left end)
   const isOrtho = cameraPreset !== "3d";
@@ -137,7 +152,7 @@ export function CameraDock() {
             className={`${styles.button} ${cameraPreset === btn.preset ? styles.buttonActive : ""}`}
             data-camera-button={btn.preset}
             onClick={() => onPreset(btn.preset)}
-            title={`${btn.label} (Cmd${btn.hotkey})`}
+            title={`${btn.label} (${btn.hotkey})`}
           >
             {/* Active pip — 18x2px at top (§4 geometry) */}
             {cameraPreset === btn.preset && <span className={styles.activePip} />}
@@ -152,9 +167,13 @@ export function CameraDock() {
       <div className={styles.statusDivider} />
 
       {/* Time/Sun pill — right end, wired to sun azimuth */}
-      <div className={styles.timePill} title="Sun time — click to adjust">
+      <button
+        className={styles.timePill}
+        onClick={onCycleSunTime}
+        title={`Sun time — click to step +${SUN_TIME_STEP_MIN} min (loops at 24:00)`}
+      >
         <span className={styles.timePillLabel}>{timeLabel}</span>
-      </div>
+      </button>
 
       {/* Rig caption — drafting mode indicator */}
       {draftingMode && (

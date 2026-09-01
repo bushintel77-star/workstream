@@ -77,8 +77,10 @@ const TOOL_GROUPS: ToolGroup[] = [
 ];
 
 const UTILITY_TOOLS: ToolDef[] = [
-  { id: "layers", label: "LAYERS", hotkey: "L", glyph: "layers" },
-  { id: "history", label: "HISTORY", hotkey: "H", glyph: "history" },
+  // No hotkeys here: L is claimed by LINE below, and H is the global
+  // hold-to-peek key (fade chrome) — see WebGLStudioPreview.
+  { id: "layers", label: "LAYERS", hotkey: "", glyph: "layers" },
+  { id: "history", label: "HISTORY", hotkey: "", glyph: "history" },
 ];
 
 /* ---- inline SVG glyphs (handoff §10: no icon set, inline line SVGs) ---- */

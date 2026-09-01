@@ -51,6 +51,7 @@ import { getCatalogSymbol } from "@workstream/domain";
 import { VignetteOverlay } from "./VignetteOverlay";
 import type { PctPoint } from "./coordTransform";
 import { FloatingChrome } from "./FloatingChrome";
+import { buildCanopyCompliance } from "./canopyCompliance";
 import {
   DEFAULT_CAMERA_RIG,
   GARDEN_PITCH_DEG,
@@ -716,6 +717,21 @@ export function WebGLStudioPreview({
     [storePlacements],
   );
 
+  // ResCode A2-6 canopy compliance for the chrome — same pure builder the
+  // scene's meta chips consume, computed here so the DOM top bar can light
+  // its obligation pill without waiting on a keyless vegetation overlay.
+  const canopyCompliance = useMemo(
+    () =>
+      buildCanopyCompliance({
+        placements: storePlacements,
+        boundary: boundaryPct,
+        scaleM,
+        boardAspect,
+        lotAreaM2: siteMeta?.lotAreaM2,
+      }),
+    [storePlacements, boundaryPct, scaleM, boardAspect, siteMeta?.lotAreaM2],
+  );
+
   // Plan snapshot for the present deck's plan-crop panels — the same bridge
   // the SVG studio feeds PresentSurface, drawn from the WebGL store's live
   // placements/strokes and the server-rendered site frame.
@@ -812,6 +828,15 @@ export function WebGLStudioPreview({
         onNativeMode(hit.mode);
         return;
       }
+      // Landscape Canvas v2 — letter hotkeys drive the ribbon's unified tool
+      // via setActiveTool (the legacy tool-flag bridge). Re-pressing the
+      // active tool toggles it off, mirroring the ribbon's click behaviour.
+      if (hit.kind === "ribbon-tool") {
+        e.preventDefault();
+        const store = useStudioStore.getState();
+        store.setActiveTool(store.activeTool === hit.tool ? "none" : hit.tool);
+        return;
+      }
       const store = useStudioStore.getState();
       e.preventDefault();
       switch (hit.tool) {
@@ -824,15 +849,6 @@ export function WebGLStudioPreview({
         case "measure":
           store.setMeasureActive(!store.measureActive);
           break;
-        case "sketch-ink": {
-          const next = !store.sketchMode;
-          if (next) {
-            store.setArmedSymbolId(null);
-            store.setMeasureActive(false);
-          }
-          store.setSketchMode(next);
-          break;
-        }
         case "underground":
           store.setSubsurfaceView(!store.subsurfaceView);
           break;
@@ -1519,6 +1535,9 @@ export function WebGLStudioPreview({
           boardAspect={boardAspect}
           northBearingDeg={northBearingDeg}
           heightmapPoints={liveData.heightmapPoints}
+          keylessOverlays={visibleLayers.siteTruth ? keylessOverlays : []}
+          easementRingCount={visibleLayers.siteTruth ? easementsPct?.length ?? 0 : 0}
+          canopy={canopyCompliance}
         />
 
         {/* Floating cursor toolbar — shows when an asset is armed */}

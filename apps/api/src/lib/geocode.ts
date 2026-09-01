@@ -40,6 +40,10 @@ async function nominatimSearch(
       },
     },
     {
+      // Nominatim's public API rate-limits aggressively; a hung lookup must
+      // not stall the survey pipeline for the default 30s × 3 retries.
+      timeoutMs: 8_000,
+      retries: 1,
       telemetry: {
         spanName: "nominatim.geocode_search",
         provider: "external",

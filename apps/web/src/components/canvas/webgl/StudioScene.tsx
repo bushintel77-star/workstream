@@ -849,8 +849,13 @@ export function StudioScene({
   // Subscribe to the view blend target — drives the editing-lock for controls
   // (editing is disabled when the camera is in 3D perspective mode, and
   // re-enabled only at the exact elevation snap: φ=90° + facade normal).
+  // The v2 ortho presets (AXO/SEC) render via the ortho crossfade at their
+  // tilt, so they stay editable — the lock derives from the same projection
+  // state the camera renders, not just the blend flag.
   const viewBlendTarget = useSeasonalStore((s) => s.viewBlendTarget);
   const elevationActive = useSeasonalStore((s) => s.elevationActive);
+  const cameraPreset = useSeasonalStore((s) => s.cameraPreset);
+  const orthoPreset = cameraPreset === "axo" || cameraPreset === "sec";
 
   // THE terrain field — one sampler, every spatial layer samples it (mesh,
   // semantic lines, aerial). Null on flat projects (no levels).
@@ -969,14 +974,17 @@ export function StudioScene({
       <PedestrianCamera sampler={elevationSampler} />
 
       {/* Input capture — invisible ground plane for raycasting.
-          Editing is locked in 3D (viewBlend > 0.5) and re-enabled only at
-          the exact orthographic elevation snap (φ=90° + facade normal). */}
+          Editing is locked when the rendered projection is perspective
+          (fused blend > 0.5). The v2 ortho presets (AXO, SEC) render via
+          the ortho crossfade, so they stay editable — the lock re-enables
+          only at the exact orthographic elevation snap (φ=90° + facade
+          normal) for free-orbit 3D views. */}
       <StudioControls
         scaleM={scaleM}
         boardAspect={boardAspect}
         onGroundClick={onGroundClick}
         onCursorMove={onCursorMove}
-        tiltLocked={viewBlendTarget > 0.5 && !elevationActive}
+        tiltLocked={viewBlendTarget > 0.5 && !elevationActive && !orthoPreset}
       />
 
       {/* Ground — real terrain mesh when spot levels exist, flat plane otherwise. */}
