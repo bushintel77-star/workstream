@@ -39,6 +39,61 @@ rather than deleting them.
 **What's real but shallow is the interaction layer around that engine** —
 this is the actual gap, not the 3D math.
 
+## Mental Canvas UX reference (added 2026-09-03)
+
+The user provided a full UX teardown of the real Mental Canvas app
+mid-session. Condensed here for later phases — the full research is
+archived in this session's transcript, not re-pasted in full to keep this
+doc scannable. Key structural facts, by relevance to the phases below:
+
+- **Draw Mode vs View Mode** — a global toggle. In Draw Mode the camera
+  locks parallel to the active canvas (prevents parallax distortion while
+  sketching); selecting a different canvas re-aligns the camera to it. In
+  View Mode the camera decouples and free-orbits; tapping a canvas shows
+  its bounding frame instead of re-aligning. **Relevant to a future
+  phase, not scoped yet** — this app's Sketch/CAD/Elevation/Garden modes
+  already partition "draw" vs "look around" differently; whether to add a
+  camera-lock-to-active-plane behavior specifically while drawing is an
+  open question, not decided.
+- **Parallel Projection / Hinge Projection** — the two placement
+  mechanics. See Phase A below; this is what Phase A now builds.
+- **Bird's-Eye HUD** — a secondary mini-viewport (own camera + frustum
+  wireframe + canonical view snap buttons) shown during a Hinge/Parallel
+  drag. Phase A3.
+- **Three-state canvas panel** (Collapsed / Default / Expanded, dragged
+  open) with thumbnail previews, a Transparency Toggle (fades all
+  inactive canvases to reduce visual clutter — this is a strong,
+  cheap-to-borrow idea), drag-to-pick-canvas-in-viewport, per-canvas Eye
+  icons, Hide All / Show All, "Rehome" (fit active canvas to viewport),
+  and a long-press context menu (Reorder / Delete / Rename / Add Link).
+  **Directly informs Phase B** (canvas rail as real cards) below — Phase
+  B's card rail should fold in naming display + an eye/visibility toggle
+  + the transparency-toggle idea at minimum; the full three-state
+  collapse mechanic is a bigger lift than Phase B currently scopes and
+  should be revisited when Phase B is actually planned.
+- **Bookmarks + Timeline** (camera view snapshots, linger/transition/
+  sequence-time sliders, loop toggle) and the **Visibility Panel**
+  (per-bookmark canvas visibility keyframing) — this is the real shape of
+  **Phase C** (viewpoint filmstrip + walk/record) below; Phase C's
+  current scope ("thumbs + active border + walk/record controls") is a
+  minimal version of this. Worth re-reading the full research before
+  Phase C is actually planned.
+- **Selection Mode** (red-mask isolation, whole-stroke/lasso select,
+  boolean add/subtract/invert, Replace Image with "all occurrences") —
+  not mapped to any current phase; flagging as a possible future phase if
+  stroke-level multi-select/replace becomes a real ask.
+- **Brushes Panel** (visual texture grid + one width slider, no named
+  brush catalog) and **stroke-matching eraser** (scales to the stroke it's
+  erasing, not a fixed radius) — worth checking against this app's
+  existing nib system (`nibs.ts`, `ToolFlyout.tsx`'s `NibPicker`) for
+  parity; not scoped as a phase, just a comparison point.
+- **Apple Pencil hardware mappings** (double-tap → eraser toggle, hover →
+  pre-stroke preview, squeeze → context menu, barrel roll → texture
+  rotation), **Options Menu/export pipeline**, **Web Player/VR** — real
+  parts of Mental Canvas, explicitly out of scope for this app's roadmap
+  (touch/pencil-specific iPad OS integration and a hosted web-player
+  product are different surfaces than this desktop-first WebGL studio).
+
 ## Gaps against the spec (turn 14b, 15a/15c, 16b)
 
 Confirmed by reading the only call site
@@ -82,23 +137,58 @@ Numbered independently of the README's own §12 workstream numbering (that
 list is the *original* build order for the whole product; this is just the
 remaining slice for sketch-mode's Mental Canvas feel).
 
-### Phase A — Canvas placement gizmo + naming (turn 14b)
-Replace the single "+" button in `FloatingChrome.tsx` with:
-- A placement flow (reuse the `ToolFlyout.tsx` "blooming" pattern — it's
-  the established second-tier-panel idiom in this codebase, see
-  `docs/GOLD-STANDARD-2026-ARCHITECTURE.md` and the flyout's own
-  `data-testid="tool-flyout"` convention) exposing lay-flat vs stand-up,
-  a bearing/height input, and the five presets (ground / terrace / canopy /
-  boundary wall / hedge line).
-- A required name field before `addSketchCanvas` commits — extend
-  `SketchCanvas` usage (check `packages/contracts/src/schemas/` for the
-  `SketchCanvas` schema — add a `name` field there first if it's not already
-  present, per this repo's "contracts is the Zod schema boundary" rule in
-  the root `CLAUDE.md`).
-- A live 3D gizmo — likely a small `@react-three/drei` `TransformControls`
-  or a bespoke handle mesh in `SketchCanvasGroup.tsx`, showing the plane's
-  live dimensions + bearing as it's dragged, matching `4c`'s camera-dock
-  feel for readouts.
+### Phase A — Hinge/Parallel Projection canvas placement (turn 14b)
+
+**Status: in progress, actively planned** — see "Mental Canvas UX
+reference" below for the source research. This phase replaces the single
+"+" button in `FloatingChrome.tsx` with the *actual* Mental Canvas
+placement mechanic rather than a generic drag-arrows gizmo, decided after
+the user reviewed a full UX teardown of the real app mid-session
+(2026-09-03).
+
+The project's own flat/standing binary (§14b) maps onto one continuous
+mechanic: **Hinge Projection** folds a plane from 0° (flat, lying on the
+ground) to 90° (standing), with the fold handle's shape morphing at snap
+angles (octagon 45° / hexagon 60° / pentagon 72° / square 90°) and a
+**Bird's-Eye HUD** (secondary mini-viewport: camera-frustum wireframe,
+the folding plane's frame, canonical view buttons) appearing during the
+drag for spatial orientation. **Parallel Projection** (drag along one
+axis, no rotation) covers the simpler "adjust an already-flat plane's
+height" case.
+
+Confirmed data-model readiness: `SketchCanvasSchema`
+(`packages/contracts/src/schemas/catalog.ts:241`) already has an optional
+`label` (naming — no contracts change needed) and a full `rotation`
+quaternion, genuinely applied by `SketchCanvasGroup.tsx`'s `CanvasPlane`
+(228-312) — a real fold-to-vertical quaternion works today.
+
+Build order (three shippable checkpoints):
+- **A1** — naming + presets (ground/terrace/canopy/boundary-wall/hedge-
+  line) + a Parallel Projection height-drag handle for flat planes. New:
+  `canvasPlacement.ts` (presets + `foldQuaternion(angle, bearing)`),
+  `CanvasPlacementFlyout.tsx` (new sibling to `ToolFlyout.tsx` — that
+  component is hardcoded to the tool ribbon's DOM/handedness, not
+  reusable as-is for the depth rail's `+` cell),
+  `ParallelProjectionHandle.tsx` (raycast-drag, same primitive as
+  `AssetPlaceLayer.tsx`, not drei `TransformControls`), plus
+  `studioStore.ts` additions (`beginSketchCanvasTransform` /
+  `setSketchCanvasTransformTransient` / `endSketchCanvasTransform`,
+  mirroring the placement trio at `studioStore.ts:1948-1985`) and an
+  `adjustingCanvasId` transient field.
+- **A2** — `HingeProjectionGizmo.tsx`: axis line with two ground-anchor
+  handles + one centre fold handle (0°→90° drag), angle-snap glyph
+  morphing, live angle/bearing readout.
+- **A3** — `BirdsEyeHud.tsx`: its own small, separate
+  `@react-three/fiber` `<Canvas>` (**not** a scissored/`Hud`-primitive
+  share of the main canvas — `SplitViewLens.tsx`'s own header comment
+  explains why that conflicts with the EffectComposer post-FX stack;
+  mount a second real canvas instead, same as split-view does), shown
+  only during an active A2 fold drag.
+
+Full build plan (file-by-file, with the "not this session's Explore
+findings" caveats) lives in the CLI's own plan file when this was
+scoped — regenerate via `EnterPlanMode` if picking this up cold rather
+than assuming a stale plan file still matches `main`.
 
 ### Phase B — Canvas rail as real cards (turn 16b)
 Upgrade `FloatingChrome.tsx`'s `sortedCanvases.map(...)` chip row into the
