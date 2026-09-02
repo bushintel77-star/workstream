@@ -59,6 +59,7 @@ import { TerrainMesh } from "./TerrainMesh";
 import { SuncastOverlay } from "./SuncastOverlay";
 import { DottedGroundField } from "./DottedGroundField";
 import { ElevationSliceLine } from "./ElevationSliceLine";
+import { SectionLayer } from "./SectionLayer";
 import { DrainageFlowLayer } from "./DrainageFlowLayer";
 import { EarthworksLayer } from "./EarthworksLayer";
 import { DimensionLayer } from "./DimensionLayer";
@@ -1012,6 +1013,15 @@ export function StudioScene({
           mounts when terrain exists; the DOM profile panel is in WebGLStudioPreview. */}
       {heightmapPoints.length > 0 && (
         <ElevationSliceLine
+          scaleM={scaleM}
+          boardAspect={boardAspect}
+          heightmapPoints={heightmapPoints}
+        />
+      )}
+      {/* Section render — the profile curtain at the active cut line, drawn
+          from the shared section math (9.6). */}
+      {heightmapPoints.length > 0 && (
+        <SectionLayer
           scaleM={scaleM}
           boardAspect={boardAspect}
           heightmapPoints={heightmapPoints}

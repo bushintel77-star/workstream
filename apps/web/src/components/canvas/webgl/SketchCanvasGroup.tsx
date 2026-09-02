@@ -22,6 +22,7 @@ import { Line, Billboard, Text } from "@react-three/drei";
 import * as THREE from "three";
 import type { SketchCanvas } from "@workstream/contracts";
 import { useStudioStore } from "./studioStore";
+import { buildStationTicks } from "./stationing";
 import { pctToWorld, worldToPct, type PctPoint } from "./coordTransform";
 
 export interface SketchCanvasGroupProps {
@@ -113,8 +114,6 @@ const RULER_COLOR = "#e8e6e0";
 const RULER_OPACITY = 0.42;
 const RULER_LABEL_COLOR = "#e8e6e0";
 const RULER_LABEL_OPACITY = 0.55;
-const TICK_MAJOR_PCT = 100;  // every 100 board-% = full board width
-const TICK_MINOR_PCT = 20;   // every 20 board-%
 const TICK_MAJOR_LEN = 0.8;  // metres — full band height
 const TICK_MINOR_LEN = 0.26 * TICK_MAJOR_LEN; // 26% of band
 const RULER_OFFSET_M = 0.02; // sit just above the plane to avoid z-fighting
@@ -127,37 +126,32 @@ function SpatialMargin({ scaleM }: { scaleM: number }) {
   // the left ruler).
   const boardDepth = scaleM; // boardAspect is 1 by law
 
+  // Single stationing source (spec 2.1) — metre chainage, clean 1/2/5 ladder.
+  const station = useMemo(() => buildStationTicks(scaleM), [scaleM]);
+
   // Bottom edge ticks (running along X, ticks point in -Z).
-  const bottomTicks = useMemo(() => {
-    const ticks: { pos: [number, number, number]; len: number; major: boolean; label?: string }[] = [];
-    for (let pct = 0; pct <= 100; pct += TICK_MINOR_PCT) {
-      const x = (pct / 100) * scaleM;
-      const isMajor = pct % TICK_MAJOR_PCT === 0;
-      ticks.push({
-        pos: [x, RULER_OFFSET_M, 0],
-        len: isMajor ? TICK_MAJOR_LEN : TICK_MINOR_LEN,
-        major: isMajor,
-        label: isMajor ? `${pct}` : undefined,
-      });
-    }
-    return ticks;
-  }, [scaleM]);
+  const bottomTicks = useMemo(
+    () =>
+      station.map((t) => ({
+        pos: [t.metres, RULER_OFFSET_M, 0] as [number, number, number],
+        len: t.major ? TICK_MAJOR_LEN : TICK_MINOR_LEN,
+        major: t.major,
+        label: t.major ? t.label : undefined,
+      })),
+    [station],
+  );
 
   // Left edge ticks (running along Z, ticks point in +X).
-  const leftTicks = useMemo(() => {
-    const ticks: { pos: [number, number, number]; len: number; major: boolean; label?: string }[] = [];
-    for (let pct = 0; pct <= 100; pct += TICK_MINOR_PCT) {
-      const z = (pct / 100) * boardDepth;
-      const isMajor = pct % TICK_MAJOR_PCT === 0;
-      ticks.push({
-        pos: [0, RULER_OFFSET_M, z],
-        len: isMajor ? TICK_MAJOR_LEN : TICK_MINOR_LEN,
-        major: isMajor,
-        label: isMajor ? `${pct}` : undefined,
-      });
-    }
-    return ticks;
-  }, [boardDepth]);
+  const leftTicks = useMemo(
+    () =>
+      station.map((t) => ({
+        pos: [0, RULER_OFFSET_M, t.metres] as [number, number, number],
+        len: t.major ? TICK_MAJOR_LEN : TICK_MINOR_LEN,
+        major: t.major,
+        label: t.major ? t.label : undefined,
+      })),
+    [station],
+  );
 
   // Build line segments for all ticks (each tick is a 2-point line).
   const bottomLinePoints = useMemo(
@@ -237,6 +231,7 @@ function CanvasPlane({
   scaleM,
   isActive,
   draftingMode,
+  scaleView,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -245,6 +240,7 @@ function CanvasPlane({
   scaleM: number;
   isActive: boolean;
   draftingMode: boolean;
+  scaleView: boolean;
   onPointerDown: (canvasId: string, worldPoint: THREE.Vector3) => void;
   onPointerMove: (canvasId: string, worldPoint: THREE.Vector3) => void;
   onPointerUp: (canvasId: string) => void;
@@ -307,9 +303,10 @@ function CanvasPlane({
         </mesh>
       ) : null}
       {/* Spatial Margin — the 3D ruler. Only on the active canvas when
-          drafting mode is on. Rendered inside the canvas group so it
-          inherits the plane's rotation and tilts with the axonometric camera. */}
-      {isActive && draftingMode ? <SpatialMargin scaleM={scaleM} /> : null}
+          drafting mode is on AND the master scale toggle is on. Rendered
+          inside the canvas group so it inherits the plane's rotation and
+          tilts with the axonometric camera. */}
+      {isActive && draftingMode && scaleView ? <SpatialMargin scaleM={scaleM} /> : null}
     </group>
   );
 }
@@ -329,8 +326,7 @@ export function SketchCanvasGroup({
   const canvases = useStudioStore((s) => s.sketchCanvases);
   const activeCanvasId = useStudioStore((s) => s.activeCanvasId);
   const draftingMode = useStudioStore((s) => s.draftingMode);
-
-  if (canvases.length === 0) return null;
+  const scaleView = useStudioStore((s) => s.scaleView);
 
   return (
     <group>
@@ -341,11 +337,18 @@ export function SketchCanvasGroup({
           scaleM={scaleM}
           isActive={canvas.id === activeCanvasId}
           draftingMode={draftingMode}
+          scaleView={scaleView}
           onPointerDown={onCanvasPointerDown ?? (() => { })}
           onPointerMove={onCanvasPointerMove ?? (() => { })}
           onPointerUp={onCanvasPointerUp ?? (() => { })}
         />
       ))}
+      {/* Ground-plane ruler — the active target when no spatial canvas is
+          selected (spec 2.5). Renders flat at the board origin, so the scale
+          margin is present even on an empty ground board. */}
+      {activeCanvasId === null && draftingMode && scaleView ? (
+        <SpatialMargin scaleM={scaleM} />
+      ) : null}
     </group>
   );
 }

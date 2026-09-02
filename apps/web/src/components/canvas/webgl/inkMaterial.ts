@@ -40,6 +40,9 @@ export interface NibInkMaterialParams {
   edgeSoft?: number;
   /** 0–1 wet-ink bleed. */
   bleed?: number;
+  /** Alcohol-marker multiply blend (spec 3.3) — crossings build up instead
+   *  of overwriting. Requires material.transparent. */
+  multiply?: boolean;
 }
 
 /** Replace each target exactly once — throws on missing or duplicate targets. */
@@ -136,6 +139,14 @@ export class NibInkMaterial extends LineMaterial {
     this.uniforms.uGrain = { value: params.grain ?? 0 };
     this.uniforms.uEdgeSoft = { value: params.edgeSoft ?? 0 };
     this.uniforms.uBleed = { value: params.bleed ?? 0 };
+    // Alcohol marker: multiply the incoming ink against what is already on
+    // the paper (src * dst). Two crossing marker strokes darken where they
+    // overlap — the marker's organic build-up, not an opacity overwrite.
+    if (params.multiply) {
+      this.blending = THREE.CustomBlending;
+      this.blendSrc = THREE.ZeroFactor;
+      this.blendDst = THREE.SrcColorFactor;
+    }
 
     this.onBeforeCompile = (
       shader: THREE.WebGLProgramParametersWithUniforms,

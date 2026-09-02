@@ -80,7 +80,7 @@ describe("snapDrawPointer", () => {
   });
 
   it("no vertex snap beyond the radius", () => {
-    const r = snapDrawPointer(SNAP_VERTEX_M + 5, 0, {
+    const r = snapDrawPointer(SNAP_VERTEX_M + 5, 0.4, {
       origin: null,
       last: null,
       vertices: [{ x: 0, z: 0 }],
@@ -139,7 +139,7 @@ describe("snapDrawPointer", () => {
   });
 
   it("no angle snap without a last point", () => {
-    const r = snapDrawPointer(5, 5, NONE);
+    const r = snapDrawPointer(5.3, 5.3, NONE);
     expect(r.kind).toBeNull();
   });
 
@@ -206,7 +206,7 @@ describe("snapDrawPointer", () => {
   });
 
   it("is inert when no boundary is supplied (existing callers unchanged)", () => {
-    const r = snapDrawPointer(8, 0.1, NONE);
+    const r = snapDrawPointer(8.4, 0.4, NONE);
     expect(r.kind).toBeNull();
   });
 
@@ -254,5 +254,26 @@ describe("snapDrawPointer", () => {
     const a = snapDrawPointer(2.4, 2.4, ctx);
     const b = snapDrawPointer(2.4, 2.4, ctx);
     expect(a).toEqual(b);
+  });
+
+  /* ---------------------------------------------------------------------- */
+  /* grid (stationing lattice, spec 2.7)                                     */
+  /* ---------------------------------------------------------------------- */
+
+  it("snaps to the origin-aligned 1m lattice within a quarter step", () => {
+    const r = snapDrawPointer(4.9, 3.1, NONE);
+    expect(r).toEqual({ x: 5, z: 3, kind: "grid" });
+  });
+
+  it("lands exactly on a stationing major tick", () => {
+    // 5 m is a major tick on the ruler lattice — the snapped vertex must sit
+    // exactly on it, not merely near it.
+    const r = snapDrawPointer(5.1, 5.0, NONE);
+    expect(r).toEqual({ x: 5, z: 5, kind: "grid" });
+  });
+
+  it("does not grid-snap outside the quarter-step tolerance", () => {
+    const r = snapDrawPointer(4.7, 3.1, NONE);
+    expect(r.kind).toBeNull();
   });
 });

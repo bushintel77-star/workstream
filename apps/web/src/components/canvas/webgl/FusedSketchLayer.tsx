@@ -283,6 +283,8 @@ export function FusedSketchLayer({
       setSnapHint(snap.kind ? snap : null);
       // Live ε-snap indicator — the stitcher's weld-node highlight.
       setHover({ x: snap.x, y: snap.z });
+      // E·N·Z chip source (2.6) — the effective draw point in world metres.
+      useStudioStore.getState().setLiveCoord({ x: snap.x, z: snap.z });
 
       if (last && last.distanceTo(new THREE.Vector3(snap.x, FLAT_Y, snap.z)) < 0.15) return;
       pointsRef.current.push(new THREE.Vector3(snap.x, FLAT_Y, snap.z));
@@ -296,6 +298,7 @@ export function FusedSketchLayer({
 
   const onPointerUp = useCallback(() => {
     if (!sketchMode) return;
+    useStudioStore.getState().setLiveCoord(null);
 
     if (isExtrudingRef.current && extrudeTarget && extrudeHeight > 0.1) {
       // Commit the extrusion height to the stroke in the store.
@@ -787,6 +790,8 @@ function InkStrokeRenderer({
         grain: nib.grain,
         edgeSoft: nib.edgeSoft,
         bleed: nib.bleed,
+        // Alcohol marker multiplies (spec 3.3) — crossings build up.
+        multiply: nib.kind === "chisel-marker",
       });
       // Phase 3+4: patch the material with angle-based opacity + seasonal
       // crossfade for canvas strokes. This injects the view-direction varying
@@ -970,6 +975,7 @@ function LiveNibLine({
         grain: nib.grain,
         edgeSoft: nib.edgeSoft,
         bleed: nib.bleed,
+        multiply: nib.kind === "chisel-marker",
       }),
     [nib],
   );

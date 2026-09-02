@@ -114,6 +114,17 @@
   color: var(--lc-accent-terrain);
 }
 
+/* Rail width — only the active group header renders, at the 8.5px mono floor.
+ * It is the single wayfinding signal in a 56px glyph-only column. */
+.groupHeaderRail {
+  font-family: var(--lc-font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+  padding: 3px 0 4px;
+}
+
 /* ---- Tool tile ---- */
 .tile {
   display: flex;

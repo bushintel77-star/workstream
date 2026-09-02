@@ -115,6 +115,8 @@ export function DimensionLayer({
   showBearings = false,
 }: DimensionLayerProps) {
   const dimsView = useStudioStore((s) => s.dimsView);
+  const scaleView = useStudioStore((s) => s.scaleView);
+  const cameraPreset = useStudioStore((s) => s.cameraPreset);
   // Quantised zoom (0.5 steps) — the declutter box scales with 1/zoom so
   // labels reappear as the user zooms in (classic parity, UI survey §3.2).
   // Quantising keeps the zero-commit pan law: liveRig is written per frame,
@@ -130,8 +132,10 @@ export function DimensionLayer({
   // rather than printing a precise-looking fiction off board north.
   const withBearings = showBearings && northCalibrated;
 
-  const showRing = dimsView;
-  const showLabels = dimsView || showBearings;
+  // The master scale toggle gates the whole overlay; dimsView / showBearings
+  // still decide WHAT is on inside it (full ring vs boundary chips only).
+  const showRing = dimsView && scaleView;
+  const showLabels = (dimsView || showBearings) && scaleView;
 
   const boundaryBox = useMemo(
     () =>
@@ -283,9 +287,10 @@ export function DimensionLayer({
               }}
               data-testid="dim-label"
               data-dim-family={d.family}
+              data-indicative={cameraPreset === "3d" ? "true" : undefined}
               style={dimLabelStyle}
             >
-              {d.text}
+              {cameraPreset === "3d" ? `≈ ${d.text}` : d.text}
             </span>
           </Html>
         );

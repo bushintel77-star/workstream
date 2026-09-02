@@ -33,7 +33,7 @@ import { useStudioStore } from "./studioStore";
  *  Neutral ink tone per the shadow tiers; token-only (consumes --gs-ink-strong,
  *  not a literal RGB triple). */
 const VIGNETTE_GRADIENT =
-  "radial-gradient(120% 90% at 50% 50%, transparent 32%, color-mix(in srgb, var(--la-ink) 22%, transparent) 100%)";
+  "radial-gradient(118% 100% at 50% 50%, transparent 44%, color-mix(in srgb, var(--la-ink) 44%, transparent) 80%, color-mix(in srgb, var(--la-ink) 70%, transparent) 100%)";
 
 /**
  * A subtle inner glow at the vignette edge that gives GlassCards a consistent

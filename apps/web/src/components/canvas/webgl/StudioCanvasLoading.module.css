@@ -1,0 +1,101 @@
+/*
+ * StudioCanvasLoading — canvas-first loading surface (Studio Paper).
+ *
+ * Layer over the canvas void (--gs-canvas), a single frosted paper card with
+ * a status line and a progress readout. Two modes: an indeterminate ring (no
+ * stages) or a bounded stage ladder (stages) that fills a linear progress bar
+ * 1..N and never loops. All colours via tokens (no raw hex, no hue-only
+ * signal). Reduced motion keeps the ring static and the ladder bounded.
+ */
+
+.root {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  /* Cover the canvas void so the load reads as the studio, not a blank page. */
+  background: var(--gs-canvas);
+  /* Visual only — the canvas keeps receiving events beneath. */
+  pointer-events: none;
+  /* Ambient tier — above the drawing, below the chrome/dock. */
+  z-index: var(--ws-z-wash);
+}
+
+.card {
+  display: grid;
+  place-items: center;
+  gap: var(--gs-space-4);
+  padding: var(--gs-space-6) var(--gs-space-6);
+  border-radius: var(--gs-radius-panel);
+  background: var(--gs-panel-frost);
+  border: 1px solid var(--gs-line);
+  box-shadow: var(--gs-shadow-2);
+  backdrop-filter: blur(var(--gs-frost-blur));
+  -webkit-backdrop-filter: blur(var(--gs-frost-blur));
+  min-width: min(280px, 80vw);
+}
+
+.ring {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--gs-radius-pill);
+  border: 3px solid color-mix(in srgb, var(--gs-ink) 16%, transparent);
+  border-top-color: var(--gs-ink);
+  animation: ringSpin 0.9s linear infinite;
+}
+
+@keyframes ringSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.label {
+  font-family: var(--font-ui);
+  font-size: var(--gs-font-sub);
+  letter-spacing: 0.02em;
+  color: var(--gs-ink-secondary);
+}
+
+/* ---- Bounded stage ladder ---- */
+.stageCurrent {
+  font-family: var(--font-tech);
+  font-size: var(--gs-font-xs);
+  letter-spacing: 0.01em;
+  color: var(--gs-ink);
+  text-align: center;
+}
+
+.progress {
+  width: 100%;
+  height: 4px;
+  border-radius: var(--gs-radius-pill);
+  background: color-mix(in srgb, var(--gs-ink) 14%, transparent);
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: var(--gs-radius-pill);
+  background: var(--gs-ink);
+  transition: width 0.4s ease;
+}
+
+.detail {
+  font-family: var(--font-tech);
+  font-size: var(--gs-font-xs);
+  letter-spacing: 0.01em;
+  color: var(--gs-ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring {
+    animation: none;
+    border-top-color: var(--gs-ink);
+    opacity: var(--lc-op-hover);
+  }
+
+  .progressBar {
+    transition: none;
+  }
+}

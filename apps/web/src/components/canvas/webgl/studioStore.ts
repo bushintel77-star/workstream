@@ -68,6 +68,7 @@ import {
 } from "../handoff/features/sunGrowth/sunDatePreset";
 import type { AnnotationDialect } from "./annotations/model";
 import type { PctPoint } from "./coordTransform";
+import type { FixedPlaneId } from "./planeStack";
 import {
   AXO_PITCH_DEG,
   blendTargetForPitch,
@@ -356,12 +357,23 @@ export interface StudioStoreState {
   // --- CAD annotation layers (SVG-studio port, Gap 3) ---
   /** Working-drawing dimension ring (boundary B… + building F… edges). */
   dimsView: boolean;
+  /** Master scale overlay — the edge ruler AND the dimension ring live under
+   *  this one visible toggle. Opt+R still flips drafting mode and D still
+   *  flips dims; this gate is the chrome's single on/off for "scale". */
+  scaleView: boolean;
   /** Interactive measure tape tool (mutually exclusive with sketchMode). */
   measureActive: boolean;
   /** The current tape in board-% (a = anchor, b = drag end); null = no tape. */
   measureTape: { a: PctPoint; b: PctPoint } | null;
   /** Itemized fit-sheet quotation card (Phase 3 live quote). */
   fitSheetOpen: boolean;
+  /** Schedule sheet — the one light surface (spec 6b / 9.1), derived only. */
+  scheduleOpen: boolean;
+  /** Selected fixed plane from the spec stack (1.1). Ground is the drawable
+   *  target; planting/massing are proposed reference bands. */
+  activePlaneId: FixedPlaneId;
+  /** Live pointer world XZ during a draw — the E·N·Z chip source (2.6). */
+  liveCoord: { x: number; z: number } | null;
   /** Surveyed-plan communication layers (bearing/RL/tags/hatches/callouts/scope). */
   surveyedPlanLayers: SurveyedPlanLayers;
   /** Survey communication dialect on the Survey screen. */
@@ -955,12 +967,16 @@ export interface StudioStoreState {
   setEarthworksView: (v: boolean) => void;
 
   setDimsView: (v: boolean) => void;
+  setScaleView: (v: boolean) => void;
   /** Arming measure disarms sketch mode (they compete for pointer capture). */
   setMeasureActive: (v: boolean) => void;
   /** Replace the tape (a new anchor press) or clear it (null, null). */
   setMeasureTape: (a: PctPoint | null, b: PctPoint | null) => void;
 
   setFitSheetOpen: (v: boolean) => void;
+  setScheduleOpen: (v: boolean) => void;
+  setActivePlaneId: (id: FixedPlaneId) => void;
+  setLiveCoord: (v: { x: number; z: number } | null) => void;
   setSurveyedPlanLayers: (patch: Partial<SurveyedPlanLayers>) => void;
   setSurveyAnnotationDialect: (dialect: AnnotationDialect) => void;
   setCadAnnotationLayers: (patch: Partial<SurveyedPlanLayers>) => void;
@@ -1272,12 +1288,18 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // the pattern CAD already used explicitly and the only path that should exist.
   // The measure tape stays an armed tool, off by default.
   dimsView: false,
+  // Scale overlays (edge ruler + dimension ring) default ON — the drawing
+  // always opens with its scale reference visible until the operator hides it.
+  scaleView: true,
   measureActive: false,
   measureTape: null,
 
   // Fit-sheet default ON — the live quote IS the product (the card
   // self-gates on an empty canvas).
   fitSheetOpen: true,
+  scheduleOpen: false,
+  activePlaneId: "ground",
+  liveCoord: null,
   surveyedPlanLayers: {
     enabled: true,
     bearings: true,
@@ -1540,6 +1562,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setEarthworksView: (earthworksView) => set({ earthworksView }),
 
   setDimsView: (dimsView) => set({ dimsView }),
+  setScaleView: (scaleView) => set({ scaleView }),
   // Mutual exclusion with sketch mode — both capture ground pointer events.
   setMeasureActive: (measureActive) =>
     set(
@@ -1557,6 +1580,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set({ measureTape: a && b ? { a, b } : null }),
 
   setFitSheetOpen: (fitSheetOpen) => set({ fitSheetOpen }),
+  setScheduleOpen: (scheduleOpen) => set({ scheduleOpen }),
+  setActivePlaneId: (activePlaneId) => set({ activePlaneId }),
+  setLiveCoord: (liveCoord) => set({ liveCoord }),
   setSurveyedPlanLayers: (patch) =>
     set((s) => ({
       surveyedPlanLayers: { ...s.surveyedPlanLayers, ...patch },
@@ -2231,7 +2257,15 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       rig.tiltDeg = AXO_PITCH_DEG;
     } else if (preset === "sec") {
       rig.tiltDeg = 90;
-      rig.rotateDeg = nearestFacadeNormalDeg(rig.rotateDeg);
+      // With a section cut active the elevation faces the CUT, not the
+      // building facade (spec 9.6 camera law): a "z" cut runs along X and its
+      // curtain faces ±Z (look N/S); an "x" cut faces ±X (look E/W).
+      const { sliceActive, sliceAxis } = useStudioStore.getState();
+      rig.rotateDeg = sliceActive
+        ? sliceAxis === "z"
+          ? 0
+          : 90
+        : nearestFacadeNormalDeg(rig.rotateDeg);
     } else {
       // 3D — the garden-eye perspective blend. Floor the zoom to the dock's
       // documented drone-orbit framing (zoom in stays untouched).

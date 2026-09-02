@@ -9,8 +9,11 @@
  *   1. close    — magnet to the live stroke's origin (auto-close assist)
  *   2. vertex   — magnet to any committed stroke endpoint (cadastral join)
  *   3. boundary — magnet to the nearest point on a title boundary edge
- *   4. angle    — soft-snap the ray from the last live point to 45° increments
- *   5. none     — the raw pointer passes through untouched
+ *   4. grid     — origin-aligned stationing lattice (1 m, shared with the
+ *                 ruler) — spec 2.7; beats the free octagon but loses to the
+ *                 site points/lines above it
+ *   5. angle    — soft-snap the ray from the last live point to 45° increments
+ *   6. none     — the raw pointer passes through untouched
  *
  * The boundary rung sits above angle deliberately: on a landscape setout the
  * edges that matter run along or off the title line, so a real site line beats
@@ -25,8 +28,10 @@
  * Binding: docs/GOLD-STANDARD-2026.md (zero-chrome drafting precision)
  */
 
+import { DEFAULT_STATIONING_STEP_M, snapToStationingGrid } from "./stationing";
+
 /** Snap kinds, highest priority first. null = no snap (raw pointer). */
-export type SnapKind = "close" | "vertex" | "boundary" | "angle" | null;
+export type SnapKind = "close" | "vertex" | "boundary" | "grid" | "angle" | null;
 
 /** A snap decision: where the pointer SHOULD read, and why. */
 export interface SnapHint {
@@ -66,6 +71,8 @@ export interface SnapDrawOptions {
   closeM?: number;
   vertexM?: number;
   boundaryM?: number;
+  /** Stationing lattice step (default 1 m, spec 2.7). */
+  gridStepM?: number;
   angleTolDeg?: number;
   angleStepDeg?: number;
 }
@@ -154,7 +161,20 @@ export function snapDrawPointer(
     return { x: bestEdge.x, z: bestEdge.z, kind: "boundary" };
   }
 
-  // 4. Angle — project the pointer onto the nearest 45° ray from the last
+  // 4. Grid — the origin-aligned stationing lattice (shared with the ruler,
+  //    spec 2.7). Only magnetises within a quarter-step so free drawing is
+  //    not swallowed by the grid everywhere.
+  const gridStep = opts?.gridStepM ?? DEFAULT_STATIONING_STEP_M;
+  const grid = snapToStationingGrid(rawX, rawZ, gridStep);
+  const gridTol = gridStep / 4;
+  if (
+    Math.abs(grid.x - rawX) <= gridTol &&
+    Math.abs(grid.z - rawZ) <= gridTol
+  ) {
+    return { x: grid.x, z: grid.z, kind: "grid" };
+  }
+
+  // 5. Angle — project the pointer onto the nearest 45° ray from the last
   //    point, keeping the pointer's current distance (soft: length is free,
   //    direction is quantised).
   if (ctx.last) {
@@ -177,6 +197,6 @@ export function snapDrawPointer(
     }
   }
 
-  // 5. No snap.
+  // 6. No snap.
   return { x: rawX, z: rawZ, kind: null };
 }

@@ -26,6 +26,7 @@ import {
   type PanDragState,
 } from "./cameraRigGesture";
 import { blendTargetForPitch, isElevationRig, settleOrbitRig } from "./cameraRig";
+import { orbitAllowedForPreset } from "./cameraGate";
 import {
   beginTouchOrbit,
   isTwoFingerDoubleTap,
@@ -322,7 +323,11 @@ export function StudioControls({
 
       // Cmd/Ctrl+drag orbits — pitch on the vertical axis, azimuth on the
       // horizontal. The single continuous camera gesture; plain drag pans.
-      if (e.nativeEvent.metaKey || e.nativeEvent.ctrlKey) {
+      // Orbit is a 3D-only gesture (spec 1.4): PLAN and SEC never orbit.
+      if (
+        (e.nativeEvent.metaKey || e.nativeEvent.ctrlKey) &&
+        orbitAllowedForPreset(useStudioStore.getState().cameraPreset)
+      ) {
         orbitState.current = beginOrbitDrag(
           useStudioStore.getState().liveRig,
           e.nativeEvent.clientX,

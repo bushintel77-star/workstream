@@ -75,6 +75,10 @@ import { PhotoTraceHud } from "./PhotoTraceHud";
 import { PhotoElevationSheet } from "./PhotoElevationSheet";
 import { SplitViewLens } from "./SplitViewLens";
 import { StudioSurfaceErrorBoundary } from "./StudioSurfaceErrorBoundary";
+import { StudioCanvasLoading } from "./StudioCanvasLoading";
+import { ScheduleSheet } from "./ScheduleSheet";
+import { guideFirstSketch } from "./firstSketchGuide";
+import type { WebGLStudioProps } from "./WebGLStudio";
 import { placementsToItems, featuresOntoItems } from "../handoff/state/canvasBridge";
 import { buildScanChoreography } from "./scanChoreography";
 import { toRenderItems } from "./stateBridge";
@@ -118,10 +122,21 @@ async function parseDesignCanvasPayload(
 // R3F Canvas requires the browser — dynamic import with ssr:false
 const WebGLStudio = dynamic(() => import("./WebGLStudio").then((m) => m.WebGLStudio), {
   ssr: false,
-  loading: () => (
-    <div style={{ position: "absolute", inset: 0, background: "var(--gs-canvas)" }} />
-  ),
+  loading: () => <StudioCanvasLoading label="Opening canvas" />,
 });
+
+/** Signals once the WebGL surface has mounted. The site-truth loading
+ *  overlay waits for this so "Opening canvas" and "Importing site truth"
+ *  never announce as two live regions at the same moment. */
+function WebGLStudioReady({
+  onReady,
+  ...sceneProps
+}: WebGLStudioProps & { onReady: () => void }) {
+  useEffect(() => {
+    onReady();
+  }, [onReady]);
+  return <WebGLStudio {...sceneProps} />;
+}
 import { CanvasFirstLayout } from "./CanvasFirstLayout";
 import type { CanvasBridge, SpatialGraphNode } from "./CanvasFirstLayout";
 import type { SelectionRef } from "./selectionPick";
@@ -273,6 +288,14 @@ export function WebGLStudioPreview({
   });
   const [webglAvailable, setWebglAvailable] = useState<boolean | null>(null);
   const [webglLost, setWebglLost] = useState(false);
+  // True once the WebGL surface mounts — the site-truth loading overlay waits
+  // for it so the two loading live regions never announce at once.
+  const [studioReady, setStudioReady] = useState(false);
+  const handleStudioReady = useCallback(() => setStudioReady(true), []);
+  // True while the quiet site-truth bootstrap parses the Vicmap cadastral data
+  // on first load — drives the StudioCanvasLoading overlay so a cold geocoded
+  // project shows "Importing site truth" instead of a blank canvas page.
+  const [importingSiteTruth, setImportingSiteTruth] = useState(false);
 
   // Tool-state canvas cursor — crosshair while a draw vector is armed
   // (sketch / measure / trench / zone / asset), grab while panning, and
@@ -463,6 +486,14 @@ export function WebGLStudioPreview({
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
     void (async () => {
+      setImportingSiteTruth(true);
+      // Client watchdog — the loading surface is bounded even if a request
+      // hangs, so "Importing site truth" can never spin forever. Cleared on
+      // normal completion below.
+      const watchdog = window.setTimeout(
+        () => setImportingSiteTruth(false),
+        12000,
+      );
       try {
         const canvasRes = await fetch(`/api/projects/${projectId}/design-canvas`);
         if (!canvasRes.ok) return;
@@ -471,9 +502,17 @@ export function WebGLStudioPreview({
         if ((r.boundaryPts ?? 0) > 0) router.refresh();
       } catch {
         // Quiet by design — the explicit Import button reports errors.
+      } finally {
+        window.clearTimeout(watchdog);
+        setImportingSiteTruth(false);
       }
     })();
-  }, [projectId, boundaryPct, lat, lng, router]);
+  }, [projectId, boundaryPct, lat, lng, router, setImportingSiteTruth]);
+
+  // Guided first-sketch handoff is a PASSIVE hint only — the pen is NOT
+  // auto-armed (auto-arming flipped sketchMode and turned plain drags into
+  // ink, breaking pan on every empty board; seen 2026-09-02 live pass). The
+  // operator starts with P / the PEN rail tile; the pan law stays intact.
 
   // Placements live in the store after hydration — the live source for both
   // the 3D items and the autosave doc. Pure client-side bridge (proven in
@@ -482,6 +521,7 @@ export function WebGLStudioPreview({
   // the SVG coupling), so a reloaded deck/lawn/bed keeps its drawn region.
   const storePlacements = useStudioStore((s) => s.placements);
   const storeFeatures = useStudioStore((s) => s.features);
+  const scheduleOpen = useStudioStore((s) => s.scheduleOpen);
   const splitView = useStudioStore((s) => s.splitView);
   const surveyedPlanLayers = useStudioStore((s) => s.surveyedPlanLayers);
   const setSurveyedPlanLayers = useStudioStore((s) => s.setSurveyedPlanLayers);
@@ -1302,9 +1342,26 @@ export function WebGLStudioPreview({
         {splitView ? (
           <SplitViewLens sceneProps={sceneProps} />
         ) : (
-          <WebGLStudio {...sceneProps} />
+          <WebGLStudioReady onReady={handleStudioReady} {...sceneProps} />
         )}
       </StudioSurfaceErrorBoundary>
+
+      {/* Site-truth parsing overlay — covers the blank canvas while the
+          quiet Vicmap bootstrap reads the cadastre on first load. Waits for
+          the WebGL surface so "Opening canvas" and this announce in sequence,
+          never as two live regions at once. */}
+      {importingSiteTruth && (studioReady || splitView) && (
+        <StudioCanvasLoading
+          label="Importing site truth"
+          testId="studio-canvas-loading-import"
+          detail={projectAddress.trim() ? projectAddress : undefined}
+          stages={[
+            "Reading cadastre",
+            "Tracing title boundary",
+            "Placing easements and levels",
+          ]}
+        />
+      )}
 
       {/* Mode cross-fade — a 150 ms paper veil keyed by mode. */}
       <div
@@ -1489,6 +1546,25 @@ export function WebGLStudioPreview({
     );
   }
 
+  // Design-content gate — true once any ink, placement, or feature exists.
+  // Used by the guided first-sketch hint, which retires when content lands.
+  const hasDesignContent =
+    strokes.length > 0 ||
+    storePlacements.length > 0 ||
+    storeFeatures.length > 0;
+  // Guided first-sketch handoff: once the title boundary is set and the board
+  // is still empty in Sketch, the studio arms the pen and shows a one-line
+  // prompt (<first-move-hint>) instead of asking the operator to pick a move.
+  // The hint waits for the WebGL surface so it never overlaps the "Opening
+  // canvas" loader card.
+  const guideSketchActive =
+    guideFirstSketch({
+      boundaryPointCount: boundaryPct.length,
+      hasDesignContent,
+      mode: activeMode,
+      isE2e: process.env.NEXT_PUBLIC_E2E === "1",
+    }) && studioReady;
+
   return (
     <CanvasFirstLayout
       style={{ position: "absolute", cursor: drawCursor }}
@@ -1570,6 +1646,79 @@ export function WebGLStudioPreview({
         {activeMode === "survey" && boundaryPct.length < 3 ? (
           <SurveyLocateState address={projectAddress} />
         ) : null}
+
+        {/* Guided first-sketch hint — boundary set, board empty: the pen is
+            armed and this one line states the next move. Non-blocking so it
+            never intercepts a draw; retires as soon as content lands. */}
+        {guideSketchActive ? (
+          <div
+            role="note"
+            aria-label="Start sketching"
+            data-testid="first-move-hint"
+            style={{
+              position: "absolute",
+              left: 72,
+              right: 336,
+              top: 152,
+              bottom: 80,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "none",
+              zIndex: "var(--cf-z-chrome)",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "var(--gs-space-3)",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "var(--gs-font-sub)",
+                  fontWeight: 600,
+                  color: "var(--la-ink)",
+                }}
+              >
+                Sketch the concept
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "var(--gs-font-xs)",
+                  color: "var(--la-ink-muted)",
+                  maxWidth: 320,
+                }}
+              >
+                Drag to draw · A for plants · Shift+3 for CAD
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Schedule sheet — the one light surface (spec 6b / 9.1). Every
+            number derives from board geometry through the domain builders;
+            nothing is stored. Opens via Cmd+K -> Schedule sheet. */}
+        {scheduleOpen && (
+          <ScheduleSheet
+            scaleM={scaleM}
+            canopy={
+              canopyCompliance &&
+              canopyCompliance.assessment.status !== "insufficient-data"
+                ? {
+                    provided: canopyCompliance.assessment.matureProvided,
+                    required: canopyCompliance.assessment.required,
+                  }
+                : null
+            }
+            onClose={() => useStudioStore.getState().setScheduleOpen(false)}
+          />
+        )}
       </div>
     </CanvasFirstLayout>
   );

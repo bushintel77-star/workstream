@@ -315,10 +315,12 @@ export function ToolRibbon() {
           {/* Group divider (not before the first group) */}
           {gi > 0 && <div className={styles.groupDivider} />}
 
-          {/* Group header — accent when the active tool is in this group */}
-          {width !== "rail" && (
+          {/* Group header — accent when the active tool is in this group.
+              At rail width only the ACTIVE group's header renders: that accent
+              header is the sole wayfinding (spec 4.8). */}
+          {(width !== "rail" || activeGroupName === group.name) && (
             <div
-              className={`${styles.groupHeader} ${activeGroupName === group.name ? styles.groupHeaderActive : ""}`}
+              className={`${styles.groupHeader} ${activeGroupName === group.name ? styles.groupHeaderActive : ""} ${width === "rail" ? styles.groupHeaderRail : ""}`}
             >
               {group.name}
             </div>

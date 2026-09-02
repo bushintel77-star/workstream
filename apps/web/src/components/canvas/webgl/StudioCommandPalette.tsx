@@ -193,6 +193,9 @@ export function StudioCommandPalette({
       tool("quote", "Fit-sheet", () =>
         store.setFitSheetOpen(!useStudioStore.getState().fitSheetOpen),
       ),
+      tool("schedule", "Schedule sheet", () =>
+        store.setScheduleOpen(!useStudioStore.getState().scheduleOpen),
+      ),
       {
         id: "tool-site-photos",
         label: "Site photos — trace an elevation from a photo",

@@ -30,7 +30,7 @@ import { padStrokes, padCutFill, CUT_FILL_CELL_M } from "./cutFill";
 import { ToolRibbon } from "./ToolRibbon";
 import { CameraDock } from "./CameraDock";
 import { WfsChips } from "./WfsChips";
-import { OverlayLegend } from "./OverlayLegend";
+import { LayersPanel } from "./LayersPanel";
 import styles from "./FloatingChrome.module.css";
 
 /* ---- helpers ---- */
@@ -152,6 +152,9 @@ export function FloatingChrome({
   const addSketchCanvas = useStudioStore((s) => s.addSketchCanvas);
   const updateSketchCanvas = useStudioStore((s) => s.updateSketchCanvas);
   const [siteSetupOpen, setSiteSetupOpen] = useState(false);
+  const scaleView = useStudioStore((s) => s.scaleView);
+  const setScaleView = useStudioStore((s) => s.setScaleView);
+  const liveCoord = useStudioStore((s) => s.liveCoord);
 
   const isLeft = handedness === "LEFT";
   const cutFill = useCutFill(scaleM, heightmapPoints, boardAspect);
@@ -212,8 +215,9 @@ export function FloatingChrome({
       {/* Tool ribbon — vertical glass panel, hand-opposite edge (handoff §5) */}
       <ToolRibbon />
 
-      {/* Overlay Layers legend — drops below the chip bar while LAYERS is armed */}
-      {activeTool === "layers" && <OverlayLegend overlays={keylessOverlays} />}
+      {/* Layers panel — planes + analysis toggles + WFS overlays, drops below
+          the chip bar while the LAYERS ribbon tool is armed. */}
+      {activeTool === "layers" && <LayersPanel overlays={keylessOverlays} />}
 
       {/* Camera dock — bottom centre, 4 presets (handoff §6.1) */}
       <CameraDock />
@@ -221,6 +225,21 @@ export function FloatingChrome({
       {/* Depth Rail -- wider, more legible */}
       <div className={`${styles.rail} ${railSide}`} style={anchorStyle}>
         <div className={styles.railHeader}>Z</div>
+        {/* Fixed plane stack (spec 1.1) — planting/massing are proposed
+            targets that do not accept drawing geometry yet; they render as
+            honest reference bands, never as selectable draw targets. */}
+        <div
+          className={`${styles.cell} ${styles.cellFixed}`}
+          title="Massing Z +4.00 — proposed plane (drawing support pending)"
+        >
+          MAS
+        </div>
+        <div
+          className={`${styles.cell} ${styles.cellFixed}`}
+          title="Planting Z +1.50 — proposed plane (drawing support pending)"
+        >
+          PLT
+        </div>
         {sortedCanvases.map((canvas) => {
           const isActive = canvas.id === activeCanvasId;
           const currentTag = (canvas.season_tag ?? "ALL") as SeasonTag;
@@ -272,6 +291,14 @@ export function FloatingChrome({
         {/* Ground-line divider — separates positive planes from subsurface */}
         <div className={styles.railGroundLine} />
 
+        {/* Survey base — imported cadastre reference, read-only (spec 6.2). */}
+        <div
+          className={`${styles.cell} ${styles.cellSubsurface}`}
+          title="Survey base Z −0.02 — imported, read-only"
+        >
+          SRV
+        </div>
+
         {/* Subsurface utility depths — redline accent (handoff §5.3).
             Read-only reference; see SUBSURFACE_DEPTHS for why these never
             arm the trench tool. */}
@@ -289,6 +316,12 @@ export function FloatingChrome({
 
       {/* Readout -- cut/fill volumes (bottom-left) */}
       <div className={`${styles.readoutGroup} ${readoutLeftSide}`} style={anchorStyle}>
+        {liveCoord && (
+          <div className={styles.readoutPillCut} data-testid="coord-chip">
+            <span className={styles.readoutValueCut}>E {liveCoord.x.toFixed(1)}</span>
+            {" · "}N {liveCoord.z.toFixed(1)} · Z {activeLabel}
+          </div>
+        )}
         {cutFill ? (
           <>
             <div className={styles.readoutPillCut}>
@@ -296,6 +329,13 @@ export function FloatingChrome({
             </div>
             <div className={styles.readoutPillCut}>
               <span className={styles.readoutValueFill}>{cutFill.fill}</span> FILL m3
+            </div>
+            <div className={styles.readoutPillCut}>
+              BAL{" "}
+              <span className={cutFill.cut >= cutFill.fill ? styles.readoutValueCut : styles.readoutValueFill}>
+                {cutFill.cut - cutFill.fill}
+              </span>{" "}
+              m3
             </div>
           </>
         ) : (
@@ -314,6 +354,25 @@ export function FloatingChrome({
           style={{ pointerEvents: "auto", cursor: "pointer" }}
         >
           {anchorLabel}
+        </button>
+      </div>
+
+      {/* Scale toggle -- its own group above the anchor readout, outside the
+          anchor dimming (Opt+F) so the scale switch is always legible. */}
+      <div className={`${styles.readoutGroup} ${readoutRightSide} ${styles.scaleToggleGroup}`}>
+        <button
+          className={`${styles.readoutPillCut} ${scaleView ? styles.scaleToggleOn : ""}`}
+          onClick={() => setScaleView(!scaleView)}
+          title={
+            scaleView
+              ? "Hide scale overlays (edge ruler + dimensions)"
+              : "Show scale overlays (edge ruler + dimensions)"
+          }
+          data-toggled={scaleView ? "on" : "off"}
+          data-testid="scale-toggle"
+          style={{ pointerEvents: "auto", cursor: "pointer" }}
+        >
+          SCALE {scaleView ? "ON" : "OFF"}
         </button>
       </div>
 

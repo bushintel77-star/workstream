@@ -65,6 +65,8 @@ export function DrainageFlowLayer({
   heightmapPoints,
 }: DrainageFlowLayerProps) {
   const drainageView = useStudioStore((s) => s.drainageView);
+  // Chrome contract 6.8: overland flow is meaningless on a section cut.
+  const cameraPreset = useStudioStore((s) => s.cameraPreset);
 
   const sampler = useMemo(
     () => createElevationSampler(heightmapPoints, scaleM, boardAspect),
@@ -97,7 +99,7 @@ export function DrainageFlowLayer({
     }
   });
 
-  if (!drainageView || !flow) return null;
+  if (!drainageView || cameraPreset === "sec" || !flow) return null;
 
   const { grid, streams, ponds } = flow;
   const totalCells = grid.cols * grid.rows;

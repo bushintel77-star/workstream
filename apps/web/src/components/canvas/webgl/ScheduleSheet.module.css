@@ -1,0 +1,221 @@
+/* Schedule sheet — the one light surface (spec 6b / 9.1). Paper tokens only:
+ * --lc-paper-bg / --lc-paper-ink / --lc-schedule-* (the spec's paper.bg).
+ * 622px wide, 1.5px rules top and totals, 26px side padding. */
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--gs-ink-strong) 42%, transparent);
+  z-index: var(--cf-z-app);
+  pointer-events: auto;
+}
+
+.sheet {
+  width: var(--lc-schedule-width, 622px);
+  max-width: min(92vw, 622px);
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--lc-schedule-radius, 10px);
+  background: var(--lc-paper-bg, #f4f2ec);
+  color: var(--lc-paper-ink, #1a1a1a);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 32%);
+  font-family: var(--lc-font-ui, "Archivo", sans-serif);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 26px 12px;
+  border-bottom: 1.5px solid color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 85%, transparent);
+}
+
+.title {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  font-family: var(--lc-font-mono, "IBM Plex Mono", monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 55%, transparent);
+  margin-top: 3px;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.actionBtn {
+  font-family: var(--lc-font-mono, "IBM Plex Mono", monospace);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 7px 11px;
+  border-radius: var(--gs-radius-chip);
+  border: 1px solid color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 25%, transparent);
+  background: transparent;
+  color: var(--lc-paper-ink, #1a1a1a);
+  cursor: pointer;
+}
+
+.actionBtn:hover {
+  background: color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 8%, transparent);
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 10px 26px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 15%, transparent);
+}
+
+.tab {
+  font-family: var(--lc-font-mono, "IBM Plex Mono", monospace);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 55%, transparent);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tabActive {
+  color: var(--lc-paper-ink, #1a1a1a);
+  border-bottom-color: var(--lc-paper-ink, #1a1a1a);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 26px 18px;
+}
+
+.empty {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 60%, transparent);
+  padding: 22px 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.table th {
+  font-family: var(--lc-font-mono, "IBM Plex Mono", monospace);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  color: color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 50%, transparent);
+  padding: 6px 8px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 20%, transparent);
+}
+
+.table td {
+  padding: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 8%, transparent);
+}
+
+.mono {
+  font-family: var(--lc-font-mono, "IBM Plex Mono", monospace);
+  font-size: 10px;
+}
+
+.services {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionLabel {
+  font-family: var(--lc-font-mono, "IBM Plex Mono", monospace);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 50%, transparent);
+  margin-top: 4px;
+}
+
+.transformer {
+  font-family: var(--lc-font-mono, "IBM Plex Mono", monospace);
+  font-size: 10px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 20%, transparent);
+  border-radius: var(--gs-radius-chip);
+}
+
+/* The one number allowed to turn red (spec 9.4). */
+.transformerOver {
+  color: #b3261e;
+  border-color: color-mix(in srgb, #b3261e 40%, transparent);
+  background: color-mix(in srgb, #b3261e 6%, transparent);
+}
+
+.totals {
+  padding: 12px 26px 14px;
+  border-top: 1.5px solid color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 85%, transparent);
+}
+
+.totalsRow {
+  display: flex;
+  gap: 22px;
+  font-family: var(--lc-font-mono, "IBM Plex Mono", monospace);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.honesty {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 55%, transparent);
+  margin-top: 8px;
+}
+
+/* Print-to-PDF: only the sheet prints. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .sheet,
+  .sheet * {
+    visibility: visible;
+  }
+
+  .scrim {
+    position: static;
+    display: block;
+    background: none;
+  }
+
+  .sheet {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .actions {
+    display: none;
+  }
+}

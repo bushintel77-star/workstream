@@ -77,6 +77,8 @@ export function SuncastOverlay({
   growthFactor = 1,
 }: SuncastOverlayProps) {
   const suncastView = useStudioStore((s) => s.suncastView);
+  // Chrome contract 6.8: a sun cast is meaningless on a section cut.
+  const cameraPreset = useStudioStore((s) => s.cameraPreset);
   const sunKey = `${useSeasonalStore((s) => s.sunMin)}:${useSeasonalStore((s) => s.sunDatePreset)}`;
 
   // Live sun — read the same (sunMin, sunDatePreset) axis the SunRig uses so
@@ -91,7 +93,7 @@ export function SuncastOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lng, sunKey]);
 
-  if (!suncastView || !sun) return null;
+  if (!suncastView || cameraPreset === "sec" || !sun) return null;
   if (sun.altitudeDeg <= 2.5) return null; // sun below the cast floor — no shadow
 
   const casts: THREE.ShapeGeometry[] = [];
