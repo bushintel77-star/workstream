@@ -221,3 +221,117 @@
     opacity: var(--lc-op-60);
   }
 }
+
+/* ---- Phase C2: timeline controls (linger, transition, loop, progress) ---- */
+.timelineControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 6px;
+  border-left: 1px solid var(--lc-glass-border);
+  flex-shrink: 0;
+}
+
+.timelineLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.timelineLabelText {
+  font-family: var(--lc-font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--lc-ink-30, var(--gs-ink-30));
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.timelineSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 48px;
+  height: 4px;
+  border-radius: var(--gs-radius-xs);
+  background: var(--lc-track-border);
+  outline: none;
+  cursor: pointer;
+}
+
+.timelineSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--lc-accent-terrain, var(--gs-accent));
+  cursor: pointer;
+  border: 1px solid var(--lc-canvas-bg);
+}
+
+.timelineSlider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--lc-accent-terrain, var(--gs-accent));
+  cursor: pointer;
+  border: 1px solid var(--lc-canvas-bg);
+}
+
+.timelineValue {
+  font-family: var(--lc-font-mono);
+  font-size: 7px;
+  font-weight: 600;
+  color: var(--lc-ink-60, var(--gs-ink-60));
+  white-space: nowrap;
+  min-width: 22px;
+}
+
+.loopBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--gs-radius-md);
+  background: var(--lc-surface-2, var(--gs-surface-2));
+  color: var(--lc-ink-60, var(--gs-ink-60));
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+  flex-shrink: 0;
+}
+
+.loopBtn:hover {
+  background: var(--lc-surface-3, var(--gs-surface-3));
+}
+
+.loopBtnActive {
+  background: var(--lc-accent-terrain, var(--gs-accent));
+  color: var(--lc-accent-on, var(--gs-accent-on));
+  border-color: var(--lc-accent-terrain, var(--gs-accent));
+}
+
+/* Progress bar — shows the walk playback head position. */
+.progressBar {
+  position: absolute;
+  bottom: -2px;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  border-radius: var(--gs-radius-xs);
+  background: var(--lc-track-border);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--lc-accent-terrain, var(--gs-accent));
+  border-radius: var(--gs-radius-xs);
+  transition: width 60ms linear;
+}

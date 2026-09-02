@@ -722,6 +722,34 @@ export interface StudioStoreState {
    *  only — never enters docSnapshot. */
   isRecordingWalk: boolean;
 
+  // --- Phase C2: Viewpoint timeline controls (view state only) ---
+  /** Linger time (seconds) the walk pauses at each viewpoint before moving
+   *  to the next. 0 = no pause. View state only. */
+  walkLingerS: number;
+  /** Transition time (seconds) for the camera to fly from one viewpoint to
+   *  the next. Controls the spline sampling speed. View state only. */
+  walkTransitionS: number;
+  /** When true, the walk loops continuously instead of stopping after one
+   *  pass. View state only. */
+  walkLoop: boolean;
+  /** The current playback head position in the sequence (0..1 across all
+   *  viewpoints). Read by the filmstrip progress bar. View state only. */
+  walkProgress: number;
+  /** Per-bookmark visibility keyframes — when non-empty, the walk hides
+   *  canvases not listed for the active viewpoint. Maps viewpoint id →
+   *  array of canvas ids that remain visible at that viewpoint. View state. */
+  viewpointVisibility: Record<string, string[]>;
+  /** Set the linger time (seconds) for the walk. */
+  setWalkLingerS: (s: number) => void;
+  /** Set the transition time (seconds) for the walk. */
+  setWalkTransitionS: (s: number) => void;
+  /** Toggle the walk loop. */
+  toggleWalkLoop: () => void;
+  /** Set the walk progress (0..1) — written by FlythroughRig each frame. */
+  setWalkProgress: (p: number) => void;
+  /** Toggle a canvas id in a viewpoint's visibility keyframe. */
+  toggleViewpointVisibility: (viewpointId: string, canvasId: string) => void;
+
   // --- Photo-trace elevation (sketch capstone) ---
   /**
    * All persisted photo elevations — pinned site photos as frozen camera
@@ -1565,6 +1593,12 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   _liveCameraPosition: { position: [0, 0, 0], target: [0, 0, 0] },
   activeViewpointId: null,
   isRecordingWalk: false,
+  // Phase C2 — timeline controls (view state only).
+  walkLingerS: 0.5,
+  walkTransitionS: 2.0,
+  walkLoop: false,
+  walkProgress: 0,
+  viewpointVisibility: {},
 
   // Site context — hydrated from the server-rendered site frame.
   siteBoundary: [],
@@ -2609,6 +2643,22 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       return { cameraBookmarks: list };
     }),
   setRecordingWalk: (recording) => set({ isRecordingWalk: recording }),
+
+  // Phase C2 — timeline controls (view state only).
+  setWalkLingerS: (s) => set({ walkLingerS: Math.max(0, Math.min(10, s)) }),
+  setWalkTransitionS: (s) => set({ walkTransitionS: Math.max(0.5, Math.min(30, s)) }),
+  toggleWalkLoop: () => set((s) => ({ walkLoop: !s.walkLoop })),
+  setWalkProgress: (p) => set({ walkProgress: Math.max(0, Math.min(1, p)) }),
+  toggleViewpointVisibility: (viewpointId, canvasId) =>
+    set((s) => {
+      const current = s.viewpointVisibility[viewpointId] ?? [];
+      const next = current.includes(canvasId)
+        ? current.filter((id) => id !== canvasId)
+        : [...current, canvasId];
+      return {
+        viewpointVisibility: { ...s.viewpointVisibility, [viewpointId]: next },
+      };
+    }),
 
   setPhotoElevations: (photoElevations) => set({ photoElevations }),
   upsertPhotoElevation: (elevation) =>

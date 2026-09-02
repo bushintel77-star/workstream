@@ -42,6 +42,14 @@ export function ViewpointFilmstrip({ mode }: ViewpointFilmstripProps) {
   const removeCameraBookmark = useStudioStore((s) => s.removeCameraBookmark);
   const toggleFlythrough = useStudioStore((s) => s.toggleFlythrough);
   const setRecordingWalk = useStudioStore((s) => s.setRecordingWalk);
+  // Phase C2 — timeline controls.
+  const walkLingerS = useStudioStore((s) => s.walkLingerS);
+  const walkTransitionS = useStudioStore((s) => s.walkTransitionS);
+  const walkLoop = useStudioStore((s) => s.walkLoop);
+  const walkProgress = useStudioStore((s) => s.walkProgress);
+  const setWalkLingerS = useStudioStore((s) => s.setWalkLingerS);
+  const setWalkTransitionS = useStudioStore((s) => s.setWalkTransitionS);
+  const toggleWalkLoop = useStudioStore((s) => s.toggleWalkLoop);
 
   // MediaRecorder ref for the walk-through video capture.
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -219,6 +227,56 @@ export function ViewpointFilmstrip({ mode }: ViewpointFilmstripProps) {
           {isRecordingWalk ? "STOP" : "REC"}
         </button>
       </div>
+
+      {/* Phase C2 — timeline controls: linger, transition, loop, progress. */}
+      <div className={styles.timelineControls} data-testid="viewpoint-timeline">
+        <label className={styles.timelineLabel} title="Seconds the camera pauses at each viewpoint">
+          <span className={styles.timelineLabelText}>LINGER</span>
+          <input
+            type="range"
+            className={styles.timelineSlider}
+            min={0}
+            max={5}
+            step={0.25}
+            value={walkLingerS}
+            onChange={(e) => setWalkLingerS(parseFloat(e.target.value))}
+            data-testid="walk-linger-slider"
+          />
+          <span className={styles.timelineValue}>{walkLingerS.toFixed(1)}s</span>
+        </label>
+        <label className={styles.timelineLabel} title="Seconds for the camera to fly between viewpoints">
+          <span className={styles.timelineLabelText}>TRANSITION</span>
+          <input
+            type="range"
+            className={styles.timelineSlider}
+            min={0.5}
+            max={10}
+            step={0.5}
+            value={walkTransitionS}
+            onChange={(e) => setWalkTransitionS(parseFloat(e.target.value))}
+            data-testid="walk-transition-slider"
+          />
+          <span className={styles.timelineValue}>{walkTransitionS.toFixed(1)}s</span>
+        </label>
+        <button
+          className={`${styles.loopBtn} ${walkLoop ? styles.loopBtnActive : ""}`}
+          onClick={toggleWalkLoop}
+          title={walkLoop ? "Loop on (walk repeats)" : "Loop off (walk stops after one pass)"}
+          data-testid="walk-loop-toggle"
+        >
+          {walkLoop ? "\u21BB" : "\u2192"}
+        </button>
+      </div>
+
+      {/* Phase C2 — progress bar showing the walk playback head. */}
+      {isPlayingFlythrough && (
+        <div className={styles.progressBar} data-testid="walk-progress-bar">
+          <div
+            className={styles.progressFill}
+            style={{ width: `${Math.round(walkProgress * 100)}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }

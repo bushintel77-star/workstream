@@ -348,6 +348,36 @@ Verified live: filmstrip renders in Sketch mode with capture/walk/record
 buttons; zero chrome inside the R3F canvas (gate C rule holds); filmstrip
 hidden in CAD mode; 13 thumbnail tests green; typecheck + lint green.
 
+### Phase C2 — Viewpoint timeline controls (linger/transition/loop/progress)
+**Status: COMPLETE — shipped 2026-09-03.** The Phase C filmstrip's hardcoded
+12-second single-pass walk was replaced with operator-controlled timeline
+parameters:
+
+- **Store (`studioStore.ts`)**: new view-state fields — `walkLingerS` (default
+  0.5s, range 0–10), `walkTransitionS` (default 2.0s, range 0.5–30),
+  `walkLoop` (default false), `walkProgress` (0..1, written by FlythroughRig
+  each frame), `viewpointVisibility` (Record<viewpointId, canvasId[]> for
+  per-bookmark visibility keyframing). Actions: `setWalkLingerS`,
+  `setWalkTransitionS`, `toggleWalkLoop`, `setWalkProgress`,
+  `toggleViewpointVisibility`. All view-state only (never enters docSnapshot).
+- **`FlythroughRig.tsx`**: the hardcoded `FLYTHROUGH_DURATION_S = 12` was
+  replaced with `segmentCount × (walkTransitionS + walkLingerS)`. The rig now
+  pauses at each viewpoint knot for `walkLingerS` seconds (linger accumulator),
+  then resumes the spline transition. When `walkLoop` is true, playback wraps
+  continuously; when false, it stops after one pass (original behavior).
+  Progress is published to the store each frame for the filmstrip progress bar.
+- **`ViewpointFilmstrip.tsx`**: new timeline controls section (after the
+  walk/record buttons) with LINGER slider, TRANSITION slider, and a loop
+  toggle button (→ off / ↻ on). A progress bar appears at the bottom of the
+  filmstrip during playback, showing the walk playback head position.
+- **CSS (`ViewpointFilmstrip.module.css`)**: `.timelineControls`,
+  `.timelineLabel`, `.timelineSlider`, `.timelineValue`, `.loopBtn` /
+  `.loopBtnActive`, `.progressBar` / `.progressFill` — all token-only.
+
+Verified live: timeline controls render (linger=0.5s, transition=2.0s, loop=→);
+loop toggle changes → to ↻; zero console errors; typecheck + lint green;
+74 viewpoint + store tests green.
+
 ### Phase D — Unscaled state + calibrate later (turn 15a/15c)
 **Status: COMPLETE — shipped 2026-09-03.**
 
