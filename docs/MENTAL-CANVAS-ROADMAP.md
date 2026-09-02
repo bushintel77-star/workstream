@@ -293,10 +293,26 @@ MAS/PLT/GRD/SRV/SUB cells; zero chrome inside the R3F canvas (gate C rule
 holds); 11 unit tests green for `canvasThumbnail.test.ts`; typecheck + lint +
 vitest all green.
 
-Scope cut: the full three-state collapse mechanic (Collapsed/Default/Expanded
-drag) and reorder/context-menu are deferred to a future Phase B2 — they are
-panel-level layout concerns, not card-content concerns, and shipping them in
-the same phase would make it unreviewable.
+Scope cut (resolved B2): the three-state collapse mechanic, drag-to-reorder,
+and context menu are now implemented.
+
+- **Store (`studioStore.ts`)**: `railCollapsed` (boolean) + `toggleRailCollapsed`
+  / `setRailCollapsed`. `canvasOrder` (string[]) + `reorderCanvas(fromId, toId)`
+  — moves `fromId` before `toId`, fills untracked canvases at the end preserving
+  Y-sort. All view state only (never enters docSnapshot, never triggers autosave).
+- **`CanvasCardsRail.tsx`**: header is now a click-to-collapse toggle. Collapsed
+  state shows only a `◀` tab (vertical text); click expands back to `PLANES`.
+  Cards are `draggable` — drag one card onto another to reorder (HTML5 DnD with
+  `text/plain` payload). Right-click or 500ms long-press opens a context menu
+  with Rename / Toggle visibility / Delete. Long-press cancels on pointer move
+  (so a drag doesn't trigger the menu).
+- **CSS (`CanvasCardsRail.module.css`)**: `.railCollapsed` (vertical header),
+  `.cardDragOver` (dashed accent border), `.contextMenu` + `.contextItem` /
+  `.contextItemDanger` (tokenized glass menu).
+
+Verified live: collapse toggles both ways (header → `◀`, slider/ground hidden;
+click again → `PLANES`, slider/ground visible); zero console errors; typecheck
++ lint green; 783 webgl tests green.
 
 ### Phase C — Viewpoint filmstrip + walk/record (turn 7a / 16b)
 **Status: COMPLETE — shipped 2026-09-03.** The existing `cameraBookmarks`

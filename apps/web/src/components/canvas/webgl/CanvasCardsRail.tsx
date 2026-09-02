@@ -24,7 +24,7 @@
  * (fades all non-active canvases — the Mental Canvas "Transparency Toggle").
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import type { CanvasMode } from "../../../lib/canvas-mode";
 import { useStudioStore } from "./studioStore";
 import { canvasThumbnailSvg } from "./canvasThumbnail";
@@ -52,6 +52,9 @@ function zLabel(z: number): string {
   return z.toFixed(1).replace(/\.0$/, "");
 }
 
+/** Long-press threshold in ms for the context menu (Phase B2). */
+const LONG_PRESS_MS = 500;
+
 export interface CanvasCardsRailProps {
   /** The active studio mode — only renders when mode === "sketch". */
   mode: CanvasMode;
@@ -73,23 +76,49 @@ export function CanvasCardsRail({
   const sketchStrokes = useStudioStore((s) => s.sketchStrokes);
   const hiddenCanvasIds = useStudioStore((s) => s.hiddenCanvasIds);
   const inactiveCanvasOpacity = useStudioStore((s) => s.inactiveCanvasOpacity);
+  const railCollapsed = useStudioStore((s) => s.railCollapsed);
+  const canvasOrder = useStudioStore((s) => s.canvasOrder);
   const setActiveCanvasId = useStudioStore((s) => s.setActiveCanvasId);
   const setAdjustingCanvasId = useStudioStore((s) => s.setAdjustingCanvasId);
   const updateSketchCanvas = useStudioStore((s) => s.updateSketchCanvas);
   const removeSketchCanvas = useStudioStore((s) => s.removeSketchCanvas);
   const toggleCanvasVisibility = useStudioStore((s) => s.toggleCanvasVisibility);
   const setInactiveCanvasOpacity = useStudioStore((s) => s.setInactiveCanvasOpacity);
+  const toggleRailCollapsed = useStudioStore((s) => s.toggleRailCollapsed);
+  const reorderCanvas = useStudioStore((s) => s.reorderCanvas);
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [contextMenu, setContextMenu] = useState<{ canvasId: string; x: number; y: number } | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isLeft = handedness === "LEFT";
   const railSide = isLeft ? styles.railLeft : styles.railRight;
 
-  const sortedCanvases = useMemo(
-    () => [...canvases].sort((a, b) => b.position[1] - a.position[1]),
-    [canvases],
-  );
+  // Phase B2: order canvases by canvasOrder when available, else Y-sort.
+  const sortedCanvases = useMemo(() => {
+    if (canvasOrder.length === 0) {
+      return [...canvases].sort((a, b) => b.position[1] - a.position[1]);
+    }
+    const orderMap = new Map(canvasOrder.map((id, idx) => [id, idx]));
+    return [...canvases].sort((a, b) => {
+      const ai = orderMap.get(a.id) ?? 999;
+      const bi = orderMap.get(b.id) ?? 999;
+      if (ai !== bi) return ai - bi;
+      return b.position[1] - a.position[1];
+    });
+  }, [canvases, canvasOrder]);
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  // Close context menu on any outside click.
+  useEffect(() => {
+    if (!contextMenu) return;
+    const onDown = () => closeContextMenu();
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [contextMenu, closeContextMenu]);
 
   if (mode !== "sketch") return null;
 
@@ -121,161 +150,257 @@ export function CanvasCardsRail({
   }
 
   return (
-    <div className={`${styles.rail} ${railSide}`}>
-      <div className={styles.railHeader}>PLANES</div>
-
-      {/* Transparency toggle — fades all inactive canvases */}
-      <div className={styles.transparencyRow}>
-        <span className={styles.transparencyLabel}>FADE</span>
-        <input
-          type="range"
-          className={styles.transparencySlider}
-          min={0.15}
-          max={1}
-          step={0.05}
-          value={inactiveCanvasOpacity}
-          onChange={(e) => setInactiveCanvasOpacity(parseFloat(e.target.value))}
-          title="Fade inactive canvases"
-          data-testid="canvas-transparency-slider"
-        />
+    <div className={`${styles.rail} ${railSide} ${railCollapsed ? styles.railCollapsed : ""}`}>
+      {/* Header — click to toggle collapse (Phase B2) */}
+      <div
+        className={styles.railHeader}
+        onClick={toggleRailCollapsed}
+        title={railCollapsed ? "Expand planes" : "Collapse planes"}
+        data-testid="canvas-rail-header"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === "Enter") toggleRailCollapsed(); }}
+      >
+        {railCollapsed ? "\u25C0" : "PLANES"}
       </div>
 
-      {sortedCanvases.map((canvas) => {
-        const isActive = canvas.id === activeCanvasId;
-        const isHidden = hiddenCanvasIds.includes(canvas.id);
-        const isRenaming = renamingId === canvas.id;
-        const currentTag = (canvas.season_tag ?? "ALL") as SeasonTag;
-        const thumbSvg = canvasThumbnailSvg(sketchStrokes, canvas.id);
-        const label = canvas.label ?? zLabel(canvas.position[1]);
-
-        return (
-          <div key={canvas.id} className={styles.cardGroup}>
-            <div
-              className={`${styles.card} ${isActive ? styles.cardActive : ""} ${isHidden ? styles.cardHidden : ""}`}
-              onClick={() => setActiveCanvasId(canvas.id)}
-              onDoubleClick={() => {
-                // Re-arm the placement gizmo: set both ids together so the
-                // gizmos' divergence guard (activeCanvasId === adjustingCanvasId)
-                // sees them equal and stays armed.
-                setActiveCanvasId(canvas.id);
-                setAdjustingCanvasId(canvas.id);
-              }}
-              title={`${label} — click to select, double-click to adjust`}
-              data-testid="canvas-card"
-              data-canvas-id={canvas.id}
-              data-active={isActive ? "true" : "false"}
-              data-hidden={isHidden ? "true" : "false"}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") setActiveCanvasId(canvas.id);
-              }}
-            >
-              {/* Thumbnail (inline SVG from board-% strokes) */}
-              <div
-                className={styles.thumb}
-                dangerouslySetInnerHTML={{ __html: thumbSvg }}
-              />
-
-              {/* Eye toggle — view-state visibility (§14c) */}
-              <button
-                className={`${styles.eyeBtn} ${isHidden ? styles.eyeBtnHidden : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleCanvasVisibility(canvas.id);
-                }}
-                title={isHidden ? "Show canvas" : "Hide canvas"}
-                data-testid="canvas-eye-toggle"
-                aria-label={isHidden ? "Show canvas" : "Hide canvas"}
-              >
-                {isHidden ? "\u25CB" : "\u25CF"}
-              </button>
-
-              {/* Delete button — removeSketchCanvas (strokes → ground) */}
-              <button
-                className={styles.deleteBtn}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeSketchCanvas(canvas.id);
-                }}
-                title="Delete canvas (strokes move to ground)"
-                data-testid="canvas-delete-btn"
-                aria-label="Delete canvas"
-              >
-                {"\u00D7"}
-              </button>
-
-              {/* Name label or inline rename input */}
-              {isRenaming ? (
-                <input
-                  className={styles.nameInput}
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onBlur={commitRename}
-                  onKeyDown={handleRenameKeyDown}
-                  onClick={(e) => e.stopPropagation()}
-                  onDoubleClick={(e) => e.stopPropagation()}
-                  autoFocus
-                  maxLength={80}
-                  placeholder="Name"
-                  data-testid="canvas-rename-input"
-                />
-              ) : (
-                <span
-                  className={styles.name}
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    startRename(canvas.id, canvas.label);
-                  }}
-                  title="Double-click to rename"
-                >
-                  {label}
-                </span>
-              )}
-            </div>
-
-            {/* Season tag cycle (preserved from the old chip block) */}
-            <button
-              className={`${styles.seasonTag} ${currentTag === "SUMMER"
-                ? styles.seasonTagSummer
-                : currentTag === "WINTER"
-                  ? styles.seasonTagWinter
-                  : styles.seasonTagAll
-                }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                updateSketchCanvas(canvas.id, {
-                  ...canvas,
-                  season_tag: nextSeasonTag(currentTag),
-                });
-              }}
-              title={`Season: ${canvas.season_tag ?? "ALL"} — click to cycle`}
-            >
-              {seasonTagLabel(currentTag)}
-            </button>
+      {/* Collapsed state: just the header, click to expand. */}
+      {railCollapsed ? null : (
+        <>
+          {/* Transparency toggle — fades all inactive canvases */}
+          <div className={styles.transparencyRow}>
+            <span className={styles.transparencyLabel}>FADE</span>
+            <input
+              type="range"
+              className={styles.transparencySlider}
+              min={0.15}
+              max={1}
+              step={0.05}
+              value={inactiveCanvasOpacity}
+              onChange={(e) => setInactiveCanvasOpacity(parseFloat(e.target.value))}
+              title="Fade inactive canvases"
+              data-testid="canvas-transparency-slider"
+            />
           </div>
-        );
-      })}
 
-      {/* Ground plane — the implicit default (activeCanvasId = null) */}
-      <button
-        className={`${styles.groundCell} ${activeCanvasId === null ? styles.groundCellActive : ""}`}
-        onClick={() => setActiveCanvasId(null)}
-        title="Ground plane"
-        data-testid="canvas-ground-card"
-      >
-        GRD
-      </button>
+          {sortedCanvases.map((canvas) => {
+            const isActive = canvas.id === activeCanvasId;
+            const isHidden = hiddenCanvasIds.includes(canvas.id);
+            const isRenaming = renamingId === canvas.id;
+            const currentTag = (canvas.season_tag ?? "ALL") as SeasonTag;
+            const thumbSvg = canvasThumbnailSvg(sketchStrokes, canvas.id);
+            const label = canvas.label ?? zLabel(canvas.position[1]);
+            const isDragOver = dragOverId === canvas.id;
 
-      {/* Add-canvas button — opens the placement flyout */}
-      <button
-        className={styles.addCell}
-        onClick={onAddClick}
-        title="Place a new sketch plane"
-        data-testid="canvas-add-card"
-      >
-        +
-      </button>
+            return (
+              <div
+                key={canvas.id}
+                className={styles.cardGroup}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("text/plain", canvas.id);
+                  e.dataTransfer.effectAllowed = "move";
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  if (dragOverId !== canvas.id) setDragOverId(canvas.id);
+                }}
+                onDragLeave={() => {
+                  if (dragOverId === canvas.id) setDragOverId(null);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const fromId = e.dataTransfer.getData("text/plain");
+                  if (fromId && fromId !== canvas.id) {
+                    reorderCanvas(fromId, canvas.id);
+                  }
+                  setDragOverId(null);
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setContextMenu({ canvasId: canvas.id, x: e.clientX, y: e.clientY });
+                }}
+                onPointerDown={(e) => {
+                  // Long-press to open context menu (touch-friendly).
+                  if (longPressTimer.current) clearTimeout(longPressTimer.current);
+                  longPressTimer.current = setTimeout(() => {
+                    setContextMenu({ canvasId: canvas.id, x: e.clientX, y: e.clientY });
+                  }, LONG_PRESS_MS);
+                }}
+                onPointerUp={() => {
+                  if (longPressTimer.current) {
+                    clearTimeout(longPressTimer.current);
+                    longPressTimer.current = null;
+                  }
+                }}
+                onPointerMove={() => {
+                  // Cancel long-press if the pointer moves (it's a drag, not a hold).
+                  if (longPressTimer.current) {
+                    clearTimeout(longPressTimer.current);
+                    longPressTimer.current = null;
+                  }
+                }}
+              >
+                <div
+                  className={`${styles.card} ${isActive ? styles.cardActive : ""} ${isHidden ? styles.cardHidden : ""} ${isDragOver ? styles.cardDragOver : ""}`}
+                  onClick={() => setActiveCanvasId(canvas.id)}
+                  onDoubleClick={() => {
+                    setActiveCanvasId(canvas.id);
+                    setAdjustingCanvasId(canvas.id);
+                  }}
+                  title={`${label} — click to select, double-click to adjust, drag to reorder, long-press for menu`}
+                  data-testid="canvas-card"
+                  data-canvas-id={canvas.id}
+                  data-active={isActive ? "true" : "false"}
+                  data-hidden={isHidden ? "true" : "false"}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") setActiveCanvasId(canvas.id);
+                  }}
+                >
+                  <div
+                    className={styles.thumb}
+                    dangerouslySetInnerHTML={{ __html: thumbSvg }}
+                  />
+
+                  <button
+                    className={`${styles.eyeBtn} ${isHidden ? styles.eyeBtnHidden : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCanvasVisibility(canvas.id);
+                    }}
+                    title={isHidden ? "Show canvas" : "Hide canvas"}
+                    data-testid="canvas-eye-toggle"
+                    aria-label={isHidden ? "Show canvas" : "Hide canvas"}
+                  >
+                    {isHidden ? "\u25CB" : "\u25CF"}
+                  </button>
+
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeSketchCanvas(canvas.id);
+                    }}
+                    title="Delete canvas (strokes move to ground)"
+                    data-testid="canvas-delete-btn"
+                    aria-label="Delete canvas"
+                  >
+                    {"\u00D7"}
+                  </button>
+
+                  {isRenaming ? (
+                    <input
+                      className={styles.nameInput}
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={commitRename}
+                      onKeyDown={handleRenameKeyDown}
+                      onClick={(e) => e.stopPropagation()}
+                      onDoubleClick={(e) => e.stopPropagation()}
+                      autoFocus
+                      maxLength={80}
+                      placeholder="Name"
+                      data-testid="canvas-rename-input"
+                    />
+                  ) : (
+                    <span
+                      className={styles.name}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        startRename(canvas.id, canvas.label);
+                      }}
+                      title="Double-click to rename"
+                    >
+                      {label}
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  className={`${styles.seasonTag} ${currentTag === "SUMMER"
+                    ? styles.seasonTagSummer
+                    : currentTag === "WINTER"
+                      ? styles.seasonTagWinter
+                      : styles.seasonTagAll
+                    }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateSketchCanvas(canvas.id, {
+                      ...canvas,
+                      season_tag: nextSeasonTag(currentTag),
+                    });
+                  }}
+                  title={`Season: ${canvas.season_tag ?? "ALL"} — click to cycle`}
+                >
+                  {seasonTagLabel(currentTag)}
+                </button>
+              </div>
+            );
+          })}
+
+          {/* Ground plane — the implicit default (activeCanvasId = null) */}
+          <button
+            className={`${styles.groundCell} ${activeCanvasId === null ? styles.groundCellActive : ""}`}
+            onClick={() => setActiveCanvasId(null)}
+            title="Ground plane"
+            data-testid="canvas-ground-card"
+          >
+            GRD
+          </button>
+
+          {/* Add-canvas button — opens the placement flyout */}
+          <button
+            className={styles.addCell}
+            onClick={onAddClick}
+            title="Place a new sketch plane"
+            data-testid="canvas-add-card"
+          >
+            +
+          </button>
+        </>
+      )}
+
+      {/* Context menu (Phase B2) — right-click or long-press */}
+      {contextMenu && (
+        <div
+          className={styles.contextMenu}
+          style={{ position: "fixed", left: contextMenu.x, top: contextMenu.y }}
+          data-testid="canvas-context-menu"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <button
+            className={styles.contextItem}
+            onClick={() => {
+              const c = canvases.find((cv) => cv.id === contextMenu.canvasId);
+              if (c) startRename(c.id, c.label);
+              closeContextMenu();
+            }}
+          >
+            Rename
+          </button>
+          <button
+            className={styles.contextItem}
+            onClick={() => {
+              toggleCanvasVisibility(contextMenu.canvasId);
+              closeContextMenu();
+            }}
+          >
+            Toggle visibility
+          </button>
+          <button
+            className={`${styles.contextItem} ${styles.contextItemDanger}`}
+            onClick={() => {
+              removeSketchCanvas(contextMenu.canvasId);
+              closeContextMenu();
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }

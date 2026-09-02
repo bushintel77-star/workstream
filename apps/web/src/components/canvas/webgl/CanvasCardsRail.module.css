@@ -359,3 +359,64 @@
   flex-direction: column;
   gap: 3px;
 }
+
+/* Phase B2 — collapsed rail: just the header tab. */
+.railCollapsed {
+  padding: 6px 4px;
+  cursor: pointer;
+}
+
+.railCollapsed .railHeader {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  padding: 4px 2px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+/* Phase B2 — drag-over highlight on a card. */
+.cardDragOver {
+  border: 1.5px dashed var(--lc-accent-terrain);
+  background: color-mix(in srgb, var(--lc-accent-terrain) 10%, transparent);
+}
+
+/* Phase B2 — context menu (right-click / long-press). */
+.contextMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  min-width: 120px;
+  border-radius: var(--gs-radius-md);
+  background: var(--lc-glass-bg);
+  border: 1px solid var(--lc-glass-border);
+  box-shadow: var(--lc-flyout-shadow);
+  z-index: var(--cf-z-app);
+  pointer-events: auto;
+}
+
+.contextItem {
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--lc-ink);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--gs-radius-xs);
+  transition: background 0.1s ease;
+}
+
+.contextItem:hover {
+  background: var(--lc-surface-tint);
+}
+
+.contextItemDanger {
+  color: var(--lc-accent-redline);
+}
+
+.contextItemDanger:hover {
+  background: color-mix(in srgb, var(--lc-accent-redline) 10%, transparent);
+}

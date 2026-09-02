@@ -1195,6 +1195,24 @@ export interface StudioStoreState {
   /** Set the global inactive-canvas opacity (0.15–1.0). */
   setInactiveCanvasOpacity: (v: number) => void;
 
+  /** Phase B2: canvas rail collapse state. When true, the rail shows only
+   *  the header bar (no cards). Click the header to expand. View state only. */
+  railCollapsed: boolean;
+  /** Toggle the canvas rail collapse state (Phase B2). */
+  toggleRailCollapsed: () => void;
+  /** Phase B2: explicit set for the rail collapse state. */
+  setRailCollapsed: (v: boolean) => void;
+
+  /** Phase B2: canvas display order (ids). When non-empty, the cards rail
+   *  renders canvases in this order instead of the default Y-height sort.
+   *  View state only — does not change spatial positions. */
+  canvasOrder: string[];
+  /** Phase B2: reorder a canvas to a new position in the display order.
+   *  Moves `fromId` before `toId` in the canvasOrder array, then fills any
+   *  canvases not yet in the order array at the end (preserving Y-sort
+   *  for newcomers). */
+  reorderCanvas: (fromId: string, toId: string) => void;
+
   // --- Spatial UI — workspace toggle actions ---
   /** Set handedness (mirrors chrome anchors left/right). */
   setHandedness: (h: "RIGHT" | "LEFT") => void;
@@ -1510,6 +1528,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Canvas rail view state (Phase B) — view state, not document state.
   hiddenCanvasIds: [],
   inactiveCanvasOpacity: 1.0,
+  // Phase B2 — collapse + reorder (view state only).
+  railCollapsed: false,
+  canvasOrder: [],
 
   // AI Automated Site Setup (Phase 7) — no setback lines or building
   // footprints until generated; processing state starts idle.
@@ -2293,6 +2314,30 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     })),
   setInactiveCanvasOpacity: (v) =>
     set({ inactiveCanvasOpacity: Math.max(0.15, Math.min(1.0, v)) }),
+
+  // Phase B2 — canvas rail collapse + reorder (view state only).
+  toggleRailCollapsed: () => set((s) => ({ railCollapsed: !s.railCollapsed })),
+  setRailCollapsed: (v) => set({ railCollapsed: v }),
+  reorderCanvas: (fromId, toId) =>
+    set((s) => {
+      if (fromId === toId) return {};
+      // Build the full order: start with canvasOrder, append any canvases
+      // not yet tracked (preserving Y-sort for newcomers).
+      const known = new Set(s.canvasOrder);
+      const extras = s.sketchCanvases
+        .filter((c) => !known.has(c.id))
+        .sort((a, b) => b.position[1] - a.position[1])
+        .map((c) => c.id);
+      const order = [...s.canvasOrder, ...extras];
+      const fromIdx = order.indexOf(fromId);
+      const toIdx = order.indexOf(toId);
+      if (fromIdx === -1 || toIdx === -1) return {};
+      // Remove fromId and insert before toId.
+      order.splice(fromIdx, 1);
+      const newToIdx = order.indexOf(toId);
+      order.splice(newToIdx, 0, fromId);
+      return { canvasOrder: order };
+    }),
 
   // --- AI Automated Site Setup (Phase 7) ---
   setSetbackLines: (setbackLines) => set({ setbackLines }),
