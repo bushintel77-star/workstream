@@ -1,0 +1,361 @@
+/* Spatial Sketching — Canvas Cards Rail (Phase B).
+ * Spec §4 Geometry: "Sketch planes rail | cards 74×46, radius 9px, gap 7px".
+ * Spec canonical screen 16b (Sketch): canvases-as-cards rail, no depth rail.
+ * Uses --lc-* / --gs-* tokens only (CI-gated per check-handoff-chrome-colors).
+ */
+
+.rail {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+  border-radius: var(--lc-depth-rail-radius);
+  background: var(--lc-glass-grad);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
+  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+}
+
+.railRight {
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.railLeft {
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.railHeader {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--lc-ink-30);
+  text-align: center;
+  padding: 2px 0 4px;
+  letter-spacing: 0.08em;
+}
+
+/* Transparency toggle — global inactive-canvas opacity slider.
+ * Sits below the header, above the cards. */
+.transparencyRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px 6px;
+}
+
+.transparencyLabel {
+  font-family: var(--lc-font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--lc-ink-30);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.transparencySlider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  border-radius: var(--gs-radius-xs);
+  background: var(--lc-track-border);
+  outline: none;
+  cursor: pointer;
+}
+
+.transparencySlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--lc-accent-terrain);
+  cursor: pointer;
+  border: 1px solid var(--lc-canvas-bg);
+}
+
+.transparencySlider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--lc-accent-terrain);
+  cursor: pointer;
+  border: 1px solid var(--lc-canvas-bg);
+}
+
+/* Card — spec §4: 74×46, radius 9px. */
+.card {
+  position: relative;
+  width: 74px;
+  height: 46px;
+  border-radius: var(--gs-radius-lg);
+  background: var(--lc-surface-tint);
+  border: 1px solid var(--lc-track-border);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  padding: 0;
+}
+
+.card:hover {
+  border-color: var(--lc-ink-30);
+}
+
+/* Active card — spec §4: "active 1.5px accent border + 0 0 0 3px accent/.18". */
+.cardActive {
+  border: 1.5px solid var(--lc-accent-terrain);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lc-accent-terrain) 18%, transparent);
+}
+
+.cardActive:hover {
+  border-color: var(--lc-accent-terrain);
+}
+
+/* Hidden canvas — §14c: "a faded canvas keeps a 1px edge and its list row".
+ *  Invisible is a view state, not a disappearance. The card stays but shows
+ *  only a 1px outline + the name, no thumbnail. */
+.cardHidden {
+  background: transparent;
+  border: 1px solid var(--lc-track-border);
+}
+
+.cardHidden .thumb {
+  display: none;
+}
+
+/* Thumbnail — inline SVG fills the card background. */
+.thumb {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: var(--lc-op-subsurface);
+}
+
+.thumbSvg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Name label — bottom overlay on the card. */
+.name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2px 4px;
+  font-family: var(--lc-font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--lc-ink);
+  background: color-mix(in srgb, var(--lc-glass-bg) 85%, transparent);
+  letter-spacing: 0.03em;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* Inline rename input — replaces the name label on double-click of the label. */
+.nameInput {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2px 4px;
+  font-family: var(--lc-font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--lc-ink);
+  background: var(--lc-glass-bg);
+  border: 1px solid var(--lc-accent-terrain);
+  border-radius: 0;
+  outline: none;
+  text-align: center;
+  letter-spacing: 0.03em;
+  z-index: var(--cf-z-chrome);
+}
+
+/* Eye toggle — top-left corner of the card. */
+.eyeBtn {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: color-mix(in srgb, var(--lc-glass-bg) 70%, transparent);
+  border-radius: var(--gs-radius-xs);
+  color: var(--lc-ink-60);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: var(--lc-op-hidden);
+  transition: opacity 0.15s ease;
+  z-index: var(--cf-z-spatial);
+}
+
+.card:hover .eyeBtn {
+  opacity: var(--lc-op-active);
+}
+
+.eyeBtn:hover {
+  color: var(--lc-ink);
+  background: var(--lc-glass-bg);
+}
+
+.eyeBtnHidden {
+  color: var(--lc-ink-30);
+  opacity: var(--lc-op-60);
+}
+
+.card:hover .eyeBtnHidden {
+  opacity: var(--lc-op-active);
+}
+
+/* Delete button — top-right corner, appears on hover. */
+.deleteBtn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: color-mix(in srgb, var(--lc-accent-redline) 15%, transparent);
+  border-radius: var(--gs-radius-xs);
+  color: var(--lc-accent-redline);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: var(--lc-op-hidden);
+  transition: opacity 0.15s ease;
+  z-index: var(--cf-z-spatial);
+}
+
+.card:hover .deleteBtn {
+  opacity: var(--lc-op-active);
+}
+
+.deleteBtn:hover {
+  background: color-mix(in srgb, var(--lc-accent-redline) 30%, transparent);
+  color: var(--lc-accent-redline);
+}
+
+/* Season tag — small cycle button below each card */
+.seasonTag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  height: 16px;
+  border-radius: var(--gs-radius-xs);
+  background: transparent;
+  color: var(--lc-ink-40);
+  font-family: var(--lc-font-mono);
+  font-size: 7px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--lc-track-border);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.seasonTag:hover {
+  background: var(--lc-surface-tint);
+  color: var(--lc-ink);
+}
+
+.seasonTagSummer {
+  color: var(--lc-accent-terrain);
+  border-color: color-mix(in srgb, var(--lc-accent-terrain) 30%, transparent);
+}
+
+.seasonTagWinter {
+  color: #73a9e1;
+  border-color: color-mix(in srgb, #73a9e1 30%, transparent);
+}
+
+.seasonTagAll {
+  color: var(--lc-ink-40);
+}
+
+/* Add-canvas button — the "+" cell at the bottom of the rail. */
+.addCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  height: 46px;
+  border-radius: var(--gs-radius-lg);
+  background: transparent;
+  color: var(--lc-ink-40);
+  font-size: 18px;
+  line-height: 1;
+  border: 1px dashed var(--lc-track-border);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.addCell:hover {
+  background: var(--lc-surface-tint);
+  color: var(--lc-ink);
+  border-color: var(--lc-ink-30);
+  border-style: solid;
+}
+
+/* Ground plane entry — the implicit ground (activeCanvasId = null). */
+.groundCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  height: 46px;
+  border-radius: var(--gs-radius-lg);
+  background: var(--lc-surface-tint);
+  border: 1px solid var(--lc-track-border);
+  color: var(--lc-ink-60);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph);
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.groundCell:hover {
+  border-color: var(--lc-ink-30);
+}
+
+.groundCellActive {
+  border: 1.5px solid var(--lc-accent-terrain);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lc-accent-terrain) 18%, transparent);
+  color: var(--lc-accent-terrain);
+}
+
+/* Card + season tag wrapper */
+.cardGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}

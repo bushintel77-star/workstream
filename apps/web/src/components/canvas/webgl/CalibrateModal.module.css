@@ -1,0 +1,214 @@
+/* Retroactive two-point calibration modal (Phase D, turn 15c).
+ * Uses --lc-* / --gs-* tokens only (CI-gated per check-handoff-chrome-colors).
+ */
+
+.backdrop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: var(--cf-z-app);
+  pointer-events: auto;
+}
+
+.panel {
+  width: 340px;
+  border-radius: var(--lc-flyout-radius);
+  background: var(--lc-glass-grad);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
+  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--lc-ink-60, var(--gs-ink-60));
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--gs-radius-sm);
+  background: transparent;
+  color: var(--lc-ink-40, var(--gs-ink-40));
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.closeBtn:hover {
+  background: var(--lc-surface-2, var(--gs-surface-2));
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.instruction {
+  font-family: var(--lc-font-mono);
+  font-size: 13px;
+  color: var(--lc-ink-60, var(--gs-ink-60));
+  margin: 0;
+  line-height: 1.4;
+}
+
+.pointsRow {
+  display: flex;
+  gap: 8px;
+}
+
+.pointChip {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--r-pill);
+  background: var(--lc-surface-2, var(--gs-surface-2));
+  border: 1px solid var(--lc-glass-border);
+  font-family: var(--lc-font-mono);
+  font-size: 11px;
+  color: var(--lc-ink-40, var(--gs-ink-40));
+}
+
+.distanceRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.distanceInput {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--gs-radius-md);
+  background: var(--lc-surface-2, var(--gs-surface-2));
+  color: var(--lc-ink-60, var(--gs-ink-60));
+  font-family: var(--lc-font-mono);
+  font-size: 16px;
+  outline: none;
+}
+
+.distanceInput:focus {
+  border-color: var(--lc-accent-terrain, var(--gs-accent));
+}
+
+.unit {
+  font-family: var(--lc-font-mono);
+  font-size: 14px;
+  color: var(--lc-ink-40, var(--gs-ink-40));
+}
+
+.currentRow {
+  font-family: var(--lc-font-mono);
+  font-size: 11px;
+  color: var(--lc-ink-30, var(--gs-ink-30));
+}
+
+.changesList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--gs-radius-md);
+  background: var(--lc-surface-2, var(--gs-surface-2));
+  border: 1px solid var(--lc-glass-border);
+}
+
+.changeRow {
+  font-family: var(--lc-font-mono);
+  font-size: 11px;
+  color: var(--lc-ink-50, var(--gs-ink-50));
+}
+
+.hazardBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--gs-radius-md);
+  background: color-mix(in srgb, var(--lc-accent-hazard) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lc-accent-hazard) 30%, transparent);
+}
+
+.hazardLabel {
+  font-family: var(--lc-font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--lc-accent-hazard);
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.hazardText {
+  font-family: var(--lc-font-mono);
+  font-size: 11px;
+  color: var(--lc-ink-60, var(--gs-ink-60));
+  line-height: 1.4;
+}
+
+.choiceRow {
+  display: flex;
+  gap: 8px;
+}
+
+.choiceBtn {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--gs-radius-md);
+  background: var(--lc-surface-2, var(--gs-surface-2));
+  color: var(--lc-ink-60, var(--gs-ink-60));
+  font-family: var(--lc-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.choiceBtn:hover {
+  background: var(--lc-surface-3, var(--gs-surface-3));
+}
+
+.nextBtn,
+.commitBtn {
+  padding: 10px;
+  border: none;
+  border-radius: var(--gs-radius-md);
+  background: var(--lc-accent-terrain, var(--gs-accent));
+  color: var(--lc-accent-on, var(--gs-accent-on));
+  font-family: var(--lc-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+.nextBtn:disabled,
+.commitBtn:disabled {
+  opacity: var(--lc-op-ground-line);
+  cursor: not-allowed;
+}
+
+.nextBtn:hover:not(:disabled),
+.commitBtn:hover:not(:disabled) {
+  opacity: var(--lc-op-hover);
+}

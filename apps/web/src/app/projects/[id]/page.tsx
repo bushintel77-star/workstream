@@ -111,6 +111,10 @@ export default async function ProjectCanvasPage({
    * (?svg=1) was retired 2026-08-19 — see ONBOARDING.md. */
   const frame = canvas?.site_frame ?? null;
   const webglScaleM = frame?.board_width_m ?? 110;
+  /** Unscaled state (turn 15a/15c): the project has no confirmed scale.
+   *  The UNSCALED badge is a first-class indicator in the chip bar that
+   *  doubles as the calibrate entry point. Drawing is never blocked. */
+  const unscaled = !frame?.board_width_m;
   // The board is a SQUARE: site_truth_import fits the site with a uniform
   // scale (8% margin), so board_width_m is the metres per 100 board-% on
   // BOTH axes and the boundary's pct SHAPE already carries the lot's true
@@ -129,6 +133,7 @@ export default async function ProjectCanvasPage({
         }
         progress={progress}
         scaleM={webglScaleM}
+        unscaled={unscaled}
         boardAspect={webglBoardAspect}
         boundaryPct={
           (frame?.boundary?.map((p) => ({ x: p.x_pct, y: p.y_pct })) as

@@ -78,7 +78,7 @@ import {
 } from "./inkGeometry";
 import { NibInkMaterial, StippleMaterial } from "./inkMaterial";
 import { canvasWorldNormal, patchMaterialForAngleOpacity, seasonOpacityForCanvas } from "./AngleOpacityShader";
-import { winterFactor } from "./studioStore";
+import { winterFactor, FALLOFF_PRESET_EDGES } from "./studioStore";
 
 /** Snap-close threshold in world metres. */
 const SNAP_CLOSE_M = 2.0;
@@ -663,6 +663,7 @@ function CommittedStrokeRenderer({
   // The seasonOpacity is passed to the stroke material's uSeasonOpacity uniform
   // and updated per-frame so the crossfade tracks the timeline slider live.
   const seasonProgress = useStudioStore((s) => s.seasonProgress);
+  const falloffPreset = useStudioStore((s) => s.falloffPreset);
   const seasonOpacity = useMemo(
     () =>
       canvas
@@ -670,6 +671,10 @@ function CommittedStrokeRenderer({
         : 1.0,
     [canvas, seasonProgress],
   );
+  // Phase E (turn 14c): the falloff preset's smoothstep upper edge. Passed to
+  // patchMaterialForAngleOpacity and live-updated per-frame so the operator
+  // can switch presets without re-mounting strokes.
+  const falloffEdge1 = FALLOFF_PRESET_EDGES[falloffPreset][1];
 
   // Phase 6: Sketch-to-CAD Extrusion — read the extrusion tool state.
   const extrusionToolArmed = useStudioStore((s) => s.extrusionToolArmed);
@@ -696,6 +701,7 @@ function CommittedStrokeRenderer({
       sampler={canvas ? null : sampler}
       canvasNormal={canvasNormal}
       seasonOpacity={seasonOpacity}
+      falloffEdge1={falloffEdge1}
     />
   ) : (
     <InkStrokeRenderer
@@ -706,6 +712,7 @@ function CommittedStrokeRenderer({
       sampler={canvas ? null : sampler}
       canvasNormal={canvasNormal}
       seasonOpacity={seasonOpacity}
+      falloffEdge1={falloffEdge1}
     />
   );
 
@@ -764,6 +771,9 @@ interface InkRenderBase {
   /** Phase 4: seasonal crossfade opacity (0-1). Multiplied into the final
    *  alpha alongside the angle-opacity factor. 1.0 = always visible. */
   seasonOpacity: number;
+  /** Phase E (turn 14c): the smoothstep upper edge for angle-opacity falloff.
+   *  Lower = gentler fade (WIDE), higher = steeper fade (NARROW). */
+  falloffEdge1: number;
 }
 
 /**
@@ -780,6 +790,7 @@ function InkStrokeRenderer({
   sampler,
   canvasNormal,
   seasonOpacity,
+  falloffEdge1,
 }: { stroke: CanvasStroke; nib: NibSpec } & InkRenderBase) {
   // Base world points (XZ) — computed once. Y is updated per-frame below.
   const basePoints = useMemo(() => {
@@ -814,11 +825,11 @@ function InkStrokeRenderer({
       if (canvasNormal) {
         patchMaterialForAngleOpacity(m as unknown as THREE.Material & {
           uniforms: Record<string, { value: unknown }>;
-        }, canvasNormal, seasonOpacity);
+        }, canvasNormal, seasonOpacity, falloffEdge1);
       }
       return m;
     },
-    [nib, stroke.width_px, canvasNormal, seasonOpacity],
+    [nib, stroke.width_px, canvasNormal, seasonOpacity, falloffEdge1],
   );
   const line2 = useMemo(() => new Line2(geometry, material), [geometry, material]);
   // The Line2 ref — we mutate its geometry positions in place each frame.
@@ -853,6 +864,11 @@ function InkStrokeRenderer({
     if (canvasNormal && material.uniforms.uSeasonOpacity) {
       material.uniforms.uSeasonOpacity.value = seasonOpacity;
     }
+    // Phase E (turn 14c): live-update the falloff edge uniform so the
+    // operator can switch presets without re-mounting strokes.
+    if (canvasNormal && material.uniforms.uFalloffEdge1) {
+      material.uniforms.uFalloffEdge1.value = falloffEdge1;
+    }
     if (!lineRef.current || basePoints.length === 0) return;
     const { viewBlend } = useStudioStore.getState();
     if (!sampler || viewBlend < 0.001) return;
@@ -884,6 +900,7 @@ function StippleStrokeRenderer({
   sampler,
   canvasNormal,
   seasonOpacity,
+  falloffEdge1,
 }: { stroke: CanvasStroke } & InkRenderBase) {
   const nib = useMemo(() => nibSpecForStroke(stroke), [stroke]);
   const points = useMemo(
@@ -896,11 +913,11 @@ function StippleStrokeRenderer({
       const m = new StippleMaterial({ color: nib.color, opacity: nib.opacity });
       // Phase 3+4: patch with angle-based opacity + seasonal crossfade.
       if (canvasNormal) {
-        patchMaterialForAngleOpacity(m, canvasNormal, seasonOpacity);
+        patchMaterialForAngleOpacity(m, canvasNormal, seasonOpacity, falloffEdge1);
       }
       return m;
     },
-    [nib.color, nib.opacity, canvasNormal, seasonOpacity],
+    [nib.color, nib.opacity, canvasNormal, seasonOpacity, falloffEdge1],
   );
   const cloud = useMemo(() => new THREE.Points(geometry, material), [geometry, material]);
 
@@ -923,6 +940,10 @@ function StippleStrokeRenderer({
     // Phase 4: live-update the seasonal opacity uniform.
     if (canvasNormal && material.uniforms.uSeasonOpacity) {
       material.uniforms.uSeasonOpacity.value = seasonOpacity;
+    }
+    // Phase E (turn 14c): live-update the falloff edge uniform.
+    if (canvasNormal && material.uniforms.uFalloffEdge1) {
+      material.uniforms.uFalloffEdge1.value = falloffEdge1;
     }
     if (!sampler || points.length === 0) return;
     const { viewBlend } = useStudioStore.getState();

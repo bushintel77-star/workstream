@@ -18,6 +18,7 @@
 
 import { useMemo, useState } from "react";
 import type { DesignKeylessOverlay } from "@workstream/contracts";
+import type { CanvasMode } from "../../../lib/canvas-mode";
 import type { CanopyComplianceResult } from "./canopyCompliance";
 import { useStudioStore } from "./studioStore";
 import { SiteSetupModal } from "./SiteSetupModal";
@@ -31,26 +32,13 @@ import { BirdsEyeHud } from "./BirdsEyeHud";
 import { CameraDock } from "./CameraDock";
 import { WfsChips } from "./WfsChips";
 import { LayersPanel } from "./LayersPanel";
+import { DepthRail } from "./DepthRail";
+import { CanvasCardsRail } from "./CanvasCardsRail";
+import { ViewpointFilmstrip } from "./ViewpointFilmstrip";
+import { CalibrateModal } from "./CalibrateModal";
 import styles from "./FloatingChrome.module.css";
 
 /* ---- helpers ---- */
-
-const SEASON_TAGS = ["ALL", "SUMMER", "WINTER"] as const;
-type SeasonTag = (typeof SEASON_TAGS)[number];
-
-function nextSeasonTag(current: SeasonTag): SeasonTag {
-  const idx = SEASON_TAGS.indexOf(current);
-  return SEASON_TAGS[(idx + 1) % SEASON_TAGS.length]!;
-}
-
-function seasonTagLabel(tag: SeasonTag): string {
-  switch (tag) {
-    case "SUMMER": return "SUM";
-    case "WINTER": return "WIN";
-    case "ALL":
-    default: return "ALL";
-  }
-}
 
 function zLabel(z: number): string {
   if (z === 0) return "GRD";
@@ -83,33 +71,15 @@ function useCutFill(
 
 /* ---- component ---- */
 
-/**
- * Subsurface utility depth bands (handoff §5.3). Standard Melbourne
- * service depths — the depth rail shows these below the ground line in
- * redline accent. Read-only reference.
- *
- * These cells deliberately do NOT arm the trench tool. The trench tool
- * persists `ConstructionTrench`s whose kinds are landscape build runs
- * (irrig/lights/drainage) — there is no gas/elec/telco kind, and mapping
- * GAS onto `lighting_conduit` would write misleading conduit geometry
- * into the client quote. Utility services are DBYD territory, not
- * landscape construction ("Vicmap easements ≠ underground assets —
- * dig needs BYDA"). The trench tool arms only from the command palette,
- * where every kind is honest.
- */
-const SUBSURFACE_DEPTHS: Array<{ id: string; label: string; depth: number }> = [
-  { id: "gas", label: "GAS", depth: 0.6 },
-  { id: "water", label: "H2O", depth: 0.75 },
-  { id: "elec", label: "ELEC", depth: 0.9 },
-  { id: "sewer", label: "SEW", depth: 1.5 },
-  { id: "telco", label: "TEL", depth: 0.45 },
-];
-
 export interface FloatingChromeProps {
   scaleM: number;
+  /** True when the project has no confirmed scale — shows the UNSCALED badge. */
+  unscaled?: boolean;
   boardAspect: number;
   northBearingDeg: number | null;
   heightmapPoints: HeightmapPoint[];
+  /** The active studio mode — drives which rail renders (16a depth vs 16b cards). */
+  mode: CanvasMode;
   /** KEYLESS Vicmap/DELWP site-frame overlays → WFS chip pills (§5.4). */
   keylessOverlays?: DesignKeylessOverlay[];
   /** Title-plan easement ring count → the dig-safety easement pill. */
@@ -120,9 +90,11 @@ export interface FloatingChromeProps {
 
 export function FloatingChrome({
   scaleM,
+  unscaled = false,
   boardAspect,
   northBearingDeg,
   heightmapPoints,
+  mode,
   keylessOverlays = [],
   easementRingCount = 0,
   canopy = null,
@@ -135,13 +107,12 @@ export function FloatingChrome({
   const activeTool = useStudioStore((s) => s.activeTool);
   const selectedExtrusionStrokeId = useStudioStore((s) => s.selectedExtrusionStrokeId);
   const activeExtrusionDepth = useStudioStore((s) => s.activeExtrusionDepth);
-  const setActiveCanvasId = useStudioStore((s) => s.setActiveCanvasId);
   const setAnchorVisibility = useStudioStore((s) => s.setAnchorVisibility);
   const setActiveExtrusionDepth = useStudioStore((s) => s.setActiveExtrusionDepth);
   const commitExtrusion = useStudioStore((s) => s.commitExtrusion);
-  const updateSketchCanvas = useStudioStore((s) => s.updateSketchCanvas);
   const [siteSetupOpen, setSiteSetupOpen] = useState(false);
   const [placementFlyoutOpen, setPlacementFlyoutOpen] = useState(false);
+  const [calibrateOpen, setCalibrateOpen] = useState(false);
   const scaleView = useStudioStore((s) => s.scaleView);
   const setScaleView = useStudioStore((s) => s.setScaleView);
   const liveCoord = useStudioStore((s) => s.liveCoord);
@@ -168,7 +139,6 @@ export function FloatingChrome({
     ? { opacity: anchorOpacity, transition: "opacity 0.35s ease" }
     : undefined;
 
-  const railSide = isLeft ? styles.railLeft : styles.railRight;
   const readoutLeftSide = isLeft ? styles.readoutGroupRight : styles.readoutGroupLeft;
   const readoutRightSide = isLeft ? styles.readoutGroupLeft : styles.readoutGroupRight;
 
@@ -200,6 +170,8 @@ export function FloatingChrome({
         keylessOverlays={keylessOverlays}
         easementRingCount={easementRingCount}
         canopy={canopy}
+        unscaled={unscaled}
+        onCalibrate={() => setCalibrateOpen(true)}
       />
 
       {/* Tool ribbon — vertical glass panel, hand-opposite edge (handoff §5) */}
@@ -219,98 +191,24 @@ export function FloatingChrome({
       {/* Camera dock — bottom centre, 4 presets (handoff §6.1) */}
       <CameraDock />
 
-      {/* Depth Rail -- wider, more legible */}
-      <div className={`${styles.rail} ${railSide}`} style={anchorStyle}>
-        <div className={styles.railHeader}>Z</div>
-        {/* Fixed plane stack (spec 1.1) — planting/massing are proposed
-            targets that do not accept drawing geometry yet; they render as
-            honest reference bands, never as selectable draw targets. */}
-        <div
-          className={`${styles.cell} ${styles.cellFixed}`}
-          title="Massing Z +4.00 — proposed plane (drawing support pending)"
-        >
-          MAS
-        </div>
-        <div
-          className={`${styles.cell} ${styles.cellFixed}`}
-          title="Planting Z +1.50 — proposed plane (drawing support pending)"
-        >
-          PLT
-        </div>
-        {sortedCanvases.map((canvas) => {
-          const isActive = canvas.id === activeCanvasId;
-          const currentTag = (canvas.season_tag ?? "ALL") as SeasonTag;
-          return (
-            <div key={canvas.id} style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              <button
-                className={`${styles.cell} ${isActive ? styles.cellActive : ""}`}
-                onClick={() => setActiveCanvasId(canvas.id)}
-                title={canvas.label ?? `Plane +${canvas.position[1]}m`}
-              >
-                {zLabel(canvas.position[1])}
-              </button>
-              <button
-                className={`${styles.seasonTag} ${currentTag === "SUMMER"
-                  ? styles.seasonTagSummer
-                  : currentTag === "WINTER"
-                    ? styles.seasonTagWinter
-                    : styles.seasonTagAll
-                  }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateSketchCanvas(canvas.id, {
-                    ...canvas,
-                    season_tag: nextSeasonTag(currentTag),
-                  });
-                }}
-                title={`Season: ${canvas.season_tag ?? "ALL"} -- click to cycle`}
-              >
-                {seasonTagLabel(currentTag)}
-              </button>
-            </div>
-          );
-        })}
-        <button
-          className={`${styles.cell} ${activeCanvasId === null ? styles.cellActive : ""}`}
-          onClick={() => setActiveCanvasId(null)}
-          title="Ground plane"
-        >
-          GRD
-        </button>
-        <button
-          className={`${styles.cell} ${styles.cellAdd}`}
-          onClick={() => setPlacementFlyoutOpen((o) => !o)}
-          title="Place a new sketch plane"
-          data-testid="canvas-add-cell"
-        >
-          +
-        </button>
+      {/* Viewpoint filmstrip + walk/record (Phase C, screen 16b Sketch only).
+          Sits above the camera dock. Captures camera viewpoints as thumbnails,
+          plays them as a fly-through walk, optionally records as video. */}
+      <ViewpointFilmstrip mode={mode} />
 
-        {/* Ground-line divider — separates positive planes from subsurface */}
-        <div className={styles.railGroundLine} />
+      {/* Depth Rail (16a Drafting) — all non-sketch modes. Cells 36×34,
+          two-way bands, no user canvas chips (those live in the cards rail). */}
+      <DepthRail mode={mode} handedness={handedness} anchorStyle={anchorStyle} />
 
-        {/* Survey base — imported cadastre reference, read-only (spec 6.2). */}
-        <div
-          className={`${styles.cell} ${styles.cellSubsurface}`}
-          title="Survey base Z −0.02 — imported, read-only"
-        >
-          SRV
-        </div>
-
-        {/* Subsurface utility depths — redline accent (handoff §5.3).
-            Read-only reference; see SUBSURFACE_DEPTHS for why these never
-            arm the trench tool. */}
-        <div className={styles.railSubsurfaceLabel}>SUB</div>
-        {SUBSURFACE_DEPTHS.map((u) => (
-          <div
-            key={u.id}
-            className={`${styles.cell} ${styles.cellSubsurface}`}
-            title={`${u.label} — ${u.depth}m below ground (DBYD reference)`}
-          >
-            {u.label}
-          </div>
-        ))}
-      </div>
+      {/* Canvas Cards Rail (16b Sketch) — Sketch mode only. Cards 74×46 with
+          thumbnails, eye toggle, transparency, inline rename, double-click
+          re-arm. The "+" add button lives here (sketch-mode action). */}
+      <CanvasCardsRail
+        mode={mode}
+        handedness={handedness}
+        defaultHeightM={nextZ}
+        onAddClick={() => setPlacementFlyoutOpen((o) => !o)}
+      />
 
       {/* Canvas placement flyout — blooms off the rail's "+" cell. A sibling
           of the rail (not nested inside it) so its viewport-relative
@@ -423,6 +321,15 @@ export function FloatingChrome({
       {/* AI site setup modal -- frosted-glass ingestion overlay. */}
       {siteSetupOpen && (
         <SiteSetupModal onClose={() => setSiteSetupOpen(false)} />
+      )}
+
+      {/* Calibrate modal — retroactive two-point scaling (turn 15c).
+          Opens from the UNSCALED badge in the chip bar. */}
+      {calibrateOpen && (
+        <CalibrateModal
+          scaleM={scaleM}
+          onClose={() => setCalibrateOpen(false)}
+        />
       )}
     </>
   );

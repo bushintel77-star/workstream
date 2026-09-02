@@ -42,6 +42,9 @@ export class AngleOpacityShader extends THREE.ShaderMaterial {
     canvasNormal?: THREE.Vector3;
     opacity?: number;
     seasonOpacity?: number;
+    /** The upper edge of the smoothstep falloff (turn 14c). Lower = gentler
+     *  fade (WIDE), higher = steeper fade (NARROW). Default 0.3 (WIDE). */
+    falloffEdge1?: number;
   } = {}) {
     super({
       transparent: true,
@@ -51,6 +54,7 @@ export class AngleOpacityShader extends THREE.ShaderMaterial {
         uCanvasNormal: { value: params.canvasNormal ?? new THREE.Vector3(0, 1, 0) },
         uBaseOpacity: { value: params.opacity ?? 1.0 },
         uSeasonOpacity: { value: params.seasonOpacity ?? 1.0 },
+        uFalloffEdge1: { value: params.falloffEdge1 ?? 0.3 },
       },
       vertexShader: /* glsl */ `
         uniform vec3 uCanvasNormal;
@@ -66,10 +70,11 @@ export class AngleOpacityShader extends THREE.ShaderMaterial {
         uniform vec3 uCanvasNormal;
         uniform float uBaseOpacity;
         uniform float uSeasonOpacity;
+        uniform float uFalloffEdge1;
         varying vec3 vViewDirection;
         void main() {
           float dp = abs(dot(normalize(vViewDirection), normalize(uCanvasNormal)));
-          float angleAlpha = smoothstep(0.0, 0.3, dp);
+          float angleAlpha = smoothstep(0.0, uFalloffEdge1, dp);
           gl_FragColor = vec4(uBaseColor, uBaseOpacity * angleAlpha * uSeasonOpacity);
         }
       `,
@@ -89,6 +94,13 @@ export class AngleOpacityShader extends THREE.ShaderMaterial {
   set seasonOpacity(v: number) {
     this.uniforms.uSeasonOpacity.value = v;
   }
+
+  get falloffEdge1(): number {
+    return this.uniforms.uFalloffEdge1.value as number;
+  }
+  set falloffEdge1(v: number) {
+    this.uniforms.uFalloffEdge1.value = v;
+  }
 }
 
 /**
@@ -105,6 +117,8 @@ export function patchMaterialForAngleOpacity(
   material: THREE.Material & { uniforms: Record<string, { value: unknown }> },
   canvasNormal: THREE.Vector3,
   seasonOpacity = 1.0,
+  /** The upper edge of the smoothstep falloff (turn 14c). Default 0.3 (WIDE). */
+  falloffEdge1 = 0.3,
 ): void {
   // Add the uCanvasNormal uniform if not already present.
   if (!material.uniforms.uCanvasNormal) {
@@ -118,6 +132,13 @@ export function patchMaterialForAngleOpacity(
     material.uniforms.uSeasonOpacity = { value: seasonOpacity };
   } else {
     material.uniforms.uSeasonOpacity.value = seasonOpacity;
+  }
+
+  // Add the uFalloffEdge1 uniform (Phase E, turn 14c).
+  if (!material.uniforms.uFalloffEdge1) {
+    material.uniforms.uFalloffEdge1 = { value: falloffEdge1 };
+  } else {
+    material.uniforms.uFalloffEdge1.value = falloffEdge1;
   }
 
   const originalOnBeforeCompile = material.onBeforeCompile;
@@ -137,6 +158,9 @@ export function patchMaterialForAngleOpacity(
     }
     if (!shader.uniforms.uSeasonOpacity) {
       shader.uniforms.uSeasonOpacity = material.uniforms.uSeasonOpacity;
+    }
+    if (!shader.uniforms.uFalloffEdge1) {
+      shader.uniforms.uFalloffEdge1 = material.uniforms.uFalloffEdge1;
     }
 
     // Inject the view-direction varying into the vertex shader.
@@ -163,10 +187,11 @@ export function patchMaterialForAngleOpacity(
       /* glsl */ `
         uniform vec3 uCanvasNormal;
         uniform float uSeasonOpacity;
+        uniform float uFalloffEdge1;
         varying vec3 vViewDirection;
         float angleOpacityAlpha() {
           float dp = abs(dot(normalize(vViewDirection), normalize(uCanvasNormal)));
-          return smoothstep(0.0, 0.3, dp);
+          return smoothstep(0.0, uFalloffEdge1, dp);
         }
         void main() {
       `,

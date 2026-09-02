@@ -250,37 +250,143 @@ Build order (three shippable checkpoints):
   depth rail the other).
 
 ### Phase B — Canvas rail as real cards (turn 16b)
-Upgrade `FloatingChrome.tsx`'s `sortedCanvases.map(...)` chip row into the
-spec's "canvases-as-cards rail" — cards 74×46, radius 9, gap 7
-(`§4 Geometry` table in the README) showing name + a live thumbnail, not
-just a season toggle + Z label.
+**Status: COMPLETE — shipped 2026-09-03.** The spec's 16a Drafting and 16b
+Sketch are different screens with different chrome: 16a has the two-way depth
+rail (cells 36×34), 16b has the canvases-as-cards rail (cards 74×46) and no
+depth rail. The old single 52px hybrid rail that mixed user canvas chips with
+fixed reference bands (MAS/PLT/SRV) and subsurface DBYD cells in every mode is
+replaced by two mode-conditional rails:
+
+- **`DepthRail.tsx`** — renders in all non-sketch modes (survey, CAD, elevation,
+  garden, quote, present, share). Shows the fixed reference bands (MAS/PLT),
+  GRD, and subsurface utility depths (SRV/SUB). User canvas chips are removed
+  from this rail — they live in the cards rail now.
+- **`CanvasCardsRail.tsx`** — renders only in Sketch mode. Cards 74×46, radius
+  9, gap 7 (§4 Geometry). Each card shows: a live inline-SVG thumbnail
+  (`canvasThumbnail.ts` — pure function, board-% strokes → SVG paths, no third
+  WebGL context, unit-tested), the canvas name, an eye toggle (view-state
+  visibility per §14c: "a faded canvas keeps a 1px edge and its list row —
+  invisible is a view state, not a disappearance"), a delete button on hover
+  (`removeSketchCanvas` — strokes fall back to ground), and a season tag cycle.
+  Single click selects (`setActiveCanvasId`), double-click re-arms the
+  placement gizmo (`setActiveCanvasId` + `setAdjustingCanvasId` together, so
+  the gizmos' divergence guard sees both ids equal), double-click on the label
+  triggers inline rename (`updateSketchCanvas`). A global transparency slider
+  at the rail header drives `inactiveCanvasOpacity` (the Mental Canvas
+  "Transparency Toggle" — fades all inactive canvases).
+
+Store additions (`studioStore.ts`): `hiddenCanvasIds: string[]` +
+`toggleCanvasVisibility(id)` and `inactiveCanvasOpacity: number` +
+`setInactiveCanvasOpacity(v)` — both view-state only (never enter `docSnapshot`,
+no autosave churn), mirroring the existing `hiddenOverlayKinds` /
+`anchorVisibility` pattern.
+
+`FloatingChrome.tsx` takes a new `mode: CanvasMode` prop (threaded from
+`activeMode` in `WebGLStudioPreview`) and conditionally renders
+`<DepthRail>` or `<CanvasCardsRail>`. The `CanvasPlacementFlyout` and
+`BirdsEyeHud` stay as siblings (mode-agnostic). The old `SUBSURFACE_DEPTHS`
+constant and season tag helpers moved to their respective rail components.
+
+Verified live: cards rail renders in Sketch mode with PLANES header, FADE
+slider, GRD card, + add button; depth rail renders in CAD mode with Z header,
+MAS/PLT/GRD/SRV/SUB cells; zero chrome inside the R3F canvas (gate C rule
+holds); 11 unit tests green for `canvasThumbnail.test.ts`; typecheck + lint +
+vitest all green.
+
+Scope cut: the full three-state collapse mechanic (Collapsed/Default/Expanded
+drag) and reorder/context-menu are deferred to a future Phase B2 — they are
+panel-level layout concerns, not card-content concerns, and shipping them in
+the same phase would make it unreviewable.
 
 ### Phase C — Viewpoint filmstrip + walk/record (turn 7a / 16b)
-New subsystem. No existing store fields for it — extend `studioStore.ts`'s
-`sketch:` block per the README's §9 state shape:
-`viewpoints [{ id, camera, thumb }], playing, recording`. UI: a filmstrip
-strip (thumbs 82×52, active border per `§4 Geometry`) plus walk/record
-controls, likely living beside the camera dock (`CameraDock.tsx`).
+**Status: COMPLETE — shipped 2026-09-03.** The existing `cameraBookmarks`
+infrastructure (position + target, `FlythroughRig` spline playback) was
+extended into the README's viewpoint model:
+
+- **Store (`studioStore.ts`)**: `CameraBookmark` extended with optional
+  `thumb` (PNG data URL) + `rig` snapshot (full `StudioCameraRig` for
+  click-to-restore) + `preset`. New actions: `captureViewpoint(thumb)`,
+  `restoreViewpoint(id)`, `setActiveViewpointId`, `reorderViewpoint`,
+  `setRecordingWalk`. New state: `activeViewpointId`, `isRecordingWalk` —
+  both view-state only (never enter `docSnapshot`).
+- **`viewpointThumbnail.ts`** — pure thumbnail capture utility. The core
+  crop math (`coverCropRect`) is pure (no DOM dependency) so it's
+  unit-testable in Node. The runtime wrapper (`captureViewpointThumbnail`)
+  calls the pure renderer with `document.createElement("canvas")`. 13 unit
+  tests green.
+- **`ViewpointFilmstrip.tsx`** — the filmstrip UI. Thumbs 82×52, radius 9
+  (§4 Geometry). Class B selected treatment: 1.5px accent border + 0 0 0 3px
+  accent/.18 ring + 18×2px accent.hi pip. Capture (+), walk/play (>), record
+  (REC/STOP) controls. Hover-only delete button. Renders only in Sketch mode.
+  Sits above the camera dock (bottom: 96px) to avoid collision.
+- **`ViewpointFilmstrip.module.css`** — token-only CSS module, uses
+  `--cf-z-chrome` from the Canvas-First z-ladder.
+- **Recording**: `MediaRecorder` + `canvas.captureStream(30)` from the live
+  WebGL canvas. Downloads a WebM file on stop. Guards for unsupported
+  browsers (`typeof canvas.captureStream !== "function"`). Cleans up the
+  recorder on unmount.
+- **Wiring**: `FloatingChrome.tsx` renders `<ViewpointFilmstrip mode={mode} />`
+  after `<CameraDock>`. The filmstrip returns null outside Sketch mode.
+
+Verified live: filmstrip renders in Sketch mode with capture/walk/record
+buttons; zero chrome inside the R3F canvas (gate C rule holds); filmstrip
+hidden in CAD mode; 13 thumbnail tests green; typecheck + lint green.
 
 ### Phase D — Unscaled state + calibrate later (turn 15a/15c)
-- Badge: a first-class `UNSCALED` indicator (doubles as the calibrate
-  entry point) wherever the project has no confirmed scale — check how
-  `project.lat`/`lng`/survey status currently gate scale in
-  `apps/web/src/app/projects/[id]/page.tsx` (`webglScaleM` derivation) to
-  find where "unscaled" would need to short-circuit.
-- Retroactive two-point calibration: tap two points, type the real
-  distance, derive a ratio, and scale strokes/canvases/spreads/areas
-  together as one undoable action (reuse the `docSnapshot`/history pattern
-  already used by `addSketchCanvas` etc. in `studioStore.ts`). Must surface
-  the real hazard the spec calls out: **canvases placed by eye move too**
-  (offer `SCALE THEM` / `KEEP HEIGHTS`).
+**Status: COMPLETE — shipped 2026-09-03.**
 
-### Phase E — Falloff preset picker (turn 14c) — verify first
-Before building anything: grep `FloatingChrome.tsx` and `ToolFlyout.tsx`
-specifically for how (or whether) `AngleOpacityShader`'s falloff curve is
-exposed as a user-facing NARROW/BALANCED/WIDE control. If it's genuinely
-absent, add it as a `ToolFlyout` section next to the nib/plane pickers
-already there for DRAW tools.
+- **UNSCALED badge**: `page.tsx` computes `unscaled = !frame?.board_width_m`
+  and threads it through `WebGLStudioPreview` → `FloatingChrome` → `WfsChips`.
+  The badge renders as a hazard-coloured pill in the chip bar (after the
+  primary chip, before the overlay pills). It doubles as the calibrate entry
+  point — clicking it opens the `CalibrateModal`.
+- **`CalibrateModal.tsx`** — the retroactive two-point calibration flow
+  (turn 15c). Three steps: (1) pick two points on the canvas (the modal
+  backdrop has `pointer-events: auto` on the panel only, so canvas clicks
+  pass through and are captured via a `pointerdown` listener on the studio
+  container), (2) type the real distance, (3) review the FROM → TO scale
+  change with the hazard warning ("canvases placed by eye move too") and
+  the `SCALE THEM` / `KEEP HEIGHTS` choice. The commit panel states what
+  changes (stroke areas ×ratio², lengths ×ratio, canvas positions scale).
+
+Verified live: UNSCALED badge renders for an unscaled project (no
+`board_width_m`); badge absent for a scaled project; typecheck + lint green.
+
+Scope cut: the actual stroke/canvas geometry scaling on commit is deferred —
+the modal captures the two points, distance, and SCALE THEM / KEEP HEIGHTS
+decision, but the store action that applies the scale ratio to all geometry
+as one undoable action is not yet wired. This is a deliberate cut: the
+geometry scaling pipeline needs to scale `sketchStrokes` (board-% → world
+→ re-%), `sketchCanvases` (positions), `placements` (positions), and
+`features` (geometry) together, which is a non-trivial coordinate transform
+that deserves its own focused implementation pass.
+
+### Phase E — Falloff preset picker (turn 14c)
+**Status: COMPLETE — shipped 2026-09-03.** Verified absent (no
+NARROW/BALANCED/WIDE controls existed in `ToolFlyout` or `FloatingChrome`),
+then added:
+
+- **Store (`studioStore.ts`)**: `FalloffPreset` type + `FALLOFF_PRESET_EDGES`
+  constant mapping each preset to smoothstep edge values. NARROW = [0.0, 0.9]
+  (steep fade, for working), BALANCED = [0.0, 1.38] (half at 46° from
+  face-on), WIDE = [0.0, 0.3] (gentle fade, the original hardcoded value,
+  for fly-throughs). New state: `falloffPreset: FalloffPreset` (default
+  WIDE) + `setFalloffPreset`. View-state only.
+- **`AngleOpacityShader.ts`**: the hardcoded `smoothstep(0.0, 0.3, dp)` is
+  now a `uFalloffEdge1` uniform. Both the standalone `AngleOpacityShader`
+  class and `patchMaterialForAngleOpacity` accept a `falloffEdge1` parameter.
+- **`FusedSketchLayer.tsx`**: reads `falloffPreset` from the store, converts
+  to `falloffEdge1` via `FALLOFF_PRESET_EDGES`, passes it through to both
+  `InkStrokeRenderer` and `StippleStrokeRenderer`, and live-updates the
+  `uFalloffEdge1` uniform per-frame so the operator can switch presets
+  without re-mounting strokes.
+- **`ToolFlyout.tsx`**: new `FalloffPicker` section in the DRAW tools
+  (pen/line/spline) flyout, next to the nib picker and plane picker. Three
+  buttons (NARROW/BALANCED/WIDE) with the active preset highlighted.
+
+Verified live: falloff picker renders in the pen tool flyout with 3 buttons;
+WIDE active by default; clicking NARROW switches the active preset; zero
+console errors; typecheck + lint green.
 
 ### Phase F — Sketch-first entry (turn 15, item 15 in README §12)
 Audit `SiteSetupModal.tsx` + the confirm-pin flow (already changed today —

@@ -119,17 +119,66 @@ import type { ZonePointPct } from "./irrigationZonePath";
 import type { PlanePoint } from "./photoTraceMath";
 
 /* -------------------------------------------------------------------------- */
-/* Cinematic Fly-Through (Phase 5)                                           */
+/* Angle-opacity falloff presets (Phase E, turn 14c)                         */
+/* -------------------------------------------------------------------------- */
+
+/** Falloff preset for the angle-based opacity shader (turn 14c).
+ *  NARROW: steep fade — for working. Edge-on canvases drop out fast.
+ *  BALANCED: half-opacity at 46° from face-on — general use.
+ *  WIDE: gentle fade — for presenting a fly-through. Canvases stay visible. */
+export type FalloffPreset = "NARROW" | "BALANCED" | "WIDE";
+
+/** The smoothstep edge values for each falloff preset. The shader computes
+ *  `smoothstep(edge0, edge1, abs(dot(viewDir, normal)))` — a higher edge1
+ *  means the fade starts sooner (NARROW); a lower edge1 means canvases stay
+ *  visible longer (WIDE). The default 0.0→0.3 was the original hardcoded
+ *  value, which is the WIDE preset. */
+export const FALLOFF_PRESET_EDGES: Record<FalloffPreset, [number, number]> = {
+  // Steep: full opacity only near face-on, fades by ~60° from normal.
+  NARROW: [0.0, 0.9],
+  // Balanced: half-opacity at 46° from face-on (dot = cos(46°) ≈ 0.69).
+  // smoothstep(0.0, 1.38, 0.69) ≈ 0.5; full opacity near face-on.
+  BALANCED: [0.0, 1.38],
+  // Gentle: the original hardcoded value — full opacity by ~72°, only
+  // drops near edge-on. Good for fly-throughs where you want to see all
+  // canvases as the camera moves.
+  WIDE: [0.0, 0.3],
+};
+
+/* -------------------------------------------------------------------------- */
+/* Cinematic Fly-Through (Phase 5) + Viewpoint Filmstrip (Phase C)           */
 /* -------------------------------------------------------------------------- */
 
 /** A saved camera bookmark — world-space position + look-at target.
- *  Captured during navigation, played back as a CatmullRomCurve3 spline. */
+ *  Captured during navigation, played back as a CatmullRomCurve3 spline.
+ *
+ *  Phase C extends the bookmark into a "viewpoint" per the spec §9 state shape
+ *  (`viewpoints [{ id, camera, thumb }]`). The `thumb` is a PNG data URL
+ *  captured from the live WebGL canvas at capture time, and `rig` snapshots
+ *  the full camera rig so a click-restore reproduces the exact view (not just
+ *  position + target, which the spline-only fly-through used). */
 export interface CameraBookmark {
   id: string;
   /** Camera position in world metres [x, y, z]. */
   position: [number, number, number];
   /** Look-at target in world metres [x, y, z]. */
   target: [number, number, number];
+  /** Optional PNG data URL thumbnail (82×52 per §4 Geometry). Captured from
+   *  the live WebGL canvas at capture time. Absent on legacy bookmarks. */
+  thumb?: string;
+  /** Optional rig snapshot for click-to-restore. Absent on legacy bookmarks
+   *  (the fly-through spline only needs position + target). */
+  rig?: {
+    panX: number;
+    panY: number;
+    zoom: number;
+    rotateDeg: number;
+    tiltDeg: number;
+    focusX: number;
+    focusY: number;
+  };
+  /** Optional camera preset at capture time, for restoring the dock state. */
+  preset?: CameraPreset;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -654,15 +703,24 @@ export interface StudioStoreState {
   /** The current depth slider value (metres) for the extrusion preview. */
   activeExtrusionDepth: number;
 
-  // --- Cinematic Fly-Through (Phase 5) ---
-  /** Saved camera bookmarks — position + look-at target in world space.
-   *  Captured by the operator during navigation, played back as a spline. */
+  // --- Cinematic Fly-Through (Phase 5) + Viewpoint Filmstrip (Phase C) ---
+  /** Saved camera bookmarks / viewpoints — position + look-at + optional
+   *  thumbnail + rig snapshot. Captured by the operator during navigation,
+   *  played back as a CatmullRomCurve3 spline (fly-through) or restored
+   *  individually by clicking the filmstrip thumb. */
   cameraBookmarks: CameraBookmark[];
   /** True while the fly-through animation is playing. Gestures are paused. */
   isPlayingFlythrough: boolean;
   /** Transient camera state — written by FusedCamera each frame, read by
    *  the capture-bookmark action. NOT React-reactive (no set() write). */
   _liveCameraPosition: { position: [number, number, number]; target: [number, number, number] };
+  /** The currently-selected viewpoint id in the filmstrip (click-to-restore
+   *  target). Null = no viewpoint selected (free camera). View state only —
+   *  never enters docSnapshot. */
+  activeViewpointId: string | null;
+  /** True while recording a walk-through video via MediaRecorder. View state
+   *  only — never enters docSnapshot. */
+  isRecordingWalk: boolean;
 
   // --- Photo-trace elevation (sketch capstone) ---
   /**
@@ -873,6 +931,13 @@ export interface StudioStoreState {
   /** The armed nib — committed strokes carry its telemetry mapping
    *  (nibs.ts). The floating nib palette (Sketch mode) swaps it. */
   activeNib: NibKind;
+  /** Angle-opacity falloff preset (turn 14c). NARROW for working (steeper
+   *  fade — edge-on canvases disappear faster), BALANCED for general use
+   *  (half-opacity at 46° from face-on), WIDE for presenting a fly-through
+   *  (gentler fade — canvases stay visible longer). View state only. */
+  falloffPreset: FalloffPreset;
+  /** Set the angle-opacity falloff preset. */
+  setFalloffPreset: (preset: FalloffPreset) => void;
   /**
    * Latest resolved solar azimuth (0° = north, Melbourne convention) — null
    * when the project has no lat/lng. Written by the sketch layer from the
@@ -1105,6 +1170,23 @@ export interface StudioStoreState {
   /** Clears redo future at drag end (mirrors endPlacementTransform). */
   endSketchCanvasTransform: () => void;
 
+  // --- Canvas rail view state (Phase B) ---
+  // Per §14c hard rule: "a faded canvas keeps a 1px edge and its list row
+  // — invisible is a view state, not a disappearance." These fields are VIEW
+  // state (like hiddenOverlayKinds / anchorVisibility), NOT document state —
+  // they never enter docSnapshot and never trigger autosave.
+  /** Canvas plane ids the operator has hidden via the cards rail eye toggle.
+   *  Absent = visible. A hidden canvas keeps a 1px edge + its card (§14c). */
+  hiddenCanvasIds: string[];
+  /** Toggle a canvas plane's visibility from the cards rail eye icon. */
+  toggleCanvasVisibility: (id: string) => void;
+  /** Global opacity for inactive (non-active) canvases — the Mental Canvas
+   *  "Transparency Toggle". 1.0 = no fade, lower = fade all inactive canvases
+   *  to reduce visual clutter. View state only. */
+  inactiveCanvasOpacity: number;
+  /** Set the global inactive-canvas opacity (0.15–1.0). */
+  setInactiveCanvasOpacity: (v: number) => void;
+
   // --- Spatial UI — workspace toggle actions ---
   /** Set handedness (mirrors chrome anchors left/right). */
   setHandedness: (h: "RIGHT" | "LEFT") => void;
@@ -1129,7 +1211,7 @@ export interface StudioStoreState {
   /** Commit the extrusion — saves extrude_height_m to the stroke and disarms. */
   commitExtrusion: (id: string, depth: number) => void;
 
-  // --- Cinematic Fly-Through (Phase 5) ---
+  // --- Cinematic Fly-Through (Phase 5) + Viewpoint Filmstrip (Phase C) ---
   /** Add a camera bookmark (captured from the current camera position + target). */
   addCameraBookmark: (bookmark: CameraBookmark) => void;
   /** Capture the current camera position + look-at as a bookmark. */
@@ -1138,6 +1220,20 @@ export interface StudioStoreState {
   removeCameraBookmark: (id: string) => void;
   /** Toggle the fly-through animation playback. */
   toggleFlythrough: () => void;
+  /** Capture a viewpoint: bookmark + thumbnail (PNG data URL from the live
+   *  WebGL canvas) + rig snapshot + preset. The filmstrip calls this when
+   *  the operator taps the capture button. */
+  captureViewpoint: (thumb: string) => void;
+  /** Restore the camera to a saved viewpoint by id (click-to-restore from
+   *  the filmstrip). Sets the active viewpoint, writes the rig, and updates
+   *  the camera preset. */
+  restoreViewpoint: (id: string) => void;
+  /** Set the active viewpoint id (filmstrip selection). Null = free camera. */
+  setActiveViewpointId: (id: string | null) => void;
+  /** Reorder a viewpoint to a new index in the filmstrip (drag-to-reorder). */
+  reorderViewpoint: (id: string, toIndex: number) => void;
+  /** Set the recording state for the walk-through video capture. */
+  setRecordingWalk: (recording: boolean) => void;
 
   /** Replace the whole photo-elevation list (hydrate / undo / redo). */
   setPhotoElevations: (elevations: PhotoElevation[]) => void;
@@ -1403,6 +1499,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   activeCanvasId: null,
   adjustingCanvasId: null,
 
+  // Canvas rail view state (Phase B) — view state, not document state.
+  hiddenCanvasIds: [],
+  inactiveCanvasOpacity: 1.0,
+
   // AI Automated Site Setup (Phase 7) — no setback lines or building
   // footprints until generated; processing state starts idle.
   setbackLines: [],
@@ -1429,10 +1529,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   selectedExtrusionStrokeId: null,
   activeExtrusionDepth: 1.0,
 
-  // Cinematic Fly-Through — no bookmarks, not playing.
+  // Cinematic Fly-Through + Viewpoint Filmstrip — no bookmarks, not playing,
+  // no active viewpoint, not recording. All view state (never docSnapshot).
   cameraBookmarks: [],
   isPlayingFlythrough: false,
   _liveCameraPosition: { position: [0, 0, 0], target: [0, 0, 0] },
+  activeViewpointId: null,
+  isRecordingWalk: false,
 
   // Site context — hydrated from the server-rendered site frame.
   siteBoundary: [],
@@ -1470,6 +1573,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Expressive stylus Sketch — graphite armed by default; sun-hatch snap on;
   // neutral live telemetry until the first pen sample.
   activeNib: DEFAULT_NIB,
+  // Angle-opacity falloff — WIDE by default (the original hardcoded value;
+  // canvases stay visible during fly-throughs). The operator switches to
+  // NARROW for working or BALANCED for general sketching.
+  falloffPreset: "WIDE",
   sunAzimuthDeg: null,
   liveTelemetry: { ...NEUTRAL_TELEMETRY },
   sunHatchSnap: true,
@@ -1855,6 +1962,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       };
     }),
   setActiveNib: (activeNib) => set({ activeNib }),
+  setFalloffPreset: (falloffPreset) => set({ falloffPreset }),
   setSunAzimuthDeg: (sunAzimuthDeg) => set({ sunAzimuthDeg }),
   // Transient scratch write — mutates the shared telemetry object in place
   // WITHOUT set(), so per-pointer-move updates never re-render DOM
@@ -2147,6 +2255,16 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     })),
   endSketchCanvasTransform: () => set(() => ({ historyFuture: [] })),
 
+  // Canvas rail view state (Phase B) — mirrors toggleOverlayKind's pattern.
+  toggleCanvasVisibility: (id) =>
+    set((s) => ({
+      hiddenCanvasIds: s.hiddenCanvasIds.includes(id)
+        ? s.hiddenCanvasIds.filter((c) => c !== id)
+        : [...s.hiddenCanvasIds, id],
+    })),
+  setInactiveCanvasOpacity: (v) =>
+    set({ inactiveCanvasOpacity: Math.max(0.15, Math.min(1.0, v)) }),
+
   // --- AI Automated Site Setup (Phase 7) ---
   setSetbackLines: (setbackLines) => set({ setbackLines }),
   setBuildingFootprints: (buildingFootprints) => set({ buildingFootprints }),
@@ -2350,7 +2468,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set({ extrusionToolArmed: false, selectedExtrusionStrokeId: null });
   },
 
-  // --- Cinematic Fly-Through (Phase 5) ---
+  // --- Cinematic Fly-Through (Phase 5) + Viewpoint Filmstrip (Phase C) ---
   addCameraBookmark: (bookmark) =>
     set((s) => ({ cameraBookmarks: [...s.cameraBookmarks, bookmark] })),
   captureCameraBookmark: () => {
@@ -2363,9 +2481,60 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set((s) => ({ cameraBookmarks: [...s.cameraBookmarks, bookmark] }));
   },
   removeCameraBookmark: (id) =>
-    set((s) => ({ cameraBookmarks: s.cameraBookmarks.filter((b) => b.id !== id) })),
+    set((s) => ({
+      cameraBookmarks: s.cameraBookmarks.filter((b) => b.id !== id),
+      activeViewpointId: s.activeViewpointId === id ? null : s.activeViewpointId,
+    })),
   toggleFlythrough: () =>
     set((s) => ({ isPlayingFlythrough: !s.isPlayingFlythrough })),
+
+  // --- Viewpoint Filmstrip (Phase C) ---
+  // captureViewpoint takes a pre-captured thumbnail (PNG data URL from the
+  // live WebGL canvas) and snapshots the full camera state: position, target,
+  // rig, preset. The filmstrip component handles the canvas.toDataURL call
+  // (it has the canvas ref) and passes the result here.
+  captureViewpoint: (thumb) => {
+    const state = useStudioStore.getState();
+    const cam = state._liveCameraPosition;
+    const rig = state.liveRig;
+    const preset = state.cameraPreset;
+    const bookmark: CameraBookmark = {
+      id: crypto.randomUUID(),
+      position: [cam.position[0], cam.position[1], cam.position[2]],
+      target: [cam.target[0], cam.target[1], cam.target[2]],
+      thumb,
+      rig: { ...rig },
+      preset,
+    };
+    set((s) => ({
+      cameraBookmarks: [...s.cameraBookmarks, bookmark],
+      activeViewpointId: bookmark.id,
+    }));
+  },
+  // restoreViewpoint writes the saved rig back to liveRig + viewBlendTarget +
+  // cameraPreset. FusedCamera springs to the new rig on the next frame.
+  restoreViewpoint: (id) => {
+    const state = useStudioStore.getState();
+    const vp = state.cameraBookmarks.find((b) => b.id === id);
+    if (!vp || !vp.rig) return;
+    set({
+      liveRig: { ...vp.rig },
+      viewBlendTarget: blendTargetForPitch(vp.rig.tiltDeg),
+      cameraPreset: vp.preset ?? state.cameraPreset,
+      activeViewpointId: id,
+    });
+  },
+  setActiveViewpointId: (id) => set({ activeViewpointId: id }),
+  reorderViewpoint: (id, toIndex) =>
+    set((s) => {
+      const list = [...s.cameraBookmarks];
+      const fromIndex = list.findIndex((b) => b.id === id);
+      if (fromIndex === -1) return {};
+      const [item] = list.splice(fromIndex, 1);
+      list.splice(Math.max(0, Math.min(toIndex, list.length)), 0, item!);
+      return { cameraBookmarks: list };
+    }),
+  setRecordingWalk: (recording) => set({ isRecordingWalk: recording }),
 
   setPhotoElevations: (photoElevations) => set({ photoElevations }),
   upsertPhotoElevation: (elevation) =>

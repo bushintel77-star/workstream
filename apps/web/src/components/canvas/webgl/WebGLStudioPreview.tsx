@@ -144,6 +144,9 @@ import type { SelectionRef } from "./selectionPick";
 export interface WebGLStudioPreviewProps {
   projectId: string;
   scaleM: number;
+  /** True when the project has no confirmed scale (no site_frame.board_width_m).
+   *  Drives the UNSCALED badge in the chip bar (turn 15a/15c). */
+  unscaled?: boolean;
   boardAspect: number;
   boundaryPct: PctPoint[];
   buildingPct?: PctPoint[];
@@ -210,6 +213,7 @@ export interface WebGLStudioPreviewProps {
 export function WebGLStudioPreview({
   projectId,
   scaleM,
+  unscaled = false,
   boardAspect,
   boundaryPct,
   buildingPct,
@@ -1613,9 +1617,11 @@ export function WebGLStudioPreview({
             handedness/mode toggles, readout). Mirrors with handedness. */}
         <FloatingChrome
           scaleM={scaleM}
+          unscaled={unscaled}
           boardAspect={boardAspect}
           northBearingDeg={northBearingDeg}
           heightmapPoints={liveData.heightmapPoints}
+          mode={activeMode}
           keylessOverlays={visibleLayers.siteTruth ? keylessOverlays : []}
           easementRingCount={visibleLayers.siteTruth ? easementsPct?.length ?? 0 : 0}
           canopy={canopyCompliance}
@@ -1714,11 +1720,11 @@ export function WebGLStudioPreview({
             scaleM={scaleM}
             canopy={
               canopyCompliance &&
-              canopyCompliance.assessment.status !== "insufficient-data"
+                canopyCompliance.assessment.status !== "insufficient-data"
                 ? {
-                    provided: canopyCompliance.assessment.matureProvided,
-                    required: canopyCompliance.assessment.required,
-                  }
+                  provided: canopyCompliance.assessment.matureProvided,
+                  required: canopyCompliance.assessment.required,
+                }
                 : null
             }
             onClose={() => useStudioStore.getState().setScheduleOpen(false)}

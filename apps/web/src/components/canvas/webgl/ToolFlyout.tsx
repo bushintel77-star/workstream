@@ -18,7 +18,7 @@
  */
 
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
-import { useStudioStore, type ToolId } from "./studioStore";
+import { useStudioStore, type ToolId, type FalloffPreset } from "./studioStore";
 import { NIBS, NIB_ORDER } from "./nibs";
 import { buildAssetPalette } from "./assetPalette";
 import styles from "./ToolFlyout.module.css";
@@ -141,6 +141,41 @@ function PlanePicker() {
   );
 }
 
+/** Falloff preset picker (turn 14c) — NARROW / BALANCED / WIDE.
+ *  Controls the angle-opacity falloff curve on canvas strokes.
+ *  NARROW for working (steeper fade), WIDE for presenting a fly-through. */
+function FalloffPicker() {
+  const falloffPreset = useStudioStore((s) => s.falloffPreset);
+  const setFalloffPreset = useStudioStore((s) => s.setFalloffPreset);
+  const presets = useRef<{ id: FalloffPreset; label: string; hint: string }[]>([
+    { id: "NARROW", label: "NARROW", hint: "for working" },
+    { id: "BALANCED", label: "BALANCED", hint: "general use" },
+    { id: "WIDE", label: "WIDE", hint: "for fly-through" },
+  ]).current;
+  return (
+    <div className={styles.section}>
+      <FlyoutHeader title="Falloff" hint="14c" />
+      <div className={styles.falloffRow} data-testid="falloff-picker">
+        {presets.map((p) => {
+          const active = falloffPreset === p.id;
+          return (
+            <button
+              key={p.id}
+              className={`${styles.falloffBtn} ${active ? styles.falloffBtnActive : ""}`}
+              data-falloff-preset={p.id}
+              data-active={active}
+              onClick={() => setFalloffPreset(p.id)}
+              title={`${p.label} — ${p.hint}`}
+            >
+              {p.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /** The content column for a given tool — null when the tool has no flyout. */
 function FlyoutContent({ tool }: { tool: ToolId }) {
   switch (tool) {
@@ -151,6 +186,7 @@ function FlyoutContent({ tool }: { tool: ToolId }) {
         <>
           <NibPicker />
           <PlanePicker />
+          <FalloffPicker />
         </>
       );
     case "tree":

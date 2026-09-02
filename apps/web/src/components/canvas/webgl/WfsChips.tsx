@@ -139,6 +139,11 @@ export interface WfsChipsProps {
   canopy?: CanopyComplianceResult | null;
   northBearingDeg?: number | null;
   scaleRatio?: string;
+  /** True when the project has no confirmed scale (turn 15a/15c). Shows the
+   *  UNSCALED badge as a first-class chip that doubles as the calibrate entry. */
+  unscaled?: boolean;
+  /** Called when the UNSCALED badge is clicked — opens the calibrate modal. */
+  onCalibrate?: () => void;
 }
 
 export function WfsChips({
@@ -148,6 +153,8 @@ export function WfsChips({
   canopy = null,
   northBearingDeg = null,
   scaleRatio = "1:200",
+  unscaled = false,
+  onCalibrate,
 }: WfsChipsProps) {
   const projectAddress = useStudioStore((s) => s.projectAddress);
   const cameraPreset = useStudioStore((s) => s.cameraPreset);
@@ -157,8 +164,8 @@ export function WfsChips({
   const cameraLabel =
     cameraPreset === "plan" ? "PLAN"
       : cameraPreset === "axo" ? "AXO 22°"
-      : cameraPreset === "sec" ? "SEC"
-      : "3D";
+        : cameraPreset === "sec" ? "SEC"
+          : "3D";
   const northLabel = northBearingDeg != null ? "N↑" : "N?";
 
   const derived = buildWfsOverlayChips(keylessOverlays, easementRingCount, canopy);
@@ -182,6 +189,16 @@ export function WfsChips({
         </span>
         <span className={styles.primaryMeta}>{cameraLabel} · {northLabel} · {scaleRatio}</span>
       </div>
+      {unscaled && (
+        <button
+          className={styles.unscaledBadge}
+          data-testid="unscaled-badge"
+          onClick={onCalibrate}
+          title="This site has no confirmed scale. Tap two known points and enter the real distance to calibrate. Drawing is never blocked."
+        >
+          UNSCALED
+        </button>
+      )}
       {visibleOverlays.length > 0 && <div className={styles.divider} />}
       {visibleOverlays.map((chip) => (
         <div
