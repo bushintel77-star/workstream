@@ -17,7 +17,7 @@
  * given a flyout when this component has something genuine to show).
  */
 
-import { useRef, type CSSProperties } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { useStudioStore, type ToolId } from "./studioStore";
 import { NIBS, NIB_ORDER } from "./nibs";
 import { buildAssetPalette } from "./assetPalette";
@@ -161,19 +161,54 @@ function FlyoutContent({ tool }: { tool: ToolId }) {
   }
 }
 
+/** Viewport margin the flyout must never cross — keeps it fully reachable
+ *  even when the active tile sits near the top or bottom of a tall ribbon
+ *  (e.g. SECTION, HISTORY). */
+const EDGE_MARGIN_PX = 20;
+
 export function ToolFlyout({ tool, handedness }: ToolFlyoutProps) {
   const content = FlyoutContent({ tool });
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [topPx, setTopPx] = useState<number | null>(null);
+
+  // §5.3: vertically centred on the active tile, arrow tip on the tile's
+  // centre line — not the ribbon or viewport centre. Measure the active
+  // tile's own position (it can sit anywhere across a 13-tool ribbon) and
+  // the flyout's own rendered height, then place its centre on the tile's.
+  useLayoutEffect(() => {
+    const tile = document.querySelector<HTMLElement>(
+      `[data-testid="tool-ribbon"] [data-tool-id="${tool}"][data-active="true"]`,
+    );
+    const panel = panelRef.current;
+    if (!tile || !panel) {
+      setTopPx(null);
+      return;
+    }
+    const tileCenter = tile.getBoundingClientRect().top + tile.getBoundingClientRect().height / 2;
+    const halfHeight = panel.getBoundingClientRect().height / 2;
+    const min = EDGE_MARGIN_PX + halfHeight;
+    const max = window.innerHeight - EDGE_MARGIN_PX - halfHeight;
+    setTopPx(Math.min(Math.max(tileCenter, min), max));
+  }, [tool, content]);
+
   if (!content) return null;
   // Ribbon sits hand-opposite (right-handed → left edge). So for a
   // right-handed operator the flyout blooms to the RIGHT of the ribbon; for a
   // left-handed operator (ribbon on the right edge) it blooms to the LEFT.
-  // `top: 50%` is overridden to sit vertical-centre in the parent composer.
   const onLeft = handedness === "LEFT";
   const origin = onLeft ? "right center" : "left center";
   return (
     <div
+      ref={panelRef}
       className={`${styles.flyout} ${onLeft ? styles.flyoutLeft : styles.flyoutRight}`}
-      style={{ "--flyout-origin": origin } as CSSProperties}
+      style={
+        {
+          "--flyout-origin": origin,
+          // Falls back to the CSS module's `top: 50%` only for the one
+          // frame before the tile has been measured.
+          ...(topPx != null ? { top: topPx } : {}),
+        } as CSSProperties
+      }
       data-testid="tool-flyout"
       data-tool-id={tool}
     >
