@@ -55,6 +55,7 @@ import { StrokeTransferLayer } from "./StrokeTransferLayer";
 import { StitchSnapLayer } from "./StitchSnapLayer";
 import { PhotoTracePlane } from "./PhotoTracePlane";
 import { PlacementGizmo } from "./PlacementGizmo";
+import { ParallelProjectionHandle } from "./ParallelProjectionHandle";
 import { TerrainMesh } from "./TerrainMesh";
 import { SuncastOverlay } from "./SuncastOverlay";
 import { DottedGroundField } from "./DottedGroundField";
@@ -1238,6 +1239,10 @@ export function StudioScene({
         boardAspect={boardAspect}
         heightmapPoints={heightmapPoints}
       />
+      {/* Parallel Projection — height-drag handle for a just-placed flat
+          sketch canvas plane (Mental Canvas roadmap Phase A1). Self-gates
+          on adjustingCanvasId + the plane being flat. */}
+      <ParallelProjectionHandle />
       <AnnotationLayer
         boundaryPct={boundaryPct}
         scaleM={scaleM}

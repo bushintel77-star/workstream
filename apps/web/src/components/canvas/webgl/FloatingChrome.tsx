@@ -17,10 +17,7 @@
  */
 
 import { useMemo, useState } from "react";
-import type {
-  DesignKeylessOverlay,
-  SketchCanvas,
-} from "@workstream/contracts";
+import type { DesignKeylessOverlay } from "@workstream/contracts";
 import type { CanopyComplianceResult } from "./canopyCompliance";
 import { useStudioStore } from "./studioStore";
 import { SiteSetupModal } from "./SiteSetupModal";
@@ -29,6 +26,7 @@ import { createElevationSampler } from "./terrainMath";
 import { padStrokes, padCutFill, CUT_FILL_CELL_M } from "./cutFill";
 import { ToolRibbon } from "./ToolRibbon";
 import { ToolFlyout } from "./ToolFlyout";
+import { CanvasPlacementFlyout } from "./CanvasPlacementFlyout";
 import { CameraDock } from "./CameraDock";
 import { WfsChips } from "./WfsChips";
 import { LayersPanel } from "./LayersPanel";
@@ -56,16 +54,6 @@ function seasonTagLabel(tag: SeasonTag): string {
 function zLabel(z: number): string {
   if (z === 0) return "GRD";
   return z.toFixed(1).replace(/\.0$/, "");
-}
-
-function createCanvas(z: number): SketchCanvas {
-  return {
-    id: crypto.randomUUID(),
-    position: [0, z, 0],
-    rotation: [0, 0, 0, 1],
-    label: `Plane +${z.toFixed(1)}m`,
-    season_tag: "ALL",
-  };
 }
 
 function useCutFill(
@@ -150,9 +138,9 @@ export function FloatingChrome({
   const setAnchorVisibility = useStudioStore((s) => s.setAnchorVisibility);
   const setActiveExtrusionDepth = useStudioStore((s) => s.setActiveExtrusionDepth);
   const commitExtrusion = useStudioStore((s) => s.commitExtrusion);
-  const addSketchCanvas = useStudioStore((s) => s.addSketchCanvas);
   const updateSketchCanvas = useStudioStore((s) => s.updateSketchCanvas);
   const [siteSetupOpen, setSiteSetupOpen] = useState(false);
+  const [placementFlyoutOpen, setPlacementFlyoutOpen] = useState(false);
   const scaleView = useStudioStore((s) => s.scaleView);
   const setScaleView = useStudioStore((s) => s.setScaleView);
   const liveCoord = useStudioStore((s) => s.liveCoord);
@@ -290,8 +278,9 @@ export function FloatingChrome({
         </button>
         <button
           className={`${styles.cell} ${styles.cellAdd}`}
-          onClick={() => addSketchCanvas(createCanvas(nextZ))}
-          title={`Add plane at +${nextZ}m`}
+          onClick={() => setPlacementFlyoutOpen((o) => !o)}
+          title="Place a new sketch plane"
+          data-testid="canvas-add-cell"
         >
           +
         </button>
@@ -321,6 +310,16 @@ export function FloatingChrome({
           </div>
         ))}
       </div>
+
+      {/* Canvas placement flyout — blooms off the rail's "+" cell. A sibling
+          of the rail (not nested inside it) so its viewport-relative
+          position math resolves against the same positioned ancestor as
+          ToolFlyout above, not the rail's own box. */}
+      <CanvasPlacementFlyout
+        open={placementFlyoutOpen}
+        onClose={() => setPlacementFlyoutOpen(false)}
+        defaultHeightM={nextZ}
+      />
 
       {/* Readout -- cut/fill volumes (bottom-left) */}
       <div className={`${styles.readoutGroup} ${readoutLeftSide}`} style={anchorStyle}>

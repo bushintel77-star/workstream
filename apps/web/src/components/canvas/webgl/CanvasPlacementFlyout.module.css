@@ -1,0 +1,197 @@
+/* Spatial Sketching — Canvas Placement Flyout (Mental Canvas roadmap,
+ * Phase A1). Same "bloom off an anchor" visual language as ToolFlyout.
+ * module.css — glass panel, arrow-tipped, 140ms scale-in bloom. */
+
+.flyout {
+  position: absolute;
+  top: 50%;
+  width: var(--lc-flyout-width, 238px);
+  padding: 14px 15px 13px;
+  border-radius: var(--lc-flyout-radius, 16px);
+  background: linear-gradient(
+    180deg,
+    rgba(32, 35, 37, 0.96),
+    rgba(23, 25, 27, 0.94)
+  );
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
+  box-shadow: var(--lc-flyout-shadow);
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: canvas-flyout-bloom 140ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* Horizontal placement is set inline (measured from the anchor's real
+ * rect — see CanvasPlacementFlyout.tsx) rather than guessed from a CSS
+ * width variable. These two only set the bloom's transform-origin so the
+ * panel scales in from the edge nearest its arrow. */
+.flyoutLeft {
+  transform-origin: right center;
+}
+
+.flyoutRight {
+  transform-origin: left center;
+}
+
+@keyframes canvas-flyout-bloom {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg) translateY(-50%);
+  background: rgba(30, 33, 35, 0.96);
+}
+
+.arrowLeft {
+  left: -5px;
+  border-left: 1px solid var(--lc-glass-border);
+  border-bottom: 1px solid var(--lc-glass-border);
+}
+
+.arrowRight {
+  right: -5px;
+  border-right: 1px solid var(--lc-glass-border);
+  border-top: 1px solid var(--lc-glass-border);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headerTitle {
+  font-family: var(--lc-font-ui);
+  font-size: var(--lc-fs-panel, 13px);
+  font-weight: 600;
+  color: var(--lc-ink);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group, 8.5px);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--lc-ink-30);
+}
+
+.textInput,
+.numberInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  background: rgba(232, 230, 224, 0.06);
+  border: 1px solid rgba(232, 230, 224, 0.14);
+  color: var(--lc-ink);
+  font-family: var(--lc-font-ui);
+  font-size: 13px;
+}
+
+.textInput:focus,
+.numberInput:focus {
+  outline: none;
+  border-color: var(--lc-accent-terrain);
+}
+
+.presetGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.preset {
+  padding: 7px 8px;
+  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  background: rgba(232, 230, 224, 0.06);
+  border: 1px solid rgba(232, 230, 224, 0.1);
+  cursor: pointer;
+  color: var(--lc-ink-60);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph, 9.5px);
+  font-weight: 600;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.preset:hover {
+  background: rgba(232, 230, 224, 0.1);
+  color: var(--lc-ink);
+}
+
+.orientationToggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.orientationButton {
+  padding: 8px 9px;
+  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  background: rgba(232, 230, 224, 0.06);
+  border: 1px solid rgba(232, 230, 224, 0.1);
+  cursor: pointer;
+  color: var(--lc-ink-60);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph, 9.5px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.orientationButton:hover {
+  background: rgba(232, 230, 224, 0.1);
+  color: var(--lc-ink);
+}
+
+.orientationActive {
+  background: var(--lc-accent-terrain);
+  border-color: var(--lc-accent-terrain);
+  color: var(--lc-accent-terrain-on);
+}
+
+.placeButton {
+  padding: 9px;
+  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  background: var(--lc-accent-terrain);
+  border: none;
+  cursor: pointer;
+  color: var(--lc-accent-terrain-on);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph, 9.5px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.placeButton:hover:not(:disabled) {
+  background: var(--lc-accent-terrain-hi);
+}
+
+.placeButton:disabled {
+  opacity: var(--lc-op-chips-quiet, 0.2);
+  cursor: not-allowed;
+}

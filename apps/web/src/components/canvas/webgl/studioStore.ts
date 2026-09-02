@@ -1085,6 +1085,26 @@ export interface StudioStoreState {
   /** Set the active canvas plane id (null = implicit ground plane). */
   setActiveCanvasId: (id: string | null) => void;
 
+  /** The plane a Parallel/Hinge Projection handle is actively adjusting
+   *  right after placement — null once dismissed or another tool arms.
+   *  Distinct from activeCanvasId: a plane can be active (drawing target)
+   *  without a gizmo showing, and vice versa isn't meaningful but this
+   *  keeps the gizmo from haunting every future selection of the plane. */
+  adjustingCanvasId: string | null;
+  setAdjustingCanvasId: (id: string | null) => void;
+  /** Pushes one undo snapshot for the whole drag ahead (mirrors
+   *  beginPlacementTransform — call once, on first pointer-down tick). */
+  beginSketchCanvasTransform: () => void;
+  /** Per-frame drag write — no history push (mirrors
+   *  setPlacementTransformTransient, minus boundary clamping: planes
+   *  aren't site-boundary-constrained). */
+  setSketchCanvasTransformTransient: (
+    id: string,
+    patch: Partial<Pick<SketchCanvas, "position" | "rotation">>,
+  ) => void;
+  /** Clears redo future at drag end (mirrors endPlacementTransform). */
+  endSketchCanvasTransform: () => void;
+
   // --- Spatial UI — workspace toggle actions ---
   /** Set handedness (mirrors chrome anchors left/right). */
   setHandedness: (h: "RIGHT" | "LEFT") => void;
@@ -1381,6 +1401,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // implicit ground plane (activeCanvasId = null) is the legacy default.
   sketchCanvases: [],
   activeCanvasId: null,
+  adjustingCanvasId: null,
 
   // AI Automated Site Setup (Phase 7) — no setback lines or building
   // footprints until generated; processing state starts idle.
@@ -2111,6 +2132,20 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       };
     }),
   setActiveCanvasId: (id) => set({ activeCanvasId: id }),
+
+  setAdjustingCanvasId: (id) => set({ adjustingCanvasId: id }),
+  beginSketchCanvasTransform: () =>
+    set((s) => ({
+      historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
+      historyFuture: [],
+    })),
+  setSketchCanvasTransformTransient: (id, patch) =>
+    set((s) => ({
+      sketchCanvases: s.sketchCanvases.map((c) =>
+        c.id === id ? { ...c, ...patch } : c,
+      ),
+    })),
+  endSketchCanvasTransform: () => set(() => ({ historyFuture: [] })),
 
   // --- AI Automated Site Setup (Phase 7) ---
   setSetbackLines: (setbackLines) => set({ setbackLines }),
