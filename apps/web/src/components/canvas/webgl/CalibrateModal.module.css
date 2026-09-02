@@ -187,6 +187,12 @@
   background: var(--lc-surface-3, var(--gs-surface-3));
 }
 
+.choiceBtnActive {
+  background: var(--lc-accent-terrain);
+  border-color: var(--lc-accent-terrain);
+  color: var(--lc-accent-terrain-on);
+}
+
 .nextBtn,
 .commitBtn {
   padding: 10px;

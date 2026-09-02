@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { guideFirstSketch } from "./firstSketchGuide";
 
 describe("guideFirstSketch — guided first-sketch handoff gate", () => {
-  it("arms only when the boundary is set, the board is empty, in sketch, and not e2e", () => {
+  it("arms when the board is empty, in sketch, and not e2e (with boundary)", () => {
     expect(
       guideFirstSketch({
         boundaryPointCount: 4,
@@ -13,15 +13,15 @@ describe("guideFirstSketch — guided first-sketch handoff gate", () => {
     ).toBe(true);
   });
 
-  it("never arms without a boundary", () => {
+  it("arms on a blank unscaled board with no boundary (turn 15: drawing never waits)", () => {
     expect(
       guideFirstSketch({
-        boundaryPointCount: 2,
+        boundaryPointCount: 0,
         hasDesignContent: false,
         mode: "sketch",
         isE2e: false,
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("never arms once content exists", () => {

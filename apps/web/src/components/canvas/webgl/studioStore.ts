@@ -1170,6 +1170,14 @@ export interface StudioStoreState {
   /** Clears redo future at drag end (mirrors endPlacementTransform). */
   endSketchCanvasTransform: () => void;
 
+  /** Retroactive calibration (turn 15c): scale all canvas plane positions
+   *  by the given ratio as one undoable action. Strokes are in board-% and
+   *  are NOT redrawn — the board_width_m change handles their world-space
+   *  scale. Canvas positions are in world metres and must be explicitly
+   *  scaled. `scaleHeights` = true → SCALE THEM (x,y,z); false → KEEP
+   *  HEIGHTS (x,z only, y unchanged). */
+  commitCalibration: (ratio: number, scaleHeights: boolean) => void;
+
   // --- Canvas rail view state (Phase B) ---
   // Per §14c hard rule: "a faded canvas keeps a 1px edge and its list row
   // — invisible is a view state, not a disappearance." These fields are VIEW
@@ -2254,6 +2262,27 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       ),
     })),
   endSketchCanvasTransform: () => set(() => ({ historyFuture: [] })),
+
+  commitCalibration: (ratio, scaleHeights) =>
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      // Scale canvas positions (world metres). Strokes are in board-% and
+      // are NOT redrawn — the board_width_m change handles their world scale.
+      const sketchCanvases = s.sketchCanvases.map((c) => {
+        const [x, y, z] = c.position;
+        return {
+          ...c,
+          position: scaleHeights
+            ? [x * ratio, y * ratio, z * ratio]
+            : [x * ratio, y, z * ratio],
+        } as SketchCanvas;
+      });
+      return {
+        sketchCanvases,
+        historyPast: past,
+        historyFuture: [],
+      };
+    }),
 
   // Canvas rail view state (Phase B) — mirrors toggleOverlayKind's pattern.
   toggleCanvasVisibility: (id) =>

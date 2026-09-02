@@ -80,6 +80,8 @@ export interface FloatingChromeProps {
   heightmapPoints: HeightmapPoint[];
   /** The active studio mode — drives which rail renders (16a depth vs 16b cards). */
   mode: CanvasMode;
+  /** Project id — needed by the calibrate modal to persist the new board_width_m. */
+  projectId: string;
   /** KEYLESS Vicmap/DELWP site-frame overlays → WFS chip pills (§5.4). */
   keylessOverlays?: DesignKeylessOverlay[];
   /** Title-plan easement ring count → the dig-safety easement pill. */
@@ -95,6 +97,7 @@ export function FloatingChrome({
   northBearingDeg,
   heightmapPoints,
   mode,
+  projectId,
   keylessOverlays = [],
   easementRingCount = 0,
   canopy = null,
@@ -328,6 +331,7 @@ export function FloatingChrome({
       {calibrateOpen && (
         <CalibrateModal
           scaleM={scaleM}
+          projectId={projectId}
           onClose={() => setCalibrateOpen(false)}
         />
       )}

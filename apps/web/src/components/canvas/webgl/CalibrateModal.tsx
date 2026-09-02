@@ -20,12 +20,16 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useStudioStore } from "./studioStore";
+import { saveDesignCanvasClient } from "../handoff/features/save/saveDesignCanvasClient";
 import styles from "./CalibrateModal.module.css";
 
 export interface CalibrateModalProps {
   /** The current scale (metres per 100 board-%). */
   scaleM: number;
+  /** Project id — needed to persist the new board_width_m. */
+  projectId: string;
   /** Called when the modal closes (cancel or commit). */
   onClose: () => void;
 }
@@ -33,13 +37,16 @@ export interface CalibrateModalProps {
 /** The two-point calibration flow has three steps. */
 type CalibrateStep = "pick" | "distance" | "review";
 
-export function CalibrateModal({ scaleM, onClose }: CalibrateModalProps) {
+export function CalibrateModal({ scaleM, projectId, onClose }: CalibrateModalProps) {
+  const router = useRouter();
   const sketchStrokes = useStudioStore((s) => s.sketchStrokes);
   const sketchCanvases = useStudioStore((s) => s.sketchCanvases);
+  const commitCalibration = useStudioStore((s) => s.commitCalibration);
   const [step, setStep] = useState<CalibrateStep>("pick");
   const [pointA, setPointA] = useState<{ x: number; y: number } | null>(null);
   const [pointB, setPointB] = useState<{ x: number; y: number } | null>(null);
   const [realDistance, setRealDistance] = useState("");
+  const [scaleHeights, setScaleHeights] = useState<boolean | null>(null);
 
   // Listen for canvas clicks to capture the two points. The modal backdrop
   // has pointer-events: none so clicks pass through to the canvas; we listen
@@ -92,15 +99,38 @@ export function CalibrateModal({ scaleM, onClose }: CalibrateModalProps) {
   const strokeCount = sketchStrokes.length;
   const canvasCount = sketchCanvases.length;
 
-  const onCommit = useCallback(() => {
-    // The actual scaling of strokes/canvases is a store action that
-    // creates one undoable history entry. For now, the modal commits
-    // by closing — the store action will be wired when the full
-    // scale-everything pipeline is implemented. The modal's job is
-    // to capture the two points + distance + the SCALE THEM / KEEP HEIGHTS
-    // decision and pass them to the store.
+  const onCommit = useCallback(async () => {
+    if (!newScaleM || scaleHeights === null) return;
+    const ratio = newScaleM / scaleM;
+    // 1. Scale canvas positions in the store (one undoable action).
+    //    Strokes are in board-% and are NOT redrawn — the board_width_m
+    //    change handles their world-space scale.
+    commitCalibration(ratio, scaleHeights);
+    // 2. Persist the new board_width_m. The API replaces site_frame
+    //    wholesale, so fetch the current canvas, merge board_width_m
+    //    into the existing site_frame, and send the full frame.
+    try {
+      const getRes = await fetch(`/api/projects/${projectId}/design-canvas`, {
+        cache: "no-store",
+      });
+      const existing = getRes.ok ? await getRes.json() : null;
+      const existingFrame = existing?.site_frame ?? null;
+      const mergedFrame = existingFrame
+        ? { ...existingFrame, board_width_m: newScaleM }
+        : { board_width_m: newScaleM, boundary: [], building: [], easements: [], services: [], levels: [] };
+      await saveDesignCanvasClient(projectId, {
+        placements: useStudioStore.getState().placements,
+        strokes: useStudioStore.getState().sketchStrokes,
+        canvases: useStudioStore.getState().sketchCanvases,
+        site_frame: mergedFrame,
+      });
+      // Refresh the page so it re-reads the new board_width_m → scaleM.
+      router.refresh();
+    } catch (err) {
+      console.error("[calibrate] failed to persist board_width_m", err);
+    }
     onClose();
-  }, [onClose]);
+  }, [newScaleM, scaleHeights, scaleM, commitCalibration, projectId, router, onClose]);
 
   return (
     <div className={styles.backdrop} data-testid="calibrate-modal">
@@ -192,15 +222,24 @@ export function CalibrateModal({ scaleM, onClose }: CalibrateModalProps) {
               </span>
             </div>
             <div className={styles.choiceRow}>
-              <button className={styles.choiceBtn} data-testid="calibrate-scale-them">
+              <button
+                className={`${styles.choiceBtn} ${scaleHeights === true ? styles.choiceBtnActive : ""}`}
+                data-testid="calibrate-scale-them"
+                onClick={() => setScaleHeights(true)}
+              >
                 SCALE THEM
               </button>
-              <button className={styles.choiceBtn} data-testid="calibrate-keep-heights">
+              <button
+                className={`${styles.choiceBtn} ${scaleHeights === false ? styles.choiceBtnActive : ""}`}
+                data-testid="calibrate-keep-heights"
+                onClick={() => setScaleHeights(false)}
+              >
                 KEEP HEIGHTS
               </button>
             </div>
             <button
               className={styles.commitBtn}
+              disabled={scaleHeights === null}
               onClick={onCommit}
               data-testid="calibrate-commit"
             >

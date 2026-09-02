@@ -352,14 +352,15 @@ hidden in CAD mode; 13 thumbnail tests green; typecheck + lint green.
 Verified live: UNSCALED badge renders for an unscaled project (no
 `board_width_m`); badge absent for a scaled project; typecheck + lint green.
 
-Scope cut: the actual stroke/canvas geometry scaling on commit is deferred —
-the modal captures the two points, distance, and SCALE THEM / KEEP HEIGHTS
-decision, but the store action that applies the scale ratio to all geometry
-as one undoable action is not yet wired. This is a deliberate cut: the
-geometry scaling pipeline needs to scale `sketchStrokes` (board-% → world
-→ re-%), `sketchCanvases` (positions), `placements` (positions), and
-`features` (geometry) together, which is a non-trivial coordinate transform
-that deserves its own focused implementation pass.
+Scope cut (resolved D2): the calibration commit is now wired. The store
+action `commitCalibration(ratio, scaleHeights)` scales canvas plane
+positions (world metres) as one undoable action — SCALE THEM scales
+[x,y,z], KEEP HEIGHTS scales [x,z] only. Strokes are in board-% and are
+NOT redrawn (the board_width_m change handles their world-space scale
+automatically). The modal persists the new `board_width_m` via a
+read-modify-write on the API (fetches the current site_frame, merges
+board_width_m, saves), then calls `router.refresh()` so the page
+re-reads the new scale.
 
 ### Phase E — Falloff preset picker (turn 14c)
 **Status: COMPLETE — shipped 2026-09-03.** Verified absent (no
@@ -389,12 +390,26 @@ WIDE active by default; clicking NARROW switches the active preset; zero
 console errors; typecheck + lint green.
 
 ### Phase F — Sketch-first entry (turn 15, item 15 in README §12)
-Audit `SiteSetupModal.tsx` + the confirm-pin flow (already changed today —
-see the routing work earlier in this session: confirm-pin now lands
-straight in Sketch mode) against the spec's first-run requirement: ribbon
-present with only the pen lit, one line of copy, three entries — Import a
-survey / **Trace an address** (default) / Blank site — no tour, no modal,
-no sample project.
+**Status: COMPLETE — shipped 2026-09-03.** The progressive disclosure gate
+was inverted: Sketch is now always unlocked (was gated behind `hasAerial`),
+and `suggestedMode` returns Sketch for a blank board (was Survey). A blank
+unscaled project now lands in Sketch mode by default with the "Draw / Your
+strokes land on the ground plane" hint and the UNSCALED badge.
+
+- **`canvas-mode.ts`**: `unlockedModes` now includes "sketch" from the start
+  (was gated behind `hasAerial`). `suggestedMode` returns "sketch" when
+  `!hasSketch` (was "survey" when `!hasAerial`).
+- **`firstSketchGuide.ts`**: the boundary gate was removed — the hint fires
+  on any empty board in Sketch mode, not just when boundary >= 3 points.
+  "Drawing must never wait on setup" (turn 15).
+- **`WebGLStudioPreview.tsx`**: hint copy changed from "Sketch the concept /
+  Drag to draw" to "Draw / Your strokes land on the ground plane" per spec.
+- **`page.tsx`**: the dead `?guide=1` survey-force flag was removed (no
+  caller passes it; `ConfirmPinClient` routes straight to `/projects/${id}`).
+
+Verified live: a fresh blank project lands in Sketch mode with the hint,
+UNSCALED badge, and full tool ribbon; zero console errors; typecheck +
+lint green; 13 canvas-mode + firstSketchGuide tests green.
 
 ## Verification per phase
 

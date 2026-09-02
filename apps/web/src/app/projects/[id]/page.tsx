@@ -61,7 +61,6 @@ export default async function ProjectCanvasPage({
     webgl?: string;
     svg?: string;
     tool?: string;
-    guide?: string;
     e2eStudioError?: string;
   }>;
 }) {
@@ -101,11 +100,9 @@ export default async function ProjectCanvasPage({
     hasQuote: Boolean(quoteOut),
   };
   /** Clamp locked deep-links before first paint — avoids cad→survey flash.
-   *  `?guide=1` forces Survey for first-run onboarding: the UnifiedPanel
-   *  shows the setup checklist there, so new users land on the guided path. */
-  const initialMode = (
-    sp.guide === "1" ? "survey" : resolveCanvasMode(sp.mode, progress)
-  ) as StudioMode;
+   *  Sketch is the default landing mode (turn 15: "drawing must never wait
+   *  on setup"); resolveCanvasMode now returns Sketch for a blank board. */
+  const initialMode = resolveCanvasMode(sp.mode, progress) as StudioMode;
 
   /** The WebGL studio is the only canvas mount. The legacy SVG studio
    * (?svg=1) was retired 2026-08-19 — see ONBOARDING.md. */

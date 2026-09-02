@@ -8,14 +8,14 @@ import {
 } from "./canvas-mode";
 
 describe("canvas progressive disclosure", () => {
-  it("starts with survey only", () => {
+  it("starts with survey + sketch (turn 15: drawing never waits on setup)", () => {
     const open = unlockedModes({
       hasAerial: false,
       hasSketch: false,
       hasCad: false,
       hasQuote: false,
     });
-    expect([...open]).toEqual(["survey"]);
+    expect([...open]).toEqual(["survey", "sketch"]);
     expect(
       suggestedMode({
         hasAerial: false,
@@ -23,10 +23,10 @@ describe("canvas progressive disclosure", () => {
         hasCad: false,
         hasQuote: false,
       }),
-    ).toBe("survey");
+    ).toBe("sketch");
   });
 
-  it("unlocks sketch, CAD, elevation, and garden after aerial", () => {
+  it("unlocks CAD, elevation, and garden after aerial (sketch already open)", () => {
     const open = unlockedModes({
       hasAerial: true,
       hasSketch: false,

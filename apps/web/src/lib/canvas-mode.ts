@@ -28,14 +28,14 @@ export type CanvasProgress = {
 
 /**
  * Progressive unlock:
- * Sketch + CAD both open after aerial/title (CAD is the Fit sheet line-draw surface).
- * Quote needs accepted CAD; Present opens with CAD too (so the deck composer is
- * available for layout even before costing); Share needs a live costed BOM.
+ * Sketch is always open — "drawing must never wait on setup" (turn 15).
+ * CAD opens after aerial/title (the Fit sheet line-draw surface needs a
+ * scaled board). Quote needs accepted CAD; Present opens with CAD too;
+ * Share needs a live costed BOM.
  */
 export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
-  const open = new Set<CanvasMode>(["survey"]);
+  const open = new Set<CanvasMode>(["survey", "sketch"]);
   if (progress.hasAerial) {
-    open.add("sketch");
     open.add("cad");
     open.add("elevation");
     open.add("garden");
@@ -50,10 +50,12 @@ export function unlockedModes(progress: CanvasProgress): Set<CanvasMode> {
   return open;
 }
 
-/** Suggested next mode for empty `?mode=` or after completing a step. */
+/** Suggested next mode for empty `?mode=` or after completing a step.
+ *  Sketch is the default landing mode — a blank project lands in Sketch,
+ *  not Survey, so the operator can draw immediately (turn 15). */
 export function suggestedMode(progress: CanvasProgress): CanvasMode {
-  if (!progress.hasAerial) return "survey";
   if (!progress.hasSketch) return "sketch";
+  if (!progress.hasAerial) return "survey";
   if (!progress.hasCad) return "cad";
   if (!progress.hasQuote) return "quote";
   return "share";

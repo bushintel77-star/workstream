@@ -1622,6 +1622,7 @@ export function WebGLStudioPreview({
           northBearingDeg={northBearingDeg}
           heightmapPoints={liveData.heightmapPoints}
           mode={activeMode}
+          projectId={projectId}
           keylessOverlays={visibleLayers.siteTruth ? keylessOverlays : []}
           easementRingCount={visibleLayers.siteTruth ? easementsPct?.length ?? 0 : 0}
           canopy={canopyCompliance}
@@ -1696,7 +1697,7 @@ export function WebGLStudioPreview({
                   color: "var(--la-ink)",
                 }}
               >
-                Sketch the concept
+                Draw
               </span>
               <span
                 style={{
@@ -1706,7 +1707,7 @@ export function WebGLStudioPreview({
                   maxWidth: 320,
                 }}
               >
-                Drag to draw · A for plants · Shift+3 for CAD
+                Your strokes land on the ground plane
               </span>
             </div>
           </div>
