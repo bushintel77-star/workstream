@@ -81,9 +81,10 @@ describe("strokeSegmentData", () => {
     );
     const data = strokeSegmentData(s, NIBS["ink-03"], SCALE_M, ASPECT);
     expect(Array.from(data.widths)).toEqual([1, 1]);
-    // 10% of a 40 m lot = 4 m per segment → fast → bleed clamped at 1.4.
-    expect(data.bleeds[0]).toBeCloseTo(1.4);
-    expect(data.bleeds[1]).toBeCloseTo(1.4);
+    // ink-03 has velocityBleed: false — bleed is neutral 0.5 regardless of
+    // segment spacing (spec 3.4: zero opacity bleed on the monoline).
+    expect(data.bleeds[0]).toBeCloseTo(0.5);
+    expect(data.bleeds[1]).toBeCloseTo(0.5);
   });
 
   it("graphite width follows pressure (heavy press → wide segments)", () => {

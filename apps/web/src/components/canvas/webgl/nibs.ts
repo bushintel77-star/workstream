@@ -11,8 +11,8 @@
  *   - 6B Graphite Lead   — tilt controls flat-edge shading; pressure controls
  *                          grain density & edge softness (gesture lines,
  *                          canopy masses, contour shading).
- *   - 0.3mm Technical Ink — pressure-invariant fixed monoline; velocity
- *                          slightly scales ink bleed (boundary tracing,
+ *   - 0.3mm Technical Ink — pressure-invariant fixed monoline, zero opacity
+ *                          bleed (scale-invariant drafting: boundary tracing,
  *                          setback lines, dimension offsets).
  *   - Chisel Felt Marker — tilt locks nib orientation; speed controls ink
  *                          saturation (surface zone filling, overlap banding).
@@ -60,6 +60,10 @@ export interface NibSpec {
   purpose: string;
   /** Base stroke width in CSS px (LineMaterial linewidth). */
   baseWidthPx: number;
+  /** The same weight expressed in mm at the 1:200 issued scale (3.5) —
+   *  derived from `baseWidthPx` through the single `mmToPx` conversion so
+   *  screen px can never drift from the issued-drawing weight. */
+  weightMm: number;
   /** Stroke color (CanvasStroke.color — hex). */
   color: string;
   /** 0–1 graphite grain density. */
@@ -75,6 +79,12 @@ export interface NibSpec {
   mapping: NibTelemetryMapping;
 }
 
+/** Inverse of `mmAtScaleToPx`: the issued-scale mm weight a px width
+ *  corresponds to at 1:200 (3.5). One conversion for the whole table. */
+function pxToWeightMm(px: number): number {
+  return (px / 96) * 25.4; // px at 96dpi → mm (scale factor 1 at 1:200)
+}
+
 export const NIBS: Record<NibKind, NibSpec> = {
   "graphite-6b": {
     kind: "graphite-6b",
@@ -83,6 +93,7 @@ export const NIBS: Record<NibKind, NibSpec> = {
     purpose:
       "Soft site gesture lines, tree canopy masses, contour shading — tilt shades the flat edge, pressure drives grain & softness",
     baseWidthPx: 3.5,
+    weightMm: pxToWeightMm(3.5),
     color: "#3B3B3B",
     grain: 0.55,
     edgeSoft: 0.45,
@@ -102,18 +113,19 @@ export const NIBS: Record<NibKind, NibSpec> = {
     label: "0.3mm ink",
     shortLabel: "Ink",
     purpose:
-      "Crisp boundary tracing, exact setbacks, dimension offsets — pressure-invariant monoline, velocity adds bleed",
+      "Crisp boundary tracing, exact setbacks, dimension offsets — pressure-invariant monoline with zero opacity bleed (spec 3.4)",
     baseWidthPx: 1.5,
+    weightMm: pxToWeightMm(1.5),
     color: PALETTE.sketchInk,
     grain: 0,
     edgeSoft: 0,
-    bleed: 0.35,
+    bleed: 0,
     opacity: 0.92,
     widthScale: [1, 1],
     mapping: {
       pressureWidth: false,
       tiltWidth: false,
-      velocityBleed: true,
+      velocityBleed: false,
       pressureDensity: false,
       altitudeRadius: false,
     },
@@ -125,6 +137,7 @@ export const NIBS: Record<NibKind, NibSpec> = {
     purpose:
       "Rapid surface zone fills (paving, lawn, decking) — tilt locks the nib edge, speed drives saturation and overlap banding",
     baseWidthPx: 9,
+    weightMm: pxToWeightMm(9),
     color: "#A52FD6",
     grain: 0,
     edgeSoft: 0.18,
@@ -146,6 +159,7 @@ export const NIBS: Record<NibKind, NibSpec> = {
     purpose:
       "Indicative soil, gravel, mulch textures and soft lawn edges — pressure sets dot density, altitude scales the dot radius",
     baseWidthPx: 2,
+    weightMm: pxToWeightMm(2),
     color: PALETTE.soilL500,
     grain: 0,
     edgeSoft: 0,
@@ -179,10 +193,12 @@ export function nibSpec(kind: NibKind | undefined): NibSpec {
  */
 export function nibSpecForStroke(stroke: CanvasStroke): NibSpec {
   if (stroke.nib) return NIBS[stroke.nib];
+  const widthPx = stroke.width_px ?? 2;
   return {
     ...NIBS["graphite-6b"],
     color: stroke.color ?? PALETTE.sketchInk,
-    baseWidthPx: stroke.width_px ?? 2,
+    baseWidthPx: widthPx,
+    weightMm: pxToWeightMm(widthPx),
     grain: 0,
     edgeSoft: 0,
     bleed: 0,
