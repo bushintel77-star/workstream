@@ -59,7 +59,7 @@ doc scannable. Key structural facts, by relevance to the phases below:
   mechanics. See Phase A below; this is what Phase A now builds.
 - **Bird's-Eye HUD** — a secondary mini-viewport (own camera + frustum
   wireframe + canonical view snap buttons) shown during a Hinge/Parallel
-  drag. Phase A3.
+  drag. Phase A3 — shipped.
 - **Three-state canvas panel** (Collapsed / Default / Expanded, dragged
   open) with thumbnail previews, a Transparency Toggle (fades all
   inactive canvases to reduce visual clutter — this is a strong,
@@ -140,14 +140,14 @@ remaining slice for sketch-mode's Mental Canvas feel).
 
 ### Phase A — Hinge/Parallel Projection canvas placement (turn 14b)
 
-**Status: A1 + A2 shipped 2026-09-03 (commits `e2ef9f1`, `9be0d78`), A3
-not started.** See "Mental Canvas UX reference" below for the source
-research. This phase replaces the single "+" button in
+**Status: COMPLETE — A1, A2 and A3 all shipped 2026-09-03 (commits
+`e2ef9f1`, `9be0d78`, plus A3).** See "Mental Canvas UX reference" below
+for the source research. This phase replaces the single "+" button in
 `FloatingChrome.tsx` with the *actual* Mental Canvas placement mechanic
 rather than a generic drag-arrows gizmo, decided after the user reviewed
 a full UX teardown of the real app mid-session.
 
-Both shipped checkpoints were verified live, not just unit-tested: A1 by
+All three checkpoints were verified live, not just unit-tested: A1 by
 placing a standing preset and confirming its persisted rotation
 quaternion via the API matched the unit tests exactly, and by
 drag-adjusting a flat plane's height with the drag collapsing to a
@@ -156,7 +156,14 @@ dragging its fold ring, and confirming via the autosave payload that the
 plane folded back toward flat while the bearing stayed *exactly*
 untouched — the trickiest part of the math (bearing preservation through
 incremental local-axis rotation composition) holds under real drag
-input, not just in the round-trip tests.
+input, not just in the round-trip tests. A3 by placing a standing plane
+at bearing 55°, watching the HUD draw it edge-on as a line (correct for
+a 90° fold seen from overhead) against the lot silhouette, dragging the
+fold ring and watching the outline open into a square in lockstep,
+pressing the HUD's AXO button and confirming the *main* camera retilted
+while the HUD's frustum wedge redrew for the new pose, and confirming on
+Escape that the second WebGL context was released without the main
+canvas losing its own (`isContextLost() === false`).
 
 One deliberate scope cut from the original three-handle plan: A2 ships
 only the fold-angle handle, not separate "two ground-anchor position
@@ -214,17 +221,33 @@ Build order (three shippable checkpoints):
   cheaper per-tick version once bearing is captured). Scope cut: ships
   only the fold handle, not separate ground-anchor position handles —
   see the note above.
-- **A3 (not started)** — `BirdsEyeHud.tsx`: its own small, separate
+- **✅ A3 (shipped)** — `BirdsEyeHud.tsx`: its own small, separate
   `@react-three/fiber` `<Canvas>` (**not** a scissored/`Hud`-primitive
   share of the main canvas — `SplitViewLens.tsx`'s own header comment
-  explains why that conflicts with the EffectComposer post-FX stack;
-  mount a second real canvas instead, same as split-view does), shown
-  only during an active A2 fold drag.
+  explains why that conflicts with the EffectComposer post-FX stack; a
+  second real canvas instead, same as split-view does), carrying the lot
+  silhouette, the main camera's frustum wireframe and the plane being
+  placed, over a fixed north-up overhead ortho camera. Geometry lives in
+  `birdsEyeFrustum.ts` (unit-tested — nothing in `apps/web` mounts an R3F
+  canvas in jsdom, so anything left inside the component would be
+  untestable). The two canvases share no React state: the main camera's
+  pose crosses via the transient `_liveCameraPosition` channel
+  `FusedCamera` already writes each frame, read in the HUD's own
+  `useFrame` through `getState()` and rewritten into pre-allocated
+  buffers — no subscription, no React render per frame.
 
-Full build plan (file-by-file, with the "not this session's Explore
-findings" caveats) lives in the CLI's own plan file when this was
-scoped — regenerate via `EnterPlanMode` if picking this up cold rather
-than assuming a stale plan file still matches `main`.
+  Three decisions worth keeping: it mounts on `adjustingCanvasId` (so it
+  covers A1's height drag as well as A2's fold, rather than a third copy
+  of the `isFlat` predicate); the mini-viewport is deliberately **not**
+  interactive, with its canonical view buttons re-aiming the MAIN camera
+  through `setCameraPreset` (a second orbit surface would fight the drag
+  already in progress); and it draws the plane clamped to the lot's long
+  side rather than at `SketchCanvasGroup`'s real five-lot-width raycast
+  mesh, which crossed the whole panel at every fold angle and buried the
+  silhouette it exists to be read against (`hudPlaneExtentM`). The panel
+  is inset past the tool ribbon at 128px, not hugged to the 22px edge —
+  both side edges are spoken for at every handedness (ribbon one side,
+  depth rail the other).
 
 ### Phase B — Canvas rail as real cards (turn 16b)
 Upgrade `FloatingChrome.tsx`'s `sortedCanvases.map(...)` chip row into the

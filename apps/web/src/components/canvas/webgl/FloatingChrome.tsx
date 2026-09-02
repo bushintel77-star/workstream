@@ -27,6 +27,7 @@ import { padStrokes, padCutFill, CUT_FILL_CELL_M } from "./cutFill";
 import { ToolRibbon } from "./ToolRibbon";
 import { ToolFlyout } from "./ToolFlyout";
 import { CanvasPlacementFlyout } from "./CanvasPlacementFlyout";
+import { BirdsEyeHud } from "./BirdsEyeHud";
 import { CameraDock } from "./CameraDock";
 import { WfsChips } from "./WfsChips";
 import { LayersPanel } from "./LayersPanel";
@@ -320,6 +321,11 @@ export function FloatingChrome({
         onClose={() => setPlacementFlyoutOpen(false)}
         defaultHeightM={nextZ}
       />
+
+      {/* Bird's-eye HUD — mounts itself only while a plane is under the
+          placement gizmo (Phase A3). Its own second WebGL context, so it
+          must not linger past the drag. */}
+      <BirdsEyeHud scaleM={scaleM} boardAspect={boardAspect} />
 
       {/* Readout -- cut/fill volumes (bottom-left) */}
       <div className={`${styles.readoutGroup} ${readoutLeftSide}`} style={anchorStyle}>
