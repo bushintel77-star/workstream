@@ -432,10 +432,11 @@ export function StudioCommandPalette({
       out.push({ kind: "project", id: `project-${project.id}`, project });
     }
 
-    for (const suggestion of addresses) {
-      out.push({ kind: "address", id: `address-${suggestion.id}`, suggestion });
-    }
-
+    // Commands come before addresses (not after): commands render
+    // synchronously from a fixed list, while addresses stream in from a
+    // debounced network call. Putting the async, still-growing group last
+    // means a row the operator is already looking at (or clicking towards)
+    // never gets shoved down mid-click by results that just landed.
     const filteredCommands = q
       ? actions.filter(
         (a) =>
@@ -445,6 +446,10 @@ export function StudioCommandPalette({
       : actions;
     for (const command of filteredCommands) {
       out.push({ kind: "command", id: command.id, command });
+    }
+
+    for (const suggestion of addresses) {
+      out.push({ kind: "address", id: `address-${suggestion.id}`, suggestion });
     }
 
     return out;
