@@ -28,6 +28,7 @@ import type { HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
 import { padStrokes, padCutFill, CUT_FILL_CELL_M } from "./cutFill";
 import { ToolRibbon } from "./ToolRibbon";
+import { ToolFlyout } from "./ToolFlyout";
 import { CameraDock } from "./CameraDock";
 import { WfsChips } from "./WfsChips";
 import { LayersPanel } from "./LayersPanel";
@@ -214,6 +215,13 @@ export function FloatingChrome({
 
       {/* Tool ribbon — vertical glass panel, hand-opposite edge (handoff §5) */}
       <ToolRibbon />
+
+      {/* Tool flyout (handoff §5.3 "blooming") — the second-tier column that
+          blooms beside the active ribbon tool. Only renders when the active
+          tool has real parameter state. Anchored to the ribbon's inner edge. */}
+      {activeTool !== "none" && (
+        <ToolFlyout tool={activeTool} handedness={handedness} />
+      )}
 
       {/* Layers panel — planes + analysis toggles + WFS overlays, drops below
           the chip bar while the LAYERS ribbon tool is armed. */}

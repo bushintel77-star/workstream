@@ -11,7 +11,8 @@ against the running `apps/web` Gold Standard 2026 WebGL studio. Each checklist i
 | Phases 0–5 | 11 | 25 | 7 | 1 | 0 |
 | Phases 6–11 | 10 | 17 | 26 | 2 | 0 |
 | Phases 12–17 | 1 | 22 | 41 | 0 | 1 |
-| **Total** | **22** | **64** | **74** | **3** | **1** |
+| **Total (at audit)** | **22** | **64** | **74** | **3** | **1** |
+| **Total (post-fix)** | **24** | **64** | **72** | **3** | **1** |
 
 **Headline honest read:** the **core drafting/section/schedule/layers** features shipped with tests, but the
 package is **not fully implemented**. Big product surfaces are absent (tool flyouts 4.10/4.11, mm-at-scale
@@ -82,8 +83,8 @@ the band audit settles.
 | 4.7 Active tool: accent fill, dark glyph, shadow, 4px corner triangle | DONE | Accent fill/dark glyph/`0 4px 14px accent/.35` (`ToolRibbon.module.css:154-158`); 4px triangle when `hasFlyout` (`ToolRibbon.tsx:411`, `:220-230`). |
 | 4.8 Active group header turns accent | DONE | `groupHeaderActive` (`ToolRibbon.module.css:113-115`); at rail width only active group's header renders (`ToolRibbon.tsx:321`). |
 | 4.9 Utility row: Layers + History as two 28px tiles | DONE | `UTILITY_TOOLS` (`:82-83`); `tileCompact` height 28px (`:173-179`); `utilityRow` (`:232-237`). |
-| 4.10 Only active tool blooms a 238/296px flyout, arrow on tile centre line, shadow right/down | MISSING | **No flyout component** (glob `*[Ff]lyout*`: none); `--lc-flyout-width` defined (`color-tokens.css:412-413`) but unused. Only the hasFlyout corner-triangle flag exists. |
-| 4.11 Flyout bloom 140ms scale .96→1 from its own arrow | MISSING | No flyout to animate. |
+| 4.10 Only active tool blooms a 238/296px flyout, arrow on tile centre line, shadow right/down | DONE | `ToolFlyout.tsx` + `ToolFlyout.module.css`: second-tier column blooms beside the ribbon's inner edge, arrow on the active tile's centre line, `--lc-flyout-width` 238px, `--lc-flyout-shadow` (offset right/down) reused. Content is honest, real store state only (nib picker for pen/line/spline, `buildAssetPalette` for tree/bed, plane target). |
+| 4.11 Flyout bloom 140ms scale .96→1 from its own arrow | DONE | `ToolFlyout.module.css` `@keyframes flyout-bloom`: `scale(.96)→scale(1)` with `transform-origin` on the arrow edge, `animation 140ms cubic-bezier(.32,.72,0,1) both`. Verified live (pen→4 nibs+3 planes; tree→8 assets). |
 | 4.12 ⚠ BLOCKED — tap-to-type numeric entry | MISSING | Design-declared blocked (stop-condition 1). No numeric entry; no flyout exists. |
 
 ## Phase 5 — Quiet state (4d)
