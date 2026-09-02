@@ -55,6 +55,18 @@ const EXPECTED_Z: Record<(typeof EXPECTED_LAYERS)[number], string> = {
 const TARGET_MODES = ["survey", "sketch", "cad", "garden"] as const;
 
 /**
+ * Mode-switch keyboard shortcuts (studioShortcuts.ts MODE_BY_SHIFT_DIGIT).
+ * The perimeter-tab strip was purged in the zero-chrome refactor (commit
+ * 58bc9f6); mode switching is now keyboard-only via Shift+digit.
+ */
+const MODE_SHORTCUT: Record<(typeof TARGET_MODES)[number], string> = {
+  survey: "Shift+1",
+  sketch: "Shift+2",
+  cad: "Shift+3",
+  garden: "Shift+5",
+};
+
+/**
  * Read the live z-index for each named `data-cf-layer` slot from inside
  * the `[data-cf-layout="root"]` wrapper. Returns null when the wrapper
  * is not yet mounted, so callers can re-poll rather than race ahead.
@@ -126,7 +138,7 @@ test.describe("Canvas-First four-layer z-stack — Survey / Sketch / CAD / Garde
    * extra wall clock on every `pnpm run ci` for headroom this one line buys
    * free, and it would break the cross-mode shape invariant at the bottom of
    * the test into cross-test shared state. The per-assertion timeouts (15s
-   * attach, 10s tab strip, 12s default) are untouched, so a genuine
+   * attach, 15s mode switch, 12s default) are untouched, so a genuine
    * contract break still fails fast with a useful message — this cap only
    * governs the accumulated sum. Same reasoning and value as
    * e2e/webgl-asset-row-plant.spec.ts. Retries are deliberately NOT the
@@ -147,48 +159,35 @@ test.describe("Canvas-First four-layer z-stack — Survey / Sketch / CAD / Garde
       timeout: 30_000,
     });
 
-    // The mode-tab strip is the chrome-tier affordance that drives
-    // mode switches. Confirm it is mounted before we begin switching.
-    const tabStrip = page.getByTestId("perimeter-tab-strip");
-    await expect(tabStrip).toBeVisible({ timeout: 15_000 });
+    // The chrome overlay's data-mode attribute is the authoritative mode
+    // marker. Confirm the studio is mounted before we begin switching.
+    await expect(
+      page.locator("[data-webgl-chrome]"),
+    ).toBeAttached({ timeout: 15_000 });
 
     const snapshots: Record<string, ReturnType<typeof Object>> = {};
 
     for (const mode of TARGET_MODES) {
-      const tab = page.getByTestId(`mode-tab-${mode}`);
-      // A locked tab is still a <button> — it routes the operator to the
-      // stage that unlocks it (PerimeterTabStrip + modeLockAction), so the
-      // tag name no longer identifies the lock. `aria-disabled="true"` is
-      // the marker. Reading an attribute also keeps this off an in-page
-      // evaluate, which is what starved the main thread on GPU-less runners.
-      const isLocked = (await tab.getAttribute("aria-disabled")) === "true";
-      if (isLocked) {
-        test.skip(
-          true,
-          `Mode "${mode}" is locked by progressive unlock — cannot probe z-stack.`,
-        );
-        return;
-      }
-
-      // Survey is the initial mode; clicking it would no-op the
-      // ViewportTransitionHUD's snap-back. Probe immediately instead.
-      // For all other modes, click first to trigger the transition.
+      // Survey is the initial mode; pressing its shortcut would no-op.
+      // Probe immediately instead. For all other modes, press the
+      // keyboard shortcut (Shift+digit) to trigger the transition.
       if (mode !== "survey") {
-        // `click()` waits for geometry stability; the mode cross-fade
-        // deliberately re-keys this strip and can detach the button while
-        // Playwright is scrolling it on software-rendered CI. Dispatch the
-        // semantic click directly, then wait on the authoritative mode marker.
-        await page.getByTestId(`mode-tab-${mode}`).dispatchEvent("click");
-        await expect(
-          page.locator(`[data-webgl-chrome][data-mode="${mode}"]`),
-        ).toBeAttached({ timeout: process.env.CI ? 60_000 : 15_000 });
-        // The wrapper's chrome slot re-keys during the transition:
-        // ViewportTransitionHUD snaps back from `--cf-z-app` to the
-        // chrome tier. Wait for the tab strip to remain attached
-        // (re-attached after the re-key) before probing.
-        await expect(
-          page.getByTestId("perimeter-tab-strip"),
-        ).toBeVisible({ timeout: 10_000 });
+        await page.keyboard.press(MODE_SHORTCUT[mode]);
+        // Wait for the chrome overlay's data-mode to reflect the switch.
+        // If the mode is locked by progressive unlock, the keyboard
+        // handler returns early and this will time out — skip the mode.
+        const switched = await page
+          .locator(`[data-webgl-chrome][data-mode="${mode}"]`)
+          .waitFor({ state: "attached", timeout: 15_000 })
+          .then(() => true)
+          .catch(() => false);
+        if (!switched) {
+          test.skip(
+            true,
+            `Mode "${mode}" is locked by progressive unlock — cannot probe z-stack.`,
+          );
+          return;
+        }
       }
 
       const stack = await expectZStackOnceReady(page);

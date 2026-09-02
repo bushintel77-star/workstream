@@ -322,6 +322,7 @@ select {
 }
 
 @media (hover: none) and (pointer: coarse) {
+
   [data-webgl-chrome] button,
   [data-webgl-chrome] a,
   [data-webgl-chrome] input:not([type="range"]) {
@@ -431,27 +432,6 @@ button:focus-visible {
   }
 }
 
-/*
- * WebGL studio dock/panel entrance. Lives here rather than in an inline
- * <style> tag inside WebGLStudioPreview because three components reference it
- * (the mode-body dock, the perimeter panel, FitSheetCard) — when it was inline
- * it was deleted with the surrounding JSX and every panel animation silently
- * resolved to nothing.
- */
-@keyframes wsPanelIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* AI prompt bar thinking pulse — injected by AiPromptBar (SaveStatusChip pattern; keeps raw decimals out of globals.css). */
-
 @media (prefers-reduced-motion: reduce) {
 
   *,
@@ -463,44 +443,6 @@ button:focus-visible {
   }
 }
 
-/*
- * Fit sheet print — when the studio is in fit-sheet mode, it owns the page.
- * Hide every other element (nav, toasts) via :has() scoping so
- * printing any non-studio page is unaffected.
- */
-@media print {
-
-  html:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]),
-  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) {
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #fff !important;
-    overflow: hidden !important;
-    height: auto !important;
-    width: auto !important;
-  }
-
-  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) * {
-    visibility: hidden;
-  }
-
-  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"],
-  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"] * {
-    visibility: visible;
-  }
-
-  /*
-   * The plan/ground is painted with CSS backgrounds — browsers drop those
-   * unless "Background graphics" is ticked, which printed a sheet with an
-   * EMPTY plot. Force colour output for the studio subtree so the working
-   * drawing always survives print / Save as PDF.
-   */
-  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"],
-  body:has([data-testid="handoff-design-studio"][data-fit-sheet="1"]) [data-testid="handoff-design-studio"] * {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-}
 /* ----------------------------------------------------------------
 /* ----------------------------------------------------------------
  * Studio chrome tokens (--hc-*) and workspace system (--ws-*).
@@ -714,13 +656,14 @@ button:focus-visible {
   --gs-font-h1: 20px;
 
   /* Spacing scale — used for gap / padding / short margins. */
-  --gs-space-1:  2px;
-  --gs-space-2:  4px;
-  --gs-space-3:  6px;
-  --gs-space-4:  8px;
-  --gs-space-6:  12px;
-  --gs-space-8:  16px;
-  --gs-space-5: 10px;   /* 5×2=10px — ladder is rung×2 (debt D7 rename) */
+  --gs-space-1: 2px;
+  --gs-space-2: 4px;
+  --gs-space-3: 6px;
+  --gs-space-4: 8px;
+  --gs-space-6: 12px;
+  --gs-space-8: 16px;
+  --gs-space-5: 10px;
+  /* 5×2=10px — ladder is rung×2 (debt D7 rename) */
 
   /* Transition scale — three rungs. The slider/keyframe HUD already
      uses cubic-bezier(0.22, 1, 0.36, 1) (the "ease-out-quint" family);
@@ -733,15 +676,15 @@ button:focus-visible {
      rgba(0,0,0,*) sites in CfzTierInspector.tsx so the operator
      tool inherits the same surface language as the contract. */
   --cf-dark-chrome-bg: rgba(0, 0, 0, 0.78);
-  --cf-dark-panel-bg:  rgba(0, 0, 0, 0.86);
+  --cf-dark-panel-bg: rgba(0, 0, 0, 0.86);
 
   /* Atmospheric-tint tokens — promoted from VignetteOverlay (rgb 17
      17 17 = ink-strong, neutral shadow) and the scrubber-handle glow
      in WebGLStudioPreview (amber 251,191,36 at 60% alpha). These carry
      content meaning, so they get named tokens rather than collapsing
      into the dark-chrome/panel rungs. */
-  --gs-shadow:           rgb(17 17 17);
-  --gs-warning-amber:    rgba(251, 191, 36, 0.6);
+  --gs-shadow: rgb(17 17 17);
+  --gs-warning-amber: rgba(251, 191, 36, 0.6);
 
   /*
    * drei `<Html zIndexRange>` ladder — companion to the four-slot CSS

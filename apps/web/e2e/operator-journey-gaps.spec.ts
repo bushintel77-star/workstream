@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createAddressProject, waitForApiReady } from "./helpers";
+import { createAddressProject } from "./helpers";
 
 /**
  * First-create locate loader — walks the full confirm-pin animation into the
@@ -38,57 +38,15 @@ test.describe("Confirm-pin locate loader", () => {
 });
 
 /**
- * Operator dashboard address composer — UI path into confirm-pin (not API seed).
- */
-test.describe("Home address composer", () => {
-  test.setTimeout(60_000);
-
-  test("composer navigates to confirm-pin", async ({ page, request }) => {
-    await waitForApiReady(request);
-
-    await page.goto("/home", { waitUntil: "networkidle" });
-    await expect(page.getByLabel("Project address")).toBeVisible({
-      timeout: 15_000,
-    });
-
-    const input = page.getByLabel("Project address");
-    await input.fill("6 Beatty Ave Armadale");
-
-    const options = page.locator('[role="option"]');
-    await options
-      .first()
-      .waitFor({ state: "visible", timeout: 12_000 })
-      .catch(() => {});
-
-    if ((await options.count()) > 0) {
-      await options.first().click();
-    } else {
-      await page.getByRole("button", { name: "Locate property →" }).click();
-    }
-
-    await expect(page).toHaveURL(/\/confirm-pin\?/, { timeout: 30_000 });
-    await expect(page.getByTestId("locate-loader-stage")).toBeVisible({
-      timeout: 15_000,
-    });
-  });
-});
-
-/**
- * Error surfaces — inline home banner vs scoped studio boundary vs app root.
+ * Error surfaces — scoped studio boundary vs app root.
+ *
+ * The home load-banner test was removed: /home now redirects signed-in
+ * operators straight to their most recent project canvas (commit d305f26),
+ * and the page fails open silently when listProjects throws — there is no
+ * inline error banner to probe. The studio-scoped and app-root boundaries
+ * remain and are tested below.
  */
 test.describe("Error boundaries", () => {
-  test("home shows inline load banner, not the app crash page", async ({
-    page,
-  }) => {
-    await page.goto("/home?e2eLoadError=1", { waitUntil: "networkidle" });
-    await expect(page.getByTestId("home-load-error")).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByText("Could not load projects")).toBeVisible();
-    await expect(page.getByText("That didn't land.")).toHaveCount(0);
-    await expect(page.getByLabel("Project address")).toBeVisible();
-  });
-
   test("studio route renders scoped error copy", async ({ page, request }) => {
     const { projectId } = await createAddressProject(request, {
       address: "9 Error Boundary Street, Melbourne VIC 3000",
