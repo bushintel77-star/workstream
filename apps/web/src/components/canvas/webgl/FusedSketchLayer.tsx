@@ -34,7 +34,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { Html, Line } from "@react-three/drei";
 import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import * as THREE from "three";
 import type { CanvasStroke, SketchCanvas } from "@workstream/contracts";
@@ -58,6 +58,7 @@ import { pctToWorld, worldToPct, type PctPoint, type HeightmapPoint } from "./co
 import { createElevationSampler } from "./terrainMath";
 import { pointInPolygonXZ } from "./cutFill";
 import { snapDrawPointer, type SnapHint } from "./snapWorld";
+import { stationAtPct } from "./stationing";
 import {
   bleedScaleForSegment,
   NEUTRAL_TELEMETRY,
@@ -121,6 +122,7 @@ export function FusedSketchLayer({
   const sketchCanvases = useStudioStore((s) => s.sketchCanvases);
   // The armed nib — committed strokes carry its telemetry mapping.
   const activeNib = useStudioStore((s) => s.activeNib);
+  const liveCoord = useStudioStore((s) => s.liveCoord);
   const setLiveTelemetry = useStudioStore((s) => s.setLiveTelemetry);
   const setSunAzimuthDeg = useStudioStore((s) => s.setSunAzimuthDeg);
   const sunMin = useStudioStore((s) => s.sunMin);
@@ -284,7 +286,14 @@ export function FusedSketchLayer({
       // Live ε-snap indicator — the stitcher's weld-node highlight.
       setHover({ x: snap.x, y: snap.z });
       // E·N·Z chip source (2.6) — the effective draw point in world metres.
-      useStudioStore.getState().setLiveCoord({ x: snap.x, z: snap.z });
+      // Chainage is derived from the SAME stationing the ruler uses (2.1):
+      // world X runs along the bottom stationing edge, so
+      // chainage = stationAtPct(x / scaleM * 100, scaleM) = x.
+      useStudioStore.getState().setLiveCoord({
+        x: snap.x,
+        z: snap.z,
+        chainage: stationAtPct((snap.x / scaleM) * 100, scaleM),
+      });
 
       if (last && last.distanceTo(new THREE.Vector3(snap.x, FLAT_Y, snap.z)) < 0.15) return;
       pointsRef.current.push(new THREE.Vector3(snap.x, FLAT_Y, snap.z));
@@ -533,6 +542,11 @@ export function FusedSketchLayer({
 
       {/* Draw-time snap marker (kind-coloured ring + glyph chip) */}
       {snapHint && <SnapMarker hint={snapHint} />}
+
+      {/* Nib crosshair (2.6) — scene-space crossing lines riding the nib.
+          Renders wherever the live draw point is, at the snap-resolved
+          coordinate, so it reads the exact point that will be committed. */}
+      {liveCoord && <NibCrosshair x={liveCoord.x} z={liveCoord.z} />}
     </group>
   );
 }
@@ -1143,6 +1157,37 @@ export function SnapMarker({ hint }: { hint: SnapHint }) {
           {glyph}
         </span>
       </Html>
+    </group>
+  );
+}
+
+/** Crosshair arm half-length in world metres — visible, not intrusive. */
+const CROSSHAIR_HALF_M = 0.5;
+
+/**
+ * The nib crosshair (spec 2.6) — two crossing lines in scene space riding the
+ * live draw point. Position comes from the store's `liveCoord` (the
+ * snap-resolved point that will be committed), so marker and committed ink
+ * can never disagree.
+ */
+export function NibCrosshair({ x, z }: { x: number; z: number }) {
+  const pts = useMemo(
+    () => ({
+      h: [
+        new THREE.Vector3(x - CROSSHAIR_HALF_M, FLAT_Y + 0.06, z),
+        new THREE.Vector3(x + CROSSHAIR_HALF_M, FLAT_Y + 0.06, z),
+      ],
+      v: [
+        new THREE.Vector3(x, FLAT_Y + 0.06, z - CROSSHAIR_HALF_M),
+        new THREE.Vector3(x, FLAT_Y + 0.06, z + CROSSHAIR_HALF_M),
+      ],
+    }),
+    [x, z],
+  );
+  return (
+    <group>
+      <Line points={pts.h} color={PALETTE.gsInk} lineWidth={1} transparent opacity={0.85} depthWrite={false} />
+      <Line points={pts.v} color={PALETTE.gsInk} lineWidth={1} transparent opacity={0.85} depthWrite={false} />
     </group>
   );
 }

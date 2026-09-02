@@ -5,6 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import * as THREE from "three";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import {
   INK_FRAGMENT_PATCHES,
@@ -67,5 +68,18 @@ describe("ink shader patches against the real three-stdlib LineMaterial", () => 
     expect(m.uniforms.uColor.value.getStyle()).toBe("rgb(139,111,78)");
     expect(m.uniforms.uOpacity.value).toBe(0.75);
     expect(m.transparent).toBe(true);
+  });
+
+  it("multiply blend darkens at crossing strokes (3.3)", () => {
+    // Marker ink multiplies the incoming stroke against what is already on
+    // the paper: src×dst with src contributing zero — so two crossing strokes
+    // darken where they overlap instead of overwriting.
+    const marker = new NibInkMaterial({ multiply: true });
+    expect(marker.blending).toBe(THREE.CustomBlending);
+    expect(marker.blendSrc).toBe(THREE.ZeroFactor);
+    expect(marker.blendDst).toBe(THREE.SrcColorFactor);
+    // A non-multiply nib must NOT carry the marker's build-up behaviour.
+    const plain = new NibInkMaterial({ multiply: false });
+    expect(plain.blending).not.toBe(THREE.CustomBlending);
   });
 });

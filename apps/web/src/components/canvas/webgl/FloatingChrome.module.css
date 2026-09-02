@@ -247,6 +247,12 @@
   font-size: 13px;
 }
 
+/* Stationing chainage inside the coord chip — derived, never stored. */
+.readoutChainage {
+  color: var(--lc-ink-40);
+  font-weight: 600;
+}
+
 .readoutValueFill {
   color: var(--lc-accent-mass);
   font-weight: 700;

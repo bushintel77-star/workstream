@@ -48,6 +48,12 @@ export function formatMetres(m: number): string {
 /** Default working-drawing grid snap (spec 2.7): 1.0 m, origin-aligned. */
 export const DEFAULT_STATIONING_STEP_M = 1.0;
 
+/** Stationing ladder (spec 2.3): major tick every 10m (=100px at 1:200),
+ *  minor every 2m (=20px), tick 0 at the site origin. Fixed by spec — not
+ *  adaptive to board size. */
+export const STATION_MAJOR_M = 10;
+export const STATION_MINOR_M = 2;
+
 /** Snap a world point to the origin-aligned stationing lattice (both axes). */
 export function snapToStationingGrid(
   x: number,
@@ -61,18 +67,24 @@ export function snapToStationingGrid(
 }
 
 export function buildStationTicks(scaleM: number): StationTick[] {
-  const minorM = niceStep(scaleM / 5);
+  // Spec 2.3 ladder: minor 2m, major 10m, origin-aligned. The final board
+  // edge always lands as a major tick even when it is not on the ladder.
   const ticks: StationTick[] = [];
-  for (let m = 0; m <= scaleM + 1e-6; m += minorM) {
-    const major =
-      Math.abs(m) < 1e-6 ||
-      m >= scaleM - 1e-6 ||
-      Math.round(m / minorM) % 5 === 0;
+  for (let m = 0; m < scaleM - 1e-6; m += STATION_MINOR_M) {
+    const major = Math.abs(m) < 1e-6 || Math.round(m) % STATION_MAJOR_M === 0;
     ticks.push({
       pct: (m / scaleM) * 100,
       metres: m,
       major,
       label: formatMetres(m),
+    });
+  }
+  if (ticks[ticks.length - 1]?.metres !== scaleM) {
+    ticks.push({
+      pct: 100,
+      metres: scaleM,
+      major: true,
+      label: formatMetres(scaleM),
     });
   }
   return ticks;

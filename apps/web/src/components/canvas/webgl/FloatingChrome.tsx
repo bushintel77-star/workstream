@@ -328,6 +328,11 @@ export function FloatingChrome({
           <div className={styles.readoutPillCut} data-testid="coord-chip">
             <span className={styles.readoutValueCut}>E {liveCoord.x.toFixed(1)}</span>
             {" · "}N {liveCoord.z.toFixed(1)} · Z {activeLabel}
+            {liveCoord.chainage !== undefined && (
+              <span className={styles.readoutChainage} data-testid="coord-chainage">
+                {" · "}STA {liveCoord.chainage.toFixed(1)}
+              </span>
+            )}
           </div>
         )}
         {cutFill ? (

@@ -372,8 +372,10 @@ export interface StudioStoreState {
   /** Selected fixed plane from the spec stack (1.1). Ground is the drawable
    *  target; planting/massing are proposed reference bands. */
   activePlaneId: FixedPlaneId;
-  /** Live pointer world XZ during a draw — the E·N·Z chip source (2.6). */
-  liveCoord: { x: number; z: number } | null;
+  /** Live pointer world XZ during a draw — the E·N·Z chip source (2.6).
+   *  `chainage` is metres along the stationing edge, derived via the single
+   *  `stationAtPct` source (2.1) — never computed ad hoc. */
+  liveCoord: { x: number; z: number; chainage?: number } | null;
   /** Surveyed-plan communication layers (bearing/RL/tags/hatches/callouts/scope). */
   surveyedPlanLayers: SurveyedPlanLayers;
   /** Survey communication dialect on the Survey screen. */
@@ -976,7 +978,7 @@ export interface StudioStoreState {
   setFitSheetOpen: (v: boolean) => void;
   setScheduleOpen: (v: boolean) => void;
   setActivePlaneId: (id: FixedPlaneId) => void;
-  setLiveCoord: (v: { x: number; z: number } | null) => void;
+  setLiveCoord: (v: { x: number; z: number; chainage?: number } | null) => void;
   setSurveyedPlanLayers: (patch: Partial<SurveyedPlanLayers>) => void;
   setSurveyAnnotationDialect: (dialect: AnnotationDialect) => void;
   setCadAnnotationLayers: (patch: Partial<SurveyedPlanLayers>) => void;

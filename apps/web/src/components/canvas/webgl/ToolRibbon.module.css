@@ -6,7 +6,9 @@
 /* ---- Ribbon container ---- */
 .ribbon {
   position: absolute;
-  top: 76px;
+  /* Spec §4.1: top-aligned at inset 30px — not vertically centred. The top
+   * chip bar clears this column (left:128px), so the two never collide. */
+  top: 30px;
   display: flex;
   flex-direction: column;
   padding: var(--lc-ribbon-padding);
@@ -87,7 +89,7 @@
 .groupDivider {
   height: 1px;
   background: var(--lc-glass-border);
-  margin: 7px 2px 6px;
+  margin: 6px 2px 5px;
   flex-shrink: 0;
 }
 
@@ -106,7 +108,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--lc-ink-30);
-  padding: 2px 0 4px;
+  padding: 1px 0 3px;
   transition: color 160ms ease;
 }
 
@@ -133,7 +135,9 @@
   justify-content: center;
   gap: 3px;
   width: 100%;
-  padding: 5px 0 4px;
+  /* Height budget (4.3/4.4): 3px 0 2px keeps the CAD pack 74px clear of
+   * the bottom on 1194×834. Labels stay at the 9.5px floor — never below. */
+  padding: 3px 0 2px;
   border-radius: var(--lc-ribbon-tile-radius);
   background: transparent;
   border: none;

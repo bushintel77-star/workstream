@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import {
   bleedScaleForSegment,
+  NIB_ORDER,
   nibSpec,
   nibSpecForStroke,
   NIBS,
@@ -12,6 +13,7 @@ import {
   widthScaleForPoint,
   type StylusTelemetry,
 } from "./nibs";
+import { mmAtScaleToPx } from "./mmScale";
 
 const NEUTRAL: StylusTelemetry = {
   pressure: 0.5,
@@ -96,12 +98,13 @@ describe("widthScaleForPoint", () => {
 });
 
 describe("bleedScaleForSegment", () => {
-  it("ink-03 bleed scales with segment length (velocity proxy)", () => {
+  it("ink-03 has zero opacity bleed — velocity never scales it (3.4)", () => {
     const ink = NIBS["ink-03"];
-    const slow = bleedScaleForSegment(ink, 0.1);
-    const fast = bleedScaleForSegment(ink, 2.5);
-    expect(fast).toBeGreaterThan(slow);
-    expect(bleedScaleForSegment(ink, 0.1)).toBeGreaterThanOrEqual(0.3);
+    expect(ink.bleed).toBe(0);
+    expect(ink.mapping.velocityBleed).toBe(false);
+    // Neutral pass-through for every segment length.
+    expect(bleedScaleForSegment(ink, 0.1)).toBe(0.5);
+    expect(bleedScaleForSegment(ink, 2.5)).toBe(0.5);
   });
 
   it("graphite ignores velocity (neutral bleed)", () => {
@@ -139,5 +142,15 @@ describe("nibSpec / nibSpecForStroke", () => {
       kind: "ink",
       nib: "chisel-marker",
     }).label).toBe("Chisel marker");
+  });
+
+  it("every nib carries its issued-scale mm weight (3.5)", () => {
+    for (const kind of NIB_ORDER) {
+      const spec = NIBS[kind];
+      expect(spec.weightMm).toBeGreaterThan(0);
+      // Round-trip through the single mm→px conversion — the px width and
+      // the mm weight can never disagree.
+      expect(mmAtScaleToPx(spec.weightMm)).toBeCloseTo(spec.baseWidthPx, 8);
+    }
   });
 });

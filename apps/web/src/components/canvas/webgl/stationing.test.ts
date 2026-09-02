@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildStationTicks, niceStep, stationAtPct } from "./stationing";
+import {
+  buildStationTicks,
+  niceStep,
+  stationAtPct,
+  STATION_MAJOR_M,
+  STATION_MINOR_M,
+} from "./stationing";
 
 describe("stationing — single source of ruler truth (2.1)", () => {
   it("converts board-% to metre chainage", () => {
@@ -14,30 +20,30 @@ describe("stationing — single source of ruler truth (2.1)", () => {
     expect(niceStep(0.5)).toBe(0.5);
   });
 
-  it("spans 0..scaleM with major ticks every 5 minors and a label", () => {
+  it("uses the spec ladder — minor 2m, major 10m, origin tick 0 (2.3)", () => {
+    expect(STATION_MINOR_M).toBe(2);
+    expect(STATION_MAJOR_M).toBe(10);
     const ticks = buildStationTicks(25);
     expect(ticks[0]!.metres).toBe(0);
     expect(ticks[0]!.major).toBe(true);
+    // Board edge always lands as a major tick, even off-ladder (25m).
     expect(ticks[ticks.length - 1]!.metres).toBeCloseTo(25);
     expect(ticks[ticks.length - 1]!.major).toBe(true);
-    const major = ticks.filter((t) => t.major);
-    expect(major.map((t) => t.metres)).toEqual([0, 25]);
-    // Minor interval for a 25m board = 5m.
-    expect(ticks.map((t) => t.metres)).toEqual([0, 5, 10, 15, 20, 25]);
+    const majors = ticks.filter((t) => t.major).map((t) => t.metres);
+    expect(majors).toEqual([0, 10, 20, 25]);
+    const minors = ticks.filter((t) => !t.major).map((t) => t.metres);
+    // 2m minors between the majors: 2,4,6,8 | 12,14,16,18 | 22,24.
+    expect(minors).toEqual([2, 4, 6, 8, 12, 14, 16, 18, 22, 24]);
   });
 
   it("produces clean integer labels and one decimal where needed", () => {
-    expect(buildStationTicks(25).map((t) => t.label)).toEqual([
-      "0",
-      "5",
-      "10",
-      "15",
-      "20",
-      "25",
-    ]);
-    // 25.4m board → 5m minors → last tick at 25, no ugly 5.08 labels.
+    const labels = buildStationTicks(25)
+      .filter((t) => t.major)
+      .map((t) => t.label);
+    expect(labels).toEqual(["0", "10", "20", "25"]);
+    // 25.4m board → off-ladder edge lands as the closing major tick.
     const t = buildStationTicks(25.4);
-    expect(t[t.length - 1]!.metres).toBeLessThanOrEqual(25.4);
-    expect(t[t.length - 1]!.metres).toBeGreaterThan(0);
+    expect(t[t.length - 1]!.metres).toBeCloseTo(25.4);
+    expect(t[t.length - 1]!.major).toBe(true);
   });
 });
