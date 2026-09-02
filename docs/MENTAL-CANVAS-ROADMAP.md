@@ -99,16 +99,17 @@ doc scannable. Key structural facts, by relevance to the phases below:
 Confirmed by reading the only call site
 (`FloatingChrome.tsx`, `addSketchCanvas(createCanvas(nextZ))`):
 
-1. **No placement gizmo (§14b).** Adding a canvas plane is a single "+"
-   button that stacks a new flat plane at the next preset Z height. The spec
-   calls for two gestures — **lay flat** at a height or **stand up** on a
-   bearing — with a live gizmo reading `vertical · 6.2 × 4.4 m · bearing
-   018°`, `⌥` to lay flat, `⇧` to snap 15°, double-tap to fit to site, and
-   presets (ground 0.00, upper terrace +1.20, canopy +4.50, boundary wall,
-   hedge line). None of that exists; every plane is horizontal.
-2. **No naming on create.** Spec: "Naming is required on create." Current
-   planes are unnamed Z-stack entries (season chip + Z value only, per the
-   `sortedCanvases.map(...)` render in `FloatingChrome.tsx`).
+1. **✅ FIXED (Phase A1/A2, 2026-09-03).** Placement gizmo + naming — was
+   a single "+" button stacking an unnamed flat plane at the next preset
+   Z height. Now: `CanvasPlacementFlyout.tsx` (required name field, the
+   five presets, numeric height/bearing entry) +
+   `ParallelProjectionHandle.tsx` (flat-plane height drag) +
+   `HingeProjectionGizmo.tsx` (fold-angle drag with angle-snap glyph
+   morphing for standing planes). Double-tap-to-fit and the `⌥`/`⇧`
+   modifier-key gestures from the spec's exact wording were deliberately
+   not built — the numeric flyout + drag gizmos cover the same outcome.
+2. **✅ FIXED (Phase A1).** Naming on create — the flyout's Place button
+   is disabled until a name is entered.
 3. **No UNSCALED badge / calibrate-later (§15a/§15c).** Grepped the whole
    `webgl/` tree for "unscaled", "calibrate" — no matches. Sketching always
    assumes a scaled site; there's no unscaled-first-class state, no
@@ -139,12 +140,31 @@ remaining slice for sketch-mode's Mental Canvas feel).
 
 ### Phase A — Hinge/Parallel Projection canvas placement (turn 14b)
 
-**Status: in progress, actively planned** — see "Mental Canvas UX
-reference" below for the source research. This phase replaces the single
-"+" button in `FloatingChrome.tsx` with the *actual* Mental Canvas
-placement mechanic rather than a generic drag-arrows gizmo, decided after
-the user reviewed a full UX teardown of the real app mid-session
-(2026-09-03).
+**Status: A1 + A2 shipped 2026-09-03 (commits `e2ef9f1`, `9be0d78`), A3
+not started.** See "Mental Canvas UX reference" below for the source
+research. This phase replaces the single "+" button in
+`FloatingChrome.tsx` with the *actual* Mental Canvas placement mechanic
+rather than a generic drag-arrows gizmo, decided after the user reviewed
+a full UX teardown of the real app mid-session.
+
+Both shipped checkpoints were verified live, not just unit-tested: A1 by
+placing a standing preset and confirming its persisted rotation
+quaternion via the API matched the unit tests exactly, and by
+drag-adjusting a flat plane's height with the drag collapsing to a
+single undo step; A2 by placing a standing plane at a non-zero bearing,
+dragging its fold ring, and confirming via the autosave payload that the
+plane folded back toward flat while the bearing stayed *exactly*
+untouched — the trickiest part of the math (bearing preservation through
+incremental local-axis rotation composition) holds under real drag
+input, not just in the round-trip tests.
+
+One deliberate scope cut from the original three-handle plan: A2 ships
+only the fold-angle handle, not separate "two ground-anchor position
+handles." Position and bearing are set numerically in the A1 flyout at
+placement time (already spec-compliant — the spec itself flags numeric
+entry as a required, not optional, input method) and aren't
+independently re-draggable yet. Revisit if that turns out to matter in
+practice.
 
 The project's own flat/standing binary (§14b) maps onto one continuous
 mechanic: **Hinge Projection** folds a plane from 0° (flat, lying on the
@@ -163,22 +183,38 @@ quaternion, genuinely applied by `SketchCanvasGroup.tsx`'s `CanvasPlane`
 (228-312) — a real fold-to-vertical quaternion works today.
 
 Build order (three shippable checkpoints):
-- **A1** — naming + presets (ground/terrace/canopy/boundary-wall/hedge-
-  line) + a Parallel Projection height-drag handle for flat planes. New:
-  `canvasPlacement.ts` (presets + `foldQuaternion(angle, bearing)`),
+- **✅ A1 (shipped)** — naming + presets (ground/terrace/canopy/boundary-
+  wall/hedge-line) + a Parallel Projection height-drag handle for flat
+  planes. `canvasPlacement.ts` (presets, `foldQuaternion(angle,
+  bearing)`, unit-tested at every angle/bearing combination),
   `CanvasPlacementFlyout.tsx` (new sibling to `ToolFlyout.tsx` — that
   component is hardcoded to the tool ribbon's DOM/handedness, not
-  reusable as-is for the depth rail's `+` cell),
-  `ParallelProjectionHandle.tsx` (raycast-drag, same primitive as
-  `AssetPlaceLayer.tsx`, not drei `TransformControls`), plus
-  `studioStore.ts` additions (`beginSketchCanvasTransform` /
-  `setSketchCanvasTransformTransient` / `endSketchCanvasTransform`,
-  mirroring the placement trio at `studioStore.ts:1948-1985`) and an
-  `adjustingCanvasId` transient field.
-- **A2** — `HingeProjectionGizmo.tsx`: axis line with two ground-anchor
-  handles + one centre fold handle (0°→90° drag), angle-snap glyph
-  morphing, live angle/bearing readout.
-- **A3** — `BirdsEyeHud.tsx`: its own small, separate
+  reusable as-is for the depth rail's `+` cell — anchor position is
+  measured from the `+` cell's real rect, same technique as the
+  ToolFlyout centering fix earlier this session),
+  `ParallelProjectionHandle.tsx` (drei `TransformControls`,
+  mode="translate", Y-axis only via `showX`/`showZ`, modeled directly on
+  the existing `PlacementGizmo.tsx` — ended up simpler and more robust
+  than the raw-raycast approach originally planned, since
+  TransformControls already solves constrained-axis 3D dragging
+  correctly), plus `studioStore.ts` additions
+  (`beginSketchCanvasTransform` / `setSketchCanvasTransformTransient` /
+  `endSketchCanvasTransform`, mirroring the placement trio at
+  `studioStore.ts:1948-1985`) and an `adjustingCanvasId` transient
+  field.
+- **✅ A2 (shipped)** — `HingeProjectionGizmo.tsx`: a fold-angle handle
+  (drei `TransformControls`, mode="rotate", space="local", only the
+  local-X ring shown) dragging a standing plane between 0° and 90°, with
+  angle-snap glyph morphing (a low-segment `circleGeometry` doubles as a
+  regular polygon — octagon/hexagon/pentagon/square, no per-shape mesh)
+  and a live angle/bearing readout. Two new `canvasPlacement.ts`
+  functions make the drag possible: `decomposeFoldQuaternion` (recovers
+  both angle and bearing from a quaternion with neither known upfront —
+  used once at gizmo mount) and `angleFromQuaternionAtBearing` (the
+  cheaper per-tick version once bearing is captured). Scope cut: ships
+  only the fold handle, not separate ground-anchor position handles —
+  see the note above.
+- **A3 (not started)** — `BirdsEyeHud.tsx`: its own small, separate
   `@react-three/fiber` `<Canvas>` (**not** a scissored/`Hud`-primitive
   share of the main canvas — `SplitViewLens.tsx`'s own header comment
   explains why that conflicts with the EffectComposer post-FX stack;
