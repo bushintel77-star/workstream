@@ -110,3 +110,106 @@ export function computePlanePose(
 export function poseForPreset(preset: CanvasPreset): PlanePose {
   return computePlanePose(preset.orientation, preset.heightM, preset.bearingDeg ?? 0);
 }
+
+/**
+ * Inverse of foldQuaternion's angle, given a KNOWN bearing.
+ *
+ * Hinge Projection (Phase A2) drags a plane's rotation incrementally around
+ * its own LOCAL X axis (drei TransformControls, mode="rotate",
+ * space="local", only the X ring shown). Because same-axis rotations
+ * compose additively (Rx(-a) * Rx(-b) = Rx(-(a+b))), a pure local-X drag
+ * starting from `foldQuaternion(angle, bearing)` always stays inside the
+ * `Ry(bearing) * Rx(-angle)` family with bearing fixed — so the gizmo
+ * captures bearing once at drag-start and this function recovers the
+ * live angle on every subsequent tick.
+ *
+ * Not a general quaternion decomposition — only valid for quaternions of
+ * exactly this Ry * Rx form, which is everything this app's canvas planes
+ * are ever constructed from.
+ */
+export function angleFromQuaternionAtBearing(
+  q: THREE.Quaternion,
+  bearingDeg: number,
+): number {
+  const bearingInv = new THREE.Quaternion().setFromAxisAngle(
+    new THREE.Vector3(0, 1, 0),
+    -THREE.MathUtils.degToRad(bearingDeg),
+  );
+  // Ry(-bearing) * Q == Rx(-angle) alone.
+  const xOnly = bearingInv.multiply(q);
+  const angleRad = -2 * Math.atan2(xOnly.x, xOnly.w);
+  return THREE.MathUtils.radToDeg(angleRad);
+}
+
+/**
+ * Full decomposition of a fold quaternion into (angleDeg, bearingDeg) with
+ * NEITHER known upfront — used once, at gizmo mount, to seed the drag
+ * (angleFromQuaternionAtBearing then tracks angle for the rest of the
+ * drag from that captured bearing, per its own doc comment).
+ *
+ * angle: the tilt of the plane's normal off vertical is convention-
+ * independent — normal.y = cos(angleRad) always (a horizontal tilt axis
+ * never touches the Y component), read via THREE's own applyQuaternion
+ * rather than a hand-derived formula.
+ *
+ * bearing: found by comparing this normal's XZ direction against the
+ * REFERENCE bearing-0 normal at the same angle (computed via
+ * foldQuaternion itself, so this stays correct even if that function's
+ * internal axis convention ever changes) — the angular offset between the
+ * two, around Y, is the bearing. Meaningless at angle 0 (defaults to 0,
+ * matching "a flat plane has no facing").
+ */
+export function decomposeFoldQuaternion(
+  q: THREE.Quaternion,
+): { angleDeg: number; bearingDeg: number } {
+  const up = new THREE.Vector3(0, 1, 0);
+  const normal = up.clone().applyQuaternion(q);
+  const angleRad = Math.acos(THREE.MathUtils.clamp(normal.y, -1, 1));
+  const angleDeg = THREE.MathUtils.radToDeg(angleRad);
+
+  if (angleDeg < 1e-3) return { angleDeg: 0, bearingDeg: 0 };
+
+  const reference = up.clone().applyQuaternion(foldQuaternion(angleDeg, 0));
+  const bearingRad =
+    Math.atan2(normal.x, normal.z) - Math.atan2(reference.x, reference.z);
+  const bearingDeg =
+    ((THREE.MathUtils.radToDeg(bearingRad) % 360) + 360) % 360;
+  return { angleDeg, bearingDeg };
+}
+
+export interface SnapGlyph {
+  angleDeg: number;
+  /** Sides of the polygon glyph the handle morphs into at this snap —
+   *  octagon 45° / hexagon 60° / pentagon 72° / square 90°, per §14b. */
+  sides: 8 | 6 | 5 | 4;
+}
+
+export const HINGE_SNAP_ANGLES: readonly SnapGlyph[] = [
+  { angleDeg: 45, sides: 8 },
+  { angleDeg: 60, sides: 6 },
+  { angleDeg: 72, sides: 5 },
+  { angleDeg: 90, sides: 4 },
+];
+
+const SNAP_EPSILON_DEG = 3;
+
+/** The snap glyph the current fold angle is within range of, or null when
+ *  mid-fold and not near any named angle. */
+export function nearestSnap(angleDeg: number): SnapGlyph | null {
+  let best: SnapGlyph | null = null;
+  let bestDelta = Infinity;
+  for (const snap of HINGE_SNAP_ANGLES) {
+    const delta = Math.abs(angleDeg - snap.angleDeg);
+    if (delta < SNAP_EPSILON_DEG && delta < bestDelta) {
+      best = snap;
+      bestDelta = delta;
+    }
+  }
+  return best;
+}
+
+/** Clamp a live-dragged fold angle to the valid 0°–90° range (a plane
+ *  can't fold past standing or back past flat). */
+export function clampFoldAngle(angleDeg: number): number {
+  return Math.min(90, Math.max(0, angleDeg));
+}

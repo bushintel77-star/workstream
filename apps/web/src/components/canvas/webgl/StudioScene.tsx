@@ -56,6 +56,7 @@ import { StitchSnapLayer } from "./StitchSnapLayer";
 import { PhotoTracePlane } from "./PhotoTracePlane";
 import { PlacementGizmo } from "./PlacementGizmo";
 import { ParallelProjectionHandle } from "./ParallelProjectionHandle";
+import { HingeProjectionGizmo } from "./HingeProjectionGizmo";
 import { TerrainMesh } from "./TerrainMesh";
 import { SuncastOverlay } from "./SuncastOverlay";
 import { DottedGroundField } from "./DottedGroundField";
@@ -1243,6 +1244,10 @@ export function StudioScene({
           sketch canvas plane (Mental Canvas roadmap Phase A1). Self-gates
           on adjustingCanvasId + the plane being flat. */}
       <ParallelProjectionHandle />
+      {/* Hinge Projection — fold-angle handle for a just-placed standing
+          sketch canvas plane (Mental Canvas roadmap Phase A2). Self-gates
+          on adjustingCanvasId + the plane NOT being flat. */}
+      <HingeProjectionGizmo />
       <AnnotationLayer
         boundaryPct={boundaryPct}
         scaleM={scaleM}

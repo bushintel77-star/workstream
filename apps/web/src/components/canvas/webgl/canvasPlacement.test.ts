@@ -5,6 +5,10 @@ import {
   computePlanePose,
   foldQuaternion,
   poseForPreset,
+  angleFromQuaternionAtBearing,
+  decomposeFoldQuaternion,
+  nearestSnap,
+  clampFoldAngle,
 } from "./canvasPlacement";
 
 describe("foldQuaternion", () => {
@@ -87,5 +91,88 @@ describe("CANVAS_PRESETS", () => {
       const q = new THREE.Quaternion(...pose.rotation);
       expect(q.length()).toBeCloseTo(1, 5);
     }
+  });
+});
+
+describe("angleFromQuaternionAtBearing", () => {
+  it("round-trips every angle/bearing pair foldQuaternion can produce", () => {
+    for (const bearingDeg of [0, 30, 90, 180, 270]) {
+      for (const angleDeg of [0, 15, 45, 60, 72, 90]) {
+        const q = foldQuaternion(angleDeg, bearingDeg);
+        const recovered = angleFromQuaternionAtBearing(q, bearingDeg);
+        expect(recovered).toBeCloseTo(angleDeg, 3);
+      }
+    }
+  });
+
+  it("stays correct after simulating an incremental local-X drag", () => {
+    // Mirrors HingeProjectionGizmo: TransformControls applies successive
+    // local-space rotations as Q_new = Q_old * deltaR — same-axis
+    // rotations must compose additively for the gizmo's read-back to work.
+    const bearingDeg = 40;
+    let q = foldQuaternion(0, bearingDeg);
+    const steps = [10, 10, 15, 20]; // sums to 55
+    for (const stepDeg of steps) {
+      const delta = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(1, 0, 0),
+        -THREE.MathUtils.degToRad(stepDeg),
+      );
+      q = q.multiply(delta);
+    }
+    expect(angleFromQuaternionAtBearing(q, bearingDeg)).toBeCloseTo(55, 3);
+  });
+});
+
+describe("decomposeFoldQuaternion", () => {
+  it("round-trips every angle/bearing pair with neither known upfront", () => {
+    for (const bearingDeg of [0, 30, 90, 180, 270, 359]) {
+      for (const angleDeg of [15, 45, 60, 72, 90]) {
+        const q = foldQuaternion(angleDeg, bearingDeg);
+        const decomposed = decomposeFoldQuaternion(q);
+        expect(decomposed.angleDeg).toBeCloseTo(angleDeg, 3);
+        expect(decomposed.bearingDeg).toBeCloseTo(bearingDeg % 360, 3);
+      }
+    }
+  });
+
+  it("angle 0 decomposes to angle 0 regardless of bearing (flat has no facing)", () => {
+    const q = foldQuaternion(0, 123);
+    expect(decomposeFoldQuaternion(q).angleDeg).toBeCloseTo(0, 3);
+  });
+
+  it("seeds angleFromQuaternionAtBearing correctly for a mid-fold gizmo mount", () => {
+    // Simulates HingeProjectionGizmo mounting on an already-mid-fold plane:
+    // decompose once to get both, then confirm the cheaper bearing-known
+    // function agrees for the rest of the drag.
+    const q = foldQuaternion(37, 210);
+    const { bearingDeg } = decomposeFoldQuaternion(q);
+    expect(angleFromQuaternionAtBearing(q, bearingDeg)).toBeCloseTo(37, 3);
+  });
+});
+
+describe("nearestSnap", () => {
+  it("finds the exact named angles", () => {
+    expect(nearestSnap(45)?.sides).toBe(8);
+    expect(nearestSnap(60)?.sides).toBe(6);
+    expect(nearestSnap(72)?.sides).toBe(5);
+    expect(nearestSnap(90)?.sides).toBe(4);
+  });
+
+  it("snaps within the epsilon window", () => {
+    expect(nearestSnap(91.5)?.sides).toBe(4);
+    expect(nearestSnap(88.5)?.sides).toBe(4);
+  });
+
+  it("returns null mid-fold, away from any named angle", () => {
+    expect(nearestSnap(20)).toBeNull();
+    expect(nearestSnap(52)).toBeNull();
+  });
+});
+
+describe("clampFoldAngle", () => {
+  it("clamps to the 0-90 range", () => {
+    expect(clampFoldAngle(-10)).toBe(0);
+    expect(clampFoldAngle(120)).toBe(90);
+    expect(clampFoldAngle(45)).toBe(45);
   });
 });
