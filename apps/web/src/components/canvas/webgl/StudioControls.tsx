@@ -218,6 +218,8 @@ export function StudioControls({
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length >= 2) {
         e.preventDefault(); // stop browser pinch/scroll on the canvas
+        // Phase G: In DRAW mode, two-finger orbit is locked (pinch zoom still works).
+        if (useStudioStore.getState().drawViewMode === "DRAW") return;
         const now = Date.now();
         // Return to plan — two quick two-finger taps flatten the camera.
         if (isTwoFingerDoubleTap(lastTwoFingerStart, now)) {
@@ -306,6 +308,8 @@ export function StudioControls({
       if (useStudioStore.getState().isPlayingFlythrough) return;
       // Phase 8: Pedestrian camera owns pointer events for mouselook.
       if (useStudioStore.getState().cameraPosture === "PEDESTRIAN") return;
+      // Phase G: In DRAW mode, orbit is locked (pan/zoom still work).
+      if (useStudioStore.getState().drawViewMode === "DRAW") return;
       if (twoFingerRef.current) return; // two-finger touch owns the camera
       // The spatial gizmo owns its pointer events while a drag is in flight —
       // the ground plane must never start a pan/orbit under the gizmo.

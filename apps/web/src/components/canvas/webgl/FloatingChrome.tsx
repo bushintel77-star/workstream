@@ -36,6 +36,7 @@ import { DepthRail } from "./DepthRail";
 import { CanvasCardsRail } from "./CanvasCardsRail";
 import { ViewpointFilmstrip } from "./ViewpointFilmstrip";
 import { CalibrateModal } from "./CalibrateModal";
+import { DrawViewToggle } from "./DrawViewToggle";
 import styles from "./FloatingChrome.module.css";
 
 /* ---- helpers ---- */
@@ -193,6 +194,11 @@ export function FloatingChrome({
 
       {/* Camera dock — bottom centre, 4 presets (handoff §6.1) */}
       <CameraDock />
+
+      {/* Phase G — Draw/View mode toggle. Sits beside the camera dock.
+          DRAW locks the camera face-on to the active canvas; VIEW allows
+          free orbit. Only renders in Sketch mode (the canvas-plane mode). */}
+      {mode === "sketch" && <DrawViewToggle />}
 
       {/* Viewpoint filmstrip + walk/record (Phase C, screen 16b Sketch only).
           Sits above the camera dock. Captures camera viewpoints as thumbnails,

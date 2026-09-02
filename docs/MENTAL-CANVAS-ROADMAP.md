@@ -50,11 +50,8 @@ doc scannable. Key structural facts, by relevance to the phases below:
   locks parallel to the active canvas (prevents parallax distortion while
   sketching); selecting a different canvas re-aligns the camera to it. In
   View Mode the camera decouples and free-orbits; tapping a canvas shows
-  its bounding frame instead of re-aligning. **Relevant to a future
-  phase, not scoped yet** — this app's Sketch/CAD/Elevation/Garden modes
-  already partition "draw" vs "look around" differently; whether to add a
-  camera-lock-to-active-plane behavior specifically while drawing is an
-  open question, not decided.
+  its bounding frame instead of re-aligning. **Implemented as Phase G
+  (see below).**
 - **Parallel Projection / Hinge Projection** — the two placement
   mechanics. See Phase A below; this is what Phase A now builds.
 - **Bird's-Eye HUD** — a secondary mini-viewport (own camera + frustum
@@ -377,6 +374,34 @@ parameters:
 Verified live: timeline controls render (linger=0.5s, transition=2.0s, loop=→);
 loop toggle changes → to ↻; zero console errors; typecheck + lint green;
 74 viewpoint + store tests green.
+
+### Phase G — Draw Mode vs View Mode (camera lock to active canvas)
+**Status: COMPLETE — shipped 2026-09-03.** A global toggle locks the camera
+face-on to the active canvas plane in Draw Mode, preventing parallax
+distortion while sketching. View Mode preserves the existing free orbit.
+
+- **`drawViewAlign.ts`** — pure math for computing the face-on camera rig
+  from a canvas's rotation quaternion. Uses `decomposeFoldQuaternion` to
+  extract the fold angle (→ tiltDeg) and bearing (→ rotateDeg). The ground
+  plane (canvas_id = null) maps to plan view (tilt=0, rotate=0). 9 unit tests.
+- **Store (`studioStore.ts`)**: `DrawViewMode = "DRAW" | "VIEW"` type.
+  `drawViewMode` state (default "VIEW"). Actions: `toggleDrawViewMode`,
+  `setDrawViewMode`, `alignCameraToActiveCanvas`. Entering DRAW mode or
+  selecting a canvas in DRAW mode calls `alignRigToActiveCanvas` to set
+  the rig's tilt/rotate face-on to the active plane. `setActiveCanvasId`
+  re-aligns in DRAW mode. All view-state only.
+- **`StudioControls.tsx`**: orbit gestures (Cmd/Ctrl+drag and two-finger
+  touch) are gated off in DRAW mode — pan and zoom still work. The camera
+  stays locked face-on while drawing.
+- **`DrawViewToggle.tsx` + `.module.css`**: a small floating button beside
+  the camera dock. Shows "VIEW" (default) or "DRAW" (accent-filled when
+  active). Only renders in Sketch mode. `data-testid="draw-view-toggle"`.
+- **`FloatingChrome.tsx`**: renders `<DrawViewToggle />` after `<CameraDock />`
+  in Sketch mode.
+
+Verified live: toggle renders with "VIEW" text; click switches to "DRAW"
+(accent-filled); zero console errors; typecheck + lint green; 70 draw-view
++ store tests green.
 
 ### Phase D — Unscaled state + calibrate later (turn 15a/15c)
 **Status: COMPLETE — shipped 2026-09-03.**

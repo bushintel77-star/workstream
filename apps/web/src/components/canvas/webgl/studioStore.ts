@@ -79,6 +79,7 @@ import {
   nearestFacadeNormalDeg,
   type StudioCameraRig,
 } from "./cameraRig";
+import { alignRigToActiveCanvas } from "./drawViewAlign";
 import {
   convertStrokesToFeatures,
   featureForAcceptedProposal,
@@ -211,6 +212,15 @@ export type RenderMode = "TECHNICAL" | "IMMERSIVE";
  * PEDESTRIAN: 1.7m first-person walk-through (PedestrianCamera).
  */
 export type CameraPosture = "ORBIT" | "PEDESTRIAN";
+
+/**
+ * Phase G — Draw Mode vs View Mode.
+ * DRAW: camera locked face-on to the active canvas plane. Orbit/tilt
+ *   gestures are disabled; pan/zoom remain. Selecting a canvas re-aligns
+ *   the camera to look directly at that plane.
+ * VIEW: free orbit (the default — the existing fused camera rig).
+ */
+export type DrawViewMode = "DRAW" | "VIEW";
 
 /**
  * Landscape Canvas v2 — unified tool ids (handoff §5.1).
@@ -686,6 +696,17 @@ export interface StudioStoreState {
   toggleRenderMode: () => void;
   /** Set the camera posture (ORBIT or PEDESTRIAN). */
   setCameraPosture: (posture: CameraPosture) => void;
+
+  /** Phase G — Draw Mode locks the camera face-on to the active canvas;
+   *  View Mode allows free orbit. View state only. */
+  drawViewMode: DrawViewMode;
+  /** Toggle between DRAW and VIEW modes (Phase G). */
+  toggleDrawViewMode: () => void;
+  /** Set the draw/view mode explicitly (Phase G). */
+  setDrawViewMode: (mode: DrawViewMode) => void;
+  /** Re-align the camera to face the active canvas (Phase G). Called when
+   *  entering DRAW mode or when the active canvas changes in DRAW mode. */
+  alignCameraToActiveCanvas: () => void;
 
   // --- Stroke Transfer (Phase 2) ---
   /** The transfer tool is armed — click a stroke to select it as the source,
@@ -1576,6 +1597,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Phase 8 — default to technical rendering + orbit camera.
   renderMode: "TECHNICAL",
   cameraPosture: "ORBIT",
+  // Phase G — default to VIEW (free orbit). DRAW locks the camera face-on.
+  drawViewMode: "VIEW",
 
   // Stroke Transfer — tool starts disarmed, no source selected.
   transferToolArmed: false,
@@ -2302,7 +2325,19 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         historyFuture: [],
       };
     }),
-  setActiveCanvasId: (id) => set({ activeCanvasId: id }),
+  setActiveCanvasId: (id) =>
+    set((s) => {
+      // Phase G: in DRAW mode, re-align the camera to the new active canvas.
+      if (s.drawViewMode === "DRAW") {
+        const rig = alignRigToActiveCanvas(
+          id,
+          s.sketchCanvases.map((c) => ({ id: c.id, rotation: c.rotation })),
+          s.liveRig,
+        );
+        return { activeCanvasId: id, liveRig: rig };
+      }
+      return { activeCanvasId: id };
+    }),
 
   setAdjustingCanvasId: (id) => set({ adjustingCanvasId: id }),
   beginSketchCanvasTransform: () =>
@@ -2552,6 +2587,44 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       renderMode: s.renderMode === "TECHNICAL" ? "IMMERSIVE" : "TECHNICAL",
     })),
   setCameraPosture: (cameraPosture) => set({ cameraPosture }),
+
+  // Phase G — Draw Mode vs View Mode.
+  toggleDrawViewMode: () =>
+    set((s) => {
+      const next = s.drawViewMode === "DRAW" ? "VIEW" : "DRAW";
+      if (next === "DRAW") {
+        // Entering DRAW mode: align the camera to the active canvas.
+        const rig = alignRigToActiveCanvas(
+          s.activeCanvasId,
+          s.sketchCanvases.map((c) => ({ id: c.id, rotation: c.rotation })),
+          s.liveRig,
+        );
+        return { drawViewMode: next, liveRig: rig };
+      }
+      return { drawViewMode: next };
+    }),
+  setDrawViewMode: (mode) =>
+    set((s) => {
+      if (mode === "DRAW") {
+        const rig = alignRigToActiveCanvas(
+          s.activeCanvasId,
+          s.sketchCanvases.map((c) => ({ id: c.id, rotation: c.rotation })),
+          s.liveRig,
+        );
+        return { drawViewMode: mode, liveRig: rig };
+      }
+      return { drawViewMode: mode };
+    }),
+  alignCameraToActiveCanvas: () =>
+    set((s) => {
+      if (s.drawViewMode !== "DRAW") return {};
+      const rig = alignRigToActiveCanvas(
+        s.activeCanvasId,
+        s.sketchCanvases.map((c) => ({ id: c.id, rotation: c.rotation })),
+        s.liveRig,
+      );
+      return { liveRig: rig };
+    }),
 
   // --- Stroke Transfer (Phase 2) ---
   setTransferToolArmed: (on) =>
