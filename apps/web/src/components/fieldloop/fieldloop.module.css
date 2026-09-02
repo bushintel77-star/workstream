@@ -1,0 +1,610 @@
+/* Fieldloop customer portal styles. The --fl-* palette lives in
+ * styles/color-tokens.css (raw hex is token-only). Chrome geometry is mapped
+ * onto the repo's radius/opacity/z token scales — never raw px/decimals. */
+.root {
+  background: var(--fl-bg-canvas);
+  font-family: var(--fl-font-body, "IBM Plex Sans", sans-serif);
+  color: var(--fl-text-primary);
+  display: flex;
+  justify-content: center;
+  padding: 30px 20px;
+  min-height: 100vh;
+}
+
+/* ---- Phone frame ---- */
+.phoneFrame {
+  width: 100%;
+  max-width: 390px;
+  background: var(--gs-ink-strong);
+  border-radius: var(--gs-radius-panel);
+  padding: 10px;
+  box-shadow:
+    0 30px 60px -20px rgb(0 0 0 / 35%),
+    0 0 0 1px rgb(0 0 0 / 6%);
+}
+
+.phoneScreen {
+  background: var(--fl-bg-page);
+  border-radius: var(--lc-flyout-radius);
+  height: min(844px, 84vh);
+  min-height: 620px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.layerActive {
+  opacity: var(--lc-op-active);
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.layerHidden {
+  opacity: var(--lc-op-hidden);
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
+/* ---- Access screen ---- */
+.accessScreen {
+  padding: 0 26px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.accessBrand {
+  font-family: var(--fl-font-display, "Big Shoulders Display", sans-serif);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+  color: var(--fl-text-primary);
+}
+
+.accessBrand span {
+  color: var(--fl-blue-bright);
+}
+
+.accessSub {
+  font-size: 0.85rem;
+  color: var(--fl-text-secondary);
+  margin-top: 6px;
+  margin-bottom: 34px;
+}
+
+.accessField {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.accessField label {
+  display: block;
+  font-family: var(--fl-font-mono, "IBM Plex Mono", monospace);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fl-text-tertiary);
+  margin-bottom: 6px;
+}
+
+.accessField input {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: var(--lc-schedule-radius);
+  border: 1.5px solid var(--fl-border-strong);
+  background: var(--fl-bg-panel);
+  font-family: inherit;
+  font-size: 0.92rem;
+  color: var(--fl-text-primary);
+  outline: none;
+}
+
+.accessField input:focus {
+  border-color: var(--fl-blue-bright);
+}
+
+.accessBtn {
+  width: 100%;
+  min-height: 52px;
+  border-radius: var(--lc-ribbon-tile-radius);
+  border: none;
+  background: var(--fl-blue-bright);
+  color: var(--fl-bg-panel);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.94rem;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.accessBtn:disabled {
+  opacity: var(--lc-op-60);
+}
+
+.accessNote {
+  font-size: 0.74rem;
+  color: var(--fl-text-tertiary);
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+.accessSent {
+  display: none;
+  font-size: 0.86rem;
+  color: var(--fl-green);
+  margin-top: 16px;
+}
+
+.accessSentVisible {
+  display: block;
+}
+
+/* ---- Portal ---- */
+.portalHeader {
+  flex-shrink: 0;
+  padding: 18px 20px 14px;
+  background: var(--fl-bg-panel);
+  border-bottom: 1px solid var(--fl-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.portalBrand {
+  font-family: var(--fl-font-display, "Big Shoulders Display", sans-serif);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+
+.portalGreeting {
+  font-size: 0.78rem;
+  color: var(--fl-text-secondary);
+  margin-top: 2px;
+}
+
+.portalAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--fl-blue-tint);
+  color: var(--fl-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fl-font-display, "Big Shoulders Display", sans-serif);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.portalScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 18px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: var(--fl-bg-panel);
+  border: 1px solid var(--fl-border);
+  border-radius: var(--lc-depth-rail-radius);
+  padding: 16px;
+}
+
+.cardLabel {
+  font-family: var(--fl-font-mono, "IBM Plex Mono", monospace);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fl-text-tertiary);
+  margin-bottom: 8px;
+}
+
+/* Reminder card */
+.reminderCard {
+  border-left: 3px solid var(--fl-amber);
+}
+
+.reminderTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.reminderDesc {
+  font-size: 0.82rem;
+  color: var(--fl-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.reminderBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 15px;
+  border-radius: var(--lc-ribbon-tile-radius);
+  background: var(--fl-amber-tint);
+  color: var(--fl-amber);
+  border: none;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+/* Job status card */
+.statusTrack {
+  display: flex;
+  align-items: center;
+  margin: 6px 0 14px;
+}
+
+.statusStep {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.statusDot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--fl-border-strong);
+  z-index: var(--cf-z-spatial);
+}
+
+.statusDone .statusDot {
+  background: var(--fl-green);
+}
+
+.statusLabel {
+  font-size: 0.66rem;
+  color: var(--fl-text-tertiary);
+  text-align: center;
+}
+
+.statusDone .statusLabel {
+  color: var(--fl-text-primary);
+  font-weight: 600;
+}
+
+.statusLine {
+  position: absolute;
+  top: 5px;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  background: var(--fl-border-strong);
+  z-index: var(--cf-z-canvas);
+}
+
+.statusDone .statusLine {
+  background: var(--fl-green);
+}
+
+.statusStep:first-child .statusLine {
+  display: none;
+}
+
+.jobTitle {
+  font-family: var(--fl-font-display, "Big Shoulders Display", sans-serif);
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin-bottom: 2px;
+}
+
+.jobMeta {
+  font-size: 0.8rem;
+  color: var(--fl-text-secondary);
+}
+
+.jobTechRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--fl-border);
+  font-size: 0.8rem;
+  color: var(--fl-text-secondary);
+}
+
+.jobTechAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--fl-blue-tint);
+  color: var(--fl-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fl-font-display, "Big Shoulders Display", sans-serif);
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+
+.jobSummaryLine {
+  font-size: 0.82rem;
+  color: var(--fl-text-secondary);
+  line-height: 1.5;
+  margin-top: 10px;
+  font-style: italic;
+}
+
+/* Quote card */
+.quoteCard {
+  border-left: 3px solid var(--fl-blue-bright);
+}
+
+.quoteTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.quoteDesc {
+  font-size: 0.82rem;
+  color: var(--fl-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.quotePriceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 0;
+  border-top: 1px solid var(--fl-border);
+  border-bottom: 1px solid var(--fl-border);
+  margin-bottom: 14px;
+}
+
+.quotePriceLabel {
+  font-size: 0.8rem;
+  color: var(--fl-text-secondary);
+}
+
+.quotePriceNum {
+  font-family: var(--fl-font-display, "Big Shoulders Display", sans-serif);
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--fl-text-primary);
+}
+
+.quoteActions {
+  display: flex;
+  gap: 8px;
+}
+
+.quoteActions button {
+  flex: 1;
+  min-height: 44px;
+  border-radius: var(--lc-schedule-radius);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.quoteApprove {
+  background: var(--fl-blue-bright);
+  color: var(--fl-bg-panel);
+  border: none;
+}
+
+.quoteDecline {
+  background: none;
+  border: 1.5px solid var(--fl-border-strong);
+  color: var(--fl-text-secondary);
+}
+
+.quoteResolved {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.quoteApproved {
+  color: var(--fl-green);
+}
+
+.quoteDeclined {
+  color: var(--fl-text-tertiary);
+}
+
+.quoteResolved svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Invoice card */
+.invoiceCard {
+  position: relative;
+  overflow: hidden;
+}
+
+.invoiceStamp {
+  position: absolute;
+  top: 14px;
+  right: -30px;
+  transform: rotate(28deg);
+  font-family: var(--fl-font-display, "Big Shoulders Display", sans-serif);
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  padding: 4px 34px;
+  text-transform: uppercase;
+}
+
+.invoiceStampDue {
+  background: var(--fl-amber-tint);
+  color: var(--fl-amber);
+  border: 1.5px solid var(--fl-amber);
+}
+
+.invoiceStampPaid {
+  background: var(--fl-green-tint);
+  color: var(--fl-green);
+  border: 1.5px solid var(--fl-green);
+}
+
+.invoiceNum {
+  font-family: var(--fl-font-mono, "IBM Plex Mono", monospace);
+  font-size: 0.72rem;
+  color: var(--fl-text-tertiary);
+  margin-bottom: 12px;
+}
+
+.invoiceLines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.invoiceLine {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--fl-text-secondary);
+}
+
+.invoiceDivider {
+  border-top: 1px dashed var(--fl-border-strong);
+  margin: 10px 0;
+}
+
+.invoiceTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.invoiceTotalLabel {
+  font-size: 0.85rem;
+  color: var(--fl-text-secondary);
+}
+
+.invoiceTotalNum {
+  font-family: var(--fl-font-display, "Big Shoulders Display", sans-serif);
+  font-weight: 800;
+  font-size: 1.7rem;
+  color: var(--fl-text-primary);
+}
+
+.payBtn {
+  width: 100%;
+  min-height: 48px;
+  border-radius: var(--lc-ribbon-tile-radius);
+  border: none;
+  background: var(--fl-blue-bright);
+  color: var(--fl-bg-panel);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.payBtnPaid {
+  background: var(--fl-green-tint);
+  color: var(--fl-green);
+}
+
+.payBtn svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* History */
+.historyRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--fl-border);
+  font-size: 0.82rem;
+}
+
+.historyRow:last-child {
+  border-bottom: none;
+}
+
+.historyDot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--fl-green);
+  flex-shrink: 0;
+}
+
+.historyTitle {
+  flex: 1;
+  font-weight: 600;
+}
+
+.historyDate {
+  font-family: var(--fl-font-mono, "IBM Plex Mono", monospace);
+  font-size: 0.72rem;
+  color: var(--fl-text-tertiary);
+}
+
+.portalFooter {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--fl-text-tertiary);
+  padding: 6px 0 4px;
+}
+
+.portalFooter a {
+  color: var(--fl-blue-bright);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Toast */
+.toast {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--fl-text-primary);
+  color: var(--fl-bg-panel);
+  padding: 10px 18px;
+  border-radius: var(--lc-schedule-radius);
+  font-size: 0.82rem;
+  opacity: var(--lc-op-hidden);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: var(--cf-z-chrome);
+  max-width: 86%;
+  text-align: center;
+}
+
+.toastVisible {
+  opacity: var(--lc-op-active);
+  transform: translateX(-50%) translateY(0);
+}

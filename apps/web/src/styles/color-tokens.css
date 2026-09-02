@@ -535,3 +535,22 @@
 .locked-geometry {
   opacity: var(--locked-opacity);
 }
+/* ---- Fieldloop customer portal (page-scoped palette; raw hex is token-only) ---- */
+:root {
+  --fl-bg-canvas: #eef0f0;
+  --fl-bg-page: #fafbfb;
+  --fl-bg-panel: #ffffff;
+  --fl-bg-panel-2: #f3f5f5;
+  --fl-border: #e2e6e6;
+  --fl-border-strong: #cdd3d3;
+  --fl-text-primary: #161b1b;
+  --fl-text-secondary: #5b6666;
+  --fl-text-tertiary: #8d9696;
+  --fl-blue: #2e5f8a;
+  --fl-blue-bright: #2f6fed;
+  --fl-blue-tint: #eaf1fa;
+  --fl-amber: #a2660a;
+  --fl-amber-tint: #fbf1dc;
+  --fl-green: #158c48;
+  --fl-green-tint: #e6f6ec;
+}

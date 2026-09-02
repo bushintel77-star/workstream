@@ -152,6 +152,10 @@ const ALLOW = new Map([
     "/e2e/root-error",
     "E2e-only probe: Playwright navigates here in non-production to assert the app-level error boundary copy. Not linked from operator UI.",
   ],
+  [
+    "/fieldloop",
+    "Deep-link only: the Fieldloop customer portal is a standalone demo page reached by direct URL (no operator workflow link yet).",
+  ],
 ]);
 
 /**
