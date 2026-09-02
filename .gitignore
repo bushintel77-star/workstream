@@ -34,3 +34,6 @@ apps/web/shots-*/
 .pipeline/
 .freebuff/
 .mimosa/
+
+# Design reference (look-and-feel HTML mockups, not app code)
+ArchitecturalLandscapeUI/
