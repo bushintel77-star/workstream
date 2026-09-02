@@ -888,6 +888,22 @@ export interface StudioStoreState {
   clearSelection: () => void;
   setSelection: (refs: SelectionRef[]) => void;
 
+  // --- Phase H — Selection Mode (isolation + boolean ops) ---
+  /** When true, non-selected entities are dimmed with a red-mask overlay
+   *  and the boolean op toolbar (add/subtract/invert) is visible. View
+   *  state only — never enters docSnapshot. */
+  selectionModeActive: boolean;
+  /** Toggle selection mode on/off (Phase H). */
+  toggleSelectionMode: () => void;
+  /** Set selection mode explicitly (Phase H). */
+  setSelectionMode: (active: boolean) => void;
+  /** Boolean subtract — remove refs from the current selection. */
+  subtractFromSelection: (refs: SelectionRef[]) => void;
+  /** Boolean invert — select all unselected entities, deselect all selected. */
+  invertSelection: () => void;
+  /** Select all selectable entities (placements + features + photo strokes). */
+  selectAll: () => void;
+
   // --- Inspector edits (selection-driven property panel) ---
   /**
    * Edit a placement's inspector fields. Clamp-triggering fields
@@ -1645,6 +1661,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
 
   // Selection — nothing selected until the operator picks.
   selection: [],
+  // Phase H — selection mode (isolation + boolean ops). Off by default.
+  selectionModeActive: false,
 
   // Inspector — no notice until a clamped edit fires.
   boundaryNotice: null,
@@ -3138,4 +3156,57 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       })),
   clearSelection: () => set({ selection: [] }),
   setSelection: (selection) => set({ selection: dedupeSelection(selection) }),
+
+  // Phase H — Selection Mode (isolation + boolean ops).
+  toggleSelectionMode: () =>
+    set((s) => ({ selectionModeActive: !s.selectionModeActive })),
+  setSelectionMode: (selectionModeActive) => set({ selectionModeActive }),
+  subtractFromSelection: (refs) =>
+    set((s) => {
+      const removeSet = new Set(
+        refs.map((r) => `${r.kind}:${r.id}:${r.elevationId ?? ""}`),
+      );
+      return {
+        selection: s.selection.filter(
+          (r) => !removeSet.has(`${r.kind}:${r.id}:${r.elevationId ?? ""}`),
+        ),
+      };
+    }),
+  invertSelection: () =>
+    set((s) => {
+      const allRefs: SelectionRef[] = [
+        ...s.placements.map((p) => ({ kind: "placement" as const, id: p.id })),
+        ...s.features.map((f) => ({ kind: "feature" as const, id: f.id })),
+        ...s.photoElevations.flatMap((e) =>
+          e.strokes.map((st) => ({
+            kind: "photoStroke" as const,
+            id: st.id,
+            elevationId: e.id,
+          })),
+        ),
+      ];
+      const selectedSet = new Set(
+        s.selection.map(
+          (r) => `${r.kind}:${r.id}:${r.elevationId ?? ""}`,
+        ),
+      );
+      const inverted = allRefs.filter(
+        (r) => !selectedSet.has(`${r.kind}:${r.id}:${r.elevationId ?? ""}`),
+      );
+      return { selection: dedupeSelection(inverted) };
+    }),
+  selectAll: () =>
+    set((s) => ({
+      selection: dedupeSelection([
+        ...s.placements.map((p) => ({ kind: "placement" as const, id: p.id })),
+        ...s.features.map((f) => ({ kind: "feature" as const, id: f.id })),
+        ...s.photoElevations.flatMap((e) =>
+          e.strokes.map((st) => ({
+            kind: "photoStroke" as const,
+            id: st.id,
+            elevationId: e.id,
+          })),
+        ),
+      ]),
+    })),
 }));

@@ -77,8 +77,8 @@ doc scannable. Key structural facts, by relevance to the phases below:
   Phase C is actually planned.
 - **Selection Mode** (red-mask isolation, whole-stroke/lasso select,
   boolean add/subtract/invert, Replace Image with "all occurrences") —
-  not mapped to any current phase; flagging as a possible future phase if
-  stroke-level multi-select/replace becomes a real ask.
+  **Implemented as Phase H (see below).** Replace Image with "all
+  occurrences" is deferred until a replace-image feature is requested.
 - **Brushes Panel** (visual texture grid + one width slider, no named
   brush catalog) and **stroke-matching eraser** (scales to the stroke it's
   erasing, not a fixed radius) — worth checking against this app's
@@ -402,6 +402,36 @@ distortion while sketching. View Mode preserves the existing free orbit.
 Verified live: toggle renders with "VIEW" text; click switches to "DRAW"
 (accent-filled); zero console errors; typecheck + lint green; 70 draw-view
 + store tests green.
+
+### Phase H — Selection Mode (red-mask isolation + boolean ops)
+**Status: COMPLETE — shipped 2026-09-03.** A selection mode that isolates
+selected entities with a red-mask vignette and provides boolean operations
+(add/subtract/invert/select-all) on the selection set.
+
+- **Store (`studioStore.ts`)**: `selectionModeActive` state (default false).
+  Actions: `toggleSelectionMode`, `setSelectionMode`, `subtractFromSelection`,
+  `invertSelection`, `selectAll`. All view-state only (never enters
+  docSnapshot). `subtractFromSelection` removes matching refs by kind+id+
+  elevationId key. `invertSelection` builds the full ref set from placements
+  + features + photo strokes and flips. `selectAll` selects everything.
+- **`SelectionIsolationOverlay.tsx` + `.module.css`**: renders a red-tinted
+  radial vignette (the "red mask") over the viewport when active, plus a
+  floating toolbar at the top centre with: selection count, ALL, INVERT,
+  NONE, CLEAR, and DONE buttons. The mask is `pointer-events: none` so it
+  doesn't block interaction with the scene.
+- **`SelectionModeToggle.tsx` + `.module.css`**: a small floating button
+  beside the Draw/View toggle. Shows "SEL" (conflict-red filled when active).
+  Only renders in Sketch mode. `data-testid="selection-mode-toggle"`.
+- **`FloatingChrome.tsx`**: renders `<SelectionModeToggle />` after
+  `<DrawViewToggle />` and `<SelectionIsolationOverlay />` in Sketch mode.
+- **`selectionMode.test.ts`**: 9 unit tests covering toggle, subtract,
+  invert (including photo-stroke elevationId), selectAll, dedup, and
+  empty-doc edge cases.
+
+Verified live: toggle renders "SEL" (inactive); click activates selection
+mode (red-filled, mask visible, toolbar visible, "0 selected" count, all
+ops buttons present); zero console errors; typecheck + lint green; 70
+selection + store tests green.
 
 ### Phase D — Unscaled state + calibrate later (turn 15a/15c)
 **Status: COMPLETE — shipped 2026-09-03.**

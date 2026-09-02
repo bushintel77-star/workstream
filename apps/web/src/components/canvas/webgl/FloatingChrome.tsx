@@ -37,6 +37,8 @@ import { CanvasCardsRail } from "./CanvasCardsRail";
 import { ViewpointFilmstrip } from "./ViewpointFilmstrip";
 import { CalibrateModal } from "./CalibrateModal";
 import { DrawViewToggle } from "./DrawViewToggle";
+import { SelectionModeToggle } from "./SelectionModeToggle";
+import { SelectionIsolationOverlay } from "./SelectionIsolationOverlay";
 import styles from "./FloatingChrome.module.css";
 
 /* ---- helpers ---- */
@@ -199,6 +201,14 @@ export function FloatingChrome({
           DRAW locks the camera face-on to the active canvas; VIEW allows
           free orbit. Only renders in Sketch mode (the canvas-plane mode). */}
       {mode === "sketch" && <DrawViewToggle />}
+
+      {/* Phase H — Selection Mode toggle. Sits beside the Draw/View toggle.
+          Activates red-mask isolation + boolean ops toolbar. */}
+      {mode === "sketch" && <SelectionModeToggle />}
+
+      {/* Phase H — Selection Mode isolation overlay + boolean ops toolbar.
+          Renders the red-mask vignette and the ops toolbar when active. */}
+      <SelectionIsolationOverlay />
 
       {/* Viewpoint filmstrip + walk/record (Phase C, screen 16b Sketch only).
           Sits above the camera dock. Captures camera viewpoints as thumbnails,
