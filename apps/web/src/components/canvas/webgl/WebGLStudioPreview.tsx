@@ -668,7 +668,7 @@ export function WebGLStudioPreview({
   const [aiScanKey] = useState<string | null>(null);
 
   // Command palette — Cmd/Ctrl+K summons; Esc closes (handled inside).
-  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(projectId === "");
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -1418,7 +1418,12 @@ export function WebGLStudioPreview({
       {/* Command palette — the power-operator surface (Cmd/Ctrl+K). */}
       <StudioCommandPalette
         open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
+        onClose={() => {
+          /* No project loaded — nothing else to see behind the picker, so
+           * keep it up until the operator chooses or creates a site. */
+          if (projectId === "") return;
+          setPaletteOpen(false);
+        }}
         projectId={projectId}
         unlocked={unlocked}
         onMode={(m) => onNativeMode(m as Parameters<typeof onNativeMode>[0])}

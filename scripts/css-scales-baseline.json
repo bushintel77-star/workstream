@@ -6,9 +6,6 @@
   "apps/web/src/app/dashboard.module.css": {
     "zIndex": 1
   },
-  "apps/web/src/app/home.module.css": {
-    "zIndex": 1
-  },
   "apps/web/src/app/portal/quote/[token]/quote.module.css": {
     "opacity": 1
   },
@@ -39,9 +36,6 @@
   },
   "apps/web/src/components/integration-setup.module.css": {
     "radius": 1
-  },
-  "apps/web/src/components/newProjectAddressForm.module.css": {
-    "zIndex": 2
   },
   "apps/web/src/components/project-client.module.css": {
     "radius": 1

@@ -5,10 +5,12 @@
  *
  * A global teleporter. Searches existing projects by address and pings
  * Nominatim for new sites. Selecting an existing project jumps to its canvas;
- * selecting an address creates a new project, routes to it, and appends
- * ?setup=1 so the WebGL mount triggers the Phase 7 auto-generation.
+ * selecting an address routes to /confirm-pin, which creates the project,
+ * runs the survey, and hands off into its canvas.
  *
- * Commands (modes/tools/views) remain as a fallback filter group.
+ * With no project loaded (the canvas-first empty state), this is the ONLY
+ * surface shown — Mode/Tool/View/Edit/Records commands drop out and it's
+ * just project search + "create a new site".
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -18,11 +20,7 @@ import { useStudioStore } from "./studioStore";
 import { OBLIQUE_PITCH_DEG } from "./cameraRig";
 import type { CanvasMode } from "../../../lib/canvas-mode";
 import type { Project } from "@workstream/contracts";
-import {
-  listProjectsAction,
-  geocodeSearchAction,
-  createProjectAction,
-} from "../../../app/actions";
+import { listProjectsAction, geocodeSearchAction } from "../../../app/actions";
 
 type Suggestion = {
   id: string;
@@ -97,12 +95,15 @@ export function StudioCommandPalette({
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [addresses, setAddresses] = useState<Suggestion[]>([]);
   const [addressesLoading, setAddressesLoading] = useState(false);
-  const [creating, setCreating] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
   useFocusTrap(open, panelRef, onClose);
 
   const actions = useMemo<PaletteAction[]>(() => {
+    /* No project loaded yet — Mode/Tool/View/Edit/Records commands are
+     * meaningless (several build hrefs off projectId) until one exists.
+     * Only the project list + address search apply. */
+    if (!projectId) return [];
     const modes: Array<[CanvasMode, string]> = [
       ["survey", "Survey — site truth checklist"],
       ["sketch", "Sketch — freehand ink (2D + 3D)"],
@@ -465,31 +466,27 @@ export function StudioCommandPalette({
       router.push(`/projects/${item.project.id}`);
       onClose();
     } else if (item.kind === "address") {
-      void createFromAddress(item.suggestion);
+      goLocate(item.suggestion);
     }
   };
 
-  async function createFromAddress(suggestion: Suggestion) {
-    if (creating) return;
-    setCreating(true);
-    try {
-      const formData = new FormData();
-      formData.set("address", suggestion.place_name);
-      formData.set("lat", String(suggestion.lat));
-      formData.set("lng", String(suggestion.lng));
-      const project = await createProjectAction(formData);
-      router.push(`/projects/${project.id}?setup=1`);
-    } catch (err) {
-      console.error("[palette] create project failed", err);
-    } finally {
-      setCreating(false);
-      onClose();
-    }
+  /** Hand off to /confirm-pin's "locate loader" — one place creates a
+   *  project from an address (runs the survey, shows the Vicmap/title
+   *  reveal) rather than the palette creating one itself and skipping
+   *  straight to a bare canvas. */
+  function goLocate(suggestion: Suggestion) {
+    const params = new URLSearchParams({
+      address: suggestion.place_name,
+      lat: String(suggestion.lat),
+      lng: String(suggestion.lng),
+    });
+    router.push(`/confirm-pin?${params.toString()}`);
+    onClose();
   }
 
   if (!open) return null;
 
-  const busy = projectsLoading || addressesLoading || creating;
+  const busy = projectsLoading || addressesLoading;
 
   return (
     <div
@@ -522,12 +519,7 @@ export function StudioCommandPalette({
         value={query}
         aria-label="Search projects, addresses or commands"
         data-testid="command-palette-input"
-        placeholder={
-          busy && creating
-            ? "Creating new site…"
-            : "Search projects, type an address, or run a command…"
-        }
-        disabled={creating}
+        placeholder="Search projects, type an address, or run a command…"
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Escape") onClose();
@@ -552,7 +544,6 @@ export function StudioCommandPalette({
           background: "transparent",
           border: "none",
           borderBottom: "1px solid color-mix(in srgb, var(--gs-line) 40%, transparent)",
-          opacity: creating ? 0.6 : 1,
         }}
       />
       <div role="listbox" aria-label="Palette results" style={{ maxHeight: 360, overflowY: "auto" }}>

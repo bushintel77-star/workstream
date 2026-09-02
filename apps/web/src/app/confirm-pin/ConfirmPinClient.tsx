@@ -156,7 +156,12 @@ export function ConfirmPinClient({ address, lat, lng }: Props) {
 
         // Always enter the canvas once the project exists — never strand the
         // loader because a parent remount cancelled the effect mid-flight.
-        router.replace(`/projects/${created.projectId}?guide=1`);
+        // No ?guide=1: the survey above already ran, so hasAerial is true
+        // and resolveCanvasMode's suggestedMode lands straight in Sketch —
+        // free-flowing design first, not a manual checklist. If the survey
+        // soft-failed (no boundary), the same logic falls back to Survey
+        // on its own.
+        router.replace(`/projects/${created.projectId}`);
         router.refresh();
       } catch (e) {
         const msg =
