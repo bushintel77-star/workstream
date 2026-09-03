@@ -141,6 +141,22 @@ export function ScheduleSheet({ scaleM, canopy, onClose }: ScheduleSheetProps) {
     </div>
   );
 
+  /**
+   * Phase O.2 — the empty schedule, drawn rather than silent.
+   *
+   * Each TAB already said it was empty, but an entirely empty board opened a
+   * sheet whose CSV and PDF buttons were live: pressing either downloaded a
+   * document containing a header row and an honesty footer and nothing else,
+   * which reads as a schedule for a job with no work in it rather than as a
+   * board nobody has drawn on yet. The sheet now names the state and the
+   * exports are held until there is something to export.
+   *
+   * It is drawn on the paper surface in the sheet's own idiom, not with the
+   * canvas `FailureState` card — the sheet is one of the two light surfaces
+   * (Q.7), and dropping dark glass chrome into it would break that.
+   */
+  const isEmpty = data.totals.objectCount === 0;
+
   return (
     <div className={s.scrim} onClick={onClose} data-testid="schedule-scrim">
       <div
@@ -158,13 +174,27 @@ export function ScheduleSheet({ scaleM, canopy, onClose }: ScheduleSheetProps) {
             </div>
           </div>
           <div className={s.actions}>
-            <button type="button" className={s.actionBtn} onClick={exportCsv}>
+            <button
+              type="button"
+              className={s.actionBtn}
+              onClick={exportCsv}
+              disabled={isEmpty}
+              title={
+                isEmpty
+                  ? "Nothing on the board to schedule"
+                  : "Export this tab as CSV"
+              }
+            >
               CSV
             </button>
             <button
               type="button"
               className={s.actionBtn}
               onClick={() => window.print()}
+              disabled={isEmpty}
+              title={
+                isEmpty ? "Nothing on the board to schedule" : "Print the schedule"
+              }
             >
               PDF
             </button>
@@ -174,21 +204,44 @@ export function ScheduleSheet({ scaleM, canopy, onClose }: ScheduleSheetProps) {
           </div>
         </header>
 
-        <div className={s.tabs} role="tablist" aria-label="Schedule tabs">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === t.id}
-              className={`${s.tab} ${tab === t.id ? s.tabActive : ""}`}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+        {!isEmpty && (
+          <div className={s.tabs} role="tablist" aria-label="Schedule tabs">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.id}
+                className={`${s.tab} ${tab === t.id ? s.tabActive : ""}`}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
 
+        {isEmpty ? (
+          <div className={s.body}>
+            <div
+              className={s.emptySchedule}
+              role="status"
+              data-testid="schedule-empty"
+            >
+              <div className={s.emptyScheduleLabel}>EMPTY SCHEDULE</div>
+              <p className={s.emptyScheduleTitle}>
+                Nothing is placed on the board yet.
+              </p>
+              <p className={s.emptyScheduleDetail}>
+                Every row here is derived — plants, paving, trenches and
+                lighting are counted from what you draw, and none of it is
+                stored. Place an asset or trace a run and the schedule fills
+                itself in. Export is held until then, so an empty sheet cannot
+                go out looking like a priced job with no work in it.
+              </p>
+            </div>
+          </div>
+        ) : (
         <div className={s.body}>
           {tab === "planting" &&
             (data.planting.rows.length > 0 ? (
@@ -328,6 +381,7 @@ export function ScheduleSheet({ scaleM, canopy, onClose }: ScheduleSheetProps) {
             </div>
           )}
         </div>
+        )}
 
         <footer className={s.totals}>
           <div className={s.totalsRow}>

@@ -67,8 +67,46 @@
   cursor: pointer;
 }
 
-.actionBtn:hover {
+.actionBtn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 8%, transparent);
+}
+
+/* Held while the board is empty — an export with only a header row and an
+ * honesty footer reads as a priced job with no work in it. */
+.actionBtn:disabled {
+  opacity: var(--lc-op-ground-line);
+  cursor: not-allowed;
+}
+
+/* Phase O.2 — the empty schedule, drawn on the paper surface in the sheet's
+ * own idiom rather than with the canvas FailureState card (the sheet is one
+ * of the two light surfaces, Q.7). */
+.emptySchedule {
+  padding: 30px 0 18px;
+  max-width: 46ch;
+}
+
+.emptyScheduleLabel {
+  font-family: var(--lc-font-mono, "IBM Plex Mono", monospace);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 45%, transparent);
+  margin-bottom: 10px;
+}
+
+.emptyScheduleTitle {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--lc-paper-ink, #1a1a1a);
+}
+
+.emptyScheduleDetail {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--lc-paper-ink, #1a1a1a) 65%, transparent);
 }
 
 .tabs {

@@ -94,6 +94,21 @@
   pointer-events: none;
 }
 
+/* P.1 — the volume delta readout. Shown only while the head is off the live
+ * position, because that is the only time there is a "then" to compare. */
+.volumeDelta {
+  margin-top: 6px;
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  line-height: 1.35;
+  color: var(--lc-ink-60);
+  font-variant-numeric: tabular-nums;
+}
+
+.volumeDelta[data-unchanged="true"] {
+  color: var(--lc-ink-30);
+}
+
 .branchOffer {
   display: flex;
   align-items: center;

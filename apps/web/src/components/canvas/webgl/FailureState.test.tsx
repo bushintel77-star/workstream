@@ -41,9 +41,9 @@ describe("FailureState — Phase O: error and empty states", () => {
 
   it("hides retry and dismiss when no handlers", () => {
     const html = renderFailure({
-      kind: "empty-schedule",
-      title: "No planting",
-      detail: "Place something",
+      kind: "corrupt-underlay",
+      title: "Underlay unreadable",
+      detail: "Re-upload the photo",
     });
     expect(html).not.toContain("Retry");
     expect(html).not.toContain("Dismiss");
@@ -78,10 +78,11 @@ describe("FailureState — Phase O: error and empty states", () => {
     expect(html).toContain('data-failure-kind="corrupt-underlay"');
   });
 
-  it("all four failure kinds have labels", () => {
+  it("every canvas failure kind has a label", () => {
+    // The empty schedule is drawn by ScheduleSheet on the paper surface, not
+    // by this dark-glass card, so it is not a kind here.
     const kinds: FailureKind[] = [
       "failed-import",
-      "empty-schedule",
       "corrupt-underlay",
       "rejected-calibration",
     ];

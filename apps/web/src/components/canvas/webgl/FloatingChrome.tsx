@@ -235,7 +235,11 @@ export function FloatingChrome({
 
       {/* Phase P — history scrub. Segmented session track, 1:1 with the
           finger, zero easing. Branch-on-edit, never silent overwrite. */}
-      <HistoryScrub />
+      <HistoryScrub
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        heightmapPoints={heightmapPoints}
+      />
 
       {/* Tool ribbon — vertical glass panel, hand-opposite edge (handoff §5) */}
       <ToolRibbon />

@@ -14,9 +14,16 @@
 import { type CSSProperties, type ReactNode } from "react";
 import styles from "./FailureState.module.css";
 
+/**
+ * The failure modes drawn on the CANVAS. The empty schedule is deliberately
+ * not one of them: it belongs to the schedule sheet, which is one of the two
+ * light surfaces (spec Q.7), and this card is dark glass chrome. It is drawn
+ * there instead — `ScheduleSheet`'s own empty state, with export held while
+ * the board has nothing on it. The kind was carried here and used by nothing
+ * but this file's own tests.
+ */
 export type FailureKind =
   | "failed-import"
-  | "empty-schedule"
   | "corrupt-underlay"
   | "rejected-calibration";
 
@@ -114,7 +121,6 @@ export function FailureState({
 
 const KIND_LABEL: Record<FailureKind, string> = {
   "failed-import": "FAILED IMPORT",
-  "empty-schedule": "EMPTY SCHEDULE",
   "corrupt-underlay": "CORRUPT UNDERLAY",
   "rejected-calibration": "REJECTED CALIBRATION",
 };

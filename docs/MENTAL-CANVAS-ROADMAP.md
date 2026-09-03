@@ -282,11 +282,16 @@ offers retry or dismiss. No failure is silent.
 the four cards were rendered but nothing ever set an error, so every failure
 stayed as silent as before the phase. Producers are now wired at the four
 paths that were failing quietly, and Retry is offered only where a retry
-exists (it pointed at the dismiss handler on all four cards). O.2's empty
-schedule is still unwired: `FailureState` supports the kind, but
-`ScheduleSheet` does not use it. The card also spanned the full canvas with
-`pointerEvents: "auto"`, so any failure silently blocked drawing and panning
-until dismissed.
+exists (it pointed at the dismiss handler on all four cards). The card also
+spanned the full canvas with `pointerEvents: "auto"`, so any failure silently
+blocked drawing and panning until dismissed.
+
+O.2 is drawn on the paper surface in `ScheduleSheet`'s own idiom, not with the
+dark-glass card — the sheet is one of the two light surfaces (Q.7). The defect
+worth fixing there was that CSV and PDF stayed live on an empty board, so
+either one exported a header row and an honesty footer that reads as a priced
+job with no work in it. `FailureState`'s `"empty-schedule"` kind was used by
+nothing but its own tests and has been deleted.
 
 ### Phase P — History scrub
 
@@ -309,8 +314,10 @@ five hardcoded bands of equal width regardless of the session, so scrubbing
 into "Planting" on a grading-only history landed on a grading step.
 `historySegments.ts` now derives each step's activity by diffing consecutive
 document snapshots. The track also carried `role="slider"` and `tabIndex={0}`
-with no key handler — focusable and inert. P.1's volume delta readout (then
-vs delta now) is still not built.
+with no key handler — focusable and inert. P.1's volume delta readout (then vs
+delta now) was never built; `historyVolumeDelta.ts` now integrates cut and
+fill for the scrubbed state against the live one through the same
+`padStrokes`/`padCutFill` pass the cut/fill readout uses.
 
 ### Phase Q — Sheet composition / issue PDF
 

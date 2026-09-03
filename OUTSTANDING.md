@@ -810,7 +810,14 @@ it, because the wiring was absent rather than unused — the same class as the
       `PhotoTracePlane`'s texture-load failure (which fell back to a bare grey
       fill — the exact silent fallback `FailureState`'s own header says it
       replaces). Retry is now offered only where a retry exists; it used to
-      point at the same handler as Dismiss on all four cards.
+      point at the same handler as Dismiss on all four cards. O.2's empty
+      schedule is drawn too, but on the paper surface in `ScheduleSheet`'s own
+      idiom rather than with the dark-glass card — the sheet is one of the two
+      light surfaces (Q.7). The real defect there was that CSV and PDF stayed
+      live on an empty board, so either one exported a header row and an
+      honesty footer that reads as a priced job with no work in it; both are
+      now held until something is placed. `FailureState`'s unused
+      `"empty-schedule"` kind was deleted rather than left as a shim.
 - [x] **The material palette changed nothing.** `activeMaterialId` was written
       by `MaterialPalette` and read by nothing: no stroke-commit path touched
       it, so M.3's mandatory dash signatures never reached a rendered line.
@@ -856,7 +863,13 @@ it, because the wiring was absent rather than unused — the same class as the
       derives each step's activity by diffing consecutive document snapshots,
       so the bands come from what actually happened. The track also carried
       `role="slider"` and `tabIndex={0}` with no key handler — focusable and
-      inert, which is worse than not being focusable; it now has one.
+      inert, which is worse than not being focusable; it now has one. P.1's
+      volume delta readout ("then vs delta now") was never built at all:
+      `historyVolumeDelta.ts` now integrates cut and fill for the scrubbed
+      state against the live one, through the same `padStrokes`/`padCutFill`
+      pass the cut/fill readout uses, so the two cannot disagree. It states
+      the "then" volumes alongside the delta — a bare "−40 m³" does not say
+      what it is 40 m³ less than.
 - [x] **`applyAccepted` claimed the whole next template version on a partial
       acceptance**, so `provenanceLine` printed "v2" onto a title block whose
       drawing still followed v1 for every rejected path. **Fixed**: the version

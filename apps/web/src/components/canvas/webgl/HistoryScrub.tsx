@@ -17,6 +17,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { CanvasStroke, LandscapeFeature } from "@workstream/contracts";
 import { useStudioStore } from "./studioStore";
 import {
   SEGMENT_COLOR,
@@ -25,9 +26,28 @@ import {
   buildHistorySegments,
   type HistorySnapshotSlice,
 } from "./historySegments";
+import {
+  formatVolumeDelta,
+  volumeDelta,
+  volumesForState,
+} from "./historyVolumeDelta";
+import type { HeightmapPoint } from "./coordTransform";
+import { createElevationSampler } from "./terrainMath";
 import styles from "./HistoryScrub.module.css";
 
-export function HistoryScrub() {
+export interface HistoryScrubProps {
+  /** Board scale (m per 100 board-%) — for the volume delta integral. */
+  scaleM: number;
+  boardAspect: number;
+  /** Existing-grade heightmap. Without one there is no volume to state. */
+  heightmapPoints: HeightmapPoint[];
+}
+
+export function HistoryScrub({
+  scaleM,
+  boardAspect,
+  heightmapPoints,
+}: HistoryScrubProps) {
   const historyPast = useStudioStore((s) => s.historyPast);
   const historyFuture = useStudioStore((s) => s.historyFuture);
   const undo = useStudioStore((s) => s.undo);
@@ -62,11 +82,47 @@ export function HistoryScrub() {
   // states, so a run of grading steps draws as one grading band of the
   // right width. Five fixed equal bands used to be drawn regardless of what
   // the session contained.
-  const segments = useMemo(
-    () => buildHistorySegments([...historyPast, liveSlice, ...historyFuture]),
+  const stepsForTrack = useMemo(
+    () => [...historyPast, liveSlice, ...historyFuture],
     [historyPast, liveSlice, historyFuture],
   );
+  const segments = useMemo(
+    () => buildHistorySegments(stepsForTrack),
+    [stepsForTrack],
+  );
   const currentActivity = activityAt(segments, currentIdx);
+
+  // P.1 — the volume delta readout ("then vs delta now"). Scrubbing back is a
+  // proposal to branch away everything after this point; on a landscape job
+  // the number that says what that costs is earthworks. Computed only while
+  // the head is off the live position — the integral rasterises every pad, so
+  // it does not run on every idle render.
+  const sampler = useMemo(
+    () =>
+      heightmapPoints.length >= 3
+        ? createElevationSampler(heightmapPoints, scaleM, boardAspect)
+        : null,
+    [heightmapPoints, scaleM, boardAspect],
+  );
+  const scrubbedState = scrubIdx === -1 ? null : stepsForTrack[scrubIdx] ?? null;
+  const delta = useMemo(() => {
+    if (!scrubbedState || scrubIdx === liveIdx) return null;
+    const then = volumesForState(
+      [...scrubbedState.strokes] as CanvasStroke[],
+      [...scrubbedState.features] as LandscapeFeature[],
+      sampler,
+      scaleM,
+      boardAspect,
+    );
+    const now = volumesForState(
+      [...liveSlice.strokes] as CanvasStroke[],
+      [...liveSlice.features] as LandscapeFeature[],
+      sampler,
+      scaleM,
+      boardAspect,
+    );
+    return volumeDelta(then, now);
+  }, [scrubbedState, scrubIdx, liveIdx, liveSlice, sampler, scaleM, boardAspect]);
 
   // Reset scrub when history changes (new commit)
   useEffect(() => {
@@ -244,6 +300,16 @@ export function HistoryScrub() {
           />
         )}
       </div>
+      {/* P.1 — volume delta readout: then, and what has changed since. */}
+      {delta && (
+        <div
+          className={styles.volumeDelta}
+          data-testid="history-volume-delta"
+          data-unchanged={delta.unchanged ? "true" : undefined}
+        >
+          {formatVolumeDelta(delta)}
+        </div>
+      )}
       {branchOffer && (
         <div className={styles.branchOffer} data-testid="branch-offer">
           <span className={styles.branchText}>
