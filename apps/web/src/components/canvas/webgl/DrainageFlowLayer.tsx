@@ -29,6 +29,7 @@ import { Line } from "@react-three/drei";
 import * as THREE from "three";
 import { PALETTE } from "../../../styles/colorTokens";
 import { useStudioStore } from "./studioStore";
+import { isHidden as chromeHidden } from "./chromeContract";
 import type { HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
 import {
@@ -99,7 +100,8 @@ export function DrainageFlowLayer({
     }
   });
 
-  if (!drainageView || cameraPreset === "sec" || !flow) return null;
+  // Phase L.8 — drainage hides in SEC per the chrome contract.
+  if (!drainageView || chromeHidden("suncastDrainage", cameraPreset) || !flow) return null;
 
   const { grid, streams, ponds } = flow;
   const totalCells = grid.cols * grid.rows;

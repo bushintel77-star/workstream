@@ -1,0 +1,121 @@
+/* Phase P — History scrub. Segmented track, 1:1 with the finger, zero easing. */
+
+.container {
+  position: absolute;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(480px, 60vw);
+  padding: 8px 12px;
+  border-radius: var(--lc-ribbon-radius);
+  background: var(--lc-glass-grad);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
+  box-shadow: var(--lc-flyout-shadow);
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph);
+  color: var(--lc-ink);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--lc-ink);
+}
+
+.count {
+  color: var(--lc-ink-30);
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  position: relative;
+  height: 24px;
+  display: flex;
+  border-radius: var(--gs-radius-xs);
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.segment {
+  flex: 1;
+  height: 100%;
+}
+
+.tick {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  background: var(--lc-ink-30);
+  pointer-events: none;
+}
+
+.tickActive {
+  background: var(--lc-ink);
+  height: 18px;
+  width: 3px;
+  box-shadow: 0 0 0 2px var(--lc-glass-bg);
+}
+
+.ghostAhead {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: repeating-linear-gradient(45deg,
+      transparent,
+      transparent 3px,
+      rgba(232, 230, 224, 0.08) 3px,
+      rgba(232, 230, 224, 0.08) 6px);
+  pointer-events: none;
+}
+
+.branchOffer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: var(--gs-radius-xs);
+  background: color-mix(in srgb, var(--gs-conflict) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gs-conflict) 40%, transparent);
+}
+
+.branchText {
+  flex: 1;
+  font-size: var(--lc-fs-group);
+  line-height: 1.3;
+  color: var(--lc-ink-60);
+}
+
+.branchBtn {
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: var(--gs-radius-xs);
+  border: 1px solid var(--lc-glass-border);
+  background: transparent;
+  color: var(--lc-ink);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.branchBtn:hover {
+  background: var(--lc-surface-tint);
+}

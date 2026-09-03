@@ -20,6 +20,7 @@
 
 import { useCallback } from "react";
 import { useStudioStore, type CameraPreset } from "./studioStore";
+import { AiRunDock } from "./AiRunDock";
 import styles from "./CameraDock.module.css";
 
 /** Sun-time step (minutes) — the time pill cycles the sun azimuth in this
@@ -174,6 +175,10 @@ export function CameraDock() {
       >
         <span className={styles.timePillLabel}>{timeLabel}</span>
       </button>
+
+      {/* Phase S — AI run dock, beside the time pill. No prompt box;
+          the drawing is the prompt. */}
+      <AiRunDock />
 
       {/* Rig caption — drafting mode indicator */}
       {draftingMode && (

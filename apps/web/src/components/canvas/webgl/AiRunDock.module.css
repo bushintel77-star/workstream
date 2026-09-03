@@ -1,0 +1,165 @@
+/* Phase S — AI run dock. Lives on the camera dock beside the time pill. */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+.runButton {
+  padding: 6px 12px;
+  border-radius: var(--gs-radius-xs);
+  border: 1px solid var(--lc-glass-border);
+  background: transparent;
+  color: var(--lc-ink);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.runButton:hover:not(:disabled) {
+  background: var(--lc-surface-tint);
+}
+
+.runButton:disabled {
+  opacity: var(--lc-op-ground-line);
+  cursor: default;
+}
+
+.panel {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border-radius: var(--lc-ribbon-radius);
+  background: var(--lc-glass-grad);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
+  box-shadow: var(--lc-flyout-shadow);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph);
+  color: var(--lc-ink);
+  z-index: var(--cf-z-chrome);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px 0;
+}
+
+.sectionTitle {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--lc-ink-30);
+  font-size: var(--lc-fs-group);
+  margin-bottom: 2px;
+}
+
+.inputRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.inputLabel {
+  color: var(--lc-ink);
+}
+
+.inputCount {
+  color: var(--lc-ink-30);
+  font-variant-numeric: tabular-nums;
+}
+
+.stageRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.stageLabel {
+  width: 80px;
+  flex-shrink: 0;
+  color: var(--lc-ink-30);
+  font-size: var(--lc-fs-group);
+}
+
+.stageBar {
+  flex: 1;
+  height: 4px;
+  border-radius: var(--gs-radius-sm);
+  background: var(--lc-glass-border);
+  overflow: hidden;
+}
+
+.stageFill {
+  height: 100%;
+  background: var(--lc-accent-terrain);
+  transition: width 200ms linear;
+}
+
+.stageStatus {
+  width: 40px;
+  text-align: right;
+  font-size: var(--lc-fs-group);
+  color: var(--lc-ink-30);
+}
+
+.stageRow[data-stalled="true"] .stageFill {
+  background: var(--gs-conflict);
+}
+
+.stageRow[data-stalled="true"] .stageStatus {
+  color: var(--gs-conflict);
+}
+
+.scrubSlider {
+  width: 100%;
+  margin: 4px 0;
+}
+
+.scrubLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--lc-fs-group);
+  color: var(--lc-ink-30);
+}
+
+.refusals {
+  padding: 6px 0;
+  border-top: 1px solid var(--lc-glass-border);
+  margin-top: 4px;
+}
+
+.refusal {
+  font-size: var(--lc-fs-group);
+  line-height: 1.3;
+  color: var(--lc-ink-30);
+  padding: 2px 0;
+}
+
+.stamp {
+  font-size: var(--lc-fs-group);
+  font-style: italic;
+  color: var(--lc-ink-30);
+  padding: 4px 0;
+  border-top: 1px solid var(--lc-glass-border);
+}
+
+.staleNotice {
+  font-size: var(--lc-fs-group);
+  color: var(--gs-conflict);
+  padding: 4px 0;
+}

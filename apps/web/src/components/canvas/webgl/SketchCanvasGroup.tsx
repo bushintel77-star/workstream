@@ -22,6 +22,7 @@ import { Line, Billboard, Text } from "@react-three/drei";
 import * as THREE from "three";
 import type { SketchCanvas } from "@workstream/contracts";
 import { useStudioStore } from "./studioStore";
+import { behaviourOf } from "./chromeContract";
 import { buildStationTicks } from "./stationing";
 import { pctToWorld, worldToPct, type PctPoint } from "./coordTransform";
 
@@ -119,6 +120,14 @@ const TICK_MINOR_LEN = 0.26 * TICK_MAJOR_LEN; // 26% of band
 const RULER_OFFSET_M = 0.02; // sit just above the plane to avoid z-fighting
 
 function SpatialMargin({ scaleM }: { scaleM: number }) {
+  // Phase L.2 — the ruler converts to a horizon band with bearings only in
+  // 3D per the chrome contract. In PLAN/AXO/SEC it renders the full metre
+  // chainage ruler; in 3D it renders a horizon band (bearings only, no
+  // chainage — chainage would be false in perspective).
+  const cameraPreset = useStudioStore((s) => s.cameraPreset);
+  const rulerBehaviour = behaviourOf("rulerMargin", cameraPreset);
+  const horizonMode = rulerBehaviour.kind === "convert" && cameraPreset === "3d";
+
   // The ruler runs along the bottom edge (Y=0 in local space, the -Z edge)
   // and the left edge (X=0, the -X edge). In the canvas's local space, the
   // board spans 0..scaleM in X and 0..scaleM*boardAspect in Z. We render
@@ -190,37 +199,67 @@ function SpatialMargin({ scaleM }: { scaleM: number }) {
   );
 
   return (
-    <group>
-      {/* Bottom edge ruler line */}
-      <Line points={bottomEdgePoints} color={RULER_COLOR} lineWidth={1} transparent opacity={RULER_OPACITY} />
-      {/* Left edge ruler line */}
-      <Line points={leftEdgePoints} color={RULER_COLOR} lineWidth={1} transparent opacity={RULER_OPACITY} />
-      {/* Bottom tick marks */}
-      <Line points={bottomLinePoints} color={RULER_COLOR} lineWidth={1} transparent opacity={RULER_OPACITY} />
-      {/* Left tick marks */}
-      <Line points={leftLinePoints} color={RULER_COLOR} lineWidth={1} transparent opacity={RULER_OPACITY} />
-      {/* Bottom edge labels (billboarded to stay upright under orbit) */}
-      {bottomTicks.filter((t) => t.label).map((t, i) => (
-        <Billboard key={`bt-${i}`} position={[t.pos[0], t.pos[1], t.pos[2] - t.len - 0.3]}>
-          <Text fontSize={0.28} color={RULER_LABEL_COLOR} fillOpacity={RULER_LABEL_OPACITY} anchorX="center" anchorY="middle">
-            {t.label}
-          </Text>
-        </Billboard>
-      ))}
-      {/* Left edge labels (billboarded) */}
-      {leftTicks.filter((t) => t.label).map((t, i) => (
-        <Billboard key={`lt-${i}`} position={[t.pos[0] + t.len + 0.3, t.pos[1], t.pos[2]]}>
-          <Text fontSize={0.28} color={RULER_LABEL_COLOR} fillOpacity={RULER_LABEL_OPACITY} anchorX="center" anchorY="middle">
-            {t.label}
-          </Text>
-        </Billboard>
-      ))}
-      {/* Origin "0" label at the corner */}
-      <Billboard position={[-0.3, RULER_OFFSET_M, -0.3]}>
-        <Text fontSize={0.24} color="#e8e6e0" fillOpacity={0.4} anchorX="center" anchorY="middle">
-          m
-        </Text>
-      </Billboard>
+    <group data-ruler-mode={horizonMode ? "horizon" : "chainage"}>
+      {/* Phase L.2 — in 3D the ruler converts to a horizon band with bearings
+          only. The chainage ticks and labels are hidden (chainage would be
+          false in perspective); a horizon line with cardinal bearings
+          replaces them. The horizon band cross-fades at 60% of the 420ms
+          camera transition (the opacity ramp is driven by the viewBlend
+          spring in FusedCamera; here we gate on the committed preset). */}
+      {horizonMode ? (
+        <>
+          {/* Horizon band — a single line across the board at eye level */}
+          <Line
+            points={[
+              new THREE.Vector3(0, RULER_OFFSET_M, 0),
+              new THREE.Vector3(scaleM, RULER_OFFSET_M, 0),
+            ]}
+            color={RULER_COLOR}
+            lineWidth={1.5}
+            transparent
+            opacity={RULER_OPACITY}
+          />
+          {/* Cardinal bearing markers — N / E / S / W at the board edges */}
+          <Billboard position={[scaleM / 2, RULER_OFFSET_M, 0]}>
+            <Text fontSize={0.32} color={RULER_LABEL_COLOR} fillOpacity={RULER_LABEL_OPACITY} anchorX="center" anchorY="middle">
+              {"N \u00b7 E \u00b7 S \u00b7 W"}
+            </Text>
+          </Billboard>
+        </>
+      ) : (
+        <>
+          {/* Bottom edge ruler line */}
+          <Line points={bottomEdgePoints} color={RULER_COLOR} lineWidth={1} transparent opacity={RULER_OPACITY} />
+          {/* Left edge ruler line */}
+          <Line points={leftEdgePoints} color={RULER_COLOR} lineWidth={1} transparent opacity={RULER_OPACITY} />
+          {/* Bottom tick marks */}
+          <Line points={bottomLinePoints} color={RULER_COLOR} lineWidth={1} transparent opacity={RULER_OPACITY} />
+          {/* Left tick marks */}
+          <Line points={leftLinePoints} color={RULER_COLOR} lineWidth={1} transparent opacity={RULER_OPACITY} />
+          {/* Bottom edge labels (billboarded to stay upright under orbit) */}
+          {bottomTicks.filter((t) => t.label).map((t, i) => (
+            <Billboard key={`bt-${i}`} position={[t.pos[0], t.pos[1], t.pos[2] - t.len - 0.3]}>
+              <Text fontSize={0.28} color={RULER_LABEL_COLOR} fillOpacity={RULER_LABEL_OPACITY} anchorX="center" anchorY="middle">
+                {t.label}
+              </Text>
+            </Billboard>
+          ))}
+          {/* Left edge labels (billboarded) */}
+          {leftTicks.filter((t) => t.label).map((t, i) => (
+            <Billboard key={`lt-${i}`} position={[t.pos[0] + t.len + 0.3, t.pos[1], t.pos[2]]}>
+              <Text fontSize={0.28} color={RULER_LABEL_COLOR} fillOpacity={RULER_LABEL_OPACITY} anchorX="center" anchorY="middle">
+                {t.label}
+              </Text>
+            </Billboard>
+          ))}
+          {/* Origin "0" label at the corner */}
+          <Billboard position={[-0.3, RULER_OFFSET_M, -0.3]}>
+            <Text fontSize={0.24} color="#e8e6e0" fillOpacity={0.4} anchorX="center" anchorY="middle">
+              m
+            </Text>
+          </Billboard>
+        </>
+      )}
     </group>
   );
 }
@@ -305,7 +344,10 @@ function CanvasPlane({
       {/* Spatial Margin — the 3D ruler. Only on the active canvas when
           drafting mode is on AND the master scale toggle is on. Rendered
           inside the canvas group so it inherits the plane's rotation and
-          tilts with the axonometric camera. */}
+          tilts with the axonometric camera.
+          Phase L.2 — in 3D the ruler converts to a horizon band (bearings
+          only) per the chrome contract; the SpatialMargin component reads
+          the contract and renders the appropriate variant. */}
       {isActive && draftingMode && scaleView ? <SpatialMargin scaleM={scaleM} /> : null}
     </group>
   );

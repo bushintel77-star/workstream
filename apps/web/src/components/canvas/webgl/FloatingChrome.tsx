@@ -21,6 +21,12 @@ import type { DesignKeylessOverlay } from "@workstream/contracts";
 import type { CanvasMode } from "../../../lib/canvas-mode";
 import type { CanopyComplianceResult } from "./canopyCompliance";
 import { useStudioStore } from "./studioStore";
+import { behaviourOf } from "./chromeContract";
+import { cameraReadoutFor3D, formatCameraReadout } from "./chromeCameraReadout";
+import { StrikeChip } from "./StrikeChip";
+import { FailureState } from "./FailureState";
+import { HistoryScrub } from "./HistoryScrub";
+import type { StrikeAlertData } from "./features/SubsurfaceEngine";
 import { SiteSetupModal } from "./SiteSetupModal";
 import type { HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
@@ -92,6 +98,8 @@ export interface FloatingChromeProps {
   easementRingCount?: number;
   /** ResCode A2-6 canopy compliance → the A2-6 obligation pill. */
   canopy?: CanopyComplianceResult | null;
+  /** Phase N — strike alerts for the strike chip + conflict card. */
+  strikeAlerts?: StrikeAlertData[];
 }
 
 export function FloatingChrome({
@@ -105,6 +113,7 @@ export function FloatingChrome({
   keylessOverlays = [],
   easementRingCount = 0,
   canopy = null,
+  strikeAlerts = [],
 }: FloatingChromeProps) {
   const canvases = useStudioStore((s) => s.sketchCanvases);
   const activeCanvasId = useStudioStore((s) => s.activeCanvasId);
@@ -123,6 +132,30 @@ export function FloatingChrome({
   const scaleView = useStudioStore((s) => s.scaleView);
   const setScaleView = useStudioStore((s) => s.setScaleView);
   const liveCoord = useStudioStore((s) => s.liveCoord);
+  // Phase O — failure states (drawn, not silent)
+  const overlayFetchError = useStudioStore((s) => s.overlayFetchError);
+  const importError = useStudioStore((s) => s.importError);
+  const underlayError = useStudioStore((s) => s.underlayError);
+  const calibrationError = useStudioStore((s) => s.calibrationError);
+  const setOverlayFetchError = useStudioStore((s) => s.setOverlayFetchError);
+  const setImportError = useStudioStore((s) => s.setImportError);
+  const setUnderlayError = useStudioStore((s) => s.setUnderlayError);
+  const setCalibrationError = useStudioStore((s) => s.setCalibrationError);
+  // Phase L.3 — coordinate chip converts to eye height / bearing / fov in 3D
+  // per the chrome contract. The contract drives whether the chip shows
+  // E/N/Z (same) or the 3D camera readout (convert).
+  const cameraPreset = useStudioStore((s) => s.cameraPreset);
+  const liveRig = useStudioStore((s) => s.liveRig);
+  const coordBehaviour = behaviourOf("crosshairCoords", cameraPreset);
+  const coord3d = useMemo(
+    () =>
+      coordBehaviour.kind === "convert"
+        ? formatCameraReadout(
+          cameraReadoutFor3D(liveRig, scaleM, boardAspect, northBearingDeg),
+        )
+        : null,
+    [coordBehaviour, liveRig, scaleM, boardAspect, northBearingDeg],
+  );
 
   const isLeft = handedness === "LEFT";
   const cutFill = useCutFill(scaleM, heightmapPoints, boardAspect);
@@ -180,6 +213,14 @@ export function FloatingChrome({
         unscaled={unscaled}
         onCalibrate={() => setCalibrateOpen(true)}
       />
+
+      {/* Phase N — strike chip in the top bar beside the WFS chips.
+          Count + severity, tap cycles and flies the camera. */}
+      <StrikeChip strikes={strikeAlerts} />
+
+      {/* Phase P — history scrub. Segmented session track, 1:1 with the
+          finger, zero easing. Branch-on-edit, never silent overwrite. */}
+      <HistoryScrub />
 
       {/* Tool ribbon — vertical glass panel, hand-opposite edge (handoff §5) */}
       <ToolRibbon />
@@ -247,8 +288,15 @@ export function FloatingChrome({
 
       {/* Readout -- cut/fill volumes (bottom-left) */}
       <div className={`${styles.readoutGroup} ${readoutLeftSide}`} style={anchorStyle}>
-        {liveCoord && (
-          <div className={styles.readoutPillCut} data-testid="coord-chip">
+        {/* Phase L.3 — coordinate chip converts to eye height / bearing / fov
+            in 3D per the chrome contract. In PLAN/AXO/SEC it shows E/N/Z; in
+            3D it shows the camera readout (no E/N/Z under perspective). */}
+        {coord3d ? (
+          <div className={styles.readoutPillCut} data-testid="coord-chip" data-coord-mode="3d">
+            {coord3d}
+          </div>
+        ) : liveCoord ? (
+          <div className={styles.readoutPillCut} data-testid="coord-chip" data-coord-mode="en z">
             <span className={styles.readoutValueCut}>E {liveCoord.x.toFixed(1)}</span>
             {" · "}N {liveCoord.z.toFixed(1)} · Z {activeLabel}
             {liveCoord.chainage !== undefined && (
@@ -257,7 +305,7 @@ export function FloatingChrome({
               </span>
             )}
           </div>
-        )}
+        ) : null}
         {cutFill ? (
           <>
             <div className={styles.readoutPillCut}>
@@ -349,6 +397,48 @@ export function FloatingChrome({
           scaleM={scaleM}
           projectId={projectId}
           onClose={() => setCalibrateOpen(false)}
+        />
+      )}
+
+      {/* Phase O — failure states (drawn, not silent). Each failure mode
+          gets a named, actionable surface. No failure is silent. */}
+      {overlayFetchError && (
+        <FailureState
+          kind="failed-import"
+          title="Overlay fetch failed"
+          detail={overlayFetchError.message}
+          source={overlayFetchError.source}
+          onRetry={() => setOverlayFetchError(null)}
+          onDismiss={() => setOverlayFetchError(null)}
+        />
+      )}
+      {importError && (
+        <FailureState
+          kind="failed-import"
+          title="Import failed"
+          detail={importError.message}
+          source={importError.source}
+          onRetry={() => setImportError(null)}
+          onDismiss={() => setImportError(null)}
+        />
+      )}
+      {underlayError && (
+        <FailureState
+          kind="corrupt-underlay"
+          title="Underlay unreadable"
+          detail={underlayError.message}
+          source={underlayError.source}
+          onRetry={() => setUnderlayError(null)}
+          onDismiss={() => setUnderlayError(null)}
+        />
+      )}
+      {calibrationError && (
+        <FailureState
+          kind="rejected-calibration"
+          title="Calibration rejected"
+          detail={calibrationError.message}
+          onRetry={() => setCalibrationError(null)}
+          onDismiss={() => setCalibrationError(null)}
         />
       )}
     </>

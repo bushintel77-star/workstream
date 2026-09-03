@@ -15,6 +15,7 @@
 
 import type { CanvasMode } from "../../../lib/canvas-mode";
 import { useStudioStore } from "./studioStore";
+import { behaviourOf } from "./chromeContract";
 import styles from "./FloatingChrome.module.css";
 
 /** Subsurface utility depth bands (handoff §5.3). Standard Melbourne
@@ -41,14 +42,31 @@ export interface DepthRailProps {
 export function DepthRail({ mode, handedness, anchorStyle }: DepthRailProps) {
   const activeCanvasId = useStudioStore((s) => s.activeCanvasId);
   const setActiveCanvasId = useStudioStore((s) => s.setActiveCanvasId);
+  const cameraPreset = useStudioStore((s) => s.cameraPreset);
 
   const isLeft = handedness === "LEFT";
   const railSide = isLeft ? styles.railLeft : styles.railRight;
 
   if (mode === "sketch") return null;
 
+  // Phase L.7 — depth rail converts per the chrome contract:
+  //   3D  → skewed stack (reads as space, same position)
+  //   SEC → band selector MAS/PLT/GRD/SUB
+  const depthBehaviour = behaviourOf("depthRail", cameraPreset);
+  const depthMode =
+    depthBehaviour.kind === "convert" && cameraPreset === "3d"
+      ? "skewed"
+      : depthBehaviour.kind === "convert" && cameraPreset === "sec"
+        ? "selector"
+        : "stack";
+
   return (
-    <div className={`${styles.rail} ${railSide}`} style={anchorStyle}>
+    <div
+      className={`${styles.rail} ${railSide}`}
+      style={anchorStyle}
+      data-depth-mode={depthMode}
+      data-testid="depth-rail"
+    >
       <div className={styles.railHeader}>Z</div>
       {/* Fixed plane stack (spec 1.1) — planting/massing are proposed
           targets that do not accept drawing geometry yet; they render as

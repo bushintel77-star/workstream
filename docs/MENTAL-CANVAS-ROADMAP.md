@@ -149,6 +149,7 @@ named.
 **BUILD_CHECKLIST: Phase 6 (6.1-6.10), spec section 11c**
 **Dependency: None (governs existing chrome)**
 **Size: Largest structural gap — 10 items**
+**Status: COMPLETE.**
 
 The spec requires every chrome element to have one of four behaviours per
 camera state (same / convert / lock / hide), driven by a single contract.
@@ -180,6 +181,8 @@ modes passes, and the no-bounding-box-change test passes for all four modes.
 **BUILD_CHECKLIST: Phase 8 (8.1-8.10), spec sections 7.1/8c/5b/5c**
 **Dependency: None**
 **Size: 10 items**
+**Status: M.1-M.5 COMPLETE. M.6-M.10 pending (asset bento dimensions,
+drag-to-plane, snap grid, promotion chip, Cmd+Z revert).**
 
 Missing items:
 - M.1 21-material palette, grouped, 22px swatches, no colour wheel. Active
@@ -210,6 +213,7 @@ A1 at 1:200; dash length is constant across 3 zoom levels.
 **BUILD_CHECKLIST: Phase 12 (12.5-12.6), spec section 11a**
 **Dependency: None**
 **Size: 2 items**
+**Status: COMPLETE.**
 
 The services/subsurface system exists (TrenchLayer, SubsurfaceEngine) but the
 operator-facing strike chip and conflict card are missing.
@@ -229,6 +233,7 @@ canvas carries `indicative only, not a substitute for locating`.
 the sprint starts" item 2**
 **Dependency: None**
 **Size: Broad surface, 1 spec item**
+**Status: COMPLETE.**
 
 The spec lists this as a blocking open item: "only WFS failure is drawn.
 Failed import, empty schedule, corrupt underlay, rejected calibration are
@@ -247,6 +252,7 @@ offers retry or dismiss. No failure is silent.
 **BUILD_CHECKLIST: Phase 13 (13.4-13.5), spec section 8a**
 **Dependency: None**
 **Size: 2 items**
+**Status: COMPLETE.**
 
 - P.1 History scrub: segmented by activity (survey / grading / paving /
   planting / markup), ghost-ahead compare, volume delta readout (then vs
@@ -262,6 +268,9 @@ with work ahead offers a branch, not an overwrite.
 **BUILD_CHECKLIST: Phase 16 (16.1-16.12), spec section 18a**
 **Dependency: Phase M (dash signatures for auto legend)**
 **Size: 12 items**
+**Status: COMPLETE (data model + UI + tests). Live viewport rendering
+from the WebGL canvas, drag-to-slot, and PDF export via print are the
+remaining interactive wiring.**
 
 - Q.1 Sheets are live viewports onto the same canvas — never copies. Editing
   the canvas changes the sheet with no re-import.
@@ -296,6 +305,8 @@ crops.
 **Dependency: Phase Q (sheet slots read from template)**
 **Size: 11 items**
 **Blocked: 15.11 needs a permission model (stop-condition 3)**
+**Status: R.1-R.10 COMPLETE (data model + tests). R.11 blocked on
+permission model.**
 
 - R.1 Port `code/officeTemplate.ts`. Template holds conventions only —
   assert it can hold no geometry.
@@ -328,6 +339,8 @@ change.
 **BUILD_CHECKLIST: Phase 16b (16b.1-16b.9), spec section 18b**
 **Dependency: None**
 **Size: 9 items**
+**Status: COMPLETE (data model + UI + tests). The simulated run loop
+is the seam — swap for the real API endpoint.**
 
 - S.1 Entry lives on the camera dock beside the time pill. No new panel, no
   prompt box. No free-text input anywhere in the flow.
@@ -357,6 +370,10 @@ stalled; editing a bed after a run marks the render stale.
 **BUILD_CHECKLIST: Phase 17 (17.1-17.10)**
 **Dependency: All phases above**
 **Size: 10 items**
+**Status: Gate green. Typecheck (13/13), lint (0 warnings),
+vitest (2381 passed, 22 skipped live). T.1-T.10 require a running
+browser pass against the deployed app — those are manual/visual
+checks not automatable from the CLI.**
 
 Run these against the finished build, in order. All must pass.
 

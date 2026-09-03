@@ -1,0 +1,310 @@
+/* Phase Q — Sheet composer. The second light surface (after the schedule). */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: var(--cf-z-app);
+}
+
+.composer {
+  width: min(960px, 92vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--lc-paper-bg);
+  color: var(--lc-paper-ink);
+  border-radius: var(--lc-ribbon-radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  font-family: var(--lc-font-ui);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--lc-paper-ink);
+}
+
+.meta {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actionBtn {
+  padding: 6px 14px;
+  border-radius: var(--gs-radius-xs);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: transparent;
+  color: var(--lc-paper-ink);
+  font-family: var(--lc-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.actionBtn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 180px 1fr 200px;
+  gap: 16px;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+/* Sheet set rail (Q.5) */
+.sheetRail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sheetTab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--gs-radius-xs);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--lc-font-mono);
+  font-size: 11px;
+  color: var(--lc-paper-ink);
+}
+
+.sheetTabActive {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.sheetNumber {
+  font-weight: 700;
+}
+
+.sheetTitle {
+  flex: 1;
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.issuedBadge {
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: var(--gs-radius-xs);
+  background: var(--lc-accent-terrain);
+  color: var(--lc-accent-terrain-on);
+}
+
+.addSheetBtn {
+  padding: 8px 10px;
+  border-radius: var(--gs-radius-xs);
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--lc-font-mono);
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* Paper preview */
+.previewArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.paperPreview {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.paper {
+  width: 100%;
+  max-width: 480px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: var(--gs-radius-sm);
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.viewport {
+  position: absolute;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  background: color-mix(in srgb, var(--gs-truth) 4%, transparent);
+  border-radius: var(--gs-radius-xs);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px;
+  overflow: hidden;
+}
+
+.viewportIssued {
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.viewportChrome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--lc-font-mono);
+  font-size: 8px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.viewportLabel {
+  font-weight: 600;
+}
+
+.viewportMeta {
+  font-size: 7px;
+}
+
+.viewportRemove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--gs-radius-xs);
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.addViewportBtn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  background: white;
+  border-radius: var(--gs-radius-xs);
+  cursor: pointer;
+  font-family: var(--lc-font-mono);
+  font-size: 9px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.paperMeta {
+  font-family: var(--lc-font-mono);
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.4);
+  margin-top: 4px;
+}
+
+/* Legend (Q.3) */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.legendTitle {
+  font-family: var(--lc-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(0, 0, 0, 0.5);
+  margin-bottom: 4px;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--lc-paper-ink);
+}
+
+.legendSwatch {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--gs-radius-xs);
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  flex: 1;
+}
+
+.legendDash {
+  font-family: var(--lc-font-mono);
+  font-size: 8px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.legendSemantic {
+  font-size: 7px;
+  padding: 1px 3px;
+  border-radius: var(--gs-radius-sm);
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.5);
+  text-transform: uppercase;
+}
+
+/* Title block (Q.4) */
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: var(--gs-radius-xs);
+  background: rgba(0, 0, 0, 0.02);
+  margin-top: 8px;
+}
+
+.titleBlockRow {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--lc-font-mono);
+  font-size: 9px;
+}
+
+.titleBlockRow span:first-child {
+  color: rgba(0, 0, 0, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.titleBlockRow span:last-child {
+  color: var(--lc-paper-ink);
+}

@@ -46,6 +46,25 @@
   transform: translateY(-50%);
 }
 
+/* Phase L.7 — depth rail converts per camera state (chrome contract).
+ *   3D  → skewed stack (reads as space, same position — transform only,
+ *          no layout shift so the bounding box stays put)
+ *   SEC → band selector (cells become wider selector bars) */
+.rail[data-depth-mode="skewed"] {
+  transform: translateY(-50%) skewY(-8deg);
+}
+
+.rail[data-depth-mode="skewed"] .railHeader,
+.rail[data-depth-mode="skewed"] .cell {
+  transform: skewY(8deg);
+}
+
+.rail[data-depth-mode="selector"] .cell {
+  min-width: 56px;
+  text-align: left;
+  padding-left: 8px;
+}
+
 .railHeader {
   font-family: var(--lc-font-mono);
   font-size: var(--lc-fs-group);

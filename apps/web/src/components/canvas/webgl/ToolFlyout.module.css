@@ -40,12 +40,12 @@
 
 @keyframes flyout-bloom {
   from {
-    opacity: 0;
+    opacity: var(--lc-op-hidden);
     transform: scale(0.96);
   }
 
   to {
-    opacity: 1;
+    opacity: var(--lc-op-active);
     transform: scale(1);
   }
 }
@@ -191,6 +191,80 @@
   background: var(--gs-conflict, #c41e1e);
   color: #fff;
   opacity: var(--lc-op-hover, 0.85);
+}
+
+/* Phase L.6 — weight control convert note (3D: mm → screen px) */
+.weightConvertNote {
+  font-family: var(--lc-font-mono);
+  font-size: 8.5px;
+  line-height: 1.25;
+  color: var(--lc-ink-30);
+  opacity: var(--lc-op-subsurface);
+  padding: 2px 0 0;
+  letter-spacing: 0.02em;
+}
+
+/* ---- Phase M — Material palette ---- */
+.materialGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.materialGroupLabel {
+  font-family: var(--lc-font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--lc-ink-30);
+}
+
+.swatchGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* 22px swatches, radius 6, inset shadow so they read as material (spec 7.1) */
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--gs-radius-md);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: box-shadow 120ms ease;
+}
+
+.swatchColor {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--gs-radius-md);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset;
+}
+
+/* Active swatch ring: 0 0 0 2px panel bg, 0 0 0 3.6px ink (spec 7.1) */
+.swatchActive {
+  box-shadow: 0 0 0 2px var(--lc-panel-bg, #1c1e21), 0 0 0 3.6px var(--lc-ink, #e8e6e0);
+}
+
+/* Build-up ramp — five alpha swatches */
+.buildUpRamp {
+  display: flex;
+  gap: 3px;
+  padding: 6px 0 2px;
+}
+
+.rampSwatch {
+  width: 28px;
+  height: 14px;
+  border-radius: var(--gs-radius-xs);
 }
 
 /* ---- Asset grid ---- */

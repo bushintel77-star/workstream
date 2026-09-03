@@ -1,0 +1,80 @@
+/* Phase O — Failure state card. Drawn, not silent. */
+
+.card {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: var(--lc-ribbon-radius);
+  border: 1px solid var(--lc-glass-border);
+  background: var(--lc-glass-grad);
+  box-shadow: var(--lc-flyout-shadow);
+  color: var(--lc-ink);
+  font-family: var(--lc-font-ui);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.kindLabel {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gs-conflict);
+}
+
+.sourceStamp {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  color: var(--lc-ink-30);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-title);
+  letter-spacing: 0.02em;
+  color: var(--lc-ink);
+}
+
+.detail {
+  margin: 0;
+  color: var(--lc-ink-60);
+  font-size: var(--lc-fs-readout);
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: var(--gs-radius-xs);
+  border: 1px solid var(--lc-glass-border);
+  background: transparent;
+  color: var(--lc-ink);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.actionBtn:hover {
+  background: var(--lc-surface-tint);
+}

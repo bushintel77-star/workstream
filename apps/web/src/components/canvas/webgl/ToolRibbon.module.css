@@ -116,6 +116,33 @@
   color: var(--lc-accent-terrain);
 }
 
+/* Phase L.5 — locked group header (3D perspective lock per chrome contract) */
+.groupHeaderLocked {
+  color: var(--lc-ink-30);
+  opacity: var(--lc-op-ground-line);
+}
+
+.lockGlyph {
+  margin-left: 4px;
+  font-size: 9px;
+  vertical-align: baseline;
+}
+
+.lockReason {
+  font-family: var(--lc-font-mono);
+  font-size: 8.5px;
+  line-height: 1.25;
+  color: var(--lc-ink-30);
+  opacity: var(--lc-op-subsurface);
+  padding: 0 0 3px;
+  letter-spacing: 0.02em;
+}
+
+.tileLocked {
+  opacity: var(--lc-op-ground-line);
+  cursor: not-allowed;
+}
+
 /* Rail width — only the active group header renders, at the 8.5px mono floor.
  * It is the single wayfinding signal in a 56px glyph-only column. */
 .groupHeaderRail {

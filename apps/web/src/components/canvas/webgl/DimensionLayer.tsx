@@ -37,6 +37,7 @@ import { useFrame } from "@react-three/fiber";
 import { Line, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useStudioStore } from "./studioStore";
+import { behaviourOf } from "./chromeContract";
 import { layerScaleAlpha, viewScaleRatioForZoom } from "./layerPolicy";
 import { pctToWorld, type PctPoint } from "./coordTransform";
 import {
@@ -117,6 +118,11 @@ export function DimensionLayer({
   const dimsView = useStudioStore((s) => s.dimsView);
   const scaleView = useStudioStore((s) => s.scaleView);
   const cameraPreset = useStudioStore((s) => s.cameraPreset);
+  // Phase L.4 — dimensions convert to billboarded ≈ in 3D per the chrome
+  // contract. The contract is the single source of truth: if it says
+  // "convert" for this preset, dims are indicative (prefixed ≈, not issuable).
+  const dimBehaviour = behaviourOf("dimensions", cameraPreset);
+  const indicative = dimBehaviour.kind === "convert";
   // Quantised zoom (0.5 steps) — the declutter box scales with 1/zoom so
   // labels reappear as the user zooms in (classic parity, UI survey §3.2).
   // Quantising keeps the zero-commit pan law: liveRig is written per frame,
@@ -287,10 +293,10 @@ export function DimensionLayer({
               }}
               data-testid="dim-label"
               data-dim-family={d.family}
-              data-indicative={cameraPreset === "3d" ? "true" : undefined}
+              data-indicative={indicative ? "true" : undefined}
               style={dimLabelStyle}
             >
-              {cameraPreset === "3d" ? `≈ ${d.text}` : d.text}
+              {indicative ? `≈ ${d.text}` : d.text}
             </span>
           </Html>
         );

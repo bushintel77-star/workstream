@@ -19,6 +19,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useStudioStore, type ToolId } from "./studioStore";
+import { isLocked, lockReason, type ChromeElement } from "./chromeContract";
 import styles from "./ToolRibbon.module.css";
 
 /* ---- tool definitions (handoff §5.1) ---- */
@@ -238,6 +239,11 @@ export function ToolRibbon() {
   const penDown = useStudioStore((s) => s.penDown);
   const ribbonDwellOpen = useStudioStore((s) => s.ribbonDwellOpen);
   const setRibbonDwellOpen = useStudioStore((s) => s.setRibbonDwellOpen);
+  // Phase L.5 — GRADE + MEASURE lock in 3D per the chrome contract. The
+  // contract is read per-group in the render below (isLocked + lockReason),
+  // not pre-computed here, so the lock state is driven by the contract data
+  // table — not scattered conditionals.
+  const cameraPreset = useStudioStore((s) => s.cameraPreset);
 
   // 400ms pointer dwell → named width (handoff §5.2)
   const dwellTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -315,41 +321,67 @@ export function ToolRibbon() {
       )}
 
       {/* Tool groups */}
-      {TOOL_GROUPS.map((group, gi) => (
-        <div key={group.name} className={styles.group}>
-          {/* Group divider (not before the first group) */}
-          {gi > 0 && <div className={styles.groupDivider} />}
+      {TOOL_GROUPS.map((group, gi) => {
+        // Phase L.5 — GRADE + MEASURE lock in 3D per the chrome contract.
+        // The locked group shows a lock glyph on its header and a single
+        // reason line beneath. Locked tools are disabled (no activation).
+        const contractEl: ChromeElement =
+          group.name === "GRADE" ? "ribbonGrade" :
+            group.name === "MEASURE" ? "ribbonMeasure" : "panels";
+        const locked = isLocked(contractEl, cameraPreset);
+        const reason = lockReason(contractEl, cameraPreset);
+        return (
+          <div key={group.name} className={styles.group} data-locked={locked ? "true" : undefined}>
+            {/* Group divider (not before the first group) */}
+            {gi > 0 && <div className={styles.groupDivider} />}
 
-          {/* Group header — accent when the active tool is in this group.
+            {/* Group header — accent when the active tool is in this group.
               At rail width only the ACTIVE group's header renders: that accent
               header is the sole wayfinding (spec 4.8). */}
-          {(width !== "rail" || activeGroupName === group.name) && (
-            <div
-              className={`${styles.groupHeader} ${activeGroupName === group.name ? styles.groupHeaderActive : ""} ${width === "rail" ? styles.groupHeaderRail : ""}`}
-            >
-              {group.name}
-            </div>
-          )}
+            {(width !== "rail" || activeGroupName === group.name) && (
+              <div
+                className={`${styles.groupHeader} ${activeGroupName === group.name ? styles.groupHeaderActive : ""} ${width === "rail" ? styles.groupHeaderRail : ""} ${locked ? styles.groupHeaderLocked : ""}`}
+              >
+                {group.name}
+                {locked && (
+                  <span className={styles.lockGlyph} data-testid={`lock-${group.name.toLowerCase()}`}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="3" y="11" width="18" height="11" rx="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </span>
+                )}
+              </div>
+            )}
 
-          {/* Tool tiles */}
-          {group.tools.map((tool) => (
-            <ToolTile
-              key={tool.id}
-              tool={tool}
-              active={activeTool === tool.id}
-              width={width}
-              onClick={() => {
-                // Toggle: clicking the active tool deactivates it
-                if (activeTool === tool.id) {
-                  setActiveTool("none");
-                } else {
-                  setActiveTool(tool.id);
-                }
-              }}
-            />
-          ))}
-        </div>
-      ))}
+            {/* Lock reason line — one stated reason beneath the header (spec 11c). */}
+            {locked && reason && width !== "rail" && (
+              <div className={styles.lockReason} data-testid={`lock-reason-${group.name.toLowerCase()}`}>
+                {reason}
+              </div>
+            )}
+
+            {/* Tool tiles */}
+            {group.tools.map((tool) => (
+              <ToolTile
+                key={tool.id}
+                tool={tool}
+                active={activeTool === tool.id}
+                width={width}
+                disabled={locked}
+                onClick={() => {
+                  // Toggle: clicking the active tool deactivates it
+                  if (activeTool === tool.id) {
+                    setActiveTool("none");
+                  } else {
+                    setActiveTool(tool.id);
+                  }
+                }}
+              />
+            ))}
+          </div>
+        );
+      })}
 
       {/* Utility row — Layers + History, two 28px tiles side by side */}
       <div className={styles.groupDivider} />
@@ -382,15 +414,17 @@ interface ToolTileProps {
   active: boolean;
   width: "rail" | "standard" | "named";
   compact?: boolean;
+  disabled?: boolean;
   onClick: () => void;
 }
 
-function ToolTile({ tool, active, width, compact, onClick }: ToolTileProps) {
+function ToolTile({ tool, active, width, compact, disabled, onClick }: ToolTileProps) {
   const className = [
     styles.tile,
     active ? styles.tileActive : "",
     compact ? styles.tileCompact : "",
     width === "rail" ? styles.tileRail : "",
+    disabled ? styles.tileLocked : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -400,8 +434,10 @@ function ToolTile({ tool, active, width, compact, onClick }: ToolTileProps) {
       className={className}
       data-tool-id={tool.id}
       data-active={active}
+      data-locked={disabled ? "true" : undefined}
+      disabled={disabled}
       onClick={onClick}
-      title={`${tool.label}${tool.hotkey ? ` (${tool.hotkey})` : ""}`}
+      title={`${tool.label}${tool.hotkey ? ` (${tool.hotkey})` : ""}${disabled ? " — locked" : ""}`}
     >
       <span className={styles.tileGlyph}>
         <ToolGlyph name={tool.glyph} />

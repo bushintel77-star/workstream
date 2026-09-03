@@ -77,6 +77,7 @@ import { SplitViewLens } from "./SplitViewLens";
 import { StudioSurfaceErrorBoundary } from "./StudioSurfaceErrorBoundary";
 import { StudioCanvasLoading } from "./StudioCanvasLoading";
 import { ScheduleSheet } from "./ScheduleSheet";
+import { SheetComposer } from "./SheetComposer";
 import { guideFirstSketch } from "./firstSketchGuide";
 import type { WebGLStudioProps } from "./WebGLStudio";
 import { placementsToItems, featuresOntoItems } from "../handoff/state/canvasBridge";
@@ -526,6 +527,7 @@ export function WebGLStudioPreview({
   const storePlacements = useStudioStore((s) => s.placements);
   const storeFeatures = useStudioStore((s) => s.features);
   const scheduleOpen = useStudioStore((s) => s.scheduleOpen);
+  const sheetComposerOpen = useStudioStore((s) => s.sheetComposerOpen);
   const splitView = useStudioStore((s) => s.splitView);
   const surveyedPlanLayers = useStudioStore((s) => s.surveyedPlanLayers);
   const setSurveyedPlanLayers = useStudioStore((s) => s.setSurveyedPlanLayers);
@@ -1633,6 +1635,7 @@ export function WebGLStudioPreview({
           keylessOverlays={visibleLayers.siteTruth ? keylessOverlays : []}
           easementRingCount={visibleLayers.siteTruth ? easementsPct?.length ?? 0 : 0}
           canopy={canopyCompliance}
+          strikeAlerts={liveData.strikeAlerts}
         />
 
         {/* Floating cursor toolbar — shows when an asset is armed */}
@@ -1736,6 +1739,14 @@ export function WebGLStudioPreview({
                 : null
             }
             onClose={() => useStudioStore.getState().setScheduleOpen(false)}
+          />
+        )}
+
+        {/* Phase Q — sheet composition modal (spec 18a). Live viewports,
+            auto legend, title block, issue PDF. */}
+        {sheetComposerOpen && (
+          <SheetComposer
+            onClose={() => useStudioStore.getState().setSheetComposerOpen(false)}
           />
         )}
       </div>

@@ -31,6 +31,7 @@ import {
 import { PALETTE } from "../../../styles/colorTokens";
 import { useSeasonalStore } from "./seasonalStore";
 import { useStudioStore } from "./studioStore";
+import { isHidden as chromeHidden } from "./chromeContract";
 import { pctToWorld, type PctPoint } from "./coordTransform";
 import { resolveSunLightPosition } from "./sunLight";
 import type { RenderItem } from "./sceneItems";
@@ -93,7 +94,8 @@ export function SuncastOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lng, sunKey]);
 
-  if (!suncastView || cameraPreset === "sec" || !sun) return null;
+  // Phase L.8 — suncast hides in SEC per the chrome contract.
+  if (!suncastView || chromeHidden("suncastDrainage", cameraPreset) || !sun) return null;
   if (sun.altitudeDeg <= 2.5) return null; // sun below the cast floor — no shadow
 
   const casts: THREE.ShapeGeometry[] = [];

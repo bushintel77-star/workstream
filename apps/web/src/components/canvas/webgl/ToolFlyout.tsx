@@ -19,8 +19,10 @@
 
 import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { useStudioStore, type ToolId, type FalloffPreset } from "./studioStore";
+import { behaviourOf } from "./chromeContract";
 import { NIBS, NIB_ORDER } from "./nibs";
 import { buildAssetPalette } from "./assetPalette";
+import { MaterialPalette } from "./MaterialPalette";
 import { NumericSlider } from "./NumericSlider";
 import styles from "./ToolFlyout.module.css";
 
@@ -56,8 +58,14 @@ function NibPicker() {
   const setBrushWidthOverride = useStudioStore((s) => s.setBrushWidthOverride);
   const eraserActive = useStudioStore((s) => s.eraserActive);
   const toggleEraser = useStudioStore((s) => s.toggleEraser);
+  const cameraPreset = useStudioStore((s) => s.cameraPreset);
   const activeSpec = NIBS[activeNib];
   const currentWidth = brushWidthOverride ?? activeSpec.baseWidthPx;
+  // Phase L.6 — weight control converts mm to screen px in 3D per the chrome
+  // contract. In 3D the unit is screen px (mm-at-scale is meaningless without
+  // a sheet scale); the contract note says so beneath the slider.
+  const weightBehaviour = behaviourOf("weightControl", cameraPreset);
+  const weightConverted = weightBehaviour.kind === "convert";
   return (
     <div className={styles.section}>
       <FlyoutHeader title="Brush" hint="p/alt" />
@@ -94,9 +102,14 @@ function NibPicker() {
         value={currentWidth}
         onChange={setBrushWidthOverride}
         unit="px"
-        title={`Brush width: ${currentWidth.toFixed(1)}px`}
+        title={`Brush width: ${currentWidth.toFixed(1)}px${weightConverted ? " (screen px — mm-at-scale meaningless in 3D)" : ""}`}
         testId="brush-width"
       />
+      {weightConverted && (
+        <div className={styles.weightConvertNote} data-testid="weight-convert-note">
+          screen px — mm-at-scale meaningless in 3D
+        </div>
+      )}
       {/* Phase I — stroke-matching eraser toggle. */}
       <button
         className={`${styles.eraserBtn} ${eraserActive ? styles.eraserBtnActive : ""}`}
@@ -261,6 +274,7 @@ function FlyoutContent({ tool }: { tool: ToolId }) {
       return (
         <>
           <NibPicker />
+          <MaterialPalette />
           <PlanePicker />
           <FalloffPicker />
         </>

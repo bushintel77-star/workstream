@@ -428,6 +428,8 @@ export interface StudioStoreState {
   fitSheetOpen: boolean;
   /** Schedule sheet — the one light surface (spec 6b / 9.1), derived only. */
   scheduleOpen: boolean;
+  /** Phase Q — sheet composition modal (spec 18a). */
+  sheetComposerOpen: boolean;
   /** Selected fixed plane from the spec stack (1.1). Ground is the drawable
    *  target; planting/massing are proposed reference bands. */
   activePlaneId: FixedPlaneId;
@@ -996,6 +998,10 @@ export interface StudioStoreState {
   /** The armed nib — committed strokes carry its telemetry mapping
    *  (nibs.ts). The floating nib palette (Sketch mode) swaps it. */
   activeNib: NibKind;
+  /** Phase M — active material id from the 21-material palette. Strokes
+   *  committed with a markup material carry its dash signature. Null = the
+   *  nib's default colour (no material override). View state only. */
+  activeMaterialId: string | null;
   /** Phase I — brush width override (px). When non-null, the active nib's
    *  baseWidthPx is replaced by this value for new strokes. Null = use the
    *  nib's default width. View state only. */
@@ -1029,6 +1035,8 @@ export interface StudioStoreState {
    *  inverse sun angle. Off → 45° drafting hatch. */
   sunHatchSnap: boolean;
   setActiveNib: (nib: NibKind) => void;
+  /** Phase M — set the active material id (null = no material override). */
+  setActiveMaterialId: (id: string | null) => void;
   /** Phase I — set the brush width override (px). Null = use nib default. */
   setBrushWidthOverride: (px: number | null) => void;
   /** Phase I — toggle the stroke-matching eraser. */
@@ -1062,6 +1070,16 @@ export interface StudioStoreState {
   saveRevision: number;
   /** Epoch ms of the last successful persist (for "Saved Ns ago" labels). */
   savedTick: number;
+
+  // --- Phase O — Failure states (drawn, not silent) ---
+  /** WFS/keyless overlay fetch failure. Null = no error / not yet fetched. */
+  overlayFetchError: { source: string; message: string; at: number } | null;
+  /** BYDA/services import failure. Null = no error. */
+  importError: { source: string; message: string; at: number } | null;
+  /** Underlay corruption (unreadable image / bad geo). Null = no error. */
+  underlayError: { source: string; message: string; at: number } | null;
+  /** Calibration rejection (e.g. scale outside tolerance). Null = no error. */
+  calibrationError: { message: string; at: number } | null;
 
   // --- Setters ---
   setGrowthYear: (y: number) => void;
@@ -1124,6 +1142,7 @@ export interface StudioStoreState {
 
   setFitSheetOpen: (v: boolean) => void;
   setScheduleOpen: (v: boolean) => void;
+  setSheetComposerOpen: (v: boolean) => void;
   setActivePlaneId: (id: FixedPlaneId) => void;
   setLiveCoord: (v: { x: number; z: number; chainage?: number } | null) => void;
   setSurveyedPlanLayers: (patch: Partial<SurveyedPlanLayers>) => void;
@@ -1403,6 +1422,11 @@ export interface StudioStoreState {
 
   setSaveStatus: (status: SaveStatus, errorKind?: SaveErrorKind) => void;
   markSaved: () => void;
+  /** Phase O — set/clear a failure state. Null clears it. */
+  setOverlayFetchError: (err: { source: string; message: string } | null) => void;
+  setImportError: (err: { source: string; message: string } | null) => void;
+  setUnderlayError: (err: { source: string; message: string } | null) => void;
+  setCalibrationError: (err: { message: string } | null) => void;
   /** Bump after a successful persist (drives downstream data refetch). */
   bumpSaveRevision: () => void;
 }
@@ -1524,6 +1548,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // self-gates on an empty canvas).
   fitSheetOpen: true,
   scheduleOpen: false,
+  sheetComposerOpen: false,
   activePlaneId: "ground",
   liveCoord: null,
   surveyedPlanLayers: {
@@ -1694,6 +1719,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Expressive stylus Sketch — graphite armed by default; sun-hatch snap on;
   // neutral live telemetry until the first pen sample.
   activeNib: DEFAULT_NIB,
+  // Phase M — active material (null = nib default colour, no override).
+  activeMaterialId: null,
   // Phase I — brush width override (null = nib default); eraser off.
   brushWidthOverride: null,
   eraserActive: false,
@@ -1729,6 +1756,12 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   saveErrorKind: null,
   saveRevision: 0,
   savedTick: 0,
+
+  // Phase O — failure states (null = no error)
+  overlayFetchError: null,
+  importError: null,
+  underlayError: null,
+  calibrationError: null,
 
   setGrowthYear: (growthYear) => set({ growthYear }),
   setSunMin: (sunMin) =>
@@ -1835,6 +1868,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
 
   setFitSheetOpen: (fitSheetOpen) => set({ fitSheetOpen }),
   setScheduleOpen: (scheduleOpen) => set({ scheduleOpen }),
+  setSheetComposerOpen: (sheetComposerOpen) => set({ sheetComposerOpen }),
   setActivePlaneId: (activePlaneId) => set({ activePlaneId }),
   setLiveCoord: (liveCoord) => set({ liveCoord }),
   setSurveyedPlanLayers: (patch) =>
@@ -2086,6 +2120,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       };
     }),
   setActiveNib: (activeNib) => set({ activeNib }),
+  // Phase M — active material from the 21-material palette.
+  setActiveMaterialId: (activeMaterialId) => set({ activeMaterialId }),
   // Phase I — brush width override + stroke-matching eraser.
   setBrushWidthOverride: (px) =>
     set({
@@ -2983,6 +3019,15 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set({ saveStatus, saveErrorKind: errorKind ?? null }),
   markSaved: () =>
     set({ saveStatus: "saved", saveErrorKind: null, savedTick: Date.now() }),
+  // Phase O — failure state setters (timestamp on set, null clears)
+  setOverlayFetchError: (err) =>
+    set(err ? { overlayFetchError: { ...err, at: Date.now() } } : { overlayFetchError: null }),
+  setImportError: (err) =>
+    set(err ? { importError: { ...err, at: Date.now() } } : { importError: null }),
+  setUnderlayError: (err) =>
+    set(err ? { underlayError: { ...err, at: Date.now() } } : { underlayError: null }),
+  setCalibrationError: (err) =>
+    set(err ? { calibrationError: { ...err, at: Date.now() } } : { calibrationError: null }),
   bumpSaveRevision: () =>
     set((s) => ({ saveRevision: s.saveRevision + 1, savedTick: Date.now() })),
 
