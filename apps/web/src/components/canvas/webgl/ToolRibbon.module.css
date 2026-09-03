@@ -112,6 +112,10 @@
   color: var(--lc-ink-30);
   padding: 1px 0 3px;
   transition: color 160ms ease;
+  /* Anchor for the lock glyph, and a fixed line box so the glyph cannot
+   * change the header's height when it appears. */
+  position: relative;
+  line-height: 1.2;
 }
 
 .groupHeaderActive {
@@ -124,10 +128,17 @@
   opacity: var(--lc-op-ground-line);
 }
 
+/* Out of flow. An inline 9px SVG sits on the baseline and drags the header's
+ * line box down with its descender space, which grew the ribbon by 2px the
+ * moment the camera reached 3D — a position change, which §11c forbids and
+ * the e2e box invariant catches. */
 .lockGlyph {
+  position: absolute;
+  top: 50%;
   margin-left: 4px;
+  transform: translateY(-50%);
   font-size: 9px;
-  vertical-align: baseline;
+  line-height: 0;
 }
 
 /* The stated reason a group is locked. Out of flow, on purpose: spec §11c's

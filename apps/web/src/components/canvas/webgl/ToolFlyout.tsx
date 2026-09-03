@@ -135,7 +135,13 @@ function BrushTexturePreview({ spec }: { spec: typeof NIBS[keyof typeof NIBS] })
   const h = 14;
   const strokeWidth = Math.min(6, Math.max(1, spec.baseWidthPx * 0.6));
   const opacity = spec.opacity;
-  const blur = spec.edgeSoft > 0 ? `filter: blur(${spec.edgeSoft * 1.5}px);` : "";
+  // React's `style` prop takes an object, not a CSS string. This was a
+  // template literal cast through `as React.CSSProperties`, which silenced
+  // the compiler and threw at render — opening the DRAW flyout for any soft
+  // nib (edgeSoft > 0: ink-03, chisel-marker) crashed the whole studio into
+  // its error boundary. The cast was the only thing hiding it.
+  const blur: CSSProperties | undefined =
+    spec.edgeSoft > 0 ? { filter: `blur(${spec.edgeSoft * 1.5}px)` } : undefined;
   return (
     <svg
       width={w}
@@ -159,7 +165,7 @@ function BrushTexturePreview({ spec }: { spec: typeof NIBS[keyof typeof NIBS] })
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           opacity={opacity}
-          style={blur as React.CSSProperties}
+          style={blur}
         />
       )}
     </svg>

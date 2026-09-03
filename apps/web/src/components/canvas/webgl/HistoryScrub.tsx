@@ -54,18 +54,45 @@ export function HistoryScrub({
   const redo = useStudioStore((s) => s.redo);
   // The live document, shaped like a snapshot, so it can sit between past
   // and future as the middle step of the track.
-  const liveSlice = useStudioStore(
-    (s): HistorySnapshotSlice => ({
-      placements: s.placements,
-      strokes: s.sketchStrokes,
-      photoElevations: s.photoElevations,
-      features: s.features,
-      constructionTrenches: s.constructionTrenches,
-      irrigationZones: s.irrigationZones,
-      canvases: s.sketchCanvases,
-      setbackLines: s.setbackLines,
-      buildingFootprints: s.buildingFootprints,
+  //
+  // Each slice is selected on its own and the composite is assembled in a
+  // memo. Building the object inside the selector returns a fresh reference
+  // on every call, and zustand compares with Object.is — so the store always
+  // reported a change, which re-rendered, which built another object. That
+  // is an infinite loop, and it took the studio's error boundary down with
+  // "Maximum update depth exceeded".
+  const placements = useStudioStore((s) => s.placements);
+  const sketchStrokes = useStudioStore((s) => s.sketchStrokes);
+  const photoElevations = useStudioStore((s) => s.photoElevations);
+  const features = useStudioStore((s) => s.features);
+  const constructionTrenches = useStudioStore((s) => s.constructionTrenches);
+  const irrigationZones = useStudioStore((s) => s.irrigationZones);
+  const sketchCanvases = useStudioStore((s) => s.sketchCanvases);
+  const setbackLines = useStudioStore((s) => s.setbackLines);
+  const buildingFootprints = useStudioStore((s) => s.buildingFootprints);
+  const liveSlice = useMemo<HistorySnapshotSlice>(
+    () => ({
+      placements,
+      strokes: sketchStrokes,
+      photoElevations,
+      features,
+      constructionTrenches,
+      irrigationZones,
+      canvases: sketchCanvases,
+      setbackLines,
+      buildingFootprints,
     }),
+    [
+      placements,
+      sketchStrokes,
+      photoElevations,
+      features,
+      constructionTrenches,
+      irrigationZones,
+      sketchCanvases,
+      setbackLines,
+      buildingFootprints,
+    ],
   );
   const [scrubIdx, setScrubIdx] = useState<number>(-1); // -1 = live (head)
   const [branchOffer, setBranchOffer] = useState(false);
