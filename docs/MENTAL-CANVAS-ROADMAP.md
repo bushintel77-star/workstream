@@ -105,27 +105,22 @@ Confirmed by reading the only call site
    not built — the numeric flyout + drag gizmos cover the same outcome.
 2. **✅ FIXED (Phase A1).** Naming on create — the flyout's Place button
    is disabled until a name is entered.
-3. **No UNSCALED badge / calibrate-later (§15a/§15c).** Grepped the whole
-   `webgl/` tree for "unscaled", "calibrate" — no matches. Sketching always
-   assumes a scaled site; there's no unscaled-first-class state, no
-   two-point retroactive calibration flow, and so no "trace an aerial /
-   photo before you have a scale" path.
-4. **No viewpoint filmstrip + walk/record (§7a / canonical screen 16b).**
-   Garden mode has `PedestrianCamera.tsx` / `FlythroughRig.tsx` for
-   eye-level 3D viewpoints, but that's a different, adjacent system — no
-   "canvases-as-cards rail" + "viewpoint filmstrip + walk/record" exists
-   for **sketch mode** specifically, as the canonical 16b screen specifies.
-5. **Falloff presets (NARROW / BALANCED / WIDE, §14c) — not yet located.**
-   The shader supports continuous angle-based falloff; whether a preset
-   *picker* is exposed anywhere in chrome wasn't confirmed in this pass
-   (broad grep for "narrow/balanced/wide" was too noisy to be useful — worth
-   a targeted look at `FloatingChrome.tsx` and `ToolFlyout.tsx` before
-   assuming it's missing).
-6. **Sketch-first entry (§11d, turn 15) — not audited this pass.** "Open →
-   drop an aerial or take a photo → draw", first-run empty state with three
-   entries (Import a survey / Trace an address / Blank site) per turn 15
-   item 15 in the README's workstream list. Needs its own check against
-   `SiteSetupModal.tsx` and the confirm-pin flow before scoping.
+3. **✅ FIXED (Phase D/D2, 2026-09-03).** UNSCALED badge + calibrate-later
+   — `WfsChips` renders a hazard-coloured UNSCALED pill (doubles as the
+   calibrate entry point), `CalibrateModal.tsx` implements the retroactive
+   two-point calibration flow with SCALE THEM / KEEP HEIGHTS commit.
+4. **✅ FIXED (Phase C/C2, 2026-09-03).** Viewpoint filmstrip + walk/record
+   — `ViewpointFilmstrip.tsx` renders in Sketch mode with capture/walk/
+   record controls, linger/transition/loop timeline parameters, and a
+   progress bar. `FlythroughRig.tsx` plays the spline with configurable
+   per-segment timing.
+5. **✅ FIXED (Phase E, 2026-09-03).** Falloff presets — NARROW/BALANCED/
+   WIDE picker in the DRAW tool flyout (`FalloffPicker` in `ToolFlyout.tsx`),
+   wired through to `AngleOpacityShader.ts`'s `uFalloffEdge1` uniform.
+6. **✅ FIXED (Phase F, 2026-09-03).** Sketch-first entry — Sketch is
+   always unlocked (was gated behind `hasAerial`), `suggestedMode` returns
+   Sketch for a blank board, the boundary gate was removed from
+   `firstSketchGuide.ts`, and the hint copy matches the spec.
 
 ## Suggested phases
 
@@ -465,6 +460,39 @@ with zero console errors. The flyout opens on real user interaction (pen
 tool click/keyboard 'p') — synthetic headless clicks don't trigger React's
 synthetic event system on the ribbon tiles, a known browser-automation
 limitation that doesn't affect the actual UI.
+
+### Phase J — Visibility Panel (per-bookmark canvas visibility keyframing)
+**Status: COMPLETE — shipped 2026-09-03.** The Phase C2 store action
+`toggleViewpointVisibility` was wired to a full visibility panel UI and
+the FlythroughRig now applies the keyframes during walk playback.
+
+- **`VisibilityPanel.tsx` + `.module.css`**: a dropdown panel that blooms
+  above the viewpoint filmstrip. Shows a matrix: rows = sketch canvases,
+  columns = viewpoints. Each cell is an eye toggle (filled circle = visible,
+  hollow circle = hidden) that drives `toggleViewpointVisibility`. When a
+  viewpoint has no keyframe entry, all its cells show as visible (the
+  default). An empty-state message renders when there are no viewpoints or
+  no canvases. A backdrop click closes the panel.
+- **`ViewpointFilmstrip.tsx`**: a "VIS" button is added after the record
+  button. It opens/closes the VisibilityPanel. Disabled when there are no
+  bookmarks. Accent-filled when active.
+- **`ViewpointFilmstrip.module.css`**: `.visibilityBtn` /
+  `.visibilityBtnActive` — token-only CSS matching the record button style.
+- **`FlythroughRig.tsx`**: on the first frame of playback, saves the
+  operator's current `hiddenCanvasIds`. Each frame, computes the active
+  viewpoint index from `progressRef.current` and applies the keyframe:
+  if the active viewpoint has a `viewpointVisibility` entry, hides all
+  canvases NOT in its visible list; if it doesn't, restores the saved set.
+  On playback stop (either end-of-walk or external pause), restores the
+  saved set via a `useEffect` on `isPlayingFlythrough`.
+- **`visibilityPanel.test.ts`**: 7 unit tests covering toggle add/remove,
+  per-viewpoint independence, multi-canvas keyframes, empty default, and
+  the full matrix state (canvases + bookmarks + visibility).
+
+Verified live: filmstrip renders with VIS button (disabled when no
+viewpoints, enabled when viewpoints exist); panel opens on click with
+the canvas × viewpoint matrix; zero console errors; typecheck + lint
+green; 68 visibility + store tests green.
 
 ### Phase D — Unscaled state + calibrate later (turn 15a/15c)
 **Status: COMPLETE — shipped 2026-09-03.**

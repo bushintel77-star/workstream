@@ -21,8 +21,9 @@
  * Phase C extends them with thumb + rig snapshot + recording state.
  */
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CanvasMode } from "../../../lib/canvas-mode";
+import { VisibilityPanel } from "./VisibilityPanel";
 import { useStudioStore } from "./studioStore";
 import { captureViewpointThumbnail } from "./viewpointThumbnail";
 import styles from "./ViewpointFilmstrip.module.css";
@@ -50,6 +51,9 @@ export function ViewpointFilmstrip({ mode }: ViewpointFilmstripProps) {
   const setWalkLingerS = useStudioStore((s) => s.setWalkLingerS);
   const setWalkTransitionS = useStudioStore((s) => s.setWalkTransitionS);
   const toggleWalkLoop = useStudioStore((s) => s.toggleWalkLoop);
+
+  // Phase J — visibility panel state (local UI state, not store).
+  const [visibilityPanelOpen, setVisibilityPanelOpen] = useState(false);
 
   // MediaRecorder ref for the walk-through video capture.
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -226,6 +230,23 @@ export function ViewpointFilmstrip({ mode }: ViewpointFilmstripProps) {
         >
           {isRecordingWalk ? "STOP" : "REC"}
         </button>
+        {/* Phase J — visibility panel toggle. Opens the per-viewpoint
+            canvas visibility keyframe matrix. */}
+        <button
+          className={`${styles.visibilityBtn} ${visibilityPanelOpen ? styles.visibilityBtnActive : ""}`}
+          onClick={() => setVisibilityPanelOpen((o) => !o)}
+          disabled={bookmarks.length === 0}
+          title={
+            bookmarks.length === 0
+              ? "Capture viewpoints first to keyframe visibility"
+              : visibilityPanelOpen
+                ? "Close visibility panel"
+                : "Edit per-viewpoint canvas visibility"
+          }
+          data-testid="viewpoint-visibility"
+        >
+          VIS
+        </button>
       </div>
 
       {/* Phase C2 — timeline controls: linger, transition, loop, progress. */}
@@ -277,6 +298,13 @@ export function ViewpointFilmstrip({ mode }: ViewpointFilmstripProps) {
           />
         </div>
       )}
+
+      {/* Phase J — visibility panel (per-viewpoint canvas visibility
+          keyframing). Drops down above the filmstrip. */}
+      <VisibilityPanel
+        open={visibilityPanelOpen}
+        onClose={() => setVisibilityPanelOpen(false)}
+      />
     </div>
   );
 }

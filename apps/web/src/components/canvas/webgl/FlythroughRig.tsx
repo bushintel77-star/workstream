@@ -22,7 +22,7 @@
  *     so it doesn't fight the fly-through.
  */
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useStudioStore } from "./studioStore";
@@ -36,6 +36,14 @@ export function FlythroughRig() {
   const walkTransitionS = useStudioStore((s) => s.walkTransitionS);
   const walkLoop = useStudioStore((s) => s.walkLoop);
   const setWalkProgress = useStudioStore((s) => s.setWalkProgress);
+
+  // Phase J — visibility keyframing. Read viewpointVisibility and
+  // sketchCanvases to compute which canvases to hide during playback.
+  // The savedHiddenIds ref preserves the operator's pre-playback hidden
+  // set so it can be restored when the walk stops.
+  const sketchCanvases = useStudioStore((s) => s.sketchCanvases);
+  const savedHiddenIdsRef = useRef<string[] | null>(null);
+  const lastViewpointIdxRef = useRef<number>(-1);
 
   // Animation progress (0.0 to 1.0) — accumulates via delta time.
   const progressRef = useRef(0);
@@ -69,8 +77,58 @@ export function FlythroughRig() {
   const segmentCount = Math.max(1, cameraBookmarks.length);
   const totalDurationS = segmentCount * (walkTransitionS + walkLingerS);
 
+  // Phase J — when playback stops (either by reaching the end or by the
+  // operator pausing), restore the saved hidden canvas set. This effect
+  // catches the external pause case (the end-of-playback case is handled
+  // inline in useFrame above).
+  useEffect(() => {
+    if (!isPlayingFlythrough && savedHiddenIdsRef.current !== null) {
+      useStudioStore.setState({ hiddenCanvasIds: savedHiddenIdsRef.current });
+      savedHiddenIdsRef.current = null;
+      lastViewpointIdxRef.current = -1;
+    }
+  }, [isPlayingFlythrough]);
+
   useFrame((_, delta) => {
     if (!isPlayingFlythrough || !positionCurve || !targetCurve) return;
+
+    // Phase J — on the first frame of playback, save the operator's
+    // current hidden canvas set so it can be restored when the walk ends.
+    if (savedHiddenIdsRef.current === null) {
+      savedHiddenIdsRef.current = [...useStudioStore.getState().hiddenCanvasIds];
+    }
+
+    // Phase J — compute the active viewpoint index and apply visibility
+    // keyframes. The active viewpoint is the knot closest to the current
+    // progress head. When a viewpoint has a keyframe entry in
+    // viewpointVisibility, hide all canvases NOT listed. When it doesn't,
+    // restore the operator's saved hidden set (no keyframe = no override).
+    const state = useStudioStore.getState();
+    const viewpointVisibility = state.viewpointVisibility;
+    const hasAnyKeyframes = Object.keys(viewpointVisibility).length > 0;
+    if (hasAnyKeyframes && cameraBookmarks.length > 0) {
+      const idx = Math.min(
+        cameraBookmarks.length - 1,
+        Math.floor(progressRef.current * cameraBookmarks.length),
+      );
+      if (idx !== lastViewpointIdxRef.current) {
+        lastViewpointIdxRef.current = idx;
+        const vpId = cameraBookmarks[idx]!.id;
+        const visibleList = viewpointVisibility[vpId];
+        if (visibleList !== undefined) {
+          // Keyframe exists — hide canvases not in the visible list.
+          const hiddenIds = sketchCanvases
+            .filter((c) => !visibleList.includes(c.id))
+            .map((c) => c.id);
+          useStudioStore.setState({ hiddenCanvasIds: hiddenIds });
+        } else {
+          // No keyframe for this viewpoint — restore the saved set.
+          useStudioStore.setState({
+            hiddenCanvasIds: savedHiddenIdsRef.current ?? [],
+          });
+        }
+      }
+    }
 
     // Check if we're lingering at a viewpoint (progress is near a knot).
     if (lingerRef.current > 0) {
@@ -102,6 +160,12 @@ export function FlythroughRig() {
       } else {
         progressRef.current = 0;
         setWalkProgress(0);
+        // Phase J — restore the operator's pre-playback hidden canvas set.
+        if (savedHiddenIdsRef.current !== null) {
+          useStudioStore.setState({ hiddenCanvasIds: savedHiddenIdsRef.current });
+          savedHiddenIdsRef.current = null;
+        }
+        lastViewpointIdxRef.current = -1;
         toggleFlythrough();
         return;
       }

@@ -210,6 +210,42 @@
   animation: recordPulse 1.5s ease-in-out infinite;
 }
 
+/* Phase J — visibility panel toggle button. */
+.visibilityBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--gs-radius-md);
+  background: var(--lc-glass-grad);
+  color: var(--lc-ink-60, var(--gs-ink-60));
+  font-family: var(--lc-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.visibilityBtn:hover:not(:disabled) {
+  background: var(--lc-surface-3, var(--gs-surface-3));
+  color: var(--lc-ink, var(--gs-ink));
+}
+
+.visibilityBtn:disabled {
+  opacity: var(--lc-op-ground-line);
+  cursor: not-allowed;
+}
+
+.visibilityBtnActive {
+  background: var(--lc-accent-terrain, var(--gs-accent));
+  color: var(--lc-accent-on, var(--gs-accent-on));
+  border-color: var(--lc-accent-terrain, var(--gs-accent));
+}
+
 @keyframes recordPulse {
 
   0%,
