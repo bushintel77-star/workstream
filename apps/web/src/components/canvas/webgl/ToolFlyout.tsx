@@ -21,6 +21,7 @@ import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { useStudioStore, type ToolId, type FalloffPreset } from "./studioStore";
 import { NIBS, NIB_ORDER } from "./nibs";
 import { buildAssetPalette } from "./assetPalette";
+import { NumericSlider } from "./NumericSlider";
 import styles from "./ToolFlyout.module.css";
 
 export interface ToolFlyoutProps {
@@ -82,21 +83,20 @@ function NibPicker() {
           );
         })}
       </div>
-      {/* Phase I — single width slider. Controls the active nib's base width. */}
-      <div className={styles.widthSlider} data-testid="brush-width-slider">
-        <span className={styles.widthLabel}>W</span>
-        <input
-          type="range"
-          className={styles.widthRange}
-          min={0.5}
-          max={20}
-          step={0.5}
-          value={currentWidth}
-          onChange={(e) => setBrushWidthOverride(parseFloat(e.target.value))}
-          title={`Brush width: ${currentWidth.toFixed(1)}px`}
-        />
-        <span className={styles.widthValue}>{currentWidth.toFixed(1)}</span>
-      </div>
+      {/* Phase I/K — brush width slider with numeric entry. Controls the
+          active nib's base width. The NumericSlider provides tap-to-type
+          entry (spec §5.3: "every numeric parameter needs tap-to-type entry"). */}
+      <NumericSlider
+        label="W"
+        min={0.5}
+        max={20}
+        step={0.5}
+        value={currentWidth}
+        onChange={setBrushWidthOverride}
+        unit="px"
+        title={`Brush width: ${currentWidth.toFixed(1)}px`}
+        testId="brush-width"
+      />
       {/* Phase I — stroke-matching eraser toggle. */}
       <button
         className={`${styles.eraserBtn} ${eraserActive ? styles.eraserBtnActive : ""}`}

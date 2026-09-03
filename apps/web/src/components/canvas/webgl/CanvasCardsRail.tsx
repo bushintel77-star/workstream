@@ -28,6 +28,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import type { CanvasMode } from "../../../lib/canvas-mode";
 import { useStudioStore } from "./studioStore";
 import { canvasThumbnailSvg } from "./canvasThumbnail";
+import { NumericSlider } from "./NumericSlider";
 import styles from "./CanvasCardsRail.module.css";
 
 const SEASON_TAGS = ["ALL", "SUMMER", "WINTER"] as const;
@@ -167,21 +168,18 @@ export function CanvasCardsRail({
       {/* Collapsed state: just the header, click to expand. */}
       {railCollapsed ? null : (
         <>
-          {/* Transparency toggle — fades all inactive canvases */}
-          <div className={styles.transparencyRow}>
-            <span className={styles.transparencyLabel}>FADE</span>
-            <input
-              type="range"
-              className={styles.transparencySlider}
-              min={0.15}
-              max={1}
-              step={0.05}
-              value={inactiveCanvasOpacity}
-              onChange={(e) => setInactiveCanvasOpacity(parseFloat(e.target.value))}
-              title="Fade inactive canvases"
-              data-testid="canvas-transparency-slider"
-            />
-          </div>
+          {/* Phase K — transparency toggle with numeric entry. Fades all
+              inactive canvases (the Mental Canvas "Transparency Toggle"). */}
+          <NumericSlider
+            label="FADE"
+            min={0.15}
+            max={1}
+            step={0.05}
+            value={inactiveCanvasOpacity}
+            onChange={setInactiveCanvasOpacity}
+            title="Fade inactive canvases"
+            testId="canvas-transparency"
+          />
 
           {sortedCanvases.map((canvas) => {
             const isActive = canvas.id === activeCanvasId;

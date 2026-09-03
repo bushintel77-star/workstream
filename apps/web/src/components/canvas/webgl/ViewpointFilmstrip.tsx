@@ -24,6 +24,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CanvasMode } from "../../../lib/canvas-mode";
 import { VisibilityPanel } from "./VisibilityPanel";
+import { NumericSlider } from "./NumericSlider";
 import { useStudioStore } from "./studioStore";
 import { captureViewpointThumbnail } from "./viewpointThumbnail";
 import styles from "./ViewpointFilmstrip.module.css";
@@ -249,36 +250,31 @@ export function ViewpointFilmstrip({ mode }: ViewpointFilmstripProps) {
         </button>
       </div>
 
-      {/* Phase C2 — timeline controls: linger, transition, loop, progress. */}
+      {/* Phase C2/K — timeline controls: linger, transition, loop, progress.
+          NumericSlider provides tap-to-type entry per spec §5.3. */}
       <div className={styles.timelineControls} data-testid="viewpoint-timeline">
-        <label className={styles.timelineLabel} title="Seconds the camera pauses at each viewpoint">
-          <span className={styles.timelineLabelText}>LINGER</span>
-          <input
-            type="range"
-            className={styles.timelineSlider}
-            min={0}
-            max={5}
-            step={0.25}
-            value={walkLingerS}
-            onChange={(e) => setWalkLingerS(parseFloat(e.target.value))}
-            data-testid="walk-linger-slider"
-          />
-          <span className={styles.timelineValue}>{walkLingerS.toFixed(1)}s</span>
-        </label>
-        <label className={styles.timelineLabel} title="Seconds for the camera to fly between viewpoints">
-          <span className={styles.timelineLabelText}>TRANSITION</span>
-          <input
-            type="range"
-            className={styles.timelineSlider}
-            min={0.5}
-            max={10}
-            step={0.5}
-            value={walkTransitionS}
-            onChange={(e) => setWalkTransitionS(parseFloat(e.target.value))}
-            data-testid="walk-transition-slider"
-          />
-          <span className={styles.timelineValue}>{walkTransitionS.toFixed(1)}s</span>
-        </label>
+        <NumericSlider
+          label="LINGER"
+          min={0}
+          max={5}
+          step={0.25}
+          value={walkLingerS}
+          onChange={setWalkLingerS}
+          unit="s"
+          title="Seconds the camera pauses at each viewpoint"
+          testId="walk-linger"
+        />
+        <NumericSlider
+          label="TRANSITION"
+          min={0.5}
+          max={10}
+          step={0.5}
+          value={walkTransitionS}
+          onChange={setWalkTransitionS}
+          unit="s"
+          title="Seconds for the camera to fly between viewpoints"
+          testId="walk-transition"
+        />
         <button
           className={`${styles.loopBtn} ${walkLoop ? styles.loopBtnActive : ""}`}
           onClick={toggleWalkLoop}

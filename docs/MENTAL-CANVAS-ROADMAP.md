@@ -494,6 +494,35 @@ viewpoints, enabled when viewpoints exist); panel opens on click with
 the canvas × viewpoint matrix; zero console errors; typecheck + lint
 green; 68 visibility + store tests green.
 
+### Phase K — Numeric entry on every flyout parameter (spec §5.3)
+**Status: COMPLETE — shipped 2026-09-03.** The spec's #1 blocking open
+item ("every numeric parameter needs tap-to-type entry. Sliders alone are
+insufficient for a profession that works to 1:14") is resolved. A reusable
+`NumericSlider` component combines a range slider with a tap-to-type
+numeric `<input type="number">` that clamps to [min, max] on blur/Enter.
+All five flyout sliders were replaced:
+
+- **`NumericSlider.tsx` + `.module.css`**: reusable component. Props:
+  label, min, max, step, value, onChange, unit, title, testId, decimals.
+  The number input always receives a pure numeric value (no unit suffix —
+  `<input type="number">` rejects "0.50s"). The unit is a separate span.
+  Focus seeds the draft with the current value; blur/Enter commits
+  (clamped); Escape cancels. Decimal places derived from the step via
+  string parsing (handles 0.25 → 2 dp correctly, unlike log10 math).
+- **ToolFlyout.tsx**: brush width slider (0.5–20px) → NumericSlider.
+- **ViewpointFilmstrip.tsx**: linger (0–5s) and transition (0.5–10s)
+  sliders → NumericSlider.
+- **CanvasCardsRail.tsx**: fade/transparency (0.15–1.0) slider →
+  NumericSlider.
+- **FloatingChrome.tsx**: extrusion depth (0.1–5m) slider → NumericSlider.
+- **`numericSlider.test.ts`**: 6 unit tests covering clamp logic (below
+  min, above max, in-range, non-finite rejection) and decimal-place
+  derivation from step.
+
+Verified live: all number inputs render with pure numeric values
+(linger=0.50, transition=2.0, fade=1.00); zero console errors/warnings;
+typecheck + lint green; 67 numericSlider + store tests green.
+
 ### Phase D — Unscaled state + calibrate later (turn 15a/15c)
 **Status: COMPLETE — shipped 2026-09-03.**
 

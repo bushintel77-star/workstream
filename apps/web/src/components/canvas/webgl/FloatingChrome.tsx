@@ -39,6 +39,7 @@ import { CalibrateModal } from "./CalibrateModal";
 import { DrawViewToggle } from "./DrawViewToggle";
 import { SelectionModeToggle } from "./SelectionModeToggle";
 import { SelectionIsolationOverlay } from "./SelectionIsolationOverlay";
+import { NumericSlider } from "./NumericSlider";
 import styles from "./FloatingChrome.module.css";
 
 /* ---- helpers ---- */
@@ -311,22 +312,21 @@ export function FloatingChrome({
         </button>
       </div>
 
-      {/* Extrusion panel -- appears when MASS tool is armed + stroke selected */}
+      {/* Extrusion panel -- appears when MASS tool is armed + stroke selected.
+          Phase K — NumericSlider provides tap-to-type entry for depth. */}
       {extrusionToolArmed && selectedExtrusionStrokeId && (
         <div className={styles.extPanel}>
-          <span className={styles.extLabel}>DEPTH</span>
-          <input
-            type="range"
-            className={styles.extSlider}
+          <NumericSlider
+            label="DEPTH"
             min={0.1}
             max={5}
             step={0.1}
             value={activeExtrusionDepth}
-            onChange={(e) => setActiveExtrusionDepth(parseFloat(e.target.value))}
+            onChange={setActiveExtrusionDepth}
+            unit="m"
+            title="Extrusion depth in metres"
+            testId="extrusion-depth"
           />
-          <span className={styles.extValue}>
-            {activeExtrusionDepth.toFixed(1)}m
-          </span>
           <button
             className={styles.extCommit}
             onClick={() => commitExtrusion(selectedExtrusionStrokeId, activeExtrusionDepth)}
