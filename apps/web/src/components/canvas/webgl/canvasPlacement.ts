@@ -2,7 +2,7 @@
  * Spatial Sketching — Canvas Placement (Mental Canvas roadmap, Phase A1).
  *
  * Pure math for placing a SketchCanvas plane: the five spec presets
- * (docs/MENTAL-CANVAS-ROADMAP.md, ArchitecturalLandscapeUI design handoff
+ * (docs/MENTAL-CANVAS-ROADMAP.md Phase A, design handoff
  * §14b) and the fold quaternion shared by Parallel Projection (height-only,
  * angle stays 0) and Hinge Projection (angle sweeps 0°→90°).
  *

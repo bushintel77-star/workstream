@@ -1,619 +1,421 @@
-# Mental Canvas-style sketching — status + roadmap
+# Mental Canvas — build roadmap
 
-Written 2026-09-03 after a live code audit (not from memory) so a fresh CLI
-session can pick this up without re-deriving it. Cross-references
-`ArchitecturalLandscapeUI/design_handoff_landscape_canvas/README.md` — the
-project's actual design spec for the sketch canvas, sections **§7a, §11c
-(turns 14a/14b/14c), §11d (turn 15)**. That README is authoritative; this
-file is a status snapshot + task list against it, not a replacement.
+Written 2026-09-03 after a full audit of the design handoff spec
+(`design_handoff_landscape_canvas/.../README.md` + `BUILD_CHECKLIST.md`)
+against the live codebase. This is the single source of truth for what is
+done, what remains, and in what order.
 
-## Headline finding
+**Spec:** `design_handoff_landscape_canvas/design_handoff_landscape_canvas/README.md`
+**Checklist:** `design_handoff_landscape_canvas/design_handoff_landscape_canvas/BUILD_CHECKLIST.md`
+**Visual truth:** `Landscape Canvas.dc.html` — cards 16a/16b/16c/17a/17b are
+the build targets; turns 1-15 are rationale, not instructions.
 
-**The core "Mental Canvas" engine already exists and is real, not a stub.**
-Three dedicated, spec-aware modules under
-`apps/web/src/components/canvas/webgl/`:
+---
 
-- **`SketchCanvasGroup.tsx`** — each `SketchCanvas` (contracts type) is a real
-  spatial node: position + rotation quaternion, a raycast mesh for drawing,
-  strokes stored in the plane's local board-% space. Comment cites
-  `docs/GOLD-STANDARD-2026-ARCHITECTURE.md §5` (SpatialObject as universal
-  node).
-- **`StrokeTransferLayer.tsx`** ("Spatial Sketching — Phase 2", its own
-  header) — projects a stroke from one canvas plane onto another via forward
-  perspective projection from the camera (`THREE.Raycaster.setFromCamera` +
-  `THREE.Plane.setFromNormalAndCoplanarPoint`). Its own comment: *"exactly
-  what Mental Canvas does when you transfer a sketch from one layer to
-  another."* This is turn **14a**.
-- **`AngleOpacityShader.ts`** ("Phase 3" + "Phase 4 seasonal crossfade") —
-  strokes fade to 0% opacity as camera angle goes oblique to their canvas
-  plane (`smoothstep` on the view/normal dot product), *plus* a seasonal
-  crossfade beyond spec (`uSeasonOpacity`, driven by `studioStore`'s
-  `winterFactor` — "living pop-up book"). This is turn **14c**, extended.
+## Completed work
 
-Store-side (`studioStore.ts`): full CRUD for canvas planes —
-`addSketchCanvas` / `updateSketchCanvas` / `removeSketchCanvas` /
-`setActiveCanvasId`, all wired into the undo/redo history stack
-(`docSnapshot`). Deleting a plane reassigns its strokes to the ground plane
-rather than deleting them.
+### Pre-existing foundations (shipped before the Mental Canvas phases)
 
-**What's real but shallow is the interaction layer around that engine** —
-this is the actual gap, not the 3D math.
+The WebGL studio already had a real spatial sketching engine, not a stub:
 
-## Mental Canvas UX reference (added 2026-09-03)
+- **SketchCanvasGroup.tsx** — each canvas is a real spatial node: position +
+  rotation quaternion, raycast mesh, strokes in board-% space.
+- **StrokeTransferLayer.tsx** — projects strokes from one canvas plane onto
+  another via forward perspective projection (turn 14a).
+- **AngleOpacityShader.ts** — strokes fade with camera-to-canvas angle
+  (smoothstep on view/normal dot product) plus seasonal crossfade.
+- **studioStore.ts** — full CRUD for canvas planes, wired into undo/redo.
+- **R3F scene shell** — FusedCamera with four rigs (PLAN/AXO/SEC/3D), plane
+  stack at real z-heights, 320ms projection-matrix blend.
+- **Plane-locked ruler** as scene geometry (not DOM) — `stationing.ts`,
+  `SketchCanvasGroup.tsx`.
+- **Crosshair + E/N/Z chip** — `NibCrosshair`, `metaChips.ts`.
+- **Snapping** from stationing — `snapWorld.ts`.
+- **Pen-down quiet state** — `penDown` in store, ribbon/dock/chips respond.
+- **Four nibs** — pen, charcoal, marker, stipple.
+- **Stroke-to-object promotion** — `sketchCad.ts`, `scheduleVectorize`.
+- **Schedule** with tabs (planting/hardscape/services) — `ScheduleSheet.tsx`.
+- **Section view** — `SectionLayer.tsx`, `cutFill.ts`, `sectionGeometry.ts`.
+- **Ghost review** — `GhostOverlay.tsx`, confidence floor in store.
+- **Command palette** (Cmd+K) — `StudioCommandPalette.tsx`.
+- **Scan reveal** (staged import) — `scanReveal.tsx`, `AiScanOverlay.tsx`.
+- **Flora ring** — `FloraRingLayer.tsx`.
+- **Depth rail** — `DepthRail.tsx`.
+- **Layers panel** — `LayersPanel.tsx`.
 
-The user provided a full UX teardown of the real Mental Canvas app
-mid-session. Condensed here for later phases — the full research is
-archived in this session's transcript, not re-pasted in full to keep this
-doc scannable. Key structural facts, by relevance to the phases below:
+### Phase A — Hinge/Parallel projection canvas placement (turn 14b)
 
-- **Draw Mode vs View Mode** — a global toggle. In Draw Mode the camera
-  locks parallel to the active canvas (prevents parallax distortion while
-  sketching); selecting a different canvas re-aligns the camera to it. In
-  View Mode the camera decouples and free-orbits; tapping a canvas shows
-  its bounding frame instead of re-aligning. **Implemented as Phase G
-  (see below).**
-- **Parallel Projection / Hinge Projection** — the two placement
-  mechanics. See Phase A below; this is what Phase A now builds.
-- **Bird's-Eye HUD** — a secondary mini-viewport (own camera + frustum
-  wireframe + canonical view snap buttons) shown during a Hinge/Parallel
-  drag. Phase A3 — shipped.
-- **Three-state canvas panel** (Collapsed / Default / Expanded, dragged
-  open) with thumbnail previews, a Transparency Toggle (fades all
-  inactive canvases to reduce visual clutter — this is a strong,
-  cheap-to-borrow idea), drag-to-pick-canvas-in-viewport, per-canvas Eye
-  icons, Hide All / Show All, "Rehome" (fit active canvas to viewport),
-  and a long-press context menu (Reorder / Delete / Rename / Add Link).
-  **Directly informs Phase B** (canvas rail as real cards) below — Phase
-  B's card rail should fold in naming display + an eye/visibility toggle
-  + the transparency-toggle idea at minimum; the full three-state
-  collapse mechanic is a bigger lift than Phase B currently scopes and
-  should be revisited when Phase B is actually planned.
-- **Bookmarks + Timeline** (camera view snapshots, linger/transition/
-  sequence-time sliders, loop toggle) and the **Visibility Panel**
-  (per-bookmark canvas visibility keyframing) — this is the real shape of
-  **Phase C** (viewpoint filmstrip + walk/record) below; Phase C's
-  current scope ("thumbs + active border + walk/record controls") is a
-  minimal version of this. Worth re-reading the full research before
-  Phase C is actually planned.
-- **Selection Mode** (red-mask isolation, whole-stroke/lasso select,
-  boolean add/subtract/invert, Replace Image with "all occurrences") —
-  **Implemented as Phase H (see below).** Replace Image with "all
-  occurrences" is deferred until a replace-image feature is requested.
-- **Brushes Panel** (visual texture grid + one width slider, no named
-  brush catalog) and **stroke-matching eraser** (scales to the stroke it's
-  erasing, not a fixed radius) — **Implemented as Phase I (see below).**
-- **Apple Pencil hardware mappings** (double-tap → eraser toggle, hover →
-  pre-stroke preview, squeeze → context menu, barrel roll → texture
-  rotation), **Options Menu/export pipeline**, **Web Player/VR** — real
-  parts of Mental Canvas, explicitly out of scope for this app's roadmap
-  (touch/pencil-specific iPad OS integration and a hosted web-player
-  product are different surfaces than this desktop-first WebGL studio).
+**Status: COMPLETE.** Replaced the single "+" button with the actual Mental
+Canvas placement mechanic: `CanvasPlacementFlyout.tsx` (required name, five
+presets, numeric height/bearing), `ParallelProjectionHandle.tsx` (flat-plane
+height drag), `HingeProjectionGizmo.tsx` (fold-angle drag with angle-snap glyph
+morphing), `BirdsEyeHud.tsx` (secondary mini-viewport with frustum wireframe
+and canonical view buttons). Commits: `e2ef9f1`, `9be0d78`.
 
-## Gaps against the spec (turn 14b, 15a/15c, 16b)
+### Phase B/B2 — Canvas rail as real cards (turn 16b)
 
-Confirmed by reading the only call site
-(`FloatingChrome.tsx`, `addSketchCanvas(createCanvas(nextZ))`):
+**Status: COMPLETE.** Mode-conditional rails: `DepthRail.tsx` (non-sketch
+modes, fixed reference bands) and `CanvasCardsRail.tsx` (sketch mode, 74x46
+cards with live SVG thumbnails, eye toggle, hover delete, season tag, inline
+rename, drag-to-reorder, collapse/expand, context menu). Store additions:
+`hiddenCanvasIds`, `inactiveCanvasOpacity`, `canvasOrder`, `railCollapsed`.
 
-1. **✅ FIXED (Phase A1/A2, 2026-09-03).** Placement gizmo + naming — was
-   a single "+" button stacking an unnamed flat plane at the next preset
-   Z height. Now: `CanvasPlacementFlyout.tsx` (required name field, the
-   five presets, numeric height/bearing entry) +
-   `ParallelProjectionHandle.tsx` (flat-plane height drag) +
-   `HingeProjectionGizmo.tsx` (fold-angle drag with angle-snap glyph
-   morphing for standing planes). Double-tap-to-fit and the `⌥`/`⇧`
-   modifier-key gestures from the spec's exact wording were deliberately
-   not built — the numeric flyout + drag gizmos cover the same outcome.
-2. **✅ FIXED (Phase A1).** Naming on create — the flyout's Place button
-   is disabled until a name is entered.
-3. **✅ FIXED (Phase D/D2, 2026-09-03).** UNSCALED badge + calibrate-later
-   — `WfsChips` renders a hazard-coloured UNSCALED pill (doubles as the
-   calibrate entry point), `CalibrateModal.tsx` implements the retroactive
-   two-point calibration flow with SCALE THEM / KEEP HEIGHTS commit.
-4. **✅ FIXED (Phase C/C2, 2026-09-03).** Viewpoint filmstrip + walk/record
-   — `ViewpointFilmstrip.tsx` renders in Sketch mode with capture/walk/
-   record controls, linger/transition/loop timeline parameters, and a
-   progress bar. `FlythroughRig.tsx` plays the spline with configurable
-   per-segment timing.
-5. **✅ FIXED (Phase E, 2026-09-03).** Falloff presets — NARROW/BALANCED/
-   WIDE picker in the DRAW tool flyout (`FalloffPicker` in `ToolFlyout.tsx`),
-   wired through to `AngleOpacityShader.ts`'s `uFalloffEdge1` uniform.
-6. **✅ FIXED (Phase F, 2026-09-03).** Sketch-first entry — Sketch is
-   always unlocked (was gated behind `hasAerial`), `suggestedMode` returns
-   Sketch for a blank board, the boundary gate was removed from
-   `firstSketchGuide.ts`, and the hint copy matches the spec.
+### Phase C/C2 — Viewpoint filmstrip + walk/record (turn 7a/16b)
 
-## Suggested phases
+**Status: COMPLETE.** `ViewpointFilmstrip.tsx` with capture/walk/record
+controls, `FlythroughRig.tsx` spline playback with configurable per-segment
+timing (linger/transition/loop), progress bar. `viewpointThumbnail.ts` for
+thumbnail capture. Store: `cameraBookmarks` extended with thumb + rig +
+preset, `walkLingerS`, `walkTransitionS`, `walkLoop`, `walkProgress`.
 
-Numbered independently of the README's own §12 workstream numbering (that
-list is the *original* build order for the whole product; this is just the
-remaining slice for sketch-mode's Mental Canvas feel).
+### Phase D/D2 — Unscaled state + calibrate later (turn 15a/15c)
 
-### Phase A — Hinge/Parallel Projection canvas placement (turn 14b)
+**Status: COMPLETE.** `WfsChips` renders hazard-coloured UNSCALED pill
+(doubles as calibrate entry point). `CalibrateModal.tsx` implements
+retroactive two-point calibration with SCALE THEM / KEEP HEIGHTS commit.
+`commitCalibration` scales canvas positions as one undoable action.
 
-**Status: COMPLETE — A1, A2 and A3 all shipped 2026-09-03 (commits
-`e2ef9f1`, `9be0d78`, plus A3).** See "Mental Canvas UX reference" below
-for the source research. This phase replaces the single "+" button in
-`FloatingChrome.tsx` with the *actual* Mental Canvas placement mechanic
-rather than a generic drag-arrows gizmo, decided after the user reviewed
-a full UX teardown of the real app mid-session.
+### Phase E — Falloff presets (turn 14c)
 
-All three checkpoints were verified live, not just unit-tested: A1 by
-placing a standing preset and confirming its persisted rotation
-quaternion via the API matched the unit tests exactly, and by
-drag-adjusting a flat plane's height with the drag collapsing to a
-single undo step; A2 by placing a standing plane at a non-zero bearing,
-dragging its fold ring, and confirming via the autosave payload that the
-plane folded back toward flat while the bearing stayed *exactly*
-untouched — the trickiest part of the math (bearing preservation through
-incremental local-axis rotation composition) holds under real drag
-input, not just in the round-trip tests. A3 by placing a standing plane
-at bearing 55°, watching the HUD draw it edge-on as a line (correct for
-a 90° fold seen from overhead) against the lot silhouette, dragging the
-fold ring and watching the outline open into a square in lockstep,
-pressing the HUD's AXO button and confirming the *main* camera retilted
-while the HUD's frustum wedge redrew for the new pose, and confirming on
-Escape that the second WebGL context was released without the main
-canvas losing its own (`isContextLost() === false`).
+**Status: COMPLETE.** NARROW/BALANCED/WIDE picker in DRAW tool flyout
+(`FalloffPicker` in `ToolFlyout.tsx`), wired through to
+`AngleOpacityShader.ts`'s `uFalloffEdge1` uniform. `FusedSketchLayer.tsx`
+live-updates the uniform per-frame.
 
-One deliberate scope cut from the original three-handle plan: A2 ships
-only the fold-angle handle, not separate "two ground-anchor position
-handles." Position and bearing are set numerically in the A1 flyout at
-placement time (already spec-compliant — the spec itself flags numeric
-entry as a required, not optional, input method) and aren't
-independently re-draggable yet. Revisit if that turns out to matter in
-practice.
+### Phase F — Sketch-first entry (turn 15)
 
-The project's own flat/standing binary (§14b) maps onto one continuous
-mechanic: **Hinge Projection** folds a plane from 0° (flat, lying on the
-ground) to 90° (standing), with the fold handle's shape morphing at snap
-angles (octagon 45° / hexagon 60° / pentagon 72° / square 90°) and a
-**Bird's-Eye HUD** (secondary mini-viewport: camera-frustum wireframe,
-the folding plane's frame, canonical view buttons) appearing during the
-drag for spatial orientation. **Parallel Projection** (drag along one
-axis, no rotation) covers the simpler "adjust an already-flat plane's
-height" case.
+**Status: COMPLETE.** Sketch always unlocked (was gated behind `hasAerial`),
+`suggestedMode` returns Sketch for blank board, boundary gate removed from
+`firstSketchGuide.ts`, hint copy matches spec.
 
-Confirmed data-model readiness: `SketchCanvasSchema`
-(`packages/contracts/src/schemas/catalog.ts:241`) already has an optional
-`label` (naming — no contracts change needed) and a full `rotation`
-quaternion, genuinely applied by `SketchCanvasGroup.tsx`'s `CanvasPlane`
-(228-312) — a real fold-to-vertical quaternion works today.
+### Phase G — Draw/View camera mode
 
-Build order (three shippable checkpoints):
-- **✅ A1 (shipped)** — naming + presets (ground/terrace/canopy/boundary-
-  wall/hedge-line) + a Parallel Projection height-drag handle for flat
-  planes. `canvasPlacement.ts` (presets, `foldQuaternion(angle,
-  bearing)`, unit-tested at every angle/bearing combination),
-  `CanvasPlacementFlyout.tsx` (new sibling to `ToolFlyout.tsx` — that
-  component is hardcoded to the tool ribbon's DOM/handedness, not
-  reusable as-is for the depth rail's `+` cell — anchor position is
-  measured from the `+` cell's real rect, same technique as the
-  ToolFlyout centering fix earlier this session),
-  `ParallelProjectionHandle.tsx` (drei `TransformControls`,
-  mode="translate", Y-axis only via `showX`/`showZ`, modeled directly on
-  the existing `PlacementGizmo.tsx` — ended up simpler and more robust
-  than the raw-raycast approach originally planned, since
-  TransformControls already solves constrained-axis 3D dragging
-  correctly), plus `studioStore.ts` additions
-  (`beginSketchCanvasTransform` / `setSketchCanvasTransformTransient` /
-  `endSketchCanvasTransform`, mirroring the placement trio at
-  `studioStore.ts:1948-1985`) and an `adjustingCanvasId` transient
-  field.
-- **✅ A2 (shipped)** — `HingeProjectionGizmo.tsx`: a fold-angle handle
-  (drei `TransformControls`, mode="rotate", space="local", only the
-  local-X ring shown) dragging a standing plane between 0° and 90°, with
-  angle-snap glyph morphing (a low-segment `circleGeometry` doubles as a
-  regular polygon — octagon/hexagon/pentagon/square, no per-shape mesh)
-  and a live angle/bearing readout. Two new `canvasPlacement.ts`
-  functions make the drag possible: `decomposeFoldQuaternion` (recovers
-  both angle and bearing from a quaternion with neither known upfront —
-  used once at gizmo mount) and `angleFromQuaternionAtBearing` (the
-  cheaper per-tick version once bearing is captured). Scope cut: ships
-  only the fold handle, not separate ground-anchor position handles —
-  see the note above.
-- **✅ A3 (shipped)** — `BirdsEyeHud.tsx`: its own small, separate
-  `@react-three/fiber` `<Canvas>` (**not** a scissored/`Hud`-primitive
-  share of the main canvas — `SplitViewLens.tsx`'s own header comment
-  explains why that conflicts with the EffectComposer post-FX stack; a
-  second real canvas instead, same as split-view does), carrying the lot
-  silhouette, the main camera's frustum wireframe and the plane being
-  placed, over a fixed north-up overhead ortho camera. Geometry lives in
-  `birdsEyeFrustum.ts` (unit-tested — nothing in `apps/web` mounts an R3F
-  canvas in jsdom, so anything left inside the component would be
-  untestable). The two canvases share no React state: the main camera's
-  pose crosses via the transient `_liveCameraPosition` channel
-  `FusedCamera` already writes each frame, read in the HUD's own
-  `useFrame` through `getState()` and rewritten into pre-allocated
-  buffers — no subscription, no React render per frame.
-
-  Three decisions worth keeping: it mounts on `adjustingCanvasId` (so it
-  covers A1's height drag as well as A2's fold, rather than a third copy
-  of the `isFlat` predicate); the mini-viewport is deliberately **not**
-  interactive, with its canonical view buttons re-aiming the MAIN camera
-  through `setCameraPreset` (a second orbit surface would fight the drag
-  already in progress); and it draws the plane clamped to the lot's long
-  side rather than at `SketchCanvasGroup`'s real five-lot-width raycast
-  mesh, which crossed the whole panel at every fold angle and buried the
-  silhouette it exists to be read against (`hudPlaneExtentM`). The panel
-  is inset past the tool ribbon at 128px, not hugged to the 22px edge —
-  both side edges are spoken for at every handedness (ribbon one side,
-  depth rail the other).
-
-### Phase B — Canvas rail as real cards (turn 16b)
-**Status: COMPLETE — shipped 2026-09-03.** The spec's 16a Drafting and 16b
-Sketch are different screens with different chrome: 16a has the two-way depth
-rail (cells 36×34), 16b has the canvases-as-cards rail (cards 74×46) and no
-depth rail. The old single 52px hybrid rail that mixed user canvas chips with
-fixed reference bands (MAS/PLT/SRV) and subsurface DBYD cells in every mode is
-replaced by two mode-conditional rails:
-
-- **`DepthRail.tsx`** — renders in all non-sketch modes (survey, CAD, elevation,
-  garden, quote, present, share). Shows the fixed reference bands (MAS/PLT),
-  GRD, and subsurface utility depths (SRV/SUB). User canvas chips are removed
-  from this rail — they live in the cards rail now.
-- **`CanvasCardsRail.tsx`** — renders only in Sketch mode. Cards 74×46, radius
-  9, gap 7 (§4 Geometry). Each card shows: a live inline-SVG thumbnail
-  (`canvasThumbnail.ts` — pure function, board-% strokes → SVG paths, no third
-  WebGL context, unit-tested), the canvas name, an eye toggle (view-state
-  visibility per §14c: "a faded canvas keeps a 1px edge and its list row —
-  invisible is a view state, not a disappearance"), a delete button on hover
-  (`removeSketchCanvas` — strokes fall back to ground), and a season tag cycle.
-  Single click selects (`setActiveCanvasId`), double-click re-arms the
-  placement gizmo (`setActiveCanvasId` + `setAdjustingCanvasId` together, so
-  the gizmos' divergence guard sees both ids equal), double-click on the label
-  triggers inline rename (`updateSketchCanvas`). A global transparency slider
-  at the rail header drives `inactiveCanvasOpacity` (the Mental Canvas
-  "Transparency Toggle" — fades all inactive canvases).
-
-Store additions (`studioStore.ts`): `hiddenCanvasIds: string[]` +
-`toggleCanvasVisibility(id)` and `inactiveCanvasOpacity: number` +
-`setInactiveCanvasOpacity(v)` — both view-state only (never enter `docSnapshot`,
-no autosave churn), mirroring the existing `hiddenOverlayKinds` /
-`anchorVisibility` pattern.
-
-`FloatingChrome.tsx` takes a new `mode: CanvasMode` prop (threaded from
-`activeMode` in `WebGLStudioPreview`) and conditionally renders
-`<DepthRail>` or `<CanvasCardsRail>`. The `CanvasPlacementFlyout` and
-`BirdsEyeHud` stay as siblings (mode-agnostic). The old `SUBSURFACE_DEPTHS`
-constant and season tag helpers moved to their respective rail components.
-
-Verified live: cards rail renders in Sketch mode with PLANES header, FADE
-slider, GRD card, + add button; depth rail renders in CAD mode with Z header,
-MAS/PLT/GRD/SRV/SUB cells; zero chrome inside the R3F canvas (gate C rule
-holds); 11 unit tests green for `canvasThumbnail.test.ts`; typecheck + lint +
-vitest all green.
-
-Scope cut (resolved B2): the three-state collapse mechanic, drag-to-reorder,
-and context menu are now implemented.
-
-- **Store (`studioStore.ts`)**: `railCollapsed` (boolean) + `toggleRailCollapsed`
-  / `setRailCollapsed`. `canvasOrder` (string[]) + `reorderCanvas(fromId, toId)`
-  — moves `fromId` before `toId`, fills untracked canvases at the end preserving
-  Y-sort. All view state only (never enters docSnapshot, never triggers autosave).
-- **`CanvasCardsRail.tsx`**: header is now a click-to-collapse toggle. Collapsed
-  state shows only a `◀` tab (vertical text); click expands back to `PLANES`.
-  Cards are `draggable` — drag one card onto another to reorder (HTML5 DnD with
-  `text/plain` payload). Right-click or 500ms long-press opens a context menu
-  with Rename / Toggle visibility / Delete. Long-press cancels on pointer move
-  (so a drag doesn't trigger the menu).
-- **CSS (`CanvasCardsRail.module.css`)**: `.railCollapsed` (vertical header),
-  `.cardDragOver` (dashed accent border), `.contextMenu` + `.contextItem` /
-  `.contextItemDanger` (tokenized glass menu).
-
-Verified live: collapse toggles both ways (header → `◀`, slider/ground hidden;
-click again → `PLANES`, slider/ground visible); zero console errors; typecheck
-+ lint green; 783 webgl tests green.
-
-### Phase C — Viewpoint filmstrip + walk/record (turn 7a / 16b)
-**Status: COMPLETE — shipped 2026-09-03.** The existing `cameraBookmarks`
-infrastructure (position + target, `FlythroughRig` spline playback) was
-extended into the README's viewpoint model:
-
-- **Store (`studioStore.ts`)**: `CameraBookmark` extended with optional
-  `thumb` (PNG data URL) + `rig` snapshot (full `StudioCameraRig` for
-  click-to-restore) + `preset`. New actions: `captureViewpoint(thumb)`,
-  `restoreViewpoint(id)`, `setActiveViewpointId`, `reorderViewpoint`,
-  `setRecordingWalk`. New state: `activeViewpointId`, `isRecordingWalk` —
-  both view-state only (never enter `docSnapshot`).
-- **`viewpointThumbnail.ts`** — pure thumbnail capture utility. The core
-  crop math (`coverCropRect`) is pure (no DOM dependency) so it's
-  unit-testable in Node. The runtime wrapper (`captureViewpointThumbnail`)
-  calls the pure renderer with `document.createElement("canvas")`. 13 unit
-  tests green.
-- **`ViewpointFilmstrip.tsx`** — the filmstrip UI. Thumbs 82×52, radius 9
-  (§4 Geometry). Class B selected treatment: 1.5px accent border + 0 0 0 3px
-  accent/.18 ring + 18×2px accent.hi pip. Capture (+), walk/play (>), record
-  (REC/STOP) controls. Hover-only delete button. Renders only in Sketch mode.
-  Sits above the camera dock (bottom: 96px) to avoid collision.
-- **`ViewpointFilmstrip.module.css`** — token-only CSS module, uses
-  `--cf-z-chrome` from the Canvas-First z-ladder.
-- **Recording**: `MediaRecorder` + `canvas.captureStream(30)` from the live
-  WebGL canvas. Downloads a WebM file on stop. Guards for unsupported
-  browsers (`typeof canvas.captureStream !== "function"`). Cleans up the
-  recorder on unmount.
-- **Wiring**: `FloatingChrome.tsx` renders `<ViewpointFilmstrip mode={mode} />`
-  after `<CameraDock>`. The filmstrip returns null outside Sketch mode.
-
-Verified live: filmstrip renders in Sketch mode with capture/walk/record
-buttons; zero chrome inside the R3F canvas (gate C rule holds); filmstrip
-hidden in CAD mode; 13 thumbnail tests green; typecheck + lint green.
-
-### Phase C2 — Viewpoint timeline controls (linger/transition/loop/progress)
-**Status: COMPLETE — shipped 2026-09-03.** The Phase C filmstrip's hardcoded
-12-second single-pass walk was replaced with operator-controlled timeline
-parameters:
-
-- **Store (`studioStore.ts`)**: new view-state fields — `walkLingerS` (default
-  0.5s, range 0–10), `walkTransitionS` (default 2.0s, range 0.5–30),
-  `walkLoop` (default false), `walkProgress` (0..1, written by FlythroughRig
-  each frame), `viewpointVisibility` (Record<viewpointId, canvasId[]> for
-  per-bookmark visibility keyframing). Actions: `setWalkLingerS`,
-  `setWalkTransitionS`, `toggleWalkLoop`, `setWalkProgress`,
-  `toggleViewpointVisibility`. All view-state only (never enters docSnapshot).
-- **`FlythroughRig.tsx`**: the hardcoded `FLYTHROUGH_DURATION_S = 12` was
-  replaced with `segmentCount × (walkTransitionS + walkLingerS)`. The rig now
-  pauses at each viewpoint knot for `walkLingerS` seconds (linger accumulator),
-  then resumes the spline transition. When `walkLoop` is true, playback wraps
-  continuously; when false, it stops after one pass (original behavior).
-  Progress is published to the store each frame for the filmstrip progress bar.
-- **`ViewpointFilmstrip.tsx`**: new timeline controls section (after the
-  walk/record buttons) with LINGER slider, TRANSITION slider, and a loop
-  toggle button (→ off / ↻ on). A progress bar appears at the bottom of the
-  filmstrip during playback, showing the walk playback head position.
-- **CSS (`ViewpointFilmstrip.module.css`)**: `.timelineControls`,
-  `.timelineLabel`, `.timelineSlider`, `.timelineValue`, `.loopBtn` /
-  `.loopBtnActive`, `.progressBar` / `.progressFill` — all token-only.
-
-Verified live: timeline controls render (linger=0.5s, transition=2.0s, loop=→);
-loop toggle changes → to ↻; zero console errors; typecheck + lint green;
-74 viewpoint + store tests green.
-
-### Phase G — Draw Mode vs View Mode (camera lock to active canvas)
-**Status: COMPLETE — shipped 2026-09-03.** A global toggle locks the camera
-face-on to the active canvas plane in Draw Mode, preventing parallax
-distortion while sketching. View Mode preserves the existing free orbit.
-
-- **`drawViewAlign.ts`** — pure math for computing the face-on camera rig
-  from a canvas's rotation quaternion. Uses `decomposeFoldQuaternion` to
-  extract the fold angle (→ tiltDeg) and bearing (→ rotateDeg). The ground
-  plane (canvas_id = null) maps to plan view (tilt=0, rotate=0). 9 unit tests.
-- **Store (`studioStore.ts`)**: `DrawViewMode = "DRAW" | "VIEW"` type.
-  `drawViewMode` state (default "VIEW"). Actions: `toggleDrawViewMode`,
-  `setDrawViewMode`, `alignCameraToActiveCanvas`. Entering DRAW mode or
-  selecting a canvas in DRAW mode calls `alignRigToActiveCanvas` to set
-  the rig's tilt/rotate face-on to the active plane. `setActiveCanvasId`
-  re-aligns in DRAW mode. All view-state only.
-- **`StudioControls.tsx`**: orbit gestures (Cmd/Ctrl+drag and two-finger
-  touch) are gated off in DRAW mode — pan and zoom still work. The camera
-  stays locked face-on while drawing.
-- **`DrawViewToggle.tsx` + `.module.css`**: a small floating button beside
-  the camera dock. Shows "VIEW" (default) or "DRAW" (accent-filled when
-  active). Only renders in Sketch mode. `data-testid="draw-view-toggle"`.
-- **`FloatingChrome.tsx`**: renders `<DrawViewToggle />` after `<CameraDock />`
-  in Sketch mode.
-
-Verified live: toggle renders with "VIEW" text; click switches to "DRAW"
-(accent-filled); zero console errors; typecheck + lint green; 70 draw-view
-+ store tests green.
+**Status: COMPLETE.** `DrawViewToggle.tsx` locks camera face-on to active
+canvas in Draw Mode (prevents parallax distortion), free orbit in View Mode.
+`drawViewAlign.ts` computes face-on rig from canvas quaternion. Orbit gestures
+gated off in Draw Mode.
 
 ### Phase H — Selection Mode (red-mask isolation + boolean ops)
-**Status: COMPLETE — shipped 2026-09-03.** A selection mode that isolates
-selected entities with a red-mask vignette and provides boolean operations
-(add/subtract/invert/select-all) on the selection set.
 
-- **Store (`studioStore.ts`)**: `selectionModeActive` state (default false).
-  Actions: `toggleSelectionMode`, `setSelectionMode`, `subtractFromSelection`,
-  `invertSelection`, `selectAll`. All view-state only (never enters
-  docSnapshot). `subtractFromSelection` removes matching refs by kind+id+
-  elevationId key. `invertSelection` builds the full ref set from placements
-  + features + photo strokes and flips. `selectAll` selects everything.
-- **`SelectionIsolationOverlay.tsx` + `.module.css`**: renders a red-tinted
-  radial vignette (the "red mask") over the viewport when active, plus a
-  floating toolbar at the top centre with: selection count, ALL, INVERT,
-  NONE, CLEAR, and DONE buttons. The mask is `pointer-events: none` so it
-  doesn't block interaction with the scene.
-- **`SelectionModeToggle.tsx` + `.module.css`**: a small floating button
-  beside the Draw/View toggle. Shows "SEL" (conflict-red filled when active).
-  Only renders in Sketch mode. `data-testid="selection-mode-toggle"`.
-- **`FloatingChrome.tsx`**: renders `<SelectionModeToggle />` after
-  `<DrawViewToggle />` and `<SelectionIsolationOverlay />` in Sketch mode.
-- **`selectionMode.test.ts`**: 9 unit tests covering toggle, subtract,
-  invert (including photo-stroke elevationId), selectAll, dedup, and
-  empty-doc edge cases.
+**Status: COMPLETE.** `SelectionModeToggle.tsx` + `SelectionIsolationOverlay.tsx`
+with red-tinted vignette and floating toolbar (count, ALL, INVERT, NONE,
+CLEAR, DONE). Store: `selectionModeActive`, `subtractFromSelection`,
+`invertSelection`, `selectAll`.
 
-Verified live: toggle renders "SEL" (inactive); click activates selection
-mode (red-filled, mask visible, toolbar visible, "0 selected" count, all
-ops buttons present); zero console errors; typecheck + lint green; 70
-selection + store tests green.
+### Phase I — Brushes panel parity
 
-### Phase I — Brushes Panel parity (visual texture grid + width slider + stroke-matching eraser)
-**Status: COMPLETE — shipped 2026-09-03.** The existing `NibPicker` in the
-tool flyout was upgraded from a text-only 2-column grid to a visual texture
-grid with SVG brush previews, a single width slider, and a stroke-matching
-eraser toggle.
-
-- **Store (`studioStore.ts`)**: `brushWidthOverride` state (number | null,
-  clamped 0.5–40; null = nib default). `eraserActive` state (boolean).
-  Actions: `setBrushWidthOverride`, `toggleEraser`, `setEraserActive`,
-  `eraseStrokeAt(pct, scaleM)`. The eraser finds the closest stroke within
-  a grab radius scaled to the stroke's OWN width (not a fixed radius) —
-  wider strokes are easier to grab, thin strokes require precision. All
-  view-state only.
-- **`ToolFlyout.tsx`**: `NibPicker` upgraded to `BrushTexturePreview` —
-  an inline SVG that renders each nib's stroke texture (width, color,
-  edge softness, stipple dots). The header changed from "Nib" to "Brush".
-  A width slider (0.5–20px, 0.5 step) controls the active nib's base width
-  via `brushWidthOverride`. An "ERASE" toggle button (conflict-red when
-  active) arms the stroke-matching eraser. Selecting a nib while the
-  eraser is active disarms the eraser.
-- **`WebGLStudioPreview.tsx`**: `handleGroundClick` checks `eraserActive`
-  first — when active, a click calls `eraseStrokeAt` instead of selecting
-  an entity.
-- **`ToolFlyout.module.css`**: `.nibPreview`, `.widthSlider`, `.widthRange`,
-  `.widthValue`, `.eraserBtn` / `.eraserBtnActive` — all token-only CSS.
-- **`brushesEraser.test.ts`**: 9 unit tests covering width clamping, null
-  override, eraser toggle, erase-at-point (hit, miss, closest-pick,
-  width-scaled grab radius).
-
-Verified: typecheck + lint green; 70 brush + store tests green; page loads
-with zero console errors. The flyout opens on real user interaction (pen
-tool click/keyboard 'p') — synthetic headless clicks don't trigger React's
-synthetic event system on the ribbon tiles, a known browser-automation
-limitation that doesn't affect the actual UI.
+**Status: COMPLETE.** `NibPicker` upgraded to visual texture grid with SVG
+brush previews, width slider, stroke-matching eraser (scales to stroke's own
+width). Store: `brushWidthOverride`, `eraserActive`, `eraseStrokeAt`.
 
 ### Phase J — Visibility Panel (per-bookmark canvas visibility keyframing)
-**Status: COMPLETE — shipped 2026-09-03.** The Phase C2 store action
-`toggleViewpointVisibility` was wired to a full visibility panel UI and
-the FlythroughRig now applies the keyframes during walk playback.
 
-- **`VisibilityPanel.tsx` + `.module.css`**: a dropdown panel that blooms
-  above the viewpoint filmstrip. Shows a matrix: rows = sketch canvases,
-  columns = viewpoints. Each cell is an eye toggle (filled circle = visible,
-  hollow circle = hidden) that drives `toggleViewpointVisibility`. When a
-  viewpoint has no keyframe entry, all its cells show as visible (the
-  default). An empty-state message renders when there are no viewpoints or
-  no canvases. A backdrop click closes the panel.
-- **`ViewpointFilmstrip.tsx`**: a "VIS" button is added after the record
-  button. It opens/closes the VisibilityPanel. Disabled when there are no
-  bookmarks. Accent-filled when active.
-- **`ViewpointFilmstrip.module.css`**: `.visibilityBtn` /
-  `.visibilityBtnActive` — token-only CSS matching the record button style.
-- **`FlythroughRig.tsx`**: on the first frame of playback, saves the
-  operator's current `hiddenCanvasIds`. Each frame, computes the active
-  viewpoint index from `progressRef.current` and applies the keyframe:
-  if the active viewpoint has a `viewpointVisibility` entry, hides all
-  canvases NOT in its visible list; if it doesn't, restores the saved set.
-  On playback stop (either end-of-walk or external pause), restores the
-  saved set via a `useEffect` on `isPlayingFlythrough`.
-- **`visibilityPanel.test.ts`**: 7 unit tests covering toggle add/remove,
-  per-viewpoint independence, multi-canvas keyframes, empty default, and
-  the full matrix state (canvases + bookmarks + visibility).
+**Status: COMPLETE.** `VisibilityPanel.tsx` renders canvas x viewpoint matrix
+with eye toggles. `FlythroughRig.tsx` applies keyframes during playback,
+restores original hidden set on stop. Store: `viewpointVisibility`,
+`toggleViewpointVisibility`.
 
-Verified live: filmstrip renders with VIS button (disabled when no
-viewpoints, enabled when viewpoints exist); panel opens on click with
-the canvas × viewpoint matrix; zero console errors; typecheck + lint
-green; 68 visibility + store tests green.
+### Phase K — Numeric entry on every flyout parameter (spec section 5.3)
 
-### Phase K — Numeric entry on every flyout parameter (spec §5.3)
-**Status: COMPLETE — shipped 2026-09-03.** The spec's #1 blocking open
-item ("every numeric parameter needs tap-to-type entry. Sliders alone are
-insufficient for a profession that works to 1:14") is resolved. A reusable
-`NumericSlider` component combines a range slider with a tap-to-type
-numeric `<input type="number">` that clamps to [min, max] on blur/Enter.
-All five flyout sliders were replaced:
+**Status: COMPLETE.** `NumericSlider.tsx` combines range slider with
+tap-to-type numeric input (clamps on blur/Enter, Escape cancels, separate
+unit span). Replaced raw sliders in ToolFlyout, ViewpointFilmstrip,
+CanvasCardsRail, FloatingChrome.
 
-- **`NumericSlider.tsx` + `.module.css`**: reusable component. Props:
-  label, min, max, step, value, onChange, unit, title, testId, decimals.
-  The number input always receives a pure numeric value (no unit suffix —
-  `<input type="number">` rejects "0.50s"). The unit is a separate span.
-  Focus seeds the draft with the current value; blur/Enter commits
-  (clamped); Escape cancels. Decimal places derived from the step via
-  string parsing (handles 0.25 → 2 dp correctly, unlike log10 math).
-- **ToolFlyout.tsx**: brush width slider (0.5–20px) → NumericSlider.
-- **ViewpointFilmstrip.tsx**: linger (0–5s) and transition (0.5–10s)
-  sliders → NumericSlider.
-- **CanvasCardsRail.tsx**: fade/transparency (0.15–1.0) slider →
-  NumericSlider.
-- **FloatingChrome.tsx**: extrusion depth (0.1–5m) slider → NumericSlider.
-- **`numericSlider.test.ts`**: 6 unit tests covering clamp logic (below
-  min, above max, in-range, non-finite rejection) and decimal-place
-  derivation from step.
+### Chrome sizing audit
 
-Verified live: all number inputs render with pure numeric values
-(linger=0.50, transition=2.0, fade=1.00); zero console errors/warnings;
-typecheck + lint green; 67 numericSlider + store tests green.
+**Status: COMPLETE.** All WebGL chrome font sizes raised to 9.5px mono floor
+(8.5px group headers allowed). Slider geometry corrected to spec (3px track,
+10px ink thumb). Filmstrip de-bloated (700px to 494px). ~233 lines of orphaned
+CSS removed. Commit: `c0273c0`.
 
-### Phase D — Unscaled state + calibrate later (turn 15a/15c)
-**Status: COMPLETE — shipped 2026-09-03.**
+### CI/deploy fix
 
-- **UNSCALED badge**: `page.tsx` computes `unscaled = !frame?.board_width_m`
-  and threads it through `WebGLStudioPreview` → `FloatingChrome` → `WfsChips`.
-  The badge renders as a hazard-coloured pill in the chip bar (after the
-  primary chip, before the overlay pills). It doubles as the calibrate entry
-  point — clicking it opens the `CalibrateModal`.
-- **`CalibrateModal.tsx`** — the retroactive two-point calibration flow
-  (turn 15c). Three steps: (1) pick two points on the canvas (the modal
-  backdrop has `pointer-events: auto` on the panel only, so canvas clicks
-  pass through and are captured via a `pointerdown` listener on the studio
-  container), (2) type the real distance, (3) review the FROM → TO scale
-  change with the hazard warning ("canvases placed by eye move too") and
-  the `SCALE THEM` / `KEEP HEIGHTS` choice. The commit panel states what
-  changes (stroke areas ×ratio², lengths ×ratio, canvas positions scale).
+**Status: COMPLETE.** `/home` route was statically importing WebGLStudioPreview
+(3315 kB vs 900 kB budget), failing the bundle-size gate on every push and
+blocking Railway deploy. Fixed with `LazyWebGLStudioPreview.tsx` (client
+component, `next/dynamic` ssr: false). Commit: `91b196d`.
 
-Verified live: UNSCALED badge renders for an unscaled project (no
-`board_width_m`); badge absent for a scaled project; typecheck + lint green.
+---
 
-Scope cut (resolved D2): the calibration commit is now wired. The store
-action `commitCalibration(ratio, scaleHeights)` scales canvas plane
-positions (world metres) as one undoable action — SCALE THEM scales
-[x,y,z], KEEP HEIGHTS scales [x,z] only. Strokes are in board-% and are
-NOT redrawn (the board_width_m change handles their world-space scale
-automatically). The modal persists the new `board_width_m` via a
-read-modify-write on the API (fetches the current site_frame, merges
-board_width_m, saves), then calls `router.refresh()` so the page
-re-reads the new scale.
+## Build roadmap — remaining phases
 
-### Phase E — Falloff preset picker (turn 14c)
-**Status: COMPLETE — shipped 2026-09-03.** Verified absent (no
-NARROW/BALANCED/WIDE controls existed in `ToolFlyout` or `FloatingChrome`),
-then added:
+Ordered by dependency and impact. Each phase references the BUILD_CHECKLIST
+items it closes. Phases are independently shippable unless a dependency is
+named.
 
-- **Store (`studioStore.ts`)**: `FalloffPreset` type + `FALLOFF_PRESET_EDGES`
-  constant mapping each preset to smoothstep edge values. NARROW = [0.0, 0.9]
-  (steep fade, for working), BALANCED = [0.0, 1.38] (half at 46° from
-  face-on), WIDE = [0.0, 0.3] (gentle fade, the original hardcoded value,
-  for fly-throughs). New state: `falloffPreset: FalloffPreset` (default
-  WIDE) + `setFalloffPreset`. View-state only.
-- **`AngleOpacityShader.ts`**: the hardcoded `smoothstep(0.0, 0.3, dp)` is
-  now a `uFalloffEdge1` uniform. Both the standalone `AngleOpacityShader`
-  class and `patchMaterialForAngleOpacity` accept a `falloffEdge1` parameter.
-- **`FusedSketchLayer.tsx`**: reads `falloffPreset` from the store, converts
-  to `falloffEdge1` via `FALLOFF_PRESET_EDGES`, passes it through to both
-  `InkStrokeRenderer` and `StippleStrokeRenderer`, and live-updates the
-  `uFalloffEdge1` uniform per-frame so the operator can switch presets
-  without re-mounting strokes.
-- **`ToolFlyout.tsx`**: new `FalloffPicker` section in the DRAW tools
-  (pen/line/spline) flyout, next to the nib picker and plane picker. Three
-  buttons (NARROW/BALANCED/WIDE) with the active preset highlighted.
+### Phase L — Chrome contract per camera state
 
-Verified live: falloff picker renders in the pen tool flyout with 3 buttons;
-WIDE active by default; clicking NARROW switches the active preset; zero
-console errors; typecheck + lint green.
+**BUILD_CHECKLIST: Phase 6 (6.1-6.10), spec section 11c**
+**Dependency: None (governs existing chrome)**
+**Size: Largest structural gap — 10 items**
 
-### Phase F — Sketch-first entry (turn 15, item 15 in README §12)
-**Status: COMPLETE — shipped 2026-09-03.** The progressive disclosure gate
-was inverted: Sketch is now always unlocked (was gated behind `hasAerial`),
-and `suggestedMode` returns Sketch for a blank board (was Survey). A blank
-unscaled project now lands in Sketch mode by default with the "Draw / Your
-strokes land on the ground plane" hint and the UNSCALED badge.
+The spec requires every chrome element to have one of four behaviours per
+camera state (same / convert / lock / hide), driven by a single contract.
+None of this exists today. `ChromeRecedeWatcher.tsx` handles orbit recede
+but not the convert/lock/hide contract.
 
-- **`canvas-mode.ts`**: `unlockedModes` now includes "sketch" from the start
-  (was gated behind `hasAerial`). `suggestedMode` returns "sketch" when
-  `!hasSketch` (was "survey" when `!hasAerial`).
-- **`firstSketchGuide.ts`**: the boundary gate was removed — the hint fires
-  on any empty board in Sketch mode, not just when boundary >= 3 points.
-  "Drawing must never wait on setup" (turn 15).
-- **`WebGLStudioPreview.tsx`**: hint copy changed from "Sketch the concept /
-  Drag to draw" to "Draw / Your strokes land on the ground plane" per spec.
-- **`page.tsx`**: the dead `?guide=1` survey-force flag was removed (no
-  caller passes it; `ConfirmPinClient` routes straight to `/projects/${id}`).
+Build items:
+- L.1 Port `code/chromeContract.ts`; drive every camera-dependent element
+  from it. Each element gets an entry for all four modes (PLAN/AXO/SEC/3D).
+- L.2 Ruler converts to horizon band with bearings only in 3D, cross-fading
+  at 60% of the 420ms transition.
+- L.3 Coordinate chip converts to eye height / bearing / fov in 3D.
+- L.4 Dimensions billboard, prefix approximate, marked indicative in 3D,
+  and are not issuable.
+- L.5 GRADE + MEASURE lock in 3D with lock glyph and one stated reason line
+  ("locked in perspective — switch to PLAN or AXO to measure").
+- L.6 Weight control converts mm to screen px in 3D and says so.
+- L.7 Depth rail skews to a stack in 3D; becomes band selector in SEC.
+- L.8 Suncast + drainage hide in SEC.
+- L.9 Test: every `ChromeElement` has an entry for all four modes. Adding a
+  new element without a rule fails the test.
+- L.10 Test: no chrome element bounding box changes between camera states.
 
-Verified live: a fresh blank project lands in Sketch mode with the hint,
-UNSCALED badge, and full tool ribbon; zero console errors; typecheck +
-lint green; 13 canvas-mode + firstSketchGuide tests green.
+Done when: the test asserting every ChromeElement has an entry for all four
+modes passes, and the no-bounding-box-change test passes for all four modes.
+
+### Phase M — Material palette, dash signatures, assets
+
+**BUILD_CHECKLIST: Phase 8 (8.1-8.10), spec sections 7.1/8c/5b/5c**
+**Dependency: None**
+**Size: 10 items**
+
+Missing items:
+- M.1 21-material palette, grouped, 22px swatches, no colour wheel. Active
+  ring per section 4.
+- M.2 Build-up ramp at 0.22 / 0.42 / 0.62 / 0.82 / 1.0.
+- M.3 Dash signatures mandatory for every semantic markup material (8c).
+  Sofftscape stays hue-only.
+- M.4 Signature scales with stroke weight, not zoom. Dash length is constant
+  across 3 zoom levels.
+- M.5 Greyscale proof: render palette to greyscale; every semantic line is
+  still distinguishable.
+- M.6 Asset bento (CANOPY/SHRUB/HARD/FURN/SYM) with real dimensions on each
+  tile (`spread 9.0m, ht 14m`).
+- M.7 Drag to active plane, ghost carries readout, dashed mature-spread ring
+  on ground.
+- M.8 Snap `canopy grid 3m`; option-drop scatters x5.
+- M.9 Stroke-to-object promotion: loop detection produces quiet chip at nib
+  (110ms) with area, perimeter, plane. Enter promotes, Escape keeps ink.
+  Non-modal. (The promotion logic exists in `sketchCad.ts`; the chip UI does
+  not.)
+- M.10 Cmd+Z reverts a promotion to ink with stroke geometry byte-identical.
+
+Done when: greyscale proof passes; a 0.5mm line measures 0.5mm on an issued
+A1 at 1:200; dash length is constant across 3 zoom levels.
+
+### Phase N — Strike chip + conflict card
+
+**BUILD_CHECKLIST: Phase 12 (12.5-12.6), spec section 11a**
+**Dependency: None**
+**Size: 2 items**
+
+The services/subsurface system exists (TrenchLayer, SubsurfaceEngine) but the
+operator-facing strike chip and conflict card are missing.
+
+- N.1 Strike chip in the top bar beside the WFS chips. Count + severity, tap
+  cycles and flies the camera. In-scene pulse is halo-opacity only, 1400ms —
+  no scale, no colour flash.
+- N.2 Conflict card: utility, trench depth, clearance, tolerance, severity +
+  REROUTE / DEEPEN / FLAG, labelled `indicative`.
+
+Done when: no run renders without a source and a measured/assumed flag; the
+canvas carries `indicative only, not a substitute for locating`.
+
+### Phase O — Error and empty states
+
+**BUILD_CHECKLIST: Rules of engagement stop-condition 2, spec "Open before
+the sprint starts" item 2**
+**Dependency: None**
+**Size: Broad surface, 1 spec item**
+
+The spec lists this as a blocking open item: "only WFS failure is drawn.
+Failed import, empty schedule, corrupt underlay, rejected calibration are
+not."
+
+- O.1 Failed import state — drawn, not silent.
+- O.2 Empty schedule state — drawn, not silent.
+- O.3 Corrupt underlay state — drawn, not silent.
+- O.4 Rejected calibration state — drawn, not silent.
+
+Done when: each failure mode has a drawn state that names what failed and
+offers retry or dismiss. No failure is silent.
+
+### Phase P — History scrub
+
+**BUILD_CHECKLIST: Phase 13 (13.4-13.5), spec section 8a**
+**Dependency: None**
+**Size: 2 items**
+
+- P.1 History scrub: segmented by activity (survey / grading / paving /
+  planting / markup), ghost-ahead compare, volume delta readout (then vs
+  delta now), 1:1 with the finger, zero easing.
+- P.2 Branch-on-edit: releasing the head with work ahead offers a branch —
+  never a silent overwrite.
+
+Done when: the scrub head tracks the finger with zero easing; releasing
+with work ahead offers a branch, not an overwrite.
+
+### Phase Q — Sheet composition / issue PDF
+
+**BUILD_CHECKLIST: Phase 16 (16.1-16.12), spec section 18a**
+**Dependency: Phase M (dash signatures for auto legend)**
+**Size: 12 items**
+
+- Q.1 Sheets are live viewports onto the same canvas — never copies. Editing
+  the canvas changes the sheet with no re-import.
+- Q.2 Viewport chrome states camera, scale-at-sheet-size, and LIVE.
+- Q.3 Legend auto-builds from materials actually used, carrying dash
+  signatures.
+- Q.4 Title block: project / sheet / scale / date / rev / north / template
+  version.
+- Q.5 Sheet set rail + paper size + orientation; one action issues the whole
+  set as PDF.
+- Q.6 Greyscale proof of an issued sheet is legible and every semantic line
+  is distinguishable.
+- Q.7 Sheet is the second and last light surface. `paper.bg` used only by the
+  schedule and the sheet.
+- Q.8 Slots read from the bound office template; drag tray lists every
+  available viewport plus site photos and schedule extracts.
+- Q.9 Dropping inside a slot follows the standard; dropping outside marks
+  the sheet with an override.
+- Q.10 Crop, never rescale. A viewport dropped into a smaller frame keeps its
+  scale and crops.
+- Q.11 The dragged frame states what the scale would become, offered as a
+  decision — never applied.
+- Q.12 Viewports live until issued, then the issued revision is frozen.
+
+Done when: editing the canvas after issue changes the working sheet and not
+the issued PDF; a viewport dropped into a smaller frame keeps its scale and
+crops.
+
+### Phase R — Office template
+
+**BUILD_CHECKLIST: Phase 15 (15.1-15.11), spec section 17a/17b**
+**Dependency: Phase Q (sheet slots read from template)**
+**Size: 11 items**
+**Blocked: 15.11 needs a permission model (stop-condition 3)**
+
+- R.1 Port `code/officeTemplate.ts`. Template holds conventions only —
+  assert it can hold no geometry.
+- R.2 Editor on `panel.bg` with section rail carrying live counts.
+- R.3 Sections: planes, trade packs, materials, line weights + signatures,
+  sheet and title block, schedule codes, defaults.
+- R.4 Weights stated in mm at issued scale; changing one re-renders bound
+  drawings at next open and never edits geometry.
+- R.5 Binding is a reference. Editing the template updates all bound
+  projects with no per-project write.
+- R.6 Overrides name what, who, when, why; null reason renders as "no reason
+  given" — never hidden.
+- R.7 Override count appears in the project chip; revert is one action per
+  item.
+- R.8 New version is an offer with a diff, item by item, each stating its
+  computed consequence.
+- R.9 Destructive changes (renumbering, anything touching an issued
+  revision) default to unchecked.
+- R.10 Sheets already issued keep the version they were issued at; the
+  version prints in the title block.
+- R.11 PROMOTE TO v5 needs a permission model — resolve stop-condition 3
+  before shipping.
+
+Done when: editing the template updates all bound projects with no
+per-project write; a new version is an offer with a diff, not a silent
+change.
+
+### Phase S — AI run from camera dock
+
+**BUILD_CHECKLIST: Phase 16b (16b.1-16b.9), spec section 18b**
+**Dependency: None**
+**Size: 9 items**
+
+- S.1 Entry lives on the camera dock beside the time pill. No new panel, no
+  prompt box. No free-text input anywhere in the flow.
+- S.2 Inputs are read from the file — geometry, materials, species, sun,
+  growth year — and each is listed with its count before the run.
+- S.3 Staged progress with real per-stage completion and elapsed time. A
+  stalled stage shows as stalled, never as a moving spinner.
+- S.4 Drawing continues during a run; a stroke committed mid-run joins the
+  next run, and the UI says so.
+- S.5 Result is a derived view with a drawing-to-render scrub; at 0 the ink
+  is untouched underneath.
+- S.6 Refusal 1: an unspecified bed renders empty. A bed with no species
+  produces no planting.
+- S.7 Refusal 2: the run cannot write geometry. No code path from the run
+  touches `objects` or a stroke.
+- S.8 Anything placed on a sheet from a run carries `indicative render, not
+  a construction document`.
+- S.9 A run records its inputs so it can be reproduced or invalidated when
+  the drawing changes. Editing a bed marks the placed render stale, with the
+  reason named.
+
+Done when: no free-text input exists in the flow; a stalled stage shows as
+stalled; editing a bed after a run marks the render stale.
+
+### Phase T — Acceptance pass
+
+**BUILD_CHECKLIST: Phase 17 (17.1-17.10)**
+**Dependency: All phases above**
+**Size: 10 items**
+
+Run these against the finished build, in order. All must pass.
+
+- T.1 Overlay each of 16a/16b/16c/17a/17b against the running app at 1:1.
+  Report every delta over 2px.
+- T.2 Camera matrix: no chrome bounding box moves across all four modes.
+- T.3 Measurement: a known 10m span reads 10m in PLAN, AXO and SEC, and reads
+  no chainage at all in 3D.
+- T.4 Derived integrity: mutate one bed's geometry; schedule area, softscape
+  total and canopy cover all change with no explicit refresh.
+- T.5 Motion audit: no chrome element animates position anywhere;
+  prefers-reduced-motion zeroes everything but the 120ms camera.
+- T.6 Legibility: no chrome label below 9.5px mono / 8.5px group header,
+  anywhere, in any state.
+- T.7 Provenance: no imported or derived element renders without its source;
+  no view shows a number it cannot prove.
+- T.8 Round trip: empty site to sketch over an aerial unscaled to calibrate
+  to draft to plane, schedule, section to compose sheets to AI run to issue
+  PDF. No dead ends, no unspecified interaction.
+- T.9 Offline: kill the network mid-session. Drawing continues, queue count
+  is visible, nothing blocks, everything replays.
+- T.10 Real content: run one real job — survey, plant list, services —
+  through all three screens. Layout breaks that invented data hid are found
+  here, not in the field.
+
+---
+
+## Deferred
+
+These are real parts of the spec but are explicitly out of scope for the
+current platform per CLAUDE.md or the spec's own "Out of v1" list.
+
+| Item | Reason |
+|------|--------|
+| Sync + collaboration (Phase 13.6-13.7, section 8b) | Single-tenant store per CLAUDE.md. The sync states (offline queue, conflict UI) could be built without real-time sync, but the full collaboration model is deferred. |
+| Site mode / phone capture (Phase 14, section 16c) | Separate Expo surface (`apps/mobile`). The spec's site-mode capture flow is a different product, not a responsive breakpoint. |
+| Panel customisation | "Out of v1, on purpose" (spec section 0). |
+| Light canvas theme | "Out of v1, on purpose" (spec section 0). |
+| Desktop layout | "Out of v1, on purpose" (spec section 0). |
+| Real underlay loading | "Out of v1, on purpose" (spec section 0). |
+
+---
+
+## Spec open items
+
+The spec lists three items as "Open before the sprint starts":
+
+1. **Numeric entry on every flyout parameter** — COMPLETE (Phase K).
+2. **Error and empty states** — Phase O.
+3. **Real project content** — Phase T.10.
+
+---
 
 ## Verification per phase
 
-- `pnpm lint` / `pnpm typecheck` from `apps/web` (zero-warning gate, per
-  root `CLAUDE.md`).
+- `pnpm lint` / `pnpm typecheck` from `apps/web` (zero-warning gate).
 - `pnpm vitest run` from repo root.
 - Manual pass in the browser: create a project via the command palette
-  (lands in Sketch mode automatically as of today's change), exercise the
-  new gizmo/rail/filmstrip/calibrate flow, and confirm strokes still
-  round-trip through `useStudioAutosave.ts` (autosave test file:
-  `useStudioAutosave.test.ts`).
-- Each phase should get its own `EnterPlanMode` pass in the CLI picking
-  this up — this document is a map of the gaps, not a locked implementation
-  plan; the placement-gizmo UI in particular has real design decisions
-  (drag vs. numeric entry, how `TransformControls` interacts with the
-  existing camera rig) worth aligning on before coding.
+  (lands in Sketch mode), exercise the new flow, confirm strokes still
+  round-trip through `useStudioAutosave.ts`.
+- Each phase should get its own plan pass in the CLI picking this up —
+  this document is a map of the gaps, not a locked implementation plan.

@@ -6,7 +6,7 @@
  *
  * Replaces the depth rail's old bare "+" button (which stamped an unnamed
  * flat plane at the next stacked height, no orientation choice — see
- * docs/MENTAL-CANVAS-ROADMAP.md Phase A). Blooms off the rail's `+` cell,
+ * docs/MENTAL-CANVAS-ROADMAP.md Phase A — COMPLETE). Blooms off the rail's `+` cell,
  * following the same "bloom a panel off an anchor" idiom as ToolFlyout.tsx,
  * but as its own component: ToolFlyout is hardcoded to the tool ribbon's
  * DOM/handedness, not a clean fit for the depth rail's opposite-edge layout

@@ -50,7 +50,7 @@ const TOOL_GROUPS: ToolGroup[] = [
     tools: [
       // No flyout yet: ToolFlyout's FLYOUT_TOOLS doesn't cover CONTOUR
       // (its spec'd variant/interval/max-slope panel isn't built — see
-      // docs/MENTAL-CANVAS-ROADMAP.md). Don't show the corner-triangle
+      // docs/MENTAL-CANVAS-ROADMAP.md Phase M for material/dash work). Don't show the corner-triangle
       // "has a flyout" affordance for a control that doesn't exist yet
       // (honesty contract, ToolFlyout.tsx's own §0.1 comment).
       { id: "contour", label: "CONTOUR", hotkey: "C", glyph: "contour" },

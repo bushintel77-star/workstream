@@ -1,9 +1,13 @@
-# Mental Canvas — gap analysis and roadmap (2026-09-03)
+# Mental Canvas — gap analysis (2026-09-03)
+
+**The build roadmap is now `docs/MENTAL-CANVAS-ROADMAP.md`.** This file is
+the audit trail — the feature-by-feature table that was used to derive the
+roadmap. Read the roadmap for the actionable build plan; read this for the
+evidence.
 
 Written after a full audit of the design handoff spec
 (`design_handoff_landscape_canvas/.../README.md` + `BUILD_CHECKLIST.md`)
-against the live codebase. This supersedes the phase status in the older
-roadmap sections below.
+against the live codebase.
 
 ## What is done
 
