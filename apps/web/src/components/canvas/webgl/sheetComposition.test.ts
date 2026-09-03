@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   PAPER_DIMENSIONS_MM,
   buildLegendFromMaterials,
@@ -189,9 +189,21 @@ describe("sheetComposition — Phase Q", () => {
   });
 
   describe("issue date is local, not UTC", () => {
+    // Runner TZ pinned to AEST so "local" and UTC calendar days actually
+    // diverge for this case — on a UTC-based CI runner they don't, which
+    // made this test's own premise pass or fail depending on the host.
+    let originalTz: string | undefined;
+    beforeAll(() => {
+      originalTz = process.env.TZ;
+      process.env.TZ = "Australia/Brisbane"; // fixed UTC+10, no DST
+    });
+    afterAll(() => {
+      process.env.TZ = originalTz;
+    });
+
     it("uses the local calendar day", () => {
-      // 09:00 on 4 Sep in a UTC+10 zone is 23:00 on 3 Sep UTC. The title
-      // block must read the day the operator is living in.
+      // 09:00 on 4 Sep AEST is 23:00 on 3 Sep UTC. The title block must
+      // read the day the operator is living in.
       const local = new Date(2026, 8, 4, 9, 0, 0);
       expect(issueDate(local)).toBe("2026-09-04");
       expect(issueDate(local)).not.toBe(local.toISOString().slice(0, 10));
