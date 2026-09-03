@@ -251,7 +251,9 @@ export function ViewpointFilmstrip({ mode }: ViewpointFilmstripProps) {
       </div>
 
       {/* Phase C2/K — timeline controls: linger, transition, loop, progress.
-          NumericSlider provides tap-to-type entry per spec §5.3. */}
+          NumericSlider provides tap-to-type entry per spec §5.3. Units are
+          omitted from the filmstrip sliders to keep the strip compact — the
+          labels (LINGER/TRANSITION) already imply seconds. */}
       <div className={styles.timelineControls} data-testid="viewpoint-timeline">
         <NumericSlider
           label="LINGER"
@@ -260,18 +262,16 @@ export function ViewpointFilmstrip({ mode }: ViewpointFilmstripProps) {
           step={0.25}
           value={walkLingerS}
           onChange={setWalkLingerS}
-          unit="s"
           title="Seconds the camera pauses at each viewpoint"
           testId="walk-linger"
         />
         <NumericSlider
-          label="TRANSITION"
+          label="TRANS"
           min={0.5}
           max={10}
           step={0.5}
           value={walkTransitionS}
           onChange={setWalkTransitionS}
-          unit="s"
           title="Seconds for the camera to fly between viewpoints"
           testId="walk-transition"
         />

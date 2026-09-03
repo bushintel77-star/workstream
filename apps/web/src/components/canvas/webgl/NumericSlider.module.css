@@ -10,7 +10,7 @@
 
 .label {
   font-family: var(--lc-font-mono);
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: 700;
   color: var(--lc-ink-30, var(--gs-ink-30));
   text-transform: uppercase;
@@ -23,46 +23,46 @@
   -webkit-appearance: none;
   appearance: none;
   flex: 1;
-  height: 4px;
+  height: 3px;
   border-radius: var(--gs-radius-xs);
   background: var(--lc-track-border, rgba(232, 230, 224, 0.15));
   outline: none;
   cursor: pointer;
-  min-width: 40px;
+  min-width: 20px;
 }
 
 .range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: var(--gs-radius-pill);
-  background: var(--lc-accent-terrain, var(--gs-accent));
+  background: var(--lc-ink, var(--gs-ink));
   cursor: pointer;
-  border: 1px solid var(--lc-canvas-bg, #1a1c1e);
+  border: none;
 }
 
 .range::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: var(--gs-radius-pill);
-  background: var(--lc-accent-terrain, var(--gs-accent));
+  background: var(--lc-ink, var(--gs-ink));
   cursor: pointer;
-  border: 1px solid var(--lc-canvas-bg, #1a1c1e);
+  border: none;
 }
 
 .number {
   -webkit-appearance: none;
   appearance: none;
-  width: 42px;
+  width: 36px;
   height: 20px;
-  padding: 0 4px;
+  padding: 0 3px;
   border: 1px solid var(--lc-glass-border);
   border-radius: var(--gs-radius-sm);
   background: var(--lc-surface-2, var(--gs-surface-2));
   color: var(--lc-ink-60, var(--gs-ink-60));
   font-family: var(--lc-font-mono);
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 600;
   text-align: right;
   outline: none;
@@ -89,7 +89,7 @@
 
 .unit {
   font-family: var(--lc-font-mono);
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: 600;
   color: var(--lc-ink-30, var(--gs-ink-30));
   flex-shrink: 0;

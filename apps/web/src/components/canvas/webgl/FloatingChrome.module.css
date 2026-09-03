@@ -72,7 +72,7 @@
   right: -2px;
   top: -7px;
   font-family: var(--lc-font-mono);
-  font-size: 7px;
+  font-size: 9.5px;
   font-weight: 600;
   color: var(--lc-accent-terrain);
   letter-spacing: 0.05em;
@@ -81,10 +81,10 @@
   border-radius: var(--gs-radius-xs);
 }
 
-/* Subsurface section label */
+/* Subsurface section label — group header, 8.5px per spec §3 */
 .railSubsurfaceLabel {
   font-family: var(--lc-font-mono);
-  font-size: 7px;
+  font-size: 8.5px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--lc-ink-30);
@@ -171,7 +171,7 @@
   background: transparent;
   color: var(--lc-ink-40);
   font-family: var(--lc-font-mono);
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -285,57 +285,6 @@
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
   box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
-}
-
-.extLabel {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-readout);
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--lc-ink-60);
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-}
-
-.extSlider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 180px;
-  height: 6px;
-  border-radius: var(--gs-radius-xs);
-  background: var(--lc-track-border);
-  outline: none;
-  cursor: pointer;
-}
-
-.extSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: var(--gs-radius-pill);
-  background: var(--lc-accent-terrain);
-  cursor: pointer;
-  border: 2px solid var(--lc-canvas-bg);
-}
-
-.extSlider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: var(--gs-radius-pill);
-  background: var(--lc-accent-terrain);
-  cursor: pointer;
-  border: 2px solid var(--lc-canvas-bg);
-}
-
-.extValue {
-  font-family: var(--lc-font-mono);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--lc-accent-terrain);
-  min-width: 56px;
-  text-align: right;
-  white-space: nowrap;
 }
 
 .extCommit {

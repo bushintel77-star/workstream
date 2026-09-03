@@ -7,12 +7,10 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse at center,
-    transparent 0%,
-    transparent 40%,
-    color-mix(in srgb, var(--gs-conflict, #c41e1e) 8%, transparent) 100%
-  );
+  background: radial-gradient(ellipse at center,
+      transparent 0%,
+      transparent 40%,
+      color-mix(in srgb, var(--gs-conflict, #c41e1e) 8%, transparent) 100%);
   z-index: var(--cf-z-chrome);
   opacity: 1;
   transition: opacity 200ms ease;
@@ -67,7 +65,7 @@
   background: var(--lc-surface-2, var(--gs-surface-2));
   color: var(--lc-ink-60, var(--gs-ink-60));
   font-family: var(--lc-font-mono);
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;

@@ -43,56 +43,6 @@
   letter-spacing: 0.08em;
 }
 
-/* Transparency toggle — global inactive-canvas opacity slider.
- * Sits below the header, above the cards. */
-.transparencyRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 2px 6px;
-}
-
-.transparencyLabel {
-  font-family: var(--lc-font-mono);
-  font-size: 7px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--lc-ink-30);
-  letter-spacing: 0.06em;
-  white-space: nowrap;
-}
-
-.transparencySlider {
-  -webkit-appearance: none;
-  appearance: none;
-  flex: 1;
-  height: 4px;
-  border-radius: var(--gs-radius-xs);
-  background: var(--lc-track-border);
-  outline: none;
-  cursor: pointer;
-}
-
-.transparencySlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: var(--gs-radius-pill);
-  background: var(--lc-accent-terrain);
-  cursor: pointer;
-  border: 1px solid var(--lc-canvas-bg);
-}
-
-.transparencySlider::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border-radius: var(--gs-radius-pill);
-  background: var(--lc-accent-terrain);
-  cursor: pointer;
-  border: 1px solid var(--lc-canvas-bg);
-}
-
 /* Card — spec §4: 74×46, radius 9px. */
 .card {
   position: relative;
@@ -156,7 +106,7 @@
   right: 0;
   padding: 2px 4px;
   font-family: var(--lc-font-mono);
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
   color: var(--lc-ink);
@@ -177,7 +127,7 @@
   right: 0;
   padding: 2px 4px;
   font-family: var(--lc-font-mono);
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
   color: var(--lc-ink);
@@ -267,12 +217,12 @@
   align-items: center;
   justify-content: center;
   width: 74px;
-  height: 16px;
+  height: 18px;
   border-radius: var(--gs-radius-xs);
   background: transparent;
   color: var(--lc-ink-40);
   font-family: var(--lc-font-mono);
-  font-size: 7px;
+  font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
