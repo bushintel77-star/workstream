@@ -372,9 +372,12 @@ stalled; editing a bed after a run marks the render stale.
 **Dependency: All phases above**
 **Size: 10 items**
 **Status: Gate green. Typecheck (13/13), lint (0 warnings),
-vitest (2381 passed, 22 skipped live). T.1-T.10 require a running
-browser pass against the deployed app — those are manual/visual
-checks not automatable from the CLI.**
+vitest (2381 passed, 22 skipped live). Browser acceptance pass run
+against localhost:3002 — T.2 camera matrix (0/10 chrome elements
+moved across AXO/SEC/3D), T.3 chainage suppressed in 3D, T.4 no
+position animation idle, all 12 key chrome elements present. T.1
+(1:1 overlay), T.5 (reduced motion), T.8 (full round trip), T.9
+(offline), T.10 (real job) remain manual field checks.**
 
 Run these against the finished build, in order. All must pass.
 
