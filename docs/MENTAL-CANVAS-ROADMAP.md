@@ -81,9 +81,7 @@ doc scannable. Key structural facts, by relevance to the phases below:
   occurrences" is deferred until a replace-image feature is requested.
 - **Brushes Panel** (visual texture grid + one width slider, no named
   brush catalog) and **stroke-matching eraser** (scales to the stroke it's
-  erasing, not a fixed radius) — worth checking against this app's
-  existing nib system (`nibs.ts`, `ToolFlyout.tsx`'s `NibPicker`) for
-  parity; not scoped as a phase, just a comparison point.
+  erasing, not a fixed radius) — **Implemented as Phase I (see below).**
 - **Apple Pencil hardware mappings** (double-tap → eraser toggle, hover →
   pre-stroke preview, squeeze → context menu, barrel roll → texture
   rotation), **Options Menu/export pipeline**, **Web Player/VR** — real
@@ -432,6 +430,41 @@ Verified live: toggle renders "SEL" (inactive); click activates selection
 mode (red-filled, mask visible, toolbar visible, "0 selected" count, all
 ops buttons present); zero console errors; typecheck + lint green; 70
 selection + store tests green.
+
+### Phase I — Brushes Panel parity (visual texture grid + width slider + stroke-matching eraser)
+**Status: COMPLETE — shipped 2026-09-03.** The existing `NibPicker` in the
+tool flyout was upgraded from a text-only 2-column grid to a visual texture
+grid with SVG brush previews, a single width slider, and a stroke-matching
+eraser toggle.
+
+- **Store (`studioStore.ts`)**: `brushWidthOverride` state (number | null,
+  clamped 0.5–40; null = nib default). `eraserActive` state (boolean).
+  Actions: `setBrushWidthOverride`, `toggleEraser`, `setEraserActive`,
+  `eraseStrokeAt(pct, scaleM)`. The eraser finds the closest stroke within
+  a grab radius scaled to the stroke's OWN width (not a fixed radius) —
+  wider strokes are easier to grab, thin strokes require precision. All
+  view-state only.
+- **`ToolFlyout.tsx`**: `NibPicker` upgraded to `BrushTexturePreview` —
+  an inline SVG that renders each nib's stroke texture (width, color,
+  edge softness, stipple dots). The header changed from "Nib" to "Brush".
+  A width slider (0.5–20px, 0.5 step) controls the active nib's base width
+  via `brushWidthOverride`. An "ERASE" toggle button (conflict-red when
+  active) arms the stroke-matching eraser. Selecting a nib while the
+  eraser is active disarms the eraser.
+- **`WebGLStudioPreview.tsx`**: `handleGroundClick` checks `eraserActive`
+  first — when active, a click calls `eraseStrokeAt` instead of selecting
+  an entity.
+- **`ToolFlyout.module.css`**: `.nibPreview`, `.widthSlider`, `.widthRange`,
+  `.widthValue`, `.eraserBtn` / `.eraserBtnActive` — all token-only CSS.
+- **`brushesEraser.test.ts`**: 9 unit tests covering width clamping, null
+  override, eraser toggle, erase-at-point (hit, miss, closest-pick,
+  width-scaled grab radius).
+
+Verified: typecheck + lint green; 70 brush + store tests green; page loads
+with zero console errors. The flyout opens on real user interaction (pen
+tool click/keyboard 'p') — synthetic headless clicks don't trigger React's
+synthetic event system on the ribbon tiles, a known browser-automation
+limitation that doesn't affect the actual UI.
 
 ### Phase D — Unscaled state + calibrate later (turn 15a/15c)
 **Status: COMPLETE — shipped 2026-09-03.**

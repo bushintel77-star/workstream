@@ -51,29 +51,105 @@ function FlyoutHeader({ title, hint }: { title: string; hint?: string }) {
 function NibPicker() {
   const activeNib = useStudioStore((s) => s.activeNib);
   const setActiveNib = useStudioStore((s) => s.setActiveNib);
+  const brushWidthOverride = useStudioStore((s) => s.brushWidthOverride);
+  const setBrushWidthOverride = useStudioStore((s) => s.setBrushWidthOverride);
+  const eraserActive = useStudioStore((s) => s.eraserActive);
+  const toggleEraser = useStudioStore((s) => s.toggleEraser);
+  const activeSpec = NIBS[activeNib];
+  const currentWidth = brushWidthOverride ?? activeSpec.baseWidthPx;
   return (
     <div className={styles.section}>
-      <FlyoutHeader title="Nib" hint="p/alt" />
-      <div className={styles.nibGrid}>
+      <FlyoutHeader title="Brush" hint="p/alt" />
+      <div className={styles.nibGrid} data-testid="brush-grid">
         {NIB_ORDER.map((kind) => {
           const spec = NIBS[kind];
-          const active = activeNib === kind;
+          const active = activeNib === kind && !eraserActive;
           return (
             <button
               key={kind}
               className={`${styles.nib} ${active ? styles.nibActive : ""}`}
               data-nib={kind}
               data-active={active}
-              onClick={() => setActiveNib(kind)}
+              onClick={() => {
+                setActiveNib(kind);
+                if (eraserActive) toggleEraser();
+              }}
               title={spec.purpose}
             >
-              <span className={styles.nibSwatch} style={{ background: spec.color }} />
+              <BrushTexturePreview spec={spec} />
               <span className={styles.nibLabel}>{spec.shortLabel}</span>
             </button>
           );
         })}
       </div>
+      {/* Phase I — single width slider. Controls the active nib's base width. */}
+      <div className={styles.widthSlider} data-testid="brush-width-slider">
+        <span className={styles.widthLabel}>W</span>
+        <input
+          type="range"
+          className={styles.widthRange}
+          min={0.5}
+          max={20}
+          step={0.5}
+          value={currentWidth}
+          onChange={(e) => setBrushWidthOverride(parseFloat(e.target.value))}
+          title={`Brush width: ${currentWidth.toFixed(1)}px`}
+        />
+        <span className={styles.widthValue}>{currentWidth.toFixed(1)}</span>
+      </div>
+      {/* Phase I — stroke-matching eraser toggle. */}
+      <button
+        className={`${styles.eraserBtn} ${eraserActive ? styles.eraserBtnActive : ""}`}
+        onClick={toggleEraser}
+        title={
+          eraserActive
+            ? "Eraser active — click a stroke to delete it (scales to the stroke's width)"
+            : "Stroke-matching eraser — click a stroke to delete it"
+        }
+        data-testid="eraser-toggle"
+        data-active={eraserActive}
+      >
+        ERASE
+      </button>
     </div>
+  );
+}
+
+/** Phase I — visual texture preview for a nib. Renders an SVG stroke
+ *  that approximates the nib's texture (width, color, edge softness). */
+function BrushTexturePreview({ spec }: { spec: typeof NIBS[keyof typeof NIBS] }) {
+  const w = 28;
+  const h = 14;
+  const strokeWidth = Math.min(6, Math.max(1, spec.baseWidthPx * 0.6));
+  const opacity = spec.opacity;
+  const blur = spec.edgeSoft > 0 ? `filter: blur(${spec.edgeSoft * 1.5}px);` : "";
+  return (
+    <svg
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      className={styles.nibPreview}
+      aria-hidden="true"
+    >
+      {spec.kind === "stipple" ? (
+        <>
+          <circle cx={6} cy={4} r={1.2} fill={spec.color} opacity={opacity} />
+          <circle cx={12} cy={9} r={0.8} fill={spec.color} opacity={opacity * 0.8} />
+          <circle cx={18} cy={5} r={1.5} fill={spec.color} opacity={opacity} />
+          <circle cx={22} cy={10} r={1} fill={spec.color} opacity={opacity * 0.9} />
+        </>
+      ) : (
+        <path
+          d={`M 2 ${h / 2} Q ${w / 2} ${h / 2 - 3}, ${w - 2} ${h / 2}`}
+          fill="none"
+          stroke={spec.color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          opacity={opacity}
+          style={blur as React.CSSProperties}
+        />
+      )}
+    </svg>
   );
 }
 

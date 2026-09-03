@@ -996,6 +996,14 @@ export interface StudioStoreState {
   /** The armed nib — committed strokes carry its telemetry mapping
    *  (nibs.ts). The floating nib palette (Sketch mode) swaps it. */
   activeNib: NibKind;
+  /** Phase I — brush width override (px). When non-null, the active nib's
+   *  baseWidthPx is replaced by this value for new strokes. Null = use the
+   *  nib's default width. View state only. */
+  brushWidthOverride: number | null;
+  /** Phase I — stroke-matching eraser mode. When true, clicking a stroke
+   *  deletes it (the eraser scales to the stroke's own width, not a fixed
+   *  radius). View state only. */
+  eraserActive: boolean;
   /** Angle-opacity falloff preset (turn 14c). NARROW for working (steeper
    *  fade — edge-on canvases disappear faster), BALANCED for general use
    *  (half-opacity at 46° from face-on), WIDE for presenting a fly-through
@@ -1021,6 +1029,15 @@ export interface StudioStoreState {
    *  inverse sun angle. Off → 45° drafting hatch. */
   sunHatchSnap: boolean;
   setActiveNib: (nib: NibKind) => void;
+  /** Phase I — set the brush width override (px). Null = use nib default. */
+  setBrushWidthOverride: (px: number | null) => void;
+  /** Phase I — toggle the stroke-matching eraser. */
+  toggleEraser: () => void;
+  /** Phase I — set the eraser mode explicitly. */
+  setEraserActive: (active: boolean) => void;
+  /** Phase I — erase a stroke by id (stroke-matching: the eraser targets
+   *  the stroke under the cursor, not a fixed-radius circle). */
+  eraseStrokeAt: (pct: { x: number; y: number }, scaleM: number) => void;
   setSunAzimuthDeg: (deg: number | null) => void;
   setLiveTelemetry: (t: StylusTelemetry) => void;
   setSunHatchSnap: (v: boolean) => void;
@@ -1677,6 +1694,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Expressive stylus Sketch — graphite armed by default; sun-hatch snap on;
   // neutral live telemetry until the first pen sample.
   activeNib: DEFAULT_NIB,
+  // Phase I — brush width override (null = nib default); eraser off.
+  brushWidthOverride: null,
+  eraserActive: false,
   // Angle-opacity falloff — WIDE by default (the original hardcoded value;
   // canvases stay visible during fly-throughs). The operator switches to
   // NARROW for working or BALANCED for general sketching.
@@ -2066,6 +2086,60 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       };
     }),
   setActiveNib: (activeNib) => set({ activeNib }),
+  // Phase I — brush width override + stroke-matching eraser.
+  setBrushWidthOverride: (px) =>
+    set({
+      brushWidthOverride:
+        px == null ? null : Math.max(0.5, Math.min(40, px)),
+    }),
+  toggleEraser: () => set((s) => ({ eraserActive: !s.eraserActive })),
+  setEraserActive: (eraserActive) => set({ eraserActive }),
+  eraseStrokeAt: (pct, scaleM) => {
+    const state = useStudioStore.getState();
+    if (!state.eraserActive) return;
+    // Stroke-matching: find the stroke whose hit-test radius is its OWN
+    // width (not a fixed eraser radius). The closest stroke within its
+    // own width-scaled grab radius is erased.
+    const mToPct = (m: number) => (m / Math.max(0.1, scaleM)) * 100;
+    let bestId: string | null = null;
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (const stroke of state.sketchStrokes) {
+      const strokeWidthPx = stroke.width_px ?? 2;
+      // Convert px to metres (96dpi → mm → m at the issued scale).
+      const strokeWidthM = (strokeWidthPx / 96) * 0.0254 * 200;
+      const grabPct = mToPct(strokeWidthM * 0.8 + 0.3);
+      const pts = stroke.points;
+      if (pts.length === 0) continue;
+      // Point-segment distance in board-%.
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i]!;
+        const b = pts[i + 1]!;
+        const dx = b.x_pct - a.x_pct;
+        const dy = b.y_pct - a.y_pct;
+        const len2 = dx * dx + dy * dy;
+        let dist: number;
+        if (len2 < 1e-12) {
+          dist = Math.hypot(pct.x - a.x_pct, pct.y - a.y_pct);
+        } else {
+          const t = Math.max(
+            0,
+            Math.min(1, ((pct.x - a.x_pct) * dx + (pct.y - a.y_pct) * dy) / len2),
+          );
+          dist = Math.hypot(
+            pct.x - (a.x_pct + t * dx),
+            pct.y - (a.y_pct + t * dy),
+          );
+        }
+        if (dist <= grabPct && dist < bestDist) {
+          bestDist = dist;
+          bestId = stroke.id;
+        }
+      }
+    }
+    if (bestId) {
+      state.removeSketchStrokes([bestId]);
+    }
+  },
   setFalloffPreset: (falloffPreset) => set({ falloffPreset }),
   setSunAzimuthDeg: (sunAzimuthDeg) => set({ sunAzimuthDeg }),
   // Transient scratch write — mutates the shared telemetry object in place

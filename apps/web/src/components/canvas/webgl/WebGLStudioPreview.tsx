@@ -585,6 +585,13 @@ export function WebGLStudioPreview({
   const handleGroundClick = useCallback(
     (pct: PctPoint, opts: { additive: boolean }) => {
       const store = useStudioStore.getState();
+      // Phase I — stroke-matching eraser: when active, clicking erases the
+      // stroke under the cursor (scales to the stroke's own width) instead
+      // of selecting an entity.
+      if (store.eraserActive) {
+        store.eraseStrokeAt(pct, scaleM);
+        return;
+      }
       const featureId = nearestFeatureId(store.features, pct, scaleM);
       if (featureId) {
         store.selectRef({ kind: "feature", id: featureId }, opts);

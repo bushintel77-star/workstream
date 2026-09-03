@@ -153,6 +153,101 @@
   line-height: 1;
 }
 
+/* ---- Phase I: visual texture preview + width slider + eraser ---- */
+.nibPreview {
+  flex-shrink: 0;
+}
+
+.widthSlider {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.widthLabel {
+  font-family: var(--lc-font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--lc-ink-30);
+  text-transform: uppercase;
+}
+
+.widthRange {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  border-radius: var(--gs-radius-xs);
+  background: var(--lc-track-border, rgba(232, 230, 224, 0.15));
+  outline: none;
+  cursor: pointer;
+}
+
+.widthRange::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--lc-accent-terrain, var(--gs-accent));
+  cursor: pointer;
+  border: 1px solid var(--lc-canvas-bg, #1a1c1e);
+}
+
+.widthRange::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--gs-radius-pill);
+  background: var(--lc-accent-terrain, var(--gs-accent));
+  cursor: pointer;
+  border: 1px solid var(--lc-canvas-bg, #1a1c1e);
+}
+
+.widthValue {
+  font-family: var(--lc-font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--lc-ink-60);
+  min-width: 24px;
+  text-align: right;
+}
+
+.eraserBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  border: 1px solid rgba(232, 230, 224, 0.1);
+  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  background: rgba(232, 230, 224, 0.06);
+  color: var(--lc-ink-60);
+  font-family: var(--lc-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.eraserBtn:hover {
+  background: rgba(232, 230, 224, 0.1);
+  color: var(--lc-ink);
+}
+
+.eraserBtnActive {
+  background: var(--gs-conflict, #c41e1e);
+  border-color: var(--gs-conflict, #c41e1e);
+  color: #fff;
+}
+
+.eraserBtnActive:hover {
+  background: var(--gs-conflict, #c41e1e);
+  color: #fff;
+  opacity: var(--lc-op-hover, 0.85);
+}
+
 /* ---- Asset grid ---- */
 .assetGrid {
   display: grid;
