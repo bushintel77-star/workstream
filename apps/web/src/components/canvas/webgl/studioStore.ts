@@ -56,6 +56,17 @@ import { DEFAULT_NIB, NEUTRAL_TELEMETRY, type StylusTelemetry } from "./nibs";
 // is a type-only cycle — erased at build, no runtime cycle.
 import { issueSheet, type Sheet, type SheetViewport } from "./sheetComposition";
 import {
+  DEFAULT_TEMPLATE,
+  addOverride,
+  applyAccepted,
+  createBinding,
+  revertOverride,
+  type Binding,
+  type Change,
+  type OfficeTemplate,
+  type Override,
+} from "./officeTemplate";
+import {
   melbourneSeason,
   type FloraStudioForm,
   type MelbourneSeason,
@@ -443,6 +454,18 @@ export interface StudioStoreState {
    */
   sheets: Sheet[];
   activeSheetId: string | null;
+  /**
+   * Phase R — the office template panel and this project's binding to it.
+   *
+   * `officeTemplate.ts` shipped with tests and no surface at all: nothing in
+   * the UI imported it, so the binding, the override count and the revert
+   * action R.5-R.7 describe had nowhere to appear. Session-scoped — a shared
+   * template that genuinely reaches every bound project is a server concern
+   * (rule 1: binding is a reference, not a copy) and needs an API brief.
+   */
+  templatePanelOpen: boolean;
+  officeTemplate: OfficeTemplate;
+  templateBinding: Binding;
   /** Selected fixed plane from the spec stack (1.1). Ground is the drawable
    *  target; planting/massing are proposed reference bands. */
   activePlaneId: FixedPlaneId;
@@ -1172,6 +1195,21 @@ export interface StudioStoreState {
   /** Issue a sheet: freeze its viewports, bump the revision and the title
    *  block's revision letter and date. */
   issueSheetById: (sheetId: string) => void;
+  setTemplatePanelOpen: (v: boolean) => void;
+  /** R.6 — record a deviation from the standard. Never silent: the override
+   *  names what, who, when and why (a null reason renders as "no reason
+   *  given", it is not hidden). */
+  addTemplateOverride: (override: Override) => void;
+  /** R.7 — revert one override, one action per item. */
+  revertTemplateOverride: (path: keyof OfficeTemplate) => void;
+  /** R.8-R.10 — accept a version offer. The binding only advances to the new
+   *  version when every offered change is accepted. */
+  acceptTemplateVersion: (
+    next: OfficeTemplate,
+    accepted: Change[],
+    offered: Change[],
+    by: string,
+  ) => void;
   setActivePlaneId: (id: FixedPlaneId) => void;
   setLiveCoord: (v: { x: number; z: number; chainage?: number } | null) => void;
   setSurveyedPlanLayers: (patch: Partial<SurveyedPlanLayers>) => void;
@@ -1585,6 +1623,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   sheetComposerOpen: false,
   sheets: [],
   activeSheetId: null,
+  templatePanelOpen: false,
+  officeTemplate: DEFAULT_TEMPLATE,
+  templateBinding: createBinding("local", DEFAULT_TEMPLATE),
   activePlaneId: "ground",
   liveCoord: null,
   surveyedPlanLayers: {
@@ -1929,6 +1970,23 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   issueSheetById: (sheetId) =>
     set((s) => ({
       sheets: s.sheets.map((sh) => (sh.id === sheetId ? issueSheet(sh) : sh)),
+    })),
+  setTemplatePanelOpen: (templatePanelOpen) => set({ templatePanelOpen }),
+  addTemplateOverride: (override) =>
+    set((s) => ({
+      templateBinding: addOverride(
+        // One override per path — a second deviation on the same convention
+        // replaces the first rather than stacking two records that disagree.
+        revertOverride(s.templateBinding, override.path),
+        override,
+      ),
+    })),
+  revertTemplateOverride: (path) =>
+    set((s) => ({ templateBinding: revertOverride(s.templateBinding, path) })),
+  acceptTemplateVersion: (next, accepted, offered, by) =>
+    set((s) => ({
+      officeTemplate: next,
+      templateBinding: applyAccepted(s.templateBinding, next, accepted, offered, by),
     })),
   setActivePlaneId: (activePlaneId) => set({ activePlaneId }),
   setLiveCoord: (liveCoord) => set({ liveCoord }),

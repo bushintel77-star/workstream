@@ -79,6 +79,7 @@ import { StudioCanvasLoading } from "./StudioCanvasLoading";
 import { ScheduleSheet } from "./ScheduleSheet";
 import { isToolLocked } from "./chromeContract";
 import { SheetComposer } from "./SheetComposer";
+import { OfficeTemplatePanel } from "./OfficeTemplatePanel";
 import { guideFirstSketch } from "./firstSketchGuide";
 import type { WebGLStudioProps } from "./WebGLStudio";
 import { placementsToItems, featuresOntoItems } from "../handoff/state/canvasBridge";
@@ -539,6 +540,7 @@ export function WebGLStudioPreview({
   const storeFeatures = useStudioStore((s) => s.features);
   const scheduleOpen = useStudioStore((s) => s.scheduleOpen);
   const sheetComposerOpen = useStudioStore((s) => s.sheetComposerOpen);
+  const templatePanelOpen = useStudioStore((s) => s.templatePanelOpen);
   const splitView = useStudioStore((s) => s.splitView);
   const surveyedPlanLayers = useStudioStore((s) => s.surveyedPlanLayers);
   const setSurveyedPlanLayers = useStudioStore((s) => s.setSurveyedPlanLayers);
@@ -1771,6 +1773,14 @@ export function WebGLStudioPreview({
         {sheetComposerOpen && (
           <SheetComposer
             onClose={() => useStudioStore.getState().setSheetComposerOpen(false)}
+          />
+        )}
+
+        {/* Phase R — office template panel (spec 17a/17b). Conventions,
+            binding, overrides and the version offer. */}
+        {templatePanelOpen && (
+          <OfficeTemplatePanel
+            onClose={() => useStudioStore.getState().setTemplatePanelOpen(false)}
           />
         )}
       </div>

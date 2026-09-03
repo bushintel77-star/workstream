@@ -895,6 +895,24 @@ it, because the wiring was absent rather than unused — the same class as the
       and needs a schema brief. "Issue revision" is likewise named for what it
       does — it freezes viewports and advances the revision; there is no sheet
       PDF export pipeline, and the button used to be labelled "Issue PDF".
+- [x] **Phase R had no surface at all.** `officeTemplate.ts` was imported only
+      by its own test, so R.2's editor, R.3's sections, R.5's binding, R.6's
+      overrides and R.7's revert existed as a data model nothing could reach.
+      **Fixed**: `OfficeTemplatePanel`, opened from Cmd+K, with the section
+      rail carrying live counts derived from the drawing, the provenance line
+      that goes onto paper, the override list with a one-action revert per
+      item, and the version offer with its per-row consequence (destructive
+      rows unchecked). Dark glass chrome, not paper — Q.7 gives the schedule
+      and the sheet as the only two light surfaces. Semantics pinned in
+      `studioStore.test.ts`: one override per path, a null reason kept rather
+      than dropped, revert scoped to its own row, and a deviation never
+      editing the template itself.
+- [ ] **The template binding is session-scoped.** R.5's "editing the template
+      updates all bound projects with no per-project write" is the whole point
+      of a binding being a reference, and it cannot be true against local
+      state — a shared standard is a server concern and needs an API brief.
+      R.4's "changing a weight re-renders bound drawings at next open" is
+      stated in the panel but not yet fed into the renderer.
 
 ## Growth Studio / Subsurface Studio follow-up (2026-08-14)
 

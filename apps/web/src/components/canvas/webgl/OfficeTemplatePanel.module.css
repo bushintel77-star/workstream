@@ -1,0 +1,331 @@
+/* Phase R — Office template panel.
+ *
+ * Dark glass chrome, NOT a paper surface: spec Q.7 gives the schedule and the
+ * sheet as the only two light surfaces, and the template is a settings
+ * surface, not a document. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--gs-ink-strong) 46%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: var(--cf-z-app);
+}
+
+.panel {
+  width: min(760px, 92vw);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--lc-ribbon-radius);
+  background: var(--lc-glass-grad);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border: 1px solid var(--lc-glass-border);
+  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  color: var(--lc-ink);
+  font-family: var(--lc-font-ui);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--lc-glass-border);
+}
+
+.title {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-readout);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* R.9 — the standard + version + override count, the line that goes on paper. */
+.provenance {
+  margin-top: 4px;
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  color: var(--lc-ink-60);
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.actionBtn {
+  padding: 6px 10px;
+  border-radius: var(--gs-radius-xs);
+  border: 1px solid var(--lc-glass-border);
+  background: transparent;
+  color: var(--lc-ink);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-glyph);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.actionBtn:hover:not(:disabled) {
+  background: var(--lc-surface-tint);
+}
+
+.actionBtn:disabled {
+  opacity: var(--lc-op-ground-line);
+  cursor: not-allowed;
+}
+
+/* R.1 — conventions only, stated where the operator can read it. */
+.rule {
+  padding: 8px 16px;
+  font-size: var(--lc-fs-group);
+  line-height: 1.4;
+  color: var(--lc-ink-30);
+  border-bottom: 1px solid var(--lc-glass-border);
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.rail {
+  width: 176px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 2px;
+  border-right: 1px solid var(--lc-glass-border);
+  overflow-y: auto;
+}
+
+.railItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  border: none;
+  border-radius: var(--gs-radius-xs);
+  background: transparent;
+  color: var(--lc-ink-60);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  text-align: left;
+  cursor: pointer;
+}
+
+.railItem:hover {
+  background: var(--lc-surface-tint);
+}
+
+.railItemActive {
+  background: var(--lc-surface-tint);
+  color: var(--lc-ink);
+}
+
+/* R.7 — a section carrying a deviation is marked in the rail, so the override
+ * count in the header is never the only place it shows. */
+.railItem[data-overridden="true"] .railLabel::after {
+  content: " ·";
+  color: var(--lc-accent-redline);
+}
+
+.railCount {
+  font-variant-numeric: tabular-nums;
+  color: var(--lc-ink-30);
+}
+
+.section {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
+  overflow-y: auto;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--lc-glass-border);
+  font-size: var(--lc-fs-group);
+}
+
+.rowKey {
+  width: 150px;
+  flex-shrink: 0;
+  font-family: var(--lc-font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--lc-ink);
+}
+
+.rowValue {
+  flex: 1;
+  font-family: var(--lc-font-mono);
+  color: var(--lc-ink-60);
+}
+
+.swatch {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border-radius: var(--gs-radius-xs);
+  border: 1px solid var(--lc-glass-border);
+}
+
+.overrides {
+  border-top: 1px solid var(--lc-glass-border);
+  padding: 10px 16px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.overridesHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.overridesCount {
+  font-variant-numeric: tabular-nums;
+  color: var(--lc-accent-redline);
+}
+
+.overridesEmpty {
+  font-size: var(--lc-fs-group);
+  color: var(--lc-ink-30);
+}
+
+.overrideRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: var(--lc-fs-group);
+}
+
+.overridePath {
+  width: 96px;
+  flex-shrink: 0;
+  font-family: var(--lc-font-mono);
+  color: var(--lc-ink);
+}
+
+.overrideMeta {
+  width: 150px;
+  flex-shrink: 0;
+  font-family: var(--lc-font-mono);
+  color: var(--lc-ink-30);
+}
+
+/* R.6 — the reason, including "no reason given". Never hidden. */
+.overrideReason {
+  flex: 1;
+  color: var(--lc-ink-60);
+  line-height: 1.35;
+}
+
+.revertBtn {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: var(--gs-radius-xs);
+  border: 1px solid var(--lc-glass-border);
+  background: transparent;
+  color: var(--lc-ink-60);
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  cursor: pointer;
+}
+
+.revertBtn:hover {
+  background: var(--lc-surface-tint);
+  color: var(--lc-ink);
+}
+
+/* R.8-R.10 — the version offer. */
+.offer {
+  border-top: 1px solid var(--lc-glass-border);
+  padding: 10px 16px 12px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.offerHead {
+  font-family: var(--lc-font-mono);
+  font-size: var(--lc-fs-group);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.offerRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: var(--lc-fs-group);
+  cursor: pointer;
+}
+
+.offerLabel {
+  width: 130px;
+  flex-shrink: 0;
+  font-family: var(--lc-font-mono);
+  color: var(--lc-ink);
+}
+
+/* The stated consequence against THIS drawing (never a bare change count). */
+.offerAffects {
+  flex: 1;
+  color: var(--lc-ink-60);
+  line-height: 1.35;
+}
+
+.offerFlag {
+  flex-shrink: 0;
+  font-family: var(--lc-font-mono);
+  color: var(--lc-accent-redline);
+}
+
+.offerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--lc-glass-border);
+}
+
+.offerNote {
+  flex: 1;
+  font-size: var(--lc-fs-group);
+  color: var(--lc-ink-30);
+  line-height: 1.35;
+}

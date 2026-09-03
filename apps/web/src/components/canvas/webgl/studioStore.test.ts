@@ -16,6 +16,13 @@ import {
   seasonProgressFromSun,
   useStudioStore,
 } from "./studioStore";
+import {
+  DEFAULT_TEMPLATE,
+  createBinding,
+  diffForProject,
+  provenanceLine,
+  type OfficeTemplate,
+} from "./officeTemplate";
 
 // Fixed instants so "today" is deterministic (Melbourne wall-clock).
 const AUG_NOON = new Date("2026-08-17T02:00:00Z"); // 12:00 AEST
@@ -1200,5 +1207,124 @@ describe("hiddenOverlayKinds / toggleOverlayKind", () => {
       "easement",
       "contour",
     ]);
+  });
+});
+
+/**
+ * Phase R — the template binding, through the store.
+ *
+ * `officeTemplate.ts` shipped with tests and no surface: nothing imported it,
+ * so R.5's binding, R.6's overrides and R.7's revert had no way to happen.
+ * These pin the semantics the panel depends on.
+ */
+describe("office template binding", () => {
+  const reset = () => {
+    useStudioStore.setState({
+      officeTemplate: DEFAULT_TEMPLATE,
+      templateBinding: createBinding("local", DEFAULT_TEMPLATE),
+    });
+  };
+  beforeEach(reset);
+  afterEach(reset);
+
+  const override = (path: keyof OfficeTemplate, reason: string | null) => ({
+    path,
+    from: DEFAULT_TEMPLATE[path],
+    to: DEFAULT_TEMPLATE[path],
+    by: "Tim",
+    at: "2026-09-03T00:00:00.000Z",
+    reason,
+  });
+
+  it("starts bound to the standard with no deviations", () => {
+    const s = useStudioStore.getState();
+    expect(s.templateBinding.boundVersion).toBe(DEFAULT_TEMPLATE.version);
+    expect(s.templateBinding.overrides).toEqual([]);
+    expect(provenanceLine(s.officeTemplate, s.templateBinding)).not.toContain(
+      "override",
+    );
+  });
+
+  it("records an override and shows it in the provenance line", () => {
+    useStudioStore.getState().addTemplateOverride(override("sheet", "client wants A0"));
+    const s = useStudioStore.getState();
+    expect(s.templateBinding.overrides).toHaveLength(1);
+    expect(provenanceLine(s.officeTemplate, s.templateBinding)).toContain(
+      "1 overrides",
+    );
+  });
+
+  it("keeps a null reason rather than dropping the override", () => {
+    useStudioStore.getState().addTemplateOverride(override("codes", null));
+    expect(useStudioStore.getState().templateBinding.overrides[0]!.reason).toBeNull();
+  });
+
+  it("holds one override per path — a second deviation replaces the first", () => {
+    const store = useStudioStore.getState();
+    store.addTemplateOverride(override("sheet", "first"));
+    store.addTemplateOverride(override("sheet", "second"));
+    const overrides = useStudioStore.getState().templateBinding.overrides;
+    expect(overrides).toHaveLength(1);
+    expect(overrides[0]!.reason).toBe("second");
+  });
+
+  it("reverts one override without touching the others", () => {
+    const store = useStudioStore.getState();
+    store.addTemplateOverride(override("sheet", "a"));
+    store.addTemplateOverride(override("codes", "b"));
+    useStudioStore.getState().revertTemplateOverride("sheet");
+    const overrides = useStudioStore.getState().templateBinding.overrides;
+    expect(overrides.map((o) => o.path)).toEqual(["codes"]);
+  });
+
+  it("never edits the template itself — deviation is a binding-level record", () => {
+    useStudioStore.getState().addTemplateOverride(override("defaults", "site is tight"));
+    expect(useStudioStore.getState().officeTemplate).toEqual(DEFAULT_TEMPLATE);
+  });
+
+  describe("version offer", () => {
+    const v2: OfficeTemplate = {
+      ...DEFAULT_TEMPLATE,
+      version: 2,
+      sheet: { ...DEFAULT_TEMPLATE.sheet, scale: 100 },
+      defaults: { ...DEFAULT_TEMPLATE.defaults, snapM: 0.25 },
+    };
+
+    it("advances the bound version when everything is accepted", () => {
+      const offered = diffForProject(
+        DEFAULT_TEMPLATE,
+        v2,
+        useStudioStore.getState().templateBinding,
+      );
+      useStudioStore.getState().acceptTemplateVersion(v2, offered, offered, "Tim");
+      const s = useStudioStore.getState();
+      expect(s.templateBinding.boundVersion).toBe(2);
+      expect(s.templateBinding.overrides).toEqual([]);
+    });
+
+    it("stays on the bound version when a row is declined, and records why", () => {
+      const offered = diffForProject(
+        DEFAULT_TEMPLATE,
+        v2,
+        useStudioStore.getState().templateBinding,
+      );
+      const accepted = offered.filter((c) => c.path === "sheet");
+      useStudioStore.getState().acceptTemplateVersion(v2, accepted, offered, "Tim");
+      const s = useStudioStore.getState();
+      expect(s.templateBinding.boundVersion).toBe(1);
+      expect(s.templateBinding.overrides.map((o) => o.path)).toEqual(["defaults"]);
+      expect(s.templateBinding.overrides[0]!.by).toBe("Tim");
+      expect(s.templateBinding.overrides[0]!.reason).toBeTruthy();
+    });
+
+    it("every offered row states a consequence, never a bare count", () => {
+      const offered = diffForProject(
+        DEFAULT_TEMPLATE,
+        v2,
+        useStudioStore.getState().templateBinding,
+      );
+      expect(offered.length).toBeGreaterThan(0);
+      for (const c of offered) expect(c.affects).not.toBe("");
+    });
   });
 });

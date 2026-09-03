@@ -200,6 +200,9 @@ export function StudioCommandPalette({
       tool("sheets", "Sheet composition", () =>
         store.setSheetComposerOpen(!useStudioStore.getState().sheetComposerOpen),
       ),
+      tool("office-template", "Office template — standards, overrides, version", () =>
+        store.setTemplatePanelOpen(!useStudioStore.getState().templatePanelOpen),
+      ),
       {
         id: "tool-site-photos",
         label: "Site photos — trace an elevation from a photo",

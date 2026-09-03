@@ -374,10 +374,27 @@ crops.
 **Status: R.1-R.10 COMPLETE (data model + tests). R.11 blocked on
 permission model.**
 
-**Correction (2026-09-03 code review):** R.2/R.3's editor does not exist —
-`officeTemplate.ts` is imported only by its own test, so nothing in the UI
-reads the template, and R.5-R.7's binding, override count and revert have no
-surface. In the model itself, `applyAccepted` advanced `boundVersion` to the
+**Correction (2026-09-03 code review):** R.2/R.3's editor did not exist —
+`officeTemplate.ts` was imported only by its own test, so nothing in the UI
+read the template, and R.5-R.7's binding, override count and revert had no
+surface. **Built**: `OfficeTemplatePanel` (Cmd+K "Office template"), with the
+section rail carrying live counts derived from the drawing, every section
+reading straight off the template, the provenance line, the override list
+with a one-action revert per item, and the version offer with its per-row
+consequence and destructive rows unchecked by default. It is dark glass
+chrome, not a paper surface — Q.7 gives the schedule and the sheet as the
+only two light surfaces. Store-level semantics are pinned in
+`studioStore.test.ts`: one override per path, a null reason kept rather than
+dropped, revert touching only its own row, and the template itself never
+edited by a deviation.
+
+Still outstanding for R: the binding is session-scoped, so R.5's "editing the
+template updates all bound projects with no per-project write" holds only
+within a session — a genuinely shared standard is a server concern and needs
+an API brief. R.4's "changing a weight re-renders bound drawings at next
+open" is stated in the panel but not yet fed into the renderer.
+
+In the model itself, `applyAccepted` advanced `boundVersion` to the
 next version whenever ANY change was accepted, so `provenanceLine` printed a
 version the drawing did not follow (fixed: it advances only on full
 acceptance, and each declined change is recorded as a named override), and
