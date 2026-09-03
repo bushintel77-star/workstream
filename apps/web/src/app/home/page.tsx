@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { listProjects } from "../../lib/api";
 import { requireSignedIn } from "../../lib/auth";
-import { WebGLStudioPreview } from "../../components/canvas/webgl/WebGLStudioPreview";
+import { LazyWebGLStudioPreview } from "../../components/canvas/webgl/LazyWebGLStudioPreview";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +34,7 @@ export default async function HomePage() {
 
   return (
     <main aria-label="Design canvas" style={{ position: "fixed", inset: 0 }}>
-      <WebGLStudioPreview
+      <LazyWebGLStudioPreview
         projectId=""
         scaleM={110}
         boardAspect={1}
