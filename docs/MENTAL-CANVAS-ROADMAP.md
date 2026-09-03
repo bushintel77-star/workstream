@@ -181,8 +181,9 @@ modes passes, and the no-bounding-box-change test passes for all four modes.
 **BUILD_CHECKLIST: Phase 8 (8.1-8.10), spec sections 7.1/8c/5b/5c**
 **Dependency: None**
 **Size: 10 items**
-**Status: M.1-M.5 COMPLETE. M.6-M.10 pending (asset bento dimensions,
-drag-to-plane, snap grid, promotion chip, Cmd+Z revert).**
+**Status: COMPLETE. M.1-M.5 material palette + dash signatures. M.6-M.10
+asset bento, drag-to-plane ghost readout, canopy grid snap + scatter,
+stroke-to-object promotion, Cmd+Z byte-identical revert.**
 
 Missing items:
 - M.1 21-material palette, grouped, 22px swatches, no colour wheel. Active
