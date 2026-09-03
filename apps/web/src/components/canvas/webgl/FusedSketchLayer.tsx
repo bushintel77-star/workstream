@@ -69,6 +69,12 @@ import {
   type NibSpec,
   type StylusTelemetry,
 } from "./nibs";
+import {
+  dashSignatureMetres,
+  materialById,
+  type MaterialEntry,
+} from "./materials";
+import { dashPolyline, dashRunsToSegments, type Vec3 } from "./dashPolyline";
 import { vectorizeStroke } from "./vectorize";
 import {
   buildInkGeometry,
@@ -122,6 +128,7 @@ export function FusedSketchLayer({
   const sketchCanvases = useStudioStore((s) => s.sketchCanvases);
   // The armed nib — committed strokes carry its telemetry mapping.
   const activeNib = useStudioStore((s) => s.activeNib);
+  const activeMaterialId = useStudioStore((s) => s.activeMaterialId);
   const liveCoord = useStudioStore((s) => s.liveCoord);
   const setLiveTelemetry = useStudioStore((s) => s.setLiveTelemetry);
   const setSunAzimuthDeg = useStudioStore((s) => s.setSunAzimuthDeg);
@@ -363,13 +370,20 @@ export function FusedSketchLayer({
       altitude_deg: Math.round(t.altitude * 10) / 10,
     }));
 
+    // Phase M — the armed material overrides the nib's colour and stamps its
+    // id on the stroke so the renderer can lay the dash signature down.
+    // Picking a material used to change nothing at all: `activeMaterialId`
+    // was written by the palette and read by no one.
+    const material = activeMaterialId ? materialById(activeMaterialId) : undefined;
+
     const stroke: CanvasStroke = {
       id: crypto.randomUUID(),
       points: finalPct.map((p) => ({ x_pct: p.x, y_pct: p.y })),
-      color: nib.color,
+      color: material?.color ?? nib.color,
       width_px: nib.baseWidthPx,
       kind: "ink",
       nib: nib.kind,
+      ...(material ? { material: material.id } : {}),
       telemetry,
       // Spatial Sketching — stamp the parent canvas plane id (null = ground).
       canvas_id: activeStrokeCanvasIdRef.current,
@@ -390,6 +404,7 @@ export function FusedSketchLayer({
     boardAspect,
     setHover,
     activeNib,
+    activeMaterialId,
   ]);
 
   // ---- Canvas-plane pointer handlers (Spatial Sketching) ----
@@ -465,20 +480,33 @@ export function FusedSketchLayer({
       const finalPct = closed ? [...pctPoints, pctPoints[0]!] : pctPoints;
 
       const nib = nibSpec(activeNib);
+      // Phase M — same material stamp as the ground-plane commit above; a
+      // stroke drawn on a canvas plane is no less a setback line.
+      const material = activeMaterialId ? materialById(activeMaterialId) : undefined;
       const stroke: CanvasStroke = {
         id: crypto.randomUUID(),
         points: finalPct.map((p) => ({ x_pct: p.x, y_pct: p.y })),
-        color: nib.color,
+        color: material?.color ?? nib.color,
         width_px: nib.baseWidthPx,
         kind: "ink",
         nib: nib.kind,
+        ...(material ? { material: material.id } : {}),
         canvas_id: canvasId,
       };
       addSketchStroke(stroke);
       scheduleVectorize(stroke.id, finalPct, closed);
       setLivePoints([]);
     },
-    [sketchMode, sketchCanvases, scaleM, boardAspect, activeNib, addSketchStroke, setHover],
+    [
+      sketchMode,
+      sketchCanvases,
+      scaleM,
+      boardAspect,
+      activeNib,
+      activeMaterialId,
+      addSketchStroke,
+      setHover,
+    ],
   );
 
   // ---- Render ----
@@ -693,7 +721,24 @@ function CommittedStrokeRenderer({
     ? activeExtrusionDepth
     : committedHeight;
 
-  const inner = nib.kind === "stipple" ? (
+  // Phase M.3 — a stroke drawn with a SEMANTIC markup material renders as a
+  // CAD line carrying its dash signature, not as organic ink. The signature
+  // is what keeps a setback, a gas run and a survey line apart in greyscale;
+  // colour alone cannot, and organic ink cannot carry a dash at all.
+  const markupMaterial = useMemo(() => {
+    const m = stroke.material ? materialById(stroke.material) : undefined;
+    return m?.semantic && m.dash && m.dash.length > 0 ? m : null;
+  }, [stroke.material]);
+
+  const inner = markupMaterial ? (
+    <MarkupStrokeRenderer
+      stroke={stroke}
+      material={markupMaterial}
+      scaleM={scaleM}
+      boardAspect={boardAspect}
+      sampler={canvas ? null : sampler}
+    />
+  ) : nib.kind === "stipple" ? (
     <StippleStrokeRenderer
       stroke={stroke}
       scaleM={scaleM}
@@ -782,6 +827,57 @@ interface InkRenderBase {
  * telemetry, procedural grain, edge softness and wet-ink bleed. Draped over
  * the terrain via per-frame position writes (the Vertical Truth lerp).
  */
+/**
+ * Phase M.3/M.4 — a semantic markup stroke, drawn with its dash signature.
+ *
+ * The signature is laid down in WORLD METRES by `dashPolyline`, so its
+ * length on the ground is fixed by the sheet scale and the stroke weight and
+ * does not move with the camera (M.4: "dash length is constant across 3 zoom
+ * levels"). Rendered as explicit segments rather than a two-value
+ * dashSize/gapSize, because the real signatures include dash-dot patterns
+ * (`gas` is [18, 7, 3, 7]) that a two-value dash cannot express.
+ */
+function MarkupStrokeRenderer({
+  stroke,
+  material,
+  scaleM,
+  boardAspect,
+  sampler,
+}: {
+  stroke: CanvasStroke;
+  material: MaterialEntry;
+  scaleM: number;
+  boardAspect: number;
+  sampler: ((x: number, z: number) => number) | null;
+}) {
+  const segments = useMemo(() => {
+    const world: Vec3[] = (stroke.points ?? []).map((p) => {
+      const [x, z] = pctToWorld({ x: p.x_pct, y: p.y_pct }, scaleM, boardAspect);
+      return [x, sampler ? sampler(x, z) + MARKUP_LIFT_M : FLAT_Y, z];
+    });
+    if (world.length < 2) return [];
+    return dashRunsToSegments(
+      dashPolyline(world, dashSignatureMetres(material, 200, stroke.width_px)),
+    );
+  }, [stroke.points, stroke.width_px, material, scaleM, boardAspect, sampler]);
+
+  if (segments.length < 2) return null;
+  return (
+    <Line
+      segments
+      points={segments}
+      color={material.color}
+      lineWidth={stroke.width_px ?? 2}
+      transparent
+      opacity={0.95}
+      depthWrite={false}
+    />
+  );
+}
+
+/** Lift markup off the terrain so a draped dash does not z-fight the ground. */
+const MARKUP_LIFT_M = 0.03;
+
 function InkStrokeRenderer({
   stroke,
   nib,

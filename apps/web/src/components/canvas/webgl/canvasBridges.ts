@@ -245,14 +245,24 @@ export function computeStrikeAlerts(
   );
 
   // Map domain alerts → renderer StrikeAlertData, preserving attribution.
-  const mapped: StrikeAlertData[] = alerts.map((a: StrikeAlert) => ({
-    id: a.id,
-    utilityType: a.utilityType,
-    hazardId: a.utilityId,
-    excavationId: a.excavationId,
-    point: a.point,
-    severity: a.severity,
-  }));
+  // Tolerance and depth provenance travel with the alert so the conflict
+  // card can state them (spec §11a) instead of presenting a strike against
+  // an assumed depth as if it were a located one.
+  const utilityById = new Map(utilities.map((u) => [u.id, u]));
+  const hazardById = new Map(layerHazards.map((h) => [h.id, h]));
+  const mapped: StrikeAlertData[] = alerts.map((a: StrikeAlert) => {
+    const util = utilityById.get(a.utilityId);
+    return {
+      id: a.id,
+      utilityType: a.utilityType,
+      hazardId: a.utilityId,
+      excavationId: a.excavationId,
+      point: a.point,
+      severity: a.severity,
+      toleranceM: util?.toleranceM,
+      depthSource: util?.depthSource,
+    };
+  });
   for (const a of layerAlerts) {
     mapped.push({
       id: a.id,
@@ -261,6 +271,9 @@ export function computeStrikeAlerts(
       excavationId: a.excavationId,
       point: a.point,
       severity: a.severity,
+      toleranceM: hazardById.get(a.hazardId)?.toleranceM,
+      // Layer hazards are surface-clearance rules, never a measured depth.
+      depthSource: "assumed",
     });
   }
 

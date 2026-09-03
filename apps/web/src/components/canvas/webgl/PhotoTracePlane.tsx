@@ -520,6 +520,9 @@ function PhotoPlaneMesh({
   );
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
   const [failed, setFailed] = useState(false);
+  // Read outside the loader callback so the effect does not depend on the
+  // whole elevation object (which churns identity on every drag).
+  const elevationName = elevation?.name ?? "";
 
   useEffect(() => {
     if (!uri) return;
@@ -540,13 +543,22 @@ function PhotoPlaneMesh({
       },
       undefined,
       () => {
-        if (!cancelled) setFailed(true);
+        if (cancelled) return;
+        setFailed(true);
+        // Phase O — a corrupt/unreachable underlay used to fall back to a
+        // bare grey fill and say nothing, so the operator traced against a
+        // blank plane without knowing the photo never loaded. Name it.
+        useStudioStore.getState().setUnderlayError({
+          source: elevationName || "site photo",
+          message:
+            "The photo underlay could not be decoded. The plane is showing a blank fill, not the image — re-upload the photo or pick another elevation.",
+        });
       },
     );
     return () => {
       cancelled = true;
     };
-  }, [uri]);
+  }, [uri, elevationName]);
 
   useEffect(
     () => () => {

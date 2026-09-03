@@ -4,95 +4,96 @@
  * Phase S — AI run dock (spec §18b).
  *
  * Lives on the camera dock beside the time pill. No prompt box. The drawing
- * is the prompt. Shows staged progress, inputs with counts, and a scrub
- * slider for the derived view. Two permanent refusals are stated plainly.
+ * is the prompt: the dock states the inputs it would read, straight from the
+ * file, with their real counts.
+ *
+ * WHAT THIS DOCK DOES NOT DO: run. There is no render service behind it —
+ * no route in `apps/api/src/routes` serves one. It used to fake the run
+ * outright: `simulateRun()` drove a `setInterval` through seven stages with
+ * no request of any kind, then marked the run COMPLETE, stamped the result
+ * "indicative render" and offered an ink-to-render scrub slider over a
+ * render that did not exist. It also reported "Materials 0 · Species 0"
+ * every time, because those counts were hardcoded zeros.
+ *
+ * A control that reports work it never did is worse than no control (§0.1,
+ * never ship a dead control). So the dock states the inputs — which is true
+ * and useful — and states plainly that the run is not connected. The staged
+ * progress model in `aiRun.ts` is real and tested; it stays, unused, for the
+ * day a service exists to drive it.
  *
  * Binding: docs/MENTAL-CANVAS-ROADMAP.md Phase S.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useStudioStore } from "./studioStore";
 import {
-  IDLE_RUN,
-  RUN_STAGES,
   buildRunInputs,
-  startRun,
-  updateStageProgress,
-  completeRun,
-  setScrubPosition,
   REFUSAL_UNSPECIFIED_BED,
   REFUSAL_NO_GEOMETRY_WRITE,
-  INDICATIVE_STAMP,
-  type AiRunState,
 } from "./aiRun";
+import { materialById } from "./materials";
 import styles from "./AiRunDock.module.css";
+
+/** Stated where the operator can see it, not buried in a tooltip. */
+const NOT_CONNECTED =
+  "No render service is configured, so this run cannot be started. Nothing here is a render.";
 
 export function AiRunDock() {
   const placements = useStudioStore((s) => s.placements);
   const features = useStudioStore((s) => s.features);
+  const strokes = useStudioStore((s) => s.sketchStrokes);
   const sunMin = useStudioStore((s) => s.sunMin);
   const growthYear = useStudioStore((s) => s.growthYear);
-  const [run, setRun] = useState<AiRunState>(IDLE_RUN);
   const [expanded, setExpanded] = useState(false);
 
-  function handleStart() {
-    const inputs = buildRunInputs({
+  const inputs = useMemo(() => {
+    // Real counts, read from the file. Species is the number of DISTINCT
+    // catalog symbols actually placed — the schedule's own definition — not
+    // the placement count, and never a hardcoded zero.
+    const species = new Set(placements.map((p) => p.symbol_id)).size;
+    const materials = new Set(
+      strokes
+        .map((s) => s.material)
+        .filter((id): id is string => Boolean(id && materialById(id))),
+    ).size;
+    return buildRunInputs({
       placementCount: placements.length,
       featureCount: features.length,
-      materialCount: 0,
-      speciesCount: 0,
+      materialCount: materials,
+      speciesCount: species,
       sunTime: `${Math.floor(sunMin / 60)}:${String(sunMin % 60).padStart(2, "0")}`,
       growthYear,
     });
-    setRun(startRun(inputs));
-    setExpanded(true);
-    // Simulate staged progress (the real implementation would call the API)
-    simulateRun();
-  }
-
-  function simulateRun() {
-    let stageIdx = 0;
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 0.1;
-      if (progress >= 1) {
-        stageIdx++;
-        progress = 0;
-        if (stageIdx >= RUN_STAGES.length) {
-          clearInterval(interval);
-          setRun((r) => completeRun(r));
-          return;
-        }
-      }
-      setRun((r) => updateStageProgress(r, stageIdx, progress, 500));
-    }, 200);
-  }
-
-  function handleScrub(value: number) {
-    setRun((r) => setScrubPosition(r, value));
-  }
-
-  const isRunning = run.status === "running";
-  const isComplete = run.status === "complete";
+  }, [placements, features, strokes, sunMin, growthYear]);
 
   return (
     <div className={styles.container} data-testid="ai-run-dock">
       <button
         className={styles.runButton}
-        onClick={handleStart}
-        disabled={isRunning}
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
         data-testid="ai-run-start"
-        data-running={isRunning ? "true" : undefined}
-        title="Run an AI render from the current drawing. No prompt — the drawing is the prompt."
+        data-available="false"
+        title={NOT_CONNECTED}
       >
-        {isRunning ? "RUNNING" : "AI RUN"}
+        AI RUN
       </button>
-      {(isRunning || isComplete || expanded) && (
+      {expanded && (
         <div className={styles.panel} data-testid="ai-run-panel">
-          {/* S.2 — inputs stated with counts */}
+          {/* The refusal that matters most: it cannot run at all. Stated
+              first, before the inputs, so the panel is never mistaken for a
+              result. */}
+          <div className={styles.unavailable} data-testid="ai-run-unavailable">
+            {NOT_CONNECTED}
+          </div>
+
+          {/* S.2 — inputs stated with counts. True whether or not a service
+              exists: this is what a run WOULD read from the drawing. */}
           <div className={styles.section}>
-            <div className={styles.sectionTitle}>Inputs (from the file)</div>
-            {run.inputs.map((input) => (
+            <div className={styles.sectionTitle}>
+              Inputs a run would read (from the file)
+            </div>
+            {inputs.map((input) => (
               <div key={input.kind} className={styles.inputRow}>
                 <span className={styles.inputLabel}>{input.label}</span>
                 <span className={styles.inputCount}>{input.count}</span>
@@ -100,71 +101,11 @@ export function AiRunDock() {
             ))}
           </div>
 
-          {/* S.3 — staged progress */}
-          {isRunning && (
-            <div className={styles.section} data-testid="ai-run-stages">
-              <div className={styles.sectionTitle}>Progress</div>
-              {run.stages.map((stage) => (
-                <div
-                  key={stage.id}
-                  className={styles.stageRow}
-                  data-stalled={stage.stalled ? "true" : undefined}
-                >
-                  <span className={styles.stageLabel}>{stage.label}</span>
-                  <div className={styles.stageBar}>
-                    <div
-                      className={styles.stageFill}
-                      style={{ width: `${stage.progress * 100}%` }}
-                    />
-                  </div>
-                  <span className={styles.stageStatus}>
-                    {stage.stalled ? "STALLED" : stage.progress >= 1 ? "DONE" : `${Math.round(stage.progress * 100)}%`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* S.5 — scrub slider */}
-          {isComplete && (
-            <div className={styles.section} data-testid="ai-run-scrub">
-              <div className={styles.sectionTitle}>Render scrub</div>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={run.scrubPosition}
-                onChange={(e) => handleScrub(parseFloat(e.target.value))}
-                className={styles.scrubSlider}
-                data-testid="ai-scrub-slider"
-              />
-              <div className={styles.scrubLabels}>
-                <span>Ink</span>
-                <span>Render</span>
-              </div>
-            </div>
-          )}
-
           {/* S.6 + S.7 — permanent refusals */}
           <div className={styles.refusals} data-testid="ai-run-refusals">
             <div className={styles.refusal}>{REFUSAL_UNSPECIFIED_BED}</div>
             <div className={styles.refusal}>{REFUSAL_NO_GEOMETRY_WRITE}</div>
           </div>
-
-          {/* S.8 — indicative stamp */}
-          {isComplete && (
-            <div className={styles.stamp} data-testid="ai-run-stamp">
-              {INDICATIVE_STAMP}
-            </div>
-          )}
-
-          {/* S.9 — stale notice */}
-          {run.stale && (
-            <div className={styles.staleNotice} data-testid="ai-run-stale">
-              Render is stale: {run.staleReason}
-            </div>
-          )}
         </div>
       )}
     </div>

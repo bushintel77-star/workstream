@@ -789,6 +789,100 @@ Deliberately marked `_`-prefixed or allowlisted rather than deleted.
       scale to check against yet (00-DISCOVERY §4.1 — the ink-tier scale is
       still unbuilt). Freezing the count stops it growing while that lands.
 
+### Mental Canvas phases L–T (found by code review, 2026-09-03)
+
+Seven of the nine phases in `d177671` / `5308bc1` terminated in a control that
+never reached the store, the canvas or the network. Lint could not see any of
+it, because the wiring was absent rather than unused — the same class as the
+2026-08 batch above, and the reason that batch is written down.
+
+- [x] **Phase O failure states were unreachable.** All four `FailureState`
+      cards were rendered by `FloatingChrome`, but nothing ever called
+      `setOverlayFetchError` / `setImportError` / `setUnderlayError` /
+      `setCalibrationError` with a non-null value — the only call sites were
+      the cards' own dismiss handlers passing `null`. **Fixed**: producers
+      wired at the four places that were failing silently —
+      `processSiteDocuments` (fetch / non-2xx / unreadable payload, previously
+      `console.error` then a quiet drop back to IDLE), the site-truth
+      bootstrap in `WebGLStudioPreview`, `CalibrateModal`'s persist failure
+      (which had already rescaled the canvas locally, so the operator went on
+      measuring against a scale the server never stored), and
+      `PhotoTracePlane`'s texture-load failure (which fell back to a bare grey
+      fill — the exact silent fallback `FailureState`'s own header says it
+      replaces). Retry is now offered only where a retry exists; it used to
+      point at the same handler as Dismiss on all four cards.
+- [x] **The material palette changed nothing.** `activeMaterialId` was written
+      by `MaterialPalette` and read by nothing: no stroke-commit path touched
+      it, so M.3's mandatory dash signatures never reached a rendered line.
+      **Fixed**: `CanvasStroke.material` added to the contract (optional,
+      following the `nib` precedent), stamped at both commit paths in
+      `FusedSketchLayer`, resolved in `nibSpecForStroke` (every renderer reads
+      its colour from the nib spec, so applying it anywhere else left the ink
+      drawing in graphite), and rendered with its signature by
+      `MarkupStrokeRenderer` via the new `dashPolyline` module — explicit
+      segments rather than dashSize/gapSize, because real signatures include
+      dash-dot patterns (`gas` is `[18, 7, 3, 7]`) that two values cannot
+      express. `drafting` was `semantic: true` with `dash: []`, which made
+      §8c false by its own data and forced the tests to carve out an
+      exception; it is a plain construction line and is now `semantic: false`.
+- [x] **The 3D GRADE/MEASURE lock was one keypress from being bypassed.** The
+      ribbon disabled the tiles while the letter hotkey called `setActiveTool`
+      unconditionally, so the operator could measure under perspective — the
+      false reading the lock exists to prevent. **Fixed**: one
+      `TOOL_CHROME_ELEMENT` table in `chromeContract.ts` now drives both the
+      ribbon and the keyboard, so they cannot disagree.
+- [x] **The strike chip never flew the camera.** `cycleStrike` read the next
+      strike, checked it for truthiness, threw it away and called
+      `setCameraPreset("3d")` — which by the chrome contract locks GRADE and
+      MEASURE just as the operator needs them. The card's REROUTE / DEEPEN /
+      FLAG buttons had no `onClick` at all. **Fixed**: `focusWorldPoint` moves
+      the look target without touching the operator's camera state, and the
+      three actions act on the striking trench (re-arm its trace tool, deepen
+      it past the strike, or record the conflict on it). The card now also
+      states trench depth, clearance and tolerance, which §11a requires and
+      `StrikeAlertData` did not carry.
+- [x] **The sheet set was destroyed on close.** Every sheet, viewport and
+      issued revision lived in `SheetComposer`'s `useState`, and the composer
+      is unmounted when dismissed. **Fixed**: moved to the store. `issueSheet`
+      also bumped `revision` without touching `titleBlock.rev`, so a sheet
+      issued three times printed "Rev A" while the tab badge read "REV 3", and
+      the title-block date came from `toISOString()` — UTC, so every sheet made
+      before ~10am AEDT was dated yesterday. The legend was a hardcoded list of
+      five markup materials under a heading claiming it was built from what was
+      used; it now reads the strokes.
+- [x] **The history scrub's segments were decorative.** Five hardcoded bands of
+      equal width regardless of the session, so scrubbing into "Planting" on a
+      grading-only history landed on a grading step. **Fixed**: `historySegments.ts`
+      derives each step's activity by diffing consecutive document snapshots,
+      so the bands come from what actually happened. The track also carried
+      `role="slider"` and `tabIndex={0}` with no key handler — focusable and
+      inert, which is worse than not being focusable; it now has one.
+- [x] **`applyAccepted` claimed the whole next template version on a partial
+      acceptance**, so `provenanceLine` printed "v2" onto a title block whose
+      drawing still followed v1 for every rejected path. **Fixed**: the version
+      advances only when every offered change is accepted, and each declined
+      change is recorded as a named override. `diffForProject` also emitted
+      `affects: ""` on every row — the one field its own contract says must
+      never be a bare count.
+- [ ] **AI RUN is not connected, and now says so.** `simulateRun()` drove a
+      `setInterval` through seven stages with no request of any kind, then
+      marked the run COMPLETE, stamped it "indicative render" and offered an
+      ink-to-render scrub slider over a render that did not exist. Its stated
+      inputs were hardcoded `materialCount: 0, speciesCount: 0`, and the
+      constant `elapsedMs: 500` made the STALLED state unreachable. **Partly
+      fixed**: the fabrication is gone and the dock states plainly that no
+      render service is configured, while still reporting the real counts a run
+      would read. The staged-progress model in `aiRun.ts` is real and tested
+      and stays for the day a service exists. **Outstanding**: no route in
+      `apps/api/src/routes` serves a render, so Phase S cannot be completed
+      without one.
+- [ ] **Sheets do not survive a reload.** Moving the sheet set into the store
+      fixed the close-the-modal data loss, but `DesignCanvas` has no sheets
+      field, so the set is session-scoped. Persisting it is a contracts change
+      and needs a schema brief. "Issue revision" is likewise named for what it
+      does — it freezes viewports and advances the revision; there is no sheet
+      PDF export pipeline, and the button used to be labelled "Issue PDF".
+
 ## Growth Studio / Subsurface Studio follow-up (2026-08-14)
 
 A second session ran `pnpm run ci` for the first time against the

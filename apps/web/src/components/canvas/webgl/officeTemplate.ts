@@ -72,11 +72,113 @@ export interface Change {
   destructive: boolean;
 }
 
+/** Human label per template path — the diff row's heading. */
+const PATH_LABEL: Partial<Record<keyof OfficeTemplate, string>> = {
+  planes: "Plane stack",
+  packs: "Trade packs",
+  materials: "Material palette",
+  weights: "Line weights",
+  sheet: "Sheet setup",
+  codes: "Asset codes",
+  defaults: "Drawing defaults",
+};
+
+/** Counts from the drawing the offer is being made against, so `affects` can
+ *  state a consequence rather than a bare "3 changes". */
+export interface DrawingCounts {
+  trees?: number;
+  beds?: number;
+  hardscape?: number;
+  sheets?: number;
+  issuedSheets?: number;
+  strokes?: number;
+}
+
+/**
+ * State the consequence of one change against THIS drawing. Never returns an
+ * empty string — an unstated consequence is the thing the Change contract
+ * exists to prevent.
+ */
+export function describeChange(
+  current: OfficeTemplate,
+  next: OfficeTemplate,
+  key: keyof OfficeTemplate,
+  counts: DrawingCounts = {},
+): string {
+  switch (key) {
+    case "codes": {
+      const coded =
+        (counts.trees ?? 0) + (counts.beds ?? 0) + (counts.hardscape ?? 0);
+      const issued = counts.issuedSheets ?? 0;
+      const scope = coded > 0 ? `${coded} coded item${coded === 1 ? "" : "s"}` : "every coded item";
+      return issued > 0
+        ? `renumbers ${scope}; ${issued} already-issued sheet${issued === 1 ? "" : "s"} would disagree with the set`
+        : `renumbers ${scope}`;
+    }
+    case "materials": {
+      const before = new Set(current.materials);
+      const after = new Set(next.materials);
+      const added = next.materials.filter((m) => !before.has(m)).length;
+      const removed = current.materials.filter((m) => !after.has(m)).length;
+      const parts: string[] = [];
+      if (added) parts.push(`${added} added`);
+      if (removed) parts.push(`${removed} withdrawn`);
+      const strokes = counts.strokes ?? 0;
+      const tail = removed > 0 && strokes > 0
+        ? `; strokes using a withdrawn material keep their colour and lose the standard`
+        : "";
+      return `${parts.join(", ") || "reordered"}${tail}`;
+    }
+    case "sheet": {
+      const c = current.sheet;
+      const n = next.sheet;
+      const bits: string[] = [];
+      if (c.size !== n.size) bits.push(`${c.size} → ${n.size}`);
+      if (c.scale !== n.scale) bits.push(`1:${c.scale} → 1:${n.scale}`);
+      if (JSON.stringify(c.titleBlockFields) !== JSON.stringify(n.titleBlockFields)) {
+        bits.push("title block fields change");
+      }
+      const sheets = counts.sheets ?? 0;
+      const on = sheets > 0 ? ` on ${sheets} sheet${sheets === 1 ? "" : "s"}` : "";
+      return `${bits.join(", ") || "sheet setup changes"}${on}`;
+    }
+    case "weights": {
+      const byPurpose = new Map(current.weights.map((w) => [w.purpose, w.mm]));
+      const changed = next.weights.filter((w) => byPurpose.get(w.purpose) !== w.mm);
+      return changed.length
+        ? changed
+          .map((w) => `${w.purpose} ${byPurpose.get(w.purpose) ?? "—"}mm → ${w.mm}mm`)
+          .join(", ")
+        : "line weight set changes";
+    }
+    case "planes":
+      return `${current.planes.length} → ${next.planes.length} planes (${next.planes.map((p) => p.name).join("/")})`;
+    case "defaults": {
+      const c = current.defaults;
+      const n = next.defaults;
+      const bits: string[] = [];
+      if (c.snapM !== n.snapM) bits.push(`snap ${c.snapM}m → ${n.snapM}m`);
+      if (c.northFromSheetUp !== n.northFromSheetUp) {
+        bits.push(`north ${c.northFromSheetUp}° → ${n.northFromSheetUp}°`);
+      }
+      if (c.verticalExaggeration !== n.verticalExaggeration) {
+        bits.push(`vertical ×${c.verticalExaggeration} → ×${n.verticalExaggeration}`);
+      }
+      return bits.join(", ") || "drawing defaults change";
+    }
+    case "packs":
+      return `drafting ${current.packs.drafting} → ${next.packs.drafting}, sketch ${current.packs.sketch} → ${next.packs.sketch}`;
+    default:
+      return `${String(key)} changes`;
+  }
+}
+
 /** Diff two template versions for a project's binding. */
 export function diffForProject(
   current: OfficeTemplate,
   next: OfficeTemplate,
   b: Binding,
+  counts: DrawingCounts = {},
 ): Change[] {
   const out: Change[] = [];
   for (const key of Object.keys(next) as (keyof OfficeTemplate)[]) {
@@ -84,8 +186,8 @@ export function diffForProject(
     if (JSON.stringify(current[key]) === JSON.stringify(next[key])) continue;
     out.push({
       path: key,
-      label: key,
-      affects: "",
+      label: PATH_LABEL[key] ?? key,
+      affects: describeChange(current, next, key, counts),
       conflictsWithOverride: b.overrides.some((o) => o.path === key),
       destructive: key === "codes",
     });
@@ -99,13 +201,46 @@ export const defaultAccepted = (c: Change) => !c.destructive && !c.conflictsWith
 /**
  * Applying is one undoable batch (Cmd+Z reverts all of it) and never edits
  * geometry — it re-renders bound drawings at their next open.
+ *
+ * The binding only advances to `next.version` when EVERY offered change was
+ * accepted. Partial acceptance previously claimed the whole version, so
+ * `provenanceLine` printed "standard: Curtis & Co standard v2" onto a title
+ * block whose drawing was still following v1 for the rejected paths — a
+ * false provenance claim on an issued sheet. A partial acceptance keeps the
+ * old version and records the rejected paths as overrides, which is what a
+ * deviation from the standard IS (rule 2: never silent).
  */
-export function applyAccepted(b: Binding, next: OfficeTemplate, accepted: Change[]): Binding {
+export function applyAccepted(
+  b: Binding,
+  next: OfficeTemplate,
+  accepted: Change[],
+  offered: Change[] = accepted,
+  by = "unknown",
+  at: string = new Date().toISOString(),
+): Binding {
   const acceptedPaths = new Set(accepted.map((c) => c.path));
+  const rejected = offered.filter((c) => !acceptedPaths.has(c.path));
+  const full = acceptedPaths.size > 0 && rejected.length === 0;
+  // Accepting a change supersedes any override on that path; rejecting one
+  // creates an override, because the drawing now deliberately differs from
+  // the version it would otherwise be on.
+  const kept = b.overrides.filter((o) => !acceptedPaths.has(o.path));
+  const newOverrides: Override[] = full
+    ? []
+    : rejected
+      .filter((c) => !kept.some((o) => o.path === c.path))
+      .map((c) => ({
+        path: c.path,
+        from: next[c.path],
+        to: b.boundVersion,
+        by,
+        at,
+        reason: `declined ${c.label} from v${next.version}`,
+      }));
   return {
     ...b,
-    boundVersion: acceptedPaths.size ? next.version : b.boundVersion,
-    overrides: b.overrides.filter((o) => !acceptedPaths.has(o.path)),
+    boundVersion: full ? next.version : b.boundVersion,
+    overrides: [...kept, ...newOverrides],
   };
 }
 

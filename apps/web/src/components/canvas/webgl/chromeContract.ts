@@ -10,7 +10,7 @@
  * Reference: design_handoff_landscape_canvas/.../code/chromeContract.ts
  */
 
-import type { CameraPreset } from "./studioStore";
+import type { CameraPreset, ToolId } from "./studioStore";
 
 export type Behaviour =
   | { kind: "same" }
@@ -152,6 +152,35 @@ export const isHidden = (el: ChromeElement, cam: CameraPreset): boolean =>
 export const lockReason = (el: ChromeElement, cam: CameraPreset): string | null => {
   const b = CONTRACT[el][cam];
   return b.kind === "lock" ? b.reason : null;
+};
+
+/**
+ * Which contract element governs each ribbon tool. This is the single
+ * mapping: the ribbon greys a group with it, and the keyboard handler
+ * refuses a hotkey with it. They used to disagree — the ribbon disabled the
+ * tile while the letter hotkey called `setActiveTool` unconditionally, so
+ * the 3D measure lock was one keypress from being bypassed.
+ *
+ * Tools absent from this table are ungoverned in every camera state.
+ */
+export const TOOL_CHROME_ELEMENT: Partial<Record<ToolId, ChromeElement>> = {
+  contour: "ribbonGrade",
+  slope: "ribbonGrade",
+  cutfill: "ribbonGrade",
+  dim: "ribbonMeasure",
+  section: "ribbonMeasure",
+};
+
+/** Is this tool locked by the chrome contract in this camera state? */
+export const isToolLocked = (tool: ToolId, cam: CameraPreset): boolean => {
+  const el = TOOL_CHROME_ELEMENT[tool];
+  return el ? isLocked(el, cam) : false;
+};
+
+/** The stated reason a tool is locked, or null when it is available. */
+export const toolLockReason = (tool: ToolId, cam: CameraPreset): string | null => {
+  const el = TOOL_CHROME_ELEMENT[tool];
+  return el ? lockReason(el, cam) : null;
 };
 
 /** All four camera presets — used by the contract test to iterate. */

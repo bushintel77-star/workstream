@@ -49,9 +49,20 @@
   touch-action: none;
 }
 
+/* Activity bands are positioned and sized from the real history (their
+ * left/width come from the segment's step range), not stretched evenly by
+ * flex — five equal bands said nothing true about the session. */
 .segment {
-  flex: 1;
+  position: absolute;
+  top: 0;
   height: 100%;
+  opacity: var(--lc-op-subsurface);
+  pointer-events: none;
+}
+
+.track:focus-visible {
+  outline: 1px solid var(--lc-accent-terrain);
+  outline-offset: 2px;
 }
 
 .tick {

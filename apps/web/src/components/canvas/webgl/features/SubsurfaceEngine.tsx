@@ -69,6 +69,15 @@ export interface StrikeAlertData {
   excavationId?: string;
   point: [number, number, number]; // [x, y(=depth), z]
   severity: "direct" | "near" | "proximity";
+  /**
+   * Locating tolerance of the hazard this strike is against (m). Spec §11a
+   * requires the conflict card to state it — a strike measured against an
+   * assumed depth with a 0.5m tolerance is a different fact from one against
+   * a located service, and the card must not hide the difference.
+   */
+  toleranceM?: number;
+  /** Whether the hazard's depth was measured or assumed. */
+  depthSource?: "assumed" | "measured";
 }
 
 /**

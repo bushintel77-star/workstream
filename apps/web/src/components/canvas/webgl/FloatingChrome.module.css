@@ -59,10 +59,14 @@
   transform: skewY(8deg);
 }
 
+/* SEC — the rail reads as a band selector. The conversion is alignment and
+ * emphasis only: `min-width` here used to widen every cell past the 52px
+ * `.cell` width, which moved the whole rail's box and broke §11c's
+ * "same position" rule for a converting element. */
 .rail[data-depth-mode="selector"] .cell {
-  min-width: 56px;
-  text-align: left;
+  justify-content: flex-start;
   padding-left: 8px;
+  font-weight: 700;
 }
 
 .railHeader {
@@ -241,6 +245,18 @@
 /* Scale toggle sits one row above the anchor readout, outside its dimming. */
 .scaleToggleGroup {
   bottom: 78px;
+}
+
+/* The coordinate chip CONVERTS in 3D (E/N/Z becomes eye height / bearing /
+ * fov). Spec §11c: a converting element may change its content but not its
+ * box — and this one sits first in a flex row, so any width change shoves the
+ * cut/fill pills beside it too. A fixed monospace width holds the box still
+ * across the conversion AND across digit changes as the pointer moves. Sized
+ * for the longest form: "E 000.0 · N 000.0 · Z GRD · CH 000.0". */
+.readoutPillCoord {
+  width: 32ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .readoutPillCut {

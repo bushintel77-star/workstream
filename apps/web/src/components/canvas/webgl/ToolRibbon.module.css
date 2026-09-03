@@ -98,6 +98,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--lc-ribbon-tile-gap);
+  /* Anchor for the out-of-flow lock reason. */
+  position: relative;
 }
 
 /* ---- Group header ---- */
@@ -128,7 +130,15 @@
   vertical-align: baseline;
 }
 
+/* The stated reason a group is locked. Out of flow, on purpose: spec §11c's
+ * first rule is that no chrome element changes POSITION between camera
+ * states, and an in-flow reason line grew the ribbon's height the moment the
+ * camera reached 3D (the e2e bounding-box invariant catches it). It blooms
+ * on the ribbon's inner edge, the same side the tool flyout uses. */
 .lockReason {
+  position: absolute;
+  top: 0;
+  width: 150px;
   font-family: var(--lc-font-mono);
   font-size: 8.5px;
   line-height: 1.25;
@@ -136,6 +146,19 @@
   opacity: var(--lc-op-subsurface);
   padding: 0 0 3px;
   letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+/* Ribbon on the right edge (left-handed) — the reason blooms to its left. */
+.ribbonLeft .lockReason {
+  right: calc(100% + 10px);
+  text-align: right;
+}
+
+/* Ribbon on the left edge (right-handed) — the reason blooms to its right. */
+.ribbonRight .lockReason {
+  left: calc(100% + 10px);
+  text-align: left;
 }
 
 .tileLocked {

@@ -199,7 +199,10 @@ function SpatialMargin({ scaleM }: { scaleM: number }) {
   );
 
   return (
-    <group data-ruler-mode={horizonMode ? "horizon" : "chainage"}>
+    // No `data-*` here: this is a THREE.Group, not a DOM node. R3F would
+    // assign the string as a JS property on the object, where nothing —
+    // no test, no CSS, no query — can ever observe it.
+    <group>
       {/* Phase L.2 — in 3D the ruler converts to a horizon band with bearings
           only. The chainage ticks and labels are hidden (chainage would be
           false in perspective); a horizon line with cardinal bearings

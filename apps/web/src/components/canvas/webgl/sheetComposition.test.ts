@@ -7,6 +7,8 @@ import {
   computeViewportCrop,
   computeImpliedScale,
   issueSheet,
+  issueDate,
+  revisionLetter,
   formatScale,
   ALL_MATERIAL_IDS,
 } from "./sheetComposition";
@@ -170,6 +172,75 @@ describe("sheetComposition — Phase Q", () => {
     it("formats scale as 1:N", () => {
       expect(formatScale(200)).toBe("1:200");
       expect(formatScale(1)).toBe("1:1");
+    });
+  });
+
+  describe("revision letters", () => {
+    it("counts from A", () => {
+      expect(revisionLetter(0)).toBe("A");
+      expect(revisionLetter(1)).toBe("B");
+      expect(revisionLetter(25)).toBe("Z");
+    });
+
+    it("rolls over past Z", () => {
+      expect(revisionLetter(26)).toBe("AA");
+      expect(revisionLetter(27)).toBe("AB");
+    });
+  });
+
+  describe("issue date is local, not UTC", () => {
+    it("uses the local calendar day", () => {
+      // 09:00 on 4 Sep in a UTC+10 zone is 23:00 on 3 Sep UTC. The title
+      // block must read the day the operator is living in.
+      const local = new Date(2026, 8, 4, 9, 0, 0);
+      expect(issueDate(local)).toBe("2026-09-04");
+      expect(issueDate(local)).not.toBe(local.toISOString().slice(0, 10));
+    });
+
+    it("pads single-digit months and days", () => {
+      expect(issueDate(new Date(2026, 0, 5))).toBe("2026-01-05");
+    });
+  });
+
+  describe("issueSheet carries the revision onto paper", () => {
+    const sheet = () =>
+      createSheet({ number: "L-01", title: "Site plan", project: "1 Test St" });
+
+    it("starts at Rev A", () => {
+      expect(sheet().titleBlock.rev).toBe("A");
+      expect(sheet().revision).toBe(0);
+    });
+
+    it("bumps the title block rev, not just the counter", () => {
+      let s = sheet();
+      s = issueSheet(s);
+      expect(s.revision).toBe(1);
+      expect(s.titleBlock.rev).toBe("B");
+      s = issueSheet(s);
+      expect(s.revision).toBe(2);
+      expect(s.titleBlock.rev).toBe("C");
+    });
+
+    it("restamps the issue date", () => {
+      const s = issueSheet(sheet(), new Date(2027, 2, 9, 14, 0, 0));
+      expect(s.titleBlock.date).toBe("2027-03-09");
+    });
+
+    it("never leaves the title block behind the counter", () => {
+      let s = sheet();
+      for (let i = 0; i < 5; i++) s = issueSheet(s);
+      expect(s.titleBlock.rev).toBe(revisionLetter(s.revision));
+    });
+  });
+
+  describe("sheet ids are unique", () => {
+    it("does not collide within a millisecond", () => {
+      const ids = new Set(
+        Array.from({ length: 200 }, () =>
+          createSheet({ number: "L-01", title: "t", project: "p" }).id,
+        ),
+      );
+      expect(ids.size).toBe(200);
     });
   });
 });

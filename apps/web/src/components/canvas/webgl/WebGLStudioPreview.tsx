@@ -77,6 +77,7 @@ import { SplitViewLens } from "./SplitViewLens";
 import { StudioSurfaceErrorBoundary } from "./StudioSurfaceErrorBoundary";
 import { StudioCanvasLoading } from "./StudioCanvasLoading";
 import { ScheduleSheet } from "./ScheduleSheet";
+import { isToolLocked } from "./chromeContract";
 import { SheetComposer } from "./SheetComposer";
 import { guideFirstSketch } from "./firstSketchGuide";
 import type { WebGLStudioProps } from "./WebGLStudio";
@@ -484,35 +485,45 @@ export function WebGLStudioPreview({
   // Vicmap boundary + building envelope, not an aerial photo. When a
   // geocoded project opens with no boundary yet, trace it once per session
   // (same flow as the explicit Import button) and reload into the vectors.
+  const runSiteTruthImport = useCallback(async () => {
+    setImportingSiteTruth(true);
+    // Client watchdog — the loading surface is bounded even if a request
+    // hangs, so "Importing site truth" can never spin forever. Cleared on
+    // normal completion below.
+    const watchdog = window.setTimeout(() => setImportingSiteTruth(false), 12000);
+    try {
+      const canvasRes = await fetch(`/api/projects/${projectId}/design-canvas`);
+      if (!canvasRes.ok) {
+        throw new Error(`design-canvas responded ${canvasRes.status}`);
+      }
+      const canvas = await parseDesignCanvasPayload(await canvasRes.json());
+      const r = await importSiteTruth(projectId, canvas);
+      useStudioStore.getState().setOverlayFetchError(null);
+      if ((r.boundaryPts ?? 0) > 0) router.refresh();
+    } catch (err) {
+      // Phase O — this is the ONLY site-truth import path (the "explicit
+      // Import button" the old comment deferred to does not exist), so
+      // swallowing here left the operator on an empty board with no
+      // boundary and no reason given.
+      const msg = err instanceof Error ? err.message : String(err);
+      useStudioStore.getState().setOverlayFetchError({
+        source: "Vicmap site truth",
+        message: `The boundary and building envelope could not be imported (${msg}). The board carries no site truth — draw on it, or retry the import.`,
+      });
+    } finally {
+      window.clearTimeout(watchdog);
+      setImportingSiteTruth(false);
+    }
+  }, [projectId, router, setImportingSiteTruth]);
+
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_E2E === "1") return; // e2e seeds its own state
     if (boundaryPct.length >= 3 || lat == null || lng == null) return;
     const key = `gs-truth-autotrace-${projectId}`;
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
-    void (async () => {
-      setImportingSiteTruth(true);
-      // Client watchdog — the loading surface is bounded even if a request
-      // hangs, so "Importing site truth" can never spin forever. Cleared on
-      // normal completion below.
-      const watchdog = window.setTimeout(
-        () => setImportingSiteTruth(false),
-        12000,
-      );
-      try {
-        const canvasRes = await fetch(`/api/projects/${projectId}/design-canvas`);
-        if (!canvasRes.ok) return;
-        const canvas = await parseDesignCanvasPayload(await canvasRes.json());
-        const r = await importSiteTruth(projectId, canvas);
-        if ((r.boundaryPts ?? 0) > 0) router.refresh();
-      } catch {
-        // Quiet by design — the explicit Import button reports errors.
-      } finally {
-        window.clearTimeout(watchdog);
-        setImportingSiteTruth(false);
-      }
-    })();
-  }, [projectId, boundaryPct, lat, lng, router, setImportingSiteTruth]);
+    void runSiteTruthImport();
+  }, [projectId, boundaryPct, lat, lng, runSiteTruthImport]);
 
   // Guided first-sketch handoff is a PASSIVE hint only — the pen is NOT
   // auto-armed (auto-arming flipped sketchMode and turned plain drags into
@@ -887,6 +898,18 @@ export function WebGLStudioPreview({
       if (hit.kind === "ribbon-tool") {
         e.preventDefault();
         const store = useStudioStore.getState();
+        // Phase L.5 — the chrome contract governs the keyboard too. The
+        // ribbon greys GRADE/MEASURE in 3D; without this guard the letter
+        // hotkey still activated them and the operator could measure under
+        // perspective, which is the false reading the lock exists to stop.
+        // Deactivating an already-active tool stays allowed, so entering 3D
+        // with a locked tool armed is not a trap.
+        // The refusal is not silent: the ribbon draws the lock glyph and the
+        // stated reason for the locked group the whole time the camera is in
+        // that state, at every ribbon width.
+        if (store.activeTool !== hit.tool && isToolLocked(hit.tool, store.cameraPreset)) {
+          return;
+        }
         store.setActiveTool(store.activeTool === hit.tool ? "none" : hit.tool);
         return;
       }
@@ -1636,6 +1659,7 @@ export function WebGLStudioPreview({
           easementRingCount={visibleLayers.siteTruth ? easementsPct?.length ?? 0 : 0}
           canopy={canopyCompliance}
           strikeAlerts={liveData.strikeAlerts}
+          onRetrySiteTruth={() => void runSiteTruthImport()}
         />
 
         {/* Floating cursor toolbar — shows when an asset is armed */}

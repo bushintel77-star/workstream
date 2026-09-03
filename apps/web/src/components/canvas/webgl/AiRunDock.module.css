@@ -27,9 +27,10 @@
   background: var(--lc-surface-tint);
 }
 
-.runButton:disabled {
-  opacity: var(--lc-op-ground-line);
-  cursor: default;
+/* The dock opens a panel that states what a run would read and that no run
+ * can be started. The button is not disabled — the panel is the point. */
+.runButton[data-available="false"] {
+  color: var(--lc-ink-60);
 }
 
 .panel {
@@ -82,59 +83,21 @@
   font-variant-numeric: tabular-nums;
 }
 
-.stageRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 0;
-}
+/* The stage bar, scrub slider, indicative stamp and stale notice lived here
+ * for a run that never happened — the dock fabricated its own progress with
+ * no request behind it. Deleted with the fabrication rather than left as a
+ * shim; `aiRun.ts` still holds the real staged-progress model for the day a
+ * render service exists to drive it. */
 
-.stageLabel {
-  width: 80px;
-  flex-shrink: 0;
-  color: var(--lc-ink-30);
+/* Stated at the top of the panel, before the inputs, so the panel can never
+ * be mistaken for a result. */
+.unavailable {
   font-size: var(--lc-fs-group);
-}
-
-.stageBar {
-  flex: 1;
-  height: 4px;
-  border-radius: var(--gs-radius-sm);
-  background: var(--lc-glass-border);
-  overflow: hidden;
-}
-
-.stageFill {
-  height: 100%;
-  background: var(--lc-accent-terrain);
-  transition: width 200ms linear;
-}
-
-.stageStatus {
-  width: 40px;
-  text-align: right;
-  font-size: var(--lc-fs-group);
-  color: var(--lc-ink-30);
-}
-
-.stageRow[data-stalled="true"] .stageFill {
-  background: var(--gs-conflict);
-}
-
-.stageRow[data-stalled="true"] .stageStatus {
+  line-height: 1.35;
   color: var(--gs-conflict);
-}
-
-.scrubSlider {
-  width: 100%;
-  margin: 4px 0;
-}
-
-.scrubLabels {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--lc-fs-group);
-  color: var(--lc-ink-30);
+  padding: 4px 0 6px;
+  border-bottom: 1px solid var(--lc-glass-border);
+  margin-bottom: 4px;
 }
 
 .refusals {
@@ -150,16 +113,3 @@
   padding: 2px 0;
 }
 
-.stamp {
-  font-size: var(--lc-fs-group);
-  font-style: italic;
-  color: var(--lc-ink-30);
-  padding: 4px 0;
-  border-top: 1px solid var(--lc-glass-border);
-}
-
-.staleNotice {
-  font-size: var(--lc-fs-group);
-  color: var(--gs-conflict);
-  padding: 4px 0;
-}

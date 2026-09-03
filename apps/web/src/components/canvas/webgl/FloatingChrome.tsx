@@ -100,6 +100,9 @@ export interface FloatingChromeProps {
   canopy?: CanopyComplianceResult | null;
   /** Phase N — strike alerts for the strike chip + conflict card. */
   strikeAlerts?: StrikeAlertData[];
+  /** Phase O — re-run the site-truth import behind the overlay failure card.
+   *  Omitted = the card offers dismiss only, never a Retry that does nothing. */
+  onRetrySiteTruth?: () => void;
 }
 
 export function FloatingChrome({
@@ -114,6 +117,7 @@ export function FloatingChrome({
   easementRingCount = 0,
   canopy = null,
   strikeAlerts = [],
+  onRetrySiteTruth,
 }: FloatingChromeProps) {
   const canvases = useStudioStore((s) => s.sketchCanvases);
   const activeCanvasId = useStudioStore((s) => s.activeCanvasId);
@@ -141,6 +145,17 @@ export function FloatingChrome({
   const setImportError = useStudioStore((s) => s.setImportError);
   const setUnderlayError = useStudioStore((s) => s.setUnderlayError);
   const setCalibrationError = useStudioStore((s) => s.setCalibrationError);
+  // Each failure card is a centred `inset: 0` layer, so two at once would
+  // print on top of each other. Show the newest; dismissing it reveals the
+  // next one down.
+  const topFailure = useMemo(() => {
+    const live: { key: string; at: number }[] = [];
+    if (overlayFetchError) live.push({ key: "overlay", at: overlayFetchError.at });
+    if (importError) live.push({ key: "import", at: importError.at });
+    if (underlayError) live.push({ key: "underlay", at: underlayError.at });
+    if (calibrationError) live.push({ key: "calibration", at: calibrationError.at });
+    return live.sort((a, b) => b.at - a.at)[0]?.key ?? null;
+  }, [overlayFetchError, importError, underlayError, calibrationError]);
   // Phase L.3 — coordinate chip converts to eye height / bearing / fov in 3D
   // per the chrome contract. The contract drives whether the chip shows
   // E/N/Z (same) or the 3D camera readout (convert).
@@ -292,11 +307,19 @@ export function FloatingChrome({
             in 3D per the chrome contract. In PLAN/AXO/SEC it shows E/N/Z; in
             3D it shows the camera readout (no E/N/Z under perspective). */}
         {coord3d ? (
-          <div className={styles.readoutPillCut} data-testid="coord-chip" data-coord-mode="3d">
+          <div
+            className={`${styles.readoutPillCut} ${styles.readoutPillCoord}`}
+            data-testid="coord-chip"
+            data-coord-mode="3d"
+          >
             {coord3d}
           </div>
         ) : liveCoord ? (
-          <div className={styles.readoutPillCut} data-testid="coord-chip" data-coord-mode="en z">
+          <div
+            className={`${styles.readoutPillCut} ${styles.readoutPillCoord}`}
+            data-testid="coord-chip"
+            data-coord-mode="en z"
+          >
             <span className={styles.readoutValueCut}>E {liveCoord.x.toFixed(1)}</span>
             {" · "}N {liveCoord.z.toFixed(1)} · Z {activeLabel}
             {liveCoord.chainage !== undefined && (
@@ -401,43 +424,65 @@ export function FloatingChrome({
       )}
 
       {/* Phase O — failure states (drawn, not silent). Each failure mode
-          gets a named, actionable surface. No failure is silent. */}
-      {overlayFetchError && (
+          gets a named, actionable surface.
+
+          Retry is only offered where a retry EXISTS. It used to be wired to
+          the same handler as Dismiss on all four cards, so a button labelled
+          "Retry" cleared the error and did nothing else — the failure looked
+          resolved while the underlying import was never re-attempted.
+
+          One at a time: every card is a centred `inset: 0` layer, so two
+          live failures would print on top of each other. The newest is
+          shown; dismissing it reveals the one beneath. */}
+      {topFailure === "overlay" && overlayFetchError && (
         <FailureState
           kind="failed-import"
-          title="Overlay fetch failed"
+          title="Site truth import failed"
           detail={overlayFetchError.message}
           source={overlayFetchError.source}
-          onRetry={() => setOverlayFetchError(null)}
+          onRetry={
+            onRetrySiteTruth
+              ? () => {
+                setOverlayFetchError(null);
+                onRetrySiteTruth();
+              }
+              : undefined
+          }
           onDismiss={() => setOverlayFetchError(null)}
         />
       )}
-      {importError && (
+      {topFailure === "import" && importError && (
         <FailureState
           kind="failed-import"
           title="Import failed"
           detail={importError.message}
           source={importError.source}
-          onRetry={() => setImportError(null)}
+          // No retry: the uploaded survey/title are not held after the
+          // request, so a retry would have nothing to send. The operator
+          // re-opens site setup and picks the files again.
           onDismiss={() => setImportError(null)}
         />
       )}
-      {underlayError && (
+      {topFailure === "underlay" && underlayError && (
         <FailureState
           kind="corrupt-underlay"
           title="Underlay unreadable"
           detail={underlayError.message}
           source={underlayError.source}
-          onRetry={() => setUnderlayError(null)}
+          // No retry: the texture load already failed for this URI, and
+          // re-requesting the same bytes reproduces the same failure.
           onDismiss={() => setUnderlayError(null)}
         />
       )}
-      {calibrationError && (
+      {topFailure === "calibration" && calibrationError && (
         <FailureState
           kind="rejected-calibration"
-          title="Calibration rejected"
+          title="Calibration not saved"
           detail={calibrationError.message}
-          onRetry={() => setCalibrationError(null)}
+          onRetry={() => {
+            setCalibrationError(null);
+            setCalibrateOpen(true);
+          }}
           onDismiss={() => setCalibrationError(null)}
         />
       )}

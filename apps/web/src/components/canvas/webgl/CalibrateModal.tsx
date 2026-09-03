@@ -126,8 +126,17 @@ export function CalibrateModal({ scaleM, projectId, onClose }: CalibrateModalPro
       });
       // Refresh the page so it re-reads the new board_width_m → scaleM.
       router.refresh();
+      useStudioStore.getState().setCalibrationError(null);
     } catch (err) {
       console.error("[calibrate] failed to persist board_width_m", err);
+      // Phase O — the store already scaled the canvas, but the new
+      // board_width_m never reached the server, so the next reload silently
+      // reverts to the old scale. Closing on a console.error let the
+      // operator carry on measuring against a scale that does not exist.
+      const msg = err instanceof Error ? err.message : String(err);
+      useStudioStore.getState().setCalibrationError({
+        message: `The canvas was rescaled to 1:${newScaleM.toFixed(0)}m but the new scale could not be saved (${msg}). Reload to see the stored scale, or calibrate again.`,
+      });
     }
     onClose();
   }, [newScaleM, scaleHeights, scaleM, commitCalibration, projectId, router, onClose]);

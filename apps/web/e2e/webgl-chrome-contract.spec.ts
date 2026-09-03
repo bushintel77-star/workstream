@@ -15,13 +15,26 @@ import { createAddressProject } from "./helpers";
  * hidden. Elements that convert may change CONTENT but not POSITION.
  */
 
+/**
+ * Elements that are always mounted, so their box can be compared across all
+ * four presets. `wfs-chips` used to be listed here and matches nothing — the
+ * chip bar's id is `wfs-chip-bar` — so the suite silently covered three
+ * elements while reporting five. The assertion below now fails on a selector
+ * that never appears, rather than skipping it.
+ */
 const CHROME_SELECTORS = [
   '[data-testid="tool-ribbon"]',
-  '[data-testid="wfs-chips"]',
+  '[data-testid="wfs-chip-bar"]',
   '[data-testid="depth-rail"]',
-  '[data-testid="coord-chip"]',
   '[data-testid="scale-toggle"]',
 ] as const;
+
+/**
+ * The coordinate chip only mounts once the pointer has moved over the canvas
+ * (`liveCoord`), and in 3D it CONVERTS to the camera readout. It is checked
+ * separately, after a pointer move, so its absence cannot quietly pass.
+ */
+const POINTER_CHROME_SELECTOR = '[data-testid="coord-chip"]';
 
 const CAMERA_PRESETS = ["plan", "axo", "sec", "3d"] as const;
 
@@ -43,32 +56,78 @@ test.describe("Phase L.10 — chrome bounding box invariant across camera states
     });
     await expect(page.locator('[data-testid="tool-ribbon"]')).toBeAttached();
 
+    // Move the pointer over the canvas so `liveCoord` is set and the
+    // coordinate chip mounts. Without this it is absent in every preset and
+    // its conversion goes unchecked.
+    const canvas = page.locator('[data-testid="webgl-canvas"]');
+    const canvasBox = await canvas.boundingBox();
+    if (canvasBox) {
+      await page.mouse.move(
+        canvasBox.x + canvasBox.width / 2,
+        canvasBox.y + canvasBox.height / 2,
+      );
+    }
+
+    const selectors = [...CHROME_SELECTORS, POINTER_CHROME_SELECTOR];
+
     // Capture bounding boxes for each chrome element in each camera preset.
     // We click the camera dock buttons to switch presets.
-    const boxesByPreset: Record<string, Record<string, DOMRect>> = {};
+    const boxesByPreset: Record<
+      string,
+      Record<string, { x: number; y: number; width: number; height: number }>
+    > = {};
 
     for (const preset of CAMERA_PRESETS) {
-      // Click the camera dock button for this preset
+      // Click the camera dock button for this preset. The button must exist —
+      // a missing selector used to skip the switch silently, which left every
+      // preset capturing the same DOM and made the whole test vacuous.
       const dockButton = page.locator(
         `[data-testid="camera-dock"] button[data-camera-button="${preset}"]`,
       );
-      if (await dockButton.count()) {
-        await dockButton.click();
-        // Wait for the camera transition to settle (420ms transition + buffer)
-        await page.waitForTimeout(600);
-      }
+      await expect(
+        dockButton,
+        `camera dock has no ${preset} button — the test cannot switch presets`,
+      ).toHaveCount(1);
+      await dockButton.click();
+      // Wait for the camera transition to settle (420ms transition + buffer)
+      await page.waitForTimeout(600);
 
       // Capture bounding boxes for all chrome elements
       boxesByPreset[preset] = {};
-      for (const selector of CHROME_SELECTORS) {
+      for (const selector of selectors) {
         const el = page.locator(selector);
         if (await el.isVisible()) {
-          const box = await el.boundingBox();
+          // LAYOUT box, not the painted box. The contract's rule is about
+          // position: the depth rail legitimately skews in 3D, and a skew
+          // changes what `boundingBox()` reports while leaving the element
+          // exactly where it was laid out. offsetLeft/offsetTop/offsetWidth
+          // ignore transforms, so this measures what §11c actually forbids.
+          const box = await el.evaluate((node) => {
+            const el2 = node as HTMLElement;
+            let x = 0;
+            let y = 0;
+            let walk: HTMLElement | null = el2;
+            while (walk) {
+              x += walk.offsetLeft;
+              y += walk.offsetTop;
+              walk = walk.offsetParent as HTMLElement | null;
+            }
+            return { x, y, width: el2.offsetWidth, height: el2.offsetHeight };
+          });
           if (box) {
             boxesByPreset[preset][selector] = box;
           }
         }
       }
+    }
+
+    // Every persistent element must have been captured in PLAN. A selector
+    // that never matches is a broken test, not a passing one.
+    for (const selector of CHROME_SELECTORS) {
+      expect(
+        boxesByPreset["plan"]?.[selector],
+        `${selector} was never visible — selector is stale`,
+      ).toBeDefined();
     }
 
     // Assert: for each element that is visible in PLAN, its bounding box

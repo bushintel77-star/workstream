@@ -62,7 +62,12 @@ export const MATERIALS: MaterialEntry[] = [
   { id: "gas", label: "Gas", group: "markup", color: "oklch(0.88 0.19 100)", semantic: true, dash: [18, 7, 3, 7], dashEnds: "glyph:G", weightMm: 0.35 },
   { id: "services", label: "Services", group: "markup", color: "oklch(0.60 0.20 320)", semantic: true, dash: [3, 8], dashEnds: "node", weightMm: 0.35 },
   { id: "survey", label: "Survey", group: "markup", color: "oklch(0.78 0.12 200)", semantic: true, dash: [7, 5], dashEnds: "cross", weightMm: 0.25 },
-  { id: "drafting", label: "Drafting", group: "markup", color: "#f2f0ea", semantic: true, dash: [], dashEnds: "none", weightMm: 0.3 },
+  // Drafting is the plain construction line — it carries no semantic
+  // meaning to encode, which is why it has no dash signature. It was marked
+  // `semantic: true` with `dash: []`, which made §8c's "dash signatures
+  // mandatory for every semantic markup material" false by its own data and
+  // forced the tests to carve out an exception for it.
+  { id: "drafting", label: "Drafting", group: "markup", color: "#f2f0ea", semantic: false, dash: [], dashEnds: "none", weightMm: 0.3 },
 ];
 
 /** Lookup by id. */
@@ -102,6 +107,33 @@ export function dashSignaturePx(
   const baseWeight = material.weightMm ?? 0.3;
   const scale = strokeWeightPx / mmToPx(baseWeight, 200);
   return material.dash.map((d) => d * scale);
+}
+
+/**
+ * Phase M.4 — the dash signature in WORLD METRES, for the metre-space studio.
+ *
+ * The pattern is authored in px at the issued scale (1:200 by default). The
+ * studio draws in metres, so the signature has to be converted once, at
+ * render, against the sheet scale — never stored in px (spec §7.1).
+ *
+ * Converting to metres rather than screen px is what makes M.4's claim true:
+ * a world-space dash is the same length on the ground at every zoom, so the
+ * signature reads identically zoomed out to the whole site or in on one
+ * corner. It scales with the stroke's weight, not the camera.
+ */
+export function dashSignatureMetres(
+  material: MaterialEntry,
+  scaleDenominator = 200,
+  strokeWeightPx?: number,
+): number[] {
+  const px = strokeWeightPx != null
+    ? dashSignaturePx(material, strokeWeightPx)
+    : (material.dash ?? []);
+  if (px.length === 0) return [];
+  // px -> mm on the sheet (at 96dpi) -> metres on the ground at 1:N.
+  const mmPerPx = 25.4 / 96;
+  const metresPerMm = scaleDenominator / 1000;
+  return px.map((d) => d * mmPerPx * metresPerMm);
 }
 
 /**

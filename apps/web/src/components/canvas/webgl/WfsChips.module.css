@@ -255,8 +255,22 @@
   transition: background 120ms ease;
 }
 
-.conflictCardAction:hover {
+.conflictCardAction:hover:not(:disabled) {
   background: var(--lc-surface-tint, rgba(232, 230, 224, 0.06));
+}
+
+.conflictCardAction:disabled {
+  opacity: var(--lc-op-ground-line);
+  cursor: not-allowed;
+}
+
+/* Stated when no excavation is linked to the strike — the three actions all
+ * operate on a trench, so with none there is nothing honest to offer. */
+.conflictCardNoTrench {
+  font-family: var(--lc-font-mono);
+  font-size: 8.5px;
+  line-height: 1.35;
+  color: var(--lc-ink-30);
 }
 
 .conflictCardStamp {

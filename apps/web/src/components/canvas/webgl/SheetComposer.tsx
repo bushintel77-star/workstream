@@ -10,11 +10,10 @@
  * Binding: docs/MENTAL-CANVAS-ROADMAP.md Phase Q.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useStudioStore } from "./studioStore";
 import {
   createSheet,
-  issueSheet,
   buildLegendFromMaterials,
   formatScale,
   type Sheet,
@@ -29,24 +28,39 @@ export interface SheetComposerProps {
 
 export function SheetComposer({ onClose }: SheetComposerProps) {
   const projectAddress = useStudioStore((s) => s.projectAddress);
-  const [sheets, setSheets] = useState<Sheet[]>(() => [
-    createSheet({
-      number: "L-01",
-      title: "Site plan",
-      project: projectAddress || "Untitled site",
-    }),
-  ]);
-  const [activeSheetId, setActiveSheetId] = useState(() => sheets[0]!.id);
+  // The sheet set lives in the store, not in this component: the composer is
+  // unmounted on close, so component state meant every sheet, viewport and
+  // issued revision was discarded the moment the operator dismissed it.
+  const sheets = useStudioStore((s) => s.sheets);
+  const activeSheetId = useStudioStore((s) => s.activeSheetId);
+  const strokes = useStudioStore((s) => s.sketchStrokes);
+  const addSheetToStore = useStudioStore((s) => s.addSheet);
+  const setActiveSheetId = useStudioStore((s) => s.setActiveSheetId);
+  const addSheetViewport = useStudioStore((s) => s.addSheetViewport);
+  const removeSheetViewport = useStudioStore((s) => s.removeSheetViewport);
+  const issueSheetById = useStudioStore((s) => s.issueSheetById);
 
-  const activeSheet = sheets.find((s) => s.id === activeSheetId) ?? sheets[0]!;
+  // First open seeds the default sheet. Re-opening finds the set as it was
+  // left, revisions included.
+  useEffect(() => {
+    if (sheets.length > 0) return;
+    addSheetToStore(
+      createSheet({
+        number: "L-01",
+        title: "Site plan",
+        project: projectAddress || "Untitled site",
+      }),
+    );
+  }, [sheets.length, addSheetToStore, projectAddress]);
 
-  function updateSheet(id: string, patch: Partial<Sheet>) {
-    setSheets((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
-  }
+  const activeSheet = sheets.find((s) => s.id === activeSheetId) ?? sheets[0];
 
   function addViewport() {
+    if (!activeSheet) return;
+    // randomUUID, not Date.now(): two viewports added in the same
+    // millisecond collided into one React key.
     const vp: SheetViewport = {
-      id: `vp-${Date.now()}`,
+      id: `vp-${crypto.randomUUID()}`,
       cameraPreset: "plan",
       scale: 200,
       x: 20,
@@ -57,39 +71,45 @@ export function SheetComposer({ onClose }: SheetComposerProps) {
       issued: false,
       label: "New viewport",
     };
-    updateSheet(activeSheetId, {
-      viewports: [...activeSheet.viewports, vp],
-    });
+    // The store action appends to the CURRENT array. This used to rebuild
+    // the array from the render-time `activeSheet`, so two quick clicks
+    // wrote the same base twice and one viewport vanished.
+    addSheetViewport(activeSheet.id, vp);
   }
 
   function removeViewport(vpId: string) {
-    updateSheet(activeSheetId, {
-      viewports: activeSheet.viewports.filter((v) => v.id !== vpId),
-    });
+    if (!activeSheet) return;
+    removeSheetViewport(activeSheet.id, vpId);
   }
 
   function handleIssue() {
-    const issued = issueSheet(activeSheet);
-    updateSheet(activeSheetId, issued);
+    if (!activeSheet) return;
+    issueSheetById(activeSheet.id);
   }
 
   function addSheet() {
     const num = `L-${String(sheets.length + 1).padStart(2, "0")}`;
-    const sheet = createSheet({
-      number: num,
-      title: "New sheet",
-      project: projectAddress || "Untitled site",
-    });
-    setSheets((prev) => [...prev, sheet]);
-    setActiveSheetId(sheet.id);
+    addSheetToStore(
+      createSheet({
+        number: num,
+        title: "New sheet",
+        project: projectAddress || "Untitled site",
+      }),
+    );
   }
 
-  // Auto-build legend from materials used (Q.3)
-  // For now, use all materials until the canvas tracks material usage
-  const legend = useMemo(
-    () => buildLegendFromMaterials(["setback", "gas", "services", "survey", "drafting"]),
-    [],
-  );
+  // Q.3 — the legend auto-builds from the materials ACTUALLY used in the
+  // drawing. It used to be a hardcoded list of the five markup materials
+  // under a heading that claimed otherwise, so the legend said the same
+  // thing on every project regardless of what was drawn.
+  const legend = useMemo(() => {
+    const used: string[] = [];
+    for (const s of strokes) if (s.material) used.push(s.material);
+    return buildLegendFromMaterials(used);
+  }, [strokes]);
+
+  // One frame before the seeding effect commits the default sheet.
+  if (!activeSheet) return null;
 
   return (
     <div className={styles.scrim} onClick={onClose} data-testid="sheet-composer-scrim">
@@ -108,8 +128,17 @@ export function SheetComposer({ onClose }: SheetComposerProps) {
             </div>
           </div>
           <div className={styles.actions}>
-            <button className={styles.actionBtn} onClick={handleIssue} data-testid="issue-pdf">
-              Issue PDF
+            {/* Named for what it does. It was labelled "Issue PDF" and
+                produced no PDF and made no request — it freezes the
+                viewports and bumps the revision, which is the issue step,
+                not the export. There is no sheet PDF pipeline yet. */}
+            <button
+              className={styles.actionBtn}
+              onClick={handleIssue}
+              data-testid="issue-revision"
+              title="Freeze this sheet's viewports and advance its revision. No PDF is exported — there is no sheet export pipeline yet."
+            >
+              Issue revision
             </button>
             <button className={styles.actionBtn} onClick={onClose}>Close</button>
           </div>
@@ -148,6 +177,12 @@ export function SheetComposer({ onClose }: SheetComposerProps) {
           {/* Legend (Q.3) */}
           <div className={styles.legend} data-testid="sheet-legend">
             <div className={styles.legendTitle}>Legend (auto-built from materials used)</div>
+            {legend.length === 0 && (
+              <div className={styles.legendEmpty}>
+                Nothing drawn with a palette material yet — the legend fills in
+                as materials are used.
+              </div>
+            )}
             {legend.map((entry) => (
               <div key={entry.materialId} className={styles.legendRow}>
                 <span

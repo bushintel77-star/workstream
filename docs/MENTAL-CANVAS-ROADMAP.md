@@ -176,6 +176,20 @@ Build items:
 Done when: the test asserting every ChromeElement has an entry for all four
 modes passes, and the no-bounding-box-change test passes for all four modes.
 
+**Correction (2026-09-03 code review):** L.5 and L.10 shipped contradicting
+each other — L.5's lock-reason line was rendered in flow and grew the ribbon's
+height in 3D, which is exactly what L.10's invariant forbids, and L.10 could
+not catch it because two of its five selectors matched nothing
+(`wfs-chips` does not exist; the coord chip needs a pointer move) and a
+missing camera-dock button skipped the preset switch silently, leaving the
+test vacuous. Fixed on both sides: the reason line is out of flow and drawn
+at every ribbon width, the coord chip has a fixed monospace width so its
+conversion cannot shove the readout row, the SEC depth-rail conversion no
+longer widens the rail, and the spec now fails on a stale selector, measures
+the LAYOUT box (so the 3D skew reads as a treatment, not a move), and asserts
+the dock button exists. L.5's lock was also bypassable from the keyboard —
+see OUTSTANDING.md.
+
 ### Phase M — Material palette, dash signatures, assets
 
 **BUILD_CHECKLIST: Phase 8 (8.1-8.10), spec sections 7.1/8c/5b/5c**
@@ -184,6 +198,16 @@ modes passes, and the no-bounding-box-change test passes for all four modes.
 **Status: COMPLETE. M.1-M.5 material palette + dash signatures. M.6-M.10
 asset bento, drag-to-plane ghost readout, canopy grid snap + scatter,
 stroke-to-object promotion, Cmd+Z byte-identical revert.**
+
+**Correction (2026-09-03 code review):** M.1-M.5 shipped inert. The palette
+wrote `activeMaterialId` and nothing read it, so no drawn stroke ever carried
+a material, a colour override or a dash signature; `drafting` was
+`semantic: true` with an empty dash, making §8c false by its own data. Now
+wired end to end — `CanvasStroke.material` (contract), stamped at commit,
+resolved in `nibSpecForStroke`, rendered by `MarkupStrokeRenderer` +
+`dashPolyline`. M.6's bento also filed benches, bollards and planning hatches
+under "Canopy trees" (it guarded on `mapSymbolToStudioType`, which never
+returns null). See OUTSTANDING.md.
 
 Missing items:
 - M.1 21-material palette, grouped, 22px swatches, no colour wheel. Active
@@ -225,6 +249,12 @@ operator-facing strike chip and conflict card are missing.
 - N.2 Conflict card: utility, trench depth, clearance, tolerance, severity +
   REROUTE / DEEPEN / FLAG, labelled `indicative`.
 
+**Correction (2026-09-03 code review):** this was marked COMPLETE while the
+chip never moved the camera (it forced the 3D preset instead, which locks
+GRADE and MEASURE), the three actions had no handlers, and the card omitted
+trench depth, clearance and tolerance because `StrikeAlertData` did not carry
+them. All four fixed. See OUTSTANDING.md.
+
 Done when: no run renders without a source and a measured/assumed flag; the
 canvas carries `indicative only, not a substitute for locating`.
 
@@ -248,6 +278,16 @@ not."
 Done when: each failure mode has a drawn state that names what failed and
 offers retry or dismiss. No failure is silent.
 
+**Correction (2026-09-03 code review):** marked COMPLETE while unreachable —
+the four cards were rendered but nothing ever set an error, so every failure
+stayed as silent as before the phase. Producers are now wired at the four
+paths that were failing quietly, and Retry is offered only where a retry
+exists (it pointed at the dismiss handler on all four cards). O.2's empty
+schedule is still unwired: `FailureState` supports the kind, but
+`ScheduleSheet` does not use it. The card also spanned the full canvas with
+`pointerEvents: "auto"`, so any failure silently blocked drawing and panning
+until dismissed.
+
 ### Phase P — History scrub
 
 **BUILD_CHECKLIST: Phase 13 (13.4-13.5), spec section 8a**
@@ -264,6 +304,14 @@ offers retry or dismiss. No failure is silent.
 Done when: the scrub head tracks the finger with zero easing; releasing
 with work ahead offers a branch, not an overwrite.
 
+**Correction (2026-09-03 code review):** P.1's "segmented by activity" was
+five hardcoded bands of equal width regardless of the session, so scrubbing
+into "Planting" on a grading-only history landed on a grading step.
+`historySegments.ts` now derives each step's activity by diffing consecutive
+document snapshots. The track also carried `role="slider"` and `tabIndex={0}`
+with no key handler — focusable and inert. P.1's volume delta readout (then
+vs delta now) is still not built.
+
 ### Phase Q — Sheet composition / issue PDF
 
 **BUILD_CHECKLIST: Phase 16 (16.1-16.12), spec section 18a**
@@ -272,6 +320,16 @@ with work ahead offers a branch, not an overwrite.
 **Status: COMPLETE (data model + UI + tests). Live viewport rendering
 from the WebGL canvas, drag-to-slot, and PDF export via print are the
 remaining interactive wiring.**
+
+**Correction (2026-09-03 code review):** the sheet set lived in the modal's
+own `useState`, so closing the composer destroyed every sheet, viewport and
+issued revision — now held in the store (session-scoped; `DesignCanvas` has
+no sheets field, so a reload still resets it). `issueSheet` bumped `revision`
+without touching `titleBlock.rev`, so a sheet issued three times printed
+"Rev A"; the title-block date was UTC, dating every sheet made before ~10am
+AEDT to the previous day. Q.3's legend was a hardcoded five-material list
+under a heading claiming it was built from what was used. "Issue PDF" is now
+"Issue revision", which is what it does.
 
 - Q.1 Sheets are live viewports onto the same canvas — never copies. Editing
   the canvas changes the sheet with no re-import.
@@ -309,6 +367,17 @@ crops.
 **Status: R.1-R.10 COMPLETE (data model + tests). R.11 blocked on
 permission model.**
 
+**Correction (2026-09-03 code review):** R.2/R.3's editor does not exist —
+`officeTemplate.ts` is imported only by its own test, so nothing in the UI
+reads the template, and R.5-R.7's binding, override count and revert have no
+surface. In the model itself, `applyAccepted` advanced `boundVersion` to the
+next version whenever ANY change was accepted, so `provenanceLine` printed a
+version the drawing did not follow (fixed: it advances only on full
+acceptance, and each declined change is recorded as a named override), and
+`diffForProject` emitted `affects: ""` on every row — the one field the
+`Change` contract says must never be a bare count (fixed: `describeChange`
+states the consequence against the drawing).
+
 - R.1 Port `code/officeTemplate.ts`. Template holds conventions only —
   assert it can hold no geometry.
 - R.2 Editor on `panel.bg` with section rail carrying live counts.
@@ -340,8 +409,17 @@ change.
 **BUILD_CHECKLIST: Phase 16b (16b.1-16b.9), spec section 18b**
 **Dependency: None**
 **Size: 9 items**
-**Status: COMPLETE (data model + UI + tests). The simulated run loop
-is the seam — swap for the real API endpoint.**
+**Status: NOT COMPLETE — the run is not connected.**
+
+**Correction (2026-09-03 code review):** "the simulated run loop is the seam"
+understated it. `simulateRun()` made no request of any kind, then marked the
+run COMPLETE, stamped the result "indicative render" and offered an
+ink-to-render scrub slider over a render that did not exist; the stated input
+counts were hardcoded zeros and the stalled state was unreachable. The
+fabrication is removed — the dock now states that no render service is
+configured and reports the real counts a run would read. No route in
+`apps/api/src/routes` serves a render, so S.3-S.5 and S.8 cannot be completed
+without one. `aiRun.ts` (the staged-progress model) is real and tested.
 
 - S.1 Entry lives on the camera dock beside the time pill. No new panel, no
   prompt box. No free-text input anywhere in the flow.
@@ -378,6 +456,17 @@ moved across AXO/SEC/3D), T.3 chainage suppressed in 3D, T.4 no
 position animation idle, all 12 key chrome elements present. T.1
 (1:1 overlay), T.5 (reduced motion), T.8 (full round trip), T.9
 (offline), T.10 (real job) remain manual field checks.**
+
+**Correction (2026-09-03 code review):** a green gate was not evidence the
+phases worked. Seven of the nine ended in a control that never reached the
+store, the canvas or the network — a material palette that changed no stroke,
+four failure cards nothing could trigger, three conflict-card buttons with no
+handlers, an AI run that fabricated its own progress — and every one of them
+passed typecheck, lint and the full suite, because the wiring was absent
+rather than unused. T.2's "0/10 chrome elements moved" was measured with the
+same vacuous spec described under Phase L. Gate green means the code compiles
+and its tests agree with it; it says nothing about whether a control is
+connected. See OUTSTANDING.md for the full list and what was fixed.
 
 Run these against the finished build, in order. All must pass.
 

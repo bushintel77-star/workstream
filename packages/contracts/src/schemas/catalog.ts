@@ -152,6 +152,17 @@ export const CanvasStrokeSchema = z.object({
   /** The nib that drew this stroke (see NibKindSchema). Optional = legacy ink. */
   nib: NibKindSchema.optional(),
   /**
+   * The material this stroke was drawn with, from the studio's 21-material
+   * palette (`apps/web/.../materials.ts`). Semantic markup materials carry a
+   * mandatory dash signature, so the id has to survive on the stroke — the
+   * rendered colour alone cannot say whether a line is a setback, a gas run
+   * or a survey line, and the two must stay distinguishable in greyscale.
+   *
+   * Optional / absent = no material override; the stroke renders in its
+   * nib's own colour, unchanged.
+   */
+  material: z.string().max(64).optional(),
+  /**
    * Per-point stylus telemetry — parallel to `points` (see
    * StrokeTelemetrySchema). Optional = legacy stroke without telemetry.
    */

@@ -115,6 +115,34 @@ export function buildLegendFromMaterials(
   return entries;
 }
 
+/**
+ * Revision letter for a revision count. 0 -> "A", 1 -> "B", ... 25 -> "Z",
+ * 26 -> "AA". The title block prints this, not the raw count \u2014 a drawing
+ * issued three times goes out as Rev D, not Rev 3.
+ */
+export function revisionLetter(revision: number): string {
+  let n = Math.max(0, Math.floor(revision));
+  let out = "";
+  for (;;) {
+    out = String.fromCharCode(65 + (n % 26)) + out;
+    if (n < 26) return out;
+    n = Math.floor(n / 26) - 1;
+  }
+}
+
+/**
+ * Issue date, in the local calendar. `toISOString()` is UTC: a sheet made at
+ * 09:00 AEDT is 22:00 UTC the previous day, so every sheet issued before
+ * ~10am Melbourne time printed yesterday's date. Sheets are dated documents;
+ * the date must be the one the operator is living in (CLAUDE.md: en-AU).
+ */
+export function issueDate(now: Date = new Date()): string {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 /** Build a default title block for a sheet. */
 export function buildTitleBlock(opts: {
   project: string;
@@ -122,13 +150,14 @@ export function buildTitleBlock(opts: {
   scale: number;
   northBearingDeg?: number | null;
   templateVersion: string;
+  revision?: number;
 }): SheetTitleBlock {
   return {
     project: opts.project,
     sheet: opts.sheet,
     scale: `1:${opts.scale}`,
-    date: new Date().toISOString().slice(0, 10),
-    rev: "A",
+    date: issueDate(),
+    rev: revisionLetter(opts.revision ?? 0),
     north: opts.northBearingDeg != null ? `${opts.northBearingDeg.toFixed(0)}\u00B0` : "N\u2191",
     templateVersion: opts.templateVersion,
   };
@@ -148,7 +177,10 @@ export function createSheet(opts: {
   const orientation = opts.orientation ?? "landscape";
   const scale = opts.scale ?? 200;
   return {
-    id: `sheet-${Date.now()}`,
+    // randomUUID, not Date.now(): two sheets added in the same millisecond
+    // collided, which gave duplicate React keys and made the second tab
+    // select the first sheet.
+    id: `sheet-${crypto.randomUUID()}`,
     number: opts.number,
     title: opts.title,
     paperSize,
@@ -209,13 +241,22 @@ export function computeImpliedScale(
  * Q.12 — issue the sheet as PDF. Freezes all live viewports and bumps the
  * revision. Returns the issued sheet.
  */
-export function issueSheet(sheet: Sheet): Sheet {
+export function issueSheet(sheet: Sheet, now: Date = new Date()): Sheet {
+  const revision = sheet.revision + 1;
   return {
     ...sheet,
     viewports: sheet.viewports.map((v) => ({ ...v, live: false, issued: true })),
     issued: true,
-    issuedAt: Date.now(),
-    revision: sheet.revision + 1,
+    issuedAt: now.getTime(),
+    revision,
+    // The title block is what actually goes out on paper, so the revision
+    // and issue date have to move with it — bumping `revision` alone left
+    // every issued sheet printing "Rev A".
+    titleBlock: {
+      ...sheet.titleBlock,
+      rev: revisionLetter(revision),
+      date: issueDate(now),
+    },
   };
 }
 

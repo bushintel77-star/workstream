@@ -21,7 +21,10 @@ import type { CatalogSymbol } from "@workstream/contracts";
 import type { StudioItemType } from "../handoff/studioCatalog";
 import { STUDIO_ITEM_TYPE_LABEL } from "../handoff/studioCatalog";
 import { TYPE_TO_SYMBOL } from "../handoff/state/canvasBridge";
-import { mapSymbolToStudioType } from "../handoff/state/studioAiEngine";
+import {
+  catalogSymbolStudioType,
+  mapSymbolToStudioType,
+} from "../handoff/state/studioAiEngine";
 
 /** The spec's five asset bento categories. */
 export type BentoCategory = "CANOPY" | "SHRUB" | "HARD" | "FURN" | "SYM";
@@ -51,9 +54,17 @@ const BENTO_BY_STUDIO_TYPE: Record<StudioItemType, BentoCategory> = {
 
 /** Map a catalog symbol to a bento category via its studio type, falling
  * back to the raw catalog category for furniture/lighting (which have no
- * studio type), and SYM for everything else. */
+ * studio type), and SYM for everything else.
+ *
+ * Classification goes through `catalogSymbolStudioType`, NOT
+ * `mapSymbolToStudioType`. The latter is the hydrate function: it is typed
+ * `=> StudioItemType` and ends in `return "canopy"`, so it never reports
+ * "this symbol has no studio type". Guarding on it made the FURN and SYM
+ * branches unreachable and filed benches, bollards and planning hatches as
+ * canopy trees — the exact silent rehydration assetPalette.ts avoids the
+ * same way. */
 function bentoCategoryFor(sym: CatalogSymbol): BentoCategory {
-  const studioType = mapSymbolToStudioType(sym.id);
+  const studioType = catalogSymbolStudioType(sym.id);
   if (studioType) return BENTO_BY_STUDIO_TYPE[studioType];
   if (sym.category === "furniture" || sym.category === "lighting") return "FURN";
   return "SYM";

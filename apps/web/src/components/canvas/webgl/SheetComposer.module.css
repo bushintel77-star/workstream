@@ -246,6 +246,15 @@
   margin-bottom: 4px;
 }
 
+/* An empty legend states why it is empty rather than rendering a bare
+ * heading over nothing. */
+.legendEmpty {
+  font-family: var(--lc-font-mono);
+  font-size: 9px;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--lc-paper-ink) 55%, transparent);
+}
+
 .legendRow {
   display: flex;
   align-items: center;

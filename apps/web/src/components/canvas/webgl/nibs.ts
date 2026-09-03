@@ -25,6 +25,7 @@
 
 import type { CanvasStroke, NibKind } from "@workstream/contracts";
 import { PALETTE } from "../../../styles/colorTokens";
+import { materialById } from "./materials";
 
 export const NIB_KINDS: readonly NibKind[] = [
   "graphite-6b",
@@ -83,6 +84,11 @@ export interface NibSpec {
  *  corresponds to at 1:200 (3.5). One conversion for the whole table. */
 function pxToWeightMm(px: number): number {
   return (px / 96) * 25.4; // px at 96dpi → mm (scale factor 1 at 1:200)
+}
+
+/** The other direction, for material weights (which are authored in mm). */
+function weightMmToPx(mm: number): number {
+  return (mm / 25.4) * 96;
 }
 
 export const NIBS: Record<NibKind, NibSpec> = {
@@ -192,7 +198,23 @@ export function nibSpec(kind: NibKind | undefined): NibSpec {
  * own color/width (no visual regression for existing ink).
  */
 export function nibSpecForStroke(stroke: CanvasStroke): NibSpec {
-  if (stroke.nib) return NIBS[stroke.nib];
+  if (stroke.nib) {
+    const base = NIBS[stroke.nib];
+    // Phase M — a material overrides the nib's colour and weight. Every
+    // renderer reads its colour from the nib spec, so applying the override
+    // anywhere else would leave the ink drawing in graphite: the palette
+    // wrote `activeMaterialId`, the commit stamped `stroke.material`, and
+    // the line still came out the nib's colour.
+    const material = stroke.material ? materialById(stroke.material) : undefined;
+    if (!material) return base;
+    return {
+      ...base,
+      color: material.color,
+      ...(material.weightMm != null
+        ? { weightMm: material.weightMm, baseWidthPx: weightMmToPx(material.weightMm) }
+        : {}),
+    };
+  }
   const widthPx = stroke.width_px ?? 2;
   return {
     ...NIBS["graphite-6b"],

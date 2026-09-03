@@ -12,6 +12,9 @@
   box-shadow: var(--lc-flyout-shadow);
   color: var(--lc-ink);
   font-family: var(--lc-font-ui);
+  /* The shell is pointer-transparent so a failure never blocks the canvas;
+   * the card takes its own events back so Retry/Dismiss are clickable. */
+  pointer-events: auto;
 }
 
 .header {

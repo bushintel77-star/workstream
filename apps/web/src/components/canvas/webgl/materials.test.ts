@@ -60,24 +60,31 @@ describe("materialPalette — Phase M.2: build-up ramp", () => {
 });
 
 describe("materialPalette — Phase M.3: dash signatures mandatory for markup", () => {
-  it("every markup material is semantic", () => {
-    for (const m of materialsByGroup("markup")) {
-      expect(m.semantic).toBe(true);
-    }
-  });
-
-  it("every markup material has a dash array (even if empty for drafting)", () => {
+  it("every markup material has a dash array", () => {
     for (const m of materialsByGroup("markup")) {
       expect(m.dash).toBeDefined();
     }
   });
 
-  it("every markup material except drafting has a non-empty dash", () => {
-    for (const m of materialsByGroup("markup")) {
-      if (m.id === "drafting") {
-        expect(m.dash).toEqual([]);
-      } else {
-        expect(m.dash!.length).toBeGreaterThan(0);
+  /**
+   * §8c with no exception. This used to read "every markup material except
+   * drafting", which is not the rule — the rule is that a SEMANTIC line must
+   * carry a signature. Drafting is a plain construction line and is not
+   * semantic, so the exception disappears rather than being written down.
+   */
+  it("every semantic material carries a non-empty dash signature", () => {
+    const semantic = MATERIALS.filter((m) => m.semantic);
+    expect(semantic.length).toBeGreaterThan(0);
+    for (const m of semantic) {
+      expect(m.dash, `${m.id} is semantic with no dash`).toBeDefined();
+      expect(m.dash!.length, `${m.id} is semantic with an empty dash`).toBeGreaterThan(0);
+    }
+  });
+
+  it("a material with no dash signature is not semantic", () => {
+    for (const m of MATERIALS) {
+      if (m.dash && m.dash.length === 0) {
+        expect(m.semantic, `${m.id} claims semantics it cannot encode`).toBe(false);
       }
     }
   });

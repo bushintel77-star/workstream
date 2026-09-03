@@ -19,7 +19,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useStudioStore, type ToolId } from "./studioStore";
-import { isLocked, lockReason, type ChromeElement } from "./chromeContract";
+import { isToolLocked, toolLockReason } from "./chromeContract";
 import styles from "./ToolRibbon.module.css";
 
 /* ---- tool definitions (handoff §5.1) ---- */
@@ -323,13 +323,16 @@ export function ToolRibbon() {
       {/* Tool groups */}
       {TOOL_GROUPS.map((group, gi) => {
         // Phase L.5 — GRADE + MEASURE lock in 3D per the chrome contract.
-        // The locked group shows a lock glyph on its header and a single
-        // reason line beneath. Locked tools are disabled (no activation).
-        const contractEl: ChromeElement =
-          group.name === "GRADE" ? "ribbonGrade" :
-            group.name === "MEASURE" ? "ribbonMeasure" : "panels";
-        const locked = isLocked(contractEl, cameraPreset);
-        const reason = lockReason(contractEl, cameraPreset);
+        // The lock is read off TOOL_CHROME_ELEMENT, the same table the
+        // keyboard handler consults, so the ribbon and the hotkeys cannot
+        // disagree about what is locked.
+        const locked = group.tools.some((t) => isToolLocked(t.id, cameraPreset));
+        const reason = locked
+          ? group.tools.reduce<string | null>(
+            (r, t) => r ?? toolLockReason(t.id, cameraPreset),
+            null,
+          )
+          : null;
         return (
           <div key={group.name} className={styles.group} data-locked={locked ? "true" : undefined}>
             {/* Group divider (not before the first group) */}
@@ -354,9 +357,18 @@ export function ToolRibbon() {
               </div>
             )}
 
-            {/* Lock reason line — one stated reason beneath the header (spec 11c). */}
-            {locked && reason && width !== "rail" && (
-              <div className={styles.lockReason} data-testid={`lock-reason-${group.name.toLowerCase()}`}>
+            {/* Lock reason — one stated reason for the group (spec 11c).
+                Rendered OUT OF FLOW: spec §11c's first rule is that nothing
+                in the chrome changes position between camera states, and an
+                in-flow reason line grew the ribbon's height in 3D. It is
+                drawn at every width, including rail, so a refused hotkey
+                always has its reason on screen. */}
+            {locked && reason && (
+              <div
+                className={styles.lockReason}
+                data-testid={`lock-reason-${group.name.toLowerCase()}`}
+                role="note"
+              >
                 {reason}
               </div>
             )}

@@ -52,6 +52,9 @@ import {
   sunHatchAngleDeg,
 } from "./hatchSun";
 import { DEFAULT_NIB, NEUTRAL_TELEMETRY, type StylusTelemetry } from "./nibs";
+// sheetComposition imports only `type CameraPreset` back from here, so this
+// is a type-only cycle — erased at build, no runtime cycle.
+import { issueSheet, type Sheet, type SheetViewport } from "./sheetComposition";
 import {
   melbourneSeason,
   type FloraStudioForm,
@@ -430,6 +433,16 @@ export interface StudioStoreState {
   scheduleOpen: boolean;
   /** Phase Q — sheet composition modal (spec 18a). */
   sheetComposerOpen: boolean;
+  /**
+   * Phase Q — the sheet set. Held here, not inside SheetComposer, because
+   * the composer is unmounted on close: every sheet, viewport and issued
+   * revision was destroyed the moment the operator dismissed the modal.
+   *
+   * Session-scoped. `DesignCanvas` has no sheets field, so this does not
+   * survive a reload — see OUTSTANDING.md.
+   */
+  sheets: Sheet[];
+  activeSheetId: string | null;
   /** Selected fixed plane from the spec stack (1.1). Ground is the drawable
    *  target; planting/massing are proposed reference bands. */
   activePlaneId: FixedPlaneId;
@@ -683,6 +696,9 @@ export interface StudioStoreState {
   cameraPreset: CameraPreset;
   /** Set the camera preset — writes the rig tilt + blend target. */
   setCameraPreset: (preset: CameraPreset) => void;
+  /** Centre the camera's look target on a world point (metres). Does not
+   *  change tilt, rotation or zoom — flying somewhere is not a mode change. */
+  focusWorldPoint: (x: number, z: number) => void;
   /** Overlay kinds the operator has hidden in the Layers legend (absent =
    *  visible). Shared by the scene washes (GovernmentOverlays) and the legend. */
   hiddenOverlayKinds: KeylessOverlayKind[];
@@ -1143,6 +1159,19 @@ export interface StudioStoreState {
   setFitSheetOpen: (v: boolean) => void;
   setScheduleOpen: (v: boolean) => void;
   setSheetComposerOpen: (v: boolean) => void;
+  /** Add a sheet and make it active. */
+  addSheet: (sheet: Sheet) => void;
+  /** Patch one sheet by id. */
+  updateSheet: (id: string, patch: Partial<Sheet>) => void;
+  setActiveSheetId: (id: string) => void;
+  /** Add / remove a viewport on a sheet. Both derive the next array from the
+   *  CURRENT state, not a render-time closure — two fast clicks used to drop
+   *  one of the two edits. */
+  addSheetViewport: (sheetId: string, viewport: SheetViewport) => void;
+  removeSheetViewport: (sheetId: string, viewportId: string) => void;
+  /** Issue a sheet: freeze its viewports, bump the revision and the title
+   *  block's revision letter and date. */
+  issueSheetById: (sheetId: string) => void;
   setActivePlaneId: (id: FixedPlaneId) => void;
   setLiveCoord: (v: { x: number; z: number; chainage?: number } | null) => void;
   setSurveyedPlanLayers: (patch: Partial<SurveyedPlanLayers>) => void;
@@ -1402,6 +1431,11 @@ export interface StudioStoreState {
   setConstructionTrenches: (trenches: ConstructionTrench[]) => void;
   /** Commit a completed traced run (clears the draft; tool stays armed). */
   addConstructionTrench: (trench: ConstructionTrench) => void;
+  /** Patch one committed trench (depth, name, why). Undoable, like a draw. */
+  updateConstructionTrench: (
+    id: string,
+    patch: Partial<ConstructionTrench>,
+  ) => void;
 
   /** Arm/disarm the zone tool (mutually exclusive with sketch/measure/asset/trench). */
   setZoneTool: (kind: IrrigationZoneKind | null) => void;
@@ -1549,6 +1583,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   fitSheetOpen: true,
   scheduleOpen: false,
   sheetComposerOpen: false,
+  sheets: [],
+  activeSheetId: null,
   activePlaneId: "ground",
   liveCoord: null,
   surveyedPlanLayers: {
@@ -1869,6 +1905,31 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   setFitSheetOpen: (fitSheetOpen) => set({ fitSheetOpen }),
   setScheduleOpen: (scheduleOpen) => set({ scheduleOpen }),
   setSheetComposerOpen: (sheetComposerOpen) => set({ sheetComposerOpen }),
+  addSheet: (sheet) =>
+    set((s) => ({ sheets: [...s.sheets, sheet], activeSheetId: sheet.id })),
+  updateSheet: (id, patch) =>
+    set((s) => ({
+      sheets: s.sheets.map((sh) => (sh.id === id ? { ...sh, ...patch } : sh)),
+    })),
+  setActiveSheetId: (activeSheetId) => set({ activeSheetId }),
+  addSheetViewport: (sheetId, viewport) =>
+    set((s) => ({
+      sheets: s.sheets.map((sh) =>
+        sh.id === sheetId ? { ...sh, viewports: [...sh.viewports, viewport] } : sh,
+      ),
+    })),
+  removeSheetViewport: (sheetId, viewportId) =>
+    set((s) => ({
+      sheets: s.sheets.map((sh) =>
+        sh.id === sheetId
+          ? { ...sh, viewports: sh.viewports.filter((v) => v.id !== viewportId) }
+          : sh,
+      ),
+    })),
+  issueSheetById: (sheetId) =>
+    set((s) => ({
+      sheets: s.sheets.map((sh) => (sh.id === sheetId ? issueSheet(sh) : sh)),
+    })),
   setActivePlaneId: (activePlaneId) => set({ activePlaneId }),
   setLiveCoord: (liveCoord) => set({ liveCoord }),
   setSurveyedPlanLayers: (patch) =>
@@ -2552,6 +2613,14 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     if (surveyFile) formData.append("survey", surveyFile);
     if (titleFile) formData.append("title", titleFile);
 
+    // Phase O — every exit from here used to be a console.error and a quiet
+    // drop back to IDLE: the operator handed over a survey and a title and
+    // watched the modal close with nothing drawn and nothing said. Each
+    // failure now names itself on the canvas.
+    const source = [surveyFile && "survey", titleFile && "title"]
+      .filter(Boolean)
+      .join(" + ") || "site documents";
+
     let res: Response;
     try {
       res = await fetch(
@@ -2566,6 +2635,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       const msg = err instanceof Error ? err.message : String(err);
       console.error("[processSiteDocuments] fetch failed", msg);
       store.setAiProcessingState("IDLE");
+      store.setImportError({
+        source,
+        message: `The import never reached the server (${msg}). Nothing was changed on the canvas.`,
+      });
       return;
     }
 
@@ -2573,14 +2646,30 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       const detail = await res.text().catch(() => "");
       console.error("[processSiteDocuments] API error", res.status, detail);
       store.setAiProcessingState("IDLE");
+      store.setImportError({
+        source,
+        message: `The server rejected the import (${res.status}${detail ? `: ${detail.slice(0, 200)}` : ""}). Nothing was changed on the canvas.`,
+      });
       return;
     }
 
-    const payload = (await res.json()) as {
+    let payload: {
       canvases: SketchCanvas[];
       setback_lines: SetbackLine[];
       building_footprints: BuildingFootprint[];
     };
+    try {
+      payload = (await res.json()) as typeof payload;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[processSiteDocuments] unreadable payload", msg);
+      store.setAiProcessingState("IDLE");
+      store.setImportError({
+        source,
+        message: `The import returned a response the canvas could not read (${msg}). Nothing was changed on the canvas.`,
+      });
+      return;
+    }
 
     store.setAiProcessingState("GENERATING_SITE");
 
@@ -2592,6 +2681,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       buildingFootprints: payload.building_footprints,
       activeCanvasId: payload.canvases[0]?.id ?? s.activeCanvasId,
       aiProcessingState: "SUCCESS",
+      // A successful run clears the previous failure card.
+      importError: null,
       historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
       historyFuture: [],
     }));
@@ -2674,6 +2765,17 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
    * re-enables editing at the orthographic horizon. The store is the single
    * commit point for every preset writer (dock click, keyboard 1–4, HUD hit).
    */
+  /**
+   * Centre the camera on a world point (metres). `computePosition` looks at
+   * `(panX, 0, panY)`, so the pan offset IS the look target — writing it is
+   * the whole fly. The camera's angle, tilt and zoom are the operator's and
+   * are left alone: flying to a strike must not silently change the camera
+   * state (switching to 3D, for instance, locks GRADE and MEASURE via the
+   * chrome contract — the exact tools needed to resolve a strike).
+   */
+  focusWorldPoint: (x, z) =>
+    set((s) => ({ liveRig: { ...s.liveRig, panX: x, panY: z } })),
+
   setCameraPreset: (preset) => {
     const live = useStudioStore.getState().liveRig;
     const rig = { ...live };
@@ -2986,6 +3088,19 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
       historyFuture: [],
     })),
+  updateConstructionTrench: (id, patch) =>
+    set((s) => {
+      const idx = s.constructionTrenches.findIndex((t) => t.id === id);
+      if (idx === -1) return {};
+      const constructionTrenches = [...s.constructionTrenches];
+      constructionTrenches[idx] = { ...constructionTrenches[idx]!, ...patch };
+      return {
+        constructionTrenches,
+        // Editing a trench is a doc mutation like drawing one — one undo step.
+        historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
+        historyFuture: [],
+      };
+    }),
 
   setZoneTool: (zoneTool) =>
     set(

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CURTIS_CATALOG_SYMBOLS, isSketchGoldStandard } from "@workstream/domain";
 import {
   BENTO_CATEGORIES,
   BENTO_CATEGORY_LABEL,
@@ -7,6 +8,7 @@ import {
   bentoCategoryCounts,
   bentoTileById,
   formatDimensions,
+  type BentoCategory,
 } from "./assetBento";
 
 describe("assetBento — Phase M.6", () => {
@@ -137,6 +139,66 @@ describe("assetBento — Phase M.6", () => {
     it("returns undefined for unknown id", () => {
       const tiles = buildBentoGrid();
       expect(bentoTileById(tiles, "nonexistent-id")).toBeUndefined();
+    });
+  });
+
+  /**
+   * Classification regression. `bentoCategoryFor` used to guard on
+   * `mapSymbolToStudioType`, which is typed `=> StudioItemType` and ends in
+   * `return "canopy"` — so the guard never failed, FURN and SYM were always
+   * empty, the annotation exclusion never fired, and benches, bollards and
+   * planning hatches were all listed under "Canopy trees".
+   */
+  describe("category classification (regression)", () => {
+    const tiles = buildBentoGrid();
+    const idsIn = (cat: BentoCategory) =>
+      new Set(filterBentoByCategory(tiles, cat).map((t) => t.symbolId));
+
+    it("files furniture and lighting under FURN, not CANOPY", () => {
+      const furn = idsIn("FURN");
+      const canopy = idsIn("CANOPY");
+      for (const sym of CURTIS_CATALOG_SYMBOLS) {
+        if (!isSketchGoldStandard(sym)) continue;
+        if (sym.category !== "furniture" && sym.category !== "lighting") continue;
+        expect(furn.has(sym.id), `${sym.id} should be FURN`).toBe(true);
+        expect(canopy.has(sym.id), `${sym.id} must not be a canopy tree`).toBe(false);
+      }
+    });
+
+    it("files structures and water under SYM, not CANOPY", () => {
+      const sym_ = idsIn("SYM");
+      const canopy = idsIn("CANOPY");
+      for (const sym of CURTIS_CATALOG_SYMBOLS) {
+        if (!isSketchGoldStandard(sym)) continue;
+        if (sym.category !== "structure" && sym.category !== "water") continue;
+        expect(sym_.has(sym.id), `${sym.id} should be SYM`).toBe(true);
+        expect(canopy.has(sym.id), `${sym.id} must not be a canopy tree`).toBe(false);
+      }
+    });
+
+    it("excludes annotation symbols entirely", () => {
+      const all = new Set(tiles.map((t) => t.symbolId));
+      for (const sym of CURTIS_CATALOG_SYMBOLS) {
+        if (sym.category !== "annotation") continue;
+        expect(all.has(sym.id), `${sym.id} is a planning hatch, not an asset`).toBe(
+          false,
+        );
+      }
+    });
+
+    it("every canopy tile comes from the planting catalog", () => {
+      for (const t of filterBentoByCategory(tiles, "CANOPY")) {
+        const sym = CURTIS_CATALOG_SYMBOLS.find((s) => s.id === t.symbolId);
+        expect(sym?.category, `${t.symbolId} listed as a canopy tree`).toBe(
+          "planting",
+        );
+      }
+    });
+
+    it("FURN and SYM are reachable", () => {
+      const counts = bentoCategoryCounts(tiles);
+      expect(counts.FURN).toBeGreaterThan(0);
+      expect(counts.SYM).toBeGreaterThan(0);
     });
   });
 });

@@ -38,13 +38,21 @@ export interface FailureStateProps {
   children?: ReactNode;
 }
 
+/**
+ * The shell spans the canvas so the card can be centred, but it must NOT
+ * swallow pointer events: `pointerEvents: "auto"` on a full-bleed `inset: 0`
+ * layer made every failure behave as a modal — the operator could not pan,
+ * draw or click anything until it was dismissed — while looking like a
+ * non-modal card. The shell is transparent to the pointer; the card itself
+ * re-enables it (`.card { pointer-events: auto }`) so its buttons work.
+ */
 const shellStyle: CSSProperties = {
   position: "absolute",
   inset: 0,
   display: "grid",
   placeItems: "center",
   padding: 24,
-  pointerEvents: "auto",
+  pointerEvents: "none",
   zIndex: "var(--cf-z-chrome)",
 };
 

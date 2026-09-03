@@ -182,4 +182,138 @@ describe("officeTemplate — Phase R", () => {
       expect(line).toContain("1 override");
     });
   });
+
+  /**
+   * The version a binding claims is printed on paper (17b), so it must not
+   * run ahead of what was actually accepted.
+   */
+  describe("R.3 — a partial acceptance does not claim the whole version", () => {
+    const v2: OfficeTemplate = {
+      ...DEFAULT_TEMPLATE,
+      version: 2,
+      sheet: { ...DEFAULT_TEMPLATE.sheet, scale: 100 },
+      codes: { ...DEFAULT_TEMPLATE.codes, tree: "TR" },
+      defaults: { ...DEFAULT_TEMPLATE.defaults, snapM: 0.25 },
+    };
+    const binding = () => createBinding("p1", DEFAULT_TEMPLATE);
+
+    it("offers every changed path", () => {
+      const changes = diffForProject(DEFAULT_TEMPLATE, v2, binding());
+      expect(changes.map((c) => c.path).sort()).toEqual([
+        "codes",
+        "defaults",
+        "sheet",
+      ]);
+    });
+
+    it("stays on the bound version when some changes are declined", () => {
+      const offered = diffForProject(DEFAULT_TEMPLATE, v2, binding());
+      const accepted = offered.filter((c) => c.path === "sheet");
+      const after = applyAccepted(binding(), v2, accepted, offered, "Tim");
+      expect(after.boundVersion).toBe(1);
+      expect(provenanceLine(v2, after)).toContain("v1");
+      expect(provenanceLine(v2, after)).not.toContain("v2");
+    });
+
+    it("records each declined change as a named override", () => {
+      const offered = diffForProject(DEFAULT_TEMPLATE, v2, binding());
+      const accepted = offered.filter((c) => c.path === "sheet");
+      const after = applyAccepted(binding(), v2, accepted, offered, "Tim");
+      expect(after.overrides.map((o) => o.path).sort()).toEqual([
+        "codes",
+        "defaults",
+      ]);
+      for (const o of after.overrides) {
+        expect(o.by).toBe("Tim");
+        expect(o.reason).toBeTruthy();
+        expect(o.at).toBeTruthy();
+      }
+      expect(isClean(after)).toBe(false);
+    });
+
+    it("advances the version only when every change is accepted", () => {
+      const offered = diffForProject(DEFAULT_TEMPLATE, v2, binding());
+      const after = applyAccepted(binding(), v2, offered, offered, "Tim");
+      expect(after.boundVersion).toBe(2);
+      expect(after.overrides).toEqual([]);
+      expect(isClean(after)).toBe(true);
+    });
+
+    it("accepting nothing changes nothing", () => {
+      const offered = diffForProject(DEFAULT_TEMPLATE, v2, binding());
+      const after = applyAccepted(binding(), v2, [], offered, "Tim");
+      expect(after.boundVersion).toBe(1);
+    });
+
+    it("accepting a conflicting change clears its override", () => {
+      const b = addOverride(binding(), {
+        path: "sheet",
+        from: DEFAULT_TEMPLATE.sheet,
+        to: v2.sheet,
+        by: "Tim",
+        at: "2026-01-15",
+        reason: "client wanted A0",
+      });
+      const offered = diffForProject(DEFAULT_TEMPLATE, v2, b);
+      expect(offered.find((c) => c.path === "sheet")?.conflictsWithOverride).toBe(
+        true,
+      );
+      const after = applyAccepted(b, v2, offered, offered, "Tim");
+      expect(after.overrides.some((o) => o.path === "sheet")).toBe(false);
+    });
+  });
+
+  describe("R.3 — every offered change states its consequence", () => {
+    const v2: OfficeTemplate = {
+      ...DEFAULT_TEMPLATE,
+      version: 2,
+      sheet: { ...DEFAULT_TEMPLATE.sheet, size: "A0", scale: 100 },
+      codes: { ...DEFAULT_TEMPLATE.codes, tree: "TR" },
+      defaults: { ...DEFAULT_TEMPLATE.defaults, snapM: 0.25 },
+      materials: DEFAULT_TEMPLATE.materials.filter((m) => m !== "asphalt"),
+      planes: DEFAULT_TEMPLATE.planes.slice(0, 3),
+    };
+
+    it("never emits a bare change with no stated consequence", () => {
+      const changes = diffForProject(DEFAULT_TEMPLATE, v2, createBinding("p", DEFAULT_TEMPLATE));
+      expect(changes.length).toBeGreaterThan(0);
+      for (const c of changes) {
+        expect(c.affects, `${c.path} has no stated consequence`).not.toBe("");
+      }
+    });
+
+    it("counts the renumbering against this drawing", () => {
+      const changes = diffForProject(
+        DEFAULT_TEMPLATE,
+        v2,
+        createBinding("p", DEFAULT_TEMPLATE),
+        { trees: 12, beds: 5, hardscape: 3, issuedSheets: 2 },
+      );
+      const codes = changes.find((c) => c.path === "codes")!;
+      expect(codes.affects).toContain("20 coded items");
+      expect(codes.affects).toContain("2 already-issued sheets");
+      expect(codes.destructive).toBe(true);
+      expect(defaultAccepted(codes)).toBe(false);
+    });
+
+    it("names the sheet delta", () => {
+      const changes = diffForProject(DEFAULT_TEMPLATE, v2, createBinding("p", DEFAULT_TEMPLATE));
+      const sheet = changes.find((c) => c.path === "sheet")!;
+      expect(sheet.affects).toContain("A1 → A0");
+      expect(sheet.affects).toContain("1:200 → 1:100");
+    });
+
+    it("names the material delta", () => {
+      const changes = diffForProject(DEFAULT_TEMPLATE, v2, createBinding("p", DEFAULT_TEMPLATE));
+      expect(changes.find((c) => c.path === "materials")!.affects).toContain(
+        "1 withdrawn",
+      );
+    });
+
+    it("gives each row a human label", () => {
+      const changes = diffForProject(DEFAULT_TEMPLATE, v2, createBinding("p", DEFAULT_TEMPLATE));
+      expect(changes.find((c) => c.path === "codes")!.label).toBe("Asset codes");
+      expect(changes.find((c) => c.path === "planes")!.label).toBe("Plane stack");
+    });
+  });
 });
