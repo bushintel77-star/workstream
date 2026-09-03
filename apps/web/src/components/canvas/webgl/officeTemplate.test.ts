@@ -9,8 +9,10 @@ import {
   defaultAccepted,
   isClean,
   provenanceLine,
+  weightMmForSignature,
   type OfficeTemplate,
 } from "./officeTemplate";
+import { materialById } from "./materials";
 
 describe("officeTemplate — Phase R", () => {
   describe("R.1 — template holds conventions only", () => {
@@ -314,6 +316,71 @@ describe("officeTemplate — Phase R", () => {
       const changes = diffForProject(DEFAULT_TEMPLATE, v2, createBinding("p", DEFAULT_TEMPLATE));
       expect(changes.find((c) => c.path === "codes")!.label).toBe("Asset codes");
       expect(changes.find((c) => c.path === "planes")!.label).toBe("Plane stack");
+    });
+  });
+
+  describe("R.4 — the standard's weight reaches the renderer", () => {
+    const binding = () => createBinding("p", DEFAULT_TEMPLATE);
+
+    it("resolves a weight by the material signature it governs", () => {
+      expect(weightMmForSignature(DEFAULT_TEMPLATE, binding(), "setback")).toBe(0.5);
+      expect(weightMmForSignature(DEFAULT_TEMPLATE, binding(), "survey")).toBe(0.25);
+    });
+
+    it("every template weight names a material that exists", () => {
+      // The signature is the join to the palette. A weight governing nothing
+      // is a convention the drawing can never honour.
+      for (const w of DEFAULT_TEMPLATE.weights) {
+        expect(materialById(w.signature), w.signature).toBeDefined();
+      }
+    });
+
+    it("says nothing about a material the standard does not govern", () => {
+      expect(weightMmForSignature(DEFAULT_TEMPLATE, binding(), "bluestone")).toBeUndefined();
+    });
+
+    it("a changed weight is what the renderer would read", () => {
+      const heavier: OfficeTemplate = {
+        ...DEFAULT_TEMPLATE,
+        version: 2,
+        weights: DEFAULT_TEMPLATE.weights.map((w) =>
+          w.purpose === "setback" ? { ...w, mm: 1.2 } : w,
+        ),
+      };
+      expect(weightMmForSignature(heavier, binding(), "setback")).toBe(1.2);
+      // Untouched purposes keep the standard they had.
+      expect(weightMmForSignature(heavier, binding(), "gas")).toBe(0.35);
+    });
+
+    it("an override on weights withdraws the standard rather than guessing", () => {
+      // Rule 2 — this project declined the weight set, so the renderer falls
+      // back to the palette baseline instead of drawing a standard the
+      // project is not following.
+      const deviating = addOverride(binding(), {
+        path: "weights",
+        from: DEFAULT_TEMPLATE.weights,
+        to: 1,
+        by: "operator",
+        at: "2026-09-04T00:00:00.000Z",
+        reason: null,
+      });
+      expect(weightMmForSignature(DEFAULT_TEMPLATE, deviating, "setback")).toBeUndefined();
+      // Reverting it returns the project to the standard.
+      expect(
+        weightMmForSignature(DEFAULT_TEMPLATE, revertOverride(deviating, "weights"), "setback"),
+      ).toBe(0.5);
+    });
+
+    it("an override on another path leaves weights governed", () => {
+      const deviating = addOverride(binding(), {
+        path: "sheet",
+        from: DEFAULT_TEMPLATE.sheet,
+        to: 1,
+        by: "operator",
+        at: "2026-09-04T00:00:00.000Z",
+        reason: "A0 for the client meeting",
+      });
+      expect(weightMmForSignature(DEFAULT_TEMPLATE, deviating, "setback")).toBe(0.5);
     });
   });
 });

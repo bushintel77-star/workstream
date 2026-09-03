@@ -32,6 +32,7 @@ import {
   diffForProject,
   isClean,
   provenanceLine,
+  type Binding,
   type Change,
   type DrawingCounts,
   type OfficeTemplate,
@@ -215,7 +216,11 @@ export function OfficeTemplatePanel({ onClose }: OfficeTemplatePanelProps) {
           </nav>
 
           <div className={styles.section} data-testid={`template-section-${section}`}>
-            <TemplateSection section={section} template={template} />
+            <TemplateSection
+              section={section}
+              template={template}
+              binding={binding}
+            />
           </div>
         </div>
 
@@ -327,9 +332,11 @@ export function OfficeTemplatePanel({ onClose }: OfficeTemplatePanelProps) {
 function TemplateSection({
   section,
   template,
+  binding,
 }: {
   section: SectionId;
   template: OfficeTemplate;
+  binding: Binding;
 }) {
   switch (section) {
     case "planes":
@@ -380,20 +387,35 @@ function TemplateSection({
           })}
         </ul>
       );
-    case "weights":
+    case "weights": {
+      // R.4 — these weights drive the drawn line. An override withdraws the
+      // whole set, so say so rather than listing weights nothing is following.
+      const withdrawn = binding.overrides.some((o) => o.path === "weights");
       return (
-        <ul className={styles.list}>
-          {template.weights.map((w) => (
-            <li key={w.purpose} className={styles.listRow}>
-              <span className={styles.rowKey}>{w.purpose}</span>
-              {/* R.4 — weights are stated in mm at issued scale, never px. */}
-              <span className={styles.rowValue}>
-                {w.mm.toFixed(2)} mm at issued scale · signature {w.signature}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className={styles.sectionNote} data-testid="template-weights-note">
+            {withdrawn
+              ? "Withdrawn on this project — ink draws at the material palette's own weight until the override is reverted."
+              : "Live: ink carrying one of these materials draws at the weight below, and changing it redraws every line that has not been given an explicit width."}
+          </div>
+          <ul className={styles.list}>
+            {template.weights.map((w) => {
+              const m = materialById(w.signature);
+              return (
+                <li key={w.purpose} className={styles.listRow}>
+                  <span className={styles.rowKey}>{w.purpose}</span>
+                  {/* Weights are stated in mm at issued scale, never px. */}
+                  <span className={styles.rowValue}>
+                    {w.mm.toFixed(2)} mm at issued scale · governs{" "}
+                    {m?.label ?? w.signature}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       );
+    }
     case "sheet":
       return (
         <ul className={styles.list}>

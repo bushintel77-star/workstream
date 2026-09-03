@@ -60,6 +60,32 @@ export const isClean = (b: Binding) => b.overrides.length === 0;
 export const provenanceLine = (t: OfficeTemplate, b: Binding) =>
   `standard: ${t.name} v${b.boundVersion}${isClean(b) ? "" : ` \u00b7 ${b.overrides.length} overrides`}`;
 
+/**
+ * R.4 \u2014 the weight the renderer must draw a material's ink at, in mm at
+ * issued scale. Undefined when the standard says nothing about it.
+ *
+ * This is the join between the template and the drawing. Template weights are
+ * keyed by `signature`, which is the material-palette id the weight governs.
+ * Without this lookup the panel stated a weight in mm while the renderer drew
+ * the material palette's own hardcoded copy of it, so R.4's "changing a weight
+ * re-renders bound drawings" was a claim with no mechanism behind it.
+ *
+ * An override on `weights` means this project declined the standard's weight
+ * set (rule 2 \u2014 deviation is legal, never silent), so nothing is returned and
+ * the caller falls back to the palette baseline. The exact weights of the
+ * version the project stayed on are not recoverable from the binding alone \u2014
+ * the store holds one template, not one per version \u2014 which is part of the
+ * same server-side brief the binding itself needs (OUTSTANDING.md).
+ */
+export function weightMmForSignature(
+  template: OfficeTemplate,
+  binding: Binding,
+  signature: string,
+): number | undefined {
+  if (binding.overrides.some((o) => o.path === "weights")) return undefined;
+  return template.weights.find((w) => w.signature === signature)?.mm;
+}
+
 /* ---------- Version offers ---------- */
 
 export interface Change {

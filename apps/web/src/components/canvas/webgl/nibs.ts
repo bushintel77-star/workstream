@@ -193,27 +193,64 @@ export function nibSpec(kind: NibKind | undefined): NibSpec {
 }
 
 /**
+ * The spec for an ARMED nib — the one resolution path for both the live line
+ * under the stylus and a committed stroke, so what the operator draws with is
+ * what lands.
+ *
+ * Phase M — a material overrides the nib's colour and weight. Every renderer
+ * reads its colour from the nib spec, so applying the override anywhere else
+ * would leave the ink drawing in graphite: the palette wrote
+ * `activeMaterialId`, the commit stamped `stroke.material`, and the line still
+ * came out the nib's colour.
+ */
+export function armedNibSpec(opts: {
+  nib: NibKind;
+  materialId?: string | null;
+  /** R.4 — the bound office template's weight for the material's signature,
+   *  in mm at issued scale. Outranks the material palette's own copy of the
+   *  weight, which is what makes a standard change reach a drawing that
+   *  already exists. */
+  templateWeightMm?: number;
+  /** Phase I — an explicit brush width in px, which outranks both. */
+  brushWidthPx?: number | null;
+}): NibSpec {
+  const base = NIBS[opts.nib];
+  const material = opts.materialId ? materialById(opts.materialId) : undefined;
+  const weightMm = opts.templateWeightMm ?? material?.weightMm;
+  const styled: NibSpec = material
+    ? {
+      ...base,
+      color: material.color,
+      ...(weightMm != null
+        ? { weightMm, baseWidthPx: weightMmToPx(weightMm) }
+        : {}),
+    }
+    : base;
+  return opts.brushWidthPx != null
+    ? {
+      ...styled,
+      baseWidthPx: opts.brushWidthPx,
+      weightMm: pxToWeightMm(opts.brushWidthPx),
+    }
+    : styled;
+}
+
+/**
  * Resolve the render spec for a stored stroke — legacy strokes (no `nib`)
  * render with the graphite profile's neutral settings but keep the stroke's
  * own color/width (no visual regression for existing ink).
  */
-export function nibSpecForStroke(stroke: CanvasStroke): NibSpec {
+export function nibSpecForStroke(
+  stroke: CanvasStroke,
+  /** R.4 — see `armedNibSpec`. */
+  templateWeightMm?: number,
+): NibSpec {
   if (stroke.nib) {
-    const base = NIBS[stroke.nib];
-    // Phase M — a material overrides the nib's colour and weight. Every
-    // renderer reads its colour from the nib spec, so applying the override
-    // anywhere else would leave the ink drawing in graphite: the palette
-    // wrote `activeMaterialId`, the commit stamped `stroke.material`, and
-    // the line still came out the nib's colour.
-    const material = stroke.material ? materialById(stroke.material) : undefined;
-    if (!material) return base;
-    return {
-      ...base,
-      color: material.color,
-      ...(material.weightMm != null
-        ? { weightMm: material.weightMm, baseWidthPx: weightMmToPx(material.weightMm) }
-        : {}),
-    };
+    return armedNibSpec({
+      nib: stroke.nib,
+      materialId: stroke.material ?? null,
+      ...(templateWeightMm != null ? { templateWeightMm } : {}),
+    });
   }
   const widthPx = stroke.width_px ?? 2;
   return {
@@ -225,6 +262,35 @@ export function nibSpecForStroke(stroke: CanvasStroke): NibSpec {
     edgeSoft: 0,
     bleed: 0,
   };
+}
+
+/**
+ * The width to draw a committed stroke at, in px. Three sources want to set
+ * it, so the precedence is stated once here rather than at each renderer:
+ *
+ *   1. a width the operator explicitly chose (the Phase I brush slider) — a
+ *      deliberate per-stroke deviation, which must survive a standard change;
+ *   2. the weight the standard gives this stroke's material — the bound
+ *      office template's weight where it governs the material's signature
+ *      (R.4), otherwise the material palette's own mm weight (Phase M). Both
+ *      arrive already resolved on `nib.baseWidthPx` via `nibSpecForStroke`;
+ *   3. the nib's own base width, for ink carrying no material at all.
+ *
+ * A stamped `width_px` counts as case 1 only when it differs from the raw nib
+ * default it would have been stamped with at commit. Reading every stamped
+ * width as an operator choice is what made case 2 unreachable: every stroke
+ * carries `nib.baseWidthPx` from commit, so the material weight was computed
+ * at render and then discarded, and the template weight had nowhere to land.
+ */
+export function committedStrokeWidthPx(
+  stroke: CanvasStroke,
+  nib: NibSpec,
+): number {
+  const rawDefault = stroke.nib ? NIBS[stroke.nib].baseWidthPx : undefined;
+  if (stroke.width_px != null && stroke.width_px !== rawDefault) {
+    return stroke.width_px;
+  }
+  return nib.baseWidthPx;
 }
 
 function clamp01(v: number): number {

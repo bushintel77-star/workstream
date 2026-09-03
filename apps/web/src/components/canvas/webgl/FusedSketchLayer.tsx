@@ -60,7 +60,9 @@ import { pointInPolygonXZ } from "./cutFill";
 import { snapDrawPointer, type SnapHint } from "./snapWorld";
 import { stationAtPct } from "./stationing";
 import {
+  armedNibSpec,
   bleedScaleForSegment,
+  committedStrokeWidthPx,
   NEUTRAL_TELEMETRY,
   nibSpec,
   nibSpecForStroke,
@@ -69,6 +71,7 @@ import {
   type NibSpec,
   type StylusTelemetry,
 } from "./nibs";
+import { weightMmForSignature } from "./officeTemplate";
 import {
   dashSignatureMetres,
   materialById,
@@ -129,6 +132,42 @@ export function FusedSketchLayer({
   // The armed nib — committed strokes carry its telemetry mapping.
   const activeNib = useStudioStore((s) => s.activeNib);
   const activeMaterialId = useStudioStore((s) => s.activeMaterialId);
+  // Phase I — the brush width slider's value, stamped onto new strokes.
+  const brushWidthOverride = useStudioStore((s) => s.brushWidthOverride);
+  // Phase R — the standard this project is bound to. Both selections return a
+  // stable reference (each is only ever replaced whole), so neither hands
+  // zustand a fresh object per call.
+  const officeTemplate = useStudioStore((s) => s.officeTemplate);
+  const templateBinding = useStudioStore((s) => s.templateBinding);
+  /**
+   * The spec the LIVE line draws with: the armed nib, recoloured and
+   * reweighted by the armed material and the bound standard, then overridden
+   * by an explicit brush width. The live line drew with the raw nib, so ink
+   * popped to the material's colour the instant it committed.
+   *
+   * The two commit paths deliberately keep stamping the RAW nib default
+   * (`nibSpec(activeNib)`) rather than this: a stamped material weight would
+   * read as an explicit operator choice later and pin the old weight onto the
+   * stroke forever — see `committedStrokeWidthPx`.
+   */
+  const armedNib = useMemo(
+    () =>
+      armedNibSpec({
+        nib: activeNib,
+        materialId: activeMaterialId,
+        templateWeightMm: activeMaterialId
+          ? weightMmForSignature(officeTemplate, templateBinding, activeMaterialId)
+          : undefined,
+        brushWidthPx: brushWidthOverride,
+      }),
+    [
+      activeNib,
+      activeMaterialId,
+      brushWidthOverride,
+      officeTemplate,
+      templateBinding,
+    ],
+  );
   const liveCoord = useStudioStore((s) => s.liveCoord);
   const setLiveTelemetry = useStudioStore((s) => s.setLiveTelemetry);
   const setSunAzimuthDeg = useStudioStore((s) => s.setSunAzimuthDeg);
@@ -380,7 +419,13 @@ export function FusedSketchLayer({
       id: crypto.randomUUID(),
       points: finalPct.map((p) => ({ x_pct: p.x, y_pct: p.y })),
       color: material?.color ?? nib.color,
-      width_px: nib.baseWidthPx,
+      // Phase I — the brush width slider is a per-stroke choice, so it has to
+      // be stamped here. `setBrushWidthOverride` wrote the value and no commit
+      // path read it, so dragging the slider moved a number in the flyout and
+      // never changed a line. Stamping the raw nib default when the operator
+      // has not chosen is what lets the material and template weights govern
+      // at render (see `committedStrokeWidthPx`).
+      width_px: brushWidthOverride ?? nib.baseWidthPx,
       kind: "ink",
       nib: nib.kind,
       ...(material ? { material: material.id } : {}),
@@ -405,6 +450,7 @@ export function FusedSketchLayer({
     setHover,
     activeNib,
     activeMaterialId,
+    brushWidthOverride,
   ]);
 
   // ---- Canvas-plane pointer handlers (Spatial Sketching) ----
@@ -487,7 +533,8 @@ export function FusedSketchLayer({
         id: crypto.randomUUID(),
         points: finalPct.map((p) => ({ x_pct: p.x, y_pct: p.y })),
         color: material?.color ?? nib.color,
-        width_px: nib.baseWidthPx,
+        // Same width stamp as the ground-plane commit above.
+        width_px: brushWidthOverride ?? nib.baseWidthPx,
         kind: "ink",
         nib: nib.kind,
         ...(material ? { material: material.id } : {}),
@@ -504,6 +551,7 @@ export function FusedSketchLayer({
       boardAspect,
       activeNib,
       activeMaterialId,
+      brushWidthOverride,
       addSketchStroke,
       setHover,
     ],
@@ -563,7 +611,7 @@ export function FusedSketchLayer({
         <LiveNibLine
           points={livePoints}
           telemetry={telemetryRef.current}
-          nib={nibSpec(activeNib)}
+          nib={armedNib}
           sampler={sampler}
         />
       )}
@@ -643,6 +691,31 @@ function drapedY(
   return FLAT_Y + blend * sampler(x, z);
 }
 
+/**
+ * R.4 — resolve a committed stroke's nib against the BOUND office template,
+ * so a weight fixed in the standard reaches drawings that already exist
+ * (rule 1: the binding is a reference, not a copy).
+ *
+ * Both store reads select a stable object reference — the template and the
+ * binding are only ever replaced whole — so this never feeds zustand a fresh
+ * object per call, which is the loop that took `HistoryScrub` into the error
+ * boundary.
+ */
+function useNibForStroke(stroke: CanvasStroke): NibSpec {
+  const template = useStudioStore((s) => s.officeTemplate);
+  const binding = useStudioStore((s) => s.templateBinding);
+  return useMemo(
+    () =>
+      nibSpecForStroke(
+        stroke,
+        stroke.material
+          ? weightMmForSignature(template, binding, stroke.material)
+          : undefined,
+      ),
+    [stroke, template, binding],
+  );
+}
+
 /** Render a committed stroke — nib-dispatched (line ink vs stipple dots).
  *  Strokes with a canvas_id render inside their parent canvas group (the
  *  group applies the canvas's position + rotation, so the stroke's board-%
@@ -661,7 +734,7 @@ function CommittedStrokeRenderer({
   sampler: ((x: number, z: number) => number) | null;
   sketchCanvases: SketchCanvas[];
 }) {
-  const nib = useMemo(() => nibSpecForStroke(stroke), [stroke]);
+  const nib = useNibForStroke(stroke);
   // Spatial Sketching — if the stroke belongs to a canvas plane, wrap it in
   // the canvas's group so it inherits the plane's position + rotation.
   const canvas = useMemo(
@@ -906,7 +979,11 @@ function InkStrokeRenderer({
     () => {
       const m = new NibInkMaterial({
         color: nib.color,
-        linewidth: stroke.width_px ?? nib.baseWidthPx,
+        // R.4 — the standard's weight governs unless the operator explicitly
+        // chose a width for this stroke. `stroke.width_px ?? …` read every
+        // stamped width as a choice, which pinned the commit-time nib default
+        // onto the line and discarded both the material and template weights.
+        linewidth: committedStrokeWidthPx(stroke, nib),
         opacity: nib.opacity,
         grain: nib.grain,
         edgeSoft: nib.edgeSoft,
@@ -925,7 +1002,7 @@ function InkStrokeRenderer({
       }
       return m;
     },
-    [nib, stroke.width_px, canvasNormal, seasonOpacity, falloffEdge1],
+    [nib, stroke, canvasNormal, seasonOpacity, falloffEdge1],
   );
   const line2 = useMemo(() => new Line2(geometry, material), [geometry, material]);
   // The Line2 ref — we mutate its geometry positions in place each frame.
@@ -998,7 +1075,7 @@ function StippleStrokeRenderer({
   seasonOpacity,
   falloffEdge1,
 }: { stroke: CanvasStroke } & InkRenderBase) {
-  const nib = useMemo(() => nibSpecForStroke(stroke), [stroke]);
+  const nib = useNibForStroke(stroke);
   const points = useMemo(
     () => stipplePointsForStroke(stroke, scaleM, boardAspect),
     [stroke, scaleM, boardAspect],
