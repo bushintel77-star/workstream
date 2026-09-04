@@ -10,7 +10,7 @@ the disagreement instead of guessing.
 |---|---|
 | **Entry (this)** | `ONBOARDING.md` |
 | **Binding** | `docs/GOLD-STANDARD-2026.md` (supreme brief) · `apps/web/src/styles/tokens.css` (token source of truth — the standalone tokens doc was purged 2026-09-04 with the legacy design-doc set) · `docs/GOLD-STANDARD-2026-ARCHITECTURE.md` (WebGL architecture — corrected 2026-08-18) |
-| **Living** | `OUTSTANDING.md` (ranked punch list) · `docs/PRODUCTION-ROADMAP-2026-08-17.md` + `docs/FEATURE-LIST-CONCEPT-TO-SIGNOFF.md` (stages + feature coverage) · `docs/CAMERA-STATE-MACHINE.md` (shipped camera map) · `docs/AEC-2026-RESEARCH-ADOPTION.md` (AEC-2026 research decisions) · `AGENTS.md` / `CLAUDE.md` (agent conventions) |
+| **Living** | `OUTSTANDING.md` (ranked punch list) · `docs/PRODUCTION-ROADMAP-2026-08-17.md` + `docs/FEATURE-LIST-CONCEPT-TO-SIGNOFF.md` (stages + feature coverage) · `docs/CAMERA-STATE-MACHINE.md` (shipped camera map) · `docs/AEC-2026-RESEARCH-ADOPTION.md` (AEC-2026 research decisions) · `docs/MORPHOLIO-TRACE-3D-GAP-ANALYSIS-2026.md` (Trace-comparative frontend gap analysis + 3D roadmap) · `AGENTS.md` / `CLAUDE.md` (agent conventions) |
 | **Historical** | `SESSION-HANDOVER-*.md` (session logs), `HANDOVER*.md` at repo root, `docs/WORKSTREAM-STATUS.md` (2026-07-21), `docs/GAP-ANALYSIS*.md`, `docs/archive/pre-gold-standard-2026/` |
 
 ---
