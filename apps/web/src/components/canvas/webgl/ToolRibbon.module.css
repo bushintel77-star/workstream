@@ -1,50 +1,49 @@
 /* Landscape Canvas v2 — Tool Ribbon (handoff §5).
- * Vertical glass panel, hand-opposite edge, top-aligned at inset 30px.
- * Three widths: RAIL 56px (pen down), STANDARD 88px (rest), NAMED 236px (dwell/CmdK).
- * Dark glass chrome with terrain-green accent. */
+ * Floating vertical control stick, vertically centered on the Y-axis,
+ * detached from the glass edge as an independent mechanical unit.
+ * Three widths: RAIL 56px (pen down), STANDARD 88px (icon-only rest), NAMED 236px (hover/CmdK).
+ * Opaque stone charcoal, 4px milled radius on all four corners, mechanically depressed active state. */
 
-/* ---- Ribbon container ---- */
+/* ---- Ribbon container — floating, vertically centered ---- */
 .ribbon {
   position: absolute;
-  /* Spec §4.1: top-aligned at inset 30px — not vertically centred. The top
-   * chip bar clears this column (left:128px), so the two never collide. */
-  top: 30px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  padding: var(--lc-ribbon-padding);
-  border-radius: var(--lc-ribbon-radius);
-  background: var(--lc-glass-grad);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  padding: var(--ws-ribbon-padding);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-2);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
-  transition: width 160ms cubic-bezier(0.32, 0.72, 0, 1),
-    opacity 120ms ease;
+  font-family: var(--ws-font-ui);
+  /* 50ms CSS transform — instant, no easing bounce, no WebGL loop */
+  transition: width 50ms linear, opacity 50ms linear;
 }
 
-/* Handedness — ribbon sits on the hand-opposite edge */
+/* Handedness — ribbon floats on the hand-opposite edge, detached 24px */
 .ribbonLeft {
-  right: 22px;
+  right: 24px;
 }
 
 .ribbonRight {
-  left: 22px;
+  left: 24px;
 }
 
 /* ---- Three widths ---- */
 .ribbonStandard {
-  width: var(--lc-ribbon-width);
+  width: var(--ws-ribbon-width);
 }
 
 .ribbonRail {
-  width: var(--lc-ribbon-width-rail);
-  opacity: var(--lc-op-quiet);
+  width: var(--ws-rail-width);
+  opacity: var(--ws-op-subdued);
 }
 
 .ribbonNamed {
-  width: var(--lc-ribbon-width-named);
+  width: var(--ws-ribbon-width-named);
 }
 
 /* ---- Header ---- */
@@ -56,12 +55,12 @@
 }
 
 .headerLabel {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
 }
 
 /* ---- Group pips (3 dots under header) ---- */
@@ -76,19 +75,25 @@
 .pip {
   width: 4px;
   height: 4px;
-  border-radius: var(--gs-radius-pill);
-  background: var(--lc-ink-30);
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-ink-muted);
 }
 
 .pipActive {
-  background: var(--lc-accent-terrain);
-  box-shadow: 0 0 6px var(--lc-accent-terrain);
+  background: var(--ws-active);
+  box-shadow: 0 0 6px var(--ws-active);
 }
 
-/* ---- Group divider ---- */
+/* ---- Chassis gap between groups (physical gap, not a drawn line) ---- */
+.chassisGap {
+  height: 8px;
+  flex-shrink: 0;
+}
+
+/* ---- Group divider (retained for compat, chassis gap preferred) ---- */
 .groupDivider {
   height: 1px;
-  background: var(--lc-glass-border);
+  background: var(--ws-line);
   margin: 6px 2px 5px;
   flex-shrink: 0;
 }
@@ -97,19 +102,19 @@
 .group {
   display: flex;
   flex-direction: column;
-  gap: var(--lc-ribbon-tile-gap);
+  gap: var(--ws-ribbon-tile-gap);
   /* Anchor for the out-of-flow lock reason. */
   position: relative;
 }
 
 /* ---- Group header ---- */
 .groupHeader {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   padding: 1px 0 3px;
   transition: color 160ms ease;
   /* Anchor for the lock glyph, and a fixed line box so the glyph cannot
@@ -119,13 +124,13 @@
 }
 
 .groupHeaderActive {
-  color: var(--lc-accent-terrain);
+  color: var(--ws-active);
 }
 
 /* Phase L.5 — locked group header (3D perspective lock per chrome contract) */
 .groupHeaderLocked {
-  color: var(--lc-ink-30);
-  opacity: var(--lc-op-ground-line);
+  color: var(--ws-ink-muted);
+  opacity: var(--ws-op-quiet);
 }
 
 /* Out of flow. An inline 9px SVG sits on the baseline and drags the header's
@@ -150,11 +155,11 @@
   position: absolute;
   top: 0;
   width: 150px;
-  font-family: var(--lc-font-mono);
-  font-size: 8.5px;
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   line-height: 1.25;
-  color: var(--lc-ink-30);
-  opacity: var(--lc-op-subsurface);
+  color: var(--ws-ink-muted);
+  opacity: var(--ws-op-subdued);
   padding: 0 0 3px;
   letter-spacing: 0.02em;
   pointer-events: none;
@@ -173,15 +178,15 @@
 }
 
 .tileLocked {
-  opacity: var(--lc-op-ground-line);
+  opacity: var(--ws-op-quiet);
   cursor: not-allowed;
 }
 
-/* Rail width — only the active group header renders, at the 8.5px mono floor.
+/* Rail width — only the active group header renders, at the mono floor.
  * It is the single wayfinding signal in a 56px glyph-only column. */
 .groupHeaderRail {
-  font-family: var(--lc-font-mono);
-  font-size: 8.5px;
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-align: center;
@@ -199,11 +204,11 @@
   /* Height budget (4.3/4.4): 3px 0 2px keeps the CAD pack 74px clear of
    * the bottom on 1194×834. Labels stay at the 9.5px floor — never below. */
   padding: 3px 0 2px;
-  border-radius: var(--lc-ribbon-tile-radius);
+  border-radius: var(--ws-radius-2);
   background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--lc-ink-60);
+  color: var(--ws-ink-secondary);
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   user-select: none;
   position: relative;
@@ -211,36 +216,37 @@
 }
 
 .tile:hover {
-  background: var(--lc-surface-tint);
-  color: var(--lc-ink);
+  background: var(--ws-active-quiet);
+  color: var(--ws-ink);
 }
 
-/* ---- Active tile — accent fill, dark glyph/label ---- */
+/* ---- Active tile — stark white fill, dark ink, inset shadow (depressed switch) ---- */
 .tileActive {
-  background: var(--lc-accent-terrain);
-  color: var(--lc-accent-terrain-on);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--lc-accent-terrain) 35%, transparent);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
+  box-shadow: var(--ws-shadow-inset);
+  border-radius: var(--ws-radius-2);
 }
 
 .tileActive:hover {
-  background: var(--lc-accent-terrain-hi);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
-/* ---- Rail width tiles — glyph-only, 38px tall ---- */
+/* ---- Rail width tiles — glyph-only, 44px tall (accommodates 28px glyph) ---- */
 .tileRail {
-  height: 38px;
+  height: 44px;
   padding: 0;
-  border-radius: var(--gs-radius-lg);
+  border-radius: var(--ws-radius-3);
 }
 
-/* ---- Compact utility tiles — 28px square ---- */
+/* ---- Compact utility tiles — 40px square (accommodates 28px glyph) ---- */
 .tileCompact {
   flex-direction: row;
   justify-content: center;
-  height: 28px;
+  height: 40px;
   padding: 0;
-  border-radius: var(--gs-radius-lg);
+  border-radius: var(--ws-radius-3);
 }
 
 /* ---- Tile glyph ---- */
@@ -258,8 +264,8 @@
 
 /* ---- Tile label (standard + named widths) ---- */
 .tileLabel {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -269,17 +275,17 @@
 
 /* ---- Tile hotkey (named width only) ---- */
 .tileHotkey {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 500;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   line-height: 1;
   margin-left: auto;
 }
 
 .tileActive .tileHotkey {
-  color: var(--lc-accent-terrain-on);
-  opacity: var(--lc-op-60);
+  color: var(--ws-active-ink);
+  opacity: var(--ws-op-subdued);
 }
 
 /* ---- Corner triangle — active tool with a flyout (§5.1) ---- */
@@ -291,7 +297,7 @@
   height: 0;
   border-style: solid;
   border-width: 0 4px 4px 0;
-  border-color: transparent var(--lc-accent-terrain-on) transparent transparent;
+  border-color: transparent var(--ws-active-ink) transparent transparent;
 }
 
 /* ---- Utility row — two 28px tiles side by side ---- */
@@ -320,8 +326,8 @@
 }
 
 .ribbonNamed .tileLabel {
-  font-family: var(--lc-font-ui);
-  font-size: var(--lc-fs-body);
+  font-family: var(--ws-font-ui);
+  font-size: var(--ws-text-xs);
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
@@ -336,5 +342,5 @@
 
 /* ---- Pen-down quiet state (§5.5) — opacity only, never position ---- */
 .ribbonRail {
-  opacity: var(--lc-op-quiet);
+  opacity: var(--ws-op-subdued);
 }

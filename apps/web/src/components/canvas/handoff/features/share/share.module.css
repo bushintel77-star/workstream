@@ -6,7 +6,6 @@
   place-items: center;
   padding: var(--s-5);
   background: color-mix(in srgb, var(--canvas) 88%, transparent);
-  backdrop-filter: none;
 }
 
 .card {

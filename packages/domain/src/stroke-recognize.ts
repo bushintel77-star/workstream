@@ -89,10 +89,12 @@ export function featureFromRecognizedStroke(
   stroke: CanvasStroke,
   recognition: StrokeRecognition,
   idFactory: () => string = () => crypto.randomUUID(),
+  planeZ?: number,
 ): LandscapeFeature {
   return buildLandscapeFeatureFromStroke({
     kind: recognition.kind,
     points: stroke.points,
     id: idFactory(),
+    planeZ,
   });
 }

@@ -13,7 +13,7 @@
  * overhead framing zoom from it; change both together. */
 
 .hud {
-  /* The HUD's own accent — deliberately NOT var(--la-accent) (that token is
+  /* The HUD's own accent — deliberately NOT var(--ws-active) (that token is
      #E5E5E5): this green is the colour the plane wireframe is drawn in
      inside the viewport (PLANE_COLOUR in BirdsEyeHud.tsx, and the same
      green HingeProjectionGizmo snaps its glyph to), so the chrome that
@@ -26,12 +26,10 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px 10px 9px;
-  border-radius: var(--lc-flyout-radius, 16px);
-  background: var(--lc-glass-grad);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  border-radius: var(--ws-radius-3, 16px);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-0), var(--ws-shadow-2);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
   animation: birds-eye-bloom 140ms cubic-bezier(0.32, 0.72, 0, 1) both;
@@ -67,17 +65,17 @@
 }
 
 .headerLabel {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
 }
 
 .headerHint {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -90,8 +88,8 @@
   position: relative;
   width: 208px;
   height: 156px;
-  border-radius: var(--gs-radius-sm);
-  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--ws-radius-3);
+  border: 1px solid var(--ws-line);
   background:
     radial-gradient(
       120% 120% at 50% 45%,
@@ -111,12 +109,12 @@
   position: absolute;
   top: 5px;
   left: 7px;
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
-  /* --lc-ink-30 is already a 55%-alpha ink; no extra opacity step. */
-  color: var(--lc-ink-30);
+  /* --ws-ink-muted is already a 55%-alpha ink; no extra opacity step. */
+  color: var(--ws-ink-muted);
 }
 
 /* ---- Readout — plane name + live fold angle / bearing ---- */
@@ -135,20 +133,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   letter-spacing: 0.04em;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
 }
 
 .readoutFigures {
   flex: none;
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
-  color: var(--lc-ink-70, #e8e6e0);
+  color: var(--ws-ink-secondary);
 }
 
 /* ---- Canonical view buttons — these drive the MAIN camera ---- */
@@ -157,9 +155,9 @@
   display: flex;
   gap: 3px;
   padding: 3px;
-  border-radius: var(--gs-radius-sm);
-  background: color-mix(in srgb, var(--gs-ink-strong) 22%, transparent);
-  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--ws-radius-3);
+  background: color-mix(in srgb, var(--ws-ink) 22%, transparent);
+  border: 1px solid var(--ws-line);
 }
 
 .viewButton {
@@ -167,26 +165,26 @@
   flex: 1;
   padding: 5px 0 4px;
   border: 0;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   background: transparent;
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   cursor: pointer;
   transition: color 120ms ease, background 120ms ease;
 }
 
 .viewButton:hover {
-  color: var(--lc-ink-70, #e8e6e0);
+  color: var(--ws-ink-secondary);
   background: rgba(255, 255, 255, 0.05);
 }
 
 .viewButtonActive,
 .viewButtonActive:hover {
-  color: var(--lc-ink-70, #e8e6e0);
+  color: var(--ws-ink-secondary);
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -199,7 +197,7 @@
   width: 18px;
   height: 2px;
   transform: translateX(-50%);
-  border-radius: var(--gs-radius-pill);
+  border-radius: var(--ws-radius-pill);
   background: var(--birds-eye-accent);
 }
 

@@ -6,16 +6,14 @@
 .flyout {
   position: absolute;
   top: 50%;
-  width: var(--lc-flyout-width, 238px);
+  width: var(--ws-flyout-width, 238px);
   padding: 14px 15px 13px;
-  border-radius: var(--lc-flyout-radius, 16px);
+  border-radius: var(--ws-radius-3, 16px);
   background: linear-gradient(180deg,
       rgba(32, 35, 37, 0.96),
       rgba(23, 25, 27, 0.94));
-  backdrop-filter: blur(22px) saturate(1.3);
-  -webkit-backdrop-filter: blur(22px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-flyout-shadow);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-2);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
   display: flex;
@@ -31,21 +29,21 @@
  * → ribbon on the right edge (right:22px), flyout blooms to the LEFT. Both
  * share the ribbon's 22px viewport inset + 10px gap. */
 .flyoutLeft {
-  right: calc(22px + var(--lc-ribbon-width, 88px) + 10px);
+  right: calc(22px + var(--ws-ribbon-width, 88px) + 10px);
 }
 
 .flyoutRight {
-  left: calc(22px + var(--lc-ribbon-width, 88px) + 10px);
+  left: calc(22px + var(--ws-ribbon-width, 88px) + 10px);
 }
 
 @keyframes flyout-bloom {
   from {
-    opacity: var(--lc-op-hidden);
+    opacity: var(--ws-op-hidden);
     transform: scale(0.96);
   }
 
   to {
-    opacity: var(--lc-op-active);
+    opacity: var(--ws-op-full);
     transform: scale(1);
   }
 }
@@ -62,14 +60,14 @@
 
 .arrowLeft {
   left: -5px;
-  border-left: 1px solid var(--lc-glass-border);
-  border-bottom: 1px solid var(--lc-glass-border);
+  border-left: 1px solid var(--ws-line);
+  border-bottom: 1px solid var(--ws-line);
 }
 
 .arrowRight {
   right: -5px;
-  border-right: 1px solid var(--lc-glass-border);
-  border-top: 1px solid var(--lc-glass-border);
+  border-right: 1px solid var(--ws-line);
+  border-top: 1px solid var(--ws-line);
 }
 
 /* ---- Section header ---- */
@@ -81,17 +79,17 @@
 }
 
 .headerTitle {
-  font-family: var(--lc-font-ui);
-  font-size: var(--lc-fs-panel, 13px);
+  font-family: var(--ws-font-ui);
+  font-size: var(--ws-text-md, 13px);
   font-weight: 600;
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .headerHint {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group, 9.5px);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro, 9.5px);
   font-weight: 600;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
 }
 
 .section {
@@ -112,13 +110,13 @@
   align-items: center;
   gap: 7px;
   padding: 8px 9px;
-  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  border-radius: var(--ws-radius-2, 11px);
   background: rgba(232, 230, 224, 0.06);
   border: 1px solid rgba(232, 230, 224, 0.1);
   cursor: pointer;
-  color: var(--lc-ink-60);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph, 9.5px);
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro, 9.5px);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -127,24 +125,24 @@
 
 .nib:hover {
   background: rgba(232, 230, 224, 0.1);
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .nibActive {
-  background: var(--lc-accent-terrain);
-  border-color: var(--lc-accent-terrain);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  border-color: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
 .nibActive:hover {
-  background: var(--lc-accent-terrain-hi);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
 .nibSwatch {
   width: 14px;
   height: 14px;
-  border-radius: var(--gs-radius-chip, 6px);
+  border-radius: var(--ws-radius-2, 6px);
   border: 1px solid rgba(232, 230, 224, 0.25);
   flex-shrink: 0;
 }
@@ -164,10 +162,10 @@
   justify-content: center;
   height: 24px;
   border: 1px solid rgba(232, 230, 224, 0.1);
-  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  border-radius: var(--ws-radius-2, 11px);
   background: rgba(232, 230, 224, 0.06);
-  color: var(--lc-ink-60);
-  font-family: var(--lc-font-mono);
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
   font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
@@ -178,28 +176,28 @@
 
 .eraserBtn:hover {
   background: rgba(232, 230, 224, 0.1);
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .eraserBtnActive {
-  background: var(--gs-conflict, #c41e1e);
-  border-color: var(--gs-conflict, #c41e1e);
+  background: var(--ws-conflict);
+  border-color: var(--ws-conflict);
   color: #fff;
 }
 
 .eraserBtnActive:hover {
-  background: var(--gs-conflict, #c41e1e);
+  background: var(--ws-conflict);
   color: #fff;
-  opacity: var(--lc-op-hover, 0.85);
+  opacity: var(--ws-op-hover, 0.85);
 }
 
 /* Phase L.6 — weight control convert note (3D: mm → screen px) */
 .weightConvertNote {
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 8.5px;
   line-height: 1.25;
-  color: var(--lc-ink-30);
-  opacity: var(--lc-op-subsurface);
+  color: var(--ws-ink-muted);
+  opacity: var(--ws-op-subdued);
   padding: 2px 0 0;
   letter-spacing: 0.02em;
 }
@@ -213,12 +211,12 @@
 }
 
 .materialGroupLabel {
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 8.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
 }
 
 .swatchGrid {
@@ -231,7 +229,7 @@
 .swatch {
   width: 22px;
   height: 22px;
-  border-radius: var(--gs-radius-md);
+  border-radius: var(--ws-radius-3);
   border: none;
   padding: 0;
   cursor: pointer;
@@ -245,13 +243,13 @@
 .swatchColor {
   width: 22px;
   height: 22px;
-  border-radius: var(--gs-radius-md);
+  border-radius: var(--ws-radius-3);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset;
 }
 
 /* Active swatch ring: 0 0 0 2px panel bg, 0 0 0 3.6px ink (spec 7.1) */
 .swatchActive {
-  box-shadow: 0 0 0 2px var(--lc-panel-bg, #1c1e21), 0 0 0 3.6px var(--lc-ink, #e8e6e0);
+  box-shadow: 0 0 0 2px var(--ws-panel), 0 0 0 3.6px var(--ws-ink);
 }
 
 /* Build-up ramp — five alpha swatches */
@@ -264,7 +262,7 @@
 .rampSwatch {
   width: 28px;
   height: 14px;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
 }
 
 /* ---- Asset grid ---- */
@@ -280,30 +278,30 @@
   align-items: flex-start;
   gap: 2px;
   padding: 8px 9px;
-  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  border-radius: var(--ws-radius-2, 11px);
   background: rgba(232, 230, 224, 0.06);
   border: 1px solid rgba(232, 230, 224, 0.1);
   cursor: pointer;
-  color: var(--lc-ink-60);
-  font-family: var(--lc-font-mono);
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   text-align: left;
 }
 
 .asset:hover {
   background: rgba(232, 230, 224, 0.1);
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .assetActive {
-  background: var(--lc-accent-terrain);
-  border-color: var(--lc-accent-terrain);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  border-color: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
 .assetActive:hover {
-  background: var(--lc-accent-terrain-hi);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
 .assetGlyph {
@@ -312,20 +310,20 @@
 }
 
 .assetName {
-  font-size: var(--lc-fs-glyph, 9.5px);
+  font-size: var(--ws-text-micro, 9.5px);
   font-weight: 600;
   line-height: 1.2;
 }
 
 .assetMeta {
-  font-size: var(--lc-fs-group, 9px);
-  color: var(--lc-ink-30);
+  font-size: var(--ws-text-micro, 9px);
+  color: var(--ws-ink-muted);
   line-height: 1;
 }
 
 .assetActive .assetMeta {
-  color: var(--lc-accent-terrain-on);
-  opacity: var(--lc-op-60, 0.6);
+  color: var(--ws-active-ink);
+  opacity: var(--ws-op-subdued, 0.6);
 }
 
 /* ---- Plane picker ---- */
@@ -341,46 +339,46 @@
   align-items: center;
   gap: 2px;
   padding: 7px 6px;
-  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  border-radius: var(--ws-radius-2, 11px);
   background: rgba(232, 230, 224, 0.06);
   border: 1px solid rgba(232, 230, 224, 0.1);
   cursor: pointer;
-  color: var(--lc-ink-60);
-  font-family: var(--lc-font-mono);
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .plane:hover {
   background: rgba(232, 230, 224, 0.1);
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .planeActive {
-  background: var(--lc-accent-terrain);
-  border-color: var(--lc-accent-terrain);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  border-color: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
 .planeActive:hover {
-  background: var(--lc-accent-terrain-hi);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
 .planeName {
-  font-size: var(--lc-fs-glyph, 9.5px);
+  font-size: var(--ws-text-micro, 9.5px);
   font-weight: 700;
   line-height: 1;
 }
 
 .planeZ {
-  font-size: var(--lc-fs-group, 8.5px);
-  color: var(--lc-ink-30);
+  font-size: var(--ws-text-micro, 8.5px);
+  color: var(--ws-ink-muted);
   line-height: 1;
 }
 
 .planeActive .planeZ {
-  color: var(--lc-accent-terrain-on);
-  opacity: var(--lc-op-60, 0.6);
+  color: var(--ws-active-ink);
+  opacity: var(--ws-op-subdued, 0.6);
 }
 
 /* ---- Falloff preset picker (turn 14c) ---- */
@@ -395,12 +393,12 @@
   align-items: center;
   justify-content: center;
   padding: 7px 4px;
-  border: 1px solid var(--lc-glass-border);
-  border-radius: var(--gs-radius-md);
+  border: 1px solid var(--ws-line);
+  border-radius: var(--ws-radius-3);
   background: transparent;
-  color: var(--lc-ink-40);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group, 8.5px);
+  color: var(--ws-ink-muted);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro, 8.5px);
   font-weight: 700;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -409,16 +407,16 @@
 
 .falloffBtn:hover {
   background: rgba(232, 230, 224, 0.1);
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .falloffBtnActive {
-  background: var(--lc-accent-terrain);
-  border-color: var(--lc-accent-terrain);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  border-color: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
 .falloffBtnActive:hover {
-  background: var(--lc-accent-terrain-hi);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
 }

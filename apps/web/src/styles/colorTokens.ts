@@ -69,25 +69,25 @@ export const PALETTE = {
   warningL500: "#525252", // status = ink + iconography (crimson reserved for critical)
   warningD400: "#525252",
   // Dark Studio chrome (DESIGN.md §2 — 2026-08-26)
-  gsCanvas: "#0A0A0A", // canvas clear color + fog — deep void for drawing pop
+  gsCanvas: "#0D0F11", // canvas clear color + fog — deep void for drawing pop
   gsPanel: "#121212", // floating panel body — dark grey chassis
   gsLine: "#2D2D2D", // decorative hairline
   gsLineStrong: "#737373", // interactive boundaries
   gsInk: "#FFFFFF", // primary ink — high-contrast white
-  gsInkStrong: "#111111", // emphasis ink (--gs-ink-strong)
-  gsInkSecondary: "#525252", // secondary ink (--gs-ink-secondary)
-  gsInkMuted: "#636363", // single muted value (--gs-ink-muted)
-  gsChipActive: "#1A1A1A", // charcoal selection chips (--gs-chip-active)
-  gsChipActiveInk: "#FFFFFF", // ink on charcoal chips (--gs-chip-active-ink)
-  gsConflict: "#C41E1E", // strike alert / critical crimson (--gs-conflict)
-  gsConflictInk: "#B91C1C", // crimson as text (--gs-primary-ink)
-  gsPrimary: "#3D5AFE", // Primary Blue — CTA/focus/active (--gs-primary)
-  gsPrimaryInk: "#2340C8", // blue text on paper (--gs-primary-ink)
-  gsEarthworksFill: "#C9A84C", // earthworks fill data pair (--gs-earthworks-fill)
+  gsInkStrong: "#E8EAEC", // emphasis ink (--ws-ink)
+  gsInkSecondary: "#B3B9BF", // secondary ink (--ws-ink-secondary)
+  gsInkMuted: "#878F96", // single muted value (--ws-ink-muted)
+  gsChipActive: "#E8EAEC", // stark white selection chips (--ws-active)
+  gsChipActiveInk: "#0D0F11", // ink on white chips (--ws-active-ink)
+  gsConflict: "#D2564F", // strike alert / critical crimson (--ws-conflict)
+  gsConflictInk: "#B91C1C", // crimson as text (--ws-active)
+  gsPrimary: "#E8EAEC", // stark white — CTA/focus/active (--ws-active)
+  gsPrimaryInk: "#E8EAEC", // white text (--ws-active)
+  gsEarthworksFill: "#C9A84C", // earthworks fill data pair (--ws-dwg-fill)
   // WebGL render values — physical light/shadow (mirrors color-tokens.css --gs-* render tokens)
   sunWarm: "#FFF1D6",
   skyCool: "#8A9BB5",
-  gsShadow: "#05070A",
+  gsShadow: "#0D0F11",
   foliageTint: "#3D6B48",
   groundOlive: "#A8A196",
   // CAD drafting surface — neutral drafting grey, maximises contrast for
@@ -119,7 +119,7 @@ export const PALETTE = {
   // around it described vellum as *lighter* ("the whole surface lightens toward
   // vellum"). Re-based 2026-08-22 to a warm drafting vellum: lighter than
   // groundOlive as the surrounding comments always claimed, a touch warmer and
-  // darker than --gs-canvas so the armed ground still reads as a surface, and
+  // darker than --ws-canvas so the armed ground still reads as a surface, and
   // light enough that the muted cad* hairlines and the #1A1A1A dotted field
   // gain contrast instead of losing it.
   renderBlueprintGround: "#E8E2D4",
@@ -136,7 +136,7 @@ export const SEMANTIC = {
   textMuted: PALETTE.grayL400,
   existingStroke: PALETTE.crimsonD500,
   existingText: PALETTE.crimsonL600,
-  proposedStroke: "#0030CF", // --gs-truth data stroke (8.22:1 on paper)
+  proposedStroke: "#0030CF", // --ws-dwg-truth data stroke (8.22:1 on paper)
   proposedText: PALETTE.cobaltL600,
   plantingRetainStroke: PALETTE.forestL600,
   plantingRetainText: PALETTE.forestL600,
@@ -212,24 +212,24 @@ export const CSS_TOKEN = {
   danger: "var(--danger)",
   success: "var(--success)",
   // Studio Paper chrome tokens (mirrors color-tokens.css --gs-*)
-  gsCanvas: "var(--gs-canvas)",
-  gsPanel: "var(--gs-panel)",
-  gsLine: "var(--gs-line)",
-  gsLineStrong: "var(--gs-line-strong)",
-  gsInk: "var(--gs-ink)",
-  gsInkStrong: "var(--gs-ink-strong)",
-  gsInkSecondary: "var(--gs-ink-secondary)",
-  gsInkMuted: "var(--gs-ink-muted)",
-  gsChipActive: "var(--gs-chip-active)",
-  gsChipActiveInk: "var(--gs-chip-active-ink)",
-  gsPrimary: "var(--gs-primary)",
-  gsPrimaryInk: "var(--gs-primary-ink)",
-  gsConflict: "var(--gs-conflict)",
+  gsCanvas: "var(--ws-canvas)",
+  gsPanel: "var(--ws-panel)",
+  gsLine: "var(--ws-line)",
+  gsLineStrong: "var(--ws-line-strong)",
+  gsInk: "var(--ws-ink)",
+  gsInkStrong: "var(--ws-ink)",
+  gsInkSecondary: "var(--ws-ink-secondary)",
+  gsInkMuted: "var(--ws-ink-muted)",
+  gsChipActive: "var(--ws-active)",
+  gsChipActiveInk: "var(--ws-active-ink)",
+  gsPrimary: "var(--ws-active)",
+  gsPrimaryInk: "var(--ws-active)",
+  gsConflict: "var(--ws-conflict)",
   // WebGL render values (mirrors color-tokens.css --gs-* render tokens)
-  sunWarm: "var(--gs-sun-warm)",
-  skyCool: "var(--gs-sky-cool)",
-  gsShadow: "var(--gs-shadow)",
-  foliageTint: "var(--gs-foliage-tint)",
+  sunWarm: "var(--ws-dwg-sun-warm)",
+  skyCool: "var(--ws-dwg-sky-cool)",
+  gsShadow: "var(--ws-canvas)",
+  foliageTint: "var(--ws-dwg-foliage)",
 } as const;
 
 /** Common plan fills as ready-to-paint CSS strings. */

@@ -29,8 +29,8 @@ function violations(
   for (const category of DESIGN_CATEGORIES) {
     for (const value of tokensIn(categories[category])) {
       for (const reserved of RESERVED_TRUTH_TOKENS) {
-        // Word-boundary match so `--gs-truth` does not also flag `--gs-truth-ink`
-        // twice, and so `--gs-primary` does not match an unrelated longer name.
+        // Word-boundary match so `--ws-dwg-truth` does not also flag `--ws-dwg-truth-ink`
+        // twice, and so `--ws-active` does not match an unrelated longer name.
         if (new RegExp(`${reserved}(?![\\w-])`).test(value)) {
           found.push(`${category} uses ${reserved}`);
         }
@@ -39,7 +39,7 @@ function violations(
   }
   for (const category of SURVEY_TRUTH_CATEGORIES) {
     const uses = tokensIn(categories[category]).some((value) =>
-      value.includes("--gs-truth"),
+      value.includes("--ws-dwg-truth"),
     );
     if (!uses) found.push(`${category} does not carry the Truth Anchor`);
   }
@@ -54,32 +54,32 @@ function violations(
  * being enforced and the hierarchy can silently invert again.
  */
 const INVERTED_ARCHITECTURAL: Record<SurveyedAnnotationCategory, CategoryStyle> = {
-  property_line: { stroke: "var(--la-ink)", strokeWidth: 2.1, text: "var(--la-ink)" },
+  property_line: { stroke: "var(--ws-ink)", strokeWidth: 2.1, text: "var(--ws-ink)" },
   elevation_rl: {
-    stroke: "var(--gs-primary)",
+    stroke: "var(--ws-active)",
     strokeWidth: 1.35,
-    text: "var(--gs-primary-ink)",
+    text: "var(--ws-active)",
   },
   plant_tag: {
-    stroke: "var(--gs-primary-ink)",
+    stroke: "var(--ws-active)",
     strokeWidth: 1.35,
-    text: "var(--gs-primary-ink)",
-    fill: "color-mix(in srgb, var(--gs-primary) 8%, var(--gs-canvas))",
+    text: "var(--ws-active)",
+    fill: "color-mix(in srgb, var(--ws-active) 8%, var(--ws-canvas))",
   },
   material_hatch: {
-    stroke: "color-mix(in srgb, var(--la-ink) 46%, transparent)",
+    stroke: "color-mix(in srgb, var(--ws-ink) 46%, transparent)",
     strokeWidth: 0.9,
-    text: "var(--la-ink-secondary)",
+    text: "var(--ws-ink-secondary)",
   },
   detail_callout: {
-    stroke: "var(--gs-primary-ink)",
+    stroke: "var(--ws-active)",
     strokeWidth: 1.35,
-    text: "var(--la-ink)",
+    text: "var(--ws-ink)",
   },
   scope_outline: {
-    stroke: "var(--gs-primary-ink)",
+    stroke: "var(--ws-active)",
     strokeWidth: 1.35,
-    text: "var(--gs-primary-ink)",
+    text: "var(--ws-active)",
     dash: "4 4",
   },
 };
@@ -88,9 +88,9 @@ describe("annotation dialect hierarchy invariant", () => {
   it("fails the pre-2026-08-22 architectural dialect (negative control)", () => {
     const found = violations(INVERTED_ARCHITECTURAL);
     expect(found).toContain("property_line does not carry the Truth Anchor");
-    expect(found).toContain("plant_tag uses --gs-primary-ink");
-    expect(found).toContain("detail_callout uses --gs-primary-ink");
-    expect(found).toContain("scope_outline uses --gs-primary-ink");
+    expect(found).toContain("plant_tag uses --ws-active");
+    expect(found).toContain("detail_callout uses --ws-active");
+    expect(found).toContain("scope_outline uses --ws-active");
   });
 
   it("holds for every shipped dialect", () => {
@@ -109,8 +109,8 @@ describe("annotation dialect hierarchy invariant", () => {
     const texts = new Set(
       DIALECTS.map((d) => dialectStyleProfile(d).categories.property_line.text),
     );
-    expect(strokes).toEqual(new Set(["var(--gs-truth)"]));
-    expect(texts).toEqual(new Set(["var(--gs-truth-ink)"]));
+    expect(strokes).toEqual(new Set(["var(--ws-dwg-truth)"]));
+    expect(texts).toEqual(new Set(["var(--ws-dwg-truth-ink)"]));
   });
 
   it("still differentiates dialects — by weight and dash, not hue", () => {

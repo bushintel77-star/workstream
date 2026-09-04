@@ -72,17 +72,17 @@ const Z_TOKEN_SELECTORS = [
 ];
 
 /**
- * SDS UI element standards enforcement — see docs/UI-ELEMENT-STANDARDS.md.
+ * SDS UI element standards enforcement — see styles/tokens.css.
  *
  * Canvas-only: feature modules outside canvas are free to use whatever scales
  * they decide on. The numeric scales here all have a token reference in
  * apps/web/src/styles/globals.css:
- *   --gs-radius-{xs|sm|md|lg|xl|2xl|pill}       7 rungs
- *   --gs-font-{micro|xs|sm|md|lg|sub|h3|h2|h1}  9 rungs
- *   --gs-space-{1|2|3|4|6|8|10}                 7 rungs
+ *   --ws-radius-{0|1|2|3|pill}                  5 rungs
+ *   --ws-text-{micro|xs|sm|md|lg|xl}            6 rungs
+ *   --ws-space-{1|2|3|4|5|6|7}                  7 rungs
  *
  * Raw rgba()/rgb() is flagged because 4 dev-HUD tokens already cover all the
- * dark-surface needs, plus the named --gs-shadow / --gs-warning-amber companion
+ * dark-surface needs, plus the named --ws-shadow-1 / --ws-warning companion
  * tokens cover the only two content-meaningful rgba usages left in the tree.
  *
  * Companion reader: apps/web/src/components/canvas/ui.scan.test.ts catches the
@@ -93,22 +93,22 @@ const UI_SCALE_SELECTORS = [
     selector:
       "Property[key.name='borderRadius'][value.type='Literal'][value>0]",
     message:
-      "Raw numeric borderRadius is forbidden in canvas — use var(--gs-radius-xs|sm|md|lg|xl|2xl|pill) per docs/UI-ELEMENT-STANDARDS.md §1. (literal 0 is reserved — it means \"no corner\" and is allowed.)",
+      "Raw numeric borderRadius is forbidden in canvas — use var(--ws-radius-0|1|2|3|pill) per styles/tokens.css §1. (literal 0 is reserved — it means \"no corner\" and is allowed.)",
   },
   {
     selector: "Property[key.name='fontSize'][value.type='Literal'][value>0]",
     message:
-      "Raw numeric fontSize is forbidden in canvas — use var(--gs-font-micro|xs|sm|md|lg|sub|h3|h2|h1) per docs/UI-ELEMENT-STANDARDS.md §2.",
+      "Raw numeric fontSize is forbidden in canvas — use var(--ws-text-micro|xs|sm|md|lg|xl) per styles/tokens.css §2.",
   },
   {
     selector: "Property[key.name='gap'][value.type='Literal'][value>0]",
     message:
-      "Raw numeric gap is forbidden in canvas — use var(--gs-space-1|2|3|4|6|8|10) per docs/UI-ELEMENT-STANDARDS.md §3. (literal 0 is reserved — it means \"no gap\" and is allowed.)",
+      "Raw numeric gap is forbidden in canvas — use var(--ws-space-1|2|3|4|5|6|7) per styles/tokens.css §3. (literal 0 is reserved — it means \"no gap\" and is allowed.)",
   },
   {
     selector: "Literal[value=/rgba?\\(\\s*\\d/]",
     message:
-      "Raw rgba()/rgb() literal in canvas is forbidden — consume a CSS token (--cf-dark-chrome-bg, --cf-dark-panel-bg, --gs-shadow, --gs-warning-amber) per docs/UI-ELEMENT-STANDARDS.md §5.",
+      "Raw rgba()/rgb() literal in canvas is forbidden — consume a CSS token (--ws-panel, --ws-panel-raised, --ws-line, --ws-shadow-1) per styles/tokens.css §5.",
   },
 ];
 

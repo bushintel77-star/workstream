@@ -58,13 +58,13 @@ const READOUT_LIFT_M = 0.4;
 
 const readoutStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: "var(--gs-font-sm)",
+  fontSize: "var(--ws-text-xs)",
   fontWeight: 600,
   fontVariantNumeric: "tabular-nums",
-  color: "var(--la-accent)",
-  background: "color-mix(in srgb, var(--la-surface) 82%, transparent)",
-  border: "1px solid color-mix(in srgb, var(--la-accent) 40%, transparent)",
-  borderRadius: "var(--gs-radius-md)",
+  color: "var(--ws-active)",
+  background: "color-mix(in srgb, var(--ws-panel) 82%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--ws-active) 40%, transparent)",
+  borderRadius: "var(--ws-radius-3)",
   padding: "1px 8px",
   whiteSpace: "nowrap",
   pointerEvents: "none",

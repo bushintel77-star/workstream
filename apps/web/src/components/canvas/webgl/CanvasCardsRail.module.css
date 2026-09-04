@@ -10,12 +10,10 @@
   flex-direction: column;
   gap: 7px;
   padding: 10px;
-  border-radius: var(--lc-depth-rail-radius);
-  background: var(--lc-glass-grad);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-0), var(--ws-shadow-2);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
 }
@@ -33,11 +31,11 @@
 }
 
 .railHeader {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   text-align: center;
   padding: 2px 0 4px;
   letter-spacing: 0.08em;
@@ -48,9 +46,9 @@
   position: relative;
   width: 74px;
   height: 46px;
-  border-radius: var(--gs-radius-lg);
-  background: var(--lc-surface-tint);
-  border: 1px solid var(--lc-track-border);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-active-quiet);
+  border: 1px solid var(--ws-line-soft);
   cursor: pointer;
   overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -58,17 +56,17 @@
 }
 
 .card:hover {
-  border-color: var(--lc-ink-30);
+  border-color: var(--ws-ink-muted);
 }
 
 /* Active card — spec §4: "active 1.5px accent border + 0 0 0 3px accent/.18". */
 .cardActive {
-  border: 1.5px solid var(--lc-accent-terrain);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lc-accent-terrain) 18%, transparent);
+  border: 1.5px solid var(--ws-active);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ws-active) 18%, transparent);
 }
 
 .cardActive:hover {
-  border-color: var(--lc-accent-terrain);
+  border-color: var(--ws-active);
 }
 
 /* Hidden canvas — §14c: "a faded canvas keeps a 1px edge and its list row".
@@ -76,7 +74,7 @@
  *  only a 1px outline + the name, no thumbnail. */
 .cardHidden {
   background: transparent;
-  border: 1px solid var(--lc-track-border);
+  border: 1px solid var(--ws-line-soft);
 }
 
 .cardHidden .thumb {
@@ -90,7 +88,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: var(--lc-op-subsurface);
+  opacity: var(--ws-op-subdued);
 }
 
 .thumbSvg {
@@ -105,12 +103,12 @@
   left: 0;
   right: 0;
   padding: 2px 4px;
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--lc-ink);
-  background: color-mix(in srgb, var(--lc-glass-bg) 85%, transparent);
+  color: var(--ws-ink);
+  background: color-mix(in srgb, var(--ws-panel) 85%, transparent);
   letter-spacing: 0.03em;
   text-align: center;
   white-space: nowrap;
@@ -126,13 +124,13 @@
   left: 0;
   right: 0;
   padding: 2px 4px;
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--lc-ink);
-  background: var(--lc-glass-bg);
-  border: 1px solid var(--lc-accent-terrain);
+  color: var(--ws-ink);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-active);
   border-radius: 0;
   outline: none;
   text-align: center;
@@ -151,33 +149,33 @@
   align-items: center;
   justify-content: center;
   border: none;
-  background: color-mix(in srgb, var(--lc-glass-bg) 70%, transparent);
-  border-radius: var(--gs-radius-xs);
-  color: var(--lc-ink-60);
+  background: color-mix(in srgb, var(--ws-panel) 70%, transparent);
+  border-radius: var(--ws-radius-2);
+  color: var(--ws-ink-secondary);
   font-size: 10px;
   line-height: 1;
   cursor: pointer;
-  opacity: var(--lc-op-hidden);
+  opacity: var(--ws-op-hidden);
   transition: opacity 0.15s ease;
   z-index: var(--cf-z-spatial);
 }
 
 .card:hover .eyeBtn {
-  opacity: var(--lc-op-active);
+  opacity: var(--ws-op-full);
 }
 
 .eyeBtn:hover {
-  color: var(--lc-ink);
-  background: var(--lc-glass-bg);
+  color: var(--ws-ink);
+  background: var(--ws-panel);
 }
 
 .eyeBtnHidden {
-  color: var(--lc-ink-30);
-  opacity: var(--lc-op-60);
+  color: var(--ws-ink-muted);
+  opacity: var(--ws-op-subdued);
 }
 
 .card:hover .eyeBtnHidden {
-  opacity: var(--lc-op-active);
+  opacity: var(--ws-op-full);
 }
 
 /* Delete button — top-right corner, appears on hover. */
@@ -191,24 +189,24 @@
   align-items: center;
   justify-content: center;
   border: none;
-  background: color-mix(in srgb, var(--lc-accent-redline) 15%, transparent);
-  border-radius: var(--gs-radius-xs);
-  color: var(--lc-accent-redline);
+  background: color-mix(in srgb, var(--ws-dwg-redline) 15%, transparent);
+  border-radius: var(--ws-radius-2);
+  color: var(--ws-dwg-redline);
   font-size: 11px;
   line-height: 1;
   cursor: pointer;
-  opacity: var(--lc-op-hidden);
+  opacity: var(--ws-op-hidden);
   transition: opacity 0.15s ease;
   z-index: var(--cf-z-spatial);
 }
 
 .card:hover .deleteBtn {
-  opacity: var(--lc-op-active);
+  opacity: var(--ws-op-full);
 }
 
 .deleteBtn:hover {
-  background: color-mix(in srgb, var(--lc-accent-redline) 30%, transparent);
-  color: var(--lc-accent-redline);
+  background: color-mix(in srgb, var(--ws-dwg-redline) 30%, transparent);
+  color: var(--ws-dwg-redline);
 }
 
 /* Season tag — small cycle button below each card */
@@ -218,27 +216,27 @@
   justify-content: center;
   width: 74px;
   height: 18px;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   background: transparent;
-  color: var(--lc-ink-40);
-  font-family: var(--lc-font-mono);
+  color: var(--ws-ink-muted);
+  font-family: var(--ws-font-tech);
   font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border: 1px solid var(--lc-track-border);
+  border: 1px solid var(--ws-line-soft);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .seasonTag:hover {
-  background: var(--lc-surface-tint);
-  color: var(--lc-ink);
+  background: var(--ws-active-quiet);
+  color: var(--ws-ink);
 }
 
 .seasonTagSummer {
-  color: var(--lc-accent-terrain);
-  border-color: color-mix(in srgb, var(--lc-accent-terrain) 30%, transparent);
+  color: var(--ws-active);
+  border-color: color-mix(in srgb, var(--ws-active) 30%, transparent);
 }
 
 .seasonTagWinter {
@@ -247,7 +245,7 @@
 }
 
 .seasonTagAll {
-  color: var(--lc-ink-40);
+  color: var(--ws-ink-muted);
 }
 
 /* Add-canvas button — the "+" cell at the bottom of the rail. */
@@ -257,20 +255,20 @@
   justify-content: center;
   width: 74px;
   height: 46px;
-  border-radius: var(--gs-radius-lg);
+  border-radius: var(--ws-radius-3);
   background: transparent;
-  color: var(--lc-ink-40);
+  color: var(--ws-ink-muted);
   font-size: 18px;
   line-height: 1;
-  border: 1px dashed var(--lc-track-border);
+  border: 1px dashed var(--ws-line-soft);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .addCell:hover {
-  background: var(--lc-surface-tint);
-  color: var(--lc-ink);
-  border-color: var(--lc-ink-30);
+  background: var(--ws-active-quiet);
+  color: var(--ws-ink);
+  border-color: var(--ws-ink-muted);
   border-style: solid;
 }
 
@@ -281,12 +279,12 @@
   justify-content: center;
   width: 74px;
   height: 46px;
-  border-radius: var(--gs-radius-lg);
-  background: var(--lc-surface-tint);
-  border: 1px solid var(--lc-track-border);
-  color: var(--lc-ink-60);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-active-quiet);
+  border: 1px solid var(--ws-line-soft);
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
   text-transform: uppercase;
   cursor: pointer;
@@ -294,13 +292,13 @@
 }
 
 .groundCell:hover {
-  border-color: var(--lc-ink-30);
+  border-color: var(--ws-ink-muted);
 }
 
 .groundCellActive {
-  border: 1.5px solid var(--lc-accent-terrain);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lc-accent-terrain) 18%, transparent);
-  color: var(--lc-accent-terrain);
+  border: 1.5px solid var(--ws-active);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ws-active) 18%, transparent);
+  color: var(--ws-active);
 }
 
 /* Card + season tag wrapper */
@@ -326,8 +324,8 @@
 
 /* Phase B2 — drag-over highlight on a card. */
 .cardDragOver {
-  border: 1.5px dashed var(--lc-accent-terrain);
-  background: color-mix(in srgb, var(--lc-accent-terrain) 10%, transparent);
+  border: 1.5px dashed var(--ws-active);
+  background: color-mix(in srgb, var(--ws-active) 10%, transparent);
 }
 
 /* Phase B2 — context menu (right-click / long-press). */
@@ -337,10 +335,10 @@
   gap: 2px;
   padding: 4px;
   min-width: 120px;
-  border-radius: var(--gs-radius-md);
-  background: var(--lc-glass-bg);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-flyout-shadow);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-2);
   z-index: var(--cf-z-app);
   pointer-events: auto;
 }
@@ -349,24 +347,24 @@
   padding: 6px 10px;
   border: none;
   background: transparent;
-  color: var(--lc-ink);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  color: var(--ws-ink);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
   text-align: left;
   cursor: pointer;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   transition: background 0.1s ease;
 }
 
 .contextItem:hover {
-  background: var(--lc-surface-tint);
+  background: var(--ws-active-quiet);
 }
 
 .contextItemDanger {
-  color: var(--lc-accent-redline);
+  color: var(--ws-dwg-redline);
 }
 
 .contextItemDanger:hover {
-  background: color-mix(in srgb, var(--lc-accent-redline) 10%, transparent);
+  background: color-mix(in srgb, var(--ws-dwg-redline) 10%, transparent);
 }

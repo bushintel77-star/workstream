@@ -4,28 +4,26 @@
 
 /* ---- Dock container ---- */
 .dock {
-  position: absolute;
-  bottom: 22px;
-  left: 50%;
-  transform: translateX(-50%);
+  /* A flow child of FloatingChrome's `.bottomStack` — the stack owns the
+     bottom offset and the centring. `relative` is kept so the buttons'
+     absolutely positioned decorations still resolve against the dock. */
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 9px;
-  border-radius: var(--lc-camera-dock-radius);
-  background: var(--lc-glass-grad);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-2);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
-  transition: opacity 120ms ease;
+  transition: opacity 50ms linear;
 }
 
 /* Pen-down quiet state — camera dock hidden (§5.5) */
 .dockHidden {
-  opacity: var(--lc-op-hidden);
+  opacity: var(--ws-op-hidden);
   pointer-events: none;
 }
 
@@ -37,19 +35,19 @@
 }
 
 .statusCapLabel {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
 }
 
 /* ---- Divider between sections ---- */
 .statusDivider {
   width: 1px;
   height: 28px;
-  background: var(--lc-glass-border);
+  background: var(--ws-line);
   flex-shrink: 0;
 }
 
@@ -69,44 +67,48 @@
   gap: 3px;
   width: 80px;
   height: 56px;
-  border-radius: var(--gs-radius-2xl);
+  border-radius: var(--ws-radius-3);
   background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--lc-ink-60);
+  color: var(--ws-ink-secondary);
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   user-select: none;
   position: relative;
 }
 
 .button:hover {
-  background: var(--lc-surface-tint);
-  color: var(--lc-ink);
+  background: var(--ws-active-quiet);
+  color: var(--ws-ink);
 }
 
-/* ---- Active button — wider (86px), accent fill ---- */
+/* ---- Active button — wider (86px), stark white with inset shadow (depressed switch) ---- */
 .buttonActive {
   width: 86px;
-  background: var(--lc-accent-terrain);
-  color: var(--lc-accent-terrain-on);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--lc-accent-terrain) 35%, transparent);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
+  box-shadow: var(--ws-shadow-inset);
 }
 
 .buttonActive:hover {
-  background: var(--lc-accent-terrain-hi);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
-/* ---- Active pip — 18x2px at top (§4 geometry) ---- */
+/* ---- Active pip — 18x2px above the button (ash, not green) ---- */
 .activePip {
   position: absolute;
-  top: 0;
+  top: -3px;
   left: 50%;
   transform: translateX(-50%);
   width: 18px;
   height: 2px;
-  border-radius: var(--gs-radius-xs);
-  background: var(--lc-accent-terrain-hi);
+  border-radius: var(--ws-radius-2);
+  background: var(--ws-active-bright);
+  /* Nearest existing rung on the opacity scale (0.45) — no 0.5 step exists
+     and check-css-scales.mjs's own guidance is to reuse a value already on
+     the surface rather than invent a new one. */
+  opacity: var(--ws-op-quiet);
 }
 
 /* ---- Button glyph ---- */
@@ -123,8 +125,8 @@
 
 /* ---- Button label ---- */
 .buttonLabel {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -145,14 +147,14 @@
 }
 
 .timePill:hover {
-  opacity: var(--lc-op-80);
+  opacity: var(--ws-op-hover);
 }
 
 .timePillLabel {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-readout);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
-  color: var(--lc-ink-60);
+  color: var(--ws-ink-secondary);
   letter-spacing: 0.02em;
 }
 
@@ -162,10 +164,10 @@
   bottom: -16px;
   left: 50%;
   transform: translateX(-50%);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 500;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;

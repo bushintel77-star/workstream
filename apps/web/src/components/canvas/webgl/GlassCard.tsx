@@ -43,7 +43,7 @@ export interface GlassCardProps {
   style?: CSSProperties;
   /**
    * Optional header slot — pinned to the top of the card with the
-   * `--gs-glass-edge` 12px padding baked in. Renders a top hairline so
+   * `--ws-line` 12px padding baked in. Renders a top hairline so
    * the header reads as a distinct band from the body when `bodyPadding`
    * is set.
    */
@@ -75,7 +75,7 @@ const headerFooterShell: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  gap: "var(--gs-space-4)",
+  gap: "var(--ws-space-4)",
   padding: "10px 12px",
   flex: "0 0 auto",
 };
@@ -102,12 +102,10 @@ export function GlassCard({
           pointerEvents: "auto",
           // Studio Paper depth law: frost panel + blur + neutral shadow tier —
           // the card floats above the drawing on light, not darkness.
-          background: "var(--la-surface)",
-          backdropFilter: "none",
-          WebkitBackdropFilter: "none",
-          borderRadius: "var(--gs-radius-panel)",
-          border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-          boxShadow: "var(--gs-shadow-2)",
+          background: "var(--ws-panel)",
+          borderRadius: "var(--ws-radius-3)",
+          border: "1px solid color-mix(in srgb, var(--ws-line) 55%, transparent)",
+          boxShadow: "var(--ws-shadow-1)",
           ...posStyle,
           ...style,
         }}
@@ -137,12 +135,10 @@ export function GlassCard({
       style={{
         position: "absolute",
         pointerEvents: "auto",
-        background: "var(--la-surface)",
-        backdropFilter: "none",
-        WebkitBackdropFilter: "none",
-        borderRadius: "var(--gs-radius-panel)",
-        border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-        boxShadow: "var(--gs-shadow-2)",
+        background: "var(--ws-panel)",
+        borderRadius: "var(--ws-radius-3)",
+        border: "1px solid color-mix(in srgb, var(--ws-line) 55%, transparent)",
+        boxShadow: "var(--ws-shadow-1)",
         ...posStyle,
         ...style,
       }}
@@ -154,7 +150,7 @@ export function GlassCard({
             data-gs-glass-header
             style={{
               ...headerFooterShell,
-              borderBottom: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+              borderBottom: "1px solid color-mix(in srgb, var(--ws-line) 35%, transparent)",
             }}
           >
             {header}
@@ -168,7 +164,7 @@ export function GlassCard({
             data-gs-glass-footer
             style={{
               ...headerFooterShell,
-              borderTop: "1px solid color-mix(in srgb, var(--gs-line) 35%, transparent)",
+              borderTop: "1px solid color-mix(in srgb, var(--ws-line) 35%, transparent)",
             }}
           >
             {footer}

@@ -5,7 +5,7 @@
  * component tree, parse .tsx files line-by-line, throw a
  * comprehensive, IDE-friendly violation list when any inline
  * value falls off the canonical scale (see
- * docs/UI-ELEMENT-STANDARDS.md).
+ * styles/tokens.css).
  *
  * The scale itself is parsed live from apps/web/src/styles/globals.css
  * so this test cannot drift away from what the CSS actually
@@ -36,9 +36,11 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const TARGET = HERE;
 // 5 ups reaches the workstream repo root (parent of apps/).
 const ROOT = path.join(HERE, "..", "..", "..", "..", "..");
+// The design system. Scales are parsed live from here so the test can never
+// drift from the source of truth.
 const CSS_PATH = path.join(
   ROOT,
-  "apps/web/src/styles/globals.css",
+  "apps/web/src/styles/tokens.css",
 );
 
 /**
@@ -111,27 +113,28 @@ function describe_finding(v: Finding): string {
   return `  ${rel}:${v.line}:${v.col}  →  ${v.raw}`;
 }
 
-describe("ui.scan — off-scale inline values (parses scales live from globals.css)", () => {
+describe("ui.scan — off-scale inline values (parses scales live from tokens.css)", () => {
   const css = readFileSync(CSS_PATH, "utf8");
-  const radiusScale = new Set(parseNumericScale(css, "gs-radius"));
-  const fontScale = new Set(parseNumericScale(css, "gs-font"));
-  const spaceScale = new Set(parseNumericScale(css, "gs-space"));
+  const radiusScale = new Set(parseNumericScale(css, "ws-radius"));
+  const fontScale = new Set(parseNumericScale(css, "ws-text"));
+  const spaceScale = new Set(parseNumericScale(css, "ws-space"));
 
   // ── Self-checks: assert the parsed scales have the documented
-  //    step count. If a token is added to globals.css without bumping
+  //    step count. If a token is added to tokens.css without bumping
   //    the standard, this fails first.
-  it("globals.css declares 7 gs-radius, 9 gs-font, 7 gs-space, 3 time tokens", () => {
+  it("tokens.css declares 4 ws-radius, 6 ws-text, 7 ws-space rungs", () => {
     // Set<number> exposes .size, not .length — that's the Array API.
-    expect(radiusScale.size, "gs-radius scale should have 7 rungs").toBe(7);
-    expect(fontScale.size, "gs-font scale should have 9 rungs").toBe(9);
-    expect(spaceScale.size, "gs-space scale should have 7 rungs").toBe(7);
+    // `--ws-radius-0: 0` carries no unit, so the px parser does not see it;
+    // literal 0 is separately allowed by the ESLint rule as "no corner".
+    expect(radiusScale.size, "ws-radius scale should have 4 px rungs").toBe(4);
+    expect(fontScale.size, "ws-text scale should have 6 rungs").toBe(6);
+    expect(spaceScale.size, "ws-space scale should have 7 rungs").toBe(7);
     // Transitions are stored as full strings (e.g. "180ms ease-out");
-    // this test only pins the count of *numeric* tokens, the transition
-    // scale is documented separately in SCALE_TRANSITIONS.
-    expect(radiusScale.has(9999), "gs-radius must include the pill rung 9999").toBe(true);
-    expect(fontScale.has(11), "gs-font must include the body default 11").toBe(true);
-    expect(spaceScale.has(8), "gs-space must include the default section gap 8").toBe(true);
-    expect(spaceScale.has(10), "gs-space must include the 10px rung used by WebGLStudioPreview layouts").toBe(true);
+    // this test only pins the count of *numeric* tokens.
+    expect(radiusScale.has(999), "ws-radius must include the pill rung 999").toBe(true);
+    expect(fontScale.has(11), "ws-text must include the body default 11").toBe(true);
+    expect(spaceScale.has(8), "ws-space must include the default section gap 8").toBe(true);
+    expect(spaceScale.has(12), "ws-space must include the 12px rung").toBe(true);
   });
 
   // ── Scale membership scans: every inline value across canvas
@@ -140,7 +143,7 @@ describe("ui.scan — off-scale inline values (parses scales live from globals.c
   const FONT_RE = /\bfontSize:\s*([\d.]+)/g;
   const GAP_RE = /\bgap:\s*([\d.]+)/g;
 
-  it("every fontSize in canvas is on the gs-font scale", () => {
+  it("every fontSize in canvas is on the ws-text scale", () => {
     const out: Finding[] = [];
     for (const f of walk(TARGET)) out.push(...findOffScale(f, FONT_RE, fontScale));
     expect(
@@ -148,13 +151,13 @@ describe("ui.scan — off-scale inline values (parses scales live from globals.c
       out.length === 0
         ? "no off-scale values"
         : `${out.length} off-scale fontSize value(s). Allowed: [${[...fontScale].join(", ")}]\n` +
-          `  See docs/UI-ELEMENT-STANDARDS.md §2.\n` +
+          `  See styles/tokens.css (type).\n` +
           out.slice(0, 10).map(describe_finding).join("\n") +
           (out.length > 10 ? `\n  …${out.length - 10} more` : ""),
     ).toEqual([]);
   });
 
-  it("every borderRadius in canvas is on the gs-radius scale", () => {
+  it("every borderRadius in canvas is on the ws-radius scale", () => {
     const out: Finding[] = [];
     for (const f of walk(TARGET)) out.push(...findOffScale(f, RADIUS_RE, radiusScale));
     expect(
@@ -162,13 +165,13 @@ describe("ui.scan — off-scale inline values (parses scales live from globals.c
       out.length === 0
         ? "no off-scale values"
         : `${out.length} off-scale borderRadius value(s). Allowed: [${[...radiusScale].join(", ")}]\n` +
-          `  See docs/UI-ELEMENT-STANDARDS.md §1.\n` +
+          `  See styles/tokens.css (radius).\n` +
           out.slice(0, 10).map(describe_finding).join("\n") +
           (out.length > 10 ? `\n  …${out.length - 10} more` : ""),
     ).toEqual([]);
   });
 
-  it("every gap in canvas is on the gs-space scale", () => {
+  it("every gap in canvas is on the ws-space scale", () => {
     const out: Finding[] = [];
     for (const f of walk(TARGET)) out.push(...findOffScale(f, GAP_RE, spaceScale));
     expect(
@@ -176,7 +179,7 @@ describe("ui.scan — off-scale inline values (parses scales live from globals.c
       out.length === 0
         ? "no off-scale values"
         : `${out.length} off-scale gap value(s). Allowed: [${[...spaceScale].join(", ")}]\n` +
-          `  See docs/UI-ELEMENT-STANDARDS.md §3.\n` +
+          `  See styles/tokens.css (space).\n` +
           out.slice(0, 10).map(describe_finding).join("\n") +
           (out.length > 10 ? `\n  …${out.length - 10} more` : ""),
     ).toEqual([]);
@@ -208,7 +211,7 @@ describe("ui.scan — off-scale inline values (parses scales live from globals.c
       out.length === 0
         ? "no raw rgba inline"
         : `${out.length} surface uses raw rgba() / rgb() (should consume a CSS token).\n` +
-          `  See docs/UI-ELEMENT-STANDARDS.md §5.\n` +
+          `  See styles/tokens.css (colour).\n` +
           out.slice(0, 10).map(describe_finding).join("\n") +
           (out.length > 10 ? `\n  …${out.length - 10} more` : ""),
     ).toEqual([]);

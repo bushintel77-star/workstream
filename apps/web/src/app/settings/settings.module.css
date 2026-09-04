@@ -3,7 +3,7 @@
 .page {
   min-height: 100svh;
   padding: 0 clamp(20px, 4vw, 48px) 64px;
-  background: var(--gs-canvas);
+  background: var(--ws-canvas);
 }
 
 .header {
@@ -17,7 +17,7 @@
   font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--gs-ink-muted);
+  color: var(--ws-ink-muted);
 }
 
 .heading {
@@ -26,7 +26,7 @@
   font-weight: 700;
   font-size: clamp(34px, 4.5vw, 52px);
   letter-spacing: -0.01em;
-  color: var(--gs-ink);
+  color: var(--ws-ink);
 }
 
 .copy {
@@ -34,17 +34,17 @@
   max-width: 640px;
   font-size: 15.5px;
   line-height: 1.6;
-  color: var(--gs-ink-secondary);
+  color: var(--ws-ink-secondary);
 }
 
 .card {
   max-width: 960px;
   margin: 0 auto 20px;
   padding: 26px 28px;
-  background: var(--gs-panel-grad);
-  border: 1px solid var(--gs-line);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
   border-radius: var(--r-3xl);
-  box-shadow: var(--gs-shadow-2);
+  box-shadow: var(--ws-shadow-1);
 }
 
 .grid {
@@ -64,7 +64,7 @@
   font-family: var(--font-tech);
   font-size: 17px;
   font-weight: 600;
-  color: var(--gs-ink-strong);
+  color: var(--ws-ink);
 }
 
 .metrics {
@@ -79,7 +79,7 @@
   font-size: 12px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--gs-ink-muted);
+  color: var(--ws-ink-muted);
   margin-bottom: 4px;
 }
 
@@ -88,11 +88,11 @@
   font-family: var(--font-technical-mono);
   font-size: 17px;
   font-weight: 600;
-  color: var(--gs-ink-strong);
+  color: var(--ws-ink);
 }
 
 .metrics .planValue {
-  color: var(--gs-primary-ink);
+  color: var(--ws-active);
 }
 
 .nextSteps {
@@ -106,7 +106,7 @@
 
 .nextSteps li {
   font-size: 14px;
-  color: var(--gs-ink-secondary);
+  color: var(--ws-ink-secondary);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -117,16 +117,16 @@
   width: 8px;
   height: 8px;
   border-radius: var(--r-md);
-  background: var(--gs-line-strong);
+  background: var(--ws-line-strong);
   flex: none;
 }
 
 .nextSteps li[data-done="true"]::before {
-  background: var(--gs-primary);
+  background: var(--ws-active);
 }
 
 .nextLink {
-  color: var(--gs-primary-ink);
+  color: var(--ws-active);
   text-decoration: none;
   text-underline-offset: 3px;
 }
@@ -140,14 +140,14 @@
   margin: 0 0 8px;
   font-size: 15px;
   font-weight: 600;
-  color: var(--gs-ink);
+  color: var(--ws-ink);
 }
 
 .note {
   margin: 0 0 16px;
   font-size: 13.5px;
   line-height: 1.6;
-  color: var(--gs-ink-muted);
+  color: var(--ws-ink-muted);
 }
 
 .cardLink {
@@ -158,8 +158,8 @@
   font-family: var(--font-ui);
   font-size: 14px;
   font-weight: 600;
-  color: var(--gs-panel);
-  background: var(--gs-primary);
+  color: var(--ws-panel);
+  background: var(--ws-active);
   border-radius: var(--r-xl);
   text-decoration: none;
   transition: background 160ms var(--ws-ease);
@@ -167,7 +167,7 @@
 
 .cardLink:hover,
 .cardLink:focus-visible {
-  background: var(--gs-primary-hover);
+  background: var(--ws-active);
 }
 
 .channels {
@@ -184,7 +184,7 @@
   align-items: center;
   gap: 14px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--gs-line-soft);
+  border-bottom: 1px solid var(--ws-line-soft);
 }
 
 .channelRow:last-child {
@@ -194,12 +194,12 @@
 .channelLabel {
   font-size: 14.5px;
   font-weight: 600;
-  color: var(--gs-ink);
+  color: var(--ws-ink);
 }
 
 .channelNote {
   font-size: 13px;
-  color: var(--gs-ink-muted);
+  color: var(--ws-ink-muted);
 }
 
 .statusChip {
@@ -208,20 +208,20 @@
   letter-spacing: 0.02em;
   padding: 5px 11px;
   border-radius: var(--r-2xl);
-  border: 1px solid var(--gs-line);
-  color: var(--gs-ink-secondary);
-  background: var(--gs-panel);
+  border: 1px solid var(--ws-line);
+  color: var(--ws-ink-secondary);
+  background: var(--ws-panel);
   white-space: nowrap;
 }
 
 .statusChip[data-tone="live"] {
-  border-color: var(--gs-primary-quiet);
-  color: var(--gs-primary-ink);
+  border-color: var(--ws-active-quiet);
+  color: var(--ws-active);
 }
 
 .statusChip[data-tone="configured"] {
-  border-color: var(--gs-line-strong);
-  color: var(--gs-ink-secondary);
+  border-color: var(--ws-line-strong);
+  color: var(--ws-ink-secondary);
 }
 
 .events {
@@ -238,7 +238,7 @@
   gap: 12px;
   align-items: baseline;
   padding: 10px 0;
-  border-bottom: 1px solid var(--gs-line-soft);
+  border-bottom: 1px solid var(--ws-line-soft);
   font-size: 13px;
 }
 
@@ -249,16 +249,16 @@
 .eventChannel {
   font-family: var(--font-technical-mono);
   font-size: 11.5px;
-  color: var(--gs-primary-ink);
+  color: var(--ws-active);
 }
 
 .eventName {
   font-weight: 600;
-  color: var(--gs-ink);
+  color: var(--ws-ink);
 }
 
 .eventDetail {
-  color: var(--gs-ink-secondary);
+  color: var(--ws-ink-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -267,7 +267,7 @@
 .eventTime {
   font-family: var(--font-technical-mono);
   font-size: 11.5px;
-  color: var(--gs-ink-muted);
+  color: var(--ws-ink-muted);
   text-align: right;
 }
 
@@ -275,12 +275,12 @@
   max-width: 960px;
   margin: 28px auto 0;
   font-size: 12.5px;
-  color: var(--gs-ink-muted);
+  color: var(--ws-ink-muted);
 }
 
 .source code {
   font-family: var(--font-technical-mono);
-  color: var(--gs-ink-secondary);
+  color: var(--ws-ink-secondary);
 }
 
 @media (max-width: 760px) {

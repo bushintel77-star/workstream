@@ -9,9 +9,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: color-mix(in srgb, var(--gs-ink-strong) 22%, transparent);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: color-mix(in srgb, var(--ws-ink) 22%, transparent);
   animation: dialogScrimIn 160ms var(--ease) both;
 }
 
@@ -31,10 +29,10 @@
   max-width: min(480px, 100%);
   max-height: 80vh;
   overflow: hidden;
-  border-radius: var(--gs-radius-panel);
+  border-radius: var(--ws-radius-3);
   background: var(--surface-elevated);
   border: 1px solid var(--line-hairline);
-  box-shadow: var(--gs-shadow-4);
+  box-shadow: var(--ws-shadow-2);
   animation: dialogIn 200ms var(--ease-emphasis) both;
   outline: none;
 }

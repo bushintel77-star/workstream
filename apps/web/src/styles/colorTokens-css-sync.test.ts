@@ -11,10 +11,14 @@ import { PALETTE } from "./colorTokens";
  * truth and fails on any mismatch or missing declaration.
  */
 
-const css = readFileSync(
-  resolve(dirname(fileURLToPath(import.meta.url)), "color-tokens.css"),
-  "utf8",
-);
+const here = dirname(fileURLToPath(import.meta.url));
+// The drawing palette lives in the design system (tokens.css); the legacy
+// namespaces (--gray-l-*, --hc-*, --surface-*) are still in color-tokens.css.
+// Both are parsed so a mirrored entry can resolve from either.
+const css = [
+  readFileSync(resolve(here, "tokens.css"), "utf8"),
+  readFileSync(resolve(here, "color-tokens.css"), "utf8"),
+].join("\n");
 
 /** All `--name: value;` declarations from the file, value before any comment. */
 const declarations = new Map<string, string>();
@@ -30,13 +34,52 @@ function kebab(key: string): string {
     .toLowerCase();
 }
 
-/** TS keys whose CSS declaration is gs-prefixed rather than bare kebab-case. */
-const GS_PREFIXED = new Set([
-  "sunWarm", "skyCool", "foliageTint", "groundOlive", "groundBounce",
-  "ambientCool", "rimCool", "windowGlow", "bark", "concrete", "anodizedMetal",
-  "timberWeathered", "ledWarm", "summerGreen", "autumnOrange", "cadWater",
-  "cadElectric", "cadSewer", "cadGas", "cadComms", "cadReclaimed", "sketchInk",
-]);
+/**
+ * Scene/material keys and the drawing token each mirrors.
+ *
+ * These are the values the WebGL scene paints with, so the mirror drifting
+ * from the CSS means the 3D scene and the DOM disagree about what "gas" or
+ * "bark" looks like. Stated explicitly rather than derived by kebab-casing:
+ * the one-system rebuild renamed several (foliage-tint -> foliage,
+ * anodized-metal -> metal, cad-water -> water), and a naming rule that has
+ * to encode its own exceptions is not a rule.
+ */
+const SCENE_TOKEN: Record<string, string> = {
+  sunWarm: "ws-dwg-sun-warm",
+  skyCool: "ws-dwg-sky-cool",
+  foliageTint: "ws-dwg-foliage",
+  groundOlive: "ws-dwg-ground-olive",
+  groundBounce: "ws-dwg-ground-bounce",
+  ambientCool: "ws-dwg-ambient-cool",
+  rimCool: "ws-dwg-rim-cool",
+  windowGlow: "ws-dwg-window-glow",
+  bark: "ws-dwg-bark",
+  concrete: "ws-dwg-concrete",
+  anodizedMetal: "ws-dwg-metal",
+  timberWeathered: "ws-dwg-timber",
+  ledWarm: "ws-dwg-led-warm",
+  summerGreen: "ws-dwg-summer",
+  autumnOrange: "ws-dwg-autumn",
+  cadWater: "ws-dwg-water",
+  cadElectric: "ws-dwg-electric",
+  cadSewer: "ws-dwg-sewer",
+  cadGas: "ws-dwg-gas",
+  cadComms: "ws-dwg-comms",
+  cadReclaimed: "ws-dwg-reclaimed",
+  sketchInk: "ws-dwg-sketch",
+  renderBlueprintGround: "ws-dwg-blueprint",
+  gsCanvas: "ws-canvas",
+  gsInkStrong: "ws-ink",
+  gsInkSecondary: "ws-ink-secondary",
+  gsInkMuted: "ws-ink-muted",
+  gsChipActive: "ws-active",
+  gsChipActiveInk: "ws-active-ink",
+  gsConflict: "ws-conflict",
+  gsPrimary: "ws-active",
+  gsPrimaryInk: "ws-active",
+  gsEarthworksFill: "ws-dwg-fill",
+  gsShadow: "ws-canvas",
+};
 
 /** TS keys with no single CSS counterpart (TS-only derivations). */
 const TS_ONLY = new Set(["draftingGrey", "warningL500", "warningD400", "gsConflictInk"]);
@@ -45,7 +88,7 @@ const TS_ONLY = new Set(["draftingGrey", "warningL500", "warningD400", "gsConfli
  * Dark-studio scene/DOM splits (DESIGN.md §2, 2026-08-26): the TS mirror
  * feeds the WebGL SCENE (ink, hairlines and boundaries render over the
  * dark canvas/panel chassis), while the CSS values serve DOM chrome —
- * which is still Studio Paper where it matters (--gs-panel-grad is a
+ * which is still Studio Paper where it matters (--ws-panel is a
  * white gradient, so DOM ink stays charcoal). The two media legitimately
  * differ for these keys; every other entry must stay byte-identical.
  * Scene-side AA for the split keys is asserted in colorTokens.test.ts.
@@ -58,11 +101,7 @@ describe("colorTokens ↔ color-tokens.css sync", () => {
     for (const [key, tsValue] of Object.entries(PALETTE)) {
       if (TS_ONLY.has(key)) continue;
       if (DARK_STUDIO_SCENE_SPLIT.has(key)) continue; // declared split — see above
-      const cssName = key === "renderBlueprintGround"
-        ? "gs-blueprint-ground"
-        : GS_PREFIXED.has(key)
-          ? `gs-${kebab(key)}`
-          : kebab(key);
+      const cssName = SCENE_TOKEN[key] ?? kebab(key);
       const cssValue = declarations.get(cssName);
       if (cssValue === undefined) {
         mismatches.push(`${key}: no --${cssName} declaration in color-tokens.css`);
@@ -79,22 +118,42 @@ describe("colorTokens ↔ color-tokens.css sync", () => {
     expect(mismatches).toEqual([]);
   });
 
-  it("defines the doc §1.3 ink names the codebase references", () => {
-    // The historical bug: components referenced --gs-ink-truth which was
-    // never defined. These three must always exist with real values.
-    for (const name of ["gs-ink-truth", "gs-ink-primary", "gs-ink-conflict"]) {
+  it("declares every chrome role the system promises", () => {
+    // The historical bug this guards: components referenced an ink token that
+    // was never declared anywhere, so it only ever resolved through a
+    // fallback — 37 such dead references were found during the rebuild.
+    for (const name of [
+      "ws-canvas", "ws-panel", "ws-panel-raised", "ws-panel-sunken",
+      "ws-line", "ws-line-soft", "ws-line-strong",
+      "ws-ink", "ws-ink-secondary", "ws-ink-muted", "ws-ink-disabled",
+      "ws-active", "ws-active-ink", "ws-focus",
+      "ws-conflict", "ws-warning", "ws-success",
+      "ws-shadow-1", "ws-shadow-2",
+    ]) {
       expect(declarations.get(name), `--${name} must be defined`).toBeDefined();
     }
   });
 
-  it("defines the Studio Paper depth law tokens", () => {
-    for (const name of [
-      "gs-panel", "gs-panel-grad", "gs-panel-frost", "gs-frost-blur",
-      "gs-shadow-1", "gs-shadow-2", "gs-shadow-3", "gs-shadow-4",
-      "gs-chip-active", "gs-chip-active-ink",
-      "gs-line-strong", "gs-primary-ink", "gs-earthworks-fill",
-    ]) {
-      expect(declarations.get(name), `--${name} must be defined`).toBeDefined();
+  it("keeps colour out of the chrome zone", () => {
+    // The rule the whole system hangs off: a landscape plan is a colour
+    // document, so chrome that carries a hue competes with the drawing.
+    // The sole exception is --ws-ai-run (bright yellow brutalist switch).
+    const chromeSurfaces = [
+      "ws-canvas", "ws-panel", "ws-panel-raised", "ws-panel-sunken",
+      "ws-ink", "ws-ink-secondary", "ws-ink-muted", "ws-active",
+    ];
+    const chromatic: string[] = [];
+    for (const name of chromeSurfaces) {
+      const hex = declarations.get(name);
+      const m = hex?.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+      if (!m) continue;
+      const [r, g, b] = [m[1], m[2], m[3]].map((h) => parseInt(h, 16));
+      // Near-neutral: no channel more than 12/255 from the mean.
+      const mean = (r + g + b) / 3;
+      if (Math.max(Math.abs(r - mean), Math.abs(g - mean), Math.abs(b - mean)) > 12) {
+        chromatic.push(`--${name} (${hex}) carries a hue`);
+      }
     }
+    expect(chromatic).toEqual([]);
   });
 });

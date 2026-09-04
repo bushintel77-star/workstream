@@ -65,7 +65,7 @@ export type CanvasLayerPolicy = {
    * "paper" — the drafting contexts (survey/sketch/cad/elevation). The ground
    * mesh spans GROUND_CONTEXT_EXTENT boards, which is 2.3x the visible frame at
    * zoom 1, so its albedo IS what the operator calls "the background". Painting
-   * it `--gs-canvas` is the only way `#F4F4F4` is reachable without zooming out
+   * it `--ws-canvas` is the only way `#F4F4F4` is reachable without zooming out
    * past 0.43 — the drawing is the product, and the drawing sits on paper.
    * "site" — the material contexts (garden/quote/present/share), where the
    * ground is a real surface being specified and the warm olive belongs.

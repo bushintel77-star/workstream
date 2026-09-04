@@ -3,7 +3,7 @@
  *
  * THE HIERARCHY INVARIANT (the reason this file is data-driven):
  *
- *   The Truth Anchor tokens (`--gs-truth*`) mean "surveyed site truth". The
+ *   The Truth Anchor tokens (`--ws-dwg-truth*`) mean "surveyed site truth". The
  *   title boundary carries them in EVERY dialect; no design category may use
  *   them, or any other blue, in ANY dialect.
  *
@@ -13,8 +13,8 @@
  *
  * This used to be four hand-written branches, and they disagreed: the
  * `architectural` dialect (the CAD default) painted `property_line` with
- * `--gs-ink` (#1a1a1a) while giving `plant_tag`, `detail_callout` and
- * `scope_outline` the blue `--gs-primary-ink` — inverting the signal, so at
+ * `--ws-ink` (#1a1a1a) while giving `plant_tag`, `detail_callout` and
+ * `scope_outline` the blue `--ws-active` — inverting the signal, so at
  * default settings the immutable survey boundary read as design ink and the
  * mutable design elements read as survey data. `style.invariant.test.ts` now
  * fails on any reintroduction.
@@ -70,18 +70,18 @@ export const DESIGN_CATEGORIES: readonly SurveyedAnnotationCategory[] = [
 /**
  * Tokens reserved for surveyed truth. A design category resolving to any of
  * these is the hierarchy inversion this module exists to prevent.
- * `--gs-primary*` is on the list because it is the CTA accent: close enough to
+ * `--ws-active*` is on the list because it is the CTA accent: close enough to
  * the Truth Anchor on paper to be misread as survey data, and off-brief for
  * drafting overlays regardless.
  */
 export const RESERVED_TRUTH_TOKENS: readonly string[] = [
-  "--gs-truth",
-  "--gs-truth-soft",
-  "--gs-truth-ink",
-  "--gs-signal-blue",
-  "--gs-signal-blue-ink",
-  "--gs-primary",
-  "--gs-primary-ink",
+  "--ws-dwg-truth",
+  "--ws-dwg-truth-ink",
+  "--ws-dwg-truth-ink",
+  "--ws-dwg-truth",
+  "--ws-dwg-truth-ink",
+  "--ws-active",
+  "--ws-active",
 ];
 
 function categoryStyles(
@@ -91,37 +91,37 @@ function categoryStyles(
   return {
     // Surveyed truth — Truth Anchor in every dialect. Only the weight varies.
     property_line: {
-      stroke: "var(--gs-truth)",
+      stroke: "var(--ws-dwg-truth)",
       strokeWidth: hierarchy.boundaryPx,
-      text: "var(--gs-truth-ink)",
+      text: "var(--ws-dwg-truth-ink)",
     },
     // Measured levels read as strong ink; proposed vs existing is carried by
     // ink weight at render time, not by hue.
     elevation_rl: {
-      stroke: "var(--la-ink-secondary)",
+      stroke: "var(--ws-ink-secondary)",
       strokeWidth: hierarchy.annotationPx,
-      text: "var(--la-ink)",
+      text: "var(--ws-ink)",
     },
     plant_tag: {
-      stroke: "var(--la-ink)",
+      stroke: "var(--ws-ink)",
       strokeWidth: hierarchy.annotationPx,
-      text: "var(--la-ink)",
-      fill: "color-mix(in srgb, var(--la-surface) 84%, transparent)",
+      text: "var(--ws-ink)",
+      fill: "color-mix(in srgb, var(--ws-panel) 84%, transparent)",
     },
     material_hatch: {
-      stroke: `color-mix(in srgb, var(--la-ink) ${HATCH_INK_MIX_PCT[dialect]}%, transparent)`,
+      stroke: `color-mix(in srgb, var(--ws-ink) ${HATCH_INK_MIX_PCT[dialect]}%, transparent)`,
       strokeWidth: hierarchy.guidePx,
-      text: "var(--la-ink-secondary)",
+      text: "var(--ws-ink-secondary)",
     },
     detail_callout: {
-      stroke: "var(--la-ink)",
+      stroke: "var(--ws-ink)",
       strokeWidth: hierarchy.annotationPx,
-      text: "var(--la-ink)",
+      text: "var(--ws-ink)",
     },
     scope_outline: {
-      stroke: "var(--la-ink-secondary)",
+      stroke: "var(--ws-ink-secondary)",
       strokeWidth: hierarchy.annotationPx,
-      text: "var(--la-ink-secondary)",
+      text: "var(--ws-ink-secondary)",
       dash: SCOPE_DASH[dialect],
     },
   };

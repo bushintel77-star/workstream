@@ -284,8 +284,6 @@
   padding: 0.4rem 0.8rem;
   border-radius: 999px;
   background: var(--frost-strong);
-  backdrop-filter: blur(var(--gs-blur)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--gs-blur)) saturate(1.2);
   font-size: var(--text-micro);
   font-weight: 600;
   color: var(--ink);
@@ -300,8 +298,6 @@
   border-radius: 2px;
   background: color-mix(in srgb, var(--paper) 96%, transparent);
   border: 1px solid color-mix(in srgb, var(--text-primary) 35%, transparent);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   font-family: var(--font-mono);
   font-size: 0.65rem;
   font-weight: 500;
@@ -467,8 +463,6 @@
 .modeStripPaper {
   background: color-mix(in srgb, var(--paper) 94%, transparent);
   border: 1px solid var(--paper-rule);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   box-shadow: 0 8px 22px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
@@ -545,8 +539,6 @@
   padding: 1.2rem 1.25rem;
   border-radius: var(--radius-sheet);
   background: var(--frost-strong);
-  backdrop-filter: blur(var(--gs-blur)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--gs-blur)) saturate(1.2);
   box-shadow:
     var(--shadow-lift),
     inset 0 1px 0 var(--glass-edge);
@@ -564,8 +556,6 @@
 .shareSheetPaper {
   background: color-mix(in srgb, var(--pink-soft) 96%, transparent);
   border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   box-shadow: 0 14px 36px color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
@@ -647,8 +637,6 @@
   padding: 0.35rem 0.85rem;
   border-radius: 999px;
   background: var(--frost);
-  backdrop-filter: blur(var(--gs-blur));
-  -webkit-backdrop-filter: blur(var(--gs-blur));
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -663,8 +651,6 @@
   padding: 0.95rem 1.25rem;
   border-radius: var(--radius-sheet);
   background: var(--frost);
-  backdrop-filter: blur(var(--gs-blur)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--gs-blur)) saturate(1.2);
   max-width: min(420px, 70vw);
   box-shadow:
     var(--shadow-soft),
@@ -713,8 +699,6 @@
   border: none;
   border-radius: var(--radius-ctrl);
   background: var(--frost);
-  backdrop-filter: blur(var(--gs-blur)) saturate(1.15);
-  -webkit-backdrop-filter: blur(var(--gs-blur)) saturate(1.15);
   color: var(--ink);
   padding: 0.7rem 1rem;
   font: inherit;
@@ -755,8 +739,6 @@
 .topActionsPaper .iconBtn {
   background: color-mix(in srgb, var(--pink-soft) 94%, transparent);
   border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   box-shadow: none;
 }
 
@@ -776,8 +758,6 @@
   padding: 0.95rem;
   border-radius: var(--radius-sheet);
   background: var(--frost);
-  backdrop-filter: blur(var(--gs-blur)) saturate(1.25);
-  -webkit-backdrop-filter: blur(var(--gs-blur)) saturate(1.25);
   box-shadow:
     var(--shadow-lift),
     inset 0 1px 0 var(--glass-edge);
@@ -801,8 +781,6 @@
   background: color-mix(in srgb, var(--paper) 96%, transparent);
   border: 1px solid var(--paper-rule);
   color: var(--paper-ink);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   box-shadow: 0 14px 36px color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
@@ -811,7 +789,6 @@
   background: transparent;
   box-shadow: none;
   border: 0;
-  backdrop-filter: none;
 }
 
 .tier1Dock {
@@ -1000,8 +977,6 @@
   padding: 1.2rem 1.25rem;
   border-radius: var(--radius-sheet);
   background: var(--frost-strong);
-  backdrop-filter: blur(var(--gs-blur)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--gs-blur)) saturate(1.2);
   box-shadow:
     var(--shadow-lift),
     inset 0 1px 0 var(--glass-edge);
@@ -1012,8 +987,6 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--pink-soft) 97%, transparent);
   border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   box-shadow: 0 14px 36px color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
@@ -1096,7 +1069,6 @@
   background:
     radial-gradient(80% 60% at 50% 0%, color-mix(in srgb, color-mix(in srgb, var(--crimson-d-500) 10%, var(--pink-soft)) 75%, transparent) 0%, transparent 55%),
     color-mix(in srgb, color-mix(in srgb, var(--crimson-d-500) 12%, var(--pink-soft)) 88%, transparent);
-  backdrop-filter: blur(var(--gs-blur));
   display: flex;
   flex-direction: column;
   animation: quoteIn 360ms var(--ease-out);
@@ -1140,8 +1112,6 @@
   padding: 1.4rem 1.6rem;
   border-radius: var(--radius-sheet);
   background: var(--frost);
-  backdrop-filter: blur(var(--gs-blur)) saturate(1.2);
-  -webkit-backdrop-filter: blur(var(--gs-blur)) saturate(1.2);
   max-width: 300px;
   pointer-events: none;
   box-shadow:
@@ -1184,8 +1154,6 @@
   background: color-mix(in srgb, var(--pink-soft) 96%, transparent);
   border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
   box-shadow: 0 12px 32px color-mix(in srgb, var(--ink) 10%, transparent);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
 .emptyHintPaper.ghostReview {

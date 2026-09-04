@@ -48,20 +48,36 @@ describe("colorTokens — Studio Paper", () => {
     expect(contrast(SEMANTIC.plantingRetainText, CANVAS)).toBeGreaterThan(4.5);
   });
 
-  it("meets AA (4.5:1) for every ink tier on every paper surface", () => {
-    const surfaces = [PANEL, CANVAS, SUNKEN, PRESSED];
-    // Paper inks — DOM chrome stays Studio Paper (--gs-panel-grad is a
-    // white gradient), so these must read on every light surface.
-    const inks = [
+  it("meets AA (4.5:1) for every chrome ink tier on every chrome surface", () => {
+    // The chrome is dark now (styles/tokens.css). These three ink tiers are
+    // the mirror of --ws-ink / -secondary / -muted and must clear AA on all
+    // four chrome surfaces: canvas, panel, raised and sunken.
+    const chromeSurfaces = [
+      PALETTE.gsCanvas,
+      PALETTE.gsPanel,
+      "#1E2226", // --ws-panel-raised
+      "#101314", // --ws-panel-sunken
+    ];
+    const chromeInks = [
       PALETTE.gsInkStrong,
       PALETTE.gsInkSecondary,
       PALETTE.gsInkMuted,
-      SEMANTIC.textPrimary,
-      SEMANTIC.textSecondary,
-      SEMANTIC.textMuted,
     ];
-    for (const ink of inks) {
-      for (const surface of surfaces) {
+    for (const ink of chromeInks) {
+      for (const surface of chromeSurfaces) {
+        expect(
+          contrast(ink, surface),
+          `${ink} on ${surface}`,
+        ).toBeGreaterThan(4.5);
+      }
+    }
+  });
+
+  it("meets AA (4.5:1) for every paper ink tier on every paper surface", () => {
+    // The export/sheet path is still light: an issued drawing prints on
+    // paper, so the SEMANTIC text tiers keep their paper contract.
+    for (const ink of [SEMANTIC.textPrimary, SEMANTIC.textSecondary, SEMANTIC.textMuted]) {
+      for (const surface of [PANEL, CANVAS, SUNKEN, PRESSED]) {
         expect(contrast(ink, surface)).toBeGreaterThan(4.5);
       }
     }
@@ -70,21 +86,23 @@ describe("colorTokens — Studio Paper", () => {
   it("meets AA for the scene ink over the dark studio chassis", () => {
     // gsInk is the SCENE value (white over the dark WebGL canvas — the
     // dotted ground and sketch ink read it); the DOM paper ink is
-    // --gs-ink in color-tokens.css. Dark-studio split: DESIGN.md §2.
+    // --ws-ink in color-tokens.css. Dark-studio split: DESIGN.md §2.
     for (const surface of [PALETTE.gsCanvas, PALETTE.gsPanel]) {
       expect(contrast(PALETTE.gsInk, surface)).toBeGreaterThan(4.5);
     }
   });
 
-  it("meets AA for blue primary + crimson conflict roles", () => {
-    // Primary CTA must carry white text (DeepSeek-family blue)
-    expect(contrast("#FFFFFF", PALETTE.gsPrimary)).toBeGreaterThan(4.5);
-    // Primary blue as text on every paper surface
-    for (const surface of [PANEL, CANVAS, SUNKEN, PRESSED]) {
-      expect(contrast(PALETTE.gsPrimaryInk, surface)).toBeGreaterThan(4.5);
-    }
-    // Conflict/strike fill must carry white text (crimson, conflict-only)
-    expect(contrast("#FFFFFF", PALETTE.gsConflict)).toBeGreaterThan(4.5);
+  it("meets AA for the active fill and the conflict role", () => {
+    // Active chrome is a LIGHT fill now, not a blue one — the system signals
+    // state with luminance so the drawing keeps the spectrum. So the pairing
+    // to check is dark ink on the light fill, the inverse of the old CTA.
+    expect(contrast(PALETTE.gsChipActiveInk, PALETTE.gsPrimary)).toBeGreaterThan(4.5);
+    // The active fill must also separate from the panel it sits on.
+    expect(contrast(PALETTE.gsPrimary, PALETTE.gsPanel)).toBeGreaterThan(4.5);
+    // Conflict is one of only two hues left in the chrome zone. It carries
+    // white text and must read on the panel.
+    expect(contrast("#FFFFFF", PALETTE.gsConflict)).toBeGreaterThan(3);
+    expect(contrast(PALETTE.gsConflict, PALETTE.gsPanel)).toBeGreaterThan(3);
   });
 
   it("meets AA for charcoal selection chips (15.8:1 class)", () => {
@@ -98,9 +116,11 @@ describe("colorTokens — Studio Paper", () => {
     expect(PALETTE.forestD550).toBe("#328052");
   });
 
-  it("meets non-text 3:1 for interactive boundaries and focus ring", () => {
-    expect(contrast(PALETTE.gsLineStrong, PANEL)).toBeGreaterThan(3);
-    expect(contrast(PALETTE.gsPrimary, PANEL)).toBeGreaterThan(3);
+  it("meets non-text 3:1 for interactive boundaries and the focus ring", () => {
+    // Both are measured against the chrome panel they actually sit on.
+    expect(contrast(PALETTE.gsLineStrong, PALETTE.gsPanel)).toBeGreaterThan(3);
+    // --ws-focus: the single hue in the chrome zone, an outline only.
+    expect(contrast("#4D8DFF", PALETTE.gsPanel)).toBeGreaterThan(3);
   });
 
   it("keeps the neutral ramp dead-neutral (R=G=B on every stop)", () => {

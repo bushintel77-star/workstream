@@ -1,23 +1,34 @@
 /* Phase P — History scrub. Segmented track, 1:1 with the finger, zero easing. */
 
 .container {
-  position: absolute;
-  bottom: 88px;
-  left: 50%;
-  transform: translateX(-50%);
+  /* 5% opacity until hovered — prevents suffocating the bottom viewport
+     during active drafting. Snaps to full on hover (50ms, no easing). */
+  position: relative;
   width: min(480px, 60vw);
   padding: 8px 12px;
-  border-radius: var(--lc-ribbon-radius);
-  background: var(--lc-glass-grad);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-flyout-shadow);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-2);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph);
-  color: var(--lc-ink);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
+  color: var(--ws-ink);
+  opacity: var(--ws-op-trace);
+  transition: opacity 50ms linear;
+}
+
+/* Pen-down quiet state — history scrub vanishes (§5.5).
+   Clears the bottom visual envelope completely while drafting.
+   Same 50ms linear timing as the ribbon and all other pen-down fades. */
+.containerPenHidden {
+  opacity: var(--ws-op-hidden);
+  pointer-events: none;
+}
+
+.container:hover {
+  opacity: 1;
 }
 
 .header {
@@ -31,11 +42,11 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .count {
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -43,10 +54,17 @@
   position: relative;
   height: 24px;
   display: flex;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   overflow: hidden;
   cursor: pointer;
   touch-action: none;
+  /* A neutral trough, so the track reads as a track. It had no background of
+     its own, which left whichever activity band covered it supplying the
+     entire fill — a single-activity session (the common case early on) drew
+     one saturated bar edge to edge, and a markup session drew that bar in
+     red. Colour now sits ON a neutral base instead of being the base. */
+  background: color-mix(in srgb, var(--ws-ink) 7%, transparent);
+  border: 1px solid var(--ws-line-soft);
 }
 
 /* Activity bands are positioned and sized from the real history (their
@@ -56,12 +74,15 @@
   position: absolute;
   top: 0;
   height: 100%;
-  opacity: var(--lc-op-subsurface);
+  /* A tint over the trough, not a fill. At --ws-op-subdued (0.7) a band
+     read as a solid status fill — and a status fill in a warm hue reads as
+     an error, which is not what "this run was markup" means. */
+  opacity: var(--ws-op-quiet);
   pointer-events: none;
 }
 
 .track:focus-visible {
-  outline: 1px solid var(--lc-accent-terrain);
+  outline: 1px solid var(--ws-active);
   outline-offset: 2px;
 }
 
@@ -71,15 +92,15 @@
   width: 2px;
   height: 12px;
   transform: translate(-50%, -50%);
-  background: var(--lc-ink-30);
+  background: var(--ws-ink-muted);
   pointer-events: none;
 }
 
 .tickActive {
-  background: var(--lc-ink);
+  background: var(--ws-ink);
   height: 18px;
   width: 3px;
-  box-shadow: 0 0 0 2px var(--lc-glass-bg);
+  box-shadow: 0 0 0 2px var(--ws-panel);
 }
 
 .ghostAhead {
@@ -98,15 +119,15 @@
  * position, because that is the only time there is a "then" to compare. */
 .volumeDelta {
   margin-top: 6px;
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   line-height: 1.35;
-  color: var(--lc-ink-60);
+  color: var(--ws-ink-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .volumeDelta[data-unchanged="true"] {
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
 }
 
 .branchOffer {
@@ -115,27 +136,27 @@
   gap: 8px;
   margin-top: 8px;
   padding: 6px 8px;
-  border-radius: var(--gs-radius-xs);
-  background: color-mix(in srgb, var(--gs-conflict) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--gs-conflict) 40%, transparent);
+  border-radius: var(--ws-radius-2);
+  background: color-mix(in srgb, var(--ws-conflict) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ws-conflict) 40%, transparent);
 }
 
 .branchText {
   flex: 1;
-  font-size: var(--lc-fs-group);
+  font-size: var(--ws-text-micro);
   line-height: 1.3;
-  color: var(--lc-ink-60);
+  color: var(--ws-ink-secondary);
 }
 
 .branchBtn {
   min-height: 28px;
   padding: 0 10px;
-  border-radius: var(--gs-radius-xs);
-  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--ws-radius-2);
+  border: 1px solid var(--ws-line);
   background: transparent;
-  color: var(--lc-ink);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  color: var(--ws-ink);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -143,5 +164,5 @@
 }
 
 .branchBtn:hover {
-  background: var(--lc-surface-tint);
+  background: var(--ws-active-quiet);
 }

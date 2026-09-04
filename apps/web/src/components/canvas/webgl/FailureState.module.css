@@ -6,12 +6,12 @@
   flex-direction: column;
   gap: 12px;
   padding: 20px;
-  border-radius: var(--lc-ribbon-radius);
-  border: 1px solid var(--lc-glass-border);
-  background: var(--lc-glass-grad);
-  box-shadow: var(--lc-flyout-shadow);
-  color: var(--lc-ink);
-  font-family: var(--lc-font-ui);
+  border-radius: var(--ws-radius-3);
+  border: 1px solid var(--ws-line);
+  background: var(--ws-panel);
+  box-shadow: var(--ws-shadow-2);
+  color: var(--ws-ink);
+  font-family: var(--ws-font-ui);
   /* The shell is pointer-transparent so a failure never blocks the canvas;
    * the card takes its own events back so Retry/Dismiss are clickable. */
   pointer-events: auto;
@@ -25,34 +25,34 @@
 }
 
 .kindLabel {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--gs-conflict);
+  color: var(--ws-conflict);
 }
 
 .sourceStamp {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
-  color: var(--lc-ink-30);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
+  color: var(--ws-ink-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .title {
   margin: 0;
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-title);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-lg);
   letter-spacing: 0.02em;
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .detail {
   margin: 0;
-  color: var(--lc-ink-60);
-  font-size: var(--lc-fs-readout);
+  color: var(--ws-ink-secondary);
+  font-size: var(--ws-text-micro);
   line-height: 1.5;
 }
 
@@ -65,12 +65,12 @@
 .actionBtn {
   min-height: 32px;
   padding: 0 12px;
-  border-radius: var(--gs-radius-xs);
-  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--ws-radius-2);
+  border: 1px solid var(--ws-line);
   background: transparent;
-  color: var(--lc-ink);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph);
+  color: var(--ws-ink);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -79,5 +79,5 @@
 }
 
 .actionBtn:hover {
-  background: var(--lc-surface-tint);
+  background: var(--ws-active-quiet);
 }

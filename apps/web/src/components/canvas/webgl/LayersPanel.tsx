@@ -36,6 +36,10 @@ export function LayersPanel({ overlays }: { overlays: DesignKeylessOverlay[] }) 
   const setActiveCanvasId = useStudioStore((st) => st.setActiveCanvasId);
   const strokes = useStudioStore((st) => st.sketchStrokes);
   const placements = useStudioStore((st) => st.placements);
+  // Fixed-plane selection + the converted geometry that lands on each plane.
+  const activePlaneId = useStudioStore((st) => st.activePlaneId);
+  const setActivePlaneId = useStudioStore((st) => st.setActivePlaneId);
+  const features = useStudioStore((st) => st.features);
   const hiddenOverlayKinds = useStudioStore((st) => st.hiddenOverlayKinds);
   const toggleOverlayKind = useStudioStore((st) => st.toggleOverlayKind);
   const subsurfaceView = useStudioStore((st) => st.subsurfaceView);
@@ -63,10 +67,34 @@ export function LayersPanel({ overlays }: { overlays: DesignKeylessOverlay[] }) 
             z={p.z.toFixed(2)}
             name={p.name}
             badge="DRAWING"
-            strokes={strokes.filter((x) => !x.canvas_id).length}
-            objects={placements.length}
-            active={activeCanvasId === null}
-            onSelect={() => setActiveCanvasId(null)}
+            /* Ink still lands on the ground: a stroke carries `canvas_id` for
+               a sketch canvas and nothing for the ground, so there is no
+               per-fixed-plane stroke id to count by. Planting and Massing
+               receive CONVERTED geometry, not raw ink, so their ink count is
+               honestly zero rather than a copy of the ground's. */
+            strokes={
+              p.id === "ground" ? strokes.filter((x) => !x.canvas_id).length : 0
+            }
+            /* Converted features carry `extrude_height_m` from the plane Z
+               (structured-tools.ts), which is the only per-plane key in the
+               data model. Ground features are stamped with no height. */
+            objects={
+              p.id === "ground"
+                ? placements.length +
+                  features.filter((f) => !f.extrude_height_m).length
+                : features.filter((f) => f.extrude_height_m === p.z).length
+            }
+            /* Fixed planes are selected through `activePlaneId`, sketch
+               canvases through `activeCanvasId`. Before Planting and Massing
+               became drawable, ground was the only row here and
+               `activeCanvasId === null` happened to identify it — so all
+               three rows read as active at once and every click selected the
+               ground. A fixed plane is active only when no sketch canvas is. */
+            active={activeCanvasId === null && activePlaneId === p.id}
+            onSelect={() => {
+              setActivePlaneId(p.id);
+              setActiveCanvasId(null);
+            }}
           />
         ) : (
           <FixedPlaneRow

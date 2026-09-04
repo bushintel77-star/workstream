@@ -11,8 +11,13 @@
  * User canvas planes are NOT shown here — they live in the CanvasCardsRail
  * (Sketch mode only). The depth rail is the honest Z reference for every
  * non-sketch mode: survey, CAD, elevation, garden, quote, present, share.
+ *
+ * Reactive flash: when a Tidy conversion commits geometry to a Z-plane, the
+ * corresponding band flashes stark white for 150ms — a mechanical LED
+ * confirmation on a physical hardware rack.
  */
 
+import { useEffect, useState } from "react";
 import type { CanvasMode } from "../../../lib/canvas-mode";
 import { useStudioStore } from "./studioStore";
 import { behaviourOf } from "./chromeContract";
@@ -30,6 +35,9 @@ const SUBSURFACE_DEPTHS: Array<{ id: string; label: string; depth: number }> = [
   { id: "telco", label: "TEL", depth: 0.45 },
 ];
 
+/** Flash duration in ms — mechanical LED confirmation. */
+const FLASH_MS = 150;
+
 export interface DepthRailProps {
   /** The active studio mode — renders in all modes EXCEPT "sketch". */
   mode: CanvasMode;
@@ -43,6 +51,19 @@ export function DepthRail({ mode, handedness, anchorStyle }: DepthRailProps) {
   const activeCanvasId = useStudioStore((s) => s.activeCanvasId);
   const setActiveCanvasId = useStudioStore((s) => s.setActiveCanvasId);
   const cameraPreset = useStudioStore((s) => s.cameraPreset);
+  const depthRailFlash = useStudioStore((s) => s.depthRailFlash);
+  const penDown = useStudioStore((s) => s.penDown);
+
+  // Track which plane is currently flashing (150ms LED confirmation)
+  const [flashPlane, setFlashPlane] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (depthRailFlash.planeId && depthRailFlash.at > 0) {
+      setFlashPlane(depthRailFlash.planeId);
+      const timer = setTimeout(() => setFlashPlane(null), FLASH_MS);
+      return () => clearTimeout(timer);
+    }
+  }, [depthRailFlash]);
 
   const isLeft = handedness === "LEFT";
   const railSide = isLeft ? styles.railLeft : styles.railRight;
@@ -62,29 +83,29 @@ export function DepthRail({ mode, handedness, anchorStyle }: DepthRailProps) {
 
   return (
     <div
-      className={`${styles.rail} ${railSide}`}
+      className={`${styles.rail} ${railSide} ${penDown ? styles.railPenQuiet : ""}`}
       style={anchorStyle}
       data-depth-mode={depthMode}
       data-testid="depth-rail"
     >
       <div className={styles.railHeader}>Z</div>
-      {/* Fixed plane stack (spec 1.1) — planting/massing are proposed
-          targets that do not accept drawing geometry yet; they render as
-          honest reference bands, never as selectable draw targets. */}
+      {/* Fixed plane stack (spec 1.1) — all three planes now accept drawing
+          geometry via the Tidy conversion Z-plane routing. MAS and PLT are
+          no longer "pending" — they receive classified strokes. */}
       <div
-        className={`${styles.cell} ${styles.cellFixed}`}
-        title="Massing Z +4.00 — proposed plane (drawing support pending)"
+        className={`${styles.cell} ${styles.cellFixed} ${flashPlane === "massing" ? styles.cellFlash : ""}`}
+        title="Massing Z +4.00 — walls and structural masses"
       >
         MAS
       </div>
       <div
-        className={`${styles.cell} ${styles.cellFixed}`}
-        title="Planting Z +1.50 — proposed plane (drawing support pending)"
+        className={`${styles.cell} ${styles.cellFixed} ${flashPlane === "planting" ? styles.cellFlash : ""}`}
+        title="Planting Z +1.50 — planting beds and softscape"
       >
         PLT
       </div>
       <button
-        className={`${styles.cell} ${activeCanvasId === null ? styles.cellActive : ""}`}
+        className={`${styles.cell} ${activeCanvasId === null ? styles.cellActive : ""} ${flashPlane === "ground" ? styles.cellFlash : ""}`}
         onClick={() => setActiveCanvasId(null)}
         title="Ground plane"
       >

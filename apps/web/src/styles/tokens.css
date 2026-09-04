@@ -1,0 +1,251 @@
+/**
+ * Workstream — the design system. One namespace, one file.
+ *
+ * Milled hardware aesthetic: opaque stone charcoal chassis, mechanically
+ * depressed active state (stark white/ash contrast inversion), no
+ * glassmorphism. Archivo + IBM Plex Mono typography. The sole chromatic
+ * exception is the AI RUN button (bright yellow brutalist switch).
+ *
+ * ## The two zones
+ *
+ * `--ws-*`     chrome. The instruments. Stone charcoal, opaque, milled.
+ * `--ws-dwg-*` the drawing. Materials, survey data, CAD services, seasons.
+ *
+ * ## Chrome is opaque
+ *
+ * No glass, no backdrop-filter, no translucency. Panels are solid stone
+ * charcoal — the drawing is not visible through the chrome. Depth comes
+ * from physical chassis gaps and inset shadows, not from blur.
+ *
+ * ## Active means depressed
+ *
+ * The active state simulates a mechanically depressed physical switch:
+ * stark white or light ash fill with dark ink and a 1px inset shadow.
+ * No green, no glow, no hue in the chrome zone except the AI RUN button.
+ */
+
+:root {
+  /* ================================================================
+   * CHROME — surfaces. Opaque stone charcoal, four steps of luminance.
+   * ================================================================ */
+
+  /** The viewport ground the drawing sits on. */
+  --ws-canvas: #0d0f11;
+  /** Chrome panel body — opaque stone charcoal chassis. */
+  --ws-panel: #16191c;
+  /** Hover / elevated step. */
+  --ws-panel-raised: #1e2226;
+  /** Wells, tracks, inputs — recessed below the panel. */
+  --ws-panel-sunken: #101314;
+  /** Full-bleed scrim behind modals. */
+  --ws-scrim: rgba(6, 8, 9, 0.72);
+  /** Backdrop blur — retired (milled hardware, no glass). Kept for compat. */
+  --ws-blur: 0px;
+
+  /* ================================================================
+   * CHROME — lines. One hairline, one divider, one interactive edge.
+   * ================================================================ */
+
+  /** Panel border / hairline. */
+  --ws-line: rgba(232, 234, 236, 0.14);
+  /** Whisper divider inside a panel. */
+  --ws-line-soft: rgba(232, 234, 236, 0.08);
+  /** Interactive boundary — inputs, segmented controls. */
+  --ws-line-strong: rgba(232, 234, 236, 0.28);
+
+  /* ================================================================
+   * CHROME — ink. Four tiers, all AA on --ws-panel.
+   * ================================================================ */
+
+  /** Primary text and glyphs. 13.9:1 on panel. */
+  --ws-ink: #e8eaec;
+  /** Labels, secondary rows. 8.2:1 on panel. */
+  --ws-ink-secondary: #b3b9bf;
+  /** Tertiary — the ONE muted value. 5.1:1 on panel, still AA. */
+  --ws-ink-muted: #878f96;
+  /** Disabled. Deliberately below AA: it must read as unavailable. */
+  --ws-ink-disabled: #5a6167;
+  /** Text on a light/active fill. */
+  --ws-ink-inverse: #0d0f11;
+
+  /* ================================================================
+   * CHROME — state. Mechanically depressed switch: stark white/ash.
+   * ================================================================ */
+
+  /** Active/selected chrome: stark white fill (depressed switch). */
+  --ws-active: #e8eaec;
+  --ws-active-bright: #f2f0ea;
+  --ws-active-ink: #0d0f11;
+  /** Resting tint for an armed-but-not-active control. */
+  --ws-active-quiet: rgba(232, 234, 236, 0.08);
+
+  /**
+   * Focus rings — stark white outline.
+   */
+  --ws-focus: #e8eaec;
+
+  /** AI RUN — the sole chromatic exception: bright yellow brutalist switch. */
+  --ws-ai-run: #d4a017;
+  --ws-ai-run-ink: #1a1300;
+
+  /** Conflict / strike / destructive. Never a CTA, never decorative. */
+  --ws-conflict: #d2564f;
+  --ws-conflict-veil: rgba(210, 86, 79, 0.16);
+  /** Caution — schedule slip, tolerance exceeded. */
+  --ws-warning: #d9a441;
+  /**
+   * Success is ink, not colour. A completed thing reads by its mark and its
+   * position, and spending a hue on "fine" is how palettes drift loud.
+   */
+  --ws-success: var(--ws-ink-secondary);
+
+  /* ================================================================
+   * CHROME — geometry. Milled chassis: tight radii, mechanical precision.
+   * ================================================================ */
+
+  --ws-radius-0: 0;
+  --ws-radius-1: 2px;
+  --ws-radius-2: 3px;
+  --ws-radius-3: 4px;
+  /** Genuine pills only — a toggle track, a count chip. */
+  --ws-radius-pill: 999px;
+
+  /* ================================================================
+   * CHROME — space. Dense; a drafting surface is not a marketing page.
+   * ================================================================ */
+
+  --ws-space-1: 2px;
+  --ws-space-2: 4px;
+  --ws-space-3: 6px;
+  --ws-space-4: 8px;
+  --ws-space-5: 12px;
+  --ws-space-6: 16px;
+  --ws-space-7: 24px;
+
+  /** Distance from the viewport edge to the outermost chrome. */
+  --ws-inset: 12px;
+
+  /* ================================================================
+   * CHROME — type. 10px floor: this is read on site, in daylight.
+   * ================================================================ */
+
+  --ws-text-micro: 10px;
+  --ws-text-xs: 11px;
+  --ws-text-sm: 12px;
+  --ws-text-md: 13px;
+  --ws-text-lg: 15px;
+  --ws-text-xl: 18px;
+
+  --ws-font-ui: "Archivo", system-ui, sans-serif;
+  --ws-font-tech: "IBM Plex Mono", ui-monospace, monospace;
+  --ws-font-hand: "Architects Daughter", cursive;
+
+  /* ================================================================
+   * CHROME — elevation. Milled chassis: inset shadows for depressed switches.
+   * ================================================================ */
+
+  --ws-shadow-0: none;
+  --ws-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ws-shadow-2: 0 6px 20px rgba(0, 0, 0, 0.5);
+  /** Inset shadow for mechanically depressed active switches. */
+  --ws-shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+
+  /* ================================================================
+   * CHROME — opacity + motion.
+   * ================================================================ */
+
+  --ws-op-hidden: 0;
+  --ws-op-trace: 0.05;
+  --ws-op-ghost: 0.2;
+  --ws-op-quiet: 0.45;
+  --ws-op-subdued: 0.7;
+  --ws-op-hover: 0.85;
+  --ws-op-full: 1;
+  /** Chrome recede while the camera moves / H is held. */
+  --ws-op-recede: 0.28;
+
+  --ws-motion-fast: 120ms ease-out;
+  --ws-motion-base: 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  --ws-motion-slow: 240ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ================================================================
+   * THE DRAWING — everything below colours the design, not the chrome.
+   * These are the only saturated values in the product, and they are
+   * the reason the chrome above is neutral.
+   * ================================================================ */
+
+  /** Survey / measured truth — the one blue that means "verified". */
+  --ws-dwg-truth: #0030cf;
+  --ws-dwg-truth-ink: #2450c7;
+  /** Freehand sketch ink before it is committed. */
+  --ws-dwg-sketch: #ff2ef6;
+  /** Redline markup. */
+  --ws-dwg-redline: #d55753;
+
+  /* Planting */
+  --ws-dwg-foliage: #3d6b48;
+  --ws-dwg-summer: #4c9662;
+  --ws-dwg-autumn: #c87f3a;
+
+  /* Ground + hardscape */
+  --ws-dwg-concrete: #8c9294;
+  --ws-dwg-bark: #4a3d2e;
+  --ws-dwg-timber: #5c4a3d;
+  --ws-dwg-soil: #8b6f4e;
+  --ws-dwg-ground-olive: #a8a196;
+
+  /* Earthworks */
+  --ws-dwg-cut: #c44b45;
+  --ws-dwg-fill: #c9a84c;
+  --ws-dwg-mass: #da915f;
+
+  /* CAD services — subsurface runs, each its own signature */
+  --ws-dwg-water: #4fa3d1;
+  --ws-dwg-sewer: #5ba874;
+  --ws-dwg-gas: #c9a84c;
+  --ws-dwg-electric: #d17a4f;
+  --ws-dwg-comms: #b8845a;
+  --ws-dwg-reclaimed: #8e6bb0;
+  --ws-dwg-hazard: #efa464;
+
+  /* Lighting rig — scene only */
+  --ws-dwg-sun-warm: #fff1d6;
+  --ws-dwg-sky-cool: #8a9bb5;
+  --ws-dwg-ambient-cool: #aebfd0;
+  --ws-dwg-rim-cool: #c8d8ee;
+  --ws-dwg-ground-bounce: #8a857a;
+  --ws-dwg-led-warm: #ffeedd;
+  --ws-dwg-window-glow: #ffd989;
+
+  /** Anodized metal — edging, fixings. */
+  --ws-dwg-metal: #2a2d30;
+
+  /** Scene vignette. Scene only; never applied to chrome. */
+  --ws-dwg-vignette: radial-gradient(118% 100% at 50% 50%,
+      rgba(0, 0, 0, 0) 44%,
+      rgba(0, 0, 0, 0.44) 80%,
+      rgba(0, 0, 0, 0.7) 100%);
+
+  /** Blueprint ground — the warmer trace/underlay paper. Distinct from the
+   * issued sheet below; the rebuild briefly collapsed the two and the render
+   * mirror caught it. */
+  --ws-dwg-blueprint: #e8e2d4;
+
+  /** Issued paper — the one light surface, for sheet preview only. */
+  --ws-dwg-paper: #f4f2ec;
+  --ws-dwg-paper-ink: #1a1a1a;
+
+  /* ================================================================
+   * LAYOUT — fixed instrument dimensions. Not styling opinions:
+   * these are the measured widths the chrome is built to.
+   * ================================================================ */
+
+  --ws-rail-width: 56px;
+  --ws-ribbon-width: 88px;
+  --ws-ribbon-width-named: 236px;
+  --ws-ribbon-padding: 8px;
+  --ws-ribbon-tile-gap: 4px;
+  --ws-flyout-width: 238px;
+  --ws-flyout-width-media: 296px;
+  --ws-schedule-width: 622px;
+}

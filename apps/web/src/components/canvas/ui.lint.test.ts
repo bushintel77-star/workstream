@@ -14,7 +14,7 @@
  *   - lint (this test pins its existence)   catches drift on save
  *   - scan (vitest fixture in ui.scan.test) catches drift on commit
  *
- * See docs/UI-ELEMENT-STANDARDS.md for the contract.
+ * See styles/tokens.css for the contract.
  */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
@@ -113,12 +113,12 @@ describe("ui.lint — UI element standards lint rules in eslint.config.mjs", () 
   });
 
   it("each rule's selector + message references the standards contract doc", () => {
-    // Every rule message should cite docs/UI-ELEMENT-STANDARDS.md so
+    // Every rule message should cite styles/tokens.css so
     // the developer who triggers the lint lands one click from context.
     for (const r of rules) {
       expect(
-        r.includes("docs/UI-ELEMENT-STANDARDS.md"),
-        `expected every rule's message to cite docs/UI-ELEMENT-STANDARDS.md, but got: ${r}`,
+        r.includes("styles/tokens.css"),
+        `expected every rule's message to cite styles/tokens.css, but got: ${r}`,
       ).toBe(true);
     }
   });

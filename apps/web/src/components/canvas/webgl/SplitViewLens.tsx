@@ -24,7 +24,7 @@ import type { WebGLStudioProps } from "./WebGLStudio";
 
 const WebGLStudio = dynamic(() => import("./WebGLStudio").then((m) => m.WebGLStudio), {
   ssr: false,
-  loading: () => <div style={{ position: "absolute", inset: 0, background: "var(--gs-canvas)" }} />,
+  loading: () => <div style={{ position: "absolute", inset: 0, background: "var(--ws-canvas)" }} />,
 });
 
 /** The scene props both halves share (everything but the camera plumbing). */
@@ -53,13 +53,11 @@ const labelChip: CSSProperties = {
   // chrome column at every tested viewport (collision-spec guaranteed).
   top: 78,
   padding: "2px 9px",
-  borderRadius: "var(--gs-radius-pill)",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
-  background: "color-mix(in srgb, var(--la-surface) 38%, transparent)",
-  backdropFilter: "none",
-  WebkitBackdropFilter: "none",
+  borderRadius: "var(--ws-radius-pill)",
+  border: "1px solid color-mix(in srgb, var(--ws-line) 45%, transparent)",
+  background: "color-mix(in srgb, var(--ws-panel) 38%, transparent)",
   fontFamily: "var(--font-tech)",
-  fontSize: "var(--gs-font-xs)",
+  fontSize: "var(--ws-text-xs)",
   letterSpacing: "0.08em",
   pointerEvents: "none",
 };
@@ -70,17 +68,17 @@ export function SplitViewLens({ sceneProps }: SplitViewLensProps) {
   return (
     <div
       data-testid="split-view-lens"
-      style={{ position: "absolute", inset: 0, overflow: "hidden", background: "var(--gs-canvas)" }}
+      style={{ position: "absolute", inset: 0, overflow: "hidden", background: "var(--ws-canvas)" }}
     >
       {/* Left half — the CAD side: locked orthographic plan. */}
-      <div style={{ ...halfStyle, left: 0, borderRight: "1px solid var(--gs-line)" }}>
+      <div style={{ ...halfStyle, left: 0, borderRight: "1px solid var(--ws-line)" }}>
         <WebGLStudio
           {...sceneProps}
           viewBlendLocked={0}
         >
           <div
             data-testid="split-label-plan"
-            style={{ ...labelChip, right: 12, color: "var(--gs-truth-ink)" }}
+            style={{ ...labelChip, right: 12, color: "var(--ws-dwg-truth-ink)" }}
           >
             PLAN · CAD
           </div>
@@ -92,7 +90,7 @@ export function SplitViewLens({ sceneProps }: SplitViewLensProps) {
         <WebGLStudio {...sceneProps}>
           <div
             data-testid="split-label-sketch"
-            style={{ ...labelChip, left: 12, color: "var(--la-accent)" }}
+            style={{ ...labelChip, left: 12, color: "var(--ws-active)" }}
           >
             SKETCH · 3D
           </div>
@@ -109,7 +107,7 @@ export function SplitViewLens({ sceneProps }: SplitViewLensProps) {
           bottom: 0,
           width: 2,
           transform: "translateX(-50%)",
-          background: "var(--la-accent)",
+          background: "var(--ws-active)",
           opacity: 0.5,
           pointerEvents: "none",
           zIndex: "var(--cf-z-chrome)",

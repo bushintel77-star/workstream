@@ -5,18 +5,16 @@
 .flyout {
   position: absolute;
   top: 50%;
-  width: var(--lc-flyout-width, 238px);
+  width: var(--ws-flyout-width, 238px);
   padding: 14px 15px 13px;
-  border-radius: var(--lc-flyout-radius, 16px);
+  border-radius: var(--ws-radius-3, 16px);
   background: linear-gradient(
     180deg,
     rgba(32, 35, 37, 0.96),
     rgba(23, 25, 27, 0.94)
   );
-  backdrop-filter: blur(22px) saturate(1.3);
-  -webkit-backdrop-filter: blur(22px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-flyout-shadow);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-2);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
   display: flex;
@@ -59,14 +57,14 @@
 
 .arrowLeft {
   left: -5px;
-  border-left: 1px solid var(--lc-glass-border);
-  border-bottom: 1px solid var(--lc-glass-border);
+  border-left: 1px solid var(--ws-line);
+  border-bottom: 1px solid var(--ws-line);
 }
 
 .arrowRight {
   right: -5px;
-  border-right: 1px solid var(--lc-glass-border);
-  border-top: 1px solid var(--lc-glass-border);
+  border-right: 1px solid var(--ws-line);
+  border-top: 1px solid var(--ws-line);
 }
 
 .header {
@@ -76,10 +74,10 @@
 }
 
 .headerTitle {
-  font-family: var(--lc-font-ui);
-  font-size: var(--lc-fs-panel, 13px);
+  font-family: var(--ws-font-ui);
+  font-size: var(--ws-text-md, 13px);
   font-weight: 600;
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .section {
@@ -89,12 +87,12 @@
 }
 
 .fieldLabel {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group, 8.5px);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro, 8.5px);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
 }
 
 .textInput,
@@ -102,18 +100,18 @@
   width: 100%;
   box-sizing: border-box;
   padding: 7px 9px;
-  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  border-radius: var(--ws-radius-2, 11px);
   background: rgba(232, 230, 224, 0.06);
   border: 1px solid rgba(232, 230, 224, 0.14);
-  color: var(--lc-ink);
-  font-family: var(--lc-font-ui);
+  color: var(--ws-ink);
+  font-family: var(--ws-font-ui);
   font-size: 13px;
 }
 
 .textInput:focus,
 .numberInput:focus {
   outline: none;
-  border-color: var(--lc-accent-terrain);
+  border-color: var(--ws-active);
 }
 
 .presetGrid {
@@ -124,13 +122,13 @@
 
 .preset {
   padding: 7px 8px;
-  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  border-radius: var(--ws-radius-2, 11px);
   background: rgba(232, 230, 224, 0.06);
   border: 1px solid rgba(232, 230, 224, 0.1);
   cursor: pointer;
-  color: var(--lc-ink-60);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph, 9.5px);
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro, 9.5px);
   font-weight: 600;
   text-align: left;
   transition: background 0.15s ease, color 0.15s ease;
@@ -138,7 +136,7 @@
 
 .preset:hover {
   background: rgba(232, 230, 224, 0.1);
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .orientationToggle {
@@ -149,13 +147,13 @@
 
 .orientationButton {
   padding: 8px 9px;
-  border-radius: var(--lc-ribbon-tile-radius, 11px);
+  border-radius: var(--ws-radius-2, 11px);
   background: rgba(232, 230, 224, 0.06);
   border: 1px solid rgba(232, 230, 224, 0.1);
   cursor: pointer;
-  color: var(--lc-ink-60);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph, 9.5px);
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro, 9.5px);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -164,34 +162,34 @@
 
 .orientationButton:hover {
   background: rgba(232, 230, 224, 0.1);
-  color: var(--lc-ink);
+  color: var(--ws-ink);
 }
 
 .orientationActive {
-  background: var(--lc-accent-terrain);
-  border-color: var(--lc-accent-terrain);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  border-color: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
 .placeButton {
   padding: 9px;
-  border-radius: var(--lc-ribbon-tile-radius, 11px);
-  background: var(--lc-accent-terrain);
+  border-radius: var(--ws-radius-2, 11px);
+  background: var(--ws-active);
   border: none;
   cursor: pointer;
-  color: var(--lc-accent-terrain-on);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph, 9.5px);
+  color: var(--ws-active-ink);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro, 9.5px);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .placeButton:hover:not(:disabled) {
-  background: var(--lc-accent-terrain-hi);
+  background: var(--ws-active);
 }
 
 .placeButton:disabled {
-  opacity: var(--lc-op-chips-quiet, 0.2);
+  opacity: var(--ws-op-ghost, 0.2);
   cursor: not-allowed;
 }

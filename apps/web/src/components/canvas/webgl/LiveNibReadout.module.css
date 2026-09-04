@@ -1,0 +1,37 @@
+/**
+ * Live nib readout — cursor-adjacent digital readout attached to the
+ * drafting instrument. Stone charcoal chassis, 4px milled radius,
+ * IBM Plex Mono. No soft floating bubbles.
+ *
+ * Position is set via translate3d on a ref (compositor-only). The 16px
+ * offset inside the translate3d keeps the panel from eclipsing the stylus
+ * tip or the 3D NibCrosshair.
+ */
+
+.readout {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-2);
+  font-family: var(--ws-font-tech);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ws-ink);
+  white-space: nowrap;
+  z-index: var(--cf-z-chrome);
+  transition: opacity 50ms linear;
+  will-change: transform, opacity;
+}
+
+.readoutVisible {
+  opacity: 1;
+}
+
+.readoutText {
+  display: inline;
+}

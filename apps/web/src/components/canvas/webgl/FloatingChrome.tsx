@@ -21,8 +21,6 @@ import type { DesignKeylessOverlay } from "@workstream/contracts";
 import type { CanvasMode } from "../../../lib/canvas-mode";
 import type { CanopyComplianceResult } from "./canopyCompliance";
 import { useStudioStore } from "./studioStore";
-import { behaviourOf } from "./chromeContract";
-import { cameraReadoutFor3D, formatCameraReadout } from "./chromeCameraReadout";
 import { StrikeChip } from "./StrikeChip";
 import { FailureState } from "./FailureState";
 import { HistoryScrub } from "./HistoryScrub";
@@ -46,6 +44,9 @@ import { DrawViewToggle } from "./DrawViewToggle";
 import { SelectionModeToggle } from "./SelectionModeToggle";
 import { SelectionIsolationOverlay } from "./SelectionIsolationOverlay";
 import { NumericSlider } from "./NumericSlider";
+import { TidyHud } from "./TidyHud";
+import { PinnedConflictCard } from "./StrikeChip";
+import { LiveNibReadout } from "./LiveNibReadout";
 import styles from "./FloatingChrome.module.css";
 
 /* ---- helpers ---- */
@@ -135,7 +136,7 @@ export function FloatingChrome({
   const [calibrateOpen, setCalibrateOpen] = useState(false);
   const scaleView = useStudioStore((s) => s.scaleView);
   const setScaleView = useStudioStore((s) => s.setScaleView);
-  const liveCoord = useStudioStore((s) => s.liveCoord);
+  // liveCoord is now consumed by LiveNibReadout (cursor-adjacent), not here.
   // Phase O — failure states (drawn, not silent)
   const overlayFetchError = useStudioStore((s) => s.overlayFetchError);
   const importError = useStudioStore((s) => s.importError);
@@ -145,6 +146,9 @@ export function FloatingChrome({
   const setImportError = useStudioStore((s) => s.setImportError);
   const setUnderlayError = useStudioStore((s) => s.setUnderlayError);
   const setCalibrationError = useStudioStore((s) => s.setCalibrationError);
+  // Tidy HUD — cursor-anchored classifier feedback
+  const tidyHud = useStudioStore((s) => s.tidyHud);
+  const dismissTidyHud = useStudioStore((s) => s.dismissTidyHud);
   // Each failure card is a centred `inset: 0` layer, so two at once would
   // print on top of each other. Show the newest; dismissing it reveals the
   // next one down.
@@ -156,21 +160,8 @@ export function FloatingChrome({
     if (calibrationError) live.push({ key: "calibration", at: calibrationError.at });
     return live.sort((a, b) => b.at - a.at)[0]?.key ?? null;
   }, [overlayFetchError, importError, underlayError, calibrationError]);
-  // Phase L.3 — coordinate chip converts to eye height / bearing / fov in 3D
-  // per the chrome contract. The contract drives whether the chip shows
-  // E/N/Z (same) or the 3D camera readout (convert).
-  const cameraPreset = useStudioStore((s) => s.cameraPreset);
-  const liveRig = useStudioStore((s) => s.liveRig);
-  const coordBehaviour = behaviourOf("crosshairCoords", cameraPreset);
-  const coord3d = useMemo(
-    () =>
-      coordBehaviour.kind === "convert"
-        ? formatCameraReadout(
-          cameraReadoutFor3D(liveRig, scaleM, boardAspect, northBearingDeg),
-        )
-        : null,
-    [coordBehaviour, liveRig, scaleM, boardAspect, northBearingDeg],
-  );
+  // The legacy fixed-position coord-chip was removed — the cursor-adjacent
+  // LiveNibReadout now tracks the stylus tip directly via translate3d.
 
   const isLeft = handedness === "LEFT";
   const cutFill = useCutFill(scaleM, heightmapPoints, boardAspect);
@@ -230,16 +221,15 @@ export function FloatingChrome({
       />
 
       {/* Phase N — strike chip in the top bar beside the WFS chips.
-          Count + severity, tap cycles and flies the camera. */}
+          Count + severity, tap cycles and flies the camera. The chip is a
+          signal only — the conflict card is a 3D-pinned DOM actor below. */}
       <StrikeChip strikes={strikeAlerts} />
 
-      {/* Phase P — history scrub. Segmented session track, 1:1 with the
-          finger, zero easing. Branch-on-edit, never silent overwrite. */}
-      <HistoryScrub
-        scaleM={scaleM}
-        boardAspect={boardAspect}
-        heightmapPoints={heightmapPoints}
-      />
+      {/* 3D-pinned conflict card — floats over the clash geometry. Reads
+          screen coords from the store (written by ConflictCardProjector in
+          the R3F canvas). Stays pinned through orbits/pans; self-destructs
+          only on explicit resolve (REROUTE/DEEPEN/FLAG) or close (×). */}
+      <PinnedConflictCard strikes={strikeAlerts} />
 
       {/* Tool ribbon — vertical glass panel, hand-opposite edge (handoff §5) */}
       <ToolRibbon />
@@ -255,26 +245,72 @@ export function FloatingChrome({
           the chip bar while the LAYERS ribbon tool is armed. */}
       {activeTool === "layers" && <LayersPanel overlays={keylessOverlays} />}
 
-      {/* Camera dock — bottom centre, 4 presets (handoff §6.1) */}
-      <CameraDock />
+      {/* ---- Bottom-centre chrome stack ----
+          One column of flow children, so a panel that grows pushes its
+          neighbours instead of painting over them. These were five
+          independently `position: absolute` panels with hand-computed
+          `bottom` offsets, and three of them overlapped: the filmstrip sat
+          entirely inside the history scrub, the scrub dipped into the dock,
+          and the sketch toggles covered the dock's PLAN button. Bottom-up
+          order (`column-reverse`) = the operator's order of reach. */}
+      <div className={styles.bottomStack} data-testid="bottom-chrome-stack">
+        {/* Row 1 — camera dock, 4 presets (handoff §6.1), held on the
+            viewport centre line by the row's equal outer tracks. */}
+        <div className={styles.dockRow}>
+          <div className={styles.dockRowLead}>
+            {/* Phase H — Selection Mode toggle. Activates red-mask
+                isolation + boolean ops toolbar. */}
+            {mode === "sketch" && <SelectionModeToggle />}
+            {/* Phase G — Draw/View mode toggle. DRAW locks the camera
+                face-on to the active canvas; VIEW allows free orbit. */}
+            {mode === "sketch" && <DrawViewToggle />}
+          </div>
+          <CameraDock />
+          {/* Right gutter — empty, and load-bearing: it balances the lead
+              so the dock stays centred rather than shoved right. */}
+          <div />
+        </div>
 
-      {/* Phase G — Draw/View mode toggle. Sits beside the camera dock.
-          DRAW locks the camera face-on to the active canvas; VIEW allows
-          free orbit. Only renders in Sketch mode (the canvas-plane mode). */}
-      {mode === "sketch" && <DrawViewToggle />}
+        {/* Row 2 — Phase P history scrub. Segmented session track, 1:1 with
+            the finger, zero easing. Branch-on-edit, never silent overwrite.
+            Opens from the ribbon's HISTORY tool, the same way LAYERS opens
+            its panel: `activeTool` already carried a `"history"` member and
+            the ribbon already drew the tile, but nothing read it, so the
+            button did nothing and the scrub instead sat over the drawing in
+            every mode for the whole session. */}
+        {activeTool === "history" && (
+          <HistoryScrub
+            scaleM={scaleM}
+            boardAspect={boardAspect}
+            heightmapPoints={heightmapPoints}
+          />
+        )}
 
-      {/* Phase H — Selection Mode toggle. Sits beside the Draw/View toggle.
-          Activates red-mask isolation + boolean ops toolbar. */}
-      {mode === "sketch" && <SelectionModeToggle />}
+        {/* Row 3 — viewpoint filmstrip + walk/record (Phase C, screen 16b,
+            Sketch only). Collapses to its capture button until viewpoints
+            exist, so an unused tool costs the drawing one button. */}
+        <ViewpointFilmstrip mode={mode} />
+      </div>
 
       {/* Phase H — Selection Mode isolation overlay + boolean ops toolbar.
           Renders the red-mask vignette and the ops toolbar when active. */}
       <SelectionIsolationOverlay />
 
-      {/* Viewpoint filmstrip + walk/record (Phase C, screen 16b Sketch only).
-          Sits above the camera dock. Captures camera viewpoints as thumbnails,
-          plays them as a fly-through walk, optionally records as video. */}
-      <ViewpointFilmstrip mode={mode} />
+      {/* Tidy HUD — cursor-anchored classifier feedback at the stroke terminal.
+          Transient DOM actor; self-destructs on commit or ESC. */}
+      {tidyHud && (
+        <TidyHud
+          x={tidyHud.x}
+          y={tidyHud.y}
+          strokeId={tidyHud.strokeId}
+          onDismiss={dismissTidyHud}
+        />
+      )}
+
+      {/* Live nib readout — cursor-adjacent digital readout tracking the
+          stylus tip. The only UI at 100% opacity during a stroke. Positions
+          via translate3d on a ref (compositor-only, no layout thrash). */}
+      <LiveNibReadout />
 
       {/* Depth Rail (16a Drafting) — all non-sketch modes. Cells 36×34,
           two-way bands, no user canvas chips (those live in the cards rail). */}
@@ -305,34 +341,10 @@ export function FloatingChrome({
           must not linger past the drag. */}
       <BirdsEyeHud scaleM={scaleM} boardAspect={boardAspect} />
 
-      {/* Readout -- cut/fill volumes (bottom-left) */}
+      {/* Readout -- cut/fill volumes (bottom-left).
+          The legacy fixed-position coord-chip was removed — the cursor-
+          adjacent LiveNibReadout now tracks the stylus tip directly. */}
       <div className={`${styles.readoutGroup} ${readoutLeftSide}`} style={anchorStyle}>
-        {/* Phase L.3 — coordinate chip converts to eye height / bearing / fov
-            in 3D per the chrome contract. In PLAN/AXO/SEC it shows E/N/Z; in
-            3D it shows the camera readout (no E/N/Z under perspective). */}
-        {coord3d ? (
-          <div
-            className={`${styles.readoutPillCut} ${styles.readoutPillCoord}`}
-            data-testid="coord-chip"
-            data-coord-mode="3d"
-          >
-            {coord3d}
-          </div>
-        ) : liveCoord ? (
-          <div
-            className={`${styles.readoutPillCut} ${styles.readoutPillCoord}`}
-            data-testid="coord-chip"
-            data-coord-mode="en z"
-          >
-            <span className={styles.readoutValueCut}>E {liveCoord.x.toFixed(1)}</span>
-            {" · "}N {liveCoord.z.toFixed(1)} · Z {activeLabel}
-            {liveCoord.chainage !== undefined && (
-              <span className={styles.readoutChainage} data-testid="coord-chainage">
-                {" · "}STA {liveCoord.chainage.toFixed(1)}
-              </span>
-            )}
-          </div>
-        ) : null}
         {cutFill ? (
           <>
             <div className={styles.readoutPillCut}>

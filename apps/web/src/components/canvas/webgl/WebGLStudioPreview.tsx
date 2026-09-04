@@ -1410,7 +1410,7 @@ export function WebGLStudioPreview({
           inset: 0,
           pointerEvents: "none",
           zIndex: "var(--cf-z-spatial)",
-          background: "var(--gs-canvas)",
+          background: "var(--ws-canvas)",
           animation: "gsModeFadeOut 150ms ease-out forwards",
         }}
       />
@@ -1483,7 +1483,7 @@ export function WebGLStudioPreview({
             alignItems: "center",
             justifyContent: "center",
             pointerEvents: "auto",
-            background: "color-mix(in srgb, var(--gs-canvas) 55%, transparent)",
+            background: "color-mix(in srgb, var(--ws-canvas) 55%, transparent)",
           }}
         >
           <div style={{ width: "min(460px, 92vw)" }}>
@@ -1545,8 +1545,8 @@ export function WebGLStudioPreview({
           display: "grid",
           placeItems: "center",
           padding: 24,
-          background: "var(--gs-canvas)",
-          color: "var(--gs-ink)",
+          background: "var(--ws-canvas)",
+          color: "var(--ws-ink)",
           fontFamily: "var(--font-ui)",
         }}
       >
@@ -1555,19 +1555,19 @@ export function WebGLStudioPreview({
             width: "min(420px, 100%)",
             display: "flex",
             flexDirection: "column",
-            gap: "var(--gs-space-6)",
+            gap: "var(--ws-space-5)",
             padding: 20,
-            borderRadius: "var(--gs-radius-panel)",
-            background: "var(--gs-glass-veil-strong)",
-            border: "1px solid var(--gs-line)",
+            borderRadius: "var(--ws-radius-3)",
+            background: "var(--ws-panel)",
+            border: "1px solid var(--ws-line)",
           }}
         >
-          <h1 style={{ margin: 0, fontSize: "var(--gs-font-h1)" }}>3D canvas unavailable</h1>
-          <p style={{ margin: 0, color: "var(--gs-ink-secondary)" }}>
+          <h1 style={{ margin: 0, fontSize: "var(--ws-text-xl)" }}>3D canvas unavailable</h1>
+          <p style={{ margin: 0, color: "var(--ws-ink-secondary)" }}>
             The graphics context is unavailable or was interrupted. Your saved
             drawing is unchanged.
           </p>
-          <div style={{ display: "flex", gap: "var(--gs-space-4)", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "var(--ws-space-4)", flexWrap: "wrap" }}>
             <Button
               variant="cta"
               onClick={() => window.location.reload()}
@@ -1722,15 +1722,15 @@ export function WebGLStudioPreview({
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: "var(--gs-space-3)",
+                gap: "var(--ws-space-3)",
               }}
             >
               <span
                 style={{
                   fontFamily: "var(--font-ui)",
-                  fontSize: "var(--gs-font-sub)",
+                  fontSize: "var(--ws-text-md)",
                   fontWeight: 600,
-                  color: "var(--la-ink)",
+                  color: "var(--ws-ink)",
                 }}
               >
                 Draw
@@ -1738,8 +1738,14 @@ export function WebGLStudioPreview({
               <span
                 style={{
                   fontFamily: "var(--font-ui)",
-                  fontSize: "var(--gs-font-xs)",
-                  color: "var(--la-ink-muted)",
+                  // Was 10.5px `--ws-ink-muted` (#8A8A8A), which measures
+                  // 5.73:1 on the studio ground — already past AA, so the
+                  // contrast was not the problem; 10.5px for the only
+                  // instruction on an empty canvas was. One step up the
+                  // ladder, and `--ws-ink-secondary` takes it to ~7.8:1 (AAA)
+                  // for the same cost.
+                  fontSize: "var(--ws-text-xs)",
+                  color: "var(--ws-ink-secondary)",
                   maxWidth: 320,
                 }}
               >
@@ -1813,7 +1819,7 @@ function SurveyLocateState({ address }: { address?: string | null }) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: "var(--gs-space-3)",
+        gap: "var(--ws-space-3)",
         pointerEvents: "none",
         zIndex: "var(--cf-z-chrome)",
         textAlign: "center",
@@ -1824,7 +1830,7 @@ function SurveyLocateState({ address }: { address?: string | null }) {
         height="34"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="var(--la-ink-muted)"
+        stroke="var(--ws-ink-muted)"
         strokeWidth="1.3"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -1835,9 +1841,9 @@ function SurveyLocateState({ address }: { address?: string | null }) {
       <span
         style={{
           fontFamily: "var(--font-tech)",
-          fontSize: "var(--gs-font-sub)",
+          fontSize: "var(--ws-text-md)",
           letterSpacing: "0.02em",
-          color: "var(--la-ink-secondary)",
+          color: "var(--ws-ink-secondary)",
           maxWidth: 320,
         }}
       >
@@ -1846,8 +1852,8 @@ function SurveyLocateState({ address }: { address?: string | null }) {
       <span
         style={{
           fontFamily: "var(--font-ui)",
-          fontSize: "var(--gs-font-xs)",
-          color: "var(--la-ink-muted)",
+          fontSize: "var(--ws-text-xs)",
+          color: "var(--ws-ink-muted)",
         }}
       >
         Import site truth to draw the title boundary

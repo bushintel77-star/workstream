@@ -3,9 +3,10 @@
  *
  * Four planes at real z-heights: Survey base −0.02 (imported, read-only),
  * Ground 0.00 (the drawing surface), Planting +1.50 and Massing +4.00
- * (proposed targets). Only the ground accepts drawing geometry today —
- * planting/massing render as honest reference bands until drawable-plane
- * support lands, so the chrome never advertises a target it cannot honour.
+ * (proposed targets). Ground, Planting, and Massing all accept drawing
+ * geometry — the Tidy conversion routes classified strokes to the correct
+ * Z-band via `kindToPlane`, and the inline HUD cycle toggle lets the operator
+ * override the classifier's default before commit.
  */
 
 export type FixedPlaneId = "survey" | "ground" | "planting" | "massing";
@@ -43,7 +44,7 @@ export const FIXED_PLANES: FixedPlane[] = [
     z: 1.5,
     state: "proposed",
     readOnly: false,
-    drawable: false,
+    drawable: true,
   },
   {
     id: "massing",
@@ -51,9 +52,26 @@ export const FIXED_PLANES: FixedPlane[] = [
     z: 4.0,
     state: "proposed",
     readOnly: false,
-    drawable: false,
+    drawable: true,
   },
 ];
+
+/**
+ * Default Z-plane routing for a classified stroke kind.
+ * `wall` → Massing (+4.0), `bed` → Planting (+1.5), `ditch`/`path` → Ground (0.0).
+ * The inline Tidy HUD cycle toggle lets the operator override this before commit.
+ */
+export const KIND_TO_PLANE: Record<string, FixedPlaneId> = {
+  wall: "massing",
+  bed: "planting",
+  ditch: "ground",
+  path: "ground",
+};
+
+/** Z-height for a plane id. Returns 0 for unknown (ground default). */
+export function planeZ(id: FixedPlaneId): number {
+  return FIXED_PLANES.find((p) => p.id === id)?.z ?? 0;
+}
 
 /** Short rail labels — the 3-letter mono codes the chrome uses. */
 export const FIXED_PLANE_LABELS: Record<FixedPlaneId, string> = {

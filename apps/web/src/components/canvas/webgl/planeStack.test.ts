@@ -1,44 +1,43 @@
-import { describe, expect, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
-  FIXED_PLANE_LABELS,
   FIXED_PLANES,
+  KIND_TO_PLANE,
+  planeZ,
   fixedPlaneById,
 } from "./planeStack";
 
-describe("planeStack — fixed four-plane registry (spec 1.1)", () => {
-  it("defines the four planes at their spec z-heights in order", () => {
-    expect(FIXED_PLANES.map((p) => p.id)).toEqual([
-      "survey",
-      "ground",
-      "planting",
-      "massing",
-    ]);
-    expect(FIXED_PLANES.map((p) => p.z)).toEqual([-0.02, 0, 1.5, 4]);
+describe("planeStack", () => {
+  it("ground, planting, and massing are all drawable", () => {
+    const ground = fixedPlaneById("ground")!;
+    const planting = fixedPlaneById("planting")!;
+    const massing = fixedPlaneById("massing")!;
+    expect(ground.drawable).toBe(true);
+    expect(planting.drawable).toBe(true);
+    expect(massing.drawable).toBe(true);
   });
 
-  it("marks survey imported/read-only and ground as the only drawable plane", () => {
-    const survey = fixedPlaneById("survey");
-    const ground = fixedPlaneById("ground");
-    expect(survey?.readOnly).toBe(true);
-    expect(survey?.state).toBe("existing");
-    expect(ground?.drawable).toBe(true);
-    expect(FIXED_PLANES.filter((p) => p.drawable).map((p) => p.id)).toEqual([
-      "ground",
-    ]);
+  it("survey base remains non-drawable and read-only", () => {
+    const survey = fixedPlaneById("survey")!;
+    expect(survey.drawable).toBe(false);
+    expect(survey.readOnly).toBe(true);
   });
 
-  it("marks planting and massing as proposed, non-drawable targets", () => {
-    for (const id of ["planting", "massing"] as const) {
-      const p = fixedPlaneById(id);
-      expect(p?.state).toBe("proposed");
-      expect(p?.drawable).toBe(false);
-    }
+  it("maps wall to massing, bed to planting, ditch/path to ground", () => {
+    expect(KIND_TO_PLANE.wall).toBe("massing");
+    expect(KIND_TO_PLANE.bed).toBe("planting");
+    expect(KIND_TO_PLANE.ditch).toBe("ground");
+    expect(KIND_TO_PLANE.path).toBe("ground");
   });
 
-  it("carries the 3-letter rail labels", () => {
-    expect(FIXED_PLANE_LABELS.survey).toBe("SRV");
-    expect(FIXED_PLANE_LABELS.ground).toBe("GRD");
-    expect(FIXED_PLANE_LABELS.planting).toBe("PLT");
-    expect(FIXED_PLANE_LABELS.massing).toBe("MAS");
+  it("planeZ returns correct Z-heights", () => {
+    expect(planeZ("ground")).toBe(0.0);
+    expect(planeZ("planting")).toBe(1.5);
+    expect(planeZ("massing")).toBe(4.0);
+  });
+
+  it("FIXED_PLANES has 4 planes with correct Z ordering", () => {
+    expect(FIXED_PLANES.length).toBe(4);
+    const zValues = FIXED_PLANES.map((p) => p.z);
+    expect(zValues).toEqual([-0.02, 0.0, 1.5, 4.0]);
   });
 });

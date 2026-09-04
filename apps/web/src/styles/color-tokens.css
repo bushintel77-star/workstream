@@ -23,103 +23,58 @@
    * ================================================================ */
 
   /* Surface tokens */
-  --gs-canvas: #0a0a0a;
   /* Canvas base — deep void for drawing pop (DESIGN.md §2) */
-  /* DOM panels stay Studio Paper white (--gs-panel-grad is the card fill).
-   * The dark panel CHASSIS is --la-surface (DESIGN.md §2); the WebGL
+  /* DOM panels stay Studio Paper white (--ws-panel is the card fill).
+   * The dark panel CHASSIS is --ws-panel (DESIGN.md §2); the WebGL
    * scene's dark panel value lives in the TS mirror (colorTokens.ts —
    * the declared scene/DOM split in colorTokens-css-sync.test.ts). */
-  --gs-panel: #ffffff;
-  --gs-glass: #ffffff;
-  /* Legacy alias of --gs-panel */
-  --gs-glass-strong: #fafafa;
+  /* Legacy alias of --ws-panel */
   /* Elevated step / hovered panel fill */
-  --gs-glass-sunken: #ebebeb;
   /* Inset wells inside panels */
-  --gs-surface-fill: #fafafa;
   /* Subtle fills inside white panels */
-  --gs-sunken: #ebebeb;
   /* Hover fills on panels */
-  --gs-pressed: #e4e4e4;
   /* Pressed fills */
-  --gs-frame: #e4e4e4;
   /* Gallery frame (one step below canvas) */
-  --gs-line: #d4d4d4;
   /* Decorative hairline (non-semantic only) */
-  --gs-line-soft: #e4e4e4;
   /* Whisper dividers */
-  --gs-line-strong: #8c8c8c;
   /* Interactive boundaries — 3.36:1 on panel */
-  --gs-disabled: #a3a3a3;
   /* Disabled text/glyphs (AA-exempt) */
 
   /* Panel depth law — the single elevation recipe app-wide. Panels are
    * top-lit white with a neutral shadow tier; floating HUD chrome uses the
    * frost variant. Components never hardcode these values. */
-  --gs-panel-grad: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
-  --gs-panel-frost: color-mix(in srgb, var(--gs-panel) 86%, transparent);
   --gs-frost-blur: 12px;
-  --gs-shadow-1: 0 1px 2px rgb(17 17 17 / 6%), 0 0 1px rgb(17 17 17 / 8%);
-  --gs-shadow-2: 0 4px 12px rgb(17 17 17 / 8%), 0 1px 3px rgb(17 17 17 / 6%);
-  --gs-shadow-3: 0 12px 32px rgb(17 17 17 / 14%), 0 2px 6px rgb(17 17 17 / 8%);
-  --gs-shadow-4: 0 24px 64px rgb(17 17 17 / 18%), 0 4px 12px rgb(17 17 17 / 8%);
-  --gs-radius-panel: 12px;
-  --gs-radius-chip: 6px;
-  --gs-radius-pill: 999px;
 
   /* Semantic signal tokens — Blue is the UI accent (DeepSeek-family);
    * crimson is reserved for conflict/strike only. */
-  --gs-primary: #3d5afe;
   /* Blue base — CTA fill, focus ring (white-on-it 5.14:1) */
-  --gs-primary-hover: #4d6bfe;
   /* Blue hover — DeepSeek brand blue (white-on-it 4.32:1) */
-  --gs-primary-pressed: #2946c8;
   /* Blue pressed (white-on-it 7.47:1) */
-  --gs-primary-ink: #2340c8;
   /* Blue as text on paper — 7.97:1 */
-  --gs-primary-quiet: #d9e0fc;
   /* Resting blue borders / veil endpoint */
-  --gs-primary-dim: #d9e0fc;
   /* Legacy alias of primary-quiet */
-  --gs-primary-veil: color-mix(in srgb, var(--gs-primary) 8%, #ffffff);
-  --gs-truth: #0030cf;
   /* Cobalt — proposed geometry, easements, title (8.22:1 on canvas) */
-  --gs-truth-soft: #2450c7;
   /* Cobalt hover/secondary */
-  --gs-truth-ink: #2450c7;
   /* Cobalt text on paper — 6.89:1 */
-  --gs-conflict: #c41e1e;
   /* Strike Alert — unified with primary crimson */
-  --gs-conflict-soft: #b91c1c;
   /* Strike text on paper (AA) */
-  --gs-success: #525252;
   /* Status is ink + iconography; colour reserved for critical */
-  --gs-warning: #525252;
   /* Status is ink + iconography; colour reserved for critical */
 
   /* Ink tokens — charcoal hierarchy (text on panel/canvas) */
-  --gs-ink: #1a1a1a;
   /* Primary text — 17.41:1 on panel */
-  --gs-ink-strong: #111111;
   /* Emphasis, headings, figures */
-  --gs-ink-secondary: #525252;
   /* Secondary text, labels — 7.82:1 */
-  --gs-ink-muted: #636363;
   /* ONE muted value — ≥4.72:1 on every surface incl. pressed */
 
   /* Selection vocabulary — charcoal chips, not crimson (crimson stays rare) */
-  --gs-chip-active: #1a1a1a;
   /* Active/selected tool chip fill */
-  --gs-chip-active-ink: #ffffff;
   /* 15.83:1 on charcoal */
 
   /* Doc-name ink tokens (TOKENS.md §1.3) — defined here so the binding
    * document's names and the code never diverge again. */
-  --gs-ink-truth: var(--gs-ink);
   /* Primary text (bug heal: was referenced, never defined) */
-  --gs-ink-primary: var(--gs-ink-strong);
   /* Emphasis ink — was gold, now charcoal */
-  --gs-ink-conflict: #b91c1c;
   /* Critical/strike label ink */
 
   /* ================================================================
@@ -127,122 +82,66 @@
    * High-contrast dark grey chassis, clean blue highlights, no green.
    * Per DESIGN.md §2 (binding).
    * ================================================================ */
-  --la-ink: #FFFFFF;
   /* Primary text — high-contrast white */
-  --la-ink-secondary: #A3A3A3;
   /* Secondary text */
-  --la-ink-muted: #8A8A8A;
-  /* Labels, hints, inactive tabs — 5.4:1 on --la-surface (AA) */
-  --la-ink-faint: #525252;
+  /* Labels, hints, inactive tabs — 5.4:1 on --ws-panel (AA) */
   /* Faintest text (AA-exempt glyphs) */
-  --la-surface: #121212;
   /* Main panel chassis (dark grey opaque) */
-  --la-surface-dim: #1A1A1A;
   /* Secondary surface / active tool bg */
-  --la-surface-muted: #2D2D2D;
   /* Hairline borders, dividers */
-  --la-surface-deep: #1A1A1A;
   /* Deep surface (same as dim for dark) */
-  --la-stone: #737373;
   /* Stone */
-  --la-timber: #A0522D;
   /* Timber (retained warm for material ref) */
-  --la-concrete: #525252;
   /* Concrete */
-  --la-sand: #A3A3A3;
   /* Sand (warm→neutral for dark) */
-  --la-sage: #A3A3A3;
   /* Sage (retired green → neutral) */
-  --la-clay: #EF4444;
   /* Clay → error red */
-  --la-slate: #3B82F6;
   /* Slate → clean blue */
-  --la-accent: #E5E5E5;
   /* Core interactive accent (stark contrast) */
-  --la-highlight: #3B82F6;
   /* Selection highlights (clean blue) */
-  --la-success: #A3A3A3;
   /* Success (retired green → neutral) */
-  --la-warning: #E5E5E5;
   /* Warning (stark) */
-  --la-error: #EF4444;
   /* Destructive / conflict alerts */
 
   /* Dialect-merge aliases — module-scoped Gold Standard names resolve
-   * to the same values at root so var(--gs-glass) means one thing everywhere. */
-  --gs-gold: var(--gs-primary);
-  --gs-gold-ink: #ffffff;
+   * to the same values at root so var(--ws-panel) means one thing everywhere. */
   /* Ink on primary-filled chips/buttons */
-  --gs-signal-blue: var(--gs-truth);
-  --gs-signal-blue-ink: var(--gs-truth-ink);
-  --gs-surface: var(--gs-canvas);
-  --gs-surface-dim: var(--gs-panel);
-  --gs-surface-bright: var(--gs-glass-strong);
-  --gs-conflict-veil: color-mix(in srgb, var(--gs-conflict) 16%, transparent);
   /* Legacy glass veil names — now the frost recipe (one translucent layer). */
-  --gs-glass-veil: var(--gs-panel-frost);
-  --gs-glass-veil-strong: color-mix(in srgb, var(--gs-panel) 96%, transparent);
   --gs-blur: 12px;
 
   /* ================================================================
    * WebGL render tokens — physical light/shadow values (not chrome).
    * These drive Three.js material/light properties, not UI identity.
    * Physical materials are unchanged by the Studio Paper pivot; only the
-   * clear color / chrome inks flip (see --gs-canvas above).
+   * clear color / chrome inks flip (see --ws-canvas above).
    * ================================================================ */
-  --gs-sun-warm: #fff1d6;
   /* Warm key-light tint (low-amber sun) */
-  --gs-sky-cool: #8a9bb5;
   /* Cool sky-bounce hemisphere tint */
-  --gs-shadow: #05070a;
   /* Contact/AO shadow colour (near-black, slight cool) */
-  --gs-foliage-tint: #3d6b48;
   /* Canopy subsurface/scatter tint */
-  --gs-ground-olive: #a8a196;
   /* Daylight site ground (paper-world neutral) */
-  --gs-ground-bounce: #8a857a;
   /* Neutral warm ground bounce (olive cast removed) */
-  --gs-ambient-cool: #aebfd0;
   /* Cool ambient fill (sky-lit shadow lift) */
-  --gs-rim-cool: #c8d8ee;
   /* Cool rim/back-light (silhouette separation) */
-  --gs-window-glow: #ffd989;
   /* Building window emissive (warm interior glow) */
-  --gs-bark: #4a3d2e;
   /* Tree trunk bark (warm brown) */
-  --gs-concrete: #8c9294;
   /* Architectural concrete (paving, walls) — PBR albedo */
-  --gs-anodized-metal: #2a2d30;
   /* Dark anodized metal (planters, railings, bollards) */
-  --gs-timber-weathered: #5c4a3d;
   /* Weathered timber (decking, sleeper walls) */
-  --gs-led-warm: #ffeedd;
   /* Fixture LED emissive (step lights, bollards, under-cap) */
-  --gs-summer-green: #4c9662;
   /* Seasonal foliage — summer canopy anchor */
-  --gs-autumn-orange: #c87f3a;
   /* Seasonal foliage — autumn canopy anchor */
-  --gs-cad-water: #4fa3d1;
   /* Subsurface schematic — drafting blue */
-  --gs-cad-electric: #d17a4f;
   /* Subsurface schematic — terracotta */
-  --gs-cad-sewer: #5ba874;
   /* Subsurface schematic — sage green */
-  --gs-cad-gas: #c9a84c;
   /* Subsurface schematic — muted gold */
-  --gs-cad-comms: #b8845a;
   /* Subsurface schematic — bronze */
-  --gs-cad-reclaimed: #8e6bb0;
   /* Subsurface schematic — muted lilac */
-  --gs-blueprint-ground: #e8e2d4;
   /* Blueprint vellum transition — warm drafting vellum */
-  --gs-sketch-ink: #ff2ef6;
   /* Freehand stroke ink (CanvasStroke default) */
 
   /* Earthworks data pair — cut/fill are drawing data, not UI accent.
    * Fill stays muted drafting gold so cut (crimson) and fill never blur. */
-  --gs-earthworks-cut: var(--gs-conflict);
-  --gs-earthworks-fill: #c9a84c;
 
   /* ================================================================
    * Raw neutral ramps — Studio Paper (dead-neutral, R=G=B)
@@ -359,91 +258,42 @@
    * Dark glass chrome — the expansion and fundamental chrome redesign.
    * The 3D scene keeps --gs-* render tokens; DOM chrome speaks --lc-*.
    * ================================================================ */
-  --lc-canvas-bg: #1a1c1e;
   /* drafting viewport */
-  --lc-canvas-bg-sketch: #131517;
   /* sketch mode viewport (deeper void) */
-  --lc-panel-bg: #1c1e21;
   /* settings/layers sheets */
-  --lc-glass-bg: rgba(26, 28, 30, 0.86);
   /* floating chrome */
-  --lc-glass-grad: linear-gradient(180deg, rgba(30, 33, 35, 0.93), rgba(22, 24, 26, 0.90));
-  --lc-glass-border: rgba(232, 230, 224, 0.13);
-  --lc-glass-inset: 0 1px 0 rgba(255, 255, 255, 0.07) inset;
-  --lc-flyout-shadow: 14px 18px 38px rgba(0, 0, 0, 0.42);
-  --lc-track-border: rgba(232, 230, 224, 0.10);
-  --lc-ink: #e8e6e0;
   /* primary text on dark */
-  --lc-ink-60: rgba(232, 230, 224, 0.70);
   /* secondary — AA on dark glass (7.96:1) */
-  --lc-ink-40: rgba(232, 230, 224, 0.60);
   /* tertiary — AA on dark glass (6.0:1) */
-  --lc-ink-30: rgba(232, 230, 224, 0.55);
   /* hint/labels — AA on dark glass (5.28:1) */
-  --lc-surface-tint: rgba(232, 230, 224, 0.06);
   /* inactive tile */
-  --lc-accent-terrain: #66ac69;
   /* active tool, active camera — sRGB equiv of oklch(0.68 0.12 145) */
-  --lc-accent-terrain-hi: #a1e9a3;
   /* active pip, sketch active stroke — sRGB equiv of oklch(0.87 0.12 145) */
-  --lc-accent-terrain-on: #10120f;
   /* text on accent — dark on green (7.07:1 on #66ac69) */
-  --lc-accent-mass: #da915f;
   /* massing fill + labels — sRGB equiv of oklch(0.72 0.11 55) */
-  --lc-accent-redline: #d55753;
   /* crosshair, section cut, cut hatch — sRGB equiv of oklch(0.62 0.16 25) */
-  --lc-accent-hazard: #efa464;
   /* BAL / bushfire overlay chip — sRGB equiv of oklch(0.78 0.12 60) */
-  --lc-vignette: radial-gradient(118% 100% at 50% 50%, rgba(0, 0, 0, 0) 44%, rgba(0, 0, 0, 0.44) 80%, rgba(0, 0, 0, 0.7) 100%);
-  --lc-paper-bg: #f4f2ec;
   /* schedule only — the one light surface */
-  --lc-paper-ink: #1a1a1a;
   /* schedule ink */
 
   /* v2 geometry — ribbon, dock, flyout, rail, schedule */
-  --lc-ribbon-width: 88px;
-  --lc-ribbon-width-rail: 56px;
-  --lc-ribbon-width-named: 236px;
-  --lc-ribbon-radius: 19px;
-  --lc-ribbon-padding: 8px;
-  --lc-ribbon-tile-radius: 11px;
-  --lc-ribbon-tile-gap: 4px;
-  --lc-camera-dock-radius: 19px;
-  --lc-flyout-width: 238px;
-  --lc-flyout-width-media: 296px;
-  --lc-flyout-radius: 16px;
-  --lc-depth-rail-radius: 14px;
-  --lc-schedule-width: 622px;
-  --lc-schedule-radius: 10px;
 
   /* v2 typography — Archivo (UI) + IBM Plex Mono (numeric/labels) */
-  --lc-font-ui: var(--font-lc-ui), "Archivo", var(--font-ui), "Inter", sans-serif;
-  --lc-font-mono: var(--font-lc-mono), "IBM Plex Mono", var(--font-tech), "Space Grotesk", monospace;
 
   /* v2 type scale — 9.5px mono floor (outdoor legibility) */
-  --lc-fs-glyph: 9.5px;
   /* tool tile labels, mono floor */
-  --lc-fs-group: 8.5px;
-  /* group headers */
-  --lc-fs-readout: 10px;
+  /* Group headers. Was 8.5px — below this scale's OWN stated floor (the
+     comment above, and DESIGN-SPEC §4's ladder, both put the micro step at
+     9.5px), and it is the token the ribbon's PEN/LINE/CONTOUR labels and the
+     dock's status cap render at. 8.5px uppercase mono at 0.08em tracking is
+     the smallest text in the product, on the surface CLAUDE.md says has to
+     stay legible on site in daylight. Raised to the documented floor. */
   /* numeric readouts */
-  --lc-fs-body: 10.5px;
   /* body text */
-  --lc-fs-panel: 13px;
   /* panel headers */
-  --lc-fs-title: 15px;
   /* titles */
 
   /* v2 opacity scale — the choreography ladder (§5.5 quiet state) */
-  --lc-op-quiet: 0.72;
-  --lc-op-chips-quiet: 0.2;
-  --lc-op-hidden: 0;
-  --lc-op-active: 1;
-  --lc-op-hover: 0.85;
-  --lc-op-subsurface: 0.7;
-  --lc-op-ground-line: 0.4;
-  --lc-op-60: 0.6;
-  --lc-op-80: 0.8;
 }
 
 /* ================================================================
@@ -457,50 +307,50 @@
 [data-theme="light"],
 :root[data-theme="dark"],
 [data-theme="dark"] {
-  --canvas: var(--gs-canvas);
-  --panel: var(--gs-panel);
-  --grid-line: var(--gs-line);
-  --border: var(--gs-line);
-  --border-strong: var(--gs-line-strong);
+  --canvas: var(--ws-canvas);
+  --panel: var(--ws-panel);
+  --grid-line: var(--ws-line);
+  --border: var(--ws-line);
+  --border-strong: var(--ws-line-strong);
   /*
    * WCAG 2.2 AA on Studio Paper. Ink tokens resolve to --gs-ink-* which are
    * verified against #FFFFFF panel and #F4F4F4 canvas (TOKENS.md §4):
    * ink 17.41:1, secondary 7.82:1, muted 6.00:1 on panel.
    */
-  --text-muted: var(--gs-ink-muted);
-  --text-secondary: var(--gs-ink-secondary);
-  --text-primary: var(--gs-ink);
+  --text-muted: var(--ws-ink-muted);
+  --text-secondary: var(--ws-ink-secondary);
+  --text-primary: var(--ws-ink);
 
   /* Geometry strokes are drawing data (TOKENS.md §1 data layer).
    * Existing = Strike crimson (semantic: "what's already there").
    * Proposed = Cobalt (the design truth — 8.22:1 on paper).
    * Easements = Cobalt. */
-  --existing-stroke: var(--gs-conflict);
-  --existing-text: var(--gs-ink-conflict);
-  --proposed-stroke: var(--gs-truth);
-  --proposed-text: var(--gs-truth-ink);
+  --existing-stroke: var(--ws-conflict);
+  --existing-text: var(--ws-conflict);
+  --proposed-stroke: var(--ws-dwg-truth);
+  --proposed-text: var(--ws-dwg-truth-ink);
   --planting-retain-stroke: var(--forest-l-600);
   --planting-retain-text: var(--forest-l-600);
   --planting-new-stroke: var(--sprout-l-500);
   --planting-new-text: var(--sprout-l-500);
-  --easement-stroke: var(--gs-truth);
+  --easement-stroke: var(--ws-dwg-truth);
 
   /* Hover/active darken on paper (affordance reads darker, not lighter). */
-  --proposed-hover: color-mix(in srgb, var(--gs-truth) 88%, black);
-  --proposed-active: color-mix(in srgb, var(--gs-truth) 76%, black);
+  --proposed-hover: color-mix(in srgb, var(--ws-dwg-truth) 88%, black);
+  --proposed-active: color-mix(in srgb, var(--ws-dwg-truth) 76%, black);
   --proposed-disabled: var(--gray-l-300);
-  --existing-hover: color-mix(in srgb, var(--gs-conflict) 88%, black);
-  --existing-active: color-mix(in srgb, var(--gs-conflict) 76%, black);
+  --existing-hover: color-mix(in srgb, var(--ws-conflict) 88%, black);
+  --existing-active: color-mix(in srgb, var(--ws-conflict) 76%, black);
   --existing-disabled: var(--gray-l-300);
   --planting-retain-hover: color-mix(in srgb, var(--forest-l-600) 88%, black);
   --planting-retain-active: color-mix(in srgb, var(--forest-l-600) 76%, black);
   --planting-retain-disabled: var(--gray-l-300);
-  --focus-ring: var(--gs-primary);
-  --focus-ring-offset: var(--gs-panel);
+  --focus-ring: var(--ws-active);
+  --focus-ring-offset: var(--ws-panel);
   /* Chrome status — ink + iconography; crimson is reserved for critical */
-  --warning: var(--gs-ink-secondary);
-  --danger: var(--gs-conflict);
-  --success: var(--gs-ink-secondary);
+  --warning: var(--ws-ink-secondary);
+  --danger: var(--ws-conflict);
+  --success: var(--ws-ink-secondary);
 }
 
 /* §4 — fills via color-mix against canvas (not hex-alpha). */

@@ -59,12 +59,12 @@ function quadGeometry(corners: [V3, V3, V3, V3]): THREE.BufferGeometry {
 
 const RL_LABEL_STYLE: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: 10.5,
+  fontSize: 11,
   fontWeight: 700,
   fontVariantNumeric: "tabular-nums",
-  color: "var(--gs-ink)",
+  color: "var(--ws-ink)",
   background: "var(--cf-dark-panel-bg)",
-  border: "1px solid var(--gs-line)",
+  border: "1px solid var(--ws-line)",
   borderRadius: 4,
   padding: "1px 5px",
   whiteSpace: "nowrap",

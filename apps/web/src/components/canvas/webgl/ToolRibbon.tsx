@@ -3,23 +3,26 @@
 /**
  * Landscape Canvas v2 — the categorical vertical tool ribbon (handoff §5).
  *
- * Replaces the Stage One horizontal bottom tool dock. Vertical glass panel,
- * hand-opposite edge, top-aligned at inset 30px. Five groups (DRAW, GRADE,
- * PLANT, BUILD, MEASURE) + a utility row (Layers, History).
+ * Milled chassis, hand-opposite edge, top-aligned at inset 30px. Five groups
+ * (DRAW, GRADE, PLANT, BUILD, MEASURE) + a utility row (Layers, History).
  *
  * Three widths, chosen for the user (no manual collapse):
  *   RAIL 56px  — while the pen is down (pen-down quiet state, §5.5)
- *   STANDARD 88px — at rest
- *   NAMED 236px — on 400ms pointer dwell or CmdK (adds names + hotkeys)
+ *   STANDARD 88px — at rest (icon-only, no text labels)
+ *   NAMED 236px — on hover or Cmd+K (adds names + hotkeys)
  *
- * Active tool: accent fill, dark glyph/label, 4px corner triangle when it
- * has a flyout. The active tool's group header turns accent — the only
- * wayfinding in rail width.
+ * Width transitions are a 50ms CSS transform in the DOM overlay — the WebGL
+ * rendering loop is never involved. XState v5 enforces a strict binary toggle:
+ * the ribbon is either COLLAPSED or DEPLOYED, with no elastic bounce.
+ *
+ * Active tool: stark white fill, dark ink, inset shadow (depressed switch).
  */
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
+import { useMachine } from "@xstate/react";
 import { useStudioStore, type ToolId } from "./studioStore";
 import { isToolLocked, toolLockReason } from "./chromeContract";
+import { ribbonMachine, widthFromState, type RibbonWidth } from "./ribbonMachine";
 import styles from "./ToolRibbon.module.css";
 
 /* ---- tool definitions (handoff §5.1) ---- */
@@ -89,18 +92,27 @@ const UTILITY_TOOLS: ToolDef[] = [
   { id: "history", label: "HISTORY", hotkey: "", glyph: "history" },
 ];
 
-/* ---- inline SVG glyphs (handoff §10: no icon set, inline line SVGs) ---- */
+/* ---- inline SVG glyphs (handoff §10: no icon set, inline line SVGs) ----
+ * Hardware-grade specification:
+ *   - 28px display grid (large-scale engineering engraving hit-target)
+ *   - strokeWidth 2 (static — does NOT scale with the grid; a 2px stroke
+ *     on a 28px box reads as a precise thin engraving, not an oversized toy)
+ *   - strokeLinecap square (mechanical termination — no soft round caps)
+ *   - strokeLinejoin miter (precision corners — no soft radii)
+ *   - State inversion: resting = stark stroke against dark panel;
+ *     active (depressed) = solid fill, no stroke. The `filled` prop
+ *     switches the entire glyph to fill mode for the active state. */
 
-function ToolGlyph({ name }: { name: string }) {
+function ToolGlyph({ name, filled = false }: { name: string; filled?: boolean }) {
   const common = {
-    width: 17,
-    height: 17,
+    width: 28,
+    height: 28,
     viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.4,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
+    fill: filled ? "currentColor" : "none",
+    stroke: filled ? "none" : "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "square" as const,
+    strokeLinejoin: "miter" as const,
   };
   switch (name) {
     case "pen":
@@ -237,7 +249,6 @@ export function ToolRibbon() {
   const setActiveTool = useStudioStore((s) => s.setActiveTool);
   const handedness = useStudioStore((s) => s.handedness);
   const penDown = useStudioStore((s) => s.penDown);
-  const ribbonDwellOpen = useStudioStore((s) => s.ribbonDwellOpen);
   const setRibbonDwellOpen = useStudioStore((s) => s.setRibbonDwellOpen);
   // Phase L.5 — GRADE + MEASURE lock in 3D per the chrome contract. The
   // contract is read per-group in the render below (isLocked + lockReason),
@@ -245,45 +256,50 @@ export function ToolRibbon() {
   // table — not scattered conditionals.
   const cameraPreset = useStudioStore((s) => s.cameraPreset);
 
-  // 400ms pointer dwell → named width (handoff §5.2)
-  const dwellTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // XState v5 binary toggle: COLLAPSED ↔ DEPLOYED, with RAIL for pen-down.
+  // No dwell timer, no easing — the statechart enforces instant binary
+  // transitions, and the 50ms CSS transform handles the visual snap.
+  const [state, send] = useMachine(ribbonMachine);
+
+  // Sync penDown from the store into the machine
+  useEffect(() => {
+    send({ type: penDown ? "PEN_DOWN" : "PEN_UP" });
+  }, [penDown, send]);
+
+  // Cmd+K toggles deployment
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        send({ type: "CMD_K_TOGGLE" });
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [send]);
 
   const onPointerEnter = useCallback(() => {
-    dwellTimer.current = setTimeout(() => {
-      setRibbonDwellOpen(true);
-    }, 400);
-  }, [setRibbonDwellOpen]);
+    send({ type: "HOVER_ENTER" });
+  }, [send]);
 
   const onPointerLeave = useCallback(() => {
-    if (dwellTimer.current) {
-      clearTimeout(dwellTimer.current);
-      dwellTimer.current = null;
-    }
-    setRibbonDwellOpen(false);
-  }, [setRibbonDwellOpen]);
+    send({ type: "HOVER_LEAVE" });
+  }, [send]);
 
+  // Keep the store in sync for components that read ribbonDwellOpen
   useEffect(() => {
-    return () => {
-      if (dwellTimer.current) clearTimeout(dwellTimer.current);
-    };
-  }, []);
+    setRibbonDwellOpen(state.matches("deployed"));
+  }, [state, setRibbonDwellOpen]);
 
-  // Width resolution: rail (pen down) > named (dwell/CmdK) > standard
-  const width = penDown
-    ? "rail"
-    : ribbonDwellOpen
-      ? "named"
-      : "standard";
+  // Width from the statechart state — the single source of truth
+  const width: RibbonWidth = widthFromState(state.value as string);
 
   const isLeft = handedness === "LEFT";
-  // Hand-opposite edge: for RIGHT-handed users the ribbon goes on the LEFT
-  // (opposite the drawing hand), for LEFT-handed users on the RIGHT.
-  // The depth rail stays on the hand-side (mirrored).
   const sideClass = isLeft ? styles.ribbonLeft : styles.ribbonRight;
   const widthClass =
     width === "rail"
       ? styles.ribbonRail
-      : width === "named"
+      : width === "deployed"
         ? styles.ribbonNamed
         : styles.ribbonStandard;
 
@@ -301,15 +317,15 @@ export function ToolRibbon() {
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
     >
-      {/* Header — hidden in rail width (§5.1: glyph-only) */}
-      {width !== "rail" && (
+      {/* Header — only in deployed (expanded) width */}
+      {width === "deployed" && (
         <div className={styles.header}>
           <span className={styles.headerLabel}>TOOLS</span>
         </div>
       )}
 
-      {/* Group pips — 3 dots under the header (standard/named only) */}
-      {width !== "rail" && (
+      {/* Group pips — only in deployed (expanded) width */}
+      {width === "deployed" && (
         <div className={styles.groupPips}>
           {TOOL_GROUPS.slice(0, 3).map((g) => (
             <span
@@ -320,12 +336,8 @@ export function ToolRibbon() {
         </div>
       )}
 
-      {/* Tool groups */}
+      {/* Tool groups — icon-only at standard/rail, labels only at named */}
       {TOOL_GROUPS.map((group, gi) => {
-        // Phase L.5 — GRADE + MEASURE lock in 3D per the chrome contract.
-        // The lock is read off TOOL_CHROME_ELEMENT, the same table the
-        // keyboard handler consults, so the ribbon and the hotkeys cannot
-        // disagree about what is locked.
         const locked = group.tools.some((t) => isToolLocked(t.id, cameraPreset));
         const reason = locked
           ? group.tools.reduce<string | null>(
@@ -335,13 +347,11 @@ export function ToolRibbon() {
           : null;
         return (
           <div key={group.name} className={styles.group} data-locked={locked ? "true" : undefined}>
-            {/* Group divider (not before the first group) */}
-            {gi > 0 && <div className={styles.groupDivider} />}
+            {/* Chassis gap between groups (not a drawn line) */}
+            {gi > 0 && <div className={styles.chassisGap} />}
 
-            {/* Group header — accent when the active tool is in this group.
-              At rail width only the ACTIVE group's header renders: that accent
-              header is the sole wayfinding (spec 4.8). */}
-            {(width !== "rail" || activeGroupName === group.name) && (
+            {/* Group header — only in deployed width; at rail only active group */}
+            {(width === "deployed" || (width === "rail" && activeGroupName === group.name)) && (
               <div
                 className={`${styles.groupHeader} ${activeGroupName === group.name ? styles.groupHeaderActive : ""} ${width === "rail" ? styles.groupHeaderRail : ""} ${locked ? styles.groupHeaderLocked : ""}`}
               >
@@ -395,8 +405,8 @@ export function ToolRibbon() {
         );
       })}
 
-      {/* Utility row — Layers + History, two 28px tiles side by side */}
-      <div className={styles.groupDivider} />
+      {/* Utility row — Layers + History, isolated at the bottom */}
+      <div className={styles.chassisGap} />
       <div className={styles.utilityRow}>
         {UTILITY_TOOLS.map((tool) => (
           <ToolTile
@@ -424,7 +434,7 @@ export function ToolRibbon() {
 interface ToolTileProps {
   tool: ToolDef;
   active: boolean;
-  width: "rail" | "standard" | "named";
+  width: RibbonWidth;
   compact?: boolean;
   disabled?: boolean;
   onClick: () => void;
@@ -452,12 +462,13 @@ function ToolTile({ tool, active, width, compact, disabled, onClick }: ToolTileP
       title={`${tool.label}${tool.hotkey ? ` (${tool.hotkey})` : ""}${disabled ? " — locked" : ""}`}
     >
       <span className={styles.tileGlyph}>
-        <ToolGlyph name={tool.glyph} />
+        <ToolGlyph name={tool.glyph} filled={active} />
       </span>
-      {width !== "rail" && (
+      {/* Labels only in deployed (expanded) width — standard is icon-only */}
+      {width === "deployed" && (
         <span className={styles.tileLabel}>{tool.label}</span>
       )}
-      {width === "named" && tool.hotkey && (
+      {width === "deployed" && tool.hotkey && (
         <span className={styles.tileHotkey}>{tool.hotkey}</span>
       )}
       {/* Corner triangle — active tool with a flyout (§5.1) */}

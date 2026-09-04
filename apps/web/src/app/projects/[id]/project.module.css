@@ -726,7 +726,7 @@
 }
 
 .processingStageActive {
-  border-color: color-mix(in srgb, var(--gs-primary) 42%, var(--line-hairline));
+  border-color: color-mix(in srgb, var(--ws-active) 42%, var(--line-hairline));
   overflow: hidden;
   animation: stageBreathe 2.4s var(--ease, ease-in-out) infinite;
 }
@@ -741,7 +741,7 @@
   height: 2px;
   background: linear-gradient(90deg,
       transparent 0%,
-      color-mix(in srgb, var(--gs-primary) 70%, transparent) 50%,
+      color-mix(in srgb, var(--ws-active) 70%, transparent) 50%,
       transparent 100%);
   width: 40%;
   animation: stageProgress 1.6s var(--ease, ease-in-out) infinite;
@@ -752,14 +752,14 @@
   0%,
   100% {
     box-shadow: var(--elev-1), var(--elev-inset);
-    border-color: color-mix(in srgb, var(--gs-primary) 34%, var(--line-hairline));
+    border-color: color-mix(in srgb, var(--ws-active) 34%, var(--line-hairline));
   }
 
   50% {
     box-shadow:
       var(--elev-1),
-      0 0 0 3px color-mix(in srgb, var(--gs-primary) 14%, transparent);
-    border-color: color-mix(in srgb, var(--gs-primary) 56%, var(--line-hairline));
+      0 0 0 3px color-mix(in srgb, var(--ws-active) 14%, transparent);
+    border-color: color-mix(in srgb, var(--ws-active) 56%, var(--line-hairline));
   }
 }
 
@@ -808,8 +808,8 @@
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  border: 2px solid color-mix(in srgb, var(--gs-primary) 24%, transparent);
-  border-top-color: var(--gs-primary);
+  border: 2px solid color-mix(in srgb, var(--ws-active) 24%, transparent);
+  border-top-color: var(--ws-active);
   animation: processingSpin var(--dur-slow) linear infinite;
 }
 
@@ -862,7 +862,7 @@
     animation: none;
     box-shadow:
       var(--elev-1),
-      0 0 0 2px color-mix(in srgb, var(--gs-primary) 14%, transparent);
+      0 0 0 2px color-mix(in srgb, var(--ws-active) 14%, transparent);
   }
 
   .processingStageActive::after {

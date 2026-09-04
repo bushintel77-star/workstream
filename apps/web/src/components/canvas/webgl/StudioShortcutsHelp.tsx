@@ -43,7 +43,7 @@ export function StudioShortcutsHelp({
         display: "grid",
         placeItems: "center",
         pointerEvents: "auto",
-        background: "color-mix(in srgb, var(--gs-canvas) 55%, transparent)",
+        background: "color-mix(in srgb, var(--ws-canvas) 55%, transparent)",
         zIndex: "var(--cf-z-app)",
       }}
       onClick={onClose}
@@ -56,10 +56,10 @@ export function StudioShortcutsHelp({
           maxHeight: "min(520px, calc(100dvh - 80px))",
           overflowY: "auto",
           padding: "14px 16px",
-          borderRadius: "var(--gs-radius-panel)",
-          background: "var(--gs-panel-grad)",
-          border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-          boxShadow: "var(--gs-shadow-3)",
+          borderRadius: "var(--ws-radius-3)",
+          background: "var(--ws-panel)",
+          border: "1px solid color-mix(in srgb, var(--ws-line) 55%, transparent)",
+          boxShadow: "var(--ws-shadow-2)",
         }}
       >
         <div
@@ -73,10 +73,10 @@ export function StudioShortcutsHelp({
           <span
             style={{
               fontFamily: "var(--font-tech)",
-              fontSize: "var(--gs-font-sm)",
+              fontSize: "var(--ws-text-xs)",
               fontWeight: 600,
               letterSpacing: "0.06em",
-              color: "var(--la-ink)",
+              color: "var(--ws-ink)",
             }}
           >
             SHORTCUTS
@@ -86,7 +86,7 @@ export function StudioShortcutsHelp({
             aria-label="Close shortcuts"
             data-testid="studio-shortcuts-close"
             onClick={onClose}
-            style={{ color: "var(--la-ink-muted)", padding: "0 4px" }}
+            style={{ color: "var(--ws-ink-muted)", padding: "0 4px" }}
           >
             ×
           </Button>
@@ -96,10 +96,10 @@ export function StudioShortcutsHelp({
             <div
               style={{
                 fontFamily: "var(--font-tech)",
-                fontSize: "var(--gs-font-xs)",
+                fontSize: "var(--ws-text-xs)",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "var(--la-ink-secondary)",
+                color: "var(--ws-ink-secondary)",
                 marginBottom: 4,
               }}
             >
@@ -111,20 +111,20 @@ export function StudioShortcutsHelp({
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  gap: "var(--gs-space-4)",
+                  gap: "var(--ws-space-4)",
                   padding: "3px 0",
                   fontFamily: "var(--font-ui)",
-                  fontSize: "var(--gs-font-sm)",
-                  color: "var(--la-ink)",
+                  fontSize: "var(--ws-text-xs)",
+                  color: "var(--ws-ink)",
                 }}
               >
                 <span>{r.action}</span>
                 <kbd
                   style={{
                     fontFamily: "var(--font-tech)",
-                    fontSize: "var(--gs-font-xs)",
+                    fontSize: "var(--ws-text-xs)",
                     letterSpacing: "0.04em",
-                    color: "var(--la-ink-secondary)",
+                    color: "var(--ws-ink-secondary)",
                     whiteSpace: "nowrap",
                   }}
                 >

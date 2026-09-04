@@ -24,7 +24,7 @@ export function PipelineShellLoading({
           left: "50%",
           transform: "translateX(-50%)",
           display: "flex",
-          gap: "var(--gs-space-4)",
+          gap: "var(--ws-space-4)",
           zIndex: "var(--cf-z-chrome)",
         }}
       >
@@ -32,7 +32,7 @@ export function PipelineShellLoading({
           <div
             key={i}
             className={`${sk.skel} ${sk.line}`}
-            style={{ width: 72, height: 32, borderRadius: "var(--gs-radius-xl)" }}
+            style={{ width: 72, height: 32, borderRadius: "var(--ws-radius-3)" }}
           />
         ))}
       </div>

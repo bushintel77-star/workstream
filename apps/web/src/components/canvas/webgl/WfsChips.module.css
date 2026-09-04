@@ -13,14 +13,14 @@
   gap: 0;
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
-  transition: opacity 120ms ease;
+  transition: opacity 50ms linear;
   max-width: calc(100% - 150px);
   overflow: hidden;
 }
 
 /* Pen-down quiet state — chips → 20% opacity (§5.5) */
 .chipBarQuiet {
-  opacity: var(--lc-op-chips-quiet);
+  opacity: var(--ws-op-ghost);
 }
 
 /* ---- Primary chip ---- */
@@ -29,29 +29,27 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-radius: var(--lc-ribbon-radius);
-  background: var(--lc-glass-grad);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-2);
   max-width: min(300px, 100%);
 }
 
 .primaryAccentSquare {
   width: 10px;
   height: 10px;
-  border-radius: var(--gs-radius-xs);
-  background: var(--lc-accent-terrain);
+  border-radius: var(--ws-radius-2);
+  background: var(--ws-active);
   flex-shrink: 0;
-  box-shadow: 0 0 8px color-mix(in srgb, var(--lc-accent-terrain) 40%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ws-active) 40%, transparent);
 }
 
 .primaryName {
-  font-family: var(--lc-font-ui);
-  font-size: var(--lc-fs-title);
+  font-family: var(--ws-font-ui);
+  font-size: var(--ws-text-lg);
   font-weight: 600;
-  color: var(--lc-ink);
+  color: var(--ws-ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -60,14 +58,14 @@
 }
 
 .primaryMeta {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-readout);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 500;
   text-transform: uppercase;
-  color: var(--lc-ink-40);
+  color: var(--ws-ink-muted);
   letter-spacing: 0.05em;
   white-space: nowrap;
-  border-left: 1px solid var(--lc-glass-border);
+  border-left: 1px solid var(--ws-line);
   padding-left: 8px;
 }
 
@@ -75,7 +73,7 @@
 .divider {
   width: 1px;
   height: 24px;
-  background: var(--lc-glass-border);
+  background: var(--ws-line);
   flex-shrink: 0;
   margin: 0 8px;
 }
@@ -88,15 +86,13 @@
   align-items: center;
   padding: 6px 10px;
   border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--lc-accent-hazard) 12%, var(--lc-glass-bg));
-  border: 1px solid color-mix(in srgb, var(--lc-accent-hazard) 40%, transparent);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  background: color-mix(in srgb, var(--ws-dwg-hazard) 12%, var(--ws-panel));
+  border: 1px solid color-mix(in srgb, var(--ws-dwg-hazard) 40%, transparent);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: var(--lc-accent-hazard);
+  color: var(--ws-dwg-hazard);
   flex-shrink: 0;
   margin: 0 8px;
   cursor: pointer;
@@ -105,7 +101,7 @@
 }
 
 .unscaledBadge:hover {
-  opacity: var(--lc-op-hover);
+  opacity: var(--ws-op-hover);
 }
 
 /* ---- Overlay pill ---- */
@@ -115,44 +111,42 @@
   gap: 5px;
   padding: 6px 10px;
   border-radius: var(--r-pill);
-  background: var(--lc-glass-bg);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
   margin-right: 4px;
   flex-shrink: 0;
 }
 
 /* ---- Hazard pill — BAL / bushfire overlay (hazard colour + triangle) ---- */
 .overlayPillHazard {
-  border-color: color-mix(in srgb, var(--lc-accent-hazard) 40%, transparent);
-  background: color-mix(in srgb, var(--lc-accent-hazard) 12%, var(--lc-glass-bg));
+  border-color: color-mix(in srgb, var(--ws-dwg-hazard) 40%, transparent);
+  background: color-mix(in srgb, var(--ws-dwg-hazard) 12%, var(--ws-panel));
 }
 
 .overlayGlyph {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
-  color: var(--lc-ink-60);
+  color: var(--ws-ink-secondary);
   line-height: 1;
 }
 
 .overlayPillHazard .overlayGlyph {
-  color: var(--lc-accent-hazard);
+  color: var(--ws-dwg-hazard);
 }
 
 .overlayLabel {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--lc-ink-60);
+  color: var(--ws-ink-secondary);
   white-space: nowrap;
 }
 
 .overlayPillHazard .overlayLabel {
-  color: var(--lc-accent-hazard);
+  color: var(--ws-dwg-hazard);
 }
 
 /* ---- Overflow chip — dashed +N WFS ---- */
@@ -162,18 +156,19 @@
   padding: 6px 10px;
   border-radius: var(--r-pill);
   background: transparent;
-  border: 1px dashed var(--lc-glass-border);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph);
+  border: 1px dashed var(--ws-line);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--lc-ink-40);
+  color: var(--ws-ink-muted);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-/* ---- Phase N — Strike chip + conflict card ---- */
+/* ---- Phase N — Strike chip + 3D-pinned conflict card ---- */
+/* Legacy fixed-offset card (retired — replaced by .conflictCardPinned) */
 .conflictCard {
   position: absolute;
   top: 60px;
@@ -181,17 +176,39 @@
   min-width: 240px;
   max-width: 320px;
   padding: 12px 14px;
-  border-radius: var(--gs-radius-xl);
-  background: var(--lc-glass-grad);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-0), var(--ws-shadow-2);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 9.5px;
-  color: var(--lc-ink);
+  color: var(--ws-ink);
+}
+
+/* 3D-pinned conflict card — floats over the clash geometry.
+   Rigid mechanical offset (translate(24px, -50%)) keeps the card
+   adjacent to the strike, never obscuring the red clash geometry. */
+.conflictCardPinned {
+  position: absolute;
+  transform: translate(24px, -50%);
+  min-width: 240px;
+  max-width: 320px;
+  pointer-events: auto;
+  z-index: var(--cf-z-chrome);
+  transition: opacity 80ms linear;
+}
+
+.conflictCardInner {
+  padding: 12px 14px;
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-0), var(--ws-shadow-2);
+  font-family: var(--ws-font-tech);
+  font-size: 9.5px;
+  color: var(--ws-ink);
 }
 
 .conflictCardHeader {
@@ -205,13 +222,13 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--gs-conflict, #c41e1e);
+  color: var(--ws-conflict);
 }
 
 .conflictCardClose {
   background: none;
   border: none;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   cursor: pointer;
   font-size: 14px;
   padding: 0 2px;
@@ -219,18 +236,18 @@
 
 .conflictCardSeverity {
   margin-bottom: 6px;
-  color: var(--lc-ink-60);
+  color: var(--ws-ink-secondary);
 }
 
 .conflictCardRow {
   display: flex;
   justify-content: space-between;
   padding: 2px 0;
-  color: var(--lc-ink-60);
+  color: var(--ws-ink-secondary);
 }
 
 .conflictCardRow span:first-child {
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
 }
 
 .conflictCardActions {
@@ -242,40 +259,51 @@
 .conflictCardAction {
   flex: 1;
   padding: 5px 8px;
-  border-radius: var(--gs-radius-md);
-  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--ws-radius-3);
+  border: 1px solid var(--ws-line);
   background: transparent;
-  color: var(--lc-ink);
-  font-family: var(--lc-font-mono);
+  color: var(--ws-ink);
+  font-family: var(--ws-font-tech);
   font-size: 8.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
-  transition: background 120ms ease;
+  transition: none;
 }
 
 .conflictCardAction:hover:not(:disabled) {
-  background: var(--lc-surface-tint, rgba(232, 230, 224, 0.06));
+  border-color: var(--ws-ink-secondary);
+}
+
+.conflictCardAction:active:not(:disabled) {
+  background: var(--ws-active);
+  color: var(--ws-panel);
+  border-color: var(--ws-active);
+  /* The same depressed-switch shadow the dock/ribbon active states use —
+     was a raw rgba() literal, which the chrome-colors gate correctly reads
+     as "darkening the drawing" even though this is a button press, not a
+     scrim. Token already existed (tokens.css); this just adopts it. */
+  box-shadow: var(--ws-shadow-inset);
 }
 
 .conflictCardAction:disabled {
-  opacity: var(--lc-op-ground-line);
+  opacity: var(--ws-op-quiet);
   cursor: not-allowed;
 }
 
 /* Stated when no excavation is linked to the strike — the three actions all
  * operate on a trench, so with none there is nothing honest to offer. */
 .conflictCardNoTrench {
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 8.5px;
   line-height: 1.35;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
 }
 
 .conflictCardStamp {
   margin-top: 8px;
   font-size: 8.5px;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   font-style: italic;
 }

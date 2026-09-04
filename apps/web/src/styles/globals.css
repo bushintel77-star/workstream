@@ -1,35 +1,43 @@
-/* Workstream — Design Studio v4
- * Curtis & Co operator chrome — Studio Paper: high-key neutral workspace,
- * white floating panels lifted by neutral shadow tiers, charcoal ink.
- * Unified with @workstream/ui tokens (packages/ui/src/tokens.ts).
- * Plan/CAD colour system: color-tokens.css (v2 semantic tokens). */
+/* Workstream — global stylesheet.
+ *
+ * The design system is `tokens.css` — one namespace, `--ws-*` for chrome and
+ * `--ws-dwg-*` for the drawing. It replaced three overlapping systems
+ * (--gs-* light "Studio Paper", --lc-* dark glass, --la-* dark chassis) that
+ * were being mixed inside single components.
+ *
+ * `color-tokens.css` is the remaining legacy surface: the older
+ * --hc-/--surface-/--text-/--gray-/--fl-/--planting-/--elev-/--portal-
+ * namespaces still live there and are NOT yet folded into --ws-*. It is
+ * imported FIRST and the one system LAST, so on any name the two share the
+ * cascade resolves to --ws-*. */
 
 @import "./color-tokens.css";
+@import "./tokens.css";
 
 :root {
   /* Gold Standard Studio Paper — the v4 bridge. Every mirror resolves to the
    * authoritative --gs-* namespace (color-tokens.css), so all operator chrome
    * speaks the same palette as the WebGL studio. Crimson is the app accent. */
-  --canvas-base: var(--gs-canvas);
-  --canvas-base-high: var(--gs-glass-sunken);
-  --canvas-base-low: var(--gs-frame);
-  --gold-standard: var(--la-accent);
-  --gold-standard-bright: var(--la-ink-secondary);
-  --gold-standard-ink: var(--gs-ink);
-  --gold-standard-ink-bright: var(--gs-panel);
-  --signal-blue: var(--gs-truth);
-  --signal-blue-ink: var(--gs-truth-ink);
-  --conflict-ink: var(--gs-conflict-soft);
+  --canvas-base: var(--ws-canvas);
+  --canvas-base-high: var(--ws-panel-sunken);
+  --canvas-base-low: var(--ws-panel-sunken);
+  --gold-standard: var(--ws-active);
+  --gold-standard-bright: var(--ws-ink-secondary);
+  --gold-standard-ink: var(--ws-ink);
+  --gold-standard-ink-bright: var(--ws-panel);
+  --signal-blue: var(--ws-dwg-truth);
+  --signal-blue-ink: var(--ws-dwg-truth-ink);
+  --conflict-ink: var(--ws-conflict);
   /* surfaces — gallery mount on the GS glass ramp */
-  --surface-base: var(--gs-glass-sunken);
-  --surface-elevated: var(--gs-glass);
-  --surface-sunken: var(--gs-frame);
-  --surface-inverted: var(--gs-ink);
-  --surface-overlay: var(--gs-glass-strong);
-  --surface-inset: var(--gs-frame);
-  --surface-panel: var(--gs-glass);
+  --surface-base: var(--ws-panel-sunken);
+  --surface-elevated: var(--ws-panel);
+  --surface-sunken: var(--ws-panel-sunken);
+  --surface-inverted: var(--ws-ink);
+  --surface-overlay: var(--ws-panel-raised);
+  --surface-inset: var(--ws-panel-sunken);
+  --surface-panel: var(--ws-panel);
   /* deep — same as base now; kept for portal/hero gradient compat */
-  --surface-deep: var(--gs-canvas);
+  --surface-deep: var(--ws-canvas);
 
   /* Client-presentation chrome (portal/quote/confirm-pin/share) — paper
      identity since the Studio Paper pivot: light surfaces, charcoal ink.
@@ -41,13 +49,13 @@
   --portal-surface-2: color-mix(in srgb, var(--surface-deep) 78%, black);
   --portal-glow-a: color-mix(in srgb, var(--accent-bright) 40%, transparent);
   --portal-glow-b: color-mix(in srgb, var(--accent-bright) 12%, transparent);
-  --portal-ink-inverted: var(--gs-ink);
-  --portal-hairline: color-mix(in srgb, var(--gs-ink) 16%, transparent);
+  --portal-ink-inverted: var(--ws-ink);
+  --portal-hairline: color-mix(in srgb, var(--ws-ink) 16%, transparent);
   --portal-accent: var(--accent-bright);
   --portal-accent-bright: var(--accent-bright);
   /* Portal sheet is the client document on paper — same ramp as the studio */
-  --portal-sheet: var(--gs-panel);
-  --portal-sheet-ink: var(--gs-ink);
+  --portal-sheet: var(--ws-panel);
+  --portal-sheet-ink: var(--ws-ink);
   /* Client-twin viewer chrome (light frosted panel — same ink/accent as the
      rest of the app, not a separate sub-brand). */
   --portal-ink-muted: var(--ink-secondary);
@@ -55,38 +63,38 @@
   --portal-accent-muted: var(--accent);
 
   /* ink — light text on dark surfaces */
-  --ink-primary: var(--gs-ink);
-  --ink-secondary: var(--gs-ink-secondary);
-  --ink-tertiary: var(--gs-ink-muted);
-  --ink-inverted: var(--gs-chip-active-ink);
+  --ink-primary: var(--ws-ink);
+  --ink-secondary: var(--ws-ink-secondary);
+  --ink-tertiary: var(--ws-ink-muted);
+  --ink-inverted: var(--ws-active-ink);
 
   /* lines — dark grey hairlines on dark surfaces */
-  --line-hairline: color-mix(in srgb, var(--gs-line) 55%, transparent);
-  --line-subtle: color-mix(in srgb, var(--gs-line-soft) 70%, transparent);
-  --line-strong: var(--gs-line);
-  --line-ink: var(--gs-ink);
+  --line-hairline: color-mix(in srgb, var(--ws-line) 55%, transparent);
+  --line-subtle: color-mix(in srgb, var(--ws-line-soft) 70%, transparent);
+  --line-strong: var(--ws-line);
+  --line-ink: var(--ws-ink);
 
   /* accent — Gold Standard crimson. One accent identity app-wide: the studio's
      crimson is the operator chrome's crimson (canvas geometry keeps its own
      cobalt/crimson drawing tokens, which chrome never borrows). */
-  --accent: var(--la-accent);
-  --accent-soft: color-mix(in srgb, var(--la-accent) 8%, transparent);
+  --accent: var(--ws-active);
+  --accent-soft: color-mix(in srgb, var(--ws-active) 8%, transparent);
   /* accent-ink = accent as TEXT on paper surfaces */
-  --accent-ink: var(--la-ink);
-  --accent-bright: var(--la-ink-secondary);
-  --accent-water: var(--la-ink-secondary);
+  --accent-ink: var(--ws-ink);
+  --accent-bright: var(--ws-ink-secondary);
+  --accent-water: var(--ws-ink-secondary);
 
   /* signal — the single critical/hero spark.
      One hero element per surface, never on the canvas. */
-  --signal: var(--la-accent);
-  --signal-ink: var(--la-surface);
-  --signal-soft: color-mix(in srgb, var(--la-accent) 8%, transparent);
+  --signal: var(--ws-active);
+  --signal-ink: var(--ws-panel);
+  --signal-soft: color-mix(in srgb, var(--ws-active) 8%, transparent);
 
   /* semantic — the GS status set (ink + iconography; crimson = critical) */
-  --ok: var(--gs-success);
-  --warn: var(--gs-warning);
-  --block: var(--gs-conflict);
-  --info: var(--gs-ink-secondary);
+  --ok: var(--ws-success);
+  --warn: var(--ws-warning);
+  --block: var(--ws-conflict);
+  --info: var(--ws-ink-secondary);
 
   /* type — Gold Standard 2026 roles (TOKENS.md §2): technical/numeric =
      Space Grotesk, UI = Inter, display = Fraunces, annotations = hand.
@@ -161,26 +169,26 @@
   /* radii — spec-aligned to the three GS depth radii (TOKENS.md §1.4):
      panel 12 / chip 6 / pill 999. The legacy --r-* scale survives as
      compat aliases; every surface resolves to a sanctioned radius. */
-  --r-sm: var(--gs-radius-chip);
-  --r-md: var(--gs-radius-chip);
-  --r-lg: var(--gs-radius-panel);
-  --r-xl: var(--gs-radius-panel);
-  --r-2xl: var(--gs-radius-panel);
-  --r-3xl: var(--gs-radius-panel);
-  --r-canvas: var(--gs-radius-panel);
-  --r-pill: var(--gs-radius-pill);
+  --r-sm: var(--ws-radius-2);
+  --r-md: var(--ws-radius-2);
+  --r-lg: var(--ws-radius-3);
+  --r-xl: var(--ws-radius-3);
+  --r-2xl: var(--ws-radius-3);
+  --r-3xl: var(--ws-radius-3);
+  --r-canvas: var(--ws-radius-3);
+  --r-pill: var(--ws-radius-pill);
   --radius-sm: var(--r-sm);
   --radius-md: var(--r-md);
   --radius-lg: var(--r-lg);
 
   /* depth — Studio Paper shadow lift (neutral tiers from color-tokens.css) */
   --elev-0: none;
-  --elev-1: var(--gs-shadow-2);
-  --elev-2: var(--gs-shadow-3);
+  --elev-1: var(--ws-shadow-1);
+  --elev-2: var(--ws-shadow-2);
   --elev-inset: none;
   --elev-rim: none;
-  --shadow-sm: var(--gs-shadow-1);
-  --shadow-md: var(--gs-shadow-2);
+  --shadow-sm: var(--ws-shadow-1);
+  --shadow-md: var(--ws-shadow-1);
 
   --border-default: var(--line-hairline);
   --surface-raised: var(--surface-elevated);
@@ -234,7 +242,7 @@
   --control-h: 44px;
   --tap-min: 48px;
   --border-weight: 1.5px;
-  --line-hairline: color-mix(in srgb, var(--gs-ink) 24%, transparent);
+  --line-hairline: color-mix(in srgb, var(--ws-ink) 24%, transparent);
 }
 
 @media (hover: none) and (pointer: coarse) {
@@ -242,7 +250,7 @@
     --control-h: 44px;
     --tap-min: 48px;
     --border-weight: 1.5px;
-    --line-hairline: color-mix(in srgb, var(--gs-ink) 24%, transparent);
+    --line-hairline: color-mix(in srgb, var(--ws-ink) 24%, transparent);
   }
 }
 
@@ -382,7 +390,7 @@ button:focus-visible {
 .webgl-field-input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
-  border-color: color-mix(in srgb, var(--gs-primary) 55%, transparent);
+  border-color: color-mix(in srgb, var(--ws-active) 55%, transparent);
 }
 
 ::selection {
@@ -457,9 +465,9 @@ button:focus-visible {
    * White panels, neutral shadows, charcoal ink; crimson accent only.
    * CAD vectors keep --sds-* separately.
    */
-  --text-primary: var(--gs-ink);
-  --text-secondary: var(--gs-ink-secondary);
-  --text-muted: var(--gs-ink-muted);
+  --text-primary: var(--ws-ink);
+  --text-secondary: var(--ws-ink-secondary);
+  --text-muted: var(--ws-ink-muted);
   --hc-ink: var(--text-primary);
   --hc-ink-muted: var(--text-secondary);
   --hc-ink-faint: var(--text-muted);
@@ -519,7 +527,7 @@ button:focus-visible {
   --hc-accent-wash: color-mix(in srgb, var(--proposed-stroke) 10%, var(--canvas));
   --ws-milled-surface: linear-gradient(180deg, var(--gray-l-25) 0%, var(--gray-l-50) 100%);
   --ws-milled-border: var(--hc-line-soft);
-  --ws-milled-shadow: inset 0 1px 1px rgb(255 255 255 / 70%), var(--gs-shadow-3);
+  --ws-milled-shadow: inset 0 1px 1px rgb(255 255 255 / 70%), var(--ws-shadow-2);
   --ws-recessed-surface: var(--gray-l-100);
   --ws-recessed-shadow: inset 0 2px 4px rgb(17 17 17 / 10%), 0 1px 0 rgb(255 255 255 / 70%);
   --ws-recessed-pressed-shadow: inset 0 3px 6px rgb(17 17 17 / 14%);
@@ -533,10 +541,10 @@ button:focus-visible {
   --tier1-bar-ink: var(--ink-primary);
   --tier1-bar-ink-muted: var(--ink-secondary);
   --tier1-bar-line: var(--line-subtle, var(--surface-panel));
-  --tier1-bar-line-strong: var(--gs-line-strong);
+  --tier1-bar-line-strong: var(--ws-line-strong);
   --tier1-bar-active-bg: var(--surface-deep);
   --tier1-bar-active-ink: var(--ink-primary);
-  --tier1-bar-focus-ring: var(--gs-primary);
+  --tier1-bar-focus-ring: var(--ws-active);
 
   --sheet-paper: var(--gray-l-25);
   --sheet-ink: var(--text-primary);
@@ -632,45 +640,19 @@ button:focus-visible {
    */
 
   /* Border-radius scale — picked so a step ≈ 2× visible difference. */
-  --gs-radius-xs: 3px;
-  --gs-radius-sm: 4px;
-  --gs-radius-md: 6px;
-  --gs-radius-lg: 8px;
-  --gs-radius-xl: 12px;
-  --gs-radius-2xl: 14px;
-  --gs-radius-pill: 9999px;
 
   /* Font-size scale — single 9-step ladder. 10.5px stays because the
      Glass Card spec was authored at that micro-line; the rest of
      the scale slots in cleanly around it. 9px (ViewportTransitionHUD
      thickness indicator) is collapsed to font-micro 9.5px on
      migration. */
-  --gs-font-micro: 9.5px;
-  --gs-font-xs: 10.5px;
-  --gs-font-sm: 11px;
-  --gs-font-md: 11.5px;
-  --gs-font-lg: 12px;
-  --gs-font-sub: 13px;
-  --gs-font-h3: 14px;
-  --gs-font-h2: 16px;
-  --gs-font-h1: 20px;
 
   /* Spacing scale — used for gap / padding / short margins. */
-  --gs-space-1: 2px;
-  --gs-space-2: 4px;
-  --gs-space-3: 6px;
-  --gs-space-4: 8px;
-  --gs-space-6: 12px;
-  --gs-space-8: 16px;
-  --gs-space-5: 10px;
   /* 5×2=10px — ladder is rung×2 (debt D7 rename) */
 
   /* Transition scale — three rungs. The slider/keyframe HUD already
      uses cubic-bezier(0.22, 1, 0.36, 1) (the "ease-out-quint" family);
      promote it to the standard rather than invent a new one. */
-  --gs-fast: 140ms ease-out;
-  --gs-base: 180ms cubic-bezier(0.22, 1, 0.36, 1);
-  --gs-slow: 240ms cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Companion dev-HUD tokens — promoted from the four hardcoded
      rgba(0,0,0,*) sites in CfzTierInspector.tsx so the operator
@@ -683,8 +665,6 @@ button:focus-visible {
      in WebGLStudioPreview (amber 251,191,36 at 60% alpha). These carry
      content meaning, so they get named tokens rather than collapsing
      into the dark-chrome/panel rungs. */
-  --gs-shadow: rgb(17 17 17);
-  --gs-warning-amber: rgba(251, 191, 36, 0.6);
 
   /*
    * drei `<Html zIndexRange>` ladder — companion to the four-slot CSS
@@ -741,7 +721,7 @@ button:focus-visible {
 
   /* Glass‑dark for chrome that must float over bright canvas washes (e.g.
    * presentation lens, night‑mode overlays). The default Studio Paper frost
-   * is --gs-glass-veil; --cf-glass-dark is the explicit low‑opacity dark
+   * is --ws-panel; --cf-glass-dark is the explicit low‑opacity dark
    * chrome the SDS asks for in §1 (rgba(20,20,20,0.65) baseline). */
   --cf-glass-dark: rgba(20, 20, 20, 0.65);
   --cf-glass-dark-border: color-mix(in srgb, #ffffff 18%, transparent);
@@ -751,7 +731,7 @@ button:focus-visible {
    * palettes. Not a new value: it is the near-white already hardcoded on
    * .vth-root.vth-dark below and repeated inline in three WebGL studio chip
    * styles. Naming it here takes the literal out of the chrome, and gives the
-   * dev HUDs something to reach for other than --gs-ink-strong, which is
+   * dev HUDs something to reach for other than --ws-ink, which is
    * paper ink (#111) and rendered them black-on-black. */
   --cf-glass-dark-ink: #f5f5f7;
   --cf-edge-default: 16px;
@@ -818,27 +798,27 @@ button:focus-visible {
    * mount. Studio Paper mount in the single theme so the plan always reads
    * as the subject. Icons live inside these bands, never on the plan.
    */
-  --ws-frame: var(--gs-frame);
-  --ws-frame-raise: var(--gs-panel);
+  --ws-frame: var(--ws-panel-sunken);
+  --ws-frame-raise: var(--ws-panel);
   /* Matte-paper endpoints — top catches ambient light, base sinks. */
-  --ws-frame-lit: var(--gs-surface-fill);
-  --ws-frame-sunk: var(--gs-pressed);
-  --ws-frame-ink: var(--gs-ink);
+  --ws-frame-lit: var(--ws-panel-raised);
+  --ws-frame-sunk: var(--ws-panel-raised);
+  --ws-frame-ink: var(--ws-ink);
   /*
    * Paper-frame ink floors — solid charcoal tiers (WCAG AA on every paper
    * surface incl. the recessed wells and frame gradient).
    */
-  --ws-frame-ink-dim: var(--gs-ink-secondary);
-  --ws-frame-ink-faint: var(--gs-ink-muted);
-  --ws-frame-hair: color-mix(in srgb, var(--gs-ink) 10%, transparent);
-  --ws-frame-wash: color-mix(in srgb, var(--gs-ink) 6%, transparent);
+  --ws-frame-ink-dim: var(--ws-ink-secondary);
+  --ws-frame-ink-faint: var(--ws-ink-muted);
+  --ws-frame-hair: color-mix(in srgb, var(--ws-ink) 10%, transparent);
+  --ws-frame-wash: color-mix(in srgb, var(--ws-ink) 6%, transparent);
   /*
    * Summoned frost over the plan — matches the paper frame. Consumers that
    * still say var(--hc-frost) without a prior definition fall through here;
    * this is the binding substrate.
    */
-  --hc-frost: color-mix(in srgb, var(--gs-panel) 86%, transparent);
-  --hc-frost-shadow: var(--gs-shadow-3);
+  --hc-frost: color-mix(in srgb, var(--ws-panel) 86%, transparent);
+  --hc-frost-shadow: var(--ws-shadow-2);
 
   /*
    * Landing hero — photographic grade tokens. Fixed values by design: the
@@ -851,8 +831,8 @@ button:focus-visible {
   --hero-copy-dim: color-mix(in srgb, #f6f4ef 68%, transparent);
   --hero-glow-warm: #ffb066;
   --hero-glow-soft: #ffd9a8;
-  --hero-scrim: color-mix(in srgb, var(--gs-ink) 34%, transparent);
-  --hero-boundary: var(--gs-truth);
+  --hero-scrim: color-mix(in srgb, var(--ws-ink) 34%, transparent);
+  --hero-boundary: var(--ws-dwg-truth);
   --hero-chalk: #f4f2ec;
   --ws-frame-top: 46px;
   --ws-frame-left: 48px;
@@ -902,7 +882,6 @@ button:focus-visible {
   --ws-dur-1: 120ms;
   --ws-dur-2: 200ms;
   --ws-dur-3: 320ms;
-  --ws-focus: 0 0 0 2px var(--hc-paper), 0 0 0 3.5px var(--hc-accent, var(--accent));
 
 }
 
@@ -933,7 +912,6 @@ button:focus-visible {
  * =================================================================== */
 body.gs-chrome-receding [data-gs-glass-card],
 body.gs-chrome-receding [data-cf-layer="chrome"] {
-  --gs-chrome-recede-opacity: 0.55;
-  opacity: var(--gs-chrome-recede-opacity);
+  opacity: var(--ws-op-recede);
   transition: opacity 180ms ease-out;
 }

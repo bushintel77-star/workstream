@@ -102,12 +102,12 @@ function worldLengthM(
 
 const draftLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-tech)",
-  fontSize: "var(--gs-font-sm)",
+  fontSize: "var(--ws-text-xs)",
   fontWeight: 600,
-  color: "var(--la-ink)",
-  background: "color-mix(in srgb, var(--la-surface) 80%, transparent)",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-  borderRadius: "var(--gs-radius-md)",
+  color: "var(--ws-ink)",
+  background: "color-mix(in srgb, var(--ws-panel) 80%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--ws-line) 55%, transparent)",
+  borderRadius: "var(--ws-radius-3)",
   padding: "1px 8px",
   whiteSpace: "nowrap",
   pointerEvents: "none",

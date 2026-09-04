@@ -84,4 +84,62 @@ describe("structured-tools", () => {
     ]);
     expect(LandscapeFeatureSchema.safeParse(bed).success).toBe(true);
   });
+
+  it("injects extrude_height_m when planeZ is provided", () => {
+    const wall = buildLandscapeFeatureFromStroke({
+      kind: "wall",
+      id: "feat-wall-massing",
+      now: "2026-08-09T00:00:00.000Z",
+      points: [
+        { x_pct: 10, y_pct: 20 },
+        { x_pct: 40, y_pct: 22 },
+      ],
+      planeZ: 4.0,
+    });
+    expect(wall.extrude_height_m).toBe(4.0);
+    expect(LandscapeFeatureSchema.safeParse(wall).success).toBe(true);
+  });
+
+  it("injects planting Z for beds", () => {
+    const bed = buildLandscapeFeatureFromStroke({
+      kind: "bed",
+      id: "feat-bed-planting",
+      now: "2026-08-09T00:00:00.000Z",
+      points: [
+        { x_pct: 10, y_pct: 10 },
+        { x_pct: 30, y_pct: 10 },
+        { x_pct: 30, y_pct: 30 },
+      ],
+      planeZ: 1.5,
+    });
+    expect(bed.extrude_height_m).toBe(1.5);
+    expect(LandscapeFeatureSchema.safeParse(bed).success).toBe(true);
+  });
+
+  it("omits extrude_height_m when planeZ is absent (backward-compatible)", () => {
+    const path = buildLandscapeFeatureFromStroke({
+      kind: "path",
+      id: "feat-path-ground",
+      now: "2026-08-09T00:00:00.000Z",
+      points: [
+        { x_pct: 10, y_pct: 20 },
+        { x_pct: 40, y_pct: 22 },
+      ],
+    });
+    expect(path.extrude_height_m).toBeUndefined();
+  });
+
+  it("omits extrude_height_m when planeZ is 0 (ground plane)", () => {
+    const ditch = buildLandscapeFeatureFromStroke({
+      kind: "ditch",
+      id: "feat-ditch-ground",
+      now: "2026-08-09T00:00:00.000Z",
+      points: [
+        { x_pct: 10, y_pct: 20 },
+        { x_pct: 40, y_pct: 22 },
+      ],
+      planeZ: 0,
+    });
+    expect(ditch.extrude_height_m).toBeUndefined();
+  });
 });

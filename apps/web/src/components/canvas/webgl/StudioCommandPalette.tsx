@@ -45,12 +45,12 @@ type PaletteItem =
 
 const chip: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-xs)",
+  fontSize: "var(--ws-text-xs)",
   letterSpacing: "0.06em",
   padding: "1px 7px",
-  borderRadius: "var(--gs-radius-pill)",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-  color: "var(--la-ink-secondary)",
+  borderRadius: "var(--ws-radius-pill)",
+  border: "1px solid color-mix(in srgb, var(--ws-line) 55%, transparent)",
+  color: "var(--ws-ink-secondary)",
   whiteSpace: "nowrap",
 };
 
@@ -509,14 +509,21 @@ export function StudioCommandPalette({
         transform: "translateX(-50%)",
         width: "min(520px, 92vw)",
         pointerEvents: "auto",
-        borderRadius: "var(--gs-radius-panel)",
-        background: "color-mix(in srgb, var(--la-surface) 55%, transparent)",
-        backdropFilter: "blur(18px)",
-        WebkitBackdropFilter: "blur(18px)",
-        border: "1px solid color-mix(in srgb, var(--gs-line) 40%, transparent)",
-        boxShadow: "0 12px 40px color-mix(in srgb, var(--gs-frame) 75%, transparent)",
+        borderRadius: "var(--ws-radius-3)",
+        background: "color-mix(in srgb, var(--ws-panel) 55%, transparent)",
+        // The canvas glass recipe, the same trio every other floating panel
+        // over the drawing uses (dock, filmstrip, history, depth rail).
+        //
+        // This panel was reaching for `--ws-panel-sunken` (#e4e4e4) and `--ws-line`
+        // (#d4d4d4) — LIGHT-mode frame tokens with no dark override — so on
+        // the dark studio it painted a near-white 40px halo at 75% opacity
+        // around itself. `--ws-shadow-2` is the dark drop the rest of
+        // the chrome casts, and `--ws-line` is the thin lighter
+        // hairline that separates glass from canvas without the glow.
+        border: "1px solid var(--ws-line)",
+        boxShadow: "var(--ws-shadow-0), var(--ws-shadow-2)",
         fontFamily: "var(--font-ui)",
-        color: "var(--la-ink)",
+        color: "var(--ws-ink)",
         overflow: "hidden",
       }}
       role="dialog"
@@ -550,11 +557,13 @@ export function StudioCommandPalette({
           boxSizing: "border-box",
           padding: "10px 12px",
           fontFamily: "var(--font-ui)",
-          fontSize: "var(--gs-font-sub)",
-          color: "var(--la-ink)",
+          fontSize: "var(--ws-text-md)",
+          color: "var(--ws-ink)",
           background: "transparent",
           border: "none",
-          borderBottom: "1px solid color-mix(in srgb, var(--gs-line) 40%, transparent)",
+          // Same reason as the panel border above — `--ws-line` is a
+          // light-mode token, so this rule was a pale bar across dark glass.
+          borderBottom: "1px solid var(--ws-line)",
         }}
       />
       <div role="listbox" aria-label="Palette results" style={{ maxHeight: 360, overflowY: "auto" }}>
@@ -562,8 +571,8 @@ export function StudioCommandPalette({
           <p
             style={{
               padding: "10px 12px",
-              fontSize: "var(--gs-font-md)",
-              color: "var(--la-ink-secondary)",
+              fontSize: "var(--ws-text-sm)",
+              color: "var(--ws-ink-secondary)",
               margin: 0,
             }}
           >
@@ -575,14 +584,14 @@ export function StudioCommandPalette({
             const baseStyle: React.CSSProperties = {
               display: "flex",
               alignItems: "center",
-              gap: "var(--gs-space-4)",
+              gap: "var(--ws-space-4)",
               padding: "6px 12px",
-              fontSize: "var(--gs-font-md)",
+              fontSize: "var(--ws-text-sm)",
               cursor: "pointer",
               background: active
-                ? "color-mix(in srgb, var(--la-accent) 14%, transparent)"
+                ? "color-mix(in srgb, var(--ws-active) 14%, transparent)"
                 : "transparent",
-              color: active ? "var(--la-accent)" : "var(--la-ink)",
+              color: active ? "var(--ws-active)" : "var(--ws-ink)",
             };
 
             if (item.kind === "project") {
@@ -596,13 +605,13 @@ export function StudioCommandPalette({
                   onClick={() => runAt(i)}
                   style={baseStyle}
                 >
-                  <span style={chipAccent("var(--la-accent)")}>Project</span>
+                  <span style={chipAccent("var(--ws-active)")}>Project</span>
                   <span style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                     <span>{item.project.client_name || item.project.address}</span>
                     <span
                       style={{
-                        fontSize: "var(--gs-font-sm)",
-                        color: "var(--la-ink-secondary)",
+                        fontSize: "var(--ws-text-xs)",
+                        color: "var(--ws-ink-secondary)",
                       }}
                     >
                       {item.project.address}
@@ -626,7 +635,7 @@ export function StudioCommandPalette({
                   onClick={() => runAt(i)}
                   style={baseStyle}
                 >
-                  <span style={chipAccent("var(--la-success)")}>Create site</span>
+                  <span style={chipAccent("var(--ws-success)")}>Create site</span>
                   <span style={{ flex: 1 }}>{labelForSuggestion(item.suggestion)}</span>
                 </div>
               );
@@ -653,8 +662,8 @@ export function StudioCommandPalette({
           <p
             style={{
               padding: "8px 12px",
-              fontSize: "var(--gs-font-sm)",
-              color: "var(--la-ink-secondary)",
+              fontSize: "var(--ws-text-xs)",
+              color: "var(--ws-ink-secondary)",
               margin: 0,
             }}
           >

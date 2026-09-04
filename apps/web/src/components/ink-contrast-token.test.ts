@@ -10,7 +10,7 @@ describe("Ink contrast token contract", () => {
   it("maps --ink-inverted to the white chip-ink token", () => {
     const css = readFileSync(CSS_PATH, "utf8");
     expect(css).toMatch(
-      /--ink-inverted:\s*var\(--gs-chip-active-ink\);/,
+      /--ink-inverted:\s*var\(--ws-active-ink\);/,
     );
   });
 });

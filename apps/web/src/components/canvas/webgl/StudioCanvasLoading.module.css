@@ -1,7 +1,7 @@
 /*
  * StudioCanvasLoading — canvas-first loading surface (Studio Paper).
  *
- * Layer over the canvas void (--gs-canvas), a single frosted paper card with
+ * Layer over the canvas void (--ws-canvas), a single frosted paper card with
  * a status line and a progress readout. Two modes: an indeterminate ring (no
  * stages) or a bounded stage ladder (stages) that fills a linear progress bar
  * 1..N and never loops. All colours via tokens (no raw hex, no hue-only
@@ -14,7 +14,7 @@
   display: grid;
   place-items: center;
   /* Cover the canvas void so the load reads as the studio, not a blank page. */
-  background: var(--gs-canvas);
+  background: var(--ws-canvas);
   /* Visual only — the canvas keeps receiving events beneath. */
   pointer-events: none;
   /* Ambient tier — above the drawing, below the chrome/dock. */
@@ -24,23 +24,21 @@
 .card {
   display: grid;
   place-items: center;
-  gap: var(--gs-space-4);
-  padding: var(--gs-space-6) var(--gs-space-6);
-  border-radius: var(--gs-radius-panel);
-  background: var(--gs-panel-frost);
-  border: 1px solid var(--gs-line);
-  box-shadow: var(--gs-shadow-2);
-  backdrop-filter: blur(var(--gs-frost-blur));
-  -webkit-backdrop-filter: blur(var(--gs-frost-blur));
+  gap: var(--ws-space-4);
+  padding: var(--ws-space-5) var(--ws-space-5);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-1);
   min-width: min(280px, 80vw);
 }
 
 .ring {
   width: 46px;
   height: 46px;
-  border-radius: var(--gs-radius-pill);
-  border: 3px solid color-mix(in srgb, var(--gs-ink) 16%, transparent);
-  border-top-color: var(--gs-ink);
+  border-radius: var(--ws-radius-pill);
+  border: 3px solid color-mix(in srgb, var(--ws-ink) 16%, transparent);
+  border-top-color: var(--ws-ink);
   animation: ringSpin 0.9s linear infinite;
 }
 
@@ -52,47 +50,47 @@
 
 .label {
   font-family: var(--font-ui);
-  font-size: var(--gs-font-sub);
+  font-size: var(--ws-text-md);
   letter-spacing: 0.02em;
-  color: var(--gs-ink-secondary);
+  color: var(--ws-ink-secondary);
 }
 
 /* ---- Bounded stage ladder ---- */
 .stageCurrent {
   font-family: var(--font-tech);
-  font-size: var(--gs-font-xs);
+  font-size: var(--ws-text-xs);
   letter-spacing: 0.01em;
-  color: var(--gs-ink);
+  color: var(--ws-ink);
   text-align: center;
 }
 
 .progress {
   width: 100%;
   height: 4px;
-  border-radius: var(--gs-radius-pill);
-  background: color-mix(in srgb, var(--gs-ink) 14%, transparent);
+  border-radius: var(--ws-radius-pill);
+  background: color-mix(in srgb, var(--ws-ink) 14%, transparent);
   overflow: hidden;
 }
 
 .progressBar {
   height: 100%;
-  border-radius: var(--gs-radius-pill);
-  background: var(--gs-ink);
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-ink);
   transition: width 0.4s ease;
 }
 
 .detail {
   font-family: var(--font-tech);
-  font-size: var(--gs-font-xs);
+  font-size: var(--ws-text-xs);
   letter-spacing: 0.01em;
-  color: var(--gs-ink-muted);
+  color: var(--ws-ink-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ring {
     animation: none;
-    border-top-color: var(--gs-ink);
-    opacity: var(--lc-op-hover);
+    border-top-color: var(--ws-ink);
+    opacity: var(--ws-op-hover);
   }
 
   .progressBar {

@@ -1,105 +1,106 @@
 /**
- * Workstream Design System — Studio Paper (2026 pivot).
- * One token source consumed by apps/mobile (RN). apps/web has its own CSS
- * mirror (`styles/color-tokens.css` + `globals.css`) that this file tracks:
- * every value below resolves to a token in docs/GOLD-STANDARD-2026-TOKENS.md,
- * the supreme binding spec.
+ * Workstream Design System — one namespace, shared by apps/mobile (RN, this
+ * file) and apps/web (`styles/tokens.css`, `--ws-*`). Every value below
+ * resolves to the `--ws-*` token named beside it; `scripts/check-ui-token-
+ * parity.mjs` reads both files and fails CI if they drift apart.
  *
- * Studio Paper: high-key dead-neutral workspace, Signal Blue `#3D5AFE` as the
- * sole UI accent, crimson `#C41E1E` for conflict/strike only, cobalt `#0030CF`
- * as drawing data. Gold is retired from chrome (the legacy `studio.gold*`
- * dialect keys now alias Signal Blue, exactly as web's `--gold-standard`
- * aliases `--gs-primary`). The old Studio Dark default is dead.
+ * The chrome is opaque, dead-neutral and dark: `surface.elevated` /
+ * `#16191C` is the panel plastic, `ink.primary` / `#E8EAEC` is primary text.
+ * `accent.*` signals state with LUMINANCE (a light fill, dark ink) rather
+ * than a hue, so the entire spectrum stays free for drawing/field content —
+ * `studio.signalBlue` / `#0030CF` (survey truth) and `semantic.block` /
+ * `#D2564F` (conflict) are the only saturated colours left in the chrome.
  *
- * Dark surfaces survive only as the charcoal vocabulary (`surface.inverted` =
- * `--gs-ink`), used by the deliberate field screens (grid-soil, recording)
- * and charcoal chips — never the drawing surface.
+ * This replaced the previous light "Studio Paper" palette (white panels,
+ * Signal Blue `#3D5AFE` accent) when apps/web collapsed three divergent
+ * chrome systems into one; mobile's values were repointed to match rather
+ * than left to diverge, per the same "one design system" decision.
  */
 export const tokens = {
   color: {
     surface: {
-      /** App shell background — web `--surface-base` (`--gs-glass-sunken`) */
-      base: "#EBEBEB",
-      /** Raised cards, sheets, panels — `--gs-panel` */
-      elevated: "#FFFFFF",
-      /** Recessed inputs, wells, sunken states — `--gs-frame` */
-      sunken: "#E4E4E4",
-      /** Charcoal inverted surfaces (field screens, chips) — `--gs-ink` */
-      inverted: "#1A1A1A",
+      /** App shell background — web `--ws-panel-sunken` */
+      base: "#101314",
+      /** Raised cards, sheets, panels — `--ws-panel` */
+      elevated: "#16191C",
+      /** Recessed inputs, wells, sunken states — `--ws-panel-sunken` */
+      sunken: "#101314",
+      /** Light inverted surfaces (chips on the dark chrome) — `--ws-ink` */
+      inverted: "#E8EAEC",
     },
     ink: {
-      /** Primary text on paper — `--gs-ink` (17.41:1 on panel) */
-      primary: "#1A1A1A",
-      /** Secondary text, labels — `--gs-ink-secondary` (7.82:1) */
-      secondary: "#525252",
-      /** Tertiary — placeholders, disabled — `--gs-ink-muted` (>=4.72:1) */
-      tertiary: "#636363",
-      /** Ink on charcoal/primary fills — `--gs-chip-active-ink` / `--gs-gold-ink` */
-      inverted: "#FFFFFF",
+      /** Primary text on panel — `--ws-ink` (13.9:1 on panel) */
+      primary: "#E8EAEC",
+      /** Secondary text, labels — `--ws-ink-secondary` (8.2:1) */
+      secondary: "#B3B9BF",
+      /** Tertiary — placeholders, disabled — `--ws-ink-muted` (5.1:1) */
+      tertiary: "#878F96",
+      /** Ink on the light active fill — `--ws-active-ink` */
+      inverted: "#0D0F11",
       /**
-       * Field-screen body on `surface.inverted` (~4.9:1 on charcoal).
-       * Companion to the white/charcoal chip vocabulary; no dark-screen
-       * equivalent exists in the web spec because web has no dark screens.
+       * Field-screen body on `surface.inverted` — this and `invertedTertiary`
+       * predate the mobile/web unification and have no `--ws-*` counterpart
+       * (web has no dark-on-light field screens to pair against). Left as
+       * documented mobile-only in check-ui-token-parity.mjs.
        */
       invertedSecondary: "rgba(255, 255, 255, 0.72)",
-      /** Field-screen captions/labels on `surface.inverted` (~3.6:1, micro/AA-exempt) */
+      /** Field-screen captions/labels on `surface.inverted` (mobile-only, see above) */
       invertedTertiary: "rgba(255, 255, 255, 0.55)",
     },
     line: {
-      /** Decorative hairline — `--gs-line` at 55% (web `--line-hairline`) */
-      hairline: "rgba(212, 212, 212, 0.55)",
-      /** Interactive boundaries — `--gs-line-strong` (3.36:1 on panel) */
-      strong: "#8C8C8C",
-      ink: "#1A1A1A",
+      /** Decorative hairline — `--ws-line`'s rgb at 55% (web `--line-hairline`) */
+      hairline: "rgba(232, 234, 236, 0.55)",
+      /** Interactive boundaries — `--ws-line-strong` */
+      strong: "rgba(232, 234, 236, 0.28)",
+      ink: "#E8EAEC",
     },
     accent: {
-      /** Signal Blue base — CTA fill, active tool state, focus rings (`--gs-primary`) */
-      default: "#3D5AFE",
-      /** Resting blue fills/borders — `--gs-primary-quiet` */
-      soft: "#D9E0FC",
-      /** Blue as text on paper — `--gs-primary-ink` (7.97:1) */
-      ink: "#2340C8",
-      /** Blue hover — `--gs-primary-hover` */
-      bright: "#4D6BFE",
+      /** Active/selected chrome — a light fill, not a hue (`--ws-active`) */
+      default: "#E8EAEC",
+      /** Resting tint for an armed-but-not-active control — `--ws-active-quiet` */
+      soft: "rgba(232, 234, 236, 0.08)",
+      /** `--ws-active` used as text */
+      ink: "#E8EAEC",
+      /** `--ws-active` hover/pressed — luminance has no hover step to shift to */
+      bright: "#E8EAEC",
     },
     semantic: {
-      /** Status is ink + iconography; colour reserved for critical — `--gs-success` */
-      ok: "#525252",
-      /** Same law as ok — `--gs-warning` */
-      warn: "#525252",
-      /** Strike/conflict crimson — `--gs-conflict` */
-      block: "#C41E1E",
-      /** `--info` alias of `--gs-ink-secondary` */
-      info: "#525252",
+      /** Status is ink + iconography; colour reserved for critical — `--ws-success` */
+      ok: "#B3B9BF",
+      /** Caution — `--ws-warning` (amber, was ink-grey) */
+      warn: "#D9A441",
+      /** Strike/conflict — `--ws-conflict` */
+      block: "#D2564F",
+      /** `--ws-ink-secondary` */
+      info: "#B3B9BF",
     },
     /**
-     * Gold Standard studio accents. The legacy dialect keys (`gold`,
-     * `signalBlue`) resolve exactly as apps/web's `globals.css` aliases:
-     * `--gold-standard` → `--gs-primary`, `--signal-blue` → `--gs-truth`,
-     * `--gs-conflict` → crimson. Used for the plant discovery/placement
-     * interaction language (AI-optimized highlight, site-truth anchor,
-     * conflict state) — not a full re-theme of mobile surfaces.
+     * Legacy dialect keys (`gold`, `signalBlue`) alias the canonical
+     * `--ws-active*` / `--ws-dwg-truth*` mirrors below them — same values,
+     * kept for call sites written before the mirrors existed. Used for the
+     * plant discovery/placement interaction language (AI-optimized
+     * highlight, site-truth anchor, conflict state).
      */
     studio: {
-      /** AI-optimized highlight / active ring — `--gold-standard` → `--gs-primary` */
-      gold: "#3D5AFE",
-      /** Ink on primary-filled chips/buttons — `--gold-standard-ink-bright` */
-      goldInk: "#FFFFFF",
-      /** Site-truth anchor (cobalt) — `--signal-blue` → `--gs-truth` */
+      /** AI-optimized highlight / active ring — `--ws-active` */
+      gold: "#E8EAEC",
+      /** Ink on the active fill — `--ws-active-ink` */
+      goldInk: "#0D0F11",
+      /** Site-truth anchor (cobalt) — `--ws-dwg-truth` */
       signalBlue: "#0030CF",
-      /** Cobalt label text on paper — `--signal-blue-ink` → `--gs-truth-ink` */
+      /** Cobalt label text — `--ws-dwg-truth-ink` */
       signalBlueInk: "#2450C7",
-      /** Strike Alert — `--gs-conflict` */
-      conflict: "#C41E1E",
-      /** Conflict veil — `--gs-conflict-veil` (16%) */
-      conflictSoft: "rgba(196, 30, 30, 0.16)",
-      /** Canonical mirrors for new code — `--gs-primary*` */
-      primary: "#3D5AFE",
-      primaryHover: "#4D6BFE",
-      primaryPressed: "#2946C8",
-      primaryInk: "#2340C8",
-      primaryQuiet: "#D9E0FC",
-      /** Canonical mirrors for new code — `--gs-truth*` */
+      /** Strike Alert — `--ws-conflict` */
+      conflict: "#D2564F",
+      /** Conflict veil — `--ws-conflict-veil` (16%) */
+      conflictSoft: "rgba(210, 86, 79, 0.16)",
+      /** Canonical mirrors for new code — `--ws-active*` */
+      primary: "#E8EAEC",
+      primaryHover: "#E8EAEC",
+      primaryPressed: "#E8EAEC",
+      primaryInk: "#E8EAEC",
+      primaryQuiet: "rgba(232, 234, 236, 0.08)",
+      /** Canonical mirrors for new code — `--ws-dwg-truth*` */
       truth: "#0030CF",
       truthInk: "#2450C7",
     },

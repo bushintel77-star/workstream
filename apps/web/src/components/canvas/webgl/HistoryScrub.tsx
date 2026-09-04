@@ -52,6 +52,7 @@ export function HistoryScrub({
   const historyFuture = useStudioStore((s) => s.historyFuture);
   const undo = useStudioStore((s) => s.undo);
   const redo = useStudioStore((s) => s.redo);
+  const penDown = useStudioStore((s) => s.penDown);
   // The live document, shaped like a snapshot, so it can sit between past
   // and future as the middle step of the track.
   //
@@ -266,7 +267,7 @@ export function HistoryScrub({
   }
 
   return (
-    <div className={styles.container} data-testid="history-scrub">
+    <div className={`${styles.container} ${penDown ? styles.containerPenHidden : ""}`} data-testid="history-scrub">
       <div className={styles.header}>
         <span className={styles.label}>History</span>
         <span className={styles.count} data-activity={currentActivity ?? undefined}>

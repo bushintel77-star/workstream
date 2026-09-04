@@ -13,9 +13,9 @@ import type { TradePackId } from "./tradeModel";
 import { useStudioStore } from "../studioStore";
 
 const TRADE_STYLE: Record<TradePackId, { stroke: string; dash?: string; width: number }> = {
-  irrigationDrainage: { stroke: "var(--la-ink)", dash: "7 3", width: 1.2 },
-  hardscapeConstruction: { stroke: "var(--la-ink)", width: 1.35 },
-  lightingElectrical: { stroke: "var(--la-accent)", dash: "2 3", width: 1.15 },
+  irrigationDrainage: { stroke: "var(--ws-ink)", dash: "7 3", width: 1.2 },
+  hardscapeConstruction: { stroke: "var(--ws-ink)", width: 1.35 },
+  lightingElectrical: { stroke: "var(--ws-active)", dash: "2 3", width: 1.15 },
 };
 
 export function TradeAnnotationLayer({
@@ -103,7 +103,7 @@ export function TradeAnnotationLayer({
         <svg aria-hidden style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
           <defs>
             <marker id="trade-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-              <path d="M0,0 L8,4 L0,8 Z" fill="var(--la-ink)" />
+              <path d="M0,0 L8,4 L0,8 Z" fill="var(--ws-ink)" />
             </marker>
           </defs>
           {model.lines.map((line) => {
@@ -150,10 +150,10 @@ export function TradeAnnotationLayer({
               marginLeft: -62,
               marginTop: -18,
               width: 124,
-              borderRadius: 6,
+              borderRadius: 4,
               border: `1px solid ${TRADE_STYLE[callout.pack].stroke}`,
-              background: "color-mix(in srgb, var(--gs-canvas) 86%, transparent)",
-              color: "var(--la-ink)",
+              background: "color-mix(in srgb, var(--ws-canvas) 86%, transparent)",
+              color: "var(--ws-ink)",
               fontFamily: "var(--font-ui)",
               fontSize: "11px",
               lineHeight: 1.25,

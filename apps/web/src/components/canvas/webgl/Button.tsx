@@ -17,23 +17,23 @@
  *                   border, charcoal active, hover-lightup only when
  *                   inactive. Letter-spacing 0.04em.
  *   • chip-tinted — PhotoTraceHud calibration chip: same pill recipe
- *                   but the active state is warm `--gs-primary`
+ *                   but the active state is warm `--ws-active`
  *                   instead of charcoal.
  *   • chip-preset — preset toggle chip (sun-date presets, canvas
  *                   layers, Plan/3D segmented): xs font, chip radius,
- *                   hairline `--gs-line` 45%, charcoal active. No
+ *                   hairline `--ws-line` 45%, charcoal active. No
  *                   hover-lightup (static toggles, not nav tabs).
  *   • ghost       — pill button with hairline border, transparent bg.
  *                   Used for secondary chrome actions (e.g. "Close",
  *                   the InspectorCard un-stitch pill via overrides).
  *   • ghost-line  — secondary action with the strong hairline
- *                   (`--gs-line-strong` 60%), chip radius, 5px 8px.
+ *                   (`--ws-line-strong` 60%), chip radius, 5px 8px.
  *                   Used by the sketch "Convert to CAD features" and
  *                   SketchCadReviewCard's Reject.
  *   • icon        — `all: "unset"` then re-apply a square footprint
  *                   (`22×22` by default). Used for the × close
  *                   affordance and other icon-only chrome.
- *   • primary     — tinted CTA chip: 45% `--gs-primary` hairline over
+ *   • primary     — tinted CTA chip: 45% `--ws-active` hairline over
  *                   a 14% wash, primary ink, chip radius. The
  *                   secondary-action CTA (Review CAD proposals /
  *                   Open CAD drafter). `active` flips it solid.
@@ -49,11 +49,11 @@
  *                   controls-hint dismiss; per-site font/size/color
  *                   arrive as style overrides.
  *   • capsule     — MetaChipSet boundary-marker pill: panel-frost veil,
- *                   tabular-nums, `--gs-shadow-1`. The per-chip dynamic
+ *                   tabular-nums, `--ws-shadow-1`. The per-chip dynamic
  *                   state arrives as consumer style overrides.
  *   • swatch      — StudioToolRail's 42px icon column. Active goes
  *                   charcoal; disabled mutes to 55% + not-allowed;
- *                   hover lifts 1px with `--gs-shadow-1`.
+ *                   hover lifts 1px with `--ws-shadow-1`.
  *
  * Sizes:
  *   • sm (default) — 3px 9px padding for chips, square for icons
@@ -94,41 +94,41 @@ export type ButtonSize = "xs" | "sm" | "md";
  */
 const chipBase: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-sm)",
+  fontSize: "var(--ws-text-xs)",
   letterSpacing: "0.04em",
   padding: "3px 9px",
-  borderRadius: "var(--gs-radius-pill)",
+  borderRadius: "var(--ws-radius-pill)",
   border: "1px solid transparent",
   whiteSpace: "nowrap",
   display: "inline-flex",
   alignItems: "center",
-  gap: "var(--gs-space-2)",
+  gap: "var(--ws-space-2)",
   cursor: "pointer",
   background: "transparent",
-  color: "var(--la-ink-secondary)",
+  color: "var(--ws-ink-secondary)",
   transition: "background 0.15s, color 0.15s",
 };
 
 /**
- * Tighter chip — same recipe as `chipBase` but with `--gs-font-xs`
+ * Tighter chip — same recipe as `chipBase` but with `--ws-text-xs`
  * and 3px 8px padding. Used by InspectorCard's gizmo toggle pills
  * (Move / Rotate) where two chips share a Field row.
  */
 const chipBaseXs: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-xs)",
+  fontSize: "var(--ws-text-xs)",
   letterSpacing: "0.04em",
   padding: "3px 8px",
-  borderRadius: "var(--gs-radius-pill)",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+  borderRadius: "var(--ws-radius-pill)",
+  border: "1px solid color-mix(in srgb, var(--ws-line) 55%, transparent)",
   background: "transparent",
-  color: "var(--la-ink-secondary)",
+  color: "var(--ws-ink-secondary)",
   cursor: "pointer",
 };
 
 /**
- * Tinted chip — like `chip` but uses `--gs-primary` (warm) instead
- * of `--gs-chip-active` (charcoal) for the active state. Used by
+ * Tinted chip — like `chip` but uses `--ws-active` (warm) instead
+ * of `--ws-active` (charcoal) for the active state. Used by
  * PhotoTraceHud's calibration workflow where the warm primary tint
  * reads as the active surface. 4 px 10 px padding (slightly more
  * generous than the chrome `chip` because calibration labels are
@@ -136,13 +136,13 @@ const chipBaseXs: CSSProperties = {
  */
 const chipTintedBase: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-sm)",
+  fontSize: "var(--ws-text-xs)",
   padding: "4px 10px",
-  borderRadius: "var(--gs-radius-pill)",
+  borderRadius: "var(--ws-radius-pill)",
   border:
-    "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
+    "1px solid color-mix(in srgb, var(--ws-line) 55%, transparent)",
   background: "transparent",
-  color: "var(--la-ink-secondary)",
+  color: "var(--ws-ink-secondary)",
   cursor: "pointer",
 };
 
@@ -153,12 +153,12 @@ const chipTintedBase: CSSProperties = {
  */
 const ghostBase: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-sm)",
+  fontSize: "var(--ws-text-xs)",
   padding: "5px 12px",
-  borderRadius: "var(--gs-radius-pill)",
-  border: "1px solid var(--gs-line)",
+  borderRadius: "var(--ws-radius-pill)",
+  border: "1px solid var(--ws-line)",
   background: "transparent",
-  color: "var(--la-ink-secondary)",
+  color: "var(--ws-ink-secondary)",
   cursor: "pointer",
   whiteSpace: "nowrap",
 };
@@ -181,14 +181,14 @@ const iconBase: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  color: "var(--la-ink-secondary)",
-  fontSize: "var(--gs-font-h3)",
+  color: "var(--ws-ink-secondary)",
+  fontSize: "var(--ws-text-lg)",
   lineHeight: 1,
-  borderRadius: "var(--gs-radius-pill)",
+  borderRadius: "var(--ws-radius-pill)",
 };
 
 /**
- * Primary — tinted CTA chip: hairline `--gs-primary` at 45% over a 14%
+ * Primary — tinted CTA chip: hairline `--ws-active` at 45% over a 14%
  * wash, primary ink, chip radius. The secondary-action CTA recipe used
  * by Review CAD proposals / Open CAD drafter (and StudioCadCard's
  * btnPrimary). The `active` override flips it to the solid charcoal
@@ -196,14 +196,14 @@ const iconBase: CSSProperties = {
  */
 const primaryBase: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-sm)",
+  fontSize: "var(--ws-text-xs)",
   padding: "5px 8px",
-  borderRadius: "var(--gs-radius-chip)",
-  border: "1px solid color-mix(in srgb, var(--la-accent) 45%, transparent)",
+  borderRadius: "var(--ws-radius-2)",
+  border: "1px solid color-mix(in srgb, var(--ws-active) 45%, transparent)",
   background:
-    "color-mix(in srgb, var(--la-accent) 14%, transparent)",
+    "color-mix(in srgb, var(--ws-active) 14%, transparent)",
   /* Primary-ink text on the tinted wash — AA at body sizes (§4). */
-  color: "var(--la-ink)",
+  color: "var(--ws-ink)",
   cursor: "pointer",
 };
 
@@ -216,29 +216,29 @@ const primaryBase: CSSProperties = {
  */
 const ctaBase: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-sm)",
+  fontSize: "var(--ws-text-xs)",
   fontWeight: 600,
   padding: "5px 8px",
-  borderRadius: "var(--gs-radius-chip)",
-  border: "1px solid var(--la-accent)",
-  background: "var(--la-accent)",
-  color: "var(--la-surface)",
+  borderRadius: "var(--ws-radius-2)",
+  border: "1px solid var(--ws-active)",
+  background: "var(--ws-active)",
+  color: "var(--ws-panel)",
   cursor: "pointer",
 };
 
 /**
- * Ghost-line — secondary action with the strong hairline (`--gs-line-strong`
+ * Ghost-line — secondary action with the strong hairline (`--ws-line-strong`
  * at 60%). Used by the sketch "Convert to CAD features" button and the
  * InspectorCard un-stitch pill. Padding "5px 8px" + radius chip.
  */
 const ghostLineBase: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-sm)",
+  fontSize: "var(--ws-text-xs)",
   padding: "5px 8px",
-  borderRadius: "var(--gs-radius-chip)",
-  border: "1px solid color-mix(in srgb, var(--gs-line-strong) 60%, transparent)",
+  borderRadius: "var(--ws-radius-2)",
+  border: "1px solid color-mix(in srgb, var(--ws-line-strong) 60%, transparent)",
   background: "transparent",
-  color: "var(--la-ink-secondary)",
+  color: "var(--ws-ink-secondary)",
   cursor: "pointer",
 };
 
@@ -251,12 +251,12 @@ const ghostLineBase: CSSProperties = {
 const glyphBase: CSSProperties = {
   flex: 1,
   padding: "2px 0",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-  borderRadius: "var(--gs-radius-chip)",
+  border: "1px solid color-mix(in srgb, var(--ws-line) 55%, transparent)",
+  borderRadius: "var(--ws-radius-2)",
   background: "transparent",
-  color: "var(--la-ink-secondary)",
+  color: "var(--ws-ink-secondary)",
   fontFamily: "var(--font-tech)",
-  fontSize: "var(--gs-font-lg)",
+  fontSize: "var(--ws-text-sm)",
   cursor: "pointer",
 };
 
@@ -272,29 +272,29 @@ const textBase: CSSProperties = {
   cursor: "pointer",
   padding: 0,
   fontFamily: "var(--font-ui)",
-  color: "var(--la-ink-secondary)",
+  color: "var(--ws-ink-secondary)",
 };
 
 /**
  * Chip-preset — preset toggle chip (sun-date presets, canvas layers,
- * Plan/3D segmented). xs font, chip radius, hairline `--gs-line` at 45%,
+ * Plan/3D segmented). xs font, chip radius, hairline `--ws-line` at 45%,
  * charcoal on active. No hover-lightup (presets are static toggles, not
  * nav tabs — matches the prior inline behavior).
  */
 const chipPresetBase: CSSProperties = {
   fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-xs)",
+  fontSize: "var(--ws-text-xs)",
   padding: "3px 6px",
-  borderRadius: "var(--gs-radius-chip)",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
+  borderRadius: "var(--ws-radius-2)",
+  border: "1px solid color-mix(in srgb, var(--ws-line) 45%, transparent)",
   background: "transparent",
-  color: "var(--la-ink-secondary)",
+  color: "var(--ws-ink-secondary)",
   cursor: "pointer",
 };
 
 /**
  * Capsule — MetaChipSet's boundary-marker pill: frosted paper veil
- * + hairline + `--gs-shadow-1` + tabular-nums tech numerals. Rendered
+ * + hairline + `--ws-shadow-1` + tabular-nums tech numerals. Rendered
  * inside a 3D Html overlay, so it keeps `pointerEvents: "auto"` (the
  * overlay nulls them otherwise). The per-chip dynamic state (bright /
  * expanded opacity, color, translateY, shadow) is passed by the
@@ -308,19 +308,19 @@ const chipPresetBase: CSSProperties = {
 const capsuleBase: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  gap: "var(--gs-space-2)",
+  gap: "var(--ws-space-2)",
   padding: "1px 8px",
   fontFamily: "var(--font-tech)",
-  fontSize: "var(--gs-font-xs)",
+  fontSize: "var(--ws-text-xs)",
   fontWeight: 500,
   letterSpacing: "0.01em",
   fontVariantNumeric: "tabular-nums",
   whiteSpace: "nowrap",
-  background: "var(--gs-panel-frost)",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
-  borderRadius: "var(--gs-radius-pill)",
-  boxShadow: "var(--gs-shadow-1)",
-  color: "var(--gs-ink-secondary)",
+  background: "var(--ws-panel)",
+  border: "1px solid color-mix(in srgb, var(--ws-line) 60%, transparent)",
+  borderRadius: "var(--ws-radius-pill)",
+  boxShadow: "var(--ws-shadow-1)",
+  color: "var(--ws-ink-secondary)",
   cursor: "pointer",
   pointerEvents: "auto",
   transition:
@@ -331,7 +331,7 @@ const capsuleBase: CSSProperties = {
  * Swatch — StudioToolRail's 42px icon column. The active/disabled
  * dependent fields (background, color, cursor, opacity) are applied
  * as overrides so the base stays the invariant shell; the hover lift
- * (translateY −1px + `--gs-shadow-1`) is wired in the component when
+ * (translateY −1px + `--ws-shadow-1`) is wired in the component when
  * the variant is `swatch`, with the same disabled guard the prior
  * inline handlers used.
  */
@@ -340,12 +340,12 @@ const swatchBase: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  gap: "var(--gs-space-1)",
+  gap: "var(--ws-space-1)",
   padding: "5px 0 4px",
-  borderRadius: "var(--gs-radius-lg)",
+  borderRadius: "var(--ws-radius-3)",
   border: "1px solid transparent",
   background: "transparent",
-  color: "var(--la-ink-secondary)",
+  color: "var(--ws-ink-secondary)",
   cursor: "pointer",
   transition:
     "background 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -406,29 +406,29 @@ const baseFor = (
 const activeOverride = (variant: ButtonVariant): CSSProperties => {
   if (variant === "chip" || variant === "chip-preset") {
     return {
-      background: "var(--gs-chip-active)",
-      color: "var(--gs-chip-active-ink)",
+      background: "var(--ws-active)",
+      color: "var(--ws-active-ink)",
     };
   }
   if (variant === "chip-tinted") {
     return {
-      border: "1px solid color-mix(in srgb, var(--la-accent) 50%, transparent)",
+      border: "1px solid color-mix(in srgb, var(--ws-active) 50%, transparent)",
       background:
-        "color-mix(in srgb, var(--la-accent) 14%, transparent)",
+        "color-mix(in srgb, var(--ws-active) 14%, transparent)",
       /* Charcoal accent on wash — AA at body sizes. */
-      color: "var(--la-ink)",
+      color: "var(--ws-ink)",
     };
   }
   if (variant === "primary") {
     return {
-      background: "var(--la-accent)",
-      color: "var(--la-surface)",
+      background: "var(--ws-active)",
+      color: "var(--ws-panel)",
     };
   }
   if (variant === "swatch") {
     return {
-      background: "var(--gs-chip-active)",
-      color: "var(--gs-chip-active-ink)",
+      background: "var(--ws-active)",
+      color: "var(--ws-active-ink)",
     };
   }
   return {};
@@ -464,7 +464,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       !active && rest.disabled
         ? variant === "swatch"
           ? {
-            color: "var(--la-ink-muted)",
+            color: "var(--ws-ink-muted)",
             cursor: "not-allowed",
             opacity: 0.55,
           }
@@ -472,26 +472,26 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             ? { opacity: 0.5, cursor: "not-allowed" }
             : variant === "glyph"
               ? {
-                color: "var(--la-ink-muted)",
+                color: "var(--ws-ink-muted)",
                 cursor: "not-allowed",
               }
               : {}
         : {};
     // Hover behavior was implemented per-variant via onMouseEnter /
     // onMouseLeave that mutated `e.currentTarget`:
-    //   • chip — color light-up to --gs-ink, skipped when active.
+    //   • chip — color light-up to --ws-ink, skipped when active.
     //   • swatch — color light-up (skipped when active) + a 1px lift
-    //     with --gs-shadow-1, skipped when disabled.
+    //     with --ws-shadow-1, skipped when disabled.
     // Both live here, in one place, so every chrome surface shares it.
     const hoverHandlers =
       variant === "chip" && !active
         ? {
           onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
-            e.currentTarget.style.color = "var(--la-ink)";
+            e.currentTarget.style.color = "var(--ws-ink)";
             rest.onMouseEnter?.(e);
           },
           onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
-            e.currentTarget.style.color = "var(--la-ink-secondary)";
+            e.currentTarget.style.color = "var(--ws-ink-secondary)";
             rest.onMouseLeave?.(e);
           },
         }
@@ -499,15 +499,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ? {
             onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
               if (rest.disabled) return;
-              if (!active) e.currentTarget.style.color = "var(--la-ink)";
+              if (!active) e.currentTarget.style.color = "var(--ws-ink)";
               e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "var(--gs-shadow-1)";
+              e.currentTarget.style.boxShadow = "var(--ws-shadow-1)";
               rest.onMouseEnter?.(e);
             },
             onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
               if (rest.disabled) return;
               if (!active)
-                e.currentTarget.style.color = "var(--la-ink-secondary)";
+                e.currentTarget.style.color = "var(--ws-ink-secondary)";
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow = "none";
               rest.onMouseLeave?.(e);

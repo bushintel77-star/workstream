@@ -6,7 +6,6 @@
   display: grid;
   place-items: center;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
   z-index: var(--cf-z-app);
 }
 
@@ -15,11 +14,11 @@
   max-height: 88vh;
   display: flex;
   flex-direction: column;
-  background: var(--lc-paper-bg);
-  color: var(--lc-paper-ink);
-  border-radius: var(--lc-ribbon-radius);
+  background: var(--ws-dwg-paper);
+  color: var(--ws-dwg-paper-ink);
+  border-radius: var(--ws-radius-3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  font-family: var(--lc-font-ui);
+  font-family: var(--ws-font-ui);
   overflow: hidden;
 }
 
@@ -34,7 +33,7 @@
 .title {
   font-size: 18px;
   font-weight: 600;
-  color: var(--lc-paper-ink);
+  color: var(--ws-dwg-paper-ink);
 }
 
 .meta {
@@ -50,11 +49,11 @@
 
 .actionBtn {
   padding: 6px 14px;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   border: 1px solid rgba(0, 0, 0, 0.15);
   background: transparent;
-  color: var(--lc-paper-ink);
-  font-family: var(--lc-font-mono);
+  color: var(--ws-dwg-paper-ink);
+  font-family: var(--ws-font-tech);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -86,14 +85,14 @@
   align-items: center;
   gap: 6px;
   padding: 8px 10px;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
   text-align: left;
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 11px;
-  color: var(--lc-paper-ink);
+  color: var(--ws-dwg-paper-ink);
 }
 
 .sheetTabActive {
@@ -117,18 +116,18 @@
 .issuedBadge {
   font-size: 8px;
   padding: 1px 4px;
-  border-radius: var(--gs-radius-xs);
-  background: var(--lc-accent-terrain);
-  color: var(--lc-accent-terrain-on);
+  border-radius: var(--ws-radius-2);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
 .addSheetBtn {
   padding: 8px 10px;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   border: 1px dashed rgba(0, 0, 0, 0.2);
   background: transparent;
   cursor: pointer;
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 11px;
   color: rgba(0, 0, 0, 0.5);
 }
@@ -153,7 +152,7 @@
   max-width: 480px;
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: var(--gs-radius-sm);
+  border-radius: var(--ws-radius-3);
   position: relative;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -161,8 +160,8 @@
 .viewport {
   position: absolute;
   border: 1px solid rgba(0, 0, 0, 0.3);
-  background: color-mix(in srgb, var(--gs-truth) 4%, transparent);
-  border-radius: var(--gs-radius-xs);
+  background: color-mix(in srgb, var(--ws-dwg-truth) 4%, transparent);
+  border-radius: var(--ws-radius-2);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -180,7 +179,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 8px;
   color: rgba(0, 0, 0, 0.6);
 }
@@ -201,7 +200,7 @@
   height: 16px;
   border: none;
   background: rgba(0, 0, 0, 0.1);
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   cursor: pointer;
   font-size: 10px;
   line-height: 1;
@@ -215,15 +214,15 @@
   padding: 4px 8px;
   border: 1px dashed rgba(0, 0, 0, 0.2);
   background: white;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   cursor: pointer;
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 9px;
   color: rgba(0, 0, 0, 0.4);
 }
 
 .paperMeta {
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 10px;
   color: rgba(0, 0, 0, 0.4);
   margin-top: 4px;
@@ -237,7 +236,7 @@
 }
 
 .legendTitle {
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
@@ -249,10 +248,10 @@
 /* An empty legend states why it is empty rather than rendering a bare
  * heading over nothing. */
 .legendEmpty {
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 9px;
   line-height: 1.4;
-  color: color-mix(in srgb, var(--lc-paper-ink) 55%, transparent);
+  color: color-mix(in srgb, var(--ws-dwg-paper-ink) 55%, transparent);
 }
 
 .legendRow {
@@ -260,13 +259,13 @@
   align-items: center;
   gap: 6px;
   font-size: 10px;
-  color: var(--lc-paper-ink);
+  color: var(--ws-dwg-paper-ink);
 }
 
 .legendSwatch {
   width: 16px;
   height: 16px;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   flex-shrink: 0;
 }
 
@@ -275,7 +274,7 @@
 }
 
 .legendDash {
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 8px;
   color: rgba(0, 0, 0, 0.4);
 }
@@ -283,7 +282,7 @@
 .legendSemantic {
   font-size: 7px;
   padding: 1px 3px;
-  border-radius: var(--gs-radius-sm);
+  border-radius: var(--ws-radius-3);
   background: rgba(0, 0, 0, 0.08);
   color: rgba(0, 0, 0, 0.5);
   text-transform: uppercase;
@@ -296,7 +295,7 @@
   gap: 2px;
   padding: 10px;
   border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
   background: rgba(0, 0, 0, 0.02);
   margin-top: 8px;
 }
@@ -304,7 +303,7 @@
 .titleBlockRow {
   display: flex;
   justify-content: space-between;
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 9px;
 }
 
@@ -315,5 +314,106 @@
 }
 
 .titleBlockRow span:last-child {
-  color: var(--lc-paper-ink);
+  color: var(--ws-dwg-paper-ink);
+}
+
+/* ---- PDF export progress + failure card (§18a vector-raster split) ---- */
+
+.exportProgressBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  font-family: var(--ws-font-tech);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ws-dwg-paper-ink);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.exportProgressLabel {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.exportProgressTrack {
+  flex: 1;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--ws-radius-3);
+  overflow: hidden;
+}
+
+.exportProgressFill {
+  height: 100%;
+  background: var(--ws-dwg-paper-ink);
+  transition: width 50ms linear;
+}
+
+/* Failure card — honest failure, never silently output a blank PDF */
+.exportErrorCard {
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(196, 30, 30, 0.3);
+  background: rgba(196, 30, 30, 0.06);
+  font-family: var(--ws-font-tech);
+}
+
+.exportErrorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.exportErrorLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #C41E1E;
+}
+
+.exportErrorDismiss,
+.exportDoneDismiss {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.4);
+  padding: 2px 4px;
+}
+
+.exportErrorMsg {
+  font-size: 11px;
+  color: var(--ws-dwg-paper-ink);
+  margin-top: 4px;
+}
+
+.exportErrorHint {
+  font-size: 9px;
+  color: rgba(0, 0, 0, 0.5);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* Done card — PDF issued confirmation */
+.exportDoneCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.03);
+  font-family: var(--ws-font-tech);
+}
+
+.exportDoneLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ws-dwg-paper-ink);
 }

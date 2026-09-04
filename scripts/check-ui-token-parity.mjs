@@ -14,7 +14,7 @@
  *
  * `packages/ui/src/tokens.ts` already documents the web counterpart for every
  * value in its JSDoc (`base: "#EBEBEB"` — "web `--surface-base`
- * (`--gs-glass-sunken`)"). This gate turns that prose into an executable table.
+ * (`--ws-panel-sunken`)"). This gate turns that prose into an executable table.
  *
  * How it cannot silently collapse
  * -------------------------------
@@ -25,7 +25,7 @@
  *
  *  1. It reads two **named files**. A move or rename is a hard read error, not
  *     an empty result.
- *  2. Both sides carry a **scope floor** — the count of `--gs-*` tokens parsed
+ *  2. Both sides carry a **scope floor** — the count of `--ws-*` tokens parsed
  *     out of the CSS and the count of pairs actually compared. Fewer than the
  *     floor fails, so a parser that silently stops matching cannot pass.
  *  3. Every colour leaf in `tokens.ts` must be **classified** — either paired
@@ -48,11 +48,11 @@ import fs from "node:fs";
 import vm from "node:vm";
 
 const TOKENS_TS = "packages/ui/src/tokens.ts";
-const WEB_CSS = "apps/web/src/styles/color-tokens.css";
+const WEB_CSS = "apps/web/src/styles/tokens.css";
 
 /**
  * Floors. Never lower one to make CI pass — repoint the reader instead.
- * At the time of writing: 83 `--gs-*` tokens, 32 compared pairs.
+ * At the time of writing: 104 `--ws-*` tokens, 32 compared pairs.
  */
 const FLOOR_WEB_TOKENS = 70;
 const FLOOR_PAIRS = 30;
@@ -68,45 +68,45 @@ const FLOOR_PAIRS = 30;
  * Every entry mirrors the counterpart already named in the tokens.ts JSDoc.
  */
 const PAIRS = {
-  "surface.base": "--gs-glass-sunken",
-  "surface.elevated": "--gs-panel",
-  "surface.sunken": "--gs-frame",
-  "surface.inverted": "--gs-ink",
+  "surface.base": "--ws-panel-sunken",
+  "surface.elevated": "--ws-panel",
+  "surface.sunken": "--ws-panel-sunken",
+  "surface.inverted": "--ws-ink",
 
-  "ink.primary": "--gs-ink",
-  "ink.secondary": "--gs-ink-secondary",
-  "ink.tertiary": "--gs-ink-muted",
-  "ink.inverted": "--gs-chip-active-ink",
+  "ink.primary": "--ws-ink",
+  "ink.secondary": "--ws-ink-secondary",
+  "ink.tertiary": "--ws-ink-muted",
+  "ink.inverted": "--ws-active-ink",
 
-  /* web: --line-hairline = color-mix(in srgb, var(--gs-line) 55%, transparent) */
-  "line.hairline": { token: "--gs-line", alpha: 0.55 },
-  "line.strong": "--gs-line-strong",
-  "line.ink": "--gs-ink",
+  /* web: --line-hairline = color-mix(in srgb, var(--ws-line) 55%, transparent) */
+  "line.hairline": { token: "--ws-line", alpha: 0.55 },
+  "line.strong": "--ws-line-strong",
+  "line.ink": "--ws-ink",
 
-  "accent.default": "--gs-primary",
-  "accent.soft": "--gs-primary-quiet",
-  "accent.ink": "--gs-primary-ink",
-  "accent.bright": "--gs-primary-hover",
+  "accent.default": "--ws-active",
+  "accent.soft": "--ws-active-quiet",
+  "accent.ink": "--ws-active",
+  "accent.bright": "--ws-active",
 
-  "semantic.ok": "--gs-success",
-  "semantic.warn": "--gs-warning",
-  "semantic.block": "--gs-conflict",
-  "semantic.info": "--gs-ink-secondary",
+  "semantic.ok": "--ws-success",
+  "semantic.warn": "--ws-warning",
+  "semantic.block": "--ws-conflict",
+  "semantic.info": "--ws-ink-secondary",
 
-  "studio.gold": "--gs-gold",
-  "studio.goldInk": "--gs-gold-ink",
-  "studio.signalBlue": "--gs-signal-blue",
-  "studio.signalBlueInk": "--gs-signal-blue-ink",
-  "studio.conflict": "--gs-conflict",
-  /* web: --gs-conflict-veil = color-mix(in srgb, var(--gs-conflict) 16%, transparent) */
-  "studio.conflictSoft": { token: "--gs-conflict", alpha: 0.16 },
-  "studio.primary": "--gs-primary",
-  "studio.primaryHover": "--gs-primary-hover",
-  "studio.primaryPressed": "--gs-primary-pressed",
-  "studio.primaryInk": "--gs-primary-ink",
-  "studio.primaryQuiet": "--gs-primary-quiet",
-  "studio.truth": "--gs-truth",
-  "studio.truthInk": "--gs-truth-ink",
+  "studio.gold": "--ws-active",
+  "studio.goldInk": "--ws-active-ink",
+  "studio.signalBlue": "--ws-dwg-truth",
+  "studio.signalBlueInk": "--ws-dwg-truth-ink",
+  "studio.conflict": "--ws-conflict",
+  /* web: --ws-conflict-veil = color-mix(in srgb, var(--ws-conflict) 16%, transparent) */
+  "studio.conflictSoft": { token: "--ws-conflict", alpha: 0.16 },
+  "studio.primary": "--ws-active",
+  "studio.primaryHover": "--ws-active",
+  "studio.primaryPressed": "--ws-active",
+  "studio.primaryInk": "--ws-active",
+  "studio.primaryQuiet": "--ws-active-quiet",
+  "studio.truth": "--ws-dwg-truth",
+  "studio.truthInk": "--ws-dwg-truth-ink",
 };
 
 /**
@@ -164,13 +164,13 @@ function readMobileTokens() {
   return flat;
 }
 
-/** `--gs-*` declarations from the CSS, with one-level `var()` aliases resolved. */
+/** `--ws-*` declarations from the CSS, with one-level `var()` aliases resolved. */
 function readWebTokens() {
   const src = fs
     .readFileSync(WEB_CSS, "utf8")
     .replace(/\/\*[\s\S]*?\*\//g, "");
   const raw = {};
-  for (const m of src.matchAll(/(--gs-[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+  for (const m of src.matchAll(/(--ws-[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
     raw[m[1]] = m[2].trim();
   }
   const resolve = (name, depth = 0) => {
@@ -198,6 +198,17 @@ function hexToRgb(hex) {
   return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
 }
 
+/**
+ * An alpha-pair's base web token used to always be a plain hex (mobile
+ * pre-composites its own alpha against it). `--ws-line` is itself an
+ * `rgba()` with a baked-in resting opacity — its rgb triple is still the
+ * right thing to composite against, so extract that rather than requiring
+ * hex. The web token's OWN alpha is discarded; mobile applies its own.
+ */
+function baseRgb(value) {
+  return hexToRgb(value) ?? rgbaParts(value)?.rgb ?? null;
+}
+
 const mobile = readMobileTokens();
 const web = readWebTokens();
 const webCount = Object.keys(web).length;
@@ -210,7 +221,7 @@ for (const key of Object.keys(mobile)) {
   if (!classified.has(key)) {
     problems.push(
       `  ${TOKENS_TS} has colour \`${key}\` (${mobile[key]}) that this gate does not know about.\n` +
-        `    Pair it with a --gs-* token in PAIRS, or list it in MOBILE_ONLY with the reason.`,
+        `    Pair it with a --ws-* token in PAIRS, or list it in MOBILE_ONLY with the reason.`,
     );
   }
 }
@@ -251,7 +262,7 @@ for (const [key, spec] of Object.entries(PAIRS)) {
   }
 
   const parts = rgbaParts(mobileValue);
-  const webRgb = hexToRgb(webValue);
+  const webRgb = baseRgb(webValue);
   if (!parts || !webRgb) {
     problems.push(
       `  ${key} = ${mobileValue} / ${tokenName} = ${webValue}\n` +
@@ -288,7 +299,7 @@ if (problems.length) {
 if (webCount < FLOOR_WEB_TOKENS || compared < FLOOR_PAIRS) {
   fail([
     "this gate is no longer measuring the surface it claims to.",
-    `  --gs-* tokens parsed from ${WEB_CSS}: ${webCount}, floor ${FLOOR_WEB_TOKENS}`,
+    `  --ws-* tokens parsed from ${WEB_CSS}: ${webCount}, floor ${FLOOR_WEB_TOKENS}`,
     `  token pairs compared: ${compared}, floor ${FLOOR_PAIRS}`,
     "",
     "Repoint the reader at the real token source. Do not lower a floor to pass.",
@@ -297,5 +308,5 @@ if (webCount < FLOOR_WEB_TOKENS || compared < FLOOR_PAIRS) {
 
 console.log(
   `ok: ${compared} shared colour tokens agree across packages/ui and apps/web ` +
-    `(${webCount} --gs-* tokens read; ${Object.keys(MOBILE_ONLY).length} documented mobile-only).`,
+    `(${webCount} --ws-* tokens read; ${Object.keys(MOBILE_ONLY).length} documented mobile-only).`,
 );

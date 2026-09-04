@@ -40,7 +40,7 @@ export function PhotoElevationSheet({
       <GlassCard
         style={{ position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)", width: "min(420px, 92vw)", padding: "12px 14px" }}
       >
-        <p style={{ margin: 0, fontSize: "var(--gs-font-lg)", color: "var(--la-ink-secondary)" }}>
+        <p style={{ margin: 0, fontSize: "var(--ws-text-sm)", color: "var(--ws-ink-secondary)" }}>
           This photo elevation is no longer on the board.
         </p>
         <button type="button" onClick={onClose} style={{ marginTop: 8 }}>
@@ -63,28 +63,28 @@ export function PhotoElevationSheet({
     <GlassCard
       style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(880px, 94vw)", maxHeight: "92vh", overflow: "auto", padding: "12px 14px" }}
     >
-      <div data-testid="photo-elevation-sheet" style={{ color: "var(--la-ink)", fontFamily: "var(--font-ui)" }}>
+      <div data-testid="photo-elevation-sheet" style={{ color: "var(--ws-ink)", fontFamily: "var(--font-ui)" }}>
         <div
           style={{
             display: "flex",
             alignItems: "baseline",
-            gap: "var(--gs-space-4)",
+            gap: "var(--ws-space-4)",
             flexWrap: "wrap",
             marginBottom: 8,
           }}
         >
-          <span style={{ fontFamily: "var(--font-tech)", fontSize: "var(--gs-font-sm)", fontWeight: 600, letterSpacing: "0.06em" }}>
+          <span style={{ fontFamily: "var(--font-tech)", fontSize: "var(--ws-text-xs)", fontWeight: 600, letterSpacing: "0.06em" }}>
             PHOTO ELEVATION
           </span>
-          <span style={{ fontSize: "var(--gs-font-lg)" }}>{elevation.name}</span>
-          <span style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)", fontVariantNumeric: "tabular-nums" }}>
+          <span style={{ fontSize: "var(--ws-text-sm)" }}>{elevation.name}</span>
+          <span style={{ fontSize: "var(--ws-text-xs)", color: "var(--ws-ink-secondary)", fontVariantNumeric: "tabular-nums" }}>
             {widthM.toFixed(1)} m × {heightM.toFixed(1)} m · look {Math.round(elevation.azimuth_deg)}°
           </span>
           <span
             data-testid="photo-sheet-stamp"
             style={{
-              fontSize: "var(--gs-font-xs)",
-              color: elevation.calibration ? "var(--la-ink-secondary)" : "var(--la-ink-muted)",
+              fontSize: "var(--ws-text-xs)",
+              color: elevation.calibration ? "var(--ws-ink-secondary)" : "var(--ws-ink-muted)",
             }}
           >
             {elevation.calibration
@@ -94,10 +94,10 @@ export function PhotoElevationSheet({
           <span
             data-testid="photo-sheet-boundary-stamp"
             style={{
-              fontSize: "var(--gs-font-xs)",
+              fontSize: "var(--ws-text-xs)",
               color: elevation.boundary_snap
-                ? "var(--la-ink-secondary)"
-                : "var(--la-ink-muted)",
+                ? "var(--ws-ink-secondary)"
+                : "var(--ws-ink-muted)",
             }}
           >
             {elevation.boundary_snap
@@ -110,12 +110,12 @@ export function PhotoElevationSheet({
             style={{
               marginLeft: "auto",
               fontFamily: "var(--font-ui)",
-              fontSize: "var(--gs-font-sm)",
+              fontSize: "var(--ws-text-xs)",
               padding: "3px 10px",
-              borderRadius: "var(--gs-radius-pill)",
-              border: "1px solid var(--gs-line)",
+              borderRadius: "var(--ws-radius-pill)",
+              border: "1px solid var(--ws-line)",
               background: "transparent",
-              color: "var(--la-ink-secondary)",
+              color: "var(--ws-ink-secondary)",
               cursor: "pointer",
             }}
           >
@@ -127,7 +127,7 @@ export function PhotoElevationSheet({
           viewBox={`0 0 ${vbW} ${vbH}`}
           role="img"
           aria-label={`Photo elevation sheet for ${elevation.name}`}
-          style={{ width: "100%", height: "auto", display: "block", borderRadius: "var(--gs-radius-md)", border: "1px solid var(--gs-line)", background: "var(--gs-panel)" }}
+          style={{ width: "100%", height: "auto", display: "block", borderRadius: "var(--ws-radius-3)", border: "1px solid var(--ws-line)", background: "var(--ws-panel)" }}
         >
           {/* The photo at true metre scale (1 px = 1 cm on the sheet grid). */}
           <image
@@ -146,7 +146,7 @@ export function PhotoElevationSheet({
                 y1={vbH - PAD_PX}
                 x2={PAD_PX + m * PX_PER_M}
                 y2={vbH - PAD_PX + (m % 5 === 0 ? 8 : 4)}
-                stroke="var(--la-ink-muted)"
+                stroke="var(--ws-ink-muted)"
                 strokeWidth={m % 5 === 0 ? 1.2 : 0.6}
               />
               {m % 5 === 0 && (
@@ -154,7 +154,7 @@ export function PhotoElevationSheet({
                   x={PAD_PX + m * PX_PER_M}
                   y={vbH - PAD_PX + 18}
                   fontSize={9}
-                  fill="var(--la-ink-secondary)"
+                  fill="var(--ws-ink-secondary)"
                   textAnchor="middle"
                   fontFamily="Space Grotesk, monospace"
                 >
@@ -169,7 +169,7 @@ export function PhotoElevationSheet({
             y1={vbH - PAD_PX}
             x2={vbW - PAD_PX}
             y2={vbH - PAD_PX}
-            stroke="var(--gs-truth)"
+            stroke="var(--ws-dwg-truth)"
             strokeWidth={1.4}
           />
           {/* Operator trace — plane-space metres mapped 1:1 onto the sheet. */}
@@ -196,7 +196,7 @@ export function PhotoElevationSheet({
           })}
         </svg>
 
-        <p style={{ margin: "6px 0 0", fontSize: "var(--gs-font-xs)", color: "var(--la-ink-muted)" }}>
+        <p style={{ margin: "6px 0 0", fontSize: "var(--ws-text-xs)", color: "var(--ws-ink-muted)" }}>
           Photo elevation sheet — {elevation.strokes.length} trace strokes.
           {elevation.calibration
             ? " Traced in true metres against the calibrated plane."

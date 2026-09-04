@@ -919,6 +919,44 @@ export interface StudioStoreState {
   rejectAllCadProposals: () => void;
   /** One-click direct convert (recognizeStroke path); returns feature count. */
   convertStrokesToCadFeatures: () => number;
+  /**
+   * Convert with per-stroke Z-plane overrides (from the inline Tidy HUD cycle
+   * toggle). The map key is the stroke id; the value is the target Z-height.
+   * Returns feature count. Triggers a depth-rail flash for the highest plane.
+   */
+  convertStrokesToCadFeaturesWithPlanes: (
+    planeOverrides: Map<string, number>,
+  ) => number;
+  /** Depth-rail band that should flash (plane id + timestamp for the 150ms LED). */
+  depthRailFlash: { planeId: string | null; at: number };
+  /** Tidy HUD state — null when no HUD is active. */
+  tidyHud: { strokeId: string; x: number; y: number } | null;
+  /** Show the Tidy HUD at a terminal point after a stroke ends. */
+  showTidyHud: (strokeId: string, x: number, y: number) => void;
+  /** Dismiss the Tidy HUD (commit or escape). */
+  dismissTidyHud: () => void;
+  /**
+   * Screen-space projection of the active conflict card's clash point.
+   * Written every frame by ConflictCardProjector (inside R3F useFrame);
+   * read by ConflictCard in the DOM overlay. Null when no card is pinned.
+   */
+  conflictCardScreen: { x: number; y: number; behind: boolean } | null;
+  /** Which strike index is currently selected for the conflict card. */
+  conflictCardStrikeIdx: number | null;
+  /** Open the conflict card pinned to a specific strike index. */
+  openConflictCard: (strikeIdx: number) => void;
+  /** Close the conflict card (explicit close or after resolve action). */
+  closeConflictCard: () => void;
+  /** Write the per-frame screen projection (called by ConflictCardProjector). */
+  setConflictCardScreen: (pos: { x: number; y: number; behind: boolean } | null) => void;
+  /**
+   * Screen-space projection of the live nib draw point. Written every frame
+   * by LiveNibProjector (inside R3F useFrame); read by LiveNibReadout in the
+   * DOM overlay. Null when not drawing or point is behind camera.
+   */
+  liveNibScreen: { x: number; y: number; behind: boolean } | null;
+  /** Write the per-frame nib screen projection (called by LiveNibProjector). */
+  setLiveNibScreen: (pos: { x: number; y: number; behind: boolean } | null) => void;
 
   // --- Selection — ONE state across placements / features / photo strokes ---
   selection: SelectionRef[];
@@ -1777,6 +1815,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   cadReviewOpen: false,
   cadActiveProposalId: null,
   sketchCadNotice: null,
+  depthRailFlash: { planeId: null, at: 0 },
+  tidyHud: null,
+  conflictCardScreen: null,
+  conflictCardStrikeIdx: null,
+  liveNibScreen: null,
 
   // Selection — nothing selected until the operator picks.
   selection: [],
@@ -3349,6 +3392,59 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     });
     return converted;
   },
+
+  /**
+   * Convert with per-stroke Z-plane overrides from the inline Tidy HUD.
+   * Each override maps a stroke id to a target Z-height; the feature inherits
+   * `extrude_height_m` so it lands on the correct depth-rail plane. Triggers
+   * a depth-rail flash on the highest plane that received geometry.
+   */
+  convertStrokesToCadFeaturesWithPlanes: (planeOverrides) => {
+    const current = useStudioStore.getState();
+    const { features, converted } = convertStrokesToFeatures(
+      current.sketchStrokes,
+      planeOverrides,
+    );
+    if (features.length === 0) {
+      set({
+        sketchCadNotice:
+          "No strokes recognised as ditch/path/wall/bed — draw a straight run or closed loop first.",
+      });
+      return 0;
+    }
+    // Find the highest Z among committed features for the rail flash
+    const highestZ = features.reduce(
+      (max, f) => Math.max(max, f.extrude_height_m ?? 0),
+      0,
+    );
+    const flashPlane =
+      highestZ >= 4.0
+        ? "massing"
+        : highestZ >= 1.5
+          ? "planting"
+          : "ground";
+    set((s) => {
+      const past = [...s.historyPast, docSnapshot(s)].slice(-50);
+      return {
+        features: [...s.features, ...features],
+        sketchCadNotice: `Converted ${converted} stroke${converted === 1 ? "" : "s"} to CAD features — ink stays as reference.`,
+        historyPast: past,
+        historyFuture: [],
+        depthRailFlash: { planeId: flashPlane, at: Date.now() },
+      };
+    });
+    return converted;
+  },
+
+  showTidyHud: (strokeId, x, y) =>
+    set({ tidyHud: { strokeId, x, y } }),
+  dismissTidyHud: () => set({ tidyHud: null }),
+  openConflictCard: (strikeIdx) =>
+    set({ conflictCardStrikeIdx: strikeIdx }),
+  closeConflictCard: () =>
+    set({ conflictCardStrikeIdx: null, conflictCardScreen: null }),
+  setConflictCardScreen: (pos) => set({ conflictCardScreen: pos }),
+  setLiveNibScreen: (pos) => set({ liveNibScreen: pos }),
 
   // --- Stitch engine actions ---
   setStitchSnapNodes: (nodes) => set({ stitchSnapNodes: nodes }),

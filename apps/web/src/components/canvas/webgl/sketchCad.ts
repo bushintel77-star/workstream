@@ -112,9 +112,9 @@ export function proposeSketchCad(
       outlinePct:
         g.outlinePct && g.outlinePct.length >= 3
           ? g.outlinePct.map((p) => ({
-              x: clampBoardPct(p.x + dx),
-              y: clampBoardPct(p.y + dy),
-            }))
+            x: clampBoardPct(p.x + dx),
+            y: clampBoardPct(p.y + dy),
+          }))
           : undefined,
     };
   });
@@ -125,8 +125,17 @@ export function proposeSketchCad(
  * bed) → real `LandscapeFeature`s. Strokes below the confidence gate are
  * counted as skipped, never silently dropped from the reply. Derived hatch
  * fills are skipped too (decorative shading, not convertible source ink).
+ *
+ * Z-plane routing: each recognized kind maps to a depth-rail plane via
+ * `KIND_TO_PLANE` (wall→massing +4.0, bed→planting +1.5, ditch/path→ground
+ * 0.0). The caller may override the default plane via `planeOverrides` —
+ * this is how the inline Tidy HUD cycle toggle routes a corrected classification
+ * before commit. The Z-height is injected as `extrude_height_m` on the feature.
  */
-export function convertStrokesToFeatures(strokes: CanvasStroke[]): {
+export function convertStrokesToFeatures(
+  strokes: CanvasStroke[],
+  planeOverrides?: Map<string, number>,
+): {
   features: LandscapeFeature[];
   converted: number;
   skipped: number;
@@ -143,7 +152,8 @@ export function convertStrokesToFeatures(strokes: CanvasStroke[]): {
       skipped += 1;
       continue;
     }
-    features.push(featureFromRecognizedStroke(stroke, rec));
+    const planeZ = planeOverrides?.get(stroke.id);
+    features.push(featureFromRecognizedStroke(stroke, rec, undefined, planeZ));
   }
   return { features, converted: features.length, skipped };
 }

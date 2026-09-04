@@ -26,13 +26,13 @@
    * (see docs/STUDIO-STYLING-AND-UX.md § Forbidden looks), so paper/ink read
    * as neutral sheet tokens. One place to re-theme the whole workspace.
    */
-  --pv-paper: var(--la-surface);
-  --pv-plan-bg: var(--la-surface-dim);
-  --pv-ink: var(--la-ink);
-  --pv-ink-muted: var(--la-ink-secondary);
-  --pv-ink-faint: var(--la-ink-muted);
-  --pv-ink-hint: var(--la-ink-muted);
-  --pv-print-line: var(--la-surface-muted);
+  --pv-paper: var(--ws-panel);
+  --pv-plan-bg: var(--ws-panel);
+  --pv-ink: var(--ws-ink);
+  --pv-ink-muted: var(--ws-ink-secondary);
+  --pv-ink-faint: var(--ws-ink-muted);
+  --pv-ink-hint: var(--ws-ink-muted);
+  --pv-print-line: var(--ws-panel-raised);
   --pv-r-chip: var(--r-sm);
   --pv-r-hair: var(--r-sm);
   --pv-op-faint: 0.4;
@@ -44,7 +44,7 @@
   position: absolute;
   inset: 0;
   display: flex;
-  background: var(--la-surface-dim);
+  background: var(--ws-panel);
   z-index: 10;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -60,8 +60,8 @@
   gap: var(--s-3);
   padding: clamp(14px, 1.5vw, 18px);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--la-surface) 96%, white 4%) 0%, var(--la-surface) 100%);
-  border-right: 1px solid var(--la-surface-muted);
+    linear-gradient(180deg, color-mix(in srgb, var(--ws-panel) 96%, white 4%) 0%, var(--ws-panel) 100%);
+  border-right: 1px solid var(--ws-panel-raised);
   overflow-y: auto;
 }
 
@@ -75,9 +75,9 @@
   margin: 0;
   padding: 10px 12px;
   border-radius: var(--r-xl);
-  border: 1px solid color-mix(in srgb, var(--la-surface-muted) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ws-panel-raised) 70%, transparent);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--la-surface-dim) 90%, white 10%) 0%, var(--la-surface-dim) 100%);
+    linear-gradient(180deg, color-mix(in srgb, var(--ws-panel) 90%, white 10%) 0%, var(--ws-panel) 100%);
   font-family: "IBM Plex Mono", monospace;
   padding: 8px 10px;
   border-radius: var(--r-sm);
@@ -195,8 +195,8 @@
   padding: var(--s-2) var(--s-4);
   font-size: 14px;
   font-family: inherit;
-  background: var(--la-accent);
-  color: var(--la-surface);
+  background: var(--ws-active);
+  color: var(--ws-panel);
   border: 0;
   border-radius: var(--r-sm);
   cursor: pointer;
@@ -236,7 +236,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--la-ink-muted);
+  color: var(--ws-ink-muted);
   margin-bottom: 6px;
   padding: 0 4px;
 }
@@ -255,10 +255,10 @@
   margin: 0;
   padding: 8px 12px;
   font-size: 13px;
-  color: var(--la-error);
-  background: color-mix(in srgb, var(--la-error) 8%, var(--la-surface));
+  color: var(--ws-conflict);
+  background: color-mix(in srgb, var(--ws-conflict) 8%, var(--ws-panel));
   border-radius: var(--r-sm);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--la-error) 20%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ws-conflict) 20%, transparent);
 }
 
 .docList {
@@ -321,10 +321,10 @@
 
 .docItemActive {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--la-accent) 10%, var(--la-surface)) 0%, var(--la-surface) 100%);
+    linear-gradient(180deg, color-mix(in srgb, var(--ws-active) 10%, var(--ws-panel)) 0%, var(--ws-panel) 100%);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--la-surface-muted) 90%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--la-accent) 6%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--ws-panel-raised) 90%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--ws-active) 6%, transparent);
 }
 
 .docTitle {
@@ -386,8 +386,8 @@
   gap: var(--s-2);
   padding: clamp(10px, 1.1vw, 14px) clamp(14px, 1.8vw, 20px);
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--la-surface) 95%, white 5%) 0%, var(--la-surface) 100%);
-  border-bottom: 1px solid var(--la-surface-muted);
+    linear-gradient(180deg, color-mix(in srgb, var(--ws-panel) 95%, white 5%) 0%, var(--ws-panel) 100%);
+  border-bottom: 1px solid var(--ws-panel-raised);
   flex-wrap: wrap;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 8%),
@@ -789,7 +789,7 @@
   padding: 4px 8px;
   font-size: 11px;
   font-family: inherit;
-  background: color-mix(in srgb, var(--gs-conflict) 10%, transparent);
+  background: color-mix(in srgb, var(--ws-conflict) 10%, transparent);
   border: 0;
   border-radius: var(--pv-r-chip);
   color: var(--color-danger);
@@ -1012,8 +1012,8 @@
   gap: var(--s-3);
   padding: 12px 16px;
   background: linear-gradient(180deg,
-      color-mix(in srgb, var(--la-surface) 92%, transparent),
-      color-mix(in srgb, var(--la-surface) 80%, transparent));
+      color-mix(in srgb, var(--ws-panel) 92%, transparent),
+      color-mix(in srgb, var(--ws-panel) 80%, transparent));
   border-top: 0;
   /* Strict stacking context — pagination bar sits above canvas content
      without masking interactive elements. Audit 1.1. */
@@ -1043,17 +1043,17 @@
   align-items: center;
   gap: 3px;
   padding: 4px;
-  background: var(--la-surface);
+  background: var(--ws-panel);
   border: 0;
   border-radius: var(--r-sm);
-  color: var(--la-ink-muted);
+  color: var(--ws-ink-muted);
   cursor: grab;
   min-height: 56px;
   min-width: 56px;
   width: 56px;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--la-surface-muted) 80%, transparent),
-    0 1px 2px color-mix(in srgb, var(--la-ink) 4%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--ws-panel-raised) 80%, transparent),
+    0 1px 2px color-mix(in srgb, var(--ws-ink) 4%, transparent);
   transition:
     color 140ms var(--ease),
     box-shadow 140ms var(--ease),
@@ -1061,10 +1061,10 @@
 }
 
 .pageTab:hover {
-  color: var(--la-ink-secondary);
+  color: var(--ws-ink-secondary);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--la-surface-muted) 100%, transparent),
-    0 1px 3px color-mix(in srgb, var(--la-ink) 8%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--ws-panel-raised) 100%, transparent),
+    0 1px 3px color-mix(in srgb, var(--ws-ink) 8%, transparent);
 }
 
 .pageTab:active {
@@ -1073,28 +1073,28 @@
 }
 
 .pageTabActive {
-  background: var(--la-accent);
-  color: var(--la-surface);
+  background: var(--ws-active);
+  color: var(--ws-panel);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--la-accent) 20%, transparent),
-    0 1px 3px color-mix(in srgb, var(--la-ink) 12%, transparent),
-    0 2px 6px color-mix(in srgb, var(--la-ink) 8%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--ws-active) 20%, transparent),
+    0 1px 3px color-mix(in srgb, var(--ws-ink) 12%, transparent),
+    0 2px 6px color-mix(in srgb, var(--ws-ink) 8%, transparent);
 }
 
 .pageTabActive:hover {
-  color: var(--la-surface);
+  color: var(--ws-panel);
 }
 
 .pageTabDragOver {
   box-shadow:
-    inset 0 0 0 2px var(--la-accent),
-    0 1px 3px color-mix(in srgb, var(--la-ink) 10%, transparent);
+    inset 0 0 0 2px var(--ws-active),
+    0 1px 3px color-mix(in srgb, var(--ws-ink) 10%, transparent);
 }
 
 .pageThumb {
   width: 36px;
   height: 26px;
-  background: var(--la-surface-dim);
+  background: var(--ws-panel);
   border-radius: var(--r-sm);
   display: flex;
   align-items: center;
@@ -1106,7 +1106,7 @@
 .pageThumbEmpty {
   width: 10px;
   height: 10px;
-  border: 1px dashed var(--la-ink-muted);
+  border: 1px dashed var(--ws-ink-muted);
   border-radius: var(--r-sm);
   opacity: var(--pv-op-faint);
 }
@@ -1127,7 +1127,7 @@
   width: 4px;
   height: 3px;
   border-radius: var(--r-sm);
-  background: var(--la-ink-muted);
+  background: var(--ws-ink-muted);
   opacity: var(--pv-op-dim);
 }
 
@@ -1180,12 +1180,12 @@
   gap: var(--s-4);
   margin: clamp(24px, 6vw, 96px);
   padding: clamp(32px, 6vw, 72px);
-  border: 1px solid color-mix(in srgb, var(--la-ink) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ws-ink) 10%, transparent);
   border-radius: var(--r-3xl);
   background: linear-gradient(
     145deg,
-    color-mix(in srgb, var(--la-surface) 92%, transparent),
-    color-mix(in srgb, var(--la-surface-dim) 76%, transparent)
+    color-mix(in srgb, var(--ws-panel) 92%, transparent),
+    color-mix(in srgb, var(--ws-panel) 76%, transparent)
   );
   box-shadow:
     0 1px 2px color-mix(in srgb, var(--text-primary) 8%, transparent),
@@ -1214,8 +1214,8 @@
   padding: var(--s-1) var(--s-3);
   font-size: 13px;
   font-weight: 600;
-  background: var(--la-accent);
-  color: var(--la-surface);
+  background: var(--ws-active);
+  color: var(--ws-panel);
   border: 0;
   border-radius: var(--r-sm);
   cursor: pointer;
@@ -1322,8 +1322,8 @@
   padding: var(--s-1) var(--s-3);
   font-size: 12px;
   font-weight: 600;
-  background: var(--la-accent);
-  color: var(--la-surface);
+  background: var(--ws-active);
+  color: var(--ws-panel);
   border: 0;
   border-radius: var(--r-sm);
   cursor: pointer;
@@ -1392,8 +1392,8 @@
   padding: var(--s-1) var(--s-2);
   font-size: 11px;
   font-weight: 600;
-  background: var(--la-accent);
-  color: var(--la-surface);
+  background: var(--ws-active);
+  color: var(--ws-panel);
   border: 0;
   border-radius: var(--pv-r-chip);
   cursor: pointer;
@@ -1713,8 +1713,8 @@
   padding: var(--s-1) var(--s-3);
   font-size: 13px;
   font-weight: 600;
-  background: var(--la-accent);
-  color: var(--la-surface);
+  background: var(--ws-active);
+  color: var(--ws-panel);
   border: 0;
   border-radius: var(--r-sm);
   cursor: pointer;

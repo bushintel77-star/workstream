@@ -18,7 +18,7 @@ import * as THREE from "three";
 /**
  * Create the terrain material.
  *
- * @param baseColor    Resting albedo (--gs-canvas paper in drafting modes,
+ * @param baseColor    Resting albedo (--ws-canvas paper in drafting modes,
  *                     groundOlive on site modes).
  * @param drafting     Paper/drafting mode: the slope albedo goes NEUTRAL
  *                     (a faint shade of the paper tone) so a contoured survey

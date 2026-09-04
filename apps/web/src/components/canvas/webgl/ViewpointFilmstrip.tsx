@@ -146,8 +146,25 @@ export function ViewpointFilmstrip({ mode }: ViewpointFilmstripProps) {
 
   const canWalk = bookmarks.length >= 2;
 
+  /**
+   * Canvas-first collapse. DESIGN-SPEC §5: "the canvas is the surface —
+   * chrome floats with air on every side (glass capsule, not a dashboard
+   * column)."
+   *
+   * With nothing captured, every control past the capture button is
+   * disabled and both sliders govern a walk that cannot run — 494px of
+   * dead chrome in the bottom stack, above the history scrub and the dock.
+   * Collapsed, an unused tool costs the drawing one button, and the strip
+   * grows into its full form the moment it has something to show.
+   */
+  const empty = bookmarks.length === 0;
+
   return (
-    <div className={styles.filmstrip} data-testid="viewpoint-filmstrip">
+    <div
+      className={styles.filmstrip}
+      data-testid="viewpoint-filmstrip"
+      data-collapsed={empty ? "true" : "false"}
+    >
       {/* Capture button — adds a new viewpoint at the current camera pose. */}
       <button
         className={styles.captureBtn}
@@ -158,149 +175,154 @@ export function ViewpointFilmstrip({ mode }: ViewpointFilmstripProps) {
         +
       </button>
 
-      {/* Viewpoint thumbs — horizontal strip, 82x52 each per ss4 Geometry. */}
-      <div className={styles.thumbsRow} data-testid="viewpoint-thumbs">
-        {bookmarks.map((vp, i) => (
-          <button
-            key={vp.id}
-            className={`${styles.thumb} ${activeViewpointId === vp.id ? styles.thumbActive : ""}`}
-            onClick={() => onRestore(vp.id)}
-            title={`Viewpoint ${i + 1}${vp.preset ? ` (${vp.preset.toUpperCase()})` : ""}`}
-            data-testid="viewpoint-thumb"
-            data-viewpoint-id={vp.id}
-            data-active={activeViewpointId === vp.id ? "true" : "false"}
-          >
-            {vp.thumb ? (
-              <img
-                src={vp.thumb}
-                alt={`Viewpoint ${i + 1}`}
-                className={styles.thumbImg}
-                draggable={false}
-              />
-            ) : (
-              <span className={styles.thumbPlaceholder}>{i + 1}</span>
-            )}
-            {/* Class B pip — 18x2px accent.hi bar at the top when active. */}
-            {activeViewpointId === vp.id && <span className={styles.thumbPip} />}
-            {/* Hover delete button. */}
-            <span
-              className={styles.thumbDelete}
-              role="button"
-              tabIndex={-1}
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(vp.id);
-              }}
-              title="Delete viewpoint"
+      {!empty && (
+        <>
+          {/* Viewpoint thumbs — horizontal strip, 82x52 each per ss4 Geometry. */}
+          <div className={styles.thumbsRow} data-testid="viewpoint-thumbs">
+            {bookmarks.map((vp, i) => (
+              <button
+                key={vp.id}
+                className={`${styles.thumb} ${activeViewpointId === vp.id ? styles.thumbActive : ""}`}
+                onClick={() => onRestore(vp.id)}
+                title={`Viewpoint ${i + 1}${vp.preset ? ` (${vp.preset.toUpperCase()})` : ""}`}
+                data-testid="viewpoint-thumb"
+                data-viewpoint-id={vp.id}
+                data-active={activeViewpointId === vp.id ? "true" : "false"}
+              >
+                {vp.thumb ? (
+                  <img
+                    src={vp.thumb}
+                    alt={`Viewpoint ${i + 1}`}
+                    className={styles.thumbImg}
+                    draggable={false}
+                  />
+                ) : (
+                  <span className={styles.thumbPlaceholder}>{i + 1}</span>
+                )}
+                {/* Class B pip — 18x2px accent.hi bar at the top when active. */}
+                {activeViewpointId === vp.id && <span className={styles.thumbPip} />}
+                {/* Hover delete button. */}
+                <span
+                  className={styles.thumbDelete}
+                  role="button"
+                  tabIndex={-1}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(vp.id);
+                  }}
+                  title="Delete viewpoint"
+                >
+                  x
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Walk/record controls. */}
+          <div className={styles.controls}>
+            <button
+              className={`${styles.walkBtn} ${isPlayingFlythrough ? styles.walkBtnActive : ""}`}
+              onClick={onToggleWalk}
+              disabled={!canWalk}
+              title={
+                canWalk
+                  ? isPlayingFlythrough
+                    ? "Pause walk-through"
+                    : "Play walk-through (fly through all viewpoints)"
+                  : "Need 2+ viewpoints to walk"
+              }
+              data-testid="viewpoint-walk"
             >
-              x
-            </span>
-          </button>
-        ))}
-      </div>
+              {isPlayingFlythrough ? "II" : ">"}
+            </button>
+            <button
+              className={`${styles.recordBtn} ${isRecordingWalk ? styles.recordBtnActive : ""}`}
+              onClick={onToggleRecord}
+              disabled={!canWalk}
+              title={
+                canWalk
+                  ? isRecordingWalk
+                    ? "Stop recording"
+                    : "Record walk-through as video"
+                  : "Need 2+ viewpoints to record"
+              }
+              data-testid="viewpoint-record"
+            >
+              {isRecordingWalk ? "STOP" : "REC"}
+            </button>
+            {/* Phase J — visibility panel toggle. Opens the per-viewpoint
+                canvas visibility keyframe matrix. The strip renders this only
+                once a viewpoint exists, so the empty-state guard the button
+                used to carry has nothing left to catch. */}
+            <button
+              className={`${styles.visibilityBtn} ${visibilityPanelOpen ? styles.visibilityBtnActive : ""}`}
+              onClick={() => setVisibilityPanelOpen((o) => !o)}
+              title={
+                visibilityPanelOpen
+                  ? "Close visibility panel"
+                  : "Edit per-viewpoint canvas visibility"
+              }
+              data-testid="viewpoint-visibility"
+            >
+              VIS
+            </button>
+          </div>
 
-      {/* Walk/record controls. */}
-      <div className={styles.controls}>
-        <button
-          className={`${styles.walkBtn} ${isPlayingFlythrough ? styles.walkBtnActive : ""}`}
-          onClick={onToggleWalk}
-          disabled={!canWalk}
-          title={
-            canWalk
-              ? isPlayingFlythrough
-                ? "Pause walk-through"
-                : "Play walk-through (fly through all viewpoints)"
-              : "Need 2+ viewpoints to walk"
-          }
-          data-testid="viewpoint-walk"
-        >
-          {isPlayingFlythrough ? "II" : ">"}
-        </button>
-        <button
-          className={`${styles.recordBtn} ${isRecordingWalk ? styles.recordBtnActive : ""}`}
-          onClick={onToggleRecord}
-          disabled={!canWalk}
-          title={
-            canWalk
-              ? isRecordingWalk
-                ? "Stop recording"
-                : "Record walk-through as video"
-              : "Need 2+ viewpoints to record"
-          }
-          data-testid="viewpoint-record"
-        >
-          {isRecordingWalk ? "STOP" : "REC"}
-        </button>
-        {/* Phase J — visibility panel toggle. Opens the per-viewpoint
-            canvas visibility keyframe matrix. */}
-        <button
-          className={`${styles.visibilityBtn} ${visibilityPanelOpen ? styles.visibilityBtnActive : ""}`}
-          onClick={() => setVisibilityPanelOpen((o) => !o)}
-          disabled={bookmarks.length === 0}
-          title={
-            bookmarks.length === 0
-              ? "Capture viewpoints first to keyframe visibility"
-              : visibilityPanelOpen
-                ? "Close visibility panel"
-                : "Edit per-viewpoint canvas visibility"
-          }
-          data-testid="viewpoint-visibility"
-        >
-          VIS
-        </button>
-      </div>
+          {/* Phase C2/K — timeline controls: linger, transition, loop, progress.
+              NumericSlider provides tap-to-type entry per spec §5.3. Units are
+              omitted from the filmstrip sliders to keep the strip compact — the
+              labels (LINGER/TRANSITION) already imply seconds. */}
+          <div className={styles.timelineControls} data-testid="viewpoint-timeline">
+            <NumericSlider
+              label="LINGER"
+              min={0}
+              max={5}
+              step={0.25}
+              value={walkLingerS}
+              onChange={setWalkLingerS}
+              title="Seconds the camera pauses at each viewpoint"
+              testId="walk-linger"
+            />
+            <NumericSlider
+              label="TRANS"
+              min={0.5}
+              max={10}
+              step={0.5}
+              value={walkTransitionS}
+              onChange={setWalkTransitionS}
+              title="Seconds for the camera to fly between viewpoints"
+              testId="walk-transition"
+            />
+            <button
+              className={`${styles.loopBtn} ${walkLoop ? styles.loopBtnActive : ""}`}
+              onClick={toggleWalkLoop}
+              title={walkLoop ? "Loop on (walk repeats)" : "Loop off (walk stops after one pass)"}
+              data-testid="walk-loop-toggle"
+            >
+              {walkLoop ? "\u21BB" : "\u2192"}
+            </button>
+          </div>
 
-      {/* Phase C2/K — timeline controls: linger, transition, loop, progress.
-          NumericSlider provides tap-to-type entry per spec §5.3. Units are
-          omitted from the filmstrip sliders to keep the strip compact — the
-          labels (LINGER/TRANSITION) already imply seconds. */}
-      <div className={styles.timelineControls} data-testid="viewpoint-timeline">
-        <NumericSlider
-          label="LINGER"
-          min={0}
-          max={5}
-          step={0.25}
-          value={walkLingerS}
-          onChange={setWalkLingerS}
-          title="Seconds the camera pauses at each viewpoint"
-          testId="walk-linger"
-        />
-        <NumericSlider
-          label="TRANS"
-          min={0.5}
-          max={10}
-          step={0.5}
-          value={walkTransitionS}
-          onChange={setWalkTransitionS}
-          title="Seconds for the camera to fly between viewpoints"
-          testId="walk-transition"
-        />
-        <button
-          className={`${styles.loopBtn} ${walkLoop ? styles.loopBtnActive : ""}`}
-          onClick={toggleWalkLoop}
-          title={walkLoop ? "Loop on (walk repeats)" : "Loop off (walk stops after one pass)"}
-          data-testid="walk-loop-toggle"
-        >
-          {walkLoop ? "\u21BB" : "\u2192"}
-        </button>
-      </div>
+          {/* Phase C2 — progress bar showing the walk playback head. */}
+          {isPlayingFlythrough && (
+            <div className={styles.progressBar} data-testid="walk-progress-bar">
+              <div
+                className={styles.progressFill}
+                style={{ width: `${Math.round(walkProgress * 100)}%` }}
+              />
+            </div>
+          )}
 
-      {/* Phase C2 — progress bar showing the walk playback head. */}
-      {isPlayingFlythrough && (
-        <div className={styles.progressBar} data-testid="walk-progress-bar">
-          <div
-            className={styles.progressFill}
-            style={{ width: `${Math.round(walkProgress * 100)}%` }}
+          {/* Phase J — visibility panel (per-viewpoint canvas visibility
+              keyframing). Drops down above the filmstrip. Emptying the strip
+              unmounts it with the rest of the expanded form; the open flag is
+              deliberately kept, so it returns with the next capture. */}
+          <VisibilityPanel
+            open={visibilityPanelOpen}
+            onClose={() => setVisibilityPanelOpen(false)}
           />
-        </div>
+        </>
       )}
-
-      {/* Phase J — visibility panel (per-viewpoint canvas visibility
-          keyframing). Drops down above the filmstrip. */}
-      <VisibilityPanel
-        open={visibilityPanelOpen}
-        onClose={() => setVisibilityPanelOpen(false)}
-      />
     </div>
   );
 }

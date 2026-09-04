@@ -5,7 +5,7 @@
  *
  * Renders inside the R3F <Canvas>. Contains:
  *   - Lighting (ambient + directional for sun)
- *   - Ground plane (--gs-canvas, adaptive grid)
+ *   - Ground plane (--ws-canvas, adaptive grid)
  *   - Origin peg (Signal Blue crosshair at (0,0,0))
  *   - Lot boundary (Signal Blue line)
  *   - Easements (Signal Blue dashed lines)
@@ -47,6 +47,8 @@ import { normalizeBox } from "./marqueeSelect";
 import { SceneItems, type RenderItem } from "./sceneItems";
 import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
+import { ConflictCardProjector } from "./ConflictCardProjector";
+import { LiveNibProjector } from "./LiveNibProjector";
 import { FusedCamera } from "./FusedCamera";
 import { FlythroughRig } from "./FlythroughRig";
 import { PedestrianCamera } from "./PedestrianCamera";
@@ -161,7 +163,7 @@ function OriginPeg({
 }: {
   sampler: ((worldX: number, worldZ: number) => number) | null;
 }) {
-  // --gs-truth stroke — the origin crosshair reads against the paper ground.
+  // --ws-dwg-truth stroke — the origin crosshair reads against the paper ground.
   const blue = "#0030CF";
   const arm = 1.2;
   // Survey furniture rides the terrain (the peg anchors real ground, not a
@@ -408,7 +410,7 @@ function GroundContactShadows({
 }
 
 /** The lot boundary — a Signal Blue line. Scene geometry follows the data
- *  law: --gs-truth (#0030CF) strokes on paper — 8.22:1 on the canvas token
+ *  law: --ws-dwg-truth (#0030CF) strokes on paper — 8.22:1 on the canvas token
  *  (SC 1.4.11 non-text ≥3:1; the dark-era lifted ink #6B8EEA failed on paper). */
 function LotBoundary({
   points,
@@ -1206,6 +1208,13 @@ export function StudioScene({
           alerts={lens?.hideStrikes ? [] : strikeAlerts}
         />
       )}
+      {/* Conflict card projector — projects the active strike point to
+          screen coords every frame for the DOM-overlay-pinned ConflictCard.
+          Pure math component, renders no DOM. */}
+      <ConflictCardProjector strikes={strikeAlerts ?? []} />
+      {/* Live nib projector — projects the live draw point to screen coords
+          every frame for the cursor-adjacent LiveNibReadout. Pure math. */}
+      <LiveNibProjector />
       {/* Fused Sketch Layer — the shared 2D↔3D ink system. Self-mounts when
           sketchMode is on (reads the store internally). Strokes live in the
           unified store (CanvasStroke[] in board-% space) and render in BOTH

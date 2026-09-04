@@ -57,15 +57,13 @@ const detailStyle: React.CSSProperties = {
   /* Paper detail card — light surface with dark ink, reads as a map
    * label against the dark canvas. Dark chrome is reserved for the
    * presentation lens. */
-  background: "var(--gs-panel)",
-  backdropFilter: "none",
-  WebkitBackdropFilter: "none",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 55%, transparent)",
-  borderRadius: "var(--gs-radius-panel)",
-  boxShadow: "var(--gs-shadow-3)",
-  color: "var(--gs-ink-strong)",
+  background: "var(--ws-panel)",
+  border: "1px solid color-mix(in srgb, var(--ws-line) 55%, transparent)",
+  borderRadius: "var(--ws-radius-3)",
+  boxShadow: "var(--ws-shadow-2)",
+  color: "var(--ws-ink)",
   fontFamily: "var(--font-ui)",
-  fontSize: "var(--gs-font-sm)",
+  fontSize: "var(--ws-text-xs)",
   lineHeight: 1.45,
   pointerEvents: "auto",
 };
@@ -162,7 +160,7 @@ export function MetaChipSet({ boundaryPct, scaleM, boardAspect, mode, chips }: M
               leaderRefs.current.set(chip.id, el);
             }}
             fill="none"
-            stroke="var(--gs-line-strong)"
+            stroke="var(--ws-line-strong)"
             strokeWidth={1}
             strokeDasharray="4 3"
             opacity={0.85}
@@ -206,8 +204,8 @@ export function MetaChipSet({ boundaryPct, scaleM, boardAspect, mode, chips }: M
               style={{
                 fontFamily: "var(--font-hand), 'Architects Daughter', cursive",
                 opacity: bright ? 1 : expanded ? 0.95 : 0.4,
-                color: bright ? "var(--gs-ink-strong)" : "var(--gs-ink-secondary)",
-                boxShadow: expanded ? "var(--gs-shadow-2)" : "var(--gs-shadow-1)",
+                color: bright ? "var(--ws-ink)" : "var(--ws-ink-secondary)",
+                boxShadow: expanded ? "var(--ws-shadow-1)" : "var(--ws-shadow-1)",
               }}
             >
               <span style={{ fontWeight: 600 }}>{chip.label}</span>

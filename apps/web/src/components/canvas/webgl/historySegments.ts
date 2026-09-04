@@ -33,12 +33,28 @@ export const SEGMENT_LABEL: Record<ActivitySegment, string> = {
   markup: "Markup",
 };
 
+/**
+ * Activity band hues. Each names what the run WAS, so none of them may borrow
+ * an alert colour: red in this studio means a conflict or a destructive state,
+ * and a routine hour of earthworks is neither.
+ *
+ * `grading` was `--ws-conflict` (#c41e1e) — the same token the walk recorder
+ * uses for its live-recording alarm — which put the loudest colour in the
+ * system on the most ordinary activity, and made a grading run and a genuine
+ * conflict indistinguishable at a glance. `--ws-dwg-mass` is the
+ * earthworks accent the cut/fill readout already uses, so the band now agrees
+ * with the instrument that reports the same work.
+ *
+ * `markup` keeps `--ws-dwg-redline`: redline IS the drafting vocabulary for
+ * markup, and at band opacity it reads as a tint over the trough rather than
+ * a status fill.
+ */
 export const SEGMENT_COLOR: Record<ActivitySegment, string> = {
-  survey: "var(--gs-truth)",
-  grading: "var(--gs-conflict)",
-  paving: "var(--lc-ink)",
-  planting: "var(--lc-accent-terrain)",
-  markup: "var(--lc-accent-redline)",
+  survey: "var(--ws-dwg-truth)",
+  grading: "var(--ws-dwg-mass)",
+  paving: "var(--ws-ink)",
+  planting: "var(--ws-active)",
+  markup: "var(--ws-dwg-redline)",
 };
 
 /**

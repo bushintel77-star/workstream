@@ -26,10 +26,9 @@
   background:
     radial-gradient(circle at 18% 0%, rgb(255 255 255 / 10%) 0%, transparent 42%),
     linear-gradient(180deg, color-mix(in srgb, var(--hc-glass, var(--tier1-bar-bg)) 94%, white 6%) 0%, var(--hc-glass, var(--tier1-bar-bg)) 100%);
-  backdrop-filter: blur(var(--gs-frost-blur));
   border-radius: var(--r-2xl);
   box-shadow:
-    var(--gs-shadow-3),
+    var(--ws-shadow-2),
     inset 0 0 0 1px var(--hc-glass-border, var(--tier1-bar-line));
   z-index: var(--ws-z-dock, 40);
   pointer-events: auto;
@@ -165,7 +164,7 @@
   padding: 8px 12px;
   font-size: 13px;
   font-family: inherit;
-  background: var(--gs-sunken);
+  background: var(--ws-panel-sunken);
   border: 0;
   border-radius: var(--hc-r-pop);
   color: var(--tier1-bar-ink);
@@ -207,7 +206,7 @@
   padding: 8px 12px;
   font-size: 13px;
   font-family: inherit;
-  background: var(--gs-sunken);
+  background: var(--ws-panel-sunken);
   border: 0;
   border-radius: var(--hc-r-pop);
   color: var(--tier1-bar-ink);

@@ -33,30 +33,30 @@ const canvasFallbackShell: CSSProperties = {
   display: "grid",
   placeItems: "center",
   padding: 24,
-  background: "var(--gs-canvas)",
+  background: "var(--ws-canvas)",
 };
 
 const panelFallbackShell: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  gap: "var(--gs-space-4)",
+  gap: "var(--ws-space-4)",
   padding: "10px 11px",
-  borderRadius: "var(--gs-radius-chip)",
-  border: "1px solid color-mix(in srgb, var(--gs-warning) 45%, transparent)",
-  background: "color-mix(in srgb, var(--gs-canvas) 88%, transparent)",
+  borderRadius: "var(--ws-radius-2)",
+  border: "1px solid color-mix(in srgb, var(--ws-warning) 45%, transparent)",
+  background: "color-mix(in srgb, var(--ws-canvas) 88%, transparent)",
 };
 
 const fallbackCard: CSSProperties = {
   width: "min(420px, 100%)",
   display: "flex",
   flexDirection: "column",
-  gap: "var(--gs-space-4)",
+  gap: "var(--ws-space-4)",
   padding: 20,
-  borderRadius: "var(--gs-radius-panel)",
-  border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
-  background: "var(--gs-panel-grad)",
-  boxShadow: "var(--gs-shadow-2)",
-  color: "var(--la-ink)",
+  borderRadius: "var(--ws-radius-3)",
+  border: "1px solid color-mix(in srgb, var(--ws-line) 60%, transparent)",
+  background: "var(--ws-panel)",
+  boxShadow: "var(--ws-shadow-1)",
+  color: "var(--ws-ink)",
   fontFamily: "var(--font-ui)",
 };
 
@@ -79,9 +79,9 @@ function StudioSurfaceFallback({
           style={{
             margin: 0,
             fontFamily: "var(--font-tech)",
-            fontSize: "var(--gs-font-h3)",
+            fontSize: "var(--ws-text-lg)",
             letterSpacing: "0.02em",
-            color: "var(--la-ink)",
+            color: "var(--ws-ink)",
           }}
         >
           {title}
@@ -89,14 +89,14 @@ function StudioSurfaceFallback({
         <p
           style={{
             margin: 0,
-            color: "var(--la-ink-secondary)",
-            fontSize: "var(--gs-font-sm)",
+            color: "var(--ws-ink-secondary)",
+            fontSize: "var(--ws-text-xs)",
             lineHeight: 1.5,
           }}
         >
           {detail}
         </p>
-        <div style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "var(--ws-space-3)", flexWrap: "wrap" }}>
           <Button
             variant="ghost-line"
             onClick={onRetry}

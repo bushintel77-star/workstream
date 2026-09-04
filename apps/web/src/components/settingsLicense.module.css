@@ -43,7 +43,7 @@
 .banner {
   margin: 14px 0 0;
   padding: 8px 12px;
-  border-radius: var(--gs-radius-chip);
+  border-radius: var(--ws-radius-2);
   border: 1px solid var(--line-hairline);
   font-size: 13px;
 }
@@ -71,7 +71,7 @@
   flex-direction: column;
   gap: 12px;
   padding: 18px;
-  border-radius: var(--gs-radius-panel);
+  border-radius: var(--ws-radius-3);
   border: 1px solid var(--line-subtle);
   background: var(--surface-elevated);
 }
@@ -190,7 +190,7 @@
 
 .label input {
   padding: 8px 10px;
-  border-radius: var(--gs-radius-chip);
+  border-radius: var(--ws-radius-2);
   border: 1px solid var(--line-strong);
   background: var(--surface-inset);
   color: var(--ink-primary);

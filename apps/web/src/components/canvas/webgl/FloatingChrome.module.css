@@ -8,30 +8,97 @@
 .perimeterTrack {
   position: absolute;
   inset: 22px;
-  /* Spec §4 geometry: 16px radius (--lc-flyout-radius), 1px track.border. */
-  border: 1px solid var(--lc-track-border);
-  border-radius: var(--lc-flyout-radius);
+  /* Spec §4 geometry: 16px radius (--ws-radius-3), 1px track.border. */
+  border: 1px solid var(--ws-line-soft);
+  border-radius: var(--ws-radius-3);
   pointer-events: none;
   z-index: var(--cf-z-chrome);
 }
 
+/* ---- Bottom-centre chrome stack ----
+ *
+ * One column, flow children — the pattern DESIGN-SPEC §5 already prescribes
+ * for the right dock, where the Estimator is "a flow child after it,
+ * structurally unable to paint over it".
+ *
+ * Every panel in this slot used to be its own `position: absolute` with a
+ * hand-computed `bottom`, and the arithmetic went stale as the panels grew:
+ * the filmstrip (bottom 96, h 42) sat entirely inside the history scrub
+ * (bottom 88, h 62), the scrub dipped 8px into the camera dock (bottom 22,
+ * h 74), and the SEL/VIEW toggles covered the dock's PLAN button because
+ * their fixed -140px/-200px centre offsets no longer cleared the dock's
+ * half-width once it reached 548px. All five sat correctly at
+ * `--cf-z-chrome`, so the z-ladder gate saw nothing wrong — the collision
+ * was geometric, inside one slot.
+ *
+ * Rows size to their content now, so growing a panel pushes its neighbours
+ * instead of painting over them, and there is no offset left to go stale.
+ * `column-reverse` keeps DOM order bottom-up (dock first), which is also
+ * the operator's order of reach.
+ */
+.bottomStack {
+  position: absolute;
+  bottom: 22px;
+  /* Spans the viewport inside the perimeter track's inset rather than
+     shrink-to-fitting around its widest row. A shrink-to-fit container has
+     no free space, so the dock row's `1fr` gutters would size to their
+     content instead of equalising — which shoved the dock 47px right of
+     centre, off the axis the camera presets are read against. */
+  left: 22px;
+  right: 22px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: var(--ws-space-4);
+  /* The container is a layout scaffold; each panel re-arms its own hits. */
+  pointer-events: none;
+  z-index: var(--cf-z-chrome);
+}
+
+/* The dock's row. Equal `1fr` gutters hold the dock on the viewport centre
+ * line however wide it grows, and the toggles ride the left gutter in flow,
+ * so they cannot reach the dock and cannot run off a narrow viewport. */
+.dockRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--ws-space-4);
+  width: 100%;
+}
+
+/* Left gutter — the sketch-only mode toggles, right-aligned so they read as
+ * attached to the dock rather than floating in the corner. */
+.dockRowLead {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ws-space-3);
+}
+
 /* ---- Depth Rail (side edge) ---- Landscape Canvas v2: two-way bands.
  * Positive z (planes) above the ground line, subsurface utility depths below.
- * Uses --lc-* tokens. Radius per --lc-depth-rail-radius. */
+ * Uses --lc-* tokens. Radius per --ws-radius-3. */
 .rail {
   position: absolute;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 12px;
-  border-radius: var(--lc-depth-rail-radius);
-  background: var(--lc-glass-grad);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-0), var(--ws-shadow-2);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
+  transition: opacity 50ms linear;
+}
+
+/* Pen-down quiet state — rail → 5% trace opacity (§5.5).
+   Z-height datums recede into the stone charcoal background,
+   yielding absolute contrast priority to the active drawing tip. */
+.railPenQuiet {
+  opacity: var(--ws-op-trace);
+  pointer-events: none;
 }
 
 .railRight {
@@ -70,11 +137,11 @@
 }
 
 .railHeader {
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-group);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   text-align: center;
   padding: 4px 0 6px;
   letter-spacing: 0.08em;
@@ -83,8 +150,8 @@
 /* Ground-line divider — separates positive planes from subsurface utilities */
 .railGroundLine {
   height: 1px;
-  background: var(--lc-accent-terrain);
-  opacity: var(--lc-op-ground-line);
+  background: var(--ws-active);
+  opacity: var(--ws-op-quiet);
   margin: 4px 2px;
   position: relative;
 }
@@ -94,23 +161,23 @@
   position: absolute;
   right: -2px;
   top: -7px;
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 9.5px;
   font-weight: 600;
-  color: var(--lc-accent-terrain);
+  color: var(--ws-active);
   letter-spacing: 0.05em;
-  background: var(--lc-glass-bg);
+  background: var(--ws-panel);
   padding: 0 3px;
-  border-radius: var(--gs-radius-xs);
+  border-radius: var(--ws-radius-2);
 }
 
 /* Subsurface section label — group header, 8.5px per spec §3 */
 .railSubsurfaceLabel {
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 8.5px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   text-align: center;
   padding: 2px 0;
   letter-spacing: 0.08em;
@@ -122,11 +189,11 @@
   justify-content: center;
   width: 52px;
   height: 44px;
-  border-radius: var(--gs-radius-lg);
+  border-radius: var(--ws-radius-3);
   background: transparent;
-  color: var(--lc-ink-60);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-glyph);
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -136,19 +203,19 @@
 }
 
 .cell:hover {
-  background: var(--lc-surface-tint);
-  color: var(--lc-ink);
+  background: var(--ws-active-quiet);
+  color: var(--ws-ink);
 }
 
 .cellActive {
-  background: var(--lc-accent-terrain);
-  color: var(--lc-accent-terrain-on);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--lc-accent-terrain) 35%, transparent);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
+  box-shadow: var(--ws-shadow-inset);
 }
 
 .cellActive:hover {
-  background: var(--lc-accent-terrain-hi);
-  color: var(--lc-accent-terrain-on);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
 }
 
 /* Subsurface utility cells — redline accent for below-ground services.
@@ -157,28 +224,36 @@
  * These are read-only reference divs (never click targets), so the shared
  * pointer affordance from `.cell` is withdrawn. */
 .cellSubsurface {
-  color: var(--lc-accent-redline);
+  color: var(--ws-dwg-redline);
   cursor: default;
 }
 
 .cellSubsurface:hover {
-  background: color-mix(in srgb, var(--lc-accent-redline) 10%, transparent);
-  color: var(--lc-accent-redline);
+  background: color-mix(in srgb, var(--ws-dwg-redline) 10%, transparent);
+  color: var(--ws-dwg-redline);
 }
 
 /* Fixed plane stack reference bands — proposed targets, never drawable. */
 .cellFixed {
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
   cursor: default;
 }
 
 .cellFixed:hover {
   background: transparent;
-  color: var(--lc-ink-30);
+  color: var(--ws-ink-muted);
+}
+
+/* Reactive flash — 150ms stark white LED confirmation when a Tidy conversion
+   commits geometry to this Z-plane. Mechanical hardware rack feedback. */
+.cellFlash {
+  background: var(--ws-active) !important;
+  color: var(--ws-panel) !important;
+  box-shadow: inset 0 0 0 1px var(--ws-active);
 }
 
 .cellAdd {
-  color: var(--lc-ink-40);
+  color: var(--ws-ink-muted);
   font-size: 18px;
   line-height: 1;
 }
@@ -190,28 +265,28 @@
   justify-content: center;
   width: 52px;
   height: 22px;
-  border-radius: var(--gs-radius-md);
+  border-radius: var(--ws-radius-3);
   background: transparent;
-  color: var(--lc-ink-40);
-  font-family: var(--lc-font-mono);
+  color: var(--ws-ink-muted);
+  font-family: var(--ws-font-tech);
   font-size: 9.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border: 1px solid var(--lc-track-border);
+  border: 1px solid var(--ws-line-soft);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   margin-top: 3px;
 }
 
 .seasonTag:hover {
-  background: var(--lc-surface-tint);
-  color: var(--lc-ink);
+  background: var(--ws-active-quiet);
+  color: var(--ws-ink);
 }
 
 .seasonTagSummer {
-  color: var(--lc-accent-terrain);
-  border-color: color-mix(in srgb, var(--lc-accent-terrain) 30%, transparent);
+  color: var(--ws-active);
+  border-color: color-mix(in srgb, var(--ws-active) 30%, transparent);
 }
 
 .seasonTagWinter {
@@ -220,7 +295,7 @@
 }
 
 .seasonTagAll {
-  color: var(--lc-ink-40);
+  color: var(--ws-ink-muted);
 }
 
 /* ---- Readouts (bottom corners) ---- cut/fill + anchor state.
@@ -261,35 +336,33 @@
 
 .readoutPillCut {
   padding: 12px 18px;
-  border-radius: var(--lc-ribbon-tile-radius);
-  background: var(--lc-glass-bg);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-readout);
+  border-radius: var(--ws-radius-2);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--lc-ink-60);
+  color: var(--ws-ink-secondary);
   letter-spacing: 0.05em;
   white-space: nowrap;
-  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  box-shadow: var(--ws-shadow-0), var(--ws-shadow-2);
 }
 
 .readoutValueCut {
-  color: var(--lc-accent-terrain);
+  color: var(--ws-active);
   font-weight: 700;
   font-size: 13px;
 }
 
 /* Stationing chainage inside the coord chip — derived, never stored. */
 .readoutChainage {
-  color: var(--lc-ink-40);
+  color: var(--ws-ink-muted);
   font-weight: 600;
 }
 
 .readoutValueFill {
-  color: var(--lc-accent-mass);
+  color: var(--ws-dwg-mass);
   font-weight: 700;
   font-size: 13px;
 }
@@ -297,9 +370,9 @@
 /* Scale toggle — master on/off for the edge ruler + dimension ring.
  * Matches the active-cell accent so the ON state reads clearly. */
 .scaleToggleOn {
-  background: var(--lc-accent-terrain);
-  color: var(--lc-accent-terrain-on);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--lc-accent-terrain) 35%, transparent);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
+  box-shadow: var(--ws-shadow-inset);
 }
 
 /* ---- Extrusion slider panel ---- appears when MASS tool is armed. */
@@ -312,14 +385,12 @@
   align-items: center;
   gap: 14px;
   padding: 14px 20px;
-  border-radius: var(--lc-ribbon-radius);
-  background: var(--lc-glass-grad);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
-  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  box-shadow: var(--ws-shadow-0), var(--ws-shadow-2);
 }
 
 .extCommit {
@@ -328,13 +399,13 @@
   justify-content: center;
   height: 40px;
   padding: 0 18px;
-  border-radius: var(--lc-ribbon-tile-radius);
-  font-family: var(--lc-font-mono);
-  font-size: var(--lc-fs-readout);
+  border-radius: var(--ws-radius-2);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro);
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--lc-accent-terrain-on);
-  background: var(--lc-accent-terrain);
+  color: var(--ws-active-ink);
+  background: var(--ws-active);
   border: none;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -343,5 +414,5 @@
 }
 
 .extCommit:hover {
-  background: var(--lc-accent-terrain-hi);
+  background: var(--ws-active);
 }

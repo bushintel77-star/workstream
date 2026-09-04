@@ -1338,12 +1338,12 @@ export function SnapMarker({ hint }: { hint: SnapHint }) {
           data-testid="snap-glyph"
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: "var(--gs-font-sub)",
+            fontSize: "var(--ws-text-md)",
             fontWeight: 600,
             color,
-            background: "color-mix(in srgb, var(--la-surface) 80%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--gs-line) 60%, transparent)",
-            borderRadius: "var(--gs-radius-md)",
+            background: "color-mix(in srgb, var(--ws-panel) 80%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--ws-line) 60%, transparent)",
+            borderRadius: "var(--ws-radius-3)",
             padding: "0px 5px",
             pointerEvents: "none",
           }}

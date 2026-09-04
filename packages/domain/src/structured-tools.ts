@@ -56,6 +56,13 @@ export function buildLandscapeFeatureFromStroke(args: {
   points: Array<{ x_pct: number; y_pct: number }>;
   id?: string;
   now?: string;
+  /**
+   * Target Z-height (metres above grade) for the converted feature.
+   * When provided and > 0, sets `extrude_height_m` so the feature lands on
+   * the correct depth-rail plane (e.g. +4.0 for massing, +1.5 for planting).
+   * Absent/0 = flat region on the ground plane (backward-compatible).
+   */
+  planeZ?: number;
 }): LandscapeFeature {
   const props = defaultStructuredToolProps(args.kind);
   const id = args.id ?? crypto.randomUUID();
@@ -92,7 +99,7 @@ export function buildLandscapeFeatureFromStroke(args: {
     args.kind === "bed"
       ? `${props.depth_m} m depth`
       : `${props.width_m} m × ${props.depth_m} m` +
-        (props.height_m != null ? ` × ${props.height_m} m h` : "");
+      (props.height_m != null ? ` × ${props.height_m} m h` : "");
 
   return {
     id,
@@ -121,5 +128,8 @@ export function buildLandscapeFeatureFromStroke(args: {
       estimated_install_hours: Math.max(0.5, points.length * 0.35),
       calculated_labor_cost_aud: 0,
     },
+    ...(args.planeZ != null && args.planeZ > 0
+      ? { extrude_height_m: args.planeZ }
+      : {}),
   };
 }

@@ -20,7 +20,7 @@ import { estimatedCostPerUnit, formatCostPreview } from "./costPreview";
 import { GLYPH_BY_TYPE } from "./assetPalette";
 import { Button } from "./Button";
 
-const GOLD = "var(--la-accent)";
+const GOLD = "var(--ws-active)";
 
 /** Offset from cursor (px) so the toolbar doesn't obscure the click target. */
 const OFFSET_X = 16;
@@ -83,27 +83,25 @@ export function FloatingPlacementToolbar() {
         transform: "translateY(-100%)",
         display: "flex",
         alignItems: "center",
-        gap: "var(--gs-space-2)",
+        gap: "var(--ws-space-2)",
         padding: "4px 10px",
-        borderRadius: "var(--gs-radius-pill)",
+        borderRadius: "var(--ws-radius-pill)",
         border: `1px solid color-mix(in srgb, ${GOLD} 40%, transparent)`,
-        background: "color-mix(in srgb, var(--la-surface) 52%, transparent)",
-        backdropFilter: "none",
-        WebkitBackdropFilter: "none",
+        background: "color-mix(in srgb, var(--ws-panel) 52%, transparent)",
         pointerEvents: "auto",
         fontFamily: "var(--font-tech)",
-        fontSize: "var(--gs-font-xs)",
+        fontSize: "var(--ws-text-xs)",
         color: GOLD,
         whiteSpace: "nowrap",
         zIndex: "var(--cf-z-app)",
-        boxShadow: "var(--gs-shadow-3)",
+        boxShadow: "var(--ws-shadow-2)",
         transition: "left 0.05s linear, top 0.05s linear",
       }}
     >
       {/* Glyph + name */}
       <span
         style={{
-          fontSize: 16,
+          fontSize: 15,
           lineHeight: 1,
           color: GOLD,
           flex: "0 0 auto",
@@ -116,7 +114,7 @@ export function FloatingPlacementToolbar() {
         style={{
           fontFamily: "var(--font-ui)",
           fontWeight: 600,
-          color: "var(--la-ink)",
+          color: "var(--ws-ink)",
           overflow: "hidden",
           textOverflow: "ellipsis",
           maxWidth: 120,
@@ -131,7 +129,7 @@ export function FloatingPlacementToolbar() {
           data-testid="floating-cost-preview"
           style={{
             fontFamily: "var(--font-tech)",
-            color: "var(--la-ink-secondary)",
+            color: "var(--ws-ink-secondary)",
             opacity: 0.85,
           }}
         >
@@ -146,7 +144,7 @@ export function FloatingPlacementToolbar() {
         style={{
           width: 1,
           height: 14,
-          background: "var(--la-surface-muted)",
+          background: "var(--ws-panel-raised)",
           flex: "0 0 auto",
         }}
       />
@@ -161,7 +159,7 @@ export function FloatingPlacementToolbar() {
           setRowPlantActive(false);
         }}
         title="Single placement — click to place one"
-        style={{ padding: "1px 6px", fontSize: "var(--gs-font-xs)" }}
+        style={{ padding: "1px 6px", fontSize: "var(--ws-text-xs)" }}
       >
         1×
       </Button>
@@ -172,7 +170,7 @@ export function FloatingPlacementToolbar() {
         data-testid="floating-area-plant"
         onClick={() => setAreaPlantActive(!areaPlantActive)}
         title="Area plant — drag a box to mass-plant at mature spacing"
-        style={{ padding: "1px 6px", fontSize: "var(--gs-font-xs)" }}
+        style={{ padding: "1px 6px", fontSize: "var(--ws-text-xs)" }}
       >
         Area
       </Button>
@@ -183,7 +181,7 @@ export function FloatingPlacementToolbar() {
         data-testid="floating-row-plant"
         onClick={() => setRowPlantActive(!rowPlantActive)}
         title="Row plant — drag a run to row-plant at mature spacing"
-        style={{ padding: "1px 6px", fontSize: "var(--gs-font-xs)" }}
+        style={{ padding: "1px 6px", fontSize: "var(--ws-text-xs)" }}
       >
         Row
       </Button>
@@ -192,8 +190,8 @@ export function FloatingPlacementToolbar() {
       <span
         style={{
           fontFamily: "var(--font-tech)",
-          fontSize: "var(--gs-font-xs)",
-          color: "var(--la-ink-muted)",
+          fontSize: "var(--ws-text-xs)",
+          color: "var(--ws-ink-muted)",
           opacity: 0.6,
         }}
       >

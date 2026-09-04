@@ -142,8 +142,6 @@
       color-mix(in srgb, var(--surface-deep) 88%, transparent) 0%,
       color-mix(in srgb, var(--surface-deep) 46%, transparent) 52%,
       transparent 100%);
-  backdrop-filter: blur(var(--gs-blur)) saturate(130%);
-  -webkit-backdrop-filter: blur(var(--gs-blur)) saturate(130%);
 }
 
 .chromeBrand {
@@ -198,8 +196,6 @@
   padding: 16px 18px;
   border-radius: 14px;
   background: color-mix(in srgb, var(--panel) 88%, transparent);
-  backdrop-filter: blur(var(--gs-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--gs-blur)) saturate(140%);
   border: 1px solid var(--border);
   box-shadow: var(--elev-2);
   display: flex;

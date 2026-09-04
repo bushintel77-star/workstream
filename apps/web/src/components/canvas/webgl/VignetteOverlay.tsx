@@ -30,17 +30,17 @@ import { memo } from "react";
 import { useStudioStore } from "./studioStore";
 
 /** The vignette gradient — matches the 3D post-processing Vignette parameters.
- *  Neutral ink tone per the shadow tiers; token-only (consumes --gs-ink-strong,
+ *  Neutral ink tone per the shadow tiers; token-only (consumes --ws-ink,
  *  not a literal RGB triple). */
 const VIGNETTE_GRADIENT =
-  "radial-gradient(118% 100% at 50% 50%, transparent 44%, color-mix(in srgb, var(--la-ink) 44%, transparent) 80%, color-mix(in srgb, var(--la-ink) 70%, transparent) 100%)";
+  "radial-gradient(118% 100% at 50% 50%, transparent 44%, color-mix(in srgb, var(--ws-ink) 44%, transparent) 80%, color-mix(in srgb, var(--ws-ink) 70%, transparent) 100%)";
 
 /**
  * A subtle inner glow at the vignette edge that gives GlassCards a consistent
  * "floating in atmosphere" read regardless of what's behind them.
  */
 const VIGNETTE_INNER_GLOW =
-  "radial-gradient(100% 100% at 50% 50%, color-mix(in srgb, var(--gs-shadow) 8%, transparent) 60%, transparent 80%)";
+  "radial-gradient(100% 100% at 50% 50%, color-mix(in srgb, var(--ws-canvas) 8%, transparent) 60%, transparent 80%)";
 
 export const VignetteOverlay = memo(function VignetteOverlay() {
   const viewBlendTarget = useStudioStore((s) => s.viewBlendTarget);

@@ -9,8 +9,8 @@
  * are forbidden outside the render-value allowlist, because raw hex checks
  * cannot see them (that is how the 40–50% black scrims slipped through in
  * the first place). Panels dim with neutral ink mixes
- * (color-mix(in srgb, var(--gs-ink-strong) N%)) and lift with the neutral
- * shadow tiers (--gs-shadow-1..4), never with black.
+ * (color-mix(in srgb, var(--ws-ink) N%)) and lift with the neutral
+ * shadow tiers (--ws-shadow-1..4), never with black.
  *
  * Allowlist — deliberately small; every entry is a literal *data* colour
  * (paint choice / render value), never chrome identity:
@@ -84,6 +84,7 @@ const ALLOW_PATH_SUBSTR = [
   "styles/color-tokens.css",
   "styles/colorTokens.ts",
   "styles/globals.css",
+  "styles/tokens.css",
   // Literal colour-choice swatches / 3D render material colours (data, not chrome)
   "components/share/clientShareTwin.module.css",
   "components/share/ClientShareTwin.tsx",
@@ -175,8 +176,8 @@ const inRegion = (regions, i) => regions.some(([a, b]) => i >= a && i <= b);
  * token's real value. A fallback that disagrees is worse than none: it never
  * renders (the token always resolves at :root), so it silently documents the
  * wrong design intent. Two had drifted through the Studio Paper pivot —
- * `var(--gs-primary, #FBBF24)` kept the pre-pivot amber for a token that is now
- * Signal Blue, and `var(--gs-warning, #c92)` kept an amber for a token that is
+ * `var(--ws-active, #FBBF24)` kept the pre-pivot amber for a token that is now
+ * Signal Blue, and `var(--ws-warning, #c92)` kept an amber for a token that is
  * now neutral grey.
  */
 const VAR_FALLBACK = /var\(\s*(--[a-zA-Z0-9-]+)\s*,\s*(#[0-9a-fA-F]{3,8})\s*\)/g;
@@ -184,7 +185,7 @@ const VAR_FALLBACK = /var\(\s*(--[a-zA-Z0-9-]+)\s*,\s*(#[0-9a-fA-F]{3,8})\s*\)/g
 /** Token name -> declared value, from the two token stylesheets. */
 function readTokenValues() {
   const map = new Map();
-  for (const f of ["styles/color-tokens.css", "styles/globals.css"]) {
+  for (const f of ["styles/color-tokens.css", "styles/globals.css", "styles/tokens.css"]) {
     const src = fs
       .readFileSync(path.join(ROOT, f), "utf8")
       .replace(/\/\*[\s\S]*?\*\//g, "");
@@ -273,7 +274,7 @@ for (const file of files) {
      * Scoped to the classified paths, not the whole app, because the first
      * repo-wide run surfaced 48 more in components/ui/kit/kit.module.css
      * (`var(--ink-primary, #fff)` against a token that resolves to #1a1a1a,
-     * plus `--ink-inverted` defined as `var(--gs-ink)` — a token that
+     * plus `--ink-inverted` defined as `var(--ws-ink)` — a token that
      * contradicts its own name). That is a separate UI-kit audit with its own
      * blast radius; it is recorded in OUTSTANDING.md rather than folded into a
      * gate-repair MR. Widen RENDER_VALUE_PATHS when that lands.
@@ -393,7 +394,7 @@ if (scrims.length) {
     console.error(`  ${v.file} (${v.count}) ${v.samples.join(" ")}`);
   }
   console.error(
-    `\n${scrims.length} file(s). Dim with color-mix(in srgb, var(--gs-ink-strong) N%); lift with --gs-shadow-1..4.`,
+    `\n${scrims.length} file(s). Dim with color-mix(in srgb, var(--ws-ink) N%); lift with --ws-shadow-1..4.`,
   );
   process.exit(1);
 }

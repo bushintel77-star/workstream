@@ -3,7 +3,7 @@
 /**
  * StudioCanvasLoading — canvas-first loading surface (Studio Paper).
  *
- * The WebGL mount used to paint a flat `--gs-canvas` void while the studio
+ * The WebGL mount used to paint a flat `--ws-canvas` void while the studio
  * chunk resolved (and again, silently, while the site-truth bootstrap parsed
  * the Vicmap cadastral data on first load) — an operator-facing blank page
  * with no feedback. This replaces that void with a single honest status

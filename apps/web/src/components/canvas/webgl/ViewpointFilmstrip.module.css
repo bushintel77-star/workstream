@@ -7,25 +7,19 @@
  */
 
 .filmstrip {
-  position: absolute;
-  bottom: 22px;
-  left: 50%;
-  transform: translateX(-50%);
+  /* A flow child of FloatingChrome's `.bottomStack`. `relative` is kept so
+     `.progressBar` (bottom: -2px) and the visibility panel still resolve
+     against the strip. */
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border-radius: var(--lc-camera-dock-radius);
-  background: var(--lc-glass-grad);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
-  border: 1px solid var(--lc-glass-border);
-  box-shadow: var(--lc-glass-inset), var(--lc-flyout-shadow);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-0), var(--ws-shadow-2);
   pointer-events: auto;
-  z-index: var(--cf-z-chrome);
-  /* Offset above the camera dock so the two don't collide. The camera dock
-     is at bottom: 22px; this sits at bottom: 22px + dock-height + gap. */
-  bottom: 96px;
 }
 
 /* ---- Capture button ---- */
@@ -36,10 +30,10 @@
   width: 28px;
   height: 28px;
   border: none;
-  border-radius: var(--gs-radius-md);
-  background: var(--lc-accent-terrain, var(--gs-accent));
-  color: var(--lc-accent-on, var(--gs-accent-on));
-  font-family: var(--lc-font-mono);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
+  font-family: var(--ws-font-tech);
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
@@ -48,7 +42,7 @@
 }
 
 .captureBtn:hover {
-  opacity: var(--lc-op-hover);
+  opacity: var(--ws-op-hover);
 }
 
 /* ---- Thumbs row ---- */
@@ -66,8 +60,8 @@
 }
 
 .thumbsRow::-webkit-scrollbar-thumb {
-  background: var(--lc-ink-20, var(--gs-ink-20));
-  border-radius: var(--gs-radius-xs);
+  background: var(--ws-ink-disabled);
+  border-radius: var(--ws-radius-2);
 }
 
 /* ---- Individual thumb (82x52 per ss4 Geometry) ---- */
@@ -75,24 +69,24 @@
   position: relative;
   width: 82px;
   height: 52px;
-  border: 1px solid var(--lc-glass-border);
-  border-radius: var(--gs-radius-lg);
+  border: 1px solid var(--ws-line);
+  border-radius: var(--ws-radius-3);
   overflow: hidden;
   cursor: pointer;
   flex-shrink: 0;
-  background: var(--lc-surface-2, var(--gs-surface-2));
+  background: var(--ws-panel-raised);
   padding: 0;
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .thumb:hover {
-  border-color: var(--lc-accent-terrain, var(--gs-accent));
+  border-color: var(--ws-active);
 }
 
 /* Class B selected — matte lift + 1.5px accent border + ring + pip. */
 .thumbActive {
-  border: 1.5px solid var(--lc-accent-terrain, var(--gs-accent));
-  box-shadow: 0 0 0 3px var(--lc-accent-ring, rgba(28, 25, 23, 0.18));
+  border: 1.5px solid var(--ws-active);
+  box-shadow: 0 0 0 3px var(--ws-focus, rgba(28, 25, 23, 0.18));
 }
 
 .thumbImg {
@@ -109,10 +103,10 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  font-family: var(--lc-font-mono);
+  font-family: var(--ws-font-tech);
   font-size: 14px;
   font-weight: 700;
-  color: var(--lc-ink-30, var(--gs-ink-30));
+  color: var(--ws-ink-muted);
 }
 
 /* Class B pip — 18x2px accent.hi bar at the top. */
@@ -123,7 +117,7 @@
   transform: translateX(-50%);
   width: 18px;
   height: 2px;
-  background: var(--lc-accent-hi, var(--gs-accent-hi));
+  background: var(--ws-active);
   border-radius: 0 0 1px 1px;
 }
 
@@ -137,8 +131,8 @@
   justify-content: center;
   width: 14px;
   height: 14px;
-  border-radius: var(--gs-radius-xs);
-  background: color-mix(in srgb, var(--gs-ink-strong) 55%, transparent);
+  border-radius: var(--ws-radius-2);
+  background: color-mix(in srgb, var(--ws-ink) 55%, transparent);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -165,11 +159,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--lc-glass-border);
-  border-radius: var(--gs-radius-md);
-  background: var(--lc-surface-2, var(--gs-surface-2));
-  color: var(--lc-ink-60, var(--gs-ink-60));
-  font-family: var(--lc-font-mono);
+  border: 1px solid var(--ws-line);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel-raised);
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
@@ -188,25 +182,25 @@
 
 .walkBtn:hover:not(:disabled),
 .recordBtn:hover:not(:disabled) {
-  background: var(--lc-surface-3, var(--gs-surface-3));
+  background: var(--ws-panel-raised);
 }
 
 .walkBtn:disabled,
 .recordBtn:disabled {
-  opacity: var(--lc-op-ground-line);
+  opacity: var(--ws-op-quiet);
   cursor: not-allowed;
 }
 
 .walkBtnActive {
-  background: var(--lc-accent-terrain, var(--gs-accent));
-  color: var(--lc-accent-on, var(--gs-accent-on));
-  border-color: var(--lc-accent-terrain, var(--gs-accent));
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
+  border-color: var(--ws-active);
 }
 
 .recordBtnActive {
-  background: var(--gs-conflict, #c41e1e);
+  background: var(--ws-conflict);
   color: #fff;
-  border-color: var(--gs-conflict, #c41e1e);
+  border-color: var(--ws-conflict);
   animation: recordPulse 1.5s ease-in-out infinite;
 }
 
@@ -217,11 +211,11 @@
   justify-content: center;
   width: 32px;
   height: 28px;
-  border: 1px solid var(--lc-glass-border);
-  border-radius: var(--gs-radius-md);
-  background: var(--lc-glass-grad);
-  color: var(--lc-ink-60, var(--gs-ink-60));
-  font-family: var(--lc-font-mono);
+  border: 1px solid var(--ws-line);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel);
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
   font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
@@ -231,30 +225,30 @@
 }
 
 .visibilityBtn:hover:not(:disabled) {
-  background: var(--lc-surface-3, var(--gs-surface-3));
-  color: var(--lc-ink, var(--gs-ink));
+  background: var(--ws-panel-raised);
+  color: var(--ws-ink);
 }
 
 .visibilityBtn:disabled {
-  opacity: var(--lc-op-ground-line);
+  opacity: var(--ws-op-quiet);
   cursor: not-allowed;
 }
 
 .visibilityBtnActive {
-  background: var(--lc-accent-terrain, var(--gs-accent));
-  color: var(--lc-accent-on, var(--gs-accent-on));
-  border-color: var(--lc-accent-terrain, var(--gs-accent));
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
+  border-color: var(--ws-active);
 }
 
 @keyframes recordPulse {
 
   0%,
   100% {
-    opacity: var(--lc-op-active);
+    opacity: var(--ws-op-full);
   }
 
   50% {
-    opacity: var(--lc-op-60);
+    opacity: var(--ws-op-subdued);
   }
 }
 
@@ -264,7 +258,7 @@
   align-items: center;
   gap: 6px;
   padding-left: 6px;
-  border-left: 1px solid var(--lc-glass-border);
+  border-left: 1px solid var(--ws-line);
   flex-shrink: 1;
   max-width: 320px;
 }
@@ -275,10 +269,10 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  border: 1px solid var(--lc-glass-border);
-  border-radius: var(--gs-radius-md);
-  background: var(--lc-surface-2, var(--gs-surface-2));
-  color: var(--lc-ink-60, var(--gs-ink-60));
+  border: 1px solid var(--ws-line);
+  border-radius: var(--ws-radius-3);
+  background: var(--ws-panel-raised);
+  color: var(--ws-ink-secondary);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -287,13 +281,13 @@
 }
 
 .loopBtn:hover {
-  background: var(--lc-surface-3, var(--gs-surface-3));
+  background: var(--ws-panel-raised);
 }
 
 .loopBtnActive {
-  background: var(--lc-accent-terrain, var(--gs-accent));
-  color: var(--lc-accent-on, var(--gs-accent-on));
-  border-color: var(--lc-accent-terrain, var(--gs-accent));
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
+  border-color: var(--ws-active);
 }
 
 /* Progress bar — shows the walk playback head position. */
@@ -303,15 +297,15 @@
   left: 8px;
   right: 8px;
   height: 2px;
-  border-radius: var(--gs-radius-xs);
-  background: var(--lc-track-border);
+  border-radius: var(--ws-radius-2);
+  background: var(--ws-line-soft);
   overflow: hidden;
   pointer-events: none;
 }
 
 .progressFill {
   height: 100%;
-  background: var(--lc-accent-terrain, var(--gs-accent));
-  border-radius: var(--gs-radius-xs);
+  background: var(--ws-active);
+  border-radius: var(--ws-radius-2);
   transition: width 60ms linear;
 }

@@ -18,16 +18,16 @@
 
 .goldStandardRoot {
   /* Paper container steps (local names — no root collision) */
-  --gs-surface-container-high: #fafafa;
-  --gs-surface-container-lowest: #e4e4e4;
+  --ws-panel-raised: #fafafa;
+  --ws-canvas: #e4e4e4;
   /* Faint ink for decorative glyphs only (never body text) */
-  --gs-ink-faint: color-mix(in srgb, var(--gs-ink-muted) 55%, transparent);
-  /* Crimson label ink (root owns --gs-ink-conflict; this order variant stays local) */
-  --gs-conflict-ink: #b91c1c;
-  --gs-radius-panel: 12px;
-  --gs-radius-chip: 6px;
-  --gs-radius-control: 4px;
-  --gs-radius-pill: 999px;
+  --ws-ink-disabled: color-mix(in srgb, var(--ws-ink-muted) 55%, transparent);
+  /* Crimson label ink (root owns --ws-conflict; this order variant stays local) */
+  --ws-conflict: #b91c1c;
+  --ws-radius-3: 12px;
+  --ws-radius-2: 6px;
+  --ws-radius-3: 4px;
+  --ws-radius-pill: 999px;
   /*
    * Stacking scale — every floating layer in a Gold Standard surface
    * references one of these, never a raw number. Both Growth Studio and
@@ -40,22 +40,22 @@
    *   hud           5   floating HUD panels (top bar, side panels)
    *   controls      6   bottom-fixed control bars (scrubber, camera controls)
    */
-  --gs-z-vignette: 2;
-  --gs-z-overlay: 3;
-  --gs-z-scene-labels: 4;
-  --gs-z-hud: 5;
-  --gs-z-controls: 6;
-  --gs-font-display: var(--font-tech), "Space Grotesk", sans-serif;
-  --gs-font-tech: var(--font-tech), "Space Grotesk", sans-serif;
-  --gs-font-ui: var(--font-inter), "Inter", sans-serif;
+  --cf-z-spatial: 2;
+  --cf-z-app: 3;
+  --cf-z-spatial: 4;
+  --cf-z-chrome: 5;
+  --cf-z-chrome: 6;
+  --ws-font-tech: var(--font-tech), "Space Grotesk", sans-serif;
+  --ws-font-tech: var(--font-tech), "Space Grotesk", sans-serif;
+  --ws-font-ui: var(--font-inter), "Inter", sans-serif;
 
   position: relative;
   width: 100%;
   height: 100dvh;
   min-height: 560px;
-  background: var(--gs-surface);
-  color: var(--gs-ink);
-  font-family: var(--gs-font-ui);
+  background: var(--ws-canvas);
+  color: var(--ws-ink);
+  font-family: var(--ws-font-ui);
   overflow: hidden;
   isolation: isolate;
 }

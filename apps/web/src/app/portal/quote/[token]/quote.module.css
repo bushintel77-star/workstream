@@ -27,7 +27,7 @@
   line-height: 1;
   /* Charcoal on the paper masthead — the old --surface-elevated (white)
    * was ~1:1 against the light portal background. */
-  color: var(--gs-ink);
+  color: var(--ws-ink);
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
@@ -74,7 +74,7 @@
   text-transform: uppercase;
   /* Primary-ink (7.97:1) — the portal accent at 11px/700 on paper was
    * 4.32:1, under AA for body-size text. */
-  color: var(--gs-primary-ink);
+  color: var(--ws-active);
 }
 
 .eyebrow {
@@ -336,10 +336,8 @@
       env(safe-area-inset-bottom)
     ) max(var(--s-4), env(safe-area-inset-right));
   background: color-mix(in srgb, var(--portal-sheet) 88%, transparent);
-  backdrop-filter: blur(var(--blur-md, 8px));
-  -webkit-backdrop-filter: blur(var(--blur-md, 8px));
-  border-top: 1px solid color-mix(in srgb, var(--gs-ink) 16%, transparent);
-  box-shadow: 0 -8px 24px color-mix(in srgb, var(--gs-ink) 10%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--ws-ink) 16%, transparent);
+  box-shadow: 0 -8px 24px color-mix(in srgb, var(--ws-ink) 10%, transparent);
   animation: stickyRise 220ms var(--ease) both;
 }
 
@@ -363,7 +361,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--gs-ink-secondary);
+  color: var(--ws-ink-secondary);
 }
 
 .stickyAmount {
@@ -371,7 +369,7 @@
   font-size: var(--text-lg);
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--gs-ink);
+  color: var(--ws-ink);
 }
 
 

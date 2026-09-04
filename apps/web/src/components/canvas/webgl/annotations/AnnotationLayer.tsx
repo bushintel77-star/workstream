@@ -421,10 +421,10 @@ export function AnnotationLayer({
                 fontSize: "11px",
                 // Proposed vs existing is carried by ink weight, not hue — the
                 // blues are reserved for surveyed truth (see annotations/style).
-                color: mark.source === "proposed" ? "var(--la-ink)" : "var(--la-ink-secondary)",
+                color: mark.source === "proposed" ? "var(--ws-ink)" : "var(--ws-ink-secondary)",
                 borderTop: `1px solid ${style.categories.elevation_rl.stroke}`,
                 borderBottom: `1px solid ${style.categories.elevation_rl.stroke}`,
-                background: "color-mix(in srgb, var(--gs-canvas) 78%, transparent)",
+                background: "color-mix(in srgb, var(--ws-canvas) 78%, transparent)",
               }}
             >
               {levelPrefix(mark.source)} {mark.rlText}
@@ -448,7 +448,7 @@ export function AnnotationLayer({
                 height: PUCK_SIZE,
                 borderRadius: "999px",
                 border: `1px solid ${style.categories.plant_tag.stroke}`,
-                background: style.categories.plant_tag.fill ?? "var(--gs-canvas)",
+                background: style.categories.plant_tag.fill ?? "var(--ws-canvas)",
                 color: style.categories.plant_tag.text,
                 fontFamily: "var(--font-tech)",
                 fontSize: "10px",
@@ -483,9 +483,9 @@ export function AnnotationLayer({
                 width: calloutProfile.width,
                 height: calloutProfile.height,
                 border: `1px solid ${style.categories.detail_callout.stroke}`,
-                background: "color-mix(in srgb, var(--gs-canvas) 84%, transparent)",
+                background: "color-mix(in srgb, var(--ws-canvas) 84%, transparent)",
                 color: style.categories.detail_callout.text,
-                borderRadius: 6,
+                borderRadius: 4,
                 padding: "3px 6px",
                 fontFamily: "var(--font-ui)",
                 fontSize: calloutProfile.fontSize,
@@ -513,8 +513,8 @@ export function AnnotationLayer({
                 transform: "translate(-50%, -50%)",
                 border: `1px dashed ${style.categories.scope_outline.stroke}`,
                 color: style.categories.scope_outline.text,
-                background: "color-mix(in srgb, var(--gs-canvas) 84%, transparent)",
-                borderRadius: 6,
+                background: "color-mix(in srgb, var(--ws-canvas) 84%, transparent)",
+                borderRadius: 4,
                 fontFamily: "var(--font-tech)",
                 fontSize: "11px",
                 padding: "2px 6px",
@@ -539,16 +539,16 @@ export function AnnotationLayer({
           }
           style={{
             position: "absolute",
-            color: "var(--la-ink-secondary)",
+            color: "var(--ws-ink-secondary)",
             fontFamily: "var(--font-tech)",
             fontSize: "12px",
-            border: "1px solid color-mix(in srgb, var(--gs-line) 45%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--ws-line) 45%, transparent)",
             borderRadius: "999px",
             width: 30,
             height: 30,
             display: "grid",
             placeItems: "center",
-            background: "color-mix(in srgb, var(--gs-canvas) 75%, transparent)",
+            background: "color-mix(in srgb, var(--ws-canvas) 75%, transparent)",
           }}
         >
           <span

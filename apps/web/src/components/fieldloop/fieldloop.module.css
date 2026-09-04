@@ -15,8 +15,8 @@
 .phoneFrame {
   width: 100%;
   max-width: 390px;
-  background: var(--gs-ink-strong);
-  border-radius: var(--gs-radius-panel);
+  background: var(--ws-ink);
+  border-radius: var(--ws-radius-3);
   padding: 10px;
   box-shadow:
     0 30px 60px -20px rgb(0 0 0 / 35%),
@@ -25,7 +25,7 @@
 
 .phoneScreen {
   background: var(--fl-bg-page);
-  border-radius: var(--lc-flyout-radius);
+  border-radius: var(--ws-radius-3);
   height: min(844px, 84vh);
   min-height: 620px;
   display: flex;
@@ -43,13 +43,13 @@
 }
 
 .layerActive {
-  opacity: var(--lc-op-active);
+  opacity: var(--ws-op-full);
   pointer-events: auto;
   transform: translateY(0);
 }
 
 .layerHidden {
-  opacity: var(--lc-op-hidden);
+  opacity: var(--ws-op-hidden);
   pointer-events: none;
   transform: translateY(8px);
 }
@@ -100,7 +100,7 @@
 .accessField input {
   width: 100%;
   padding: 13px 14px;
-  border-radius: var(--lc-schedule-radius);
+  border-radius: var(--ws-radius-3);
   border: 1.5px solid var(--fl-border-strong);
   background: var(--fl-bg-panel);
   font-family: inherit;
@@ -116,7 +116,7 @@
 .accessBtn {
   width: 100%;
   min-height: 52px;
-  border-radius: var(--lc-ribbon-tile-radius);
+  border-radius: var(--ws-radius-2);
   border: none;
   background: var(--fl-blue-bright);
   color: var(--fl-bg-panel);
@@ -128,7 +128,7 @@
 }
 
 .accessBtn:disabled {
-  opacity: var(--lc-op-60);
+  opacity: var(--ws-op-subdued);
 }
 
 .accessNote {
@@ -176,7 +176,7 @@
 .portalAvatar {
   width: 38px;
   height: 38px;
-  border-radius: var(--gs-radius-pill);
+  border-radius: var(--ws-radius-pill);
   background: var(--fl-blue-tint);
   color: var(--fl-blue);
   display: flex;
@@ -199,7 +199,7 @@
 .card {
   background: var(--fl-bg-panel);
   border: 1px solid var(--fl-border);
-  border-radius: var(--lc-depth-rail-radius);
+  border-radius: var(--ws-radius-3);
   padding: 16px;
 }
 
@@ -235,7 +235,7 @@
   align-items: center;
   gap: 6px;
   padding: 9px 15px;
-  border-radius: var(--lc-ribbon-tile-radius);
+  border-radius: var(--ws-radius-2);
   background: var(--fl-amber-tint);
   color: var(--fl-amber);
   border: none;
@@ -264,7 +264,7 @@
 .statusDot {
   width: 12px;
   height: 12px;
-  border-radius: var(--gs-radius-pill);
+  border-radius: var(--ws-radius-pill);
   background: var(--fl-border-strong);
   z-index: var(--cf-z-spatial);
 }
@@ -328,7 +328,7 @@
 .jobTechAvatar {
   width: 26px;
   height: 26px;
-  border-radius: var(--gs-radius-pill);
+  border-radius: var(--ws-radius-pill);
   background: var(--fl-blue-tint);
   color: var(--fl-blue);
   display: flex;
@@ -395,7 +395,7 @@
 .quoteActions button {
   flex: 1;
   min-height: 44px;
-  border-radius: var(--lc-schedule-radius);
+  border-radius: var(--ws-radius-3);
   font-family: inherit;
   font-weight: 700;
   font-size: 0.84rem;
@@ -514,7 +514,7 @@
 .payBtn {
   width: 100%;
   min-height: 48px;
-  border-radius: var(--lc-ribbon-tile-radius);
+  border-radius: var(--ws-radius-2);
   border: none;
   background: var(--fl-blue-bright);
   color: var(--fl-bg-panel);
@@ -556,7 +556,7 @@
 .historyDot {
   width: 7px;
   height: 7px;
-  border-radius: var(--gs-radius-pill);
+  border-radius: var(--ws-radius-pill);
   background: var(--fl-green);
   flex-shrink: 0;
 }
@@ -594,9 +594,9 @@
   background: var(--fl-text-primary);
   color: var(--fl-bg-panel);
   padding: 10px 18px;
-  border-radius: var(--lc-schedule-radius);
+  border-radius: var(--ws-radius-3);
   font-size: 0.82rem;
-  opacity: var(--lc-op-hidden);
+  opacity: var(--ws-op-hidden);
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
   z-index: var(--cf-z-chrome);
@@ -605,6 +605,6 @@
 }
 
 .toastVisible {
-  opacity: var(--lc-op-active);
+  opacity: var(--ws-op-full);
   transform: translateX(-50%) translateY(0);
 }

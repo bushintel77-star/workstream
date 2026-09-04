@@ -64,39 +64,38 @@ export function PhotoTraceHud() {
         transform: "translateX(-50%)",
         display: "flex",
         flexDirection: "column",
-        gap: "var(--gs-space-4)",
+        gap: "var(--ws-space-4)",
         maxWidth: "min(560px, calc(100% - 48px))",
         padding: "10px 12px",
-        borderRadius: "var(--gs-radius-panel)",
-        background: "var(--la-surface)",
-        backdropFilter: "none",
-        border: "1px solid color-mix(in srgb, var(--gs-line) 70%, transparent)",
-        boxShadow: "var(--gs-shadow-2)",
+        borderRadius: "var(--ws-radius-3)",
+        background: "var(--ws-panel)",
+        border: "1px solid color-mix(in srgb, var(--ws-line) 70%, transparent)",
+        boxShadow: "var(--ws-shadow-1)",
         pointerEvents: "auto",
         zIndex: "var(--cf-z-chrome)",
-        color: "var(--la-ink)",
+        color: "var(--ws-ink)",
         fontFamily: "var(--font-ui)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: "var(--gs-space-4)", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: "var(--ws-space-4)", flexWrap: "wrap" }}>
         <span
           style={{
             fontFamily: "var(--font-tech)",
-            fontSize: "var(--gs-font-xs)",
+            fontSize: "var(--ws-text-xs)",
             fontWeight: 600,
             letterSpacing: "0.06em",
           }}
         >
           PHOTO TRACE
         </span>
-        <span style={{ fontSize: "var(--gs-font-sm)", color: "var(--la-ink-secondary)" }}>
+        <span style={{ fontSize: "var(--ws-text-xs)", color: "var(--ws-ink-secondary)" }}>
           {elevation.name}
         </span>
         <span
           data-testid="photo-trace-stamp"
           style={{
-            fontSize: "var(--gs-font-xs)",
-            color: elevation.calibration ? "var(--la-ink-secondary)" : "var(--la-ink-muted)",
+            fontSize: "var(--ws-text-xs)",
+            color: elevation.calibration ? "var(--ws-ink-secondary)" : "var(--ws-ink-muted)",
           }}
         >
           {elevation.calibration
@@ -106,10 +105,10 @@ export function PhotoTraceHud() {
         <span
           data-testid="photo-trace-boundary-stamp"
           style={{
-            fontSize: "var(--gs-font-xs)",
+            fontSize: "var(--ws-text-xs)",
             color: elevation.boundary_snap
-              ? "var(--la-ink-secondary)"
-              : "var(--la-ink-muted)",
+              ? "var(--ws-ink-secondary)"
+              : "var(--ws-ink-muted)",
           }}
         >
           {elevation.boundary_snap
@@ -120,11 +119,11 @@ export function PhotoTraceHud() {
 
       {session.mode === "trace" ? (
         <>
-          <p style={{ margin: 0, fontSize: "var(--gs-font-sm)", color: "var(--la-ink-secondary)" }}>
+          <p style={{ margin: 0, fontSize: "var(--ws-text-xs)", color: "var(--ws-ink-secondary)" }}>
             Draw on the photo — ink is stored in true metres on the plane.
             Swivel away and the pin releases; the trace stays on the sheet.
           </p>
-          <div style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "var(--ws-space-3)", flexWrap: "wrap" }}>
             <Button
               variant="chip-tinted"
               data-testid="photo-trace-calibrate"
@@ -145,7 +144,7 @@ export function PhotoTraceHud() {
         </>
       ) : (
         <>
-          <p style={{ margin: 0, fontSize: "var(--gs-font-sm)", color: "var(--la-ink-secondary)" }}>
+          <p style={{ margin: 0, fontSize: "var(--ws-text-xs)", color: "var(--ws-ink-secondary)" }}>
             Draw a line on the photo along a feature with a known length, then
             pick that length below. One known dimension calibrates the whole
             frame.
@@ -155,8 +154,8 @@ export function PhotoTraceHud() {
               data-testid="photo-calibrate-draft-length"
               style={{
                 fontFamily: "var(--font-tech)",
-                fontSize: "var(--gs-font-xs)",
-                color: "var(--la-ink-secondary)",
+                fontSize: "var(--ws-text-xs)",
+                color: "var(--ws-ink-secondary)",
                 fontVariantNumeric: "tabular-nums",
               }}
             >
@@ -166,7 +165,7 @@ export function PhotoTraceHud() {
           <div
             role="group"
             aria-label="Known reference lengths"
-            style={{ display: "flex", gap: "var(--gs-space-3)", flexWrap: "wrap" }}
+            style={{ display: "flex", gap: "var(--ws-space-3)", flexWrap: "wrap" }}
           >
             {CALIBRATION_PRESETS.map((preset) => (
               <Button
@@ -181,9 +180,9 @@ export function PhotoTraceHud() {
               </Button>
             ))}
           </div>
-          <div style={{ display: "flex", gap: "var(--gs-space-3)", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "var(--ws-space-3)", alignItems: "center", flexWrap: "wrap" }}>
             <label
-              style={{ fontSize: "var(--gs-font-xs)", color: "var(--la-ink-secondary)" }}
+              style={{ fontSize: "var(--ws-text-xs)", color: "var(--ws-ink-secondary)" }}
               htmlFor="photo-calibrate-custom"
             >
               Custom (m)
@@ -209,11 +208,11 @@ export function PhotoTraceHud() {
               style={{
                 width: 84,
                 padding: "4px 8px",
-                fontSize: "var(--gs-font-h2)",
-                borderRadius: "var(--gs-radius-chip)",
-                border: "1px solid var(--gs-line)",
-                background: "var(--gs-panel)",
-                color: "var(--la-ink)",
+                fontSize: "var(--ws-text-lg)",
+                borderRadius: "var(--ws-radius-2)",
+                border: "1px solid var(--ws-line)",
+                background: "var(--ws-panel)",
+                color: "var(--ws-ink)",
                 fontFamily: "var(--font-tech)",
               }}
             />
@@ -224,12 +223,12 @@ export function PhotoTraceHud() {
               onClick={() => applyCalibrationRef.current?.()}
               style={{
                 background: canApply
-                  ? "var(--la-accent)"
-                  : "color-mix(in srgb, var(--la-accent) 8%, transparent)",
+                  ? "var(--ws-active)"
+                  : "color-mix(in srgb, var(--ws-active) 8%, transparent)",
                 border: canApply
-                  ? "1px solid var(--la-accent)"
-                  : "1px solid var(--gs-line)",
-                color: canApply ? "var(--gs-panel)" : "var(--la-ink-muted)",
+                  ? "1px solid var(--ws-active)"
+                  : "1px solid var(--ws-line)",
+                color: canApply ? "var(--ws-panel)" : "var(--ws-ink-muted)",
                 cursor: canApply ? "pointer" : "not-allowed",
               }}
             >

@@ -10,7 +10,7 @@
  * Binding: docs/MENTAL-CANVAS-ROADMAP.md Phase Q.
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStudioStore } from "./studioStore";
 import {
   createSheet,
@@ -20,6 +20,10 @@ import {
   type SheetViewport,
   PAPER_DIMENSIONS_MM,
 } from "./sheetComposition";
+import {
+  exportSheetToPdf,
+  type ExportProgress,
+} from "./pdfExport";
 import styles from "./SheetComposer.module.css";
 
 export interface SheetComposerProps {
@@ -82,9 +86,42 @@ export function SheetComposer({ onClose }: SheetComposerProps) {
     removeSheetViewport(activeSheet.id, vpId);
   }
 
-  function handleIssue() {
-    if (!activeSheet) return;
+  // PDF export pipeline state — hardware-grade determinative progress.
+  const [exportProgress, setExportProgress] = useState<ExportProgress>({
+    phase: "idle",
+    current: 0,
+    total: 0,
+    label: "",
+  });
+  const isExporting = exportProgress.phase === "capturing" || exportProgress.phase === "assembling";
+
+  async function handleIssue() {
+    if (!activeSheet || isExporting) return;
+    // Find the WebGL canvas element for raster capture.
+    const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="webgl-canvas"]');
+    if (!canvas) {
+      setExportProgress({
+        phase: "error",
+        current: 0,
+        total: 0,
+        label: "CAPTURE FAILED",
+        error: "WebGL canvas not found — cannot rasterize viewports",
+      });
+      return;
+    }
+    // Issue the sheet (freeze viewports + bump revision) before export,
+    // so the PDF reflects the issued state.
     issueSheetById(activeSheet.id);
+    // Read the now-issued sheet from the store for the export.
+    const issuedSheet = useStudioStore
+      .getState()
+      .sheets.find((s) => s.id === activeSheet.id);
+    if (!issuedSheet) return;
+    await exportSheetToPdf(issuedSheet, canvas, setExportProgress);
+  }
+
+  function dismissExportError() {
+    setExportProgress({ phase: "idle", current: 0, total: 0, label: "" });
   }
 
   function addSheet() {
@@ -128,21 +165,58 @@ export function SheetComposer({ onClose }: SheetComposerProps) {
             </div>
           </div>
           <div className={styles.actions}>
-            {/* Named for what it does. It was labelled "Issue PDF" and
-                produced no PDF and made no request — it freezes the
-                viewports and bumps the revision, which is the issue step,
-                not the export. There is no sheet PDF pipeline yet. */}
             <button
               className={styles.actionBtn}
               onClick={handleIssue}
+              disabled={isExporting}
               data-testid="issue-revision"
-              title="Freeze this sheet's viewports and advance its revision. No PDF is exported — there is no sheet export pipeline yet."
+              title="Freeze this sheet's viewports, advance its revision, and export a PDF."
             >
-              Issue revision
+              {isExporting ? exportProgress.label : "Issue revision"}
             </button>
-            <button className={styles.actionBtn} onClick={onClose}>Close</button>
+            <button className={styles.actionBtn} onClick={onClose} disabled={isExporting}>Close</button>
           </div>
         </header>
+
+        {/* PDF export progress / failure card (§18a vector-raster split) */}
+        {exportProgress.phase === "error" && (
+          <div className={styles.exportErrorCard} data-testid="export-error-card" role="alert">
+            <div className={styles.exportErrorHeader}>
+              <span className={styles.exportErrorLabel}>EXPORT FAILED</span>
+              <button className={styles.exportErrorDismiss} onClick={dismissExportError} title="Dismiss">
+                {"\u00D7"}
+              </button>
+            </div>
+            <div className={styles.exportErrorMsg}>{exportProgress.error}</div>
+            <div className={styles.exportErrorHint}>
+              The sheet revision was issued but no PDF was produced. Correct the
+              viewport or WebGL state and re-issue.
+            </div>
+          </div>
+        )}
+        {isExporting && (
+          <div className={styles.exportProgressBar} data-testid="export-progress">
+            <span className={styles.exportProgressLabel}>{exportProgress.label}</span>
+            <div className={styles.exportProgressTrack}>
+              <div
+                className={styles.exportProgressFill}
+                style={{
+                  width: exportProgress.total > 0
+                    ? `${(exportProgress.current / exportProgress.total) * 100}%`
+                    : "100%",
+                }}
+              />
+            </div>
+          </div>
+        )}
+        {exportProgress.phase === "done" && (
+          <div className={styles.exportDoneCard} data-testid="export-done-card">
+            <span className={styles.exportDoneLabel}>PDF ISSUED</span>
+            <button className={styles.exportDoneDismiss} onClick={dismissExportError} title="Dismiss">
+              {"\u00D7"}
+            </button>
+          </div>
+        )}
 
         <div className={styles.body}>
           {/* Sheet set rail (Q.5) */}
