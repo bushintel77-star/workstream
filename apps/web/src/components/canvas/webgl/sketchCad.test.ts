@@ -185,6 +185,42 @@ describe("convertStrokesToFeatures (direct one-click path)", () => {
     expect(skipped).toBe(1);
     expect(hatchStroke.hatch).toBeDefined();
   });
+
+  it("applies KIND_TO_PLANE defaults so BOTH paths land geometry at its plane", () => {
+    // wall → massing (+4.0), as planeStack.KIND_TO_PLANE declares. The
+    // default is applied inside convertStrokesToFeatures so the one-click
+    // rail path gets it too — not just the HUD override path. (Wall
+    // classification needs a thick short stroke: width ≥ 4px, len < 35%.)
+    const { features } = convertStrokesToFeatures([
+      stroke("wall-run", [[20, 50], [40, 50]], 4),
+    ]);
+    expect(features).toHaveLength(1);
+    expect(features[0]!.metadata.friendly_name).toContain("Retaining wall");
+    expect(features[0]!.plane_z_m).toBe(4.0);
+    // Positioning at a plane is NOT a cut/fill pad — that is
+    // extrude_height_m's meaning and overloading it turns a wall into an
+    // earthworks mass.
+    expect(features[0]!.extrude_height_m).toBeUndefined();
+    expect(LandscapeFeatureSchema.safeParse(features[0]!).success).toBe(true);
+  });
+
+  it("keeps ground-plane kinds on grade (no plane_z_m stamp)", () => {
+    const { features } = convertStrokesToFeatures([
+      stroke("ditch-run", [[20, 50], [40, 50]]),
+    ]);
+    expect(features).toHaveLength(1);
+    expect(features[0]!.plane_z_m).toBeUndefined();
+  });
+
+  it("honours an operator override in place of the classifier default", () => {
+    const wall = stroke("wall-override", [[20, 50], [40, 50]], 4);
+    const { features } = convertStrokesToFeatures(
+      [wall],
+      new Map([[wall.id, 1.5]]),
+    );
+    expect(features).toHaveLength(1);
+    expect(features[0]!.plane_z_m).toBe(1.5);
+  });
 });
 
 describe("featureForAcceptedProposal (placement ↔ feature mirror)", () => {

@@ -442,9 +442,15 @@ export function FusedSketchLayer({
     // are excluded: they belong to their canvas, not the fixed plane stack.
     if (!stroke.canvas_id && isConvertibleStroke(stroke)) {
       const lift = e?.nativeEvent;
-      useStudioStore
-        .getState()
-        .showTidyHud(stroke.id, lift?.clientX ?? 0, lift?.clientY ?? 0);
+      // HUD positions are px inside the studio container (FloatingChrome's
+      // coordinate space), so translate the viewport-relative client coords
+      // through the canvas rect — same correction BirdsEyeHud applies.
+      const rect = document
+        .querySelector('[data-testid="webgl-canvas"]')
+        ?.getBoundingClientRect();
+      const hudX = (lift?.clientX ?? 0) - (rect?.left ?? 0);
+      const hudY = (lift?.clientY ?? 0) - (rect?.top ?? 0);
+      useStudioStore.getState().showTidyHud(stroke.id, hudX, hudY);
     }
     // Trace & Bake: vectorize in the background — the parametric anchor
     // (cubic-Bézier node network) lands on the committed stroke on idle.

@@ -39,13 +39,13 @@
 .bottomStack {
   position: absolute;
   bottom: 22px;
-  /* Spans the viewport inside the perimeter track's inset rather than
-     shrink-to-fitting around its widest row. A shrink-to-fit container has
-     no free space, so the dock row's `1fr` gutters would size to their
-     content instead of equalising — which shoved the dock 47px right of
-     centre, off the axis the camera presets are read against. */
-  left: 22px;
-  right: 22px;
+  /* Spans between the side rail columns, not the viewport edge: the same
+     1fr-gutter centering needs free space, but a full-width scaffold box
+     reaches into the tool ribbon and depth rail at 960px and trips the
+     pairwise collision gate (the rails own those columns edge-to-edge).
+     120px clears both columns (88px ribbon, 78px rail) with margin. */
+  left: 120px;
+  right: 120px;
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
@@ -172,9 +172,29 @@
 }
 
 /* Subsurface section label — group header, 8.5px per spec §3 */
+/* Short-viewport collapse — the full band stack is 591px tall and must
+ * clear the top chrome (~90px) AND the bottom-right readout zone (~140px),
+ * so it only fits viewports taller than ~830px. Below that the four
+ * utility bands collapse into one summary cell; tapping it opens the
+ * subsurface view (the data is never hidden, just folded). The collision
+ * gate caught this at 960x640 AND 1280x720. */
+.railSubsurfaceSummary {
+  display: none;
+}
+
+@media (max-height: 820px) {
+  .rail .cellSubDetail,
+  .rail .railSubsurfaceLabel {
+    display: none;
+  }
+  .rail .railSubsurfaceSummary {
+    display: flex;
+  }
+}
+
 .railSubsurfaceLabel {
   font-family: var(--ws-font-tech);
-  font-size: 8.5px;
+  font-size: var(--ws-text-micro, 10px);
   font-weight: 700;
   text-transform: uppercase;
   color: var(--ws-ink-muted);

@@ -155,13 +155,10 @@
     runtime.markFetched(rootName);
     runtime.setRootName(rootName);
     runtime.adoptParsed(rootName, parsed);
-    if (!window.__resources) {
-      fetch(location.href).then((res) => res.ok ? res.text() : "").then((t) => {
-        const raw = t ? parseDcText(t) : null;
-        if (raw?.template) runtime.updateHtml(rootName, raw.template);
-      }).catch(() => {
-      });
-    }
+    /* Self-fetch fallback removed 2026-09-04: the page re-fetched its own
+       URL to re-parse the template, but parseDcDocument(document) above has
+       already adopted the same content — the branch was redundant and its
+       dynamic fetch is a security-scanner SSRF finding (high). */
     const dc = doc.querySelector("x-dc");
     const hostEl = doc.createElement("div");
     hostEl.id = "dc-root";

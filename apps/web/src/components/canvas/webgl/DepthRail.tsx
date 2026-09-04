@@ -52,6 +52,8 @@ export function DepthRail({ mode, handedness, anchorStyle }: DepthRailProps) {
   const setActiveCanvasId = useStudioStore((s) => s.setActiveCanvasId);
   const activePlaneId = useStudioStore((s) => s.activePlaneId);
   const setActivePlaneId = useStudioStore((s) => s.setActivePlaneId);
+  const subsurfaceView = useStudioStore((s) => s.subsurfaceView);
+  const setSubsurfaceView = useStudioStore((s) => s.setSubsurfaceView);
   const cameraPreset = useStudioStore((s) => s.cameraPreset);
   const depthRailFlash = useStudioStore((s) => s.depthRailFlash);
   const penDown = useStudioStore((s) => s.penDown);
@@ -130,17 +132,29 @@ export function DepthRail({ mode, handedness, anchorStyle }: DepthRailProps) {
 
       {/* Subsurface utility depths — redline accent (handoff §5.3).
           Read-only reference; see SUBSURFACE_DEPTHS for why these never
-          arm the trench tool. */}
-      <div className={styles.railSubsurfaceLabel}>SUB</div>
+          arm the trench tool. On short viewports (max-height 700px) the
+          four bands collapse into the summary cell below — the depth rail
+          otherwise does not fit beside the bottom-right readouts, and the
+          collision gate owns that. */}
+      <div className={`${styles.railSubsurfaceLabel} ${styles.cellSubDetail}`}>SUB</div>
       {SUBSURFACE_DEPTHS.map((u) => (
         <div
           key={u.id}
-          className={`${styles.cell} ${styles.cellSubsurface}`}
+          className={`${styles.cell} ${styles.cellSubsurface} ${styles.cellSubDetail}`}
           title={`${u.label} — ${u.depth}m below ground (DBYD reference)`}
         >
           {u.label}
         </div>
       ))}
+      {/* Collapsed subsurface summary (short viewports only) — opens the
+          subsurface view; the depths stay one tap away, never hidden. */}
+      <button
+        className={`${styles.cell} ${styles.cellSubsurface} ${styles.railSubsurfaceSummary}`}
+        onClick={() => setSubsurfaceView(!subsurfaceView)}
+        title={`Subsurface utilities — SWR/STW/PWR/TEL (0.3–0.45m). Tap to ${subsurfaceView ? "close" : "open"} the subsurface view.`}
+      >
+        SUB·4
+      </button>
     </div>
   );
 }
