@@ -1,7 +1,20 @@
 # HANDOVER — Studio front end: state + Tier-1 widget standard (2026-09-04)
 
 For a fresh context window. Everything below is verified against git and the
-live tree as of commit `0af7649` (pushed to `origin/main`).
+live tree as of commit `2b76432` (pushed to `origin/main`).
+
+## 0. Shipped after this doc was first written (evening 2026-09-04)
+
+**Tool ribbon redesigned** (`2b76432`) per the user's live critique of the
+expanding TOOLS panel: ribbonMachine lost its DEPLOYED state (two states:
+collapsed rail / pen-down recede) — hover no longer reflows the rail under
+the hand; the Cmd+K double-binding with the command palette is gone. Depth:
+the ribbon is a recessed `--ws-panel-sunken` tray, each tile a raised
+`--ws-panel-raised` key with `--ws-line` edge + `--ws-shadow-1`; hover lights
+the edge, press sinks 1px with the inset shadow, active = white depressed
+switch. 13 tactile keys, not a printed strip. Both e2e gates (collision +
+sketch-assist) passed on it. §2's remaining widget work (Brush/Palette split,
+colour-well tile, recents, contrast readout) is the NEXT phase — unchanged.
 
 ---
 
