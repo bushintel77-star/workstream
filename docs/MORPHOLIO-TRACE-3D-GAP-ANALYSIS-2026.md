@@ -208,6 +208,10 @@ the 3D-native model beats Trace's underlay-only 3D.
 ## 5. Roadmap — "3D in addition to 2D"
 
 Each phase is independently shippable and ordered by felt value per risk.
+**Governing rule (2026-09-04): polish sticks only when a gate enforces
+it.** This repo's consistent failure mode is polish regressing between
+commits — raw hex reappearing, panels overlapping, specs going stale-red
+in non-gating shards. Every phase below therefore ships with its lock.
 
 ### Phase 1 — 2D fluency parity (the Trace feel, no new geometry)
 - Per-nib **stroke stabilizer** (smooth-curve slider with live test pad in
@@ -220,6 +224,31 @@ Each phase is independently shippable and ordered by felt value per risk.
   (STA channel already exists).
 - Gate: e2e stroke test + collision spec stay green; no new chrome tokens
   without tokens.css registration.
+
+**Status (2026-09-04): stabilizer + hold-to-straighten SHIPPED**
+(`strokeAssist.ts` — pull-chain with a follow floor, straighten gated on
+≥400ms hold AND ≥0.6 straightness so curves that pause stay curves; wired
+into BOTH draw paths — ground and canvas planes; SM slider in the brush
+flyout; 14 unit tests). Remaining: straightedge tool, per-nib smoothing
+defaults (technical pen ~5%, charcoal ~25%), hold-to-extend with typed
+length.
+
+### Phase 1b — Polish locks: gate what polish you have
+Structural, do before further feature work — converts "looks worse than
+last month" from a user report into a red check.
+- **Visual regression gate**: Playwright screenshot-diff over ~10
+  canonical views (empty board, seeded lot per mode, sheet composer,
+  present lens) at the three standard viewports. Would have caught the
+  token drift, the collision overlaps, and every "COMPLETE while inert"
+  phase automatically.
+- **Latency budgets**, ratcheted like the bundle gate: time-to-first-stroke
+  after studio mount, camera preset spring settle (<350ms), tool flyout
+  open (<50ms), ink commit → ghost. Perceived polish ≈ latency
+  consistency; bundle size is already gated, interaction latency is not.
+- **Stale-spec guard**: CI's e2e shards are non-gating
+  (`continue-on-error`), so dead expectations rot silently — the
+  annotations spec spent weeks asserting a chip deleted in the chrome
+  purge. Either gate a smoke subset or run a periodic dead-locator sweep.
 
 ### Phase 2 — The trace-stack, vector-native (iteration feel)
 - **Per-plane / per-canvas ink opacity** slider (drawing-opacity semantics;
@@ -270,7 +299,27 @@ sells it:
 - **AR bridge** per the architecture doc (mobile): SketchWalk parity —
   walk the issued design on the real site.
 
-### Phase 5 — Delight & collaboration (post-parity)
+### Phase 4b — Durability: the drawing survives the session
+The most on-brand defect on the list: sheets, viewpoint template binding,
+and office-template overrides are session-scoped — reload and parts of
+"the drawing is the product" evaporate. Schema fields live in
+`DesignCanvas`'s orbit; this is an API brief more than a UI job. Ship
+after the seams close, before the delight layer.
+
+### Phase 5 — Polish passes (micro-interactions + one real tablet week)
+Mechanical, compounding, cheap:
+- **Micro-interaction audit**: every button has hover/active/pressed
+  states (`--ws-active-bright` exists for exactly this); cursor changes
+  per tool (crosshair for measure, grab for pan, beam for rename);
+  keyboard focus rings visible; every live numeral uses tabular figures
+  so digits don't jitter (Space Grotesk supports them); empty-state copy
+  in the same voice as the error cards.
+- **One real tablet pass** (cannot be automated): the field persona is
+  stylus+tablet; pressure/tilt/palm-rejection behavior is invisible to
+  CI. Thirty minutes of real drawing on the target device beats any
+  audit — it is how Trace's stabilizer slider got its ranges.
+
+### Phase 6 — Delight & collaboration (post-parity)
 - **Time-lapse export** of a history-scrub session (history data already
   snapshots every commit).
 - Live co-drawing (multiplayer CRDT canvas) — only after the field persona
