@@ -79,7 +79,7 @@
 }
 
 .opBtn:disabled {
-  opacity: var(--ws-op-quiet, 0.3);
+  opacity: var(--ws-op-quiet, 0.45);
   cursor: not-allowed;
 }
 

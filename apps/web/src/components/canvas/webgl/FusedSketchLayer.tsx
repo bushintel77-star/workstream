@@ -48,6 +48,7 @@ import {
 import { PALETTE } from "../../../styles/colorTokens";
 import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { useStudioStore } from "./studioStore";
+import { isConvertibleStroke } from "./sketchCad";
 import {
   SketchCanvasGroup,
   worldToCanvasPct,
@@ -351,7 +352,7 @@ export function FusedSketchLayer({
     [sketchMode, extrudeTarget, scaleM, snapVertices, setHover, setLiveTelemetry],
   );
 
-  const onPointerUp = useCallback(() => {
+  const onPointerUp = useCallback((e?: ThreeEvent<PointerEvent>) => {
     if (!sketchMode) return;
     useStudioStore.getState().setLiveCoord(null);
 
@@ -435,6 +436,16 @@ export function FusedSketchLayer({
     };
 
     addSketchStroke(stroke);
+    // Tidy HUD (§7.3) — spawn at the pen-lift terminal point iff the stroke
+    // would pass the conversion gate, so ordinary annotation ink is never
+    // interrupted by a commit prompt. Canvas-plane strokes (Spatial Sketching)
+    // are excluded: they belong to their canvas, not the fixed plane stack.
+    if (!stroke.canvas_id && isConvertibleStroke(stroke)) {
+      const lift = e?.nativeEvent;
+      useStudioStore
+        .getState()
+        .showTidyHud(stroke.id, lift?.clientX ?? 0, lift?.clientY ?? 0);
+    }
     // Trace & Bake: vectorize in the background — the parametric anchor
     // (cubic-Bézier node network) lands on the committed stroke on idle.
     scheduleVectorize(stroke.id, finalPct, closed);

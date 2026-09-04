@@ -75,14 +75,16 @@ export function LayersPanel({ overlays }: { overlays: DesignKeylessOverlay[] }) 
             strokes={
               p.id === "ground" ? strokes.filter((x) => !x.canvas_id).length : 0
             }
-            /* Converted features carry `extrude_height_m` from the plane Z
-               (structured-tools.ts), which is the only per-plane key in the
-               data model. Ground features are stamped with no height. */
+            /* Converted features carry `plane_z_m` from the Tidy Z routing
+               (structured-tools.ts) — the only per-plane key in the data
+               model. Features without it live on grade; cut/fill pads
+               (extrude_height_m) are grade-based extrusions, so they count
+               as ground objects. */
             objects={
               p.id === "ground"
                 ? placements.length +
-                  features.filter((f) => !f.extrude_height_m).length
-                : features.filter((f) => f.extrude_height_m === p.z).length
+                  features.filter((f) => !f.plane_z_m).length
+                : features.filter((f) => f.plane_z_m === p.z).length
             }
             /* Fixed planes are selected through `activePlaneId`, sketch
                canvases through `activeCanvasId`. Before Planting and Massing

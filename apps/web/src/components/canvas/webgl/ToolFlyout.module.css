@@ -8,7 +8,7 @@
   top: 50%;
   width: var(--ws-flyout-width, 238px);
   padding: 14px 15px 13px;
-  border-radius: var(--ws-radius-3, 16px);
+  border-radius: var(--ws-radius-3, 4px);
   background: linear-gradient(180deg,
       rgba(32, 35, 37, 0.96),
       rgba(23, 25, 27, 0.94));
@@ -87,7 +87,7 @@
 
 .headerHint {
   font-family: var(--ws-font-tech);
-  font-size: var(--ws-text-micro, 9.5px);
+  font-size: var(--ws-text-micro, 10px);
   font-weight: 600;
   color: var(--ws-ink-muted);
 }
@@ -110,13 +110,13 @@
   align-items: center;
   gap: 7px;
   padding: 8px 9px;
-  border-radius: var(--ws-radius-2, 11px);
+  border-radius: var(--ws-radius-2, 3px);
   background: rgba(232, 230, 224, 0.06);
   border: 1px solid rgba(232, 230, 224, 0.1);
   cursor: pointer;
   color: var(--ws-ink-secondary);
   font-family: var(--ws-font-tech);
-  font-size: var(--ws-text-micro, 9.5px);
+  font-size: var(--ws-text-micro, 10px);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -142,7 +142,7 @@
 .nibSwatch {
   width: 14px;
   height: 14px;
-  border-radius: var(--ws-radius-2, 6px);
+  border-radius: var(--ws-radius-2, 3px);
   border: 1px solid rgba(232, 230, 224, 0.25);
   flex-shrink: 0;
 }
@@ -162,7 +162,7 @@
   justify-content: center;
   height: 24px;
   border: 1px solid rgba(232, 230, 224, 0.1);
-  border-radius: var(--ws-radius-2, 11px);
+  border-radius: var(--ws-radius-2, 3px);
   background: rgba(232, 230, 224, 0.06);
   color: var(--ws-ink-secondary);
   font-family: var(--ws-font-tech);
@@ -278,7 +278,7 @@
   align-items: flex-start;
   gap: 2px;
   padding: 8px 9px;
-  border-radius: var(--ws-radius-2, 11px);
+  border-radius: var(--ws-radius-2, 3px);
   background: rgba(232, 230, 224, 0.06);
   border: 1px solid rgba(232, 230, 224, 0.1);
   cursor: pointer;
@@ -310,20 +310,20 @@
 }
 
 .assetName {
-  font-size: var(--ws-text-micro, 9.5px);
+  font-size: var(--ws-text-micro, 10px);
   font-weight: 600;
   line-height: 1.2;
 }
 
 .assetMeta {
-  font-size: var(--ws-text-micro, 9px);
+  font-size: var(--ws-text-micro, 10px);
   color: var(--ws-ink-muted);
   line-height: 1;
 }
 
 .assetActive .assetMeta {
   color: var(--ws-active-ink);
-  opacity: var(--ws-op-subdued, 0.6);
+  opacity: var(--ws-op-subdued, 0.7);
 }
 
 /* ---- Plane picker ---- */
@@ -339,7 +339,7 @@
   align-items: center;
   gap: 2px;
   padding: 7px 6px;
-  border-radius: var(--ws-radius-2, 11px);
+  border-radius: var(--ws-radius-2, 3px);
   background: rgba(232, 230, 224, 0.06);
   border: 1px solid rgba(232, 230, 224, 0.1);
   cursor: pointer;
@@ -365,20 +365,20 @@
 }
 
 .planeName {
-  font-size: var(--ws-text-micro, 9.5px);
+  font-size: var(--ws-text-micro, 10px);
   font-weight: 700;
   line-height: 1;
 }
 
 .planeZ {
-  font-size: var(--ws-text-micro, 8.5px);
+  font-size: var(--ws-text-micro, 10px);
   color: var(--ws-ink-muted);
   line-height: 1;
 }
 
 .planeActive .planeZ {
   color: var(--ws-active-ink);
-  opacity: var(--ws-op-subdued, 0.6);
+  opacity: var(--ws-op-subdued, 0.7);
 }
 
 /* ---- Falloff preset picker (turn 14c) ---- */
@@ -398,7 +398,7 @@
   background: transparent;
   color: var(--ws-ink-muted);
   font-family: var(--ws-font-tech);
-  font-size: var(--ws-text-micro, 8.5px);
+  font-size: var(--ws-text-micro, 10px);
   font-weight: 700;
   letter-spacing: 0.04em;
   cursor: pointer;

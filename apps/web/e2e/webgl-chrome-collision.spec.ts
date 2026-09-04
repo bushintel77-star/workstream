@@ -8,16 +8,12 @@ import { createWrightsTier1Project } from "./helpers";
  *
  * ## Why this file was written from scratch on 2026-09-04
  *
- * It did not exist. `docs/GOLD-STANDARD-2026-DESIGN-SPEC.md` §5 states
- * "`webgl-chrome-collision.spec.ts` enforces no overlaps at 2560x1080,
- * 1280x720, 960x640 across four states", its §11 gate table records the spec
- * as **passed** with a 12.1m run, `.cursor/rules/end-of-build.mdc` lists it as
- * a required gate, `webgl-chrome-coverage.spec.ts` defines its own scope by
- * contrast with it ("this measures everything that paints over the drawing;
- * collision measures floating instruments against each other"), and eleven
- * further docs cite it — four of them by line number
- * (`ui-root-cause-survey.md` quotes `:190-194` for the viewport list and
- * `LANDSCAPE-CANVAS-AUDIT-VERIFICATION.md` quotes `:92-139,333-459`).
+ * It did not exist. The design docs that mandated it (the purged 2026 design
+ * spec set — see git history, commit 9e02e07's doc purge) recorded it as a
+ * passed gate with a 12.1m run, `.cursor/rules/end-of-build.mdc` lists it as
+ * a required gate, and `webgl-chrome-coverage.spec.ts` defines its own scope
+ * by contrast with it ("this measures everything that paints over the
+ * drawing; collision measures floating instruments against each other").
  *
  * Nothing enforced any of it. The consequence shipped: three of the five
  * bottom-centre instruments overlapped at the default viewport —
@@ -52,6 +48,9 @@ import { createWrightsTier1Project } from "./helpers";
  * are deliberately included (`bottom-chrome-stack`): the ancestor filter
  * excludes them from their own children, and their presence catches an
  * instrument that escapes its stack and lands on an unrelated one.
+ * (`coord-chip` was removed 2026-09-04 — the fixed bottom-left coordinate
+ * chip was replaced by the cursor-adjacent live-nib-readout, which is only
+ * visible mid-stroke and is excluded by the opacity filter by design.)
  */
 const INSTRUMENTS = [
   "bottom-chrome-stack",
@@ -62,18 +61,17 @@ const INSTRUMENTS = [
   "selection-mode-toggle",
   "tool-ribbon",
   "depth-rail",
-  "coord-chip",
   "scale-toggle",
 ] as const;
 
-/** The three viewports DESIGN-SPEC §5 names. */
+/** The three canonical viewports the design system was composed against. */
 const VIEWPORTS = [
   { width: 2560, height: 1080 },
   { width: 1280, height: 720 },
   { width: 960, height: 640 },
 ] as const;
 
-/** The four operator-facing modes the gate table counts as its "four states". */
+/** The four operator-facing modes this gate sweeps. */
 const MODES = ["survey", "sketch", "cad", "quote"] as const;
 
 /**
@@ -209,7 +207,7 @@ test.describe("WebGL floating chrome — pairwise collision", () => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
 
       for (const mode of MODES) {
-        await page.goto(`/projects/${projectId}?webgl=1&mode=${mode}`, {
+        await page.goto(`/projects/${projectId}?mode=${mode}`, {
           waitUntil: "networkidle",
         });
         await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({

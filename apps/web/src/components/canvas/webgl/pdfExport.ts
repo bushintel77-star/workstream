@@ -2,13 +2,25 @@
  * PDF export engine — raster viewports + vector chrome (spec §18a).
  *
  * The vector-raster split:
- *   - Raster: WebGL canvas framebuffers captured at high resolution and
- *     placed as JPEG images in the PDF.
- *   - Vector: Title block, legend, dimension strings, and sheet borders
- *     written as native PDF text and lines (infinitely scalable).
+ *   - Raster: WebGL canvas framebuffer captured per viewport and placed as
+ *     a JPEG image in the PDF.
+ *   - Vector: Title block, legend, and sheet borders written as native PDF
+ *     text and lines (infinitely scalable).
  *
- * Absolute scale preservation: PDF coordinates map to physical paper mm.
- * A 1:200 viewport in an A1 frame guarantees a 10m wall prints at 50mm.
+ * Scale honesty (the binding rule): a viewport's printed scale is COMPUTED
+ * from the camera state at capture time, never copied from the nominal
+ * `vp.scale` metadata. Orthographic frames report the true denominator
+ * (visible world metres across the frame ÷ frame width in metres); a
+ * perspective frame is stamped "NOT TO SCALE" — a screenshot from a
+ * perspective camera has no scale, and pretending otherwise on an issued
+ * sheet is a professional defect. Raster sharpness is bounded by the
+ * canvas DPR ([1, 1.5]) — the image maps the true frustum to the frame at
+ * any resolution, so the scale holds; only crispness varies.
+ *
+ * Per-viewport views: the caller passes a `frame` adapter that positions
+ * the studio camera at each viewport's preset (and waits for the camera
+ * spring to settle) before its capture, so two viewports never print the
+ * same picture.
  *
  * Honest failure: if a viewport capture fails, the export halts and throws
  * a typed error — never silently outputs a blank or corrupted viewport.
@@ -17,17 +29,10 @@
 import { jsPDF } from "jspdf";
 import {
   type Sheet,
+  type SheetViewport,
   PAPER_DIMENSIONS_MM,
-  formatScale,
   revisionLetter,
 } from "./sheetComposition";
-
-/** Target DPI for rasterized viewports (300 = print quality). */
-const EXPORT_DPI = 300;
-/** Screen DPI reference (CSS px per inch). */
-const SCREEN_DPI = 96;
-/** DPI scale factor for high-resolution capture. */
-const DPI_SCALE = EXPORT_DPI / SCREEN_DPI;
 
 export type ExportPhase = "idle" | "capturing" | "assembling" | "done" | "error";
 
@@ -51,15 +56,46 @@ export interface ViewportCapture {
   width: number;
   /** Captured pixel height. */
   height: number;
+  /**
+   * True scale denominator of this capture (1:N), computed from the live
+   * camera frustum at capture time. Undefined = perspective frame, which
+   * has no scale and is labelled as such.
+   */
+  trueScaleDenominator?: number;
+}
+
+/** Adapter that lets the export loop drive the live studio camera. */
+export interface ExportFrameAdapter {
+  /**
+   * Position the studio at this viewport's view (camera preset) and resolve
+   * once the camera spring has settled — the capture must read the rested
+   * frame, not a mid-transition blur.
+   */
+  apply: (vp: SheetViewport) => Promise<void>;
+  /**
+   * Honest scale denominator for the CURRENT frame at this viewport's mm
+   * width, read from the camera at capture time. Undefined = not to scale.
+   */
+  scaleDenominator: (vp: SheetViewport) => number | undefined;
 }
 
 /**
- * Capture the WebGL canvas at high resolution. Forces a render before
- * capture to ensure the framebuffer is populated.
+ * The scale text printed under a viewport frame. Truth only: a computed
+ * orthographic denominator, or an explicit not-to-scale stamp.
+ */
+export function viewportScaleLabel(
+  capture: Pick<ViewportCapture, "trueScaleDenominator">,
+): string {
+  const den = capture.trueScaleDenominator;
+  return den != null && den >= 1 ? `1:${den}` : "NOT TO SCALE";
+}
+
+/**
+ * Capture the WebGL canvas at its native resolution. The Canvas is created
+ * with `preserveDrawingBuffer: true` (WebGLStudio) so the drawing buffer
+ * survives compositing and `toDataURL` is deterministic — the flush here is
+ * belt-and-braces, not the mechanism.
  *
- * @param canvas The WebGL canvas element.
- * @param targetW Target pixel width (at 300 DPI).
- * @param targetH Target pixel height (at 300 DPI).
  * @throws {ViewportCaptureError} if the canvas is lost or capture fails.
  */
 export class ViewportCaptureError extends Error {
@@ -71,8 +107,6 @@ export class ViewportCaptureError extends Error {
 
 export function captureCanvas(
   canvas: HTMLCanvasElement,
-  targetW: number,
-  targetH: number,
   viewportId: string,
 ): ViewportCapture {
   const gl = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
@@ -83,10 +117,7 @@ export function captureCanvas(
     );
   }
 
-  // Force a render flush so the framebuffer is populated.
-  // R3F manages its own render loop, but toDataURL requires the drawing
-  // buffer to be valid at capture time. Setting preserveDrawingBuffer
-  // is handled by the Canvas config; we flush here as a safety net.
+  // Safety net only — preserveDrawingBuffer is the real guarantee.
   try {
     gl.flush();
     gl.finish();
@@ -94,10 +125,6 @@ export function captureCanvas(
     // Context may be lost — fall through to the toDataURL check
   }
 
-  // Capture at the canvas's native resolution, then we scale in the PDF.
-  // The canvas DPR is [1, 1.5] per the Canvas config; for 300 DPI we
-  // would need a larger framebuffer. For now we capture at native res
-  // and let the PDF place it at the correct physical size.
   let dataUrl: string;
   try {
     dataUrl = canvas.toDataURL("image/jpeg", 0.92);
@@ -156,7 +183,9 @@ export function assemblePdf(
     if (!capture) continue;
 
     // Place the raster at the viewport's mm position on the sheet.
-    // The image fills the viewport frame exactly.
+    // The image fills the viewport frame exactly — the raster maps the
+    // captured frustum onto the frame, which is what makes the printed
+    // 1:N label true for orthographic frames.
     doc.addImage(
       capture.dataUrl,
       "JPEG",
@@ -173,14 +202,14 @@ export function assemblePdf(
     doc.setLineWidth(0.3);
     doc.rect(vp.x, vp.y, vp.w, vp.h);
 
-    // Viewport label (vector text)
+    // Viewport label (vector text) — scale text is the COMPUTED truth.
     doc.setFont("courier", "bold");
     doc.setFontSize(7);
     doc.setTextColor(28, 25, 23);
     doc.text(
-      `${vp.label ?? "Viewport"} · ${vp.cameraPreset.toUpperCase()} · ${formatScale(vp.scale)}`,
+      `${vp.label ?? "Viewport"} · ${vp.cameraPreset.toUpperCase()} · ${viewportScaleLabel(capture)}`,
       vp.x + 2,
-      vp.y - 1,
+      Math.max(vp.y - 1, 3.5),
     );
   }
 
@@ -275,16 +304,17 @@ function parseHexColor(hex: string): [number, number, number] | null {
 }
 
 /**
- * Full export pipeline: capture all viewports, assemble the PDF, and
- * trigger a download. Reports progress via the callback.
+ * Full export pipeline: position the camera per viewport, capture, assemble
+ * the PDF, and trigger a download. Reports progress via the callback.
  *
- * Uses requestAnimationFrame between captures to avoid blocking the main
+ * Uses requestAnimationFrame between steps to avoid blocking the main
  * thread — each capture yields back to the event loop.
  */
 export async function exportSheetToPdf(
   sheet: Sheet,
   canvas: HTMLCanvasElement,
   onProgress: (progress: ExportProgress) => void,
+  frame?: ExportFrameAdapter,
 ): Promise<void> {
   const viewports = sheet.viewports;
   const total = viewports.length;
@@ -293,12 +323,12 @@ export async function exportSheetToPdf(
     // No viewports — still produce a PDF with just the title block + border
     onProgress({ phase: "assembling", current: 0, total: 0, label: "ASSEMBLING PDF..." });
     const doc = assemblePdf(sheet, new Map());
-    doc.save(`${sheet.number}-${sheet.title.replace(/\s+/g, "-").toLowerCase()}-rev${revisionLetter(sheet.revision)}.pdf`);
+    doc.save(pdfFilename(sheet));
     onProgress({ phase: "done", current: 0, total: 0, label: "PDF ISSUED" });
     return;
   }
 
-  // Phase 1: Rasterize viewports
+  // Phase 1: Frame + rasterize viewports (each at its own camera view)
   const captures = new Map<string, ViewportCapture>();
   for (let i = 0; i < viewports.length; i++) {
     const vp = viewports[i]!;
@@ -309,13 +339,15 @@ export async function exportSheetToPdf(
       label: `RASTERIZING VIEWPORTS [${i + 1}/${total}]...`,
     });
 
-    // Yield to the event loop before each capture so the UI doesn't freeze
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-
     try {
-      const targetW = Math.round(vp.w * DPI_SCALE);
-      const targetH = Math.round(vp.h * DPI_SCALE);
-      const capture = captureCanvas(canvas, targetW, targetH, vp.id);
+      if (frame) {
+        await frame.apply(vp);
+      }
+      // Yield a frame so the rested camera state is what gets captured.
+      await nextFrame();
+
+      const capture = captureCanvas(canvas, vp.id);
+      capture.trueScaleDenominator = frame?.scaleDenominator(vp);
       captures.set(vp.id, capture);
     } catch (e) {
       const msg = e instanceof ViewportCaptureError
@@ -342,11 +374,10 @@ export async function exportSheetToPdf(
     label: "ASSEMBLING PDF...",
   });
 
-  await new Promise((resolve) => requestAnimationFrame(resolve));
+  await nextFrame();
 
   const doc = assemblePdf(sheet, captures);
-  const filename = `${sheet.number}-${sheet.title.replace(/\s+/g, "-").toLowerCase()}-rev${revisionLetter(sheet.revision)}.pdf`;
-  doc.save(filename);
+  doc.save(pdfFilename(sheet));
 
   onProgress({
     phase: "done",
@@ -354,4 +385,12 @@ export async function exportSheetToPdf(
     total,
     label: "PDF ISSUED",
   });
+}
+
+function pdfFilename(sheet: Sheet): string {
+  return `${sheet.number}-${sheet.title.replace(/\s+/g, "-").toLowerCase()}-rev${revisionLetter(sheet.revision)}.pdf`;
+}
+
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }

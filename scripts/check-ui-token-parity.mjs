@@ -78,7 +78,8 @@ const PAIRS = {
   "ink.tertiary": "--ws-ink-muted",
   "ink.inverted": "--ws-active-ink",
 
-  /* web: --line-hairline = color-mix(in srgb, var(--ws-line) 55%, transparent) */
+  /* web: --line-hairline = color-mix(in srgb, var(--ws-line) 55%, transparent).
+     --ws-line itself is rgba(...,0.14), so effective painted alpha = 0.077. */
   "line.hairline": { token: "--ws-line", alpha: 0.55 },
   "line.strong": "--ws-line-strong",
   "line.ink": "--ws-ink",
@@ -86,7 +87,7 @@ const PAIRS = {
   "accent.default": "--ws-active",
   "accent.soft": "--ws-active-quiet",
   "accent.ink": "--ws-active",
-  "accent.bright": "--ws-active",
+  "accent.bright": "--ws-active-bright",
 
   "semantic.ok": "--ws-success",
   "semantic.warn": "--ws-warning",
@@ -101,9 +102,9 @@ const PAIRS = {
   /* web: --ws-conflict-veil = color-mix(in srgb, var(--ws-conflict) 16%, transparent) */
   "studio.conflictSoft": { token: "--ws-conflict", alpha: 0.16 },
   "studio.primary": "--ws-active",
-  "studio.primaryHover": "--ws-active",
-  "studio.primaryPressed": "--ws-active",
-  "studio.primaryInk": "--ws-active",
+  "studio.primaryHover": "--ws-active-bright",
+  "studio.primaryPressed": "--ws-active-bright",
+  "studio.primaryInk": "--ws-active-ink",
   "studio.primaryQuiet": "--ws-active-quiet",
   "studio.truth": "--ws-dwg-truth",
   "studio.truthInk": "--ws-dwg-truth-ink",
@@ -201,12 +202,19 @@ function hexToRgb(hex) {
 /**
  * An alpha-pair's base web token used to always be a plain hex (mobile
  * pre-composites its own alpha against it). `--ws-line` is itself an
- * `rgba()` with a baked-in resting opacity — its rgb triple is still the
- * right thing to composite against, so extract that rather than requiring
- * hex. The web token's OWN alpha is discarded; mobile applies its own.
+ * `rgba()` with a baked-in resting opacity, so the effective alpha the web
+ * paints is the BASE alpha multiplied by the color-mix percentage — e.g.
+ * `--line-hairline` = color-mix(var(--ws-line) 55%, transparent) with
+ * `--ws-line` at 0.14 paints 0.077, not 0.55. Discarding the base alpha
+ * here would certify a ~7x opacity drift as "agree" (found 2026-09-04).
  */
 function baseRgb(value) {
   return hexToRgb(value) ?? rgbaParts(value)?.rgb ?? null;
+}
+
+/** Effective alpha of the base token: 1 for opaque hex, its own rgba alpha. */
+function baseAlpha(value) {
+  return rgbaParts(value)?.alpha ?? 1;
 }
 
 const mobile = readMobileTokens();
@@ -276,10 +284,15 @@ for (const [key, spec] of Object.entries(PAIRS)) {
         `    The rgb triple must equal the web token it is mixed from.`,
     );
   }
-  if (Math.abs(parts.alpha - spec.alpha) > 1e-6) {
+  // Effective alpha composites the base token's OWN alpha with the mix
+  // percentage (see baseAlpha) — comparing against the bare percentage
+  // blessed a 7x drift on line.hairline.
+  const effectiveAlpha = baseAlpha(webValue) * spec.alpha;
+  if (Math.abs(parts.alpha - effectiveAlpha) > 1e-6) {
     problems.push(
-      `  ${key} alpha ${parts.alpha} but web mixes ${tokenName} at ${spec.alpha}.\n` +
-        `    Keep the pre-composited alpha equal to the color-mix percentage.`,
+      `  ${key} alpha ${parts.alpha} but web paints ${tokenName} ` +
+        `(alpha ${baseAlpha(webValue)}) at ${spec.alpha} = effective ${effectiveAlpha.toFixed(3)}.\n` +
+        `    Pre-composite against the base token's effective alpha, not the bare mix percentage.`,
     );
   }
 }

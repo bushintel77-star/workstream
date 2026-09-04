@@ -133,6 +133,16 @@ export const LandscapeFeatureSchema = z.object({
    * no migration and no existing feature silently becomes earthworks.
    */
   extrude_height_m: z.number().positive().optional(),
+  /**
+   * Elevation of the feature's base plane (metres above grade) — the depth-rail
+   * plane the converted geometry sits on (e.g. +1.5 planting, +4.0 massing).
+   * Deliberately orthogonal to `extrude_height_m`: a plane-z feature is NOT a
+   * cut/fill pad (it is not raised fill above grade, it is linework/boundary
+   * positioned at an elevation), so `cutFill.padStrokes()` ignores it and the
+   * renderer lifts the geometry to the plane instead of extruding from grade.
+   * Optional / absent = on grade.
+   */
+  plane_z_m: z.number().positive().optional(),
 });
 export type LandscapeFeature = z.infer<typeof LandscapeFeatureSchema>;
 

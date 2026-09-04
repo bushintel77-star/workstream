@@ -20,11 +20,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--ws-radius-3, 10px);
+  border-radius: var(--ws-radius-3, 4px);
   background: var(--ws-dwg-paper, #f4f2ec);
   color: var(--ws-dwg-paper-ink, #1a1a1a);
   box-shadow: 0 24px 64px rgb(0 0 0 / 32%);
-  font-family: var(--ws-font-ui, "Archivo", sans-serif);
+  font-family: var(--ws-font-ui, "Archivo", system-ui, sans-serif);
 }
 
 .head {
@@ -42,7 +42,7 @@
 }
 
 .meta {
-  font-family: var(--ws-font-tech, "IBM Plex Mono", monospace);
+  font-family: var(--ws-font-tech, "IBM Plex Mono", ui-monospace, monospace);
   font-size: 9.5px;
   letter-spacing: 0.03em;
   color: color-mix(in srgb, var(--ws-dwg-paper-ink, #1a1a1a) 55%, transparent);
@@ -55,7 +55,7 @@
 }
 
 .actionBtn {
-  font-family: var(--ws-font-tech, "IBM Plex Mono", monospace);
+  font-family: var(--ws-font-tech, "IBM Plex Mono", ui-monospace, monospace);
   font-size: 9.5px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -87,7 +87,7 @@
 }
 
 .emptyScheduleLabel {
-  font-family: var(--ws-font-tech, "IBM Plex Mono", monospace);
+  font-family: var(--ws-font-tech, "IBM Plex Mono", ui-monospace, monospace);
   font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -117,7 +117,7 @@
 }
 
 .tab {
-  font-family: var(--ws-font-tech, "IBM Plex Mono", monospace);
+  font-family: var(--ws-font-tech, "IBM Plex Mono", ui-monospace, monospace);
   font-size: 9.5px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -154,7 +154,7 @@
 }
 
 .table th {
-  font-family: var(--ws-font-tech, "IBM Plex Mono", monospace);
+  font-family: var(--ws-font-tech, "IBM Plex Mono", ui-monospace, monospace);
   font-size: 9.5px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -171,7 +171,7 @@
 }
 
 .mono {
-  font-family: var(--ws-font-tech, "IBM Plex Mono", monospace);
+  font-family: var(--ws-font-tech, "IBM Plex Mono", ui-monospace, monospace);
   font-size: 10px;
 }
 
@@ -182,7 +182,7 @@
 }
 
 .sectionLabel {
-  font-family: var(--ws-font-tech, "IBM Plex Mono", monospace);
+  font-family: var(--ws-font-tech, "IBM Plex Mono", ui-monospace, monospace);
   font-size: 9.5px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -192,7 +192,7 @@
 }
 
 .transformer {
-  font-family: var(--ws-font-tech, "IBM Plex Mono", monospace);
+  font-family: var(--ws-font-tech, "IBM Plex Mono", ui-monospace, monospace);
   font-size: 10px;
   padding: 8px 10px;
   border: 1px solid color-mix(in srgb, var(--ws-dwg-paper-ink, #1a1a1a) 20%, transparent);
@@ -201,9 +201,9 @@
 
 /* The one number allowed to turn red (spec 9.4). */
 .transformerOver {
-  color: #b3261e;
-  border-color: color-mix(in srgb, #b3261e 40%, transparent);
-  background: color-mix(in srgb, #b3261e 6%, transparent);
+  color: var(--ws-conflict);
+  border-color: color-mix(in srgb, var(--ws-conflict) 40%, transparent);
+  background: color-mix(in srgb, var(--ws-conflict) 6%, transparent);
 }
 
 .totals {
@@ -214,7 +214,7 @@
 .totalsRow {
   display: flex;
   gap: 22px;
-  font-family: var(--ws-font-tech, "IBM Plex Mono", monospace);
+  font-family: var(--ws-font-tech, "IBM Plex Mono", ui-monospace, monospace);
   font-size: 10.5px;
   font-weight: 600;
 }

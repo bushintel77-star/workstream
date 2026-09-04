@@ -25,7 +25,7 @@ import { useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { clampBoardPct } from "@workstream/contracts";
 import type { CatalogPlacement } from "@workstream/contracts";
-import { PALETTE } from "../../../styles/colorTokens";
+import { PALETTE, SEMANTIC } from "../../../styles/colorTokens";
 import { useStudioStore } from "./studioStore";
 import { worldToPct, pctToWorld, type PctPoint } from "./coordTransform";
 import { snapToGridMetres } from "../handoff/geometry/snap";
@@ -259,7 +259,7 @@ export function AssetPlaceLayer({ scaleM, boardAspect }: AssetPlaceLayerProps) {
     // Truth Anchor cobalt — the data-stroke colour on paper (8.22:1 on
     // #F4F4F4), so the ghost reads on the drafting sheet; crimson on conflict
     // (same vocabulary as the flora ring).
-    const ghostColor = conflict ? PALETTE.gsConflict : PALETTE.gsPrimaryInk;
+    const ghostColor = conflict ? PALETTE.gsConflict : SEMANTIC.proposedStroke;
     // Centre crosshair is a fixed WORLD size — always legible regardless of
     // footprint (a 0.6 m paver ring would vanish at fit zoom otherwise).
     const cross = Math.max(0.5, radiusM * 0.18);

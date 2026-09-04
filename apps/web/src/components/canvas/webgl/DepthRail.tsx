@@ -50,6 +50,8 @@ export interface DepthRailProps {
 export function DepthRail({ mode, handedness, anchorStyle }: DepthRailProps) {
   const activeCanvasId = useStudioStore((s) => s.activeCanvasId);
   const setActiveCanvasId = useStudioStore((s) => s.setActiveCanvasId);
+  const activePlaneId = useStudioStore((s) => s.activePlaneId);
+  const setActivePlaneId = useStudioStore((s) => s.setActivePlaneId);
   const cameraPreset = useStudioStore((s) => s.cameraPreset);
   const depthRailFlash = useStudioStore((s) => s.depthRailFlash);
   const penDown = useStudioStore((s) => s.penDown);
@@ -105,8 +107,11 @@ export function DepthRail({ mode, handedness, anchorStyle }: DepthRailProps) {
         PLT
       </div>
       <button
-        className={`${styles.cell} ${activeCanvasId === null ? styles.cellActive : ""} ${flashPlane === "ground" ? styles.cellFlash : ""}`}
-        onClick={() => setActiveCanvasId(null)}
+        className={`${styles.cell} ${activeCanvasId === null && activePlaneId === "ground" ? styles.cellActive : ""} ${flashPlane === "ground" ? styles.cellFlash : ""}`}
+        onClick={() => {
+          setActivePlaneId("ground");
+          setActiveCanvasId(null);
+        }}
         title="Ground plane"
       >
         GRD

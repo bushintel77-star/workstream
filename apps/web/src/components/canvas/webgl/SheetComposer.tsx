@@ -23,6 +23,7 @@ import {
 import {
   exportSheetToPdf,
   type ExportProgress,
+  type ExportFrameAdapter,
 } from "./pdfExport";
 import styles from "./SheetComposer.module.css";
 
@@ -117,7 +118,36 @@ export function SheetComposer({ onClose }: SheetComposerProps) {
       .getState()
       .sheets.find((s) => s.id === activeSheet.id);
     if (!issuedSheet) return;
-    await exportSheetToPdf(issuedSheet, canvas, setExportProgress);
+
+    // Frame adapter — drive the live studio camera per viewport so each
+    // raster is that viewport's view (never N copies of one frame), and
+    // compute the TRUE printed scale from the camera at capture time.
+    // A perspective frame has no scale and the PDF says so.
+    const prevPreset = useStudioStore.getState().cameraPreset;
+    const frame: ExportFrameAdapter = {
+      apply: async (vp) => {
+        useStudioStore.getState().setCameraPreset(vp.cameraPreset);
+        // Let the camera spring settle — capture the rested frame, not a
+        // mid-transition blur. 700ms covers the preset spring + margin.
+        await new Promise((r) => setTimeout(r, 700));
+      },
+      scaleDenominator: (vp) => {
+        const cv = useStudioStore.getState().cameraView;
+        if (!cv || cv.kind !== "ortho" || cv.widthM <= 0 || vp.w <= 0) {
+          return undefined;
+        }
+        // Frame is vp.w mm wide on paper; the frustum shows cv.widthM m.
+        // 1:N where N = world_mm ÷ paper_mm.
+        return Math.max(1, Math.round((cv.widthM * 1000) / vp.w));
+      },
+    };
+
+    try {
+      await exportSheetToPdf(issuedSheet, canvas, setExportProgress, frame);
+    } finally {
+      // Return the operator to the view they left, whatever happened.
+      useStudioStore.getState().setCameraPreset(prevPreset);
+    }
   }
 
   function dismissExportError() {

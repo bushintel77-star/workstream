@@ -76,7 +76,7 @@ const SCENE_TOKEN: Record<string, string> = {
   gsChipActiveInk: "ws-active-ink",
   gsConflict: "ws-conflict",
   gsPrimary: "ws-active",
-  gsPrimaryInk: "ws-active",
+  gsPrimaryInk: "ws-active-ink",
   gsEarthworksFill: "ws-dwg-fill",
   gsShadow: "ws-canvas",
 };

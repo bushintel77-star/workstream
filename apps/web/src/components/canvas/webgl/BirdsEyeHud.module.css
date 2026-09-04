@@ -18,7 +18,7 @@
      inside the viewport (PLANE_COLOUR in BirdsEyeHud.tsx, and the same
      green HingeProjectionGizmo snaps its glyph to), so the chrome that
      frames the drag matches the thing being dragged. */
-  --birds-eye-accent: #8fd18f;
+  --birds-eye-accent: var(--ws-dwg-birdseye);
 
   position: absolute;
   top: 76px;
@@ -26,7 +26,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px 10px 9px;
-  border-radius: var(--ws-radius-3, 16px);
+  border-radius: var(--ws-radius-3, 4px);
   background: var(--ws-panel);
   border: 1px solid var(--ws-line);
   box-shadow: var(--ws-shadow-0), var(--ws-shadow-2);

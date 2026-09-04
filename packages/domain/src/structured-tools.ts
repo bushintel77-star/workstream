@@ -57,10 +57,13 @@ export function buildLandscapeFeatureFromStroke(args: {
   id?: string;
   now?: string;
   /**
-   * Target Z-height (metres above grade) for the converted feature.
-   * When provided and > 0, sets `extrude_height_m` so the feature lands on
-   * the correct depth-rail plane (e.g. +4.0 for massing, +1.5 for planting).
-   * Absent/0 = flat region on the ground plane (backward-compatible).
+   * Elevation of the base plane (metres above grade) the converted feature
+   * sits on — the depth-rail Z-plane from the Tidy routing (e.g. +4.0 for
+   * massing, +1.5 for planting). Stored as `plane_z_m`: the feature's
+   * geometry is positioned at that elevation, but it is NOT a cut/fill pad
+   * (that is what `extrude_height_m` means, and overloading it would make a
+   * planting bed render as an earthworks mass). Absent/0 = on grade
+   * (backward-compatible).
    */
   planeZ?: number;
 }): LandscapeFeature {
@@ -129,7 +132,7 @@ export function buildLandscapeFeatureFromStroke(args: {
       calculated_labor_cost_aud: 0,
     },
     ...(args.planeZ != null && args.planeZ > 0
-      ? { extrude_height_m: args.planeZ }
+      ? { plane_z_m: args.planeZ }
       : {}),
   };
 }

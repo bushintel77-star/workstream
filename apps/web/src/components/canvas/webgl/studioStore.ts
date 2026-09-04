@@ -922,7 +922,10 @@ export interface StudioStoreState {
   /**
    * Convert with per-stroke Z-plane overrides (from the inline Tidy HUD cycle
    * toggle). The map key is the stroke id; the value is the target Z-height.
-   * Returns feature count. Triggers a depth-rail flash for the highest plane.
+   * ONLY the strokes named in the map are converted — the HUD commits the one
+   * stroke that spawned it, and re-committing later strokes must never
+   * re-convert (duplicate) ink that was already converted. Returns feature
+   * count. Triggers a depth-rail flash for the highest plane.
    */
   convertStrokesToCadFeaturesWithPlanes: (
     planeOverrides: Map<string, number>,
@@ -933,8 +936,17 @@ export interface StudioStoreState {
   tidyHud: { strokeId: string; x: number; y: number } | null;
   /** Show the Tidy HUD at a terminal point after a stroke ends. */
   showTidyHud: (strokeId: string, x: number, y: number) => void;
-  /** Dismiss the Tidy HUD (commit or escape). */
+  /** Dismiss the Tidy HUD (commit or escape). Clears the preview lift too. */
   dismissTidyHud: () => void;
+  /**
+   * Live preview lift (metres) for the stroke the Tidy HUD is holding. The
+   * HUD writes it as the operator cycles planes; TidyPreviewLayer renders
+   * the stroke's ghost at this Z so "what you see is what commits". Null
+   * when no HUD is up.
+   */
+  tidyPreviewZ: number | null;
+  /** Write the preview lift (called by the Tidy HUD). */
+  setTidyPreviewZ: (z: number | null) => void;
   /**
    * Screen-space projection of the active conflict card's clash point.
    * Written every frame by ConflictCardProjector (inside R3F useFrame);
@@ -957,6 +969,15 @@ export interface StudioStoreState {
   liveNibScreen: { x: number; y: number; behind: boolean } | null;
   /** Write the per-frame nib screen projection (called by LiveNibProjector). */
   setLiveNibScreen: (pos: { x: number; y: number; behind: boolean } | null) => void;
+  /**
+   * Live camera projection facts, written by CameraProbe inside the R3F
+   * loop whenever they change. The PDF export reads the ortho frustum width
+   * at capture time to COMPUTE a viewport's true printed scale (never copy
+   * the nominal scale metadata). kind "persp" = no scale exists.
+   */
+  cameraView: { kind: "ortho" | "persp"; widthM: number } | null;
+  /** Write the camera facts (called by CameraProbe). */
+  setCameraView: (view: { kind: "ortho" | "persp"; widthM: number } | null) => void;
 
   // --- Selection — ONE state across placements / features / photo strokes ---
   selection: SelectionRef[];
@@ -1817,9 +1838,11 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   sketchCadNotice: null,
   depthRailFlash: { planeId: null, at: 0 },
   tidyHud: null,
+  tidyPreviewZ: null,
   conflictCardScreen: null,
   conflictCardStrikeIdx: null,
   liveNibScreen: null,
+  cameraView: null,
 
   // Selection — nothing selected until the operator picks.
   selection: [],
@@ -3395,14 +3418,19 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
 
   /**
    * Convert with per-stroke Z-plane overrides from the inline Tidy HUD.
-   * Each override maps a stroke id to a target Z-height; the feature inherits
-   * `extrude_height_m` so it lands on the correct depth-rail plane. Triggers
-   * a depth-rail flash on the highest plane that received geometry.
+   * Only the strokes named in the map are converted (the HUD's stroke), so a
+   * later commit never re-converts already-converted ink. Unnamed strokes are
+   * excluded entirely — their defaults apply when they get their own commit
+   * or a one-click convert. Triggers a depth-rail flash on the highest plane
+   * that received geometry.
    */
   convertStrokesToCadFeaturesWithPlanes: (planeOverrides) => {
     const current = useStudioStore.getState();
+    const targets = current.sketchStrokes.filter((s) =>
+      planeOverrides.has(s.id),
+    );
     const { features, converted } = convertStrokesToFeatures(
-      current.sketchStrokes,
+      targets,
       planeOverrides,
     );
     if (features.length === 0) {
@@ -3414,7 +3442,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     }
     // Find the highest Z among committed features for the rail flash
     const highestZ = features.reduce(
-      (max, f) => Math.max(max, f.extrude_height_m ?? 0),
+      (max, f) => Math.max(max, f.plane_z_m ?? 0),
       0,
     );
     const flashPlane =
@@ -3438,13 +3466,15 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
 
   showTidyHud: (strokeId, x, y) =>
     set({ tidyHud: { strokeId, x, y } }),
-  dismissTidyHud: () => set({ tidyHud: null }),
+  dismissTidyHud: () => set({ tidyHud: null, tidyPreviewZ: null }),
+  setTidyPreviewZ: (z) => set({ tidyPreviewZ: z }),
   openConflictCard: (strikeIdx) =>
     set({ conflictCardStrikeIdx: strikeIdx }),
   closeConflictCard: () =>
     set({ conflictCardStrikeIdx: null, conflictCardScreen: null }),
   setConflictCardScreen: (pos) => set({ conflictCardScreen: pos }),
   setLiveNibScreen: (pos) => set({ liveNibScreen: pos }),
+  setCameraView: (view) => set({ cameraView: view }),
 
   // --- Stitch engine actions ---
   setStitchSnapNodes: (nodes) => set({ stitchSnapNodes: nodes }),

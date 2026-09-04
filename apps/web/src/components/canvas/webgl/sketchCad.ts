@@ -34,6 +34,7 @@ import {
 } from "@workstream/domain";
 import { constrainAssetCentre } from "../handoff/geometry/outdoorClamp";
 import { mapSymbolToStudioType } from "../handoff/state/studioAiEngine";
+import { kindPlane, planeZ } from "./planeStack";
 import type { PctPoint } from "./coordTransform";
 
 export type SketchCadProposal = {
@@ -57,6 +58,18 @@ export type SketchCadProposal = {
 
 /** Direct-conversion confidence gate — matches SVG StudioAssistPanel. */
 const MIN_DIRECT_CONFIDENCE = 0.55;
+
+/**
+ * Would this stroke be convertible by `convertStrokesToFeatures`? The Tidy
+ * HUD spawn gate uses the same confidence bar as the conversion itself, so
+ * the HUD never appears for ink that could not commit (and the conversion
+ * never accepts ink the HUD would have shown).
+ */
+export function isConvertibleStroke(stroke: CanvasStroke): boolean {
+  if (stroke.hatch) return false;
+  const rec = recognizeStroke(stroke);
+  return !!rec && rec.confidence >= MIN_DIRECT_CONFIDENCE;
+}
 
 /** Scale fallback for proposals without a classifier hint (SVG parity). */
 export function proposalScale(
@@ -128,9 +141,12 @@ export function proposeSketchCad(
  *
  * Z-plane routing: each recognized kind maps to a depth-rail plane via
  * `KIND_TO_PLANE` (wall→massing +4.0, bed→planting +1.5, ditch/path→ground
- * 0.0). The caller may override the default plane via `planeOverrides` —
- * this is how the inline Tidy HUD cycle toggle routes a corrected classification
- * before commit. The Z-height is injected as `extrude_height_m` on the feature.
+ * 0.0) and the default is applied HERE, so both callers (one-click rail
+ * Tidy and the inline HUD commit) land geometry on the classifier's plane.
+ * A per-stroke `planeOverrides` entry (stroke id → Z) replaces the default —
+ * this is how the HUD cycle toggle routes a corrected classification before
+ * commit. The Z is stamped as `plane_z_m` on the feature (never
+ * `extrude_height_m`, which means cut/fill pad).
  */
 export function convertStrokesToFeatures(
   strokes: CanvasStroke[],
@@ -152,8 +168,8 @@ export function convertStrokesToFeatures(
       skipped += 1;
       continue;
     }
-    const planeZ = planeOverrides?.get(stroke.id);
-    features.push(featureFromRecognizedStroke(stroke, rec, undefined, planeZ));
+    const targetZ = planeOverrides?.get(stroke.id) ?? planeZ(kindPlane(rec.kind));
+    features.push(featureFromRecognizedStroke(stroke, rec, undefined, targetZ));
   }
   return { features, converted: features.length, skipped };
 }

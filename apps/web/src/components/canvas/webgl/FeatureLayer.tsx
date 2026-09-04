@@ -120,7 +120,11 @@ function FeatureLine({
   // classified layer id — no per-component hex or ad-hoc lift.
   const layerId = featureLayerIdFor(feature.metadata.layer);
   const style = getLayerStyle(layerId);
-  const baseY = layerYOffset(layerId);
+  // Plane lift: a feature stamped `plane_z_m` (Tidy Z-plane routing) sits at
+  // its depth-rail elevation. It does NOT drape onto terrain — it is off the
+  // ground by definition — and it is not a pad (that is extrude_height_m).
+  const planeLift = feature.plane_z_m ?? 0;
+  const baseY = layerYOffset(layerId) + planeLift;
   const basePoints = useMemo(() => {
     const pts = feature.geometry.points.map((v) => {
       const [x, z] = pctToWorld(
@@ -161,7 +165,8 @@ function FeatureLine({
     }
     if (basePoints.length < 2) return;
     const { viewBlend } = useStudioStore.getState();
-    if (!sampler || viewBlend < 0.001) return;
+    // Elevated (plane-z) geometry never drapes — it holds its plane.
+    if (!sampler || viewBlend < 0.001 || planeLift > 0) return;
     for (let i = 0; i < basePoints.length; i++) {
       const [x, , z] = basePoints[i]!;
       const y = baseY + viewBlend * sampler(x, z);

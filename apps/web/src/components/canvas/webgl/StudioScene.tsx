@@ -49,6 +49,8 @@ import { StudioControls } from "./StudioControls";
 import { SubsurfaceEngine, type SubsurfaceUtility, type StrikeAlertData } from "./features/SubsurfaceEngine";
 import { ConflictCardProjector } from "./ConflictCardProjector";
 import { LiveNibProjector } from "./LiveNibProjector";
+import { CameraProbe } from "./CameraProbe";
+import { TidyPreviewLayer } from "./TidyPreviewLayer";
 import { FusedCamera } from "./FusedCamera";
 import { FlythroughRig } from "./FlythroughRig";
 import { PedestrianCamera } from "./PedestrianCamera";
@@ -1215,6 +1217,12 @@ export function StudioScene({
       {/* Live nib projector — projects the live draw point to screen coords
           every frame for the cursor-adjacent LiveNibReadout. Pure math. */}
       <LiveNibProjector />
+      {/* Camera probe — publishes ortho frustum width for the PDF export's
+          true-scale computation. Pure math, writes only on change. */}
+      <CameraProbe />
+      {/* Tidy Z preview — lifts the Tidy HUD's stroke ghost to the selected
+          plane so the cycle toggle moves real geometry before commit. */}
+      <TidyPreviewLayer scaleM={scaleM} boardAspect={boardAspect} />
       {/* Fused Sketch Layer — the shared 2D↔3D ink system. Self-mounts when
           sketchMode is on (reads the store internally). Strokes live in the
           unified store (CanvasStroke[] in board-% space) and render in BOTH

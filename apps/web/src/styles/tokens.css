@@ -99,6 +99,21 @@
    */
   --ws-success: var(--ws-ink-secondary);
 
+  /**
+   * Seasonal chrome — the winter tag's cool blue. One token because the tag
+   * is painted from two modules (CanvasCardsRail, FloatingChrome); a raw hex
+   * in either drifts from its twin silently.
+   */
+  --ws-season-winter: #73a9e1;
+
+  /**
+   * Birdseye drag accent — the chrome that frames the plane drag matches the
+   * plane wireframe colour drawn in the viewport. MUST stay in lockstep with
+   * PLANE_COLOUR in BirdsEyeHud.tsx (the render-side constant; this is the
+   * chrome-side twin).
+   */
+  --ws-dwg-birdseye: #8fd18f;
+
   /* ================================================================
    * CHROME — geometry. Milled chassis: tight radii, mechanical precision.
    * ================================================================ */

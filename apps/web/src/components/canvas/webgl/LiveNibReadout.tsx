@@ -21,8 +21,7 @@
 import { useRef } from "react";
 import { useStudioStore } from "./studioStore";
 import { formatNibReadout, computeGradeAndBearing } from "./nibReadoutFormatter";
-import { FIXED_PLANE_LABELS, planeZ, type FixedPlaneId } from "./planeStack";
-import { KIND_TO_PLANE } from "./planeStack";
+import { FIXED_PLANE_LABELS, TOOL_TARGET_PLANE, planeZ, type FixedPlaneId } from "./planeStack";
 import styles from "./LiveNibReadout.module.css";
 
 export function LiveNibReadout() {
@@ -32,7 +31,6 @@ export function LiveNibReadout() {
   const penDown = useStudioStore((s) => s.penDown);
   const liveCoord = useStudioStore((s) => s.liveCoord);
   const activeTool = useStudioStore((s) => s.activeTool);
-  const activeCanvasId = useStudioStore((s) => s.activeCanvasId);
 
   // Update position and text via direct DOM mutation (no React re-render)
   if (containerRef.current && liveNibScreen && !liveNibScreen.behind) {
@@ -43,9 +41,11 @@ export function LiveNibReadout() {
 
   // Build the readout string
   if (textRef.current && liveCoord && penDown) {
-    const planeId: FixedPlaneId =
-      (KIND_TO_PLANE[activeTool] as FixedPlaneId) ??
-      (activeCanvasId === null ? "ground" : "ground");
+    // Target plane for the ACTIVE TOOL — keyed by ToolId (the draw tools),
+    // not by recognition kind; tools without an established plane draw on
+    // grade. (KIND_TO_PLANE's keys are stroke kinds — the vocabularies only
+    // share "bed"/"path" by coincidence.)
+    const planeId: FixedPlaneId = TOOL_TARGET_PLANE[activeTool] ?? "ground";
     const zLabel = FIXED_PLANE_LABELS[planeId];
     const z = planeZ(planeId);
 

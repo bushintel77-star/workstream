@@ -56,10 +56,16 @@ export const authAppearance: ClerkAppearance = {
     },
     formFieldInput__focused: {
       borderColor: PALETTE.gsPrimary,
-      boxShadow: "0 0 0 2px rgb(61 90 254 / 22%)",
+      // Truth Anchor cobalt veil (#0030CF at 22%) — the retired Signal Blue
+      // rgb(61 90 254 / 22%) was the pre-rebuild focus ring.
+      boxShadow: "0 0 0 2px rgb(0 48 207 / 22%)",
     },
     formButtonPrimary: {
       backgroundColor: PALETTE.gsPrimary,
+      // Ink on the stark-white CTA — same pair as the studio's active chips
+      // (gsChipActive / gsChipActiveInk). Without this the button text falls
+      // back to Clerk's white-on-light and disappears.
+      color: PALETTE.gsChipActiveInk,
       borderRadius: "14px",
       fontFamily: "Inter, sans-serif",
       fontWeight: 600,
@@ -68,7 +74,9 @@ export const authAppearance: ClerkAppearance = {
       backgroundColor: PALETTE.gsPrimary,
     },
     formButtonPrimary__active: {
-      backgroundColor: PALETTE.gsPrimaryInk,
+      // Pressed inverts the chip pair: dark fill, light ink.
+      backgroundColor: PALETTE.gsChipActiveInk,
+      color: PALETTE.gsChipActive,
     },
     footerActionLink: {
       color: PALETTE.gsPrimaryInk,

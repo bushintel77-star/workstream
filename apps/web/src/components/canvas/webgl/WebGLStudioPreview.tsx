@@ -78,7 +78,16 @@ import { StudioSurfaceErrorBoundary } from "./StudioSurfaceErrorBoundary";
 import { StudioCanvasLoading } from "./StudioCanvasLoading";
 import { ScheduleSheet } from "./ScheduleSheet";
 import { isToolLocked } from "./chromeContract";
-import { SheetComposer } from "./SheetComposer";
+// Lazy: SheetComposer statically imports pdfExport.ts, which statically
+// imports the full jsPDF library. SheetComposer only ever renders behind
+// `sheetComposerOpen &&` below, but a static import still ships jsPDF in
+// this route's first-load JS regardless of whether the panel is ever
+// opened — it put /projects/[id] ~459 kB over its budget. Same pattern as
+// LazyWebGLStudioPreview.tsx for the studio itself.
+const SheetComposer = dynamic(
+  () => import("./SheetComposer").then((m) => m.SheetComposer),
+  { ssr: false },
+);
 import { OfficeTemplatePanel } from "./OfficeTemplatePanel";
 import { guideFirstSketch } from "./firstSketchGuide";
 import type { WebGLStudioProps } from "./WebGLStudio";

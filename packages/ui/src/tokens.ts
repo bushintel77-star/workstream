@@ -48,8 +48,10 @@ export const tokens = {
       invertedTertiary: "rgba(255, 255, 255, 0.55)",
     },
     line: {
-      /** Decorative hairline — `--ws-line`'s rgb at 55% (web `--line-hairline`) */
-      hairline: "rgba(232, 234, 236, 0.55)",
+      /** Decorative hairline — web `--line-hairline` = color-mix(var(--ws-line) 55%);
+       *  --ws-line is itself rgba(...,0.14), so the painted alpha is
+       *  0.14 x 0.55 = 0.077. */
+      hairline: "rgba(232, 234, 236, 0.077)",
       /** Interactive boundaries — `--ws-line-strong` */
       strong: "rgba(232, 234, 236, 0.28)",
       ink: "#E8EAEC",
@@ -61,8 +63,8 @@ export const tokens = {
       soft: "rgba(232, 234, 236, 0.08)",
       /** `--ws-active` used as text */
       ink: "#E8EAEC",
-      /** `--ws-active` hover/pressed — luminance has no hover step to shift to */
-      bright: "#E8EAEC",
+      /** Brighter hover/pressed step — `--ws-active-bright` */
+      bright: "#F2F0EA",
     },
     semantic: {
       /** Status is ink + iconography; colour reserved for critical — `--ws-success` */
@@ -96,9 +98,9 @@ export const tokens = {
       conflictSoft: "rgba(210, 86, 79, 0.16)",
       /** Canonical mirrors for new code — `--ws-active*` */
       primary: "#E8EAEC",
-      primaryHover: "#E8EAEC",
-      primaryPressed: "#E8EAEC",
-      primaryInk: "#E8EAEC",
+      primaryHover: "#F2F0EA",
+      primaryPressed: "#F2F0EA",
+      primaryInk: "#0D0F11",
       primaryQuiet: "rgba(232, 234, 236, 0.08)",
       /** Canonical mirrors for new code — `--ws-dwg-truth*` */
       truth: "#0030CF",

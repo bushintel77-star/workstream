@@ -170,5 +170,5 @@
 
 .cellHidden {
   color: var(--ws-ink-muted);
-  opacity: var(--ws-op-subdued, 0.6);
+  opacity: var(--ws-op-subdued, 0.7);
 }

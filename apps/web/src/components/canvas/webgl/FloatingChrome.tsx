@@ -42,12 +42,20 @@ import { ViewpointFilmstrip } from "./ViewpointFilmstrip";
 import { CalibrateModal } from "./CalibrateModal";
 import { DrawViewToggle } from "./DrawViewToggle";
 import { SelectionModeToggle } from "./SelectionModeToggle";
+import dynamic from "next/dynamic";
 import { SelectionIsolationOverlay } from "./SelectionIsolationOverlay";
 import { NumericSlider } from "./NumericSlider";
-import { TidyHud } from "./TidyHud";
 import { PinnedConflictCard } from "./StrikeChip";
 import { LiveNibReadout } from "./LiveNibReadout";
 import styles from "./FloatingChrome.module.css";
+
+// Lazy: TidyHud only ever renders behind `tidyHud &&` below — it is a
+// transient actor that spawns at a stroke's pen-lift point and self-
+// destructs on commit/dismiss, so most page loads never mount it at all.
+// Same reasoning as SheetComposer's dynamic() boundary just above.
+const TidyHud = dynamic(() => import("./TidyHud").then((m) => m.TidyHud), {
+  ssr: false,
+});
 
 /* ---- helpers ---- */
 

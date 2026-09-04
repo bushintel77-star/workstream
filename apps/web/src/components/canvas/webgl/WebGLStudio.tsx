@@ -353,7 +353,12 @@ export function WebGLStudio({
         shadows="variance"
         dpr={[1, 1.5]}
         camera={{ position: [0, 100, 0.001], fov: 30, near: 0.1, far: 500 }}
-        gl={{ antialias: true, alpha: false }}
+        /* preserveDrawingBuffer: the PDF viewport capture (pdfExport.ts)
+           reads the framebuffer with toDataURL after compositing — without
+           this the buffer is cleared at present and captures come back
+           blank racily. Cost is a held backbuffer; worth deterministic
+           sheet export. */
+        gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true }}
         onCreated={onCanvasCreated}
         /* Force a full Canvas remount when drafting toggles so the
            EffectComposer tree is rebuilt from scratch (R3F reconciler

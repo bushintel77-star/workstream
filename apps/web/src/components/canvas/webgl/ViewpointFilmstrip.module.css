@@ -86,7 +86,7 @@
 /* Class B selected — matte lift + 1.5px accent border + ring + pip. */
 .thumbActive {
   border: 1.5px solid var(--ws-active);
-  box-shadow: 0 0 0 3px var(--ws-focus, rgba(28, 25, 23, 0.18));
+  box-shadow: 0 0 0 3px var(--ws-focus, #e8eaec);
 }
 
 .thumbImg {

@@ -25,7 +25,7 @@
   flex: 1;
   height: 3px;
   border-radius: var(--ws-radius-2);
-  background: var(--ws-line-soft, rgba(232, 230, 224, 0.15));
+  background: var(--ws-line-soft, rgba(232, 234, 236, 0.08));
   outline: none;
   cursor: pointer;
   min-width: 20px;

@@ -172,15 +172,18 @@ function chromeRegions(src) {
 const inRegion = (regions, i) => regions.some(([a, b]) => i >= a && i <= b);
 
 /**
- * `var(--token, #hex)` — the fallback is good practice, but only if it is the
- * token's real value. A fallback that disagrees is worse than none: it never
- * renders (the token always resolves at :root), so it silently documents the
- * wrong design intent. Two had drifted through the Studio Paper pivot —
- * `var(--ws-active, #FBBF24)` kept the pre-pivot amber for a token that is now
- * Signal Blue, and `var(--ws-warning, #c92)` kept an amber for a token that is
- * now neutral grey.
+ * `var(--token, #hex|rgb()/rgba())` — the fallback is good practice, but only
+ * if it is the token's real value. A fallback that disagrees is worse than
+ * none: it never renders (the token always resolves at :root), so it silently
+ * documents the wrong design intent. Two had drifted through the Studio Paper
+ * pivot — `var(--ws-active, #FBBF24)` kept the pre-pivot amber for a token
+ * that is now Signal Blue, and `var(--ws-warning, #c92)` kept an amber for a
+ * token that is now neutral grey. rgba() fallbacks are compared too (found
+ * 2026-09-04: the codemod renamed --lc-track-border → --ws-line-soft but left
+ * the old literal `rgba(232,230,224,0.15)` — invisible to a hex-only check).
  */
-const VAR_FALLBACK = /var\(\s*(--[a-zA-Z0-9-]+)\s*,\s*(#[0-9a-fA-F]{3,8})\s*\)/g;
+const VAR_FALLBACK =
+  /var\(\s*(--[a-zA-Z0-9-]+)\s*,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))\s*\)/g;
 
 /** Token name -> declared value, from the two token stylesheets. */
 function readTokenValues() {
@@ -212,6 +215,35 @@ function normaliseHex(h) {
   return s.length === 4
     ? `#${s[1]}${s[1]}${s[2]}${s[2]}${s[3]}${s[3]}`
     : s;
+}
+
+/** Parse #hex or rgb()/rgba() into {rgb, alpha}; null when unparseable. */
+function parseColor(v) {
+  const hex = hexToRgb(v);
+  if (hex) return { rgb: hex, alpha: 1 };
+  const m = v.match(
+    /^rgba?\(\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*(?:[,/]\s*([\d.]+)\s*)?\)$/,
+  );
+  if (!m) return null;
+  return { rgb: [+m[1], +m[2], +m[3]], alpha: m[4] === undefined ? 1 : +m[4] };
+}
+
+/** #hex -> [r,g,b] | null. */
+function hexToRgb(h) {
+  const s = normaliseHex(h).slice(1);
+  if (!/^[0-9a-f]{6}$/.test(s)) return null;
+  return [0, 2, 4].map((i) => parseInt(s.slice(i, i + 2), 16));
+}
+
+/** Two colour literals agree when rgb and alpha both agree. */
+function coloursAgree(a, b) {
+  const pa = parseColor(a);
+  const pb = parseColor(b);
+  if (!pa || !pb) return true; // unparseable sides are other checks' business
+  return (
+    pa.rgb.join() === pb.rgb.join() &&
+    Math.abs(pa.alpha - pb.alpha) < 1e-6
+  );
 }
 
 function walk(dir, out = []) {
@@ -281,8 +313,8 @@ for (const file of files) {
      */
     for (const m of offsetSrc.matchAll(VAR_FALLBACK)) {
       const real = resolveToken(tokenValues, m[1]);
-      if (!real || !/^#[0-9a-fA-F]{3,8}$/.test(real)) continue;
-      if (normaliseHex(real) !== normaliseHex(m[2])) {
+      if (!real) continue;
+      if (!coloursAgree(real, m[2])) {
         badFallbacks.push({
           file: rel,
           line: lineOf(offsetSrc, m.index),
@@ -292,11 +324,18 @@ for (const file of files) {
         });
       }
     }
-    const regions = chromeRegions(offsetSrc);
+    // A .module.css file in a render-value path IS chrome paint — there is
+    // no Three.js material in CSS, so every raw hex (outside an allowlisted
+    // mask value or a var() fallback) is a violation. Found 2026-09-04: the
+    // retired conflict crimson #C41E1E was newly added to SheetComposer's
+    // .exportErrorLabel and sailed through because chromeRegions() only
+    // classifies TSX style objects and SVG paint attributes.
+    const regions = isCss ? [] : chromeRegions(offsetSrc);
+    const cssChrome = isCss;
     const chromeHex = [];
     for (const m of offsetSrc.matchAll(HEX)) {
       if (ALLOW_HEX.has(m[0].toLowerCase())) continue;
-      if (!inRegion(regions, m.index)) continue;
+      if (!cssChrome && !inRegion(regions, m.index)) continue;
       // Hex inside a var() fallback is the badFallbacks check's business.
       const before = offsetSrc.slice(Math.max(0, m.index - 64), m.index);
       if (/var\(\s*--[a-zA-Z0-9-]+\s*,\s*$/.test(before)) continue;

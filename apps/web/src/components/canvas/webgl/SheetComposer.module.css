@@ -372,7 +372,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #C41E1E;
+  color: var(--ws-conflict, #d2564f);
 }
 
 .exportErrorDismiss,

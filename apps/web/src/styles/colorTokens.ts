@@ -82,7 +82,7 @@ export const PALETTE = {
   gsConflict: "#D2564F", // strike alert / critical crimson (--ws-conflict)
   gsConflictInk: "#B91C1C", // crimson as text (--ws-active)
   gsPrimary: "#E8EAEC", // stark white — CTA/focus/active (--ws-active)
-  gsPrimaryInk: "#E8EAEC", // white text (--ws-active)
+  gsPrimaryInk: "#0D0F11", // ink on the stark-white active fill (--ws-active-ink)
   gsEarthworksFill: "#C9A84C", // earthworks fill data pair (--ws-dwg-fill)
   // WebGL render values — physical light/shadow (mirrors color-tokens.css --gs-* render tokens)
   sunWarm: "#FFF1D6",
@@ -223,7 +223,7 @@ export const CSS_TOKEN = {
   gsChipActive: "var(--ws-active)",
   gsChipActiveInk: "var(--ws-active-ink)",
   gsPrimary: "var(--ws-active)",
-  gsPrimaryInk: "var(--ws-active)",
+  gsPrimaryInk: "var(--ws-active-ink)",
   gsConflict: "var(--ws-conflict)",
   // WebGL render values (mirrors color-tokens.css --gs-* render tokens)
   sunWarm: "var(--ws-dwg-sun-warm)",

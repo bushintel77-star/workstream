@@ -1,9 +1,28 @@
 import { describe, it, expect } from "vitest";
-import { assemblePdf } from "./pdfExport";
+import { assemblePdf, viewportScaleLabel } from "./pdfExport";
 import {
   createSheet,
   type SheetViewport,
 } from "./sheetComposition";
+
+describe("viewportScaleLabel", () => {
+  it("prints the computed orthographic denominator", () => {
+    // 40m frustum on a 200mm frame → 1:200
+    expect(viewportScaleLabel({ trueScaleDenominator: 200 })).toBe("1:200");
+  });
+
+  it("stamps perspective frames NOT TO SCALE", () => {
+    expect(viewportScaleLabel({ trueScaleDenominator: undefined })).toBe(
+      "NOT TO SCALE",
+    );
+  });
+
+  it("refuses degenerate denominators rather than printing a lie", () => {
+    expect(viewportScaleLabel({ trueScaleDenominator: 0 })).toBe(
+      "NOT TO SCALE",
+    );
+  });
+});
 
 describe("pdfExport", () => {
   describe("assemblePdf", () => {
