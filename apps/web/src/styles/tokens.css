@@ -196,6 +196,10 @@
   --ws-dwg-sketch: #ff2ef6;
   /** Redline markup. */
   --ws-dwg-redline: #d55753;
+  /** Redline as CHROME TEXT — a lighter tint of the drawing redline that
+   *  clears WCAG AA on --ws-panel (6.8:1; the raw redline sits at 4.47:1,
+   *  just under). Geometry strokes keep --ws-dwg-redline itself. */
+  --ws-dwg-redline-ink: #e5877f;
 
   /* Planting */
   --ws-dwg-foliage: #3d6b48;

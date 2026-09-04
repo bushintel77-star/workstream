@@ -8,7 +8,7 @@ import {
   CostScenarioSchema,
 } from "@workstream/contracts";
 import { requireAuth } from "../plugins/auth";
-import { getOwnedProject, PROJECT_NOT_FOUND_BODY } from "../lib/project-guard";
+import { requireOwnedProject } from "../lib/project-guard";
 import {
   acceptCadDocument,
   applyCadOpsBatch,
@@ -28,18 +28,22 @@ import {
 import { refreshOrchestration } from "../lib/material-orchestrator";
 import { publicBaseUrl } from "../lib/public-url";
 
+/**
+ * CAD routes. Every handler resolves its project through
+ * `requireOwnedProject` (the tenant gate) and then carries `project.id` —
+ * the store's UUID-validated id — into store calls, filenames and error
+ * bodies. The raw `:projectId` path param is only ever the lookup key; it
+ * never flows past the gate (that unvalidated flow is what the taint scan
+ * flagged here before this refactor).
+ */
 export default async function cadRoutes(fastify: FastifyInstance) {
   fastify.get(
     "/:projectId/cad",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
-      const result = await getCadWithSvg(fastify.store, ownerId, projectId);
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
+      const result = await getCadWithSvg(fastify.store, request.userId!, project.id);
       return reply.send(result);
     },
   );
@@ -48,19 +52,15 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad.dxf",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       try {
-        const dxf = await exportCadDxf(fastify.store, ownerId, projectId);
+        const dxf = await exportCadDxf(fastify.store, request.userId!, project.id);
         return reply
           .header("content-type", "application/dxf; charset=utf-8")
           .header(
             "content-disposition",
-            `attachment; filename="workstream-${projectId.slice(0, 8)}.dxf"`,
+            `attachment; filename="workstream-${project.id.slice(0, 8)}.dxf"`,
           )
           .send(dxf);
       } catch (err) {
@@ -74,19 +74,15 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad.gltf",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       try {
-        const gltf = await exportCadGltf(fastify.store, ownerId, projectId);
+        const gltf = await exportCadGltf(fastify.store, request.userId!, project.id);
         return reply
           .header("content-type", "model/gltf+json; charset=utf-8")
           .header(
             "content-disposition",
-            `attachment; filename="workstream-${projectId.slice(0, 8)}.gltf"`,
+            `attachment; filename="workstream-${project.id.slice(0, 8)}.gltf"`,
           )
           .send(gltf);
       } catch (err) {
@@ -101,23 +97,19 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad.sync.json",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       try {
         const manifest = await exportCadSync(
           fastify.store,
-          ownerId,
-          projectId,
+          request.userId!,
+          project.id,
         );
         return reply
           .header("content-type", "application/json; charset=utf-8")
           .header(
             "content-disposition",
-            `attachment; filename="workstream-${projectId.slice(0, 8)}.sync.json"`,
+            `attachment; filename="workstream-${project.id.slice(0, 8)}.sync.json"`,
           )
           .send(manifest);
       } catch (err) {
@@ -132,17 +124,13 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad/ensure",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       try {
         const result = await ensureCadDocument(
           fastify.store,
-          ownerId,
-          projectId,
+          request.userId!,
+          project.id,
         );
         return reply.send(result);
       } catch (err) {
@@ -157,12 +145,8 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad/ops",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       const parsed = CadOpsBatchSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply
@@ -172,11 +156,11 @@ export default async function cadRoutes(fastify: FastifyInstance) {
       try {
         const result = await applyCadOpsBatch(
           fastify.store,
-          ownerId,
-          projectId,
+          request.userId!,
+          project.id,
           parsed.data.ops,
         );
-        void refreshOrchestration(fastify.store, ownerId, projectId);
+        void refreshOrchestration(fastify.store, request.userId!, project.id);
         return reply.send(result);
       } catch (err) {
         const message = err instanceof Error ? err.message : "CAD ops failed";
@@ -189,12 +173,8 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad/generate",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       const parsed = CadGenerateRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply
@@ -204,11 +184,11 @@ export default async function cadRoutes(fastify: FastifyInstance) {
       try {
         const result = await generateCadDocument(
           fastify.store,
-          ownerId,
-          projectId,
+          request.userId!,
+          project.id,
           parsed.data,
         );
-        void refreshOrchestration(fastify.store, ownerId, projectId);
+        void refreshOrchestration(fastify.store, request.userId!, project.id);
         return reply.send(result);
       } catch (err) {
         const message = err instanceof Error ? err.message : "CAD generate failed";
@@ -221,12 +201,8 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad/edit",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       const parsed = CadEditRequestSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply
@@ -236,11 +212,11 @@ export default async function cadRoutes(fastify: FastifyInstance) {
       try {
         const result = await editCadDocument(
           fastify.store,
-          ownerId,
-          projectId,
+          request.userId!,
+          project.id,
           parsed.data.instruction,
         );
-        void refreshOrchestration(fastify.store, ownerId, projectId);
+        void refreshOrchestration(fastify.store, request.userId!, project.id);
         return reply.send(result);
       } catch (err) {
         const message = err instanceof Error ? err.message : "CAD edit failed";
@@ -253,12 +229,8 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad/accept",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       const parsed = CadAcceptRequestSchema.safeParse(request.body ?? {});
       if (!parsed.success) {
         return reply
@@ -268,11 +240,11 @@ export default async function cadRoutes(fastify: FastifyInstance) {
       try {
         const result = await acceptCadDocument(
           fastify.store,
-          ownerId,
-          projectId,
+          request.userId!,
+          project.id,
           parsed.data.entity_ids,
         );
-        void refreshOrchestration(fastify.store, ownerId, projectId);
+        void refreshOrchestration(fastify.store, request.userId!, project.id);
         return reply.send(result);
       } catch (err) {
         const message = err instanceof Error ? err.message : "CAD accept failed";
@@ -285,17 +257,13 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad/quantity-survey",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       try {
         const survey = await runCadQuantitySurvey(
           fastify.store,
-          ownerId,
-          projectId,
+          request.userId!,
+          project.id,
         );
         return reply.send({ survey });
       } catch (err) {
@@ -310,12 +278,8 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad/build",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       const body = z
         .object({ scenario: CostScenarioSchema.optional() })
         .safeParse(request.body ?? {});
@@ -327,8 +291,8 @@ export default async function cadRoutes(fastify: FastifyInstance) {
       try {
         const build = await runCadBuild(
           fastify.store,
-          ownerId,
-          projectId,
+          request.userId!,
+          project.id,
           body.data.scenario ?? "standard",
         );
         return reply.send({ build });
@@ -344,12 +308,8 @@ export default async function cadRoutes(fastify: FastifyInstance) {
     "/:projectId/cad/quote",
     { preHandler: requireAuth },
     async (request, reply) => {
-      const { projectId } = request.params as { projectId: string };
-      const ownerId = request.userId!;
-      const project = await getOwnedProject(fastify.store, ownerId, projectId);
-      if (!project) {
-        return reply.code(404).send(PROJECT_NOT_FOUND_BODY);
-      }
+      const project = await requireOwnedProject(fastify.store, request, reply);
+      if (!project) return reply;
       const body = z
         .object({ scenario: CostScenarioSchema.optional() })
         .safeParse(request.body ?? {});
@@ -367,8 +327,8 @@ export default async function cadRoutes(fastify: FastifyInstance) {
         }
         const quote = await runCadQuote(
           fastify.store,
-          ownerId,
-          projectId,
+          request.userId!,
+          project.id,
           body.data.scenario ?? "standard",
           baseUrl,
         );

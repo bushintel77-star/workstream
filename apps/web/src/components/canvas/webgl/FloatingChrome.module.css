@@ -241,16 +241,18 @@
 /* Subsurface utility cells — redline accent for below-ground services.
  * No opacity dimming: the redline color is already distinct from the
  * terrain-green active cells, and dimming kills text contrast on dark glass.
+ * Text uses the AA-cleared ink tint — the raw drawing redline measures
+ * 4.47:1 on the panel, just under AA (the webgl-contrast-aa gate's finding).
  * These are read-only reference divs (never click targets), so the shared
  * pointer affordance from `.cell` is withdrawn. */
 .cellSubsurface {
-  color: var(--ws-dwg-redline);
+  color: var(--ws-dwg-redline-ink);
   cursor: default;
 }
 
 .cellSubsurface:hover {
   background: color-mix(in srgb, var(--ws-dwg-redline) 10%, transparent);
-  color: var(--ws-dwg-redline);
+  color: var(--ws-dwg-redline-ink);
 }
 
 /* Fixed plane stack reference bands — proposed targets, never drawable. */
