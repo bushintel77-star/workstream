@@ -58,8 +58,14 @@ jobs:
           fetch-depth: 0
       - name: gitleaks
         uses: gitleaks/gitleaks-action@v3
-        with:
-          config: .gitleaks.toml
+        env:
+          # v3's breaking change: gitleaks-action now calls the GitHub API to
+          # comment on PRs and requires this token to do so — the action's
+          # `with:` inputs were removed entirely (config included) in favour
+          # of env vars. GITHUB_TOKEN is the auto-issued per-run token every
+          # workflow gets for free, not a repo secret to configure.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
 
   # ---------------------------------------------------------------- e2e
   # Playwright across 6 shards. Non-gating (continue-on-error) — the WebGL
