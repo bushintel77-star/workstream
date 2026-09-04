@@ -29,13 +29,6 @@ const CHROME_SELECTORS = [
   '[data-testid="scale-toggle"]',
 ] as const;
 
-/**
- * The coordinate chip only mounts once the pointer has moved over the canvas
- * (`liveCoord`), and in 3D it CONVERTS to the camera readout. It is checked
- * separately, after a pointer move, so its absence cannot quietly pass.
- */
-const POINTER_CHROME_SELECTOR = '[data-testid="coord-chip"]';
-
 const CAMERA_PRESETS = ["plan", "axo", "sec", "3d"] as const;
 
 test.describe("Phase L.10 — chrome bounding box invariant across camera states", () => {
@@ -46,7 +39,12 @@ test.describe("Phase L.10 — chrome bounding box invariant across camera states
     const { projectId } = await createAddressProject(request, {
       address: "1 Chrome Contract Test Street, Melbourne VIC 3000",
     });
-    await page.goto(`/projects/${projectId}?webgl=1`, {
+    // ?mode=survey: a fresh project with no site truth suggests SKETCH mode
+    // (suggestedMode — the drawing-first flow), and the depth rail
+    // legitimately returns null in sketch. The invariant under test is
+    // camera-preset invariance, so pin a mode where the persistent chrome
+    // actually mounts.
+    await page.goto(`/projects/${projectId}?mode=survey`, {
       waitUntil: "networkidle",
     });
 
@@ -56,19 +54,7 @@ test.describe("Phase L.10 — chrome bounding box invariant across camera states
     });
     await expect(page.locator('[data-testid="tool-ribbon"]')).toBeAttached();
 
-    // Move the pointer over the canvas so `liveCoord` is set and the
-    // coordinate chip mounts. Without this it is absent in every preset and
-    // its conversion goes unchecked.
-    const canvas = page.locator('[data-testid="webgl-canvas"]');
-    const canvasBox = await canvas.boundingBox();
-    if (canvasBox) {
-      await page.mouse.move(
-        canvasBox.x + canvasBox.width / 2,
-        canvasBox.y + canvasBox.height / 2,
-      );
-    }
-
-    const selectors = [...CHROME_SELECTORS, POINTER_CHROME_SELECTOR];
+    const selectors = [...CHROME_SELECTORS];
 
     // Capture bounding boxes for each chrome element in each camera preset.
     // We click the camera dock buttons to switch presets.

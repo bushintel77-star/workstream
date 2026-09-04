@@ -2,20 +2,26 @@ import { test, expect, type ConsoleMessage, type Page } from "@playwright/test";
 import { createAddressProject, seedElevationGarden } from "./helpers";
 
 /**
- * The click-through a real operator makes to reach the project's non-canvas
- * surfaces, walked end to end.
+ * The click-through a real operator makes to reach the project's records
+ * surfaces and the growth studio, walked end to end.
  *
- * Why this is a kept spec and not a one-off probe: `/growth-studio/[id]` — a
- * finished 3D growth-maturity studio — shipped with no inbound link anywhere in
- * the product, and every gate stayed green because Next.js reaches a `page.tsx`
- * by filesystem. `scripts/check-route-reachability.mjs` now proves an href
- * *exists*; only a browser proves the operator can actually walk it and that
- * what they land on renders. Both are needed: the static gate cannot see a link
- * rendered behind a condition that is never true, which is the next mutation of
- * this bug.
+ * Rewritten 2026-09-05 against the CURRENT information architecture. The
+ * original walks (dashboard cards on /home, a "Studio" meta-panel door, the
+ * "Project surfaces" rail) died with the dashboard purge (`dcf7018` deleted
+ * HomePlanner + RailDrawer as dead code) and the specs stayed red for a week
+ * — which is exactly how a kept gate turns into noise nobody reads.
  *
- * It also pins the Zero-Chrome law from `docs/GOLD-STANDARD-2026.md`: the
- * surface rail must not appear over the drawing.
+ * The law this spec pins TODAY:
+ *   - /home lands the operator on their newest project's canvas (redirect,
+ *     never a card list);
+ *   - the command palette (Ctrl+K) is the ONLY inbound door to the records
+ *     surfaces and the studios — including /growth-studio/[id], which once
+ *     shipped with no inbound link at all because Next.js reaches a page.tsx
+ *     by filesystem (`scripts/check-route-reachability.mjs` proves an href
+ *     exists; only a browser proves the operator can walk it);
+ *   - the records surfaces carry the "Project records navigation" rail for
+ *     moving between them, with aria-current marking where you are;
+ *   - Zero-Chrome: no records rail ever renders over the drawing.
  */
 
 /** Console errors that are environmental, not the page's fault. */
@@ -40,8 +46,24 @@ function watchConsole(page: Page) {
   return errors;
 }
 
-test.describe("Project surfaces are reachable by clicking", () => {
-  test("home to canvas to records to the growth studio, and back", async ({
+/** The records nav — the inter-surface rail ProjectUtilitySurface renders. */
+const RECORDS_RAIL = "Project records navigation";
+
+async function openPalette(page: Page) {
+  // The Ctrl+K handler lives on the studio's client bundle — wait for the
+  // studio itself before summoning, or the keystroke lands on a page whose
+  // listener is not attached yet.
+  await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.keyboard.press("Control+k");
+  await expect(page.getByTestId("studio-command-palette")).toBeVisible({
+    timeout: 10_000,
+  });
+}
+
+test.describe("Project records + studios are reachable by clicking", () => {
+  test("home lands on the canvas; the palette reaches outputs and the growth studio; back", async ({
     page,
     request,
   }) => {
@@ -54,39 +76,32 @@ test.describe("Project surfaces are reachable by clicking", () => {
     await seedElevationGarden(request, projectId);
     const errors = watchConsole(page);
 
-    // 1. The operator dashboard lists the project, and the card opens the canvas.
-    await page.goto("/home");
-    const card = page.locator(`a[href="/projects/${projectId}"]`).first();
-    await expect(card).toBeVisible({ timeout: 20_000 });
-    await card.click();
-    await expect(page).toHaveURL(new RegExp(`/projects/${projectId}`), {
+    // 1. /home IS a redirect to the newest project's canvas — there is no
+    //    separate pre-canvas page to list cards any more.
+    await page.goto("/home", { waitUntil: "domcontentloaded" });
+    await page.waitForURL(new RegExp(`/projects/${projectId}`), {
       timeout: 30_000,
     });
 
-    // 2. Zero-Chrome: the rail must never render over the drawing.
+    // 2. Zero-Chrome: no records rail over the drawing.
     await expect(
-      page.getByRole("navigation", { name: "Project surfaces" }),
+      page.getByRole("navigation", { name: RECORDS_RAIL }),
     ).toHaveCount(0);
 
-    // 3. The canvas door into the records area lives in the Studio meta panel:
-    //    open it, then follow Outputs. (`webgl/**` is owned elsewhere, so this
-    //    spec pins the existing door rather than moving it.)
-    await page.getByRole("button", { name: "Studio", exact: true }).click();
-    const outputs = page
-      .locator(`a[href="/projects/${projectId}/outputs"]`)
-      .first();
-    await expect(outputs).toBeVisible({ timeout: 30_000 });
-    await outputs.click();
+    // 3. The command palette is the only door into the records: take it to
+    //    Outputs.
+    await openPalette(page);
+    await page.getByTestId("command-records-outputs").click();
     await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/outputs`), {
       timeout: 30_000,
     });
 
-    // 4. Every project surface is offered from there.
-    const rail = page.getByRole("navigation", { name: "Project surfaces" });
+    // 4. Every record is offered from there, and the rail marks where you
+    //    are. The studios are deliberately NOT in this rail — the palette is
+    //    their only inbound link.
+    const rail = page.getByRole("navigation", { name: RECORDS_RAIL });
     await expect(rail).toBeVisible({ timeout: 20_000 });
     for (const label of [
-      "Growth studio",
-      "Subsurface studio",
       "Outputs",
       "Audit",
       "Carbon",
@@ -95,14 +110,24 @@ test.describe("Project surfaces are reachable by clicking", () => {
     ]) {
       await expect(rail.getByRole("link", { name: label })).toBeVisible();
     }
+    await expect(rail.getByRole("link", { name: "Growth studio" })).toHaveCount(
+      0,
+    );
     await expect(rail.getByRole("link", { name: "Outputs" })).toHaveAttribute(
       "aria-current",
       "page",
     );
 
-    // 5. The growth studio — the route that had no inbound link at all — opens
-    //    and renders its own chrome.
-    await rail.getByRole("link", { name: "Growth studio" }).click();
+    // 5. Back to the drawing, then the palette door to the growth studio —
+    //    the route that once had no inbound link at all.
+    await page.goto(`/projects/${projectId}`, {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
+      timeout: 30_000,
+    });
+    await openPalette(page);
+    await page.getByTestId("command-records-growth-studio").click();
     await expect(page).toHaveURL(new RegExp(`/growth-studio/${projectId}`), {
       timeout: 30_000,
     });
@@ -123,46 +148,13 @@ test.describe("Project surfaces are reachable by clicking", () => {
       timeout: 30_000,
     });
 
-    expect(errors, `console errors during the walk:\n${errors.join("\n")}`).toEqual(
-      [],
-    );
+    expect(
+      errors,
+      `console errors during the walk:\n${errors.join("\n")}`,
+    ).toEqual([]);
   });
 
-  test("the dashboard card offers a shallow door into the records area", async ({
-    page,
-    request,
-  }) => {
-    const address = "E2E Surface Rail Card, 9 Reach St, Melbourne VIC 3000";
-    const { projectId } = await createAddressProject(request, {
-      address,
-      seedCanvas: true,
-    });
-    const errors = watchConsole(page);
-
-    await page.goto("/home", { waitUntil: "domcontentloaded" });
-    await expect(
-      page.getByRole("region", { name: "Projects register" }),
-    ).toBeVisible({ timeout: 20_000 });
-    const records = page.locator(`a[href="/projects/${projectId}/outputs"]`);
-    await expect(records).toHaveCount(1, { timeout: 20_000 });
-    await Promise.all([
-      page.waitForURL(new RegExp(`/projects/${projectId}/outputs`), {
-        timeout: 30_000,
-      }),
-      records.click(),
-    ]);
-    await expect(
-      page
-        .getByRole("navigation", { name: "Project surfaces" })
-        .getByRole("link", { name: "Growth studio" }),
-    ).toBeVisible({ timeout: 20_000 });
-
-    expect(errors, `console errors during the walk:\n${errors.join("\n")}`).toEqual(
-      [],
-    );
-  });
-
-  test("the rail reaches the audit surface and marks where you are", async ({
+  test("the records rail reaches audit and marks where you are", async ({
     page,
     request,
   }) => {
@@ -173,13 +165,8 @@ test.describe("Project surfaces are reachable by clicking", () => {
     const errors = watchConsole(page);
 
     await page.goto(`/projects/${projectId}/recordings`);
-    const rail = page.getByRole("navigation", { name: "Project surfaces" });
+    const rail = page.getByRole("navigation", { name: RECORDS_RAIL });
     await expect(rail).toBeVisible({ timeout: 20_000 });
-
-    // The pipeline progress screen's hero entry point lives on this surface.
-    await expect(
-      page.getByRole("link", { name: "Follow pipeline progress" }),
-    ).toBeVisible();
 
     await rail.getByRole("link", { name: "Audit" }).click();
     await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/audit`), {
@@ -189,12 +176,14 @@ test.describe("Project surfaces are reachable by clicking", () => {
       timeout: 20_000,
     });
     await expect(
-      page.getByRole("navigation", { name: "Project surfaces" })
+      page
+        .getByRole("navigation", { name: RECORDS_RAIL })
         .getByRole("link", { name: "Audit" }),
     ).toHaveAttribute("aria-current", "page");
 
-    expect(errors, `console errors during the walk:\n${errors.join("\n")}`).toEqual(
-      [],
-    );
+    expect(
+      errors,
+      `console errors during the walk:\n${errors.join("\n")}`,
+    ).toEqual([]);
   });
 });

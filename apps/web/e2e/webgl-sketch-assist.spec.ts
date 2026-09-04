@@ -25,7 +25,10 @@ test.describe("WebGL sketch assist + Tidy Z-routing", () => {
     page,
     request,
   }) => {
-    test.setTimeout(240_000);
+    // 240s locally; 600s in CI — the stroke capture + HUD cycle is
+    // assertion-green but wall-clock-slow on contended software-GL runners
+    // (same economics as the collision gate's CI budget).
+    test.setTimeout(process.env.CI ? 600_000 : 240_000);
     const errors: string[] = [];
     page.on("console", (msg: ConsoleMessage) => {
       if (msg.type() === "error") errors.push(msg.text().slice(0, 300));

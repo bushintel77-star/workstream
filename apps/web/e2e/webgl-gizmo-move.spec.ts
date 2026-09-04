@@ -86,28 +86,20 @@ test.describe("WebGL placement gizmo (P1 spatial manipulator)", () => {
     const cy = box!.y + box!.height / 2;
     await page.mouse.click(cx, cy);
 
-    // Manipulator chips mount in the inspector; Move (translate) is default.
-    const move = page.getByTestId("gizmo-move");
-    const rotate = page.getByTestId("gizmo-rotate");
-    await expect(move).toBeVisible({ timeout: 8_000 });
-    await expect(rotate).toBeVisible();
-    await expect(move).toHaveAttribute("aria-pressed", "true");
-
-    // Toggle Rotate.
-    await rotate.click();
-    await expect(rotate).toHaveAttribute("aria-pressed", "true");
-    await expect(move).toHaveAttribute("aria-pressed", "false");
-
-    // Back to Move, then drag the gizmo handle across the board.
-    await move.click();
+    // The manipulator auto-arms on selection (store gizmoMode defaults to
+    // "translate") and renders as SCENE-side TransformControls — the old
+    // inspector chips (gizmo-move / gizmo-rotate) died with the zero-chrome
+    // purge, so the honest observable here is the original point of the
+    // probe: selecting a placement and dragging it produces no fatal errors
+    // and the studio stays alive.
     await page.mouse.move(cx, cy);
     await page.mouse.down();
     await page.mouse.move(cx + 120, cy + 60, { steps: 8 });
     await page.mouse.up();
     await page.waitForTimeout(600);
 
-    // Selection + gizmo survive the drag; no fatal console errors.
-    await expect(rotate).toBeVisible();
+    // Studio still mounted and interactive after the drag; no fatal errors.
+    await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible();
     const fatal = errors.filter(
       (e) =>
         e.includes("Maximum update depth") ||

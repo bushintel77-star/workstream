@@ -5,7 +5,7 @@ import { createAddressProject } from "./helpers";
  * Split View e2e — the dual-screen workflow (locked plan | live 3D, linked
  * cameras) inside the one studio.
  *
- *   1. The rail Split tool toggles the lens: TWO webgl-studio canvases.
+ *   1. The Split command toggles the lens: TWO webgl-studio canvases.
  *   2. Both halves render (PLAN·CAD and SKETCH·3D label chips visible).
  *   3. The shared camera links: a drag on the LEFT (locked plan) half moves
  *      the rig — verified via the studio stats tilt readout changing... the
@@ -14,6 +14,10 @@ import { createAddressProject } from "./helpers";
  *      we assert the drag produced no errors and the split persists.
  *   4. Toggling off returns to ONE canvas.
  *   5. No fatal console errors.
+ *
+ * Entry is the COMMAND PALETTE ("Split plan | 3D", Ctrl+K): the "▸ Split"
+ * rail button this spec originally clicked was removed with the legacy
+ * canvas chrome (58bc9f6) and the split tool now lives in the palette.
  */
 test.describe("WebGL split view (plan | 3D)", () => {
   // Two full WebGL canvases (context + shader compile + EffectComposer)
@@ -33,15 +37,20 @@ test.describe("WebGL split view (plan | 3D)", () => {
       address: "1 Split View Street, Melbourne VIC 3000",
     });
 
-    await page.goto(`/projects/${projectId}?webgl=1`, { waitUntil: "networkidle" });
+    await page.goto(`/projects/${projectId}`, { waitUntil: "networkidle" });
     await page.waitForTimeout(4000);
     await expect(page.locator('[data-testid="webgl-studio"]')).toBeVisible({
       timeout: 10_000,
     });
     expect(await page.locator('[data-testid="webgl-studio"]').count()).toBe(1);
 
-    // 1. Toggle Split on the rail.
-    await page.getByRole("button", { name: "▸ Split" }).click();
+    // 1. Toggle Split from the command palette.
+    await page.keyboard.press("Control+k");
+    await expect(page.getByTestId("studio-command-palette")).toBeVisible({
+      timeout: 10_000,
+    });
+    await page.fill('[data-testid="command-palette-input"]', "split");
+    await page.getByRole("option", { name: /Split plan \| 3D/ }).first().click();
     await page.waitForTimeout(4000); // both dynamic canvases mount + compile
     const halves = page.locator('[data-testid="webgl-studio"]');
     await expect(halves.nth(1)).toBeVisible({ timeout: 15_000 });
@@ -65,8 +74,13 @@ test.describe("WebGL split view (plan | 3D)", () => {
     expect(await halves.count()).toBe(2);
     await expect(halves.nth(1)).toBeVisible();
 
-    // 4. Toggle off — one canvas again.
-    await page.getByRole("button", { name: "▾ Split" }).click();
+    // 4. Toggle off — palette again, one canvas back.
+    await page.keyboard.press("Control+k");
+    await expect(page.getByTestId("studio-command-palette")).toBeVisible({
+      timeout: 10_000,
+    });
+    await page.fill('[data-testid="command-palette-input"]', "split");
+    await page.getByRole("option", { name: /Split plan \| 3D/ }).first().click();
     await page.waitForTimeout(1500);
     expect(await page.locator('[data-testid="webgl-studio"]').count()).toBe(1);
 

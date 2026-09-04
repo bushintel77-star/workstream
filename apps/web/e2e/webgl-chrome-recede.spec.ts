@@ -34,12 +34,22 @@ test.describe("Motion-aware chrome recede", () => {
     await expect(chromeLayer).toBeVisible({ timeout: 15_000 });
     await expect(page.locator("body")).not.toHaveClass(/gs-chrome-receding/);
 
-    // Hold — class lands and the chrome layer composites at the recede value.
+    // Hold — class lands and the chrome layer composites at the recede token
+    // value. Asserted AGAINST THE TOKEN (--ws-op-recede), not a copied
+    // literal: the token was tuned (0.55 → 0.28) after this spec was written
+    // and the stale literal kept the gate red through no product fault.
+    const recedeToken = await page.evaluate(() =>
+      getComputedStyle(document.body).getPropertyValue("--ws-op-recede").trim(),
+    );
+    expect(recedeToken, "--ws-op-recede must be defined in tokens.css").not.toBe("");
+
     await page.keyboard.down("h");
     await expect(page.locator("body")).toHaveClass(/gs-chrome-receding/);
     await expect
-      .poll(async () => chromeLayer.evaluate((el) => getComputedStyle(el).opacity))
-      .toBe("0.55");
+      .poll(async () =>
+        chromeLayer.evaluate((el) => parseFloat(getComputedStyle(el).opacity)),
+      )
+      .toBeCloseTo(parseFloat(recedeToken), 5);
 
     // Release — full opaque paper returns.
     await page.keyboard.up("h");
