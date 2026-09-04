@@ -1,10 +1,19 @@
 /* Landscape Canvas v2 — Tool Ribbon (handoff §5).
  * Floating vertical control stick, vertically centered on the Y-axis,
  * detached from the glass edge as an independent mechanical unit.
- * Three widths: RAIL 56px (pen down), STANDARD 88px (icon-only rest), NAMED 236px (hover/CmdK).
- * Opaque stone charcoal, 4px milled radius on all four corners, mechanically depressed active state. */
+ * TWO widths: RAIL 56px (pen down, subdued) and STANDARD 88px (rest).
+ * The 2026-09-04 vision pass removed the hover/CmdK 236px NAMED expansion:
+ * a width change under the cursor reflowed the operator's target row —
+ * names live in tile tooltips + tool flyouts now.
+ *
+ * Depth model (user directive: "layer the charcoal with several tints of
+ * dark grey so it gives the UI depth"): the ribbon is a RECESSED tray in
+ * --ws-panel-sunken; each tile is a RAISED key in --ws-panel-raised with a
+ * --ws-line edge and a shadow tier; the active tool is a depressed switch
+ * in --ws-active with --ws-shadow-inset. Every tile is a real button —
+ * hover lifts, press sinks — never a printed strip. */
 
-/* ---- Ribbon container — floating, vertically centered ---- */
+/* ---- Ribbon container — recessed tray, floating, vertically centered ---- */
 .ribbon {
   position: absolute;
   top: 50%;
@@ -13,13 +22,13 @@
   flex-direction: column;
   padding: var(--ws-ribbon-padding);
   border-radius: var(--ws-radius-3);
-  background: var(--ws-panel);
+  background: var(--ws-panel-sunken);
   border: 1px solid var(--ws-line);
-  box-shadow: var(--ws-shadow-2);
+  box-shadow: var(--ws-shadow-2), var(--ws-shadow-inset);
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
   font-family: var(--ws-font-ui);
-  /* 50ms CSS transform — instant, no easing bounce, no WebGL loop */
+  /* 50ms linear only — instant snap, no easing, no WebGL loop */
   transition: width 50ms linear, opacity 50ms linear;
 }
 
@@ -32,7 +41,7 @@
   left: 24px;
 }
 
-/* ---- Three widths ---- */
+/* ---- Two widths ---- */
 .ribbonStandard {
   width: var(--ws-ribbon-width);
 }
@@ -42,59 +51,9 @@
   opacity: var(--ws-op-subdued);
 }
 
-.ribbonNamed {
-  width: var(--ws-ribbon-width-named);
-}
-
-/* ---- Header ---- */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 0 6px;
-}
-
-.headerLabel {
-  font-family: var(--ws-font-tech);
-  font-size: var(--ws-text-micro);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ws-ink-muted);
-}
-
-/* ---- Group pips (3 dots under header) ---- */
-.groupPips {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 0 0 8px;
-}
-
-.pip {
-  width: 4px;
-  height: 4px;
-  border-radius: var(--ws-radius-pill);
-  background: var(--ws-ink-muted);
-}
-
-.pipActive {
-  background: var(--ws-active);
-  box-shadow: 0 0 6px var(--ws-active);
-}
-
 /* ---- Chassis gap between groups (physical gap, not a drawn line) ---- */
 .chassisGap {
   height: 8px;
-  flex-shrink: 0;
-}
-
-/* ---- Group divider (retained for compat, chassis gap preferred) ---- */
-.groupDivider {
-  height: 1px;
-  background: var(--ws-line);
-  margin: 6px 2px 5px;
   flex-shrink: 0;
 }
 
@@ -107,7 +66,7 @@
   position: relative;
 }
 
-/* ---- Group header ---- */
+/* ---- Group header — rail-width active-group marker only ---- */
 .groupHeader {
   font-family: var(--ws-font-tech);
   font-size: var(--ws-text-micro);
@@ -193,7 +152,7 @@
   padding: 3px 0 4px;
 }
 
-/* ---- Tool tile ---- */
+/* ---- Tool tile — a raised mechanical key on the sunken tray ---- */
 .tile {
   display: flex;
   flex-direction: column;
@@ -202,27 +161,47 @@
   gap: 3px;
   width: 100%;
   /* Height budget (4.3/4.4): 3px 0 2px keeps the CAD pack 74px clear of
-   * the bottom on 1194×834. Labels stay at the 9.5px floor — never below. */
+   * the bottom on 1194×834. */
   padding: 3px 0 2px;
   border-radius: var(--ws-radius-2);
-  background: transparent;
-  border: none;
+  /* Raised key: one charcoal tint ABOVE the sunken tray, edged and lit. */
+  background: var(--ws-panel-raised);
+  border: 1px solid var(--ws-line);
+  box-shadow: var(--ws-shadow-1);
   cursor: pointer;
   color: var(--ws-ink-secondary);
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background 50ms linear, border-color 50ms linear,
+    color 50ms linear, box-shadow 50ms linear, transform 50ms linear;
   user-select: none;
   position: relative;
   overflow: visible;
 }
 
+/* Hover — the key lifts to meet the hand: edge lights, shadow deepens. */
 .tile:hover {
-  background: var(--ws-active-quiet);
+  background: var(--ws-panel-raised);
+  border-color: var(--ws-line-strong);
   color: var(--ws-ink);
+  box-shadow: var(--ws-shadow-2);
+}
+
+/* Press — the key sinks into the tray: 1px travel, inner shadow. */
+.tile:active {
+  transform: translateY(1px);
+  box-shadow: var(--ws-shadow-inset);
+}
+
+/* Keyboard parity — the focus ring is the same stark outline as the
+ * active switch, so keyboard operators see the same button sighted ones do. */
+.tile:focus-visible {
+  outline: 2px solid var(--ws-focus);
+  outline-offset: 1px;
 }
 
 /* ---- Active tile — stark white fill, dark ink, inset shadow (depressed switch) ---- */
 .tileActive {
   background: var(--ws-active);
+  border-color: var(--ws-active);
   color: var(--ws-active-ink);
   box-shadow: var(--ws-shadow-inset);
   border-radius: var(--ws-radius-2);
@@ -230,7 +209,13 @@
 
 .tileActive:hover {
   background: var(--ws-active);
+  border-color: var(--ws-active);
   color: var(--ws-active-ink);
+  box-shadow: var(--ws-shadow-inset);
+}
+
+.tileActive:active {
+  transform: none;
 }
 
 /* ---- Rail width tiles — glyph-only, 44px tall (accommodates 28px glyph) ---- */
@@ -262,32 +247,6 @@
   display: block;
 }
 
-/* ---- Tile label (standard + named widths) ---- */
-.tileLabel {
-  font-family: var(--ws-font-tech);
-  font-size: var(--ws-text-micro);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-/* ---- Tile hotkey (named width only) ---- */
-.tileHotkey {
-  font-family: var(--ws-font-tech);
-  font-size: var(--ws-text-micro);
-  font-weight: 500;
-  color: var(--ws-ink-muted);
-  line-height: 1;
-  margin-left: auto;
-}
-
-.tileActive .tileHotkey {
-  color: var(--ws-active-ink);
-  opacity: var(--ws-op-subdued);
-}
-
 /* ---- Corner triangle — active tool with a flyout (§5.1) ---- */
 .tileCornerTriangle {
   position: absolute;
@@ -309,38 +268,4 @@
 
 .utilityRow .tile {
   flex: 1;
-}
-
-/* ---- Named width — rows become horizontal with glyph + name + hotkey ---- */
-.ribbonNamed .tile {
-  flex-direction: row;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 7px 8px;
-}
-
-.ribbonNamed .tileGlyph {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
-
-.ribbonNamed .tileLabel {
-  font-family: var(--ws-font-ui);
-  font-size: var(--ws-text-xs);
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.ribbonNamed .tileCompact {
-  flex-direction: row;
-  justify-content: flex-start;
-  height: auto;
-  padding: 7px 8px;
-}
-
-/* ---- Pen-down quiet state (§5.5) — opacity only, never position ---- */
-.ribbonRail {
-  opacity: var(--ws-op-subdued);
 }

@@ -1,21 +1,21 @@
 /**
  * Ribbon expansion statechart (XState v5).
  *
- * Strict binary toggle: the ribbon is either COLLAPSED (88px icon-only) or
- * DEPLOYED (236px with labels + hotkeys). No intermediate states, no elastic
- * bounce, no easing curves. The 50ms CSS transform handles the visual snap;
- * this machine owns the boolean state only.
+ * TWO states, not three: the ribbon is an icon rail at rest (88px) and
+ * recedes (56px, subdued) while the stylus is down. It no longer expands
+ * into a labelled panel on hover — the 2026-09-04 vision pass judged the
+ * full-panel expansion poor UX (the operator's target jumps as the row
+ * under the cursor reflows). Tool names live in the tile tooltips and the
+ * tool flyouts; the rail never reflows under the hand.
  *
  * Transitions are instant — the statechart exists to enforce that no
- * half-deployed state can ever be observed, and to centralise the trigger
- * logic (hover, Cmd+K, pen-down collapse) in one auditable place.
- *
- * Binding: the user's DOM-to-WebGL Animation Mechanics spec.
+ * intermediate state can ever be observed. The 50ms CSS opacity handles
+ * the visual snap; this machine owns the boolean state only.
  */
 
 import { setup } from "xstate";
 
-export type RibbonWidth = "rail" | "collapsed" | "deployed";
+export type RibbonWidth = "rail" | "collapsed";
 
 export interface RibbonMachineContext {
   /** The resolved width the ribbon should render at. */
@@ -23,9 +23,6 @@ export interface RibbonMachineContext {
 }
 
 export type RibbonMachineEvent =
-  | { type: "HOVER_ENTER" }
-  | { type: "HOVER_LEAVE" }
-  | { type: "CMD_K_TOGGLE" }
   | { type: "PEN_DOWN" }
   | { type: "PEN_UP" };
 
@@ -40,25 +37,14 @@ export const ribbonMachine = setup({
   initial: "collapsed",
 
   states: {
-    /** 88px icon-only resting state. */
+    /** 88px icon rail at rest. */
     collapsed: {
       on: {
-        HOVER_ENTER: { target: "deployed" },
-        CMD_K_TOGGLE: { target: "deployed" },
         PEN_DOWN: { target: "rail" },
       },
     },
 
-    /** 236px expanded with labels + hotkeys. */
-    deployed: {
-      on: {
-        HOVER_LEAVE: { target: "collapsed" },
-        CMD_K_TOGGLE: { target: "collapsed" },
-        PEN_DOWN: { target: "rail" },
-      },
-    },
-
-    /** 56px rail while the stylus is down. Pen-up returns to collapsed. */
+    /** 56px subdued rail while the stylus is down. Pen-up returns to rest. */
     rail: {
       on: {
         PEN_UP: { target: "collapsed" },
@@ -70,6 +56,5 @@ export const ribbonMachine = setup({
 /** Map a statechart state name to the CSS width class key. */
 export function widthFromState(stateValue: string): RibbonWidth {
   if (stateValue === "rail") return "rail";
-  if (stateValue === "deployed") return "deployed";
   return "collapsed";
 }

@@ -18,7 +18,7 @@
  * Active tool: stark white fill, dark ink, inset shadow (depressed switch).
  */
 
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useMachine } from "@xstate/react";
 import { useStudioStore, type ToolId } from "./studioStore";
 import { isToolLocked, toolLockReason } from "./chromeContract";
@@ -249,16 +249,18 @@ export function ToolRibbon() {
   const setActiveTool = useStudioStore((s) => s.setActiveTool);
   const handedness = useStudioStore((s) => s.handedness);
   const penDown = useStudioStore((s) => s.penDown);
-  const setRibbonDwellOpen = useStudioStore((s) => s.setRibbonDwellOpen);
   // Phase L.5 — GRADE + MEASURE lock in 3D per the chrome contract. The
   // contract is read per-group in the render below (isLocked + lockReason),
   // not pre-computed here, so the lock state is driven by the contract data
   // table — not scattered conditionals.
   const cameraPreset = useStudioStore((s) => s.cameraPreset);
 
-  // XState v5 binary toggle: COLLAPSED ↔ DEPLOYED, with RAIL for pen-down.
-  // No dwell timer, no easing — the statechart enforces instant binary
-  // transitions, and the 50ms CSS transform handles the visual snap.
+  // XState v5: COLLAPSED (icon rail at rest) ↔ RAIL (pen-down recede).
+  // The 2026-09-04 vision pass removed the hover/CmdK DEPLOYED expansion —
+  // a width change under the cursor reflowed the operator's target row.
+  // Names live in tile tooltips + the tool flyouts; the rail never
+  // reflows under the hand. No dwell timer, no easing — the statechart
+  // enforces instant binary transitions, 50ms CSS handles the snap.
   const [state, send] = useMachine(ribbonMachine);
 
   // Sync penDown from the store into the machine
@@ -266,44 +268,15 @@ export function ToolRibbon() {
     send({ type: penDown ? "PEN_DOWN" : "PEN_UP" });
   }, [penDown, send]);
 
-  // Cmd+K toggles deployment
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        send({ type: "CMD_K_TOGGLE" });
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [send]);
-
-  const onPointerEnter = useCallback(() => {
-    send({ type: "HOVER_ENTER" });
-  }, [send]);
-
-  const onPointerLeave = useCallback(() => {
-    send({ type: "HOVER_LEAVE" });
-  }, [send]);
-
-  // Keep the store in sync for components that read ribbonDwellOpen
-  useEffect(() => {
-    setRibbonDwellOpen(state.matches("deployed"));
-  }, [state, setRibbonDwellOpen]);
-
   // Width from the statechart state — the single source of truth
   const width: RibbonWidth = widthFromState(state.value as string);
 
   const isLeft = handedness === "LEFT";
   const sideClass = isLeft ? styles.ribbonLeft : styles.ribbonRight;
   const widthClass =
-    width === "rail"
-      ? styles.ribbonRail
-      : width === "deployed"
-        ? styles.ribbonNamed
-        : styles.ribbonStandard;
+    width === "rail" ? styles.ribbonRail : styles.ribbonStandard;
 
-  // Find which group contains the active tool (for accent header)
+  // Find which group contains the active tool (for the rail group marker)
   const activeGroupName = TOOL_GROUPS.find((g) =>
     g.tools.some((t) => t.id === activeTool),
   )?.name;
@@ -314,29 +287,10 @@ export function ToolRibbon() {
       data-testid="tool-ribbon"
       data-ribbon-width={width}
       data-handedness={handedness.toLowerCase()}
-      onPointerEnter={onPointerEnter}
-      onPointerLeave={onPointerLeave}
     >
-      {/* Header — only in deployed (expanded) width */}
-      {width === "deployed" && (
-        <div className={styles.header}>
-          <span className={styles.headerLabel}>TOOLS</span>
-        </div>
-      )}
-
-      {/* Group pips — only in deployed (expanded) width */}
-      {width === "deployed" && (
-        <div className={styles.groupPips}>
-          {TOOL_GROUPS.slice(0, 3).map((g) => (
-            <span
-              key={g.name}
-              className={`${styles.pip} ${activeGroupName === g.name ? styles.pipActive : ""}`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Tool groups — icon-only at standard/rail, labels only at named */}
+      {/* Group sections — icon rail at every width; group headers only as
+          the active-group marker in the pen-down rail. Names live in the
+          tile tooltips and the tool flyouts. */}
       {TOOL_GROUPS.map((group, gi) => {
         const locked = group.tools.some((t) => isToolLocked(t.id, cameraPreset));
         const reason = locked
@@ -350,8 +304,10 @@ export function ToolRibbon() {
             {/* Chassis gap between groups (not a drawn line) */}
             {gi > 0 && <div className={styles.chassisGap} />}
 
-            {/* Group header — only in deployed width; at rail only active group */}
-            {(width === "deployed" || (width === "rail" && activeGroupName === group.name)) && (
+            {/* Active-group marker — rail width only (the pen-down recede
+                keeps a single group tag so the operator knows where they
+                are). Group headers never reflow the rail: fixed line box. */}
+            {(width === "rail" && activeGroupName === group.name) && (
               <div
                 className={`${styles.groupHeader} ${activeGroupName === group.name ? styles.groupHeaderActive : ""} ${width === "rail" ? styles.groupHeaderRail : ""} ${locked ? styles.groupHeaderLocked : ""}`}
               >
@@ -464,13 +420,6 @@ function ToolTile({ tool, active, width, compact, disabled, onClick }: ToolTileP
       <span className={styles.tileGlyph}>
         <ToolGlyph name={tool.glyph} filled={active} />
       </span>
-      {/* Labels only in deployed (expanded) width — standard is icon-only */}
-      {width === "deployed" && (
-        <span className={styles.tileLabel}>{tool.label}</span>
-      )}
-      {width === "deployed" && tool.hotkey && (
-        <span className={styles.tileHotkey}>{tool.hotkey}</span>
-      )}
       {/* Corner triangle — active tool with a flyout (§5.1) */}
       {active && tool.hasFlyout && <span className={styles.tileCornerTriangle} />}
     </button>
