@@ -1104,6 +1104,23 @@ export interface StudioStoreState {
    *  baseWidthPx is replaced by this value for new strokes. Null = use the
    *  nib's default width. View state only. */
   brushWidthOverride: number | null;
+  /**
+   * Stroke stabilizer strength 0..1 (gap-analysis Phase 1, Trace's "smooth
+   * curves"). 0 = raw passthrough (the pre-assist behaviour). The pull-chain
+   * lives in strokeAssist.ts; this is the operator's dial. View state only.
+   */
+  strokeSmoothing: number;
+  /** Set the stabilizer strength (clamped 0..1). */
+  setStrokeSmoothing: (strength: number) => void;
+  /**
+   * Hold-to-straighten (Trace's preference of the same name): when the pen
+   * holds still ≥400ms before lift on a line-intending stroke, the stroke
+   * commits as its straight chord (snapped within 5° to a 15° increment).
+   * Curves that pause stay curves — see strokeAssist.ts. View state only.
+   */
+  holdToStraighten: boolean;
+  /** Toggle hold-to-straighten. */
+  setHoldToStraighten: (on: boolean) => void;
   /** Phase I — stroke-matching eraser mode. When true, clicking a stroke
    *  deletes it (the eraser scales to the stroke's own width, not a fixed
    *  radius). View state only. */
@@ -1866,6 +1883,8 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   activeMaterialId: null,
   // Phase I — brush width override (null = nib default); eraser off.
   brushWidthOverride: null,
+  strokeSmoothing: 0.2,
+  holdToStraighten: true,
   eraserActive: false,
   // Angle-opacity falloff — WIDE by default (the original hardcoded value;
   // canvases stay visible during fly-throughs). The operator switches to
@@ -2313,6 +2332,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       brushWidthOverride:
         px == null ? null : Math.max(0.5, Math.min(40, px)),
     }),
+  // Gap-analysis Phase 1 — stroke assist dials (strokeAssist.ts).
+  setStrokeSmoothing: (strength) =>
+    set({ strokeSmoothing: Math.max(0, Math.min(1, strength)) }),
+  setHoldToStraighten: (on) => set({ holdToStraighten: on }),
   toggleEraser: () => set((s) => ({ eraserActive: !s.eraserActive })),
   setEraserActive: (eraserActive) => set({ eraserActive }),
   eraseStrokeAt: (pct, scaleM) => {

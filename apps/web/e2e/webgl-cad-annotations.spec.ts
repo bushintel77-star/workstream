@@ -74,7 +74,7 @@ test.describe("WebGL CAD annotations (dims + measure tape)", () => {
     // the operator was still establishing. Dims are now armed by mode entry
     // (`modeArmsDims`), so the spec that tests the CAD dimension ring has to
     // actually be in CAD.
-    await page.goto(`/projects/${projectId}?webgl=1&mode=cad`, {
+    await page.goto(`/projects/${projectId}?mode=cad`, {
       // domcontentloaded (not networkidle): production keeps background
       // polling alive, so networkidle never settles there.
       waitUntil: "domcontentloaded",
@@ -92,15 +92,12 @@ test.describe("WebGL CAD annotations (dims + measure tape)", () => {
     expect(labelCount).toBeGreaterThanOrEqual(3);
     await expect(dimLabels.first()).toContainText(/ m$/);
 
-    // 2. The Dims chip toggles the working-drawing ring off and back on.
-    //
-    //    Asserted per family, not as a total count. Two controls can put a chip
-    //    on screen: this Dims instrument (the full ring — boundary AND building
-    //    F-dims) and the CAD card's Bearings control (boundary survey truth
-    //    alone, which Survey needs because `modeArmsDims` deliberately leaves
-    //    dims off there). So Dims-off clears the building dims and the ring line
-    //    work while the four boundary chips correctly stay — turning Bearings
-    //    off is what clears those, covered in webgl-communication-modes.spec.
+    // 2. The working-drawing dims toggle (command palette — the "▾ Dims"
+    //    chip this spec used to click was removed with the chrome
+    //    consolidation; the palette command is the current surface) turns
+    //    the ring off and back on. Asserted per family: the building
+    //    F-dims exist only under dimsView; boundary chips may also light
+    //    via Bearings, so only the building family is guaranteed to clear.
     const buildingLabels = page.locator(
       '[data-testid="dim-label"][data-dim-family="building"]',
     );
@@ -110,19 +107,23 @@ test.describe("WebGL CAD annotations (dims + measure tape)", () => {
     await expect(buildingLabels.first()).toBeVisible();
     await expect(boundaryLabels.first()).toBeVisible();
 
-    const dimsChip = page.getByRole("button", { name: "▾ Dims" });
-    await dimsChip.click();
+    await page.keyboard.press("Control+k");
+    const palette = page.locator('[data-testid="studio-command-palette"]');
+    await expect(palette).toBeVisible({ timeout: 5_000 });
+    await page.locator('[data-testid="command-tool-dims"]').click();
     await expect(buildingLabels).toHaveCount(0);
-    await expect(boundaryLabels.first()).toBeVisible();
-    await page.getByRole("button", { name: "▸ Dims" }).click();
+
+    await page.keyboard.press("Control+k");
+    await expect(palette).toBeVisible({ timeout: 5_000 });
+    await page.locator('[data-testid="command-tool-dims"]').click();
     await expect(buildingLabels.first()).toBeVisible();
     await expect(dimLabels.first()).toBeVisible();
 
-    // 3. Arm the measure tape and drag a line across the canvas.
-    await page.getByRole("button", { name: "▸ Measure" }).click();
-    await expect(
-      page.getByRole("button", { name: "▾ Measure" }),
-    ).toBeVisible();
+    // 3. Arm the measure tape (palette command — the "▸ Measure" chip is
+    //    gone with the same consolidation) and drag a line across the canvas.
+    await page.keyboard.press("Control+k");
+    await expect(palette).toBeVisible({ timeout: 5_000 });
+    await page.locator('[data-testid="command-tool-measure"]').click();
 
     const canvas = page.locator('[data-testid="webgl-canvas"]');
     const box = (await canvas.boundingBox())!;
@@ -133,7 +134,9 @@ test.describe("WebGL CAD annotations (dims + measure tape)", () => {
     await page.mouse.move(cx + 120, cy + 60, { steps: 8 });
     await page.mouse.up();
 
-    const readout = page.locator('[data-testid="measure-readout"]');
+    // The tape's midpoint label (drei <Html> span). Was `measure-readout`
+    // before the 2026-08 zero-chrome purge renamed it `measure-label`.
+    const readout = page.locator('[data-testid="measure-label"]');
     await expect(readout).toBeVisible({ timeout: 5_000 });
     await expect(readout).toContainText(/\d+\.\d{2} m/);
 

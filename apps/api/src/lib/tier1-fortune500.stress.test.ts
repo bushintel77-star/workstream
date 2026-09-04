@@ -13,7 +13,9 @@ const OWNER = "tier1-f500";
 const TARGET = 58410.35;
 const WRIGHTS = "36 Wrights Terrace, Prahran VIC 3181";
 
-describe("fortune-500 · costing concurrency + isolation", { timeout: 20000 }, () => {
+/* See cost-job.tier1-stress.test.ts — budgets sized for contended 2-core CI
+ * runners, where these CPU-bound repeats run ~3x their dev-machine time. */
+describe("fortune-500 · costing concurrency + isolation", { timeout: 90_000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
 
   beforeEach(async () => {
@@ -130,7 +132,7 @@ describe("fortune-500 · costing concurrency + isolation", { timeout: 20000 }, (
       }
       expect(new Set(totals).size).toBe(1);
     },
-    180_000,
+    600_000,
   );
 
   it("re-cost burst (25× sequential) on one project stays locked", async () => {

@@ -56,6 +56,8 @@ function NibPicker() {
   const setActiveNib = useStudioStore((s) => s.setActiveNib);
   const brushWidthOverride = useStudioStore((s) => s.brushWidthOverride);
   const setBrushWidthOverride = useStudioStore((s) => s.setBrushWidthOverride);
+  const strokeSmoothing = useStudioStore((s) => s.strokeSmoothing);
+  const setStrokeSmoothing = useStudioStore((s) => s.setStrokeSmoothing);
   const eraserActive = useStudioStore((s) => s.eraserActive);
   const toggleEraser = useStudioStore((s) => s.toggleEraser);
   const cameraPreset = useStudioStore((s) => s.cameraPreset);
@@ -110,6 +112,23 @@ function NibPicker() {
           screen px — mm-at-scale meaningless in 3D
         </div>
       )}
+      {/* Gap-analysis Phase 1 — stroke stabilizer (Trace's "smooth curves"):
+          the pull-chain damps hand wobble after the snap resolves the draw
+          point. 0% is raw passthrough. Hold-to-straighten (hold the pen
+          still ≥400ms before lift on a line-intending stroke) is on by
+          default and independent of this dial (studioStore.holdToStraighten). */}
+      <NumericSlider
+        label="SM"
+        min={0}
+        max={100}
+        step={5}
+        value={Math.round(strokeSmoothing * 100)}
+        onChange={(v) => setStrokeSmoothing(v / 100)}
+        unit="%"
+        decimals={0}
+        title={`Smoothing: ${Math.round(strokeSmoothing * 100)}% — damps wobble; hold the pen still before lift to straighten`}
+        testId="stroke-smoothing"
+      />
       {/* Phase I — stroke-matching eraser toggle. */}
       <button
         className={`${styles.eraserBtn} ${eraserActive ? styles.eraserBtnActive : ""}`}

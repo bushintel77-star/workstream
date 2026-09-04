@@ -50,6 +50,12 @@ import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { useStudioStore } from "./studioStore";
 import { isConvertibleStroke } from "./sketchCad";
 import {
+  stabilizePoint,
+  shouldStraighten,
+  straightenStroke,
+  type StabilizerState,
+} from "./strokeAssist";
+import {
   SketchCanvasGroup,
   worldToCanvasPct,
 } from "./SketchCanvasGroup";
@@ -208,6 +214,39 @@ export function FusedSketchLayer({
   const pointsRef = useRef<THREE.Vector3[]>([]);
   // Pen-down quiet state timeout — restores chrome 240ms after pen-up (§5.5).
   const penUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Stroke assist (gap-analysis Phase 1): the stabilizer chain state and the
+  // timestamp of the last ACCEPTED point — the gap between that and lift is
+  // the "hold" that arms straighten-on-lift.
+  const stabRef = useRef<StabilizerState>({ last: null });
+  const lastMoveAtRef = useRef(0);
+
+  /**
+   * Hold-to-straighten, applied at lift on BOTH draw paths (ground plane
+   * and canvas plane). Gated by strokeAssist.shouldStraighten: a
+   * deliberate hold (≥400ms after the last accepted point) on a
+   * line-intending stroke commits as its straight chord, snapped within 5°
+   * to a 15° increment. A curve that pauses stays a curve; a lift without
+   * a hold keeps every point. Telemetry is trimmed to match the two
+   * surviving points so per-point width scaling stays aligned.
+   */
+  const applyStraightenOnLift = useCallback(() => {
+    if (!useStudioStore.getState().holdToStraighten) return;
+    const heldMs = performance.now() - lastMoveAtRef.current;
+    const planar = pointsRef.current.map((p) => ({ x: p.x, y: p.z }));
+    if (!shouldStraighten(planar, heldMs)) return;
+    const [a, b] = straightenStroke(planar);
+    const y = pointsRef.current[0]!.y;
+    pointsRef.current = [
+      new THREE.Vector3(a.x, y, a.y),
+      new THREE.Vector3(b.x, y, b.y),
+    ];
+    if (telemetryRef.current.length >= 2) {
+      telemetryRef.current = [
+        telemetryRef.current[0]!,
+        telemetryRef.current[telemetryRef.current.length - 1]!,
+      ];
+    }
+  }, []);
   // Per-point stylus telemetry — parallel to pointsRef (same index).
   const telemetryRef = useRef<StylusTelemetry[]>([]);
   // The canvas plane the current stroke is being drawn on (null = ground).
@@ -288,6 +327,11 @@ export function FusedSketchLayer({
       // Otherwise start a new freehand stroke. Seed the first point at FLAT_Y —
       // the live-stroke renderer will drape it as the camera tilts.
       isDrawingRef.current = true;
+      // Stroke assist state (gap-analysis Phase 1): the stabilizer chain
+      // seeds fresh per stroke, and the hold clock starts now — a hold is
+      // measured from the last ACCEPTED point, so the seed counts as one.
+      stabRef.current = { last: null };
+      lastMoveAtRef.current = performance.now();
       // Pen-down quiet state — ribbon → rail, chips → 20%, dock hidden (§5.5).
       if (penUpTimerRef.current) { clearTimeout(penUpTimerRef.current); penUpTimerRef.current = null; }
       useStudioStore.getState().setPenDown(true);
@@ -332,18 +376,27 @@ export function FusedSketchLayer({
       setSnapHint(snap.kind ? snap : null);
       // Live ε-snap indicator — the stitcher's weld-node highlight.
       setHover({ x: snap.x, y: snap.z });
+
+      // Stabilizer (gap-analysis Phase 1) — the pull-chain smooths the
+      // effective draw point AFTER the snap resolves it, so snap truth and
+      // smoothness compose: the chain tracks the snapped point, not raw
+      // pointer jitter. Strength 0 is byte-for-byte today's behaviour.
+      const smoothing = useStudioStore.getState().strokeSmoothing;
+      const sm = stabilizePoint({ x: snap.x, y: snap.z }, stabRef.current, smoothing);
+
       // E·N·Z chip source (2.6) — the effective draw point in world metres.
       // Chainage is derived from the SAME stationing the ruler uses (2.1):
       // world X runs along the bottom stationing edge, so
       // chainage = stationAtPct(x / scaleM * 100, scaleM) = x.
       useStudioStore.getState().setLiveCoord({
-        x: snap.x,
-        z: snap.z,
-        chainage: stationAtPct((snap.x / scaleM) * 100, scaleM),
+        x: sm.x,
+        z: sm.y,
+        chainage: stationAtPct((sm.x / scaleM) * 100, scaleM),
       });
 
-      if (last && last.distanceTo(new THREE.Vector3(snap.x, FLAT_Y, snap.z)) < 0.15) return;
-      pointsRef.current.push(new THREE.Vector3(snap.x, FLAT_Y, snap.z));
+      if (last && last.distanceTo(new THREE.Vector3(sm.x, FLAT_Y, sm.y)) < 0.15) return;
+      pointsRef.current.push(new THREE.Vector3(sm.x, FLAT_Y, sm.y));
+      lastMoveAtRef.current = performance.now();
       const tel = telemetryFromPointer(e.nativeEvent);
       telemetryRef.current.push(tel);
       setLiveTelemetry(tel);
@@ -378,11 +431,15 @@ export function FusedSketchLayer({
     setSnapHint(null);
     setHover(null);
 
-    const worldPts = pointsRef.current;
-    if (worldPts.length < 2) {
+    if (pointsRef.current.length < 2) {
       setLivePoints([]);
       return;
     }
+    // Hold-to-straighten (strokeAssist): applied to the committed points
+    // BEFORE they are read for board-% conversion, on both draw paths.
+    applyStraightenOnLift();
+
+    const worldPts = pointsRef.current;
 
     // Convert world points back to board-% for the CanvasStroke contract.
     // This is the key to the fused system: the stroke is stored in
@@ -461,6 +518,7 @@ export function FusedSketchLayer({
     extrudeTarget,
     extrudeHeight,
     updateSketchStroke,
+    applyStraightenOnLift,
     addSketchStroke,
     scaleM,
     boardAspect,
@@ -492,6 +550,9 @@ export function FusedSketchLayer({
       // For canvas-plane strokes, the live point is the world point itself
       // (the canvas transform is applied by the parent group on render).
       pointsRef.current = [worldPoint];
+      // Stroke assist state seeds fresh per stroke (same as ground path).
+      stabRef.current = { last: null };
+      lastMoveAtRef.current = performance.now();
       telemetryRef.current = [NEUTRAL_TELEMETRY];
       setLiveTelemetry(telemetryRef.current[0]!);
       setLivePoints(pointsRef.current);
@@ -502,9 +563,18 @@ export function FusedSketchLayer({
   const onCanvasPointerMove = useCallback(
     (canvasId: string, worldPoint: THREE.Vector3) => {
       if (!sketchMode || !isDrawingRef.current) return;
+      // Stabilizer — same pull-chain as the ground path, in world space.
+      const smoothing = useStudioStore.getState().strokeSmoothing;
+      const sm = stabilizePoint(
+        { x: worldPoint.x, y: worldPoint.z },
+        stabRef.current,
+        smoothing,
+      );
+      const stabilized = new THREE.Vector3(sm.x, worldPoint.y, sm.y);
       const last = pointsRef.current[pointsRef.current.length - 1];
-      if (last && last.distanceTo(worldPoint) < 0.15) return;
-      pointsRef.current.push(worldPoint);
+      if (last && last.distanceTo(stabilized) < 0.15) return;
+      pointsRef.current.push(stabilized);
+      lastMoveAtRef.current = performance.now();
       setLivePoints([...pointsRef.current]);
     },
     [sketchMode],
@@ -522,11 +592,15 @@ export function FusedSketchLayer({
       setSnapHint(null);
       setHover(null);
 
-      const worldPts = pointsRef.current;
-      if (worldPts.length < 2) {
+      if (pointsRef.current.length < 2) {
         setLivePoints([]);
         return;
       }
+      // Hold-to-straighten — same gate as the ground-plane commit above.
+      // Runs BEFORE worldPts is read: it replaces pointsRef wholesale.
+      applyStraightenOnLift();
+
+      const worldPts = pointsRef.current;
 
       // Localize world points to the canvas's board-% space.
       const canvas = sketchCanvases.find((c) => c.id === canvasId);
@@ -566,6 +640,7 @@ export function FusedSketchLayer({
       sketchCanvases,
       scaleM,
       boardAspect,
+      applyStraightenOnLift,
       activeNib,
       activeMaterialId,
       brushWidthOverride,

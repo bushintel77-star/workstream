@@ -10,7 +10,10 @@ const WRIGHTS = "36 Wrights Terrace, Prahran VIC 3181";
 const CARLTON = "3 Test St, Carlton VIC 3053";
 const TARGET = TIER1_WRIGHTS_SAVINGS.target_total_inc_gst;
 
-describe("fortune-500 · portal quote honesty", () => {
+/* Each case drives the full survey→design→cost pipeline before the quote
+ * read — correctness, not latency. Budgeted for contended 2-core CI runners
+ * where the pipeline runs ~3x its dev-machine time (2026-09-04). */
+describe("fortune-500 · portal quote honesty", { timeout: 60_000 }, () => {
   let app: Awaited<ReturnType<typeof buildTestApp>>["app"];
 
   afterEach(async () => {
@@ -72,7 +75,7 @@ describe("fortune-500 · portal quote honesty", () => {
     expect(body.tier1).toEqual(TIER1_WRIGHTS_SAVINGS);
     expect(body.costing?.scenario).toBe("standard");
     expect(body.costing?.total).toBe(TARGET);
-  }, 20000);
+  });
 
   it("Carlton portal quote must not expose Tier-1 savings", async () => {
     const projectId = await pipelineToCosting(CARLTON);
@@ -93,7 +96,7 @@ describe("fortune-500 · portal quote honesty", () => {
     };
     expect(body.tier1).toBeNull();
     expect(body.costing?.total).not.toBe(TARGET);
-  }, 20000);
+  });
 
   it("deposit-scope token cannot read quote (scope isolation)", async () => {
     const projectId = await pipelineToCosting(WRIGHTS);
@@ -108,7 +111,7 @@ describe("fortune-500 · portal quote honesty", () => {
       url: `/portal/quote/${token}`,
     });
     expect(quote.statusCode).toBe(403);
-  }, 20000);
+  });
 
   it("tampered / empty tokens are rejected", async () => {
     ({ app } = await buildTestApp());

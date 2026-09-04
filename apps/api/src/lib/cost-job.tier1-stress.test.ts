@@ -18,7 +18,13 @@ const WRIGHTS_VARIANTS = [
   "WRIGHTS TERRACE, PRAHRAN",
 ];
 
-describe("tier-1 stress · costing pipeline", { timeout: 20000 }, () => {
+/* Timeout sized for CI, not dev hardware: these suites are
+ * correctness-under-repetition checks (identical lock across repeats), not
+ * latency checks. On 2-core CI runners vitest runs every suite
+ * concurrently, so the CPU-bound loops take ~3x their dev-machine wall
+ * time and the old 20s describe budget timed out on slow runners while the
+ * assertions themselves were green (2026-09-04, twice). */
+describe("tier-1 stress · costing pipeline", { timeout: 90_000 }, () => {
   let store: ReturnType<typeof createMemoryStore>;
 
   beforeEach(async () => {
@@ -95,7 +101,7 @@ describe("tier-1 stress · costing pipeline", { timeout: 20000 }, () => {
     },
     /* Address-keyed title search adds a live WFS round-trip per survey —
      * 15 full pipelines legitimately exceed the old 60s budget. */
-    180_000,
+    600_000,
   );
 
   it("re-costing the same project stays on the workbook lock", async () => {
