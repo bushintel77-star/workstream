@@ -149,6 +149,13 @@ export const CanvasStrokeSchema = z.object({
   points: z.array(CanvasStrokePointSchema),
   color: z.string().default("#ff2ef6"),
   width_px: z.number().positive().default(2),
+  /**
+   * Stroke opacity (0–1) the operator set on the brush widget when this
+   * stroke was drawn — the same per-stroke stamp `width_px` gets. Absent =
+   * the nib's own base opacity (nibs.ts), which every pre-existing stroke
+   * keeps rendering with.
+   */
+  opacity: z.number().min(0).max(1).optional(),
   /** The nib that drew this stroke (see NibKindSchema). Optional = legacy ink. */
   nib: NibKindSchema.optional(),
   /**

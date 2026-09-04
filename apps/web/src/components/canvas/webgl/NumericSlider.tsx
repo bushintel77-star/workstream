@@ -40,6 +40,28 @@ export interface NumericSliderProps {
   decimals?: number;
 }
 
+/**
+ * Tier-1 slider duality (§2.3): the slider answers arrow keys with `step`
+ * (×10 with shift), clamped. Pure so the duality is unit-testable. The
+ * handler takes over the arrows entirely so the shift-multiplication is
+ * consistent instead of fighting the native range behaviour.
+ */
+export function steppedValue(
+  value: number,
+  direction: 1 | -1,
+  step: number,
+  min: number,
+  max: number,
+  factor: number,
+): number {
+  const raw = value + direction * step * factor;
+  // Kill float drift (0.1 + 0.2 → 0.30000000000000004) without snapping the
+  // value onto the step grid — the current value may legitimately sit
+  // between steps (e.g. a nib's 1.5px base on a 0.5 slider).
+  const fixed = parseFloat(raw.toFixed(10));
+  return Math.max(min, Math.min(max, fixed));
+}
+
 export function NumericSlider({
   label,
   min,
@@ -109,7 +131,21 @@ export function NumericSlider({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
+        onKeyDown={(e) => {
+          const direction =
+            e.key === "ArrowRight" || e.key === "ArrowUp"
+              ? 1
+              : e.key === "ArrowLeft" || e.key === "ArrowDown"
+                ? -1
+                : 0;
+          if (direction === 0) return;
+          e.preventDefault();
+          onChange(
+            steppedValue(value, direction, step, min, max, e.shiftKey ? 10 : 1),
+          );
+        }}
         aria-label={label}
+        title={title ? `${title} — arrow keys step, Shift+arrow ×10` : undefined}
       />
       <input
         type="number"

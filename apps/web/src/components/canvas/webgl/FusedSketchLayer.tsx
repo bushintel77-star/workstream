@@ -141,6 +141,9 @@ export function FusedSketchLayer({
   const activeMaterialId = useStudioStore((s) => s.activeMaterialId);
   // Phase I — the brush width slider's value, stamped onto new strokes.
   const brushWidthOverride = useStudioStore((s) => s.brushWidthOverride);
+  // Tier-1 brush widget — the opacity dial, stamped onto new strokes the
+  // same way (nibs.ts `armedNibSpec` override / CanvasStroke.opacity).
+  const brushOpacity = useStudioStore((s) => s.brushOpacity);
   // Phase R — the standard this project is bound to. Both selections return a
   // stable reference (each is only ever replaced whole), so neither hands
   // zustand a fresh object per call.
@@ -166,11 +169,13 @@ export function FusedSketchLayer({
           ? weightMmForSignature(officeTemplate, templateBinding, activeMaterialId)
           : undefined,
         brushWidthPx: brushWidthOverride,
+        brushOpacity,
       }),
     [
       activeNib,
       activeMaterialId,
       brushWidthOverride,
+      brushOpacity,
       officeTemplate,
       templateBinding,
     ],
@@ -484,6 +489,10 @@ export function FusedSketchLayer({
       // has not chosen is what lets the material and template weights govern
       // at render (see `committedStrokeWidthPx`).
       width_px: brushWidthOverride ?? nib.baseWidthPx,
+      // Tier-1 brush widget — the opacity dial is a per-stroke choice, so it
+      // stamps here like the width does. Absent = the nib's base opacity
+      // (nibs.ts nibSpecForStroke), which existing ink keeps rendering with.
+      ...(brushOpacity != null ? { opacity: brushOpacity } : {}),
       kind: "ink",
       nib: nib.kind,
       ...(material ? { material: material.id } : {}),
@@ -526,6 +535,7 @@ export function FusedSketchLayer({
     activeNib,
     activeMaterialId,
     brushWidthOverride,
+    brushOpacity,
   ]);
 
   // ---- Canvas-plane pointer handlers (Spatial Sketching) ----

@@ -75,6 +75,12 @@ export interface NibSpec {
   bleed: number;
   /** Base stroke opacity. */
   opacity: number;
+  /**
+   * Tier-1 brush widget — the smoothing-dial default this nib arms with.
+   * The dial follows it until the operator sets SM explicitly (their choice
+   * then sticks across nib switches — studioStore.smoothingTouched).
+   */
+  defaultSmoothing: number;
   /** Width modulation range [min, max] as multiples of baseWidthPx. */
   widthScale: readonly [number, number];
   mapping: NibTelemetryMapping;
@@ -105,6 +111,9 @@ export const NIBS: Record<NibKind, NibSpec> = {
     edgeSoft: 0.45,
     bleed: 0,
     opacity: 0.85,
+    // The historical global dial default — graphite keeps it so the studio's
+    // initial damping is unchanged by the per-nib defaults landing.
+    defaultSmoothing: 0.2,
     widthScale: [0.35, 1.6],
     mapping: {
       pressureWidth: true,
@@ -127,6 +136,7 @@ export const NIBS: Record<NibKind, NibSpec> = {
     edgeSoft: 0,
     bleed: 0,
     opacity: 0.92,
+    defaultSmoothing: 0.05,
     widthScale: [1, 1],
     mapping: {
       pressureWidth: false,
@@ -149,6 +159,7 @@ export const NIBS: Record<NibKind, NibSpec> = {
     edgeSoft: 0.18,
     bleed: 0,
     opacity: 0.5,
+    defaultSmoothing: 0.25,
     widthScale: [0.75, 1.25],
     mapping: {
       pressureWidth: false,
@@ -171,6 +182,7 @@ export const NIBS: Record<NibKind, NibSpec> = {
     edgeSoft: 0,
     bleed: 0,
     opacity: 0.8,
+    defaultSmoothing: 0.1,
     widthScale: [1, 1],
     mapping: {
       pressureWidth: false,
@@ -213,6 +225,9 @@ export function armedNibSpec(opts: {
   templateWeightMm?: number;
   /** Phase I — an explicit brush width in px, which outranks both. */
   brushWidthPx?: number | null;
+  /** Tier-1 brush widget — an explicit opacity 0–1, which overrides the
+   *  nib's base opacity for the live line. */
+  brushOpacity?: number | null;
 }): NibSpec {
   const base = NIBS[opts.nib];
   const material = opts.materialId ? materialById(opts.materialId) : undefined;
@@ -226,13 +241,17 @@ export function armedNibSpec(opts: {
         : {}),
     }
     : base;
+  const withOpacity =
+    opts.brushOpacity != null
+      ? { ...styled, opacity: clamp01(opts.brushOpacity) }
+      : styled;
   return opts.brushWidthPx != null
     ? {
-      ...styled,
+      ...withOpacity,
       baseWidthPx: opts.brushWidthPx,
       weightMm: pxToWeightMm(opts.brushWidthPx),
     }
-    : styled;
+    : withOpacity;
 }
 
 /**
@@ -246,11 +265,16 @@ export function nibSpecForStroke(
   templateWeightMm?: number,
 ): NibSpec {
   if (stroke.nib) {
-    return armedNibSpec({
+    const resolved = armedNibSpec({
       nib: stroke.nib,
       materialId: stroke.material ?? null,
       ...(templateWeightMm != null ? { templateWeightMm } : {}),
     });
+    // Tier-1 brush widget — the stroke's own stamped opacity outranks the
+    // nib's base (the same precedence a stamped width_px gets).
+    return stroke.opacity != null
+      ? { ...resolved, opacity: stroke.opacity }
+      : resolved;
   }
   const widthPx = stroke.width_px ?? 2;
   return {

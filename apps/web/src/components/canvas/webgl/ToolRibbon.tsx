@@ -23,6 +23,8 @@ import { useMachine } from "@xstate/react";
 import { useStudioStore, type ToolId } from "./studioStore";
 import { isToolLocked, toolLockReason } from "./chromeContract";
 import { ribbonMachine, widthFromState, type RibbonWidth } from "./ribbonMachine";
+import { NIBS } from "./nibs";
+import { materialById } from "./materials";
 import styles from "./ToolRibbon.module.css";
 
 /* ---- tool definitions (handoff §5.1) ---- */
@@ -357,6 +359,13 @@ export function ToolRibbon() {
                 }}
               />
             ))}
+
+            {/* Tier-1 colour well — drawing media previews state on the rail
+                (Procreate/Figma pattern): the armed material's colour as a
+                filled key, click to open the palette widget. Deliberately NOT
+                a ToolId — toggling the palette must never disarm the active
+                tool. Lives in the DRAW group because it is draw media. */}
+            {group.name === "DRAW" && <ColourWellTile width={width} />}
           </div>
         );
       })}
@@ -422,6 +431,36 @@ function ToolTile({ tool, active, width, compact, disabled, onClick }: ToolTileP
       </span>
       {/* Corner triangle — active tool with a flyout (§5.1) */}
       {active && tool.hasFlyout && <span className={styles.tileCornerTriangle} />}
+    </button>
+  );
+}
+
+/* ---- colour well tile (Tier-1 widget standard §2.2) ---- */
+
+function ColourWellTile({ width }: { width: RibbonWidth }) {
+  const activeMaterialId = useStudioStore((s) => s.activeMaterialId);
+  const activeNib = useStudioStore((s) => s.activeNib);
+  const paletteOpen = useStudioStore((s) => s.paletteOpen);
+  const togglePalette = useStudioStore((s) => s.togglePalette);
+  // The well previews the armed ink: the material's colour when one is
+  // armed, otherwise the nib's own. The panel can stay closed because the
+  // rail already answers "what colour am I holding?".
+  const material = activeMaterialId ? materialById(activeMaterialId) : undefined;
+  const color = material?.color ?? NIBS[activeNib].color;
+  const label = material?.label ?? NIBS[activeNib].label;
+
+  return (
+    <button
+      className={`${styles.tile} ${paletteOpen ? styles.tileActive : ""} ${width === "rail" ? styles.tileRail : ""}`}
+      data-tool-id="colour-well"
+      data-active={paletteOpen}
+      data-testid="colour-well-tile"
+      onClick={togglePalette}
+      title={`Colour — ${label} (opens the palette; X swaps previous)`}
+    >
+      <span className={styles.tileGlyph}>
+        <span className={styles.wellColor} style={{ background: color }} />
+      </span>
     </button>
   );
 }

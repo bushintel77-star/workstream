@@ -51,6 +51,12 @@ import { createWrightsTier1Project } from "./helpers";
  * (`coord-chip` was removed 2026-09-04 — the fixed bottom-left coordinate
  * chip was replaced by the cursor-adjacent live-nib-readout, which is only
  * visible mid-stroke and is excluded by the opacity filter by design.)
+ *
+ * The Tier-1 widgets' open states (`tool-flyout`, `palette-widget`) are in
+ * this list too: an open flyout is chrome like any other, and the
+ * both-open case is exactly where two panels could pile onto one column
+ * (the palette tiers one column out when the tool flyout is open). They
+ * are absent — and skipped — at rest.
  */
 const INSTRUMENTS = [
   "bottom-chrome-stack",
@@ -62,6 +68,8 @@ const INSTRUMENTS = [
   "tool-ribbon",
   "depth-rail",
   "scale-toggle",
+  "tool-flyout",
+  "palette-widget",
 ] as const;
 
 /** The three canonical viewports the design system was composed against. */
@@ -233,6 +241,38 @@ test.describe("WebGL floating chrome — pairwise collision", () => {
               `an instrument that has left the screen collides with nothing, ` +
               `and that is not a pass`,
           );
+        }
+
+        // Tier-1 open states — in the two drawing modes, open the brush
+        // widget (PEN), then the palette widget (colour well) on top, and
+        // measure each state. The next loop iteration's goto reloads the
+        // studio, so no teardown is needed before the next mode.
+        if (mode === "sketch" || mode === "cad") {
+          await page.getByRole("button", { name: "PEN (P)" }).click();
+          await page.waitForTimeout(400); // open transition + anchor settle
+          const probeBrush = await probeChrome(page, INSTRUMENTS);
+          const brushHits = collisions(probeBrush);
+          report.push(
+            `${label} [brush open]: ${probeBrush.rects.length} instruments, ` +
+              `${brushHits.length} collisions, ${probeBrush.offscreen.length} offscreen`,
+          );
+          for (const hit of brushHits) failures.push(`${label} [brush open] — ${hit}`);
+          for (const off of probeBrush.offscreen) {
+            failures.push(`${label} [brush open] — ${off.id} offscreen (${off.detail})`);
+          }
+
+          await page.locator('[data-testid="colour-well-tile"]').click();
+          await page.waitForTimeout(400);
+          const probeBoth = await probeChrome(page, INSTRUMENTS);
+          const bothHits = collisions(probeBoth);
+          report.push(
+            `${label} [brush+palette open]: ${probeBoth.rects.length} instruments, ` +
+              `${bothHits.length} collisions, ${probeBoth.offscreen.length} offscreen`,
+          );
+          for (const hit of bothHits) failures.push(`${label} [brush+palette open] — ${hit}`);
+          for (const off of probeBoth.offscreen) {
+            failures.push(`${label} [brush+palette open] — ${off.id} offscreen (${off.detail})`);
+          }
         }
       }
     }

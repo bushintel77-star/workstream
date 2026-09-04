@@ -30,7 +30,8 @@ import type { HeightmapPoint } from "./coordTransform";
 import { createElevationSampler } from "./terrainMath";
 import { padStrokes, padCutFill, CUT_FILL_CELL_M } from "./cutFill";
 import { ToolRibbon } from "./ToolRibbon";
-import { ToolFlyout } from "./ToolFlyout";
+import { ToolFlyout, FLYOUT_TOOLS } from "./ToolFlyout";
+import { PaletteWidget } from "./PaletteWidget";
 import { CanvasPlacementFlyout } from "./CanvasPlacementFlyout";
 import { BirdsEyeHud } from "./BirdsEyeHud";
 import { CameraDock } from "./CameraDock";
@@ -134,6 +135,7 @@ export function FloatingChrome({
   const anchorVisibility = useStudioStore((s) => s.anchorVisibility);
   const extrusionToolArmed = useStudioStore((s) => s.extrusionToolArmed);
   const activeTool = useStudioStore((s) => s.activeTool);
+  const paletteOpen = useStudioStore((s) => s.paletteOpen);
   const selectedExtrusionStrokeId = useStudioStore((s) => s.selectedExtrusionStrokeId);
   const activeExtrusionDepth = useStudioStore((s) => s.activeExtrusionDepth);
   const setAnchorVisibility = useStudioStore((s) => s.setAnchorVisibility);
@@ -245,8 +247,18 @@ export function FloatingChrome({
       {/* Tool flyout (handoff §5.3 "blooming") — the second-tier column that
           blooms beside the active ribbon tool. Only renders when the active
           tool has real parameter state. Anchored to the ribbon's inner edge. */}
-      {activeTool !== "none" && (
-        <ToolFlyout tool={activeTool} handedness={handedness} />
+      {activeTool !== "none" && <ToolFlyout tool={activeTool} />}
+
+      {/* Tier-1 palette widget — anchored to the colour-well ribbon tile,
+          NOT to the active tool: the well previews colour state so this
+          panel can stay closed, and opening it never fights the tool
+          flyout for the single activeTool. When the tool's own flyout is
+          also open the palette takes the second column (tier 1), so the
+          two panels compose into a row instead of overlapping. */}
+      {paletteOpen && (
+        <PaletteWidget
+          tier={activeTool !== "none" && FLYOUT_TOOLS.has(activeTool) ? 1 : 0}
+        />
       )}
 
       {/* Layers panel — planes + analysis toggles + WFS overlays, drops below

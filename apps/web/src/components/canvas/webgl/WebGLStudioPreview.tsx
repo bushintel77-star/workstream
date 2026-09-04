@@ -104,6 +104,7 @@ import {
 import { unlockedModes, type CanvasMode, type CanvasProgress } from "../../../lib/canvas-mode";
 import { StudioShortcutsHelp } from "./StudioShortcutsHelp";
 import { isTypingTarget, resolveStudioShortcut } from "./studioShortcuts";
+import { NIBS } from "./nibs";
 import { viewpointYawDeg, type GardenViewpointLook } from "../handoff/features/tilt/tiltMath";
 import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { ShareSurface } from "../handoff/features/share/ShareSurface";
@@ -651,6 +652,8 @@ export function WebGLStudioPreview({
           target.tagName === "TEXTAREA" ||
           target.isContentEditable);
       if (typing || e.key !== "Escape") return;
+      // Tier-1: Esc closes the palette widget too (assist, never trap).
+      useStudioStore.getState().setPaletteOpen(false);
       useStudioStore.getState().clearSelection();
     };
     window.addEventListener("keydown", onKey);
@@ -922,6 +925,29 @@ export function WebGLStudioPreview({
           return;
         }
         store.setActiveTool(store.activeTool === hit.tool ? "none" : hit.tool);
+        return;
+      }
+      // Tier-1 brush keys (§2.3): E eraser, [ ] size, X colour swap —
+      // Photoshop muscle memory, registered in StudioShortcutsHelp.
+      if (hit.kind === "brush") {
+        e.preventDefault();
+        const store = useStudioStore.getState();
+        const nib = NIBS[store.activeNib];
+        const width = store.brushWidthOverride ?? nib.baseWidthPx;
+        switch (hit.action) {
+          case "eraser":
+            store.toggleEraser();
+            break;
+          case "swap-colour":
+            store.swapActiveMaterial();
+            break;
+          case "size-down":
+            store.setBrushWidthOverride(Math.max(0.5, width - 0.5));
+            break;
+          case "size-up":
+            store.setBrushWidthOverride(Math.min(20, width + 0.5));
+            break;
+        }
         return;
       }
       const store = useStudioStore.getState();

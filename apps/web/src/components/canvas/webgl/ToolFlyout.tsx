@@ -4,33 +4,34 @@
  * Landscape Canvas v2 — Tool Flyout (handoff §5.3 "blooming").
  *
  * The second-tier column that blooms beside the ribbon when the active tool
- * has a flyout. Positioned to the ribbon's inner edge, vertically centred on
- * the active tool's tile (the arrow rests on the tile's centre line).
+ * has a flyout. Anchored to the ACTIVE TOOL'S TILE by the Tier-1 alignment
+ * law (useFlyoutAnchor): vertically centred on the tile's live rect, arrow
+ * on the tile's centre line, re-placed whenever the ribbon re-lays (pen-down
+ * rail), the panel's own height changes, or the window moves.
  *
  * Honesty contract (§0.1, never ship a dead control): every control here backs
- * real store state. Currently wired:
- *   - DRAW (pen/line/spline)        → nib picker (activeNib) + target plane
- *   - PLANT (tree/bed)               → asset palette (buildAssetPalette/armedSymbolId)
- *   - GRADE/BUILD/MEASURE           → target plane + parameter surface
+ * real store state. Content mapping per the Tier-1 widget standard (§2.2):
+ *   - DRAW (pen/line/spline) → BrushWidget (nib, width, smoothing, opacity,
+ *     eraser + collapsed falloff) — colour lives in the palette widget,
+ *     anchored to the colour-well tile;
+ *   - PLANT (tree/bed)       → asset palette + Target plane (the plane is a
+ *     *where*, not a *what* — it sits with placement, not with the nib);
+ *   - BUILD (mass)           → Target plane.
  *
  * Tools that have no real parameter state render no flyout (a tool is only
  * given a flyout when this component has something genuine to show).
  */
 
-import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
-import { useStudioStore, type ToolId, type FalloffPreset } from "./studioStore";
-import { behaviourOf } from "./chromeContract";
-import { NIBS, NIB_ORDER } from "./nibs";
+import { useRef, type CSSProperties } from "react";
+import { useStudioStore, type ToolId } from "./studioStore";
 import { buildAssetPalette } from "./assetPalette";
-import { MaterialPalette } from "./MaterialPalette";
-import { NumericSlider } from "./NumericSlider";
+import { BrushWidget, FlyoutHeader } from "./BrushWidget";
+import { useFlyoutAnchor } from "./useFlyoutAnchor";
 import styles from "./ToolFlyout.module.css";
 
 export interface ToolFlyoutProps {
   /** The active tool (the flyout only renders when it has content). */
   tool: ToolId;
-  /** Handedness — the flyout blooms on the ribbon's inner (hand) edge. */
-  handedness: "LEFT" | "RIGHT";
 }
 
 /** The tool set that genuinely supports a flyout with real state today. */
@@ -40,156 +41,11 @@ export const FLYOUT_TOOLS: ReadonlySet<ToolId> = new Set<ToolId>([
   "spline",
   "tree",
   "bed",
+  // mass gains a flyout with the Tier-1 split: the target plane is a real
+  // store-backed parameter (activePlaneId) and mass placement is exactly
+  // where a "which plane does this land on" control belongs.
+  "mass",
 ]);
-
-function FlyoutHeader({ title, hint }: { title: string; hint?: string }) {
-  return (
-    <div className={styles.header}>
-      <span className={styles.headerTitle}>{title}</span>
-      {hint ? <span className={styles.headerHint}>{hint}</span> : null}
-    </div>
-  );
-}
-
-function NibPicker() {
-  const activeNib = useStudioStore((s) => s.activeNib);
-  const setActiveNib = useStudioStore((s) => s.setActiveNib);
-  const brushWidthOverride = useStudioStore((s) => s.brushWidthOverride);
-  const setBrushWidthOverride = useStudioStore((s) => s.setBrushWidthOverride);
-  const strokeSmoothing = useStudioStore((s) => s.strokeSmoothing);
-  const setStrokeSmoothing = useStudioStore((s) => s.setStrokeSmoothing);
-  const eraserActive = useStudioStore((s) => s.eraserActive);
-  const toggleEraser = useStudioStore((s) => s.toggleEraser);
-  const cameraPreset = useStudioStore((s) => s.cameraPreset);
-  const activeSpec = NIBS[activeNib];
-  const currentWidth = brushWidthOverride ?? activeSpec.baseWidthPx;
-  // Phase L.6 — weight control converts mm to screen px in 3D per the chrome
-  // contract. In 3D the unit is screen px (mm-at-scale is meaningless without
-  // a sheet scale); the contract note says so beneath the slider.
-  const weightBehaviour = behaviourOf("weightControl", cameraPreset);
-  const weightConverted = weightBehaviour.kind === "convert";
-  return (
-    <div className={styles.section}>
-      <FlyoutHeader title="Brush" hint="p/alt" />
-      <div className={styles.nibGrid} data-testid="brush-grid">
-        {NIB_ORDER.map((kind) => {
-          const spec = NIBS[kind];
-          const active = activeNib === kind && !eraserActive;
-          return (
-            <button
-              key={kind}
-              className={`${styles.nib} ${active ? styles.nibActive : ""}`}
-              data-nib={kind}
-              data-active={active}
-              onClick={() => {
-                setActiveNib(kind);
-                if (eraserActive) toggleEraser();
-              }}
-              title={spec.purpose}
-            >
-              <BrushTexturePreview spec={spec} />
-              <span className={styles.nibLabel}>{spec.shortLabel}</span>
-            </button>
-          );
-        })}
-      </div>
-      {/* Phase I/K — brush width slider with numeric entry. Controls the
-          active nib's base width. The NumericSlider provides tap-to-type
-          entry (spec §5.3: "every numeric parameter needs tap-to-type entry"). */}
-      <NumericSlider
-        label="W"
-        min={0.5}
-        max={20}
-        step={0.5}
-        value={currentWidth}
-        onChange={setBrushWidthOverride}
-        unit="px"
-        title={`Brush width: ${currentWidth.toFixed(1)}px${weightConverted ? " (screen px — mm-at-scale meaningless in 3D)" : ""}`}
-        testId="brush-width"
-      />
-      {weightConverted && (
-        <div className={styles.weightConvertNote} data-testid="weight-convert-note">
-          screen px — mm-at-scale meaningless in 3D
-        </div>
-      )}
-      {/* Gap-analysis Phase 1 — stroke stabilizer (Trace's "smooth curves"):
-          the pull-chain damps hand wobble after the snap resolves the draw
-          point. 0% is raw passthrough. Hold-to-straighten (hold the pen
-          still ≥400ms before lift on a line-intending stroke) is on by
-          default and independent of this dial (studioStore.holdToStraighten). */}
-      <NumericSlider
-        label="SM"
-        min={0}
-        max={100}
-        step={5}
-        value={Math.round(strokeSmoothing * 100)}
-        onChange={(v) => setStrokeSmoothing(v / 100)}
-        unit="%"
-        decimals={0}
-        title={`Smoothing: ${Math.round(strokeSmoothing * 100)}% — damps wobble; hold the pen still before lift to straighten`}
-        testId="stroke-smoothing"
-      />
-      {/* Phase I — stroke-matching eraser toggle. */}
-      <button
-        className={`${styles.eraserBtn} ${eraserActive ? styles.eraserBtnActive : ""}`}
-        onClick={toggleEraser}
-        title={
-          eraserActive
-            ? "Eraser active — click a stroke to delete it (scales to the stroke's width)"
-            : "Stroke-matching eraser — click a stroke to delete it"
-        }
-        data-testid="eraser-toggle"
-        data-active={eraserActive}
-      >
-        ERASE
-      </button>
-    </div>
-  );
-}
-
-/** Phase I — visual texture preview for a nib. Renders an SVG stroke
- *  that approximates the nib's texture (width, color, edge softness). */
-function BrushTexturePreview({ spec }: { spec: typeof NIBS[keyof typeof NIBS] }) {
-  const w = 28;
-  const h = 14;
-  const strokeWidth = Math.min(6, Math.max(1, spec.baseWidthPx * 0.6));
-  const opacity = spec.opacity;
-  // React's `style` prop takes an object, not a CSS string. This was a
-  // template literal cast through `as React.CSSProperties`, which silenced
-  // the compiler and threw at render — opening the DRAW flyout for any soft
-  // nib (edgeSoft > 0: ink-03, chisel-marker) crashed the whole studio into
-  // its error boundary. The cast was the only thing hiding it.
-  const blur: CSSProperties | undefined =
-    spec.edgeSoft > 0 ? { filter: `blur(${spec.edgeSoft * 1.5}px)` } : undefined;
-  return (
-    <svg
-      width={w}
-      height={h}
-      viewBox={`0 0 ${w} ${h}`}
-      className={styles.nibPreview}
-      aria-hidden="true"
-    >
-      {spec.kind === "stipple" ? (
-        <>
-          <circle cx={6} cy={4} r={1.2} fill={spec.color} opacity={opacity} />
-          <circle cx={12} cy={9} r={0.8} fill={spec.color} opacity={opacity * 0.8} />
-          <circle cx={18} cy={5} r={1.5} fill={spec.color} opacity={opacity} />
-          <circle cx={22} cy={10} r={1} fill={spec.color} opacity={opacity * 0.9} />
-        </>
-      ) : (
-        <path
-          d={`M 2 ${h / 2} Q ${w / 2} ${h / 2 - 3}, ${w - 2} ${h / 2}`}
-          fill="none"
-          stroke={spec.color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          opacity={opacity}
-          style={blur}
-        />
-      )}
-    </svg>
-  );
-}
 
 function AssetGrid() {
   const armedSymbolId = useStudioStore((s) => s.armedSymbolId);
@@ -232,7 +88,7 @@ function PlanePicker() {
     { id: "ground" as const, label: "GRD", z: "0.00" },
   ]).current;
   return (
-    <div className={styles.section}>
+    <div className={styles.section} data-testid="plane-picker">
       <FlyoutHeader title="Target plane" />
       <div className={styles.planeGrid}>
         {planes.map((plane) => {
@@ -255,115 +111,58 @@ function PlanePicker() {
   );
 }
 
-/** Falloff preset picker (turn 14c) — NARROW / BALANCED / WIDE.
- *  Controls the angle-opacity falloff curve on canvas strokes.
- *  NARROW for working (steeper fade), WIDE for presenting a fly-through. */
-function FalloffPicker() {
-  const falloffPreset = useStudioStore((s) => s.falloffPreset);
-  const setFalloffPreset = useStudioStore((s) => s.setFalloffPreset);
-  const presets = useRef<{ id: FalloffPreset; label: string; hint: string }[]>([
-    { id: "NARROW", label: "NARROW", hint: "for working" },
-    { id: "BALANCED", label: "BALANCED", hint: "general use" },
-    { id: "WIDE", label: "WIDE", hint: "for fly-through" },
-  ]).current;
-  return (
-    <div className={styles.section}>
-      <FlyoutHeader title="Falloff" hint="14c" />
-      <div className={styles.falloffRow} data-testid="falloff-picker">
-        {presets.map((p) => {
-          const active = falloffPreset === p.id;
-          return (
-            <button
-              key={p.id}
-              className={`${styles.falloffBtn} ${active ? styles.falloffBtnActive : ""}`}
-              data-falloff-preset={p.id}
-              data-active={active}
-              onClick={() => setFalloffPreset(p.id)}
-              title={`${p.label} — ${p.hint}`}
-            >
-              {p.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 /** The content column for a given tool — null when the tool has no flyout. */
 function FlyoutContent({ tool }: { tool: ToolId }) {
   switch (tool) {
     case "pen":
     case "line":
     case "spline":
-      return (
-        <>
-          <NibPicker />
-          <MaterialPalette />
-          <PlanePicker />
-          <FalloffPicker />
-        </>
-      );
+      return <BrushWidget />;
     case "tree":
     case "bed":
-      return <AssetGrid />;
+      return (
+        <>
+          <AssetGrid />
+          <PlanePicker />
+        </>
+      );
+    case "mass":
+      return <PlanePicker />;
     default:
       return null;
   }
 }
 
-/** Viewport margin the flyout must never cross — keeps it fully reachable
- *  even when the active tile sits near the top or bottom of a tall ribbon
- *  (e.g. SECTION, HISTORY). */
-const EDGE_MARGIN_PX = 20;
-
-export function ToolFlyout({ tool, handedness }: ToolFlyoutProps) {
+export function ToolFlyout({ tool }: ToolFlyoutProps) {
   const content = FlyoutContent({ tool });
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [topPx, setTopPx] = useState<number | null>(null);
-
-  // §5.3: vertically centred on the active tile, arrow tip on the tile's
-  // centre line — not the ribbon or viewport centre. Measure the active
-  // tile's own position (it can sit anywhere across a 13-tool ribbon) and
-  // the flyout's own rendered height, then place its centre on the tile's.
-  useLayoutEffect(() => {
-    const tile = document.querySelector<HTMLElement>(
-      `[data-testid="tool-ribbon"] [data-tool-id="${tool}"][data-active="true"]`,
-    );
-    const panel = panelRef.current;
-    if (!tile || !panel) {
-      setTopPx(null);
-      return;
-    }
-    const tileCenter = tile.getBoundingClientRect().top + tile.getBoundingClientRect().height / 2;
-    const halfHeight = panel.getBoundingClientRect().height / 2;
-    const min = EDGE_MARGIN_PX + halfHeight;
-    const max = window.innerHeight - EDGE_MARGIN_PX - halfHeight;
-    setTopPx(Math.min(Math.max(tileCenter, min), max));
-  }, [tool, content]);
+  // The content is tool-driven, so `tool` is the content key — a stable
+  // primitive (the panel's ResizeObserver covers height changes within a
+  // tool, e.g. the Falloff disclosure).
+  const { panelRef, topPx, leftPx, rightPx, ribbonOnLeft } = useFlyoutAnchor(
+    tool,
+    tool,
+  );
 
   if (!content) return null;
-  // Ribbon sits hand-opposite (right-handed → left edge). So for a
-  // right-handed operator the flyout blooms to the RIGHT of the ribbon; for a
-  // left-handed operator (ribbon on the right edge) it blooms to the LEFT.
-  const onLeft = handedness === "LEFT";
-  const origin = onLeft ? "right center" : "left center";
+  // Geometry comes from the live ribbon rect (useFlyoutAnchor) — top tracks
+  // the anchor tile's centre line, left/right track the ribbon's actual edge
+  // at its current width. The pre-measurement frame falls back to the CSS.
   return (
     <div
       ref={panelRef}
-      className={`${styles.flyout} ${onLeft ? styles.flyoutLeft : styles.flyoutRight}`}
+      className={styles.flyout}
       style={
         {
-          "--flyout-origin": origin,
-          // Falls back to the CSS module's `top: 50%` only for the one
-          // frame before the tile has been measured.
           ...(topPx != null ? { top: topPx } : {}),
+          ...(ribbonOnLeft
+            ? { left: leftPx ?? undefined }
+            : { right: rightPx ?? undefined }),
         } as CSSProperties
       }
       data-testid="tool-flyout"
       data-tool-id={tool}
     >
-      <span className={`${styles.arrow} ${onLeft ? styles.arrowLeft : styles.arrowRight}`} />
+      <span className={`${styles.arrow} ${ribbonOnLeft ? styles.arrowLeft : styles.arrowRight}`} />
       {content}
     </div>
   );

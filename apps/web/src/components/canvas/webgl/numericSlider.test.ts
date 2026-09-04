@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { steppedValue } from "./NumericSlider";
 
 /**
  * Phase K — NumericSlider pure logic tests.
@@ -54,5 +55,28 @@ describe("Phase K — NumericSlider clamp logic", () => {
 
   it("handles edge case: step = 0.1 → 1 decimal place", () => {
     expect(deriveDecimals(0.1)).toBe(1);
+  });
+});
+
+/** Tier-1 slider duality (§2.3): arrow keys step, shift = ×10. */
+describe("steppedValue (arrow-key duality)", () => {
+  it("steps up and down by the step", () => {
+    expect(steppedValue(5, 1, 0.5, 0.5, 20, 1)).toBe(5.5);
+    expect(steppedValue(5, -1, 0.5, 0.5, 20, 1)).toBe(4.5);
+  });
+
+  it("multiplies the step by the shift factor", () => {
+    expect(steppedValue(5, 1, 0.5, 0.5, 20, 10)).toBe(10);
+    expect(steppedValue(5, -1, 0.5, 0.5, 20, 10)).toBe(0.5);
+  });
+
+  it("clamps to the range without overshooting", () => {
+    expect(steppedValue(19.8, 1, 0.5, 0.5, 20, 10)).toBe(20);
+    expect(steppedValue(0.6, -1, 0.5, 0.5, 20, 10)).toBe(0.5);
+  });
+
+  it("does not accumulate float drift across steps", () => {
+    expect(steppedValue(0.1, 1, 0.2, 0, 1, 1)).toBe(0.3);
+    expect(steppedValue(35, -1, 5, 0, 100, 1)).toBe(30);
   });
 });

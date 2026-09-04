@@ -1,17 +1,21 @@
-/* Landscape Canvas v2 — Tool Flyout (handoff §5.3 "blooming").
- * Second-tier column beside the ribbon, vertically centred on the active
- * tool's tile, arrow on the tile's centre line. Bloom .96→1 at 140ms from
- * its own arrow. 238px (media/assets 296px) per §4 geometry. */
+/* Landscape Canvas v2 — Tool Flyout + Tier-1 widgets (handoff §5.3).
+ * Second-tier panels beside the ribbon, each vertically centred on its OWN
+ * anchor tile (useFlyoutAnchor: live tile + ribbon geometry), arrow on the
+ * tile's centre line. Opaque raised panel per the LA amendment (no frost /
+ * blur); 50ms linear opacity only per chrome contract §5.5 — no easing, no
+ * layout shift on open. 238px (media/assets 296px) per §4 geometry. */
 
 .flyout {
   position: absolute;
   top: 50%;
+  /* Horizontal placement comes from useFlyoutAnchor's live ribbon geometry
+   * (inline left OR right, never both). The one pre-measurement frame is
+   * pre-paint (useLayoutEffect), so no CSS fallback is wanted here — a CSS
+   * `left` would over-constrain the box when the inline side is `right`. */
   width: var(--ws-flyout-width, 238px);
   padding: 14px 15px 13px;
   border-radius: var(--ws-radius-3, 4px);
-  background: linear-gradient(180deg,
-      rgba(32, 35, 37, 0.96),
-      rgba(23, 25, 27, 0.94));
+  background: var(--ws-panel-raised);
   border: 1px solid var(--ws-line);
   box-shadow: var(--ws-shadow-2);
   pointer-events: auto;
@@ -19,32 +23,17 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  /* Bloom: scale .96→1 from the arrow, 140ms, never a slide-in. */
-  transform-origin: var(--flyout-origin, left center);
-  animation: flyout-bloom 140ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  /* Open: 50ms linear opacity, nothing else (chrome contract §5.5). */
+  animation: flyout-in 50ms linear both;
 }
 
-/* Ribbon sits hand-opposite: right-handed → left edge (left:22px), so the
- * flyout blooms to the RIGHT of the ribbon (off its inner edge). Left-handed
- * → ribbon on the right edge (right:22px), flyout blooms to the LEFT. Both
- * share the ribbon's 22px viewport inset + 10px gap. */
-.flyoutLeft {
-  right: calc(22px + var(--ws-ribbon-width, 88px) + 10px);
-}
-
-.flyoutRight {
-  left: calc(22px + var(--ws-ribbon-width, 88px) + 10px);
-}
-
-@keyframes flyout-bloom {
+@keyframes flyout-in {
   from {
     opacity: var(--ws-op-hidden);
-    transform: scale(0.96);
   }
 
   to {
     opacity: var(--ws-op-full);
-    transform: scale(1);
   }
 }
 
@@ -55,7 +44,7 @@
   width: 9px;
   height: 9px;
   transform: rotate(45deg);
-  background: rgba(30, 33, 35, 0.96);
+  background: var(--ws-panel-raised);
 }
 
 .arrowLeft {
@@ -419,4 +408,117 @@
 .falloffBtnActive:hover {
   background: var(--ws-active);
   color: var(--ws-active-ink);
+}
+
+/* ---- Tier-1 — collapsed section disclosure (Falloff) ----
+ * Native <details>: keyboard-reachable with zero JS state, collapsed by
+ * default so the draw panel stays a short, fixed-height widget. */
+.disclosure {
+  border-top: 1px solid var(--ws-line);
+  padding-top: 8px;
+}
+
+.disclosureSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  min-height: 20px;
+}
+
+.disclosureSummary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosureSummary::before {
+  content: "+";
+  font-family: var(--ws-font-tech);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ws-ink-muted);
+  margin-right: 7px;
+}
+
+.disclosure[open] .disclosureSummary::before {
+  content: "−";
+}
+
+.disclosureTitle {
+  font-family: var(--ws-font-ui);
+  font-size: var(--ws-text-micro, 10px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ws-ink-secondary);
+}
+
+.disclosureValue {
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro, 10px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ws-ink-muted);
+}
+
+/* ---- Tier-1 — palette active well (Widget B) ----
+ * The current material, its name, its contrast against the canvas ground,
+ * and the previous-swap — one key, like the ribbon tiles: raised surface,
+ * --ws-line edge, press = swap. */
+.activeWell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: var(--ws-radius-2, 3px);
+  background: rgba(232, 230, 224, 0.06);
+  border: 1px solid rgba(232, 230, 224, 0.1);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.activeWell:hover:not(:disabled) {
+  background: rgba(232, 230, 224, 0.1);
+}
+
+.activeWell:disabled {
+  cursor: default;
+}
+
+.activeWellColor {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--ws-radius-3);
+  border: 1px solid rgba(232, 230, 224, 0.25);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset;
+  flex-shrink: 0;
+}
+
+.activeWellMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.activeWellLabel {
+  font-family: var(--ws-font-ui);
+  font-size: var(--ws-text-micro, 10px);
+  font-weight: 600;
+  color: var(--ws-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activeWellContrast {
+  /* Live numeral → tabular figures (chrome contract). */
+  font-family: var(--ws-font-tech);
+  font-variant-numeric: tabular-nums;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--ws-ink-muted);
 }

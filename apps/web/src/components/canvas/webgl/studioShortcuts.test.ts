@@ -117,12 +117,51 @@ describe("resolveStudioShortcut", () => {
     expect(keys).toContain("1");
     expect(keys).toContain("Shift+2");
     expect(keys).toContain("A");
-    expect(keys).toContain("P");
+    expect(keys).toContain("P / B");
     expect(keys).toContain("L");
     expect(keys).toContain("S");
     expect(keys).toContain("C");
     expect(keys).toContain("G");
     expect(keys).toContain("?");
     expect(keys).toContain("Ctrl+K");
+  });
+});
+
+describe("Tier-1 brush keys (§2.3)", () => {
+  it("maps E eraser, [ ] size, X colour swap", () => {
+    expect(resolveStudioShortcut(key("e"))).toEqual({
+      kind: "brush",
+      action: "eraser",
+    });
+    expect(resolveStudioShortcut(key("["))).toEqual({
+      kind: "brush",
+      action: "size-down",
+    });
+    expect(resolveStudioShortcut(key("]"))).toEqual({
+      kind: "brush",
+      action: "size-up",
+    });
+    expect(resolveStudioShortcut(key("x"))).toEqual({
+      kind: "brush",
+      action: "swap-colour",
+    });
+  });
+
+  it("keeps B as a pen alias and ignores shifted variants", () => {
+    expect(resolveStudioShortcut(key("b"))).toEqual({
+      kind: "ribbon-tool",
+      tool: "pen",
+    });
+    // Shift+[ is "{" on US layouts — not a brush key.
+    expect(resolveStudioShortcut(key("[", { shiftKey: true }))).toBeNull();
+    expect(resolveStudioShortcut(key("e", { shiftKey: true }))).toBeNull();
+  });
+
+  it("documents the brush keys in the help rows", () => {
+    const keys = SHORTCUT_ROWS.map((r) => r.keys);
+    expect(keys).toContain("E");
+    expect(keys).toContain("[ / ]");
+    expect(keys).toContain("X");
+    expect(keys).toContain("P / B");
   });
 });

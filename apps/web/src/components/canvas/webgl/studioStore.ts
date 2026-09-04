@@ -51,7 +51,7 @@ import {
   isClosedRing,
   sunHatchAngleDeg,
 } from "./hatchSun";
-import { DEFAULT_NIB, NEUTRAL_TELEMETRY, type StylusTelemetry } from "./nibs";
+import { DEFAULT_NIB, NEUTRAL_TELEMETRY, NIBS, type StylusTelemetry } from "./nibs";
 // sheetComposition imports only `type CameraPreset` back from here, so this
 // is a type-only cycle — erased at build, no runtime cycle.
 import { issueSheet, type Sheet, type SheetViewport } from "./sheetComposition";
@@ -1100,18 +1100,41 @@ export interface StudioStoreState {
    *  committed with a markup material carry its dash signature. Null = the
    *  nib's default colour (no material override). View state only. */
   activeMaterialId: string | null;
+  /** Tier-1 palette widget — materials used before the current one, most
+   *  recent first (max 6). Session-scoped view state; never persisted. */
+  recentMaterialIds: string[];
+  /** Tier-1 palette widget — the material the operator used immediately
+   *  before the current one. Backs the active well's previous-swap (well
+   *  click / X key). Null = nothing to swap to yet. */
+  previousMaterialId: string | null;
+  /** Tier-1 colour well — whether the palette widget is open. Independent
+   *  of the active tool: the well tile toggles it, so panels never fight
+   *  over the single activeTool. */
+  paletteOpen: boolean;
   /** Phase I — brush width override (px). When non-null, the active nib's
    *  baseWidthPx is replaced by this value for new strokes. Null = use the
    *  nib's default width. View state only. */
   brushWidthOverride: number | null;
+  /**
+   * Tier-1 brush widget — per-brush opacity 0.05–1 stamped onto NEW strokes
+   * at commit (the same per-stroke stamp `brushWidthOverride` gets). Null =
+   * the nib's own base opacity. View state only.
+   */
+  brushOpacity: number | null;
   /**
    * Stroke stabilizer strength 0..1 (gap-analysis Phase 1, Trace's "smooth
    * curves"). 0 = raw passthrough (the pre-assist behaviour). The pull-chain
    * lives in strokeAssist.ts; this is the operator's dial. View state only.
    */
   strokeSmoothing: number;
-  /** Set the stabilizer strength (clamped 0..1). */
+  /** Set the stabilizer strength (clamped 0..1). Marks the dial as
+   *  operator-owned — per-nib smoothing defaults stop applying. */
   setStrokeSmoothing: (strength: number) => void;
+  /**
+   * Tier-1 brush widget — true once the operator has moved the SM dial.
+   * Until then arming a nib applies that nib's defaultSmoothing.
+   */
+  smoothingTouched: boolean;
   /**
    * Hold-to-straighten (Trace's preference of the same name): when the pen
    * holds still ≥400ms before lift on a line-intending stroke, the stroke
@@ -1150,8 +1173,17 @@ export interface StudioStoreState {
    *  inverse sun angle. Off → 45° drafting hatch. */
   sunHatchSnap: boolean;
   setActiveNib: (nib: NibKind) => void;
-  /** Phase M — set the active material id (null = no material override). */
+  /** Phase M — set the active material id (null = no material override).
+   *  Tier-1 palette: also maintains the recent list + previous for swap. */
   setActiveMaterialId: (id: string | null) => void;
+  /** Tier-1 palette widget — swap current ↔ previous material (well click,
+   *  X key). No-op before a second material has been chosen. */
+  swapActiveMaterial: () => void;
+  /** Tier-1 colour well — open/close the palette widget. */
+  setPaletteOpen: (open: boolean) => void;
+  togglePalette: () => void;
+  /** Tier-1 brush widget — set the opacity override (null = nib default). */
+  setBrushOpacity: (opacity: number | null) => void;
   /** Phase I — set the brush width override (px). Null = use nib default. */
   setBrushWidthOverride: (px: number | null) => void;
   /** Phase I — toggle the stroke-matching eraser. */
@@ -1881,9 +1913,14 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   activeNib: DEFAULT_NIB,
   // Phase M — active material (null = nib default colour, no override).
   activeMaterialId: null,
+  recentMaterialIds: [],
+  previousMaterialId: null,
+  paletteOpen: false,
   // Phase I — brush width override (null = nib default); eraser off.
   brushWidthOverride: null,
-  strokeSmoothing: 0.2,
+  brushOpacity: null,
+  strokeSmoothing: NIBS[DEFAULT_NIB].defaultSmoothing,
+  smoothingTouched: false,
   holdToStraighten: true,
   eraserActive: false,
   // Angle-opacity falloff — WIDE by default (the original hardcoded value;
@@ -2323,9 +2360,50 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
         marqueeDraft: null,
       };
     }),
-  setActiveNib: (activeNib) => set({ activeNib }),
-  // Phase M — active material from the 21-material palette.
-  setActiveMaterialId: (activeMaterialId) => set({ activeMaterialId }),
+  setActiveNib: (activeNib) =>
+    set((s) => ({
+      activeNib,
+      // Tier-1 defaults: arming a nib applies its smoothing default until
+      // the operator has moved the SM dial themselves (then their choice
+      // sticks across nib switches).
+      strokeSmoothing: s.smoothingTouched
+        ? s.strokeSmoothing
+        : NIBS[activeNib].defaultSmoothing,
+    })),
+  // Phase M — active material from the 21-material palette. The Tier-1
+  // palette widget also maintains its own memory here: the outgoing material
+  // becomes the previous (for well-click / X swap) and joins the recent row
+  // (max 6, most recent first, never duplicating the incoming choice).
+  setActiveMaterialId: (activeMaterialId) =>
+    set((s) => {
+      if (activeMaterialId === s.activeMaterialId) return {};
+      const recents = Array.from(
+        new Set([s.activeMaterialId, ...s.recentMaterialIds].filter(
+          (id): id is string => id != null,
+        )),
+      ).slice(0, 6);
+      return {
+        activeMaterialId,
+        previousMaterialId: s.activeMaterialId,
+        recentMaterialIds: recents,
+      };
+    }),
+  swapActiveMaterial: () =>
+    set((s) => {
+      if (s.previousMaterialId == null) return {};
+      return {
+        activeMaterialId: s.previousMaterialId,
+        previousMaterialId: s.activeMaterialId,
+      };
+    }),
+  setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
+  togglePalette: () => set((s) => ({ paletteOpen: !s.paletteOpen })),
+  // Tier-1 brush widget — per-brush opacity override.
+  setBrushOpacity: (opacity) =>
+    set({
+      brushOpacity:
+        opacity == null ? null : Math.max(0.05, Math.min(1, opacity)),
+    }),
   // Phase I — brush width override + stroke-matching eraser.
   setBrushWidthOverride: (px) =>
     set({
@@ -2334,7 +2412,10 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     }),
   // Gap-analysis Phase 1 — stroke assist dials (strokeAssist.ts).
   setStrokeSmoothing: (strength) =>
-    set({ strokeSmoothing: Math.max(0, Math.min(1, strength)) }),
+    set({
+      strokeSmoothing: Math.max(0, Math.min(1, strength)),
+      smoothingTouched: true,
+    }),
   setHoldToStraighten: (on) => set({ holdToStraighten: on }),
   toggleEraser: () => set((s) => ({ eraserActive: !s.eraserActive })),
   setEraserActive: (eraserActive) => set({ eraserActive }),

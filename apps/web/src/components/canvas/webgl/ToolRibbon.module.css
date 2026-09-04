@@ -259,6 +259,18 @@
   border-color: transparent var(--ws-active-ink) transparent transparent;
 }
 
+/* ---- Colour well (Tier-1) — the armed ink as a filled square ----
+ * The key inherits .tile/.tileActive; only the colour square is added here.
+ * The border keeps very light materials (drafting) visible on the white
+ * depressed switch. */
+.wellColor {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--ws-radius-2);
+  border: 1px solid var(--ws-ink-muted);
+}
+
 /* ---- Utility row — two 28px tiles side by side ---- */
 .utilityRow {
   display: flex;

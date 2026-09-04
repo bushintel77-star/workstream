@@ -21,7 +21,15 @@ export type StudioShortcut =
   | { kind: "viewport"; preset: ViewportPreset }
   | { kind: "mode"; mode: CanvasMode }
   | { kind: "tool"; tool: ToolAction }
-  | { kind: "ribbon-tool"; tool: ToolId };
+  | { kind: "ribbon-tool"; tool: ToolId }
+  | { kind: "brush"; action: BrushAction };
+
+/** Tier-1 brush widget keys (Photoshop muscle memory — §2.3). */
+export type BrushAction =
+  | "eraser"
+  | "size-down"
+  | "size-up"
+  | "swap-colour";
 
 export const MODE_BY_SHIFT_DIGIT: Record<string, CanvasMode> = {
   "1": "survey",
@@ -57,10 +65,19 @@ export const TOOL_BY_KEY: Record<string, ToolAction> = {
  */
 export const RIBBON_TOOL_BY_KEY: Record<string, ToolId> = {
   p: "pen",
+  b: "pen", // Photoshop muscle memory (P stays primary; see SHORTCUT_ROWS)
   l: "line",
   s: "spline",
   c: "contour",
   g: "slope",
+};
+
+/** Tier-1 brush keys — eraser toggle, brush size down/up, colour swap. */
+export const BRUSH_BY_KEY: Record<string, BrushAction> = {
+  e: "eraser",
+  "[": "size-down",
+  "]": "size-up",
+  x: "swap-colour",
 };
 
 export const SHORTCUT_ROWS: Array<{
@@ -82,11 +99,14 @@ export const SHORTCUT_ROWS: Array<{
     { group: "Mode", keys: "Shift+7", action: "Present" },
     { group: "Mode", keys: "Shift+8", action: "Share" },
     { group: "Tool", keys: "A", action: "Asset dock" },
-    { group: "Tool", keys: "P", action: "Pen sketch" },
+    { group: "Tool", keys: "P / B", action: "Pen sketch" },
     { group: "Tool", keys: "L", action: "Line" },
     { group: "Tool", keys: "S", action: "Spline" },
     { group: "Tool", keys: "C", action: "Contour" },
     { group: "Tool", keys: "G", action: "Slope" },
+    { group: "Tool", keys: "E", action: "Eraser on/off" },
+    { group: "Tool", keys: "[ / ]", action: "Brush size down / up" },
+    { group: "Tool", keys: "X", action: "Swap current / previous colour" },
     { group: "Tool", keys: "M", action: "Measure tape" },
     { group: "Tool", keys: "U", action: "Underground" },
     { group: "Tool", keys: "D", action: "Working-drawing dims" },
@@ -131,6 +151,11 @@ export function resolveStudioShortcut(e: KeyboardEvent): StudioShortcut | null {
   // removed so the keyboard can never disagree with the ribbon.
   if (!e.shiftKey && RIBBON_TOOL_BY_KEY[letter]) {
     return { kind: "ribbon-tool", tool: RIBBON_TOOL_BY_KEY[letter]! };
+  }
+  // Tier-1 brush keys — [ ] are not letters and carry no other meaning;
+  // E and X resolve here only when the ribbon tools did not take them.
+  if (!e.shiftKey && BRUSH_BY_KEY[e.key]) {
+    return { kind: "brush", action: BRUSH_BY_KEY[e.key]! };
   }
   if (!e.shiftKey && TOOL_BY_KEY[letter]) {
     return { kind: "tool", tool: TOOL_BY_KEY[letter]! };
