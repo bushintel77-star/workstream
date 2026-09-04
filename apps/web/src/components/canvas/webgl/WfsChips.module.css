@@ -10,7 +10,10 @@
   right: 22px;
   display: flex;
   align-items: center;
-  gap: 0;
+  /* 8px between every chip: with gap 0 the UNSCALED badge abutted the
+     overlay pills so tightly the two pill silhouettes read as one
+     overlapping blob at studio distances (2026-09-04 vision pass). */
+  gap: 8px;
   pointer-events: auto;
   z-index: var(--cf-z-chrome);
   transition: opacity 50ms linear;

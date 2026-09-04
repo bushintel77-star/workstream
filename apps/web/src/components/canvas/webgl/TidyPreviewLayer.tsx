@@ -14,7 +14,7 @@
  */
 
 import { useMemo } from "react";
-import { Line } from "@react-three/drei";
+import { Line, Html } from "@react-three/drei";
 import { useStudioStore } from "./studioStore";
 import { pctToWorld } from "./coordTransform";
 import { PALETTE } from "../../../styles/colorTokens";
@@ -56,7 +56,7 @@ export function TidyPreviewLayer({
       [first[0], y, first[2]],
       [first[0], 0, first[2]],
     ];
-    return { world, drop };
+    return { world, drop, tag: { x: first[0], y, z: first[2] } };
   }, [stroke, tidyPreviewZ, scaleM, boardAspect]);
 
   if (!ghost) return null;
@@ -83,6 +83,31 @@ export function TidyPreviewLayer({
         transparent
         opacity={0.5}
       />
+      {/* Elevation tag — in PLAN (top-down ortho) the lift projects to the
+          same pixels as the ink, so the preview is invisible exactly in the
+          default view (2026-09-04 vision pass). The tag carries the height
+          where the operator is looking. */}
+      <Html
+        position={[ghost.tag.x, ghost.tag.y, ghost.tag.z]}
+        center
+        style={{ pointerEvents: "none" }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--ws-font-tech)",
+            fontSize: "var(--ws-text-micro)",
+            fontWeight: 700,
+            color: "var(--ws-active-ink)",
+            background: "var(--ws-active)",
+            border: "1px solid var(--ws-line)",
+            borderRadius: 3,
+            padding: "2px 6px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          +{tidyPreviewZ!.toFixed(1)} m
+        </span>
+      </Html>
     </group>
   );
 }
