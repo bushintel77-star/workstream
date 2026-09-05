@@ -84,8 +84,15 @@ module.exports = {
    * file, not the full 1,985-case suite. Specs that read repo files as text
    * instead of importing them are invisible to this and are run unconditionally
    * by scripts/precommit-repo-gates.mjs.
+   *
+   * `--exclude` with the stress glob (doublestar, star, "stress", star,
+   * ".test.ts"): the tier1 stress suites sit in the
+   * import graph of the api/domain libs and multiply a ~25s pipeline by 15–25
+   * iterations — 3–8 minutes in a hook slow enough to train `--no-verify`.
+   * They own the dedicated `stress` CI job (ci.yml) with their own budget;
+   * `pnpm test:stress` runs them locally.
    */
   "**/*.{ts,tsx}": (files) =>
     /* `--silent=true`, not `--silent`: a bare flag swallows the first path. */
-    `pnpm exec vitest related --run --silent=true ${rel(files).join(" ")}`,
+    `pnpm exec vitest related --run --silent=true --exclude '**/*stress*.test.ts' ${rel(files).join(" ")}`,
 };

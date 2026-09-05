@@ -11,6 +11,8 @@
 #                           (warnings included: unused bindings are how five
 #                           shipped-inert features were found in apps/web)
 #   3. vitest related       specs whose module graph reaches a staged file
+#                           (stress suites excluded — they own the dedicated
+#                           `stress` CI job; `pnpm test:stress` runs them)
 #   4. source-scraping specs  every test that reads repo files as text — found
 #                           by scanning, not by a list (eslint.config.mjs,
 #                           globals.css, package.json; ten of them today).

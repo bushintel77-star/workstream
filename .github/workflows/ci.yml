@@ -3,13 +3,18 @@ name: ci
 # Workstream — GitHub Actions CI (2026-08-23).
 #
 # Jobs:
-#   `gate`         — pnpm run ci (static gate)
+#   `gate`         — pnpm run ci (static gate; stress suites excluded from
+#                    its vitest run)
+#   `stress`       — the tier1 stress suites with their OWN budget, so a
+#                    600s suite never times out against the gate's shared
+#                    clock on contended runners (the failure that turned
+#                    the gate red twice before the split)
 #   `secret-scan`  — gitleaks
 #   `e2e`          — Playwright matrix (6 shards, non-blocking signal)
 #   `deploy`       — Railway CLI + live probe (main only; needs gate + secret-scan)
 #
-# Deploy is decoupled from e2e. e2e runs on every push and PR as a signal,
-# never blocks deploy.
+# Deploy is decoupled from e2e and stress. e2e runs on every push and PR as a
+# signal, never blocks deploy.
 
 on:
   push:
@@ -66,6 +71,27 @@ jobs:
           # workflow gets for free, not a repo secret to configure.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
+
+  # ---------------------------------------------------------------- stress
+  # The tier1 cost-lock stress suites (pipeline × 15–25 iterations). They ran
+  # inside the gate's vitest run until 2026-09-05: green assertions, red
+  # budget — twice — on contended 2-core runners. Their own job, their own
+  # clock. Not in deploy's needs: deploy ships the static gate, not a soak.
+  stress:
+    needs: [gate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:stress
 
   # ---------------------------------------------------------------- e2e
   # Playwright across 6 shards. Non-gating (continue-on-error) — the WebGL
