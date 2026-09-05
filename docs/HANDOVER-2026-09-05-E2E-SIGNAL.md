@@ -1,19 +1,13 @@
-# HANDOVER — Tier-1 widgets shipped + e2e signal greened (2026-09-05)
+# HANDOVER — Tier-1 widgets + e2e signal + Phase 4 seam + stress split (2026-09-05)
 
-For a fresh context window. Everything below is verified against git and the
-live tree as of commit `970e671` (pushed to `origin/main`, CI run
-`33905876662` in flight at handover time). Prior context:
+For a fresh context window. Updated through commit `ab3c7b3` — CI on `main`
+is fully green (gate, secret-scan, stress, all 6 e2e shards, deploy; live
+200). Prior context:
 [`HANDOVER-2026-09-04-STUDIO-TIER1.md`](HANDOVER-2026-09-04-STUDIO-TIER1.md)
 (the Tier-1 design brief this session executed) and [`AGENTS.md`](AGENTS.md).
 
-**First action for a fresh session: check the CI run that `970e671` triggered
-— `gh run list --repo bushintel77-star/workstream --limit 2`.** Expected:
-gate + secret-scan + deploy green as always; the e2e shards that were red on
-every push for a week (2/4/6) should now be green — that is the claim of the
-last commit and it had NOT been CI-verified when this doc was written. If a
-shard is still red, pull its log (`gh api repos/.../actions/jobs/<id>/logs`
-and grep `✘`) and triage locally before assuming CI fault — see §3, the
-method matters.
+**Outstanding work lives in §4 (threads) and §5 (the Trace-fluency feature
+backlog, itemized with status).** Between them they are the complete list.
 
 ---
 
@@ -25,8 +19,16 @@ method matters.
 | `3fb81b8` | **Contrast-AA cleared + cad.ts refactor.** AI RUN's hardcoded unavailable state was grey-on-gold (1.2:1) → now a hollow key (gold text/border on panel, ~7:1); SRV cell used raw `--ws-dwg-redline` as text (4.47:1) → new `--ws-dwg-redline-ink` tint in tokens.css (6.8:1, mirrors the `truth`/`truth-ink` pattern). `webgl-contrast-aa` shard flipped red→green in CI. `cad.ts`: new `requireOwnedProject(store, request, reply)` chokepoint in `project-guard.ts`; all 12 handlers carry `project.id` (store-validated) past the gate — the raw `:projectId` param is only ever the lookup key. |
 | `970e671` | **e2e signal greened** (see §3). 10 files, +142/−904. |
 
-Deploy is live and verified (web + API 200) through `3fb81b8`; `970e671`
-deploys are doc/test-only.
+### 1b. Shipped after this doc was first written (continuation sessions)
+
+| Commit | Content |
+|---|---|
+| `56aa6f4` + `32e9225` | **Phase 4 seam decision record** (`PHASE4-SEAM-DECISION-2026.md`), v2 after an in-session Pro review that caught three v1 defects (vacuous provenance inheritance; preset-tag standing vs the hinge gizmo; bare `height_m` naming). |
+| `dc21a32` | **Phase 4 seam BUILD** — elevation-drawn ink becomes massing geometry: `wallSeam.ts` (geometric standing test ε=1°, closed-outline wall conversion, drawn height, boundary containment/crossing stamps), `convertStrokesToFeatures` standing-canvas branch, Tidy HUD wall preset (massing + drawn height + reconciliation chip), `assignFeaturesToPlane` bulk re-plane in one history commit + LayersPanel strip, additive `LandscapeFeature` schema fields, `canvasPose.ts` extraction (bundle ratchet: 3557→3446 kB). New `webgl-wall-seam.spec.ts` e2e through persistence. |
+| `059f936` | **Stress economics split** — `pnpm test` excludes the stress suites (local gate 55s, was ~12 min); `pnpm test:stress` runs the 4 suites standalone; pre-commit `vitest related` excludes them; ci.yml `stress` job with its own 45m clock (gate 5m50→3m58 in CI, stress green 2m51). Deploy still gated on the static gate + secret scan only. |
+
+Deploy is live and verified (web + API 200) through `dc21a32`; later commits
+are config/doc-only.
 
 ## 2. The cad.ts Mimosa findings — status, and what is NOT done
 
@@ -108,7 +110,53 @@ historical workflow doc; updating it is doc hygiene, not a gate.
    produces a Next.js "Runtime Error" dev-overlay page that looks like a
    product crash — kill orphans before e2e batches.
 
-## 5. Key files map (fresh-session shortcuts)
+## 5. Outstanding — the Trace-fluency feature backlog
+
+The Morpholio-Trace parity work (`MORPHOLIO-TRACE-3D-GAP-ANALYSIS-2026.md`
+56-feature matrix; phased in `MENTAL-CANVAS-ROADMAP.md` §5). Itemized status
+after the Phase 4 seam landed — this section is the feature backlog a fresh
+session picks from. **2D leftovers first (cheapest felt value), then the
+trace-stack, then scale-true.**
+
+### Phase 1 leftovers — 2D fluency (highest value per line of code)
+- ❌ **Straightedge rail tool** — draw-along-edge with live length via the
+  existing LiveNibReadout channel.
+- ❌ **Hold-to-extend** with typed length.
+- ❌ Super Ruler / Triangle / Protractor.
+- 🟡 Gesture/touch parity (2-finger undo, hold-to-erase) — the field persona.
+
+### Phase 2 — the trace-stack, vector-native (iteration feel)
+- ❌ **Per-plane ink opacity** (the "peel the trace" dial; note the shipped OP
+  dial is per-BRUSH, not per-plane).
+- ❌ **Duplicate plane** verb (PLT-alt / MAS-alt alternatives as siblings).
+- ❌ Flood-fill hatch into closed ink regions.
+
+### Phase 3 — scale-true drawing
+- ❌ Scale-true stroke widths (px → 1:N print truth; extends the true-scale
+  capture work).
+- ❌ Straight-line dimension assist (near-axis stroke snaps the dim string).
+- ✅ DXF export — DONE (the gap analysis's ❌ is stale; `cadDocumentToDxf` +
+  `/cad.dxf` exist).
+
+### Phase 4 remainder — the seams (the goal surface)
+- ✅ Standing-canvas wall → massing with drawn height + reconciliation; bulk
+  plane assignment (this session).
+- ❌ Assist on tilted/hinged planes stating TRUE plane measurements (today
+  only standing planes convert; tilted keep plan routing).
+- ❌ Model import as underlay (USDZ/OBJ/glTF, boundary-snapped).
+- ❌ Cinematic flythrough authoring + guided present (walk exists).
+- ❌ AR SketchWalk bridge (mobile); LiDAR scan-to-sketch.
+
+### Phase 1b — polish locks (meta; do before more polish)
+- ❌ Visual-regression screenshot gate (~10 canonical views × 3 viewports).
+- ❌ Interaction-latency budgets, ratcheted (time-to-first-stroke, flyout
+  open, camera settle).
+- 🟡 Stale-spec guard — the manual greening is done (§3); no automated
+  dead-locator sweep yet.
+- 🟡 Micro-interaction audit (cursor per tool, empty-state voice); ❌ one
+  real tablet week (pressure/palm-rejection on device — cannot be automated).
+
+## 6. Key files map (fresh-session shortcuts)
 
 - Tier-1 widgets: `apps/web/src/components/canvas/webgl/{BrushWidget,PaletteWidget,useFlyoutAnchor,materialContrast}.tsx`
   (+ tests: `PaletteWidget.test.tsx`, `studioStoreTier1.test.ts`,
