@@ -81,19 +81,24 @@ historical workflow doc; updating it is doc hygiene, not a gate.
 
 ## 4. Open threads (ranked)
 
-1. **CI-verify `970e671`** (see header) — if shards 2/4/6 are green, the e2e
-   signal is trustworthy for the first time in a week. If anything is red,
-   triage per §3's method.
-2. **Stress-test economics** (carried from the prior handover, still the top
-   structural item): 600s budgets are a splint; the right fix is a dedicated
-   slow-stress CI job + excluding stress files from the pre-commit
-   `vitest related` path. The sketch-assist CI-budget fix in `970e671` is the
-   same disease, treated locally.
-3. **cad.ts Mimosa findings** — user decision (see §2).
-4. **Tier-1 leftover (small):** session persistence of last nib/colour/width
+1. **CI-verify `970e671`** — DONE 2026-09-05: all 6 e2e shards green on
+   `a8ff1e7` (run `33906514141`). The signal is trustworthy.
+2. **Stress-test economics** — DONE 2026-09-05 (`059f936`): `pnpm test`
+   excludes the stress suites (55s locally, was ~12 min); `pnpm test:stress`
+   runs the 4 suites standalone; pre-commit `vitest related` excludes them;
+   ci.yml has the dedicated `stress` job (own 45m clock, gate 5m50→3m58 in
+   CI). Deploy remains gated on the static gate + secret scan only.
+3. **Phase 4 seam** — DONE 2026-09-05 (`32e9225` decision record v2 +
+   `dc21a32` build): standing-canvas wall → massing with drawn height,
+   operator provenance, boundary containment/crossing stamps; bulk re-plane
+   in one history commit. Remaining Phase 4 items per the roadmap: assist on
+   tilted planes stating true plane measurements, model import as underlay,
+   cinematic flythrough authoring, AR bridge.
+4. **cad.ts Mimosa findings** — user decision (see §2).
+5. **Tier-1 leftover (small):** session persistence of last nib/colour/width
    per project (recents/swap/per-nib smoothing defaults shipped; the
    persistence layer didn't).
-5. **Cosmetic, repro known:** first-move hint can resurrect after a second
+6. **Cosmetic, repro known:** first-move hint can resurrect after a second
    stroke's HUD cycle (`guideFirstSketch` retires correctly on first ink;
    resurrection path unwired); chip-bar middle pill truncates ~1280px
    (`WfsChips.module.css` needs an overflow strategy); transient "Untitled
