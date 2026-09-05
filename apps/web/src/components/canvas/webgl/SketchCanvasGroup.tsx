@@ -24,7 +24,6 @@ import type { SketchCanvas } from "@workstream/contracts";
 import { useStudioStore } from "./studioStore";
 import { behaviourOf } from "./chromeContract";
 import { buildStationTicks } from "./stationing";
-import { pctToWorld, worldToPct, type PctPoint } from "./coordTransform";
 
 export interface SketchCanvasGroupProps {
   /** Board scale in metres (board_width_m — the metres per 100 board-%). */
@@ -39,62 +38,11 @@ export interface SketchCanvasGroupProps {
 }
 
 /**
- * Convert a world-space point to board-% relative to a canvas plane.
- *
- * The canvas plane is positioned + rotated in world space. To get board-%
- * coordinates on the plane, we transform the world point into the plane's
- * local space (inverse of the plane's world matrix), then convert the local
- * XZ coordinates to board-% using the same scaleM + boardAspect as the ground.
+ * Board-% ⇄ world pose math now lives in `canvasPose.ts` (bundle ratchet:
+ * chrome modules like `wallSeam` need the math without the scene graph).
+ * Re-exported here so existing consumers keep their import paths.
  */
-export function worldToCanvasPct(
-  worldPoint: THREE.Vector3,
-  canvas: SketchCanvas,
-  scaleM: number,
-  boardAspect: number,
-): PctPoint {
-  const planePos = new THREE.Vector3(
-    canvas.position[0],
-    canvas.position[1],
-    canvas.position[2],
-  );
-  const planeQuat = new THREE.Quaternion(
-    canvas.rotation[0],
-    canvas.rotation[1],
-    canvas.rotation[2],
-    canvas.rotation[3],
-  );
-  // Inverse-transform the world point into the plane's local space.
-  const local = worldPoint.clone().sub(planePos).applyQuaternion(planeQuat.clone().invert());
-  // Local X → board X%, local Z → board Y% (the plane's local Z maps to the
-  // board's Y axis, matching the ground-plane convention where world Z = board Y).
-  return worldToPct(local.x, local.z, scaleM, boardAspect);
-}
-
-/**
- * Convert board-% coordinates on a canvas plane to world space.
- * The inverse of worldToCanvasPct.
- */
-export function canvasPctToWorld(
-  pct: PctPoint,
-  canvas: SketchCanvas,
-  scaleM: number,
-  boardAspect: number,
-): THREE.Vector3 {
-  const [x, z] = pctToWorld(pct, scaleM, boardAspect);
-  const local = new THREE.Vector3(x, 0, z);
-  const planePos = new THREE.Vector3(
-    canvas.position[0],
-    canvas.position[1],
-    canvas.position[2],
-  );
-  const planeQuat = new THREE.Quaternion(
-    canvas.rotation[0],
-    canvas.rotation[1],
-    canvas.rotation[2],
-    canvas.rotation[3],
-  );
-  return local.applyQuaternion(planeQuat).add(planePos);
-}
+export { canvasPctToWorld, worldToCanvasPct } from "./canvasPose";
 
 /* -------------------------------------------------------------------------- */
 /* Spatial Margin — the 3D ruler (lives in scene space, not DOM)              */

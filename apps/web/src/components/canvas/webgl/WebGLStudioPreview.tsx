@@ -467,10 +467,13 @@ export function WebGLStudioPreview({
     store.setFeatures(initialFeaturesProp);
     // Site context feeds the sketch→CAD classifier + placement constraints.
     store.setSiteContext(boundaryPct, buildingPct ?? []);
+    // Board metre scale — the Phase 4 standing-canvas → wall conversion
+    // reads board-% ↔ world through it (scaleM/boardAspect are preview props).
+    store.setBoardScale(scaleM, boardAspect);
     store.setSelection([]);
     store.setProjectContext(projectId, null, projectAddress);
     if (initialSketchMode) store.setSketchMode(true);
-  }, [initialStrokes, initialCanvases, initialSetbackLines, initialBuildingFootprints, initialPlacements, initialFeaturesProp, constructionTrenches, irrigationZones, initialPhotoElevations, projectId, projectAddress, initialSketchMode, boundaryPct, buildingPct, hydratedRef]);
+  }, [initialStrokes, initialCanvases, initialSetbackLines, initialBuildingFootprints, initialPlacements, initialFeaturesProp, constructionTrenches, irrigationZones, initialPhotoElevations, projectId, projectAddress, initialSketchMode, boundaryPct, buildingPct, hydratedRef, scaleM, boardAspect]);
 
   // Phase 9: auto-site setup from the spatial command palette. When a new
   // project is created via JUMP, the URL carries ?setup=1; run the mock

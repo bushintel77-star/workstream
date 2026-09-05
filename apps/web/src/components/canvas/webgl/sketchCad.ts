@@ -26,8 +26,13 @@
  */
 
 import { clampBoardPct } from "@workstream/contracts";
-import type { CanvasStroke, LandscapeFeature } from "@workstream/contracts";
+import type {
+  CanvasStroke,
+  LandscapeFeature,
+  SketchCanvas,
+} from "@workstream/contracts";
 import {
+  buildLandscapeFeatureFromStroke,
   featureFromRecognizedStroke,
   interpretSketchStrokesToCad,
   recognizeStroke,
@@ -36,6 +41,11 @@ import { constrainAssetCentre } from "../handoff/geometry/outdoorClamp";
 import { mapSymbolToStudioType } from "../handoff/state/studioAiEngine";
 import { kindPlane, planeZ } from "./planeStack";
 import type { PctPoint } from "./coordTransform";
+import {
+  isStandingCanvas,
+  reconcileWallFootprint,
+  wallFromStandingStroke,
+} from "./wallSeam";
 
 export type SketchCadProposal = {
   /** Unique proposal id (derived from the stroke cluster it came from). */
@@ -151,6 +161,16 @@ export function proposeSketchCad(
 export function convertStrokesToFeatures(
   strokes: CanvasStroke[],
   planeOverrides?: Map<string, number>,
+  /** Phase 4 seam context — canvas poses + site truth. When provided, a
+   *  CLOSED stroke on a geometrically-standing canvas converts as a wall
+   *  (docs/PHASE4-SEAM-DECISION-2026.md D1/D2) instead of going through the
+   *  plan classifier, which cannot see drawn height. */
+  opts?: {
+    canvases?: SketchCanvas[];
+    scaleM?: number;
+    boardAspect?: number;
+    boundaryPct?: PctPoint[];
+  },
 ): {
   features: LandscapeFeature[];
   converted: number;
@@ -163,6 +183,52 @@ export function convertStrokesToFeatures(
       skipped += 1;
       continue;
     }
+    // Phase 4 seam — standing-canvas wall branch. The closed outline on a
+    // standing plane IS a wall by construction (geometry, not
+    // classification), so it bypasses the plan recognizer entirely. Open or
+    // degenerate standing-canvas ink is skipped with the counter — it must
+    // NOT fall through to the plan classifier, which would misread
+    // elevation-space geometry.
+    const sourceCanvas =
+      stroke.canvas_id != null
+        ? opts?.canvases?.find((c) => c.id === stroke.canvas_id)
+        : undefined;
+    if (
+      sourceCanvas &&
+      isStandingCanvas(sourceCanvas) &&
+      opts?.scaleM != null &&
+      opts?.boardAspect != null
+    ) {
+      const wall = wallFromStandingStroke(
+        stroke,
+        sourceCanvas,
+        opts.scaleM,
+        opts.boardAspect,
+      );
+      if (!wall) {
+        skipped += 1;
+        continue;
+      }
+      const rec = reconcileWallFootprint(
+        wall.footprintPct,
+        opts.boundaryPct ?? [],
+      );
+      const feature = buildLandscapeFeatureFromStroke({
+        kind: "wall",
+        // The domain builder's point contract is {x_pct, y_pct}; the seam
+        // module returns board points in the coordTransform shape {x, y}.
+        points: wall.footprintPct.map((p) => ({ x_pct: p.x, y_pct: p.y })),
+        planeZ: planeZ(kindPlane("wall")),
+        closed: true,
+      });
+      features.push({
+        ...feature,
+        drawn_height_m: wall.drawnHeightM,
+        height_source: "operator",
+        ...(rec.kind === "crosses" ? { boundary_cross: true } : {}),
+      });
+      continue;
+    }
     const rec = recognizeStroke(stroke);
     if (!rec || rec.confidence < MIN_DIRECT_CONFIDENCE) {
       skipped += 1;
@@ -172,6 +238,26 @@ export function convertStrokesToFeatures(
     features.push(featureFromRecognizedStroke(stroke, rec, undefined, targetZ));
   }
   return { features, converted: features.length, skipped };
+}
+
+/**
+ * Phase 4 seam — would this stroke convert as a standing-canvas wall? The
+ * Tidy HUD spawn gate uses it alongside `isConvertibleStroke` so wall ink
+ * gets the same commit prompt (with its plane/height/reconciliation preset)
+ * that ground ink gets.
+ */
+export function isWallCandidateStroke(
+  stroke: CanvasStroke,
+  canvases: SketchCanvas[] | undefined,
+  scaleM: number,
+  boardAspect: number,
+): boolean {
+  const canvas =
+    stroke.canvas_id != null
+      ? canvases?.find((c) => c.id === stroke.canvas_id)
+      : undefined;
+  if (!canvas || !isStandingCanvas(canvas)) return false;
+  return wallFromStandingStroke(stroke, canvas, scaleM, boardAspect) != null;
 }
 
 /**

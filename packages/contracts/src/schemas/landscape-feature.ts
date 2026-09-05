@@ -143,6 +143,28 @@ export const LandscapeFeatureSchema = z.object({
    * Optional / absent = on grade.
    */
   plane_z_m: z.number().positive().optional(),
+  /**
+   * Phase 4 seam — vertical extent the operator DREW on a standing sketch
+   * canvas (metres), carried to the feature when elevation ink converts to
+   * massing (docs/PHASE4-SEAM-DECISION-2026.md D2). The qualified name joins
+   * the `_m` family (`extrude_height_m` = pad raise above grade, `plane_z_m`
+   * = base-plane elevation) so pad-vs-wall can never be confused by name. An
+   * operator INTENT, never presented as measured truth — provenance is
+   * `height_source`. Optional / absent = not a converted wall.
+   */
+  drawn_height_m: z.number().positive().optional(),
+  /**
+   * Provenance of the feature's height — the neighbour-building enum, shared
+   * so one vocabulary covers every height downstream (sun/overshadowing
+   * reads both). Absent = the classic assumed default applies.
+   */
+  height_source: z.enum(["assumed", "measured", "operator"]).optional(),
+  /**
+   * Phase 4 seam D1 — the landed footprint CROSSES the title boundary. The
+   * feature lands where drawn (never moved); this stamp surfaces the crossing
+   * in the Tidy review conflict-crimson. Absent = no crossing detected.
+   */
+  boundary_cross: z.boolean().optional(),
 });
 export type LandscapeFeature = z.infer<typeof LandscapeFeatureSchema>;
 

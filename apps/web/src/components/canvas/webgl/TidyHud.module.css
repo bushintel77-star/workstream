@@ -93,3 +93,24 @@
 .commitBtn:active {
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 }
+
+/* Phase 4 seam — the wall preset's reconciliation chip. Conflict crimson is
+ * conflict-ONLY: the crossing stamp is the one state that earns it. */
+.reconciliationChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: var(--ws-radius-1);
+  border: 1px solid var(--ws-line);
+  font-family: var(--ws-font-tech);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ws-ink-secondary);
+  white-space: nowrap;
+}
+
+.reconciliationChip[data-reconciliation="crosses"] {
+  border-color: var(--ws-conflict);
+  color: var(--ws-conflict);
+}

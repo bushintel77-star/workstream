@@ -82,7 +82,7 @@ import {
 } from "../handoff/features/sunGrowth/sunDatePreset";
 import type { AnnotationDialect } from "./annotations/model";
 import type { PctPoint } from "./coordTransform";
-import type { FixedPlaneId } from "./planeStack";
+import { planeZ, type FixedPlaneId } from "./planeStack";
 import {
   AXO_PITCH_DEG,
   blendTargetForPitch,
@@ -862,6 +862,14 @@ export interface StudioStoreState {
   siteBuilding: PctPoint[];
   /** Set both site rings (hydrate / site-truth import). */
   setSiteContext: (boundary: PctPoint[], building: PctPoint[]) => void;
+  /**
+   * Phase 4 seam — the board's metre scale, kept current by the studio mount
+   * (scaleM/boardAspect are preview props, not store state). The standing
+   * canvas → wall conversion reads board-% ↔ world through it. Null until
+   * the studio hydrates.
+   */
+  boardScale: { scaleM: number; boardAspect: number } | null;
+  setBoardScale: (scaleM: number, boardAspect: number) => void;
 
   // --- Landscape features (converted CAD entities → DesignCanvas.features) ---
   /** Committed features — direct-converts + accepted-proposal outline mirrors. */
@@ -930,6 +938,12 @@ export interface StudioStoreState {
   convertStrokesToCadFeaturesWithPlanes: (
     planeOverrides: Map<string, number>,
   ) => number;
+  /**
+   * Phase 4 seam D3 — re-plane N selected features in ONE history commit
+   * (the operator undoes one re-planning decision, not N edits). Features
+   * not in the list are untouched; the depth rail flashes the target plane.
+   */
+  assignFeaturesToPlane: (featureIds: string[], planeId: FixedPlaneId) => number;
   /** Depth-rail band that should flash (plane id + timestamp for the 150ms LED). */
   depthRailFlash: { planeId: string | null; at: number };
   /** Tidy HUD state — null when no HUD is active. */
@@ -1869,6 +1883,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   // Site context — hydrated from the server-rendered site frame.
   siteBoundary: [],
   siteBuilding: [],
+  boardScale: null,
 
   // Landscape features — hydrated from DesignCanvas.features.
   features: [],
@@ -3374,8 +3389,9 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   bumpSaveRevision: () =>
     set((s) => ({ saveRevision: s.saveRevision + 1, savedTick: Date.now() })),
 
-  setSiteContext: (siteBoundary, siteBuilding) =>
-    set({ siteBoundary, siteBuilding }),
+  setSiteContext: (siteBoundary, siteBuilding) =>    set({ siteBoundary, siteBuilding }),
+
+  setBoardScale: (scaleM, boardAspect) => set({ boardScale: { scaleM, boardAspect } }),
 
   setFeatures: (features) => set({ features }),
   addFeatures: (incoming) =>
@@ -3500,6 +3516,13 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     const current = useStudioStore.getState();
     const { features, converted } = convertStrokesToFeatures(
       current.sketchStrokes,
+      undefined,
+      {
+        canvases: current.sketchCanvases,
+        scaleM: current.boardScale?.scaleM,
+        boardAspect: current.boardScale?.boardAspect,
+        boundaryPct: current.siteBoundary,
+      },
     );
     if (features.length === 0) {
       set({
@@ -3536,6 +3559,12 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     const { features, converted } = convertStrokesToFeatures(
       targets,
       planeOverrides,
+      {
+        canvases: current.sketchCanvases,
+        scaleM: current.boardScale?.scaleM,
+        boardAspect: current.boardScale?.boardAspect,
+        boundaryPct: current.siteBoundary,
+      },
     );
     if (features.length === 0) {
       set({
@@ -3572,6 +3601,31 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     set({ tidyHud: { strokeId, x, y } }),
   dismissTidyHud: () => set({ tidyHud: null, tidyPreviewZ: null }),
   setTidyPreviewZ: (z) => set({ tidyPreviewZ: z }),
+
+  // Phase 4 seam D3 — bulk re-plane: ONE history commit for the whole
+  // decision ("move these three beds to planting" is one undo).
+  assignFeaturesToPlane: (featureIds, planeId) => {
+    const z = planeZ(planeId);
+    const wanted = new Set(featureIds);
+    let moved = 0;
+    set((s) => {
+      const features = s.features.map((f) => {
+        if (!wanted.has(f.id)) return f;
+        moved += 1;
+        return { ...f, plane_z_m: z };
+      });
+      if (moved === 0) return {};
+      return {
+        features,
+        historyPast: [...s.historyPast, docSnapshot(s)].slice(-50),
+        historyFuture: [],
+        depthRailFlash: { planeId, at: Date.now() },
+        sketchCadNotice: `Moved ${moved} feature${moved === 1 ? "" : "s"} to ${planeId}.`,
+      };
+    });
+    return moved;
+  },
+
   openConflictCard: (strikeIdx) =>
     set({ conflictCardStrikeIdx: strikeIdx }),
   closeConflictCard: () =>

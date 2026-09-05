@@ -134,3 +134,39 @@
   background: var(--ws-active);
   border-color: var(--ws-active);
 }
+/* Phase 4 seam D3 — bulk re-plane strip: one decision, one commit. */
+.bulkPlaneRow {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2, 8px);
+  padding: var(--ws-space-2, 8px) 0;
+  border-top: 1px solid var(--ws-line);
+}
+
+.bulkLabel {
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro, 10px);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ws-ink-secondary);
+  flex: 1;
+}
+
+.bulkPlaneBtn {
+  padding: 4px 8px;
+  border-radius: var(--ws-radius-2, 3px);
+  border: 1px solid var(--ws-line);
+  background: transparent;
+  color: var(--ws-ink-secondary);
+  font-family: var(--ws-font-tech);
+  font-size: var(--ws-text-micro, 10px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 50ms linear, color 50ms linear;
+}
+
+.bulkPlaneBtn:hover {
+  background: var(--ws-active);
+  color: var(--ws-active-ink);
+}

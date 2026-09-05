@@ -13,6 +13,7 @@
  */
 
 import type { DesignKeylessOverlay } from "@workstream/contracts";
+import { useMemo } from "react";
 import {
   OVERLAY_COLORS,
   OVERLAY_LABELS,
@@ -40,6 +41,13 @@ export function LayersPanel({ overlays }: { overlays: DesignKeylessOverlay[] }) 
   const activePlaneId = useStudioStore((st) => st.activePlaneId);
   const setActivePlaneId = useStudioStore((st) => st.setActivePlaneId);
   const features = useStudioStore((st) => st.features);
+  const selection = useStudioStore((st) => st.selection);
+  const assignFeaturesToPlane = useStudioStore((st) => st.assignFeaturesToPlane);
+  const selectedFeatureIds = useMemo(
+    () =>
+      selection.filter((r) => r.kind === "feature").map((r) => r.id),
+    [selection],
+  );
   const hiddenOverlayKinds = useStudioStore((st) => st.hiddenOverlayKinds);
   const toggleOverlayKind = useStudioStore((st) => st.toggleOverlayKind);
   const subsurfaceView = useStudioStore((st) => st.subsurfaceView);
@@ -107,6 +115,27 @@ export function LayersPanel({ overlays }: { overlays: DesignKeylessOverlay[] }) 
             locked={p.readOnly}
           />
         ),
+      )}
+      {/* Phase 4 seam D3 — bulk re-plane: when converted features are
+          selected (marquee or click), each drawable plane is one commit away.
+          ONE action = ONE history commit, whatever the count. */}
+      {selectedFeatureIds.length > 0 && (
+        <div className={s.bulkPlaneRow} data-testid="bulk-plane-assign">
+          <span className={s.bulkLabel}>
+            Move {selectedFeatureIds.length} selected
+          </span>
+          {FIXED_PLANES.filter((p) => p.drawable).map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className={s.bulkPlaneBtn}
+              onClick={() => assignFeaturesToPlane(selectedFeatureIds, p.id)}
+              title={`Move ${selectedFeatureIds.length} selected feature${selectedFeatureIds.length === 1 ? "" : "s"} to ${p.name} — one undo`}
+            >
+              {p.id === "ground" ? "GRD" : p.id === "planting" ? "PLT" : "MAS"}
+            </button>
+          ))}
+        </div>
       )}
       {canvases.map((c) => (
         <PlaneRow

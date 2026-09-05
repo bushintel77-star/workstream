@@ -66,6 +66,13 @@ export function buildLandscapeFeatureFromStroke(args: {
    * (backward-compatible).
    */
   planeZ?: number;
+  /**
+   * Emit a CLOSED Polygon instead of the kind's default LineString. Phase 4
+   * seam: a wall drawn as a closed outline on a standing canvas lands as a
+   * plan footprint — a ring, not a zero-width line (the drawn outline IS the
+   * wall's thickness; inventing one would be fake precision).
+   */
+  closed?: boolean;
 }): LandscapeFeature {
   const props = defaultStructuredToolProps(args.kind);
   const id = args.id ?? crypto.randomUUID();
@@ -83,8 +90,9 @@ export function buildLandscapeFeatureFromStroke(args: {
   }));
 
   const isBed = args.kind === "bed";
+  const isClosed = args.closed === true;
   let points = pts;
-  if (isBed && points.length >= 3) {
+  if ((isBed || isClosed) && points.length >= 3) {
     const first = points[0]!;
     const last = points[points.length - 1]!;
     if (
@@ -115,7 +123,7 @@ export function buildLandscapeFeatureFromStroke(args: {
       user_modification_state: "draft",
     },
     geometry: {
-      type: isBed ? "Polygon" : "LineString",
+      type: isBed || isClosed ? "Polygon" : "LineString",
       spatial_reference: "EPSG:3857",
       canvas_origin_pct: { x_pct: 0, y_pct: 0 },
       points,

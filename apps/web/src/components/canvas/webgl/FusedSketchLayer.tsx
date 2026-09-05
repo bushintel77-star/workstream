@@ -48,7 +48,7 @@ import {
 import { PALETTE } from "../../../styles/colorTokens";
 import { sunDateFromPreset } from "../handoff/features/sunGrowth/sunDatePreset";
 import { useStudioStore } from "./studioStore";
-import { isConvertibleStroke } from "./sketchCad";
+import { isConvertibleStroke, isWallCandidateStroke } from "./sketchCad";
 import {
   stabilizePoint,
   shouldStraighten,
@@ -504,9 +504,21 @@ export function FusedSketchLayer({
     addSketchStroke(stroke);
     // Tidy HUD (§7.3) — spawn at the pen-lift terminal point iff the stroke
     // would pass the conversion gate, so ordinary annotation ink is never
-    // interrupted by a commit prompt. Canvas-plane strokes (Spatial Sketching)
-    // are excluded: they belong to their canvas, not the fixed plane stack.
-    if (!stroke.canvas_id && isConvertibleStroke(stroke)) {
+    // interrupted by a commit prompt. Ground strokes convert through the
+    // classifier; Phase 4 seam — a closed outline on a standing canvas also
+    // spawns (the wall preset: massing + drawn height + reconciliation),
+    // while other canvas-plane strokes stay excluded (they belong to their
+    // canvas, not the fixed plane stack).
+    const wallCandidate = isWallCandidateStroke(
+      stroke,
+      sketchCanvases,
+      scaleM,
+      boardAspect,
+    );
+    if (
+      (!stroke.canvas_id && isConvertibleStroke(stroke)) ||
+      wallCandidate
+    ) {
       const lift = e?.nativeEvent;
       // HUD positions are px inside the studio container (FloatingChrome's
       // coordinate space), so translate the viewport-relative client coords
@@ -531,6 +543,7 @@ export function FusedSketchLayer({
     addSketchStroke,
     scaleM,
     boardAspect,
+    sketchCanvases,
     setHover,
     activeNib,
     activeMaterialId,

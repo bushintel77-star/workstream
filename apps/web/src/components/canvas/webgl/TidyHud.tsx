@@ -26,10 +26,11 @@
  * then self-destructs. ESC dismisses without committing.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStudioStore } from "./studioStore";
 import { recognizeStroke } from "@workstream/domain";
 import { FIXED_PLANE_LABELS, kindPlane, planeZ, type FixedPlaneId } from "./planeStack";
+import { reconcileWallFootprint, wallFromStandingStroke } from "./wallSeam";
 import styles from "./TidyHud.module.css";
 
 const PLANE_CYCLE: FixedPlaneId[] = ["ground", "planting", "massing"];
@@ -50,15 +51,43 @@ export function TidyHud({ x, y, strokeId, onDismiss }: TidyHudProps) {
   );
   const setTidyPreviewZ = useStudioStore((s) => s.setTidyPreviewZ);
   const strokes = useStudioStore((s) => s.sketchStrokes);
+  const canvases = useStudioStore((s) => s.sketchCanvases);
+  const boardScale = useStudioStore((s) => s.boardScale);
+  const siteBoundary = useStudioStore((s) => s.siteBoundary);
 
   // Classify the triggering stroke
   const stroke = strokes.find((s) => s.id === strokeId);
   const recognition = stroke ? recognizeStroke(stroke) : null;
 
+  // Phase 4 seam — standing-canvas wall preset (D1/D2). A wall is a wall by
+  // GEOMETRY, not classification, so this runs before the recognizer and
+  // replaces the plane cycle with the massing preset: plane locked, drawn
+  // height readout, reconciliation chip.
+  const wall = useMemo(() => {
+    if (!stroke || !boardScale) return null;
+    const canvas = stroke.canvas_id
+      ? canvases.find((c) => c.id === stroke.canvas_id)
+      : undefined;
+    if (!canvas) return null;
+    const w = wallFromStandingStroke(
+      stroke,
+      canvas,
+      boardScale.scaleM,
+      boardScale.boardAspect,
+    );
+    if (!w) return null;
+    return {
+      ...w,
+      reconciliation: reconcileWallFootprint(w.footprintPct, siteBoundary),
+    };
+  }, [stroke, canvases, boardScale, siteBoundary]);
+
   // Default Z-plane from the classifier mapping
-  const defaultPlane: FixedPlaneId = recognition
-    ? kindPlane(recognition.kind)
-    : "ground";
+  const defaultPlane: FixedPlaneId = wall
+    ? "massing"
+    : recognition
+      ? kindPlane(recognition.kind)
+      : "ground";
 
   const [selectedPlane, setSelectedPlane] = useState<FixedPlaneId>(defaultPlane);
   /** Set once the operator cycles — after that, their choice is theirs. */
@@ -108,11 +137,60 @@ export function TidyHud({ x, y, strokeId, onDismiss }: TidyHudProps) {
     return () => window.removeEventListener("keydown", handler, true);
   }, [onDismiss]);
 
-  if (!recognition) return null;
+  if (!recognition && !wall) return null;
 
   const z = planeZ(selectedPlane);
   const zLabel = z === 0 ? "0.0" : `+${z.toFixed(1)}`;
   const planeCode = FIXED_PLANE_LABELS[selectedPlane];
+
+  // Phase 4 seam — the wall preset HUD: plane locked to massing, the drawn
+  // height as a live numeral, and the D1 reconciliation chip. No plane
+  // cycle: a wall's plane is not an operator choice, it is its geometry.
+  if (wall) {
+    return (
+      <div
+        className={styles.hud}
+        data-testid="tidy-hud"
+        style={{ left: `${x}px`, top: `${y}px` }}
+      >
+        <span className={styles.kindLabel}>WALL</span>
+        <span
+          className={styles.planeToggle}
+          data-testid="tidy-wall-preset"
+          data-plane="massing"
+          title="Wall preset — massing plane +4.0 m, drawn height carried to the feature"
+        >
+          MAS +4.0 · {wall.drawnHeightM.toFixed(1)} m drawn
+        </span>
+        <span
+          className={styles.reconciliationChip}
+          data-testid="tidy-wall-reconciliation"
+          data-reconciliation={wall.reconciliation.kind}
+          title={
+            wall.reconciliation.kind === "crosses"
+              ? "The footprint crosses the title boundary — it lands where drawn, flagged"
+              : wall.reconciliation.kind === "contained"
+                ? "Footprint contained in the title boundary"
+                : "No title boundary on this project — locational-indicative"
+          }
+        >
+          {wall.reconciliation.kind === "crosses"
+            ? "⚠ crosses title"
+            : wall.reconciliation.kind === "contained"
+              ? "✓ in title"
+              : "indicative"}
+        </span>
+        <button
+          className={styles.commitBtn}
+          data-testid="tidy-commit"
+          onClick={commit}
+          title="Commit converted geometry"
+        >
+          ✓
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -121,7 +199,7 @@ export function TidyHud({ x, y, strokeId, onDismiss }: TidyHudProps) {
       style={{ left: `${x}px`, top: `${y}px` }}
     >
       <span className={styles.kindLabel}>
-        {recognition.kind.toUpperCase()}
+        {(recognition?.kind ?? "ink").toUpperCase()}
       </span>
       <button
         className={styles.planeToggle}

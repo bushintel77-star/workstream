@@ -85,4 +85,23 @@ describe("studioStore Tier-1 palette + brush state", () => {
     store.setBrushOpacity(null);
     expect(useStudioStore.getState().brushOpacity).toBeNull();
   });
+
+  it("bulk plane assignment moves N features in ONE history commit", () => {
+    const store = useStudioStore.getState();
+    store.setFeatures([]);
+    useStudioStore.setState({ historyPast: [] });
+    store.addFeatures([
+      { id: "f1", type: "LandscapeFeature", metadata: { layer: "hardscape", timestamp_created: new Date().toISOString(), source_attribution: "human_drawn", user_modification_state: "draft" }, geometry: { type: "LineString", spatial_reference: "EPSG:3857", canvas_origin_pct: { x_pct: 0, y_pct: 0 }, points: [] } },
+      { id: "f2", type: "LandscapeFeature", metadata: { layer: "hardscape", timestamp_created: new Date().toISOString(), source_attribution: "human_drawn", user_modification_state: "draft" }, geometry: { type: "LineString", spatial_reference: "EPSG:3857", canvas_origin_pct: { x_pct: 0, y_pct: 0 }, points: [] } },
+    ] as never);
+    const historyBefore = useStudioStore.getState().historyPast.length;
+    const moved = store.assignFeaturesToPlane(["f1", "f2"], "planting");
+    const s = useStudioStore.getState();
+    expect(moved).toBe(2);
+    // One decision = one undo step, whatever the count.
+    expect(s.historyPast.length).toBe(historyBefore + 1);
+    expect(s.features.every((f) => f.plane_z_m === 1.5)).toBe(true);
+    // Untouched ids are untouched.
+    expect(store.assignFeaturesToPlane(["fX"], "ground")).toBe(0);
+  });
 });
