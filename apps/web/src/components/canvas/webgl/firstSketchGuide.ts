@@ -27,3 +27,23 @@ export function guideFirstSketch(args: {
     !args.isE2e
   );
 }
+
+/**
+ * Retirement latch for the hint. Retirement must be LATCHED, not re-derived:
+ * a later HUD cycle (Tidy spawn/dismiss windows) can transiently recompute
+ * the content gate false, and a re-derived gate resurrects the prompt over
+ * ink — observed in the field (handover §4.6). One latch per studio mount:
+ * an empty board re-prompts (fresh session), a board with content latches on
+ * the first observation. Pure state so the behaviour is unit-testable.
+ */
+export function createFirstSketchHintLatch() {
+  let retired = false;
+  return {
+    get retired(): boolean {
+      return retired;
+    },
+    observe(hasDesignContent: boolean): void {
+      if (hasDesignContent) retired = true;
+    },
+  };
+}

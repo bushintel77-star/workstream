@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { DEFAULT_NIB } from "./nibs";
 import { NIBS } from "./nibs";
 import { useStudioStore } from "./studioStore";
+import { readBrushPrefs, writeBrushPrefs } from "./brushPrefs";
 
 /**
  * Tier-1 widget standard — the palette/brush store behaviours behind
@@ -103,5 +104,98 @@ describe("studioStore Tier-1 palette + brush state", () => {
     expect(s.features.every((f) => f.plane_z_m === 1.5)).toBe(true);
     // Untouched ids are untouched.
     expect(store.assignFeaturesToPlane(["fX"], "ground")).toBe(0);
+  });
+});
+
+describe("studioStore Tier-1 brush-state persistence (handover §4.5)", () => {
+  let backing: Map<string, string>;
+
+  beforeEach(() => {
+    backing = new Map();
+    (globalThis as Record<string, unknown>).sessionStorage = {
+      getItem: (key: string) => backing.get(key) ?? null,
+      setItem: (key: string, value: string) => void backing.set(key, value),
+    };
+    useStudioStore.setState({
+      projectId: "",
+      activeNib: DEFAULT_NIB,
+      activeMaterialId: null,
+      brushWidthOverride: null,
+      brushOpacity: null,
+      smoothingTouched: false,
+      strokeSmoothing: NIBS[DEFAULT_NIB].defaultSmoothing,
+      recentMaterialIds: [],
+      previousMaterialId: null,
+    });
+  });
+
+  afterEach(() => {
+    delete (globalThis as Record<string, unknown>).sessionStorage;
+  });
+
+  it("hydrateBrushPrefs restores the project's armed nib, material, width, opacity", () => {
+    writeBrushPrefs("p1", {
+      nib: "ink-03",
+      materialId: "corten",
+      widthPx: 9,
+      opacity: 0.55,
+    });
+    useStudioStore.getState().setProjectContext("p1", null, "");
+    useStudioStore.getState().hydrateBrushPrefs("p1");
+    const s = useStudioStore.getState();
+    expect(s.activeNib).toBe("ink-03");
+    // The restored nib brings its smoothing default (the operator hasn't
+    // touched the dial in this fresh session).
+    expect(s.strokeSmoothing).toBe(NIBS["ink-03"].defaultSmoothing);
+    expect(s.activeMaterialId).toBe("corten");
+    expect(s.brushWidthOverride).toBe(9);
+    expect(s.brushOpacity).toBe(0.55);
+  });
+
+  it("restoring does not rewrite the palette's recent/previous memory", () => {
+    writeBrushPrefs("p1", { materialId: "olive" });
+    useStudioStore.getState().setProjectContext("p1", null, "");
+    useStudioStore.getState().hydrateBrushPrefs("p1");
+    const s = useStudioStore.getState();
+    expect(s.activeMaterialId).toBe("olive");
+    // Recents/previous record what the operator picked THIS session; a
+    // restored arm is a restore, not a pick.
+    expect(s.recentMaterialIds).toEqual([]);
+    expect(s.previousMaterialId).toBeNull();
+  });
+
+  it("operator dial changes persist under the current project's key", () => {
+    useStudioStore.getState().setProjectContext("p1", null, "");
+    useStudioStore.getState().setActiveNib("stipple");
+    const saved = readBrushPrefs("p1");
+    expect(saved?.nib).toBe("stipple");
+    // The write stamps the whole armed set, not just the changed field.
+    expect(saved).toEqual({
+      nib: "stipple",
+      materialId: useStudioStore.getState().activeMaterialId,
+      widthPx: useStudioStore.getState().brushWidthOverride,
+      opacity: useStudioStore.getState().brushOpacity,
+    });
+  });
+
+  it("a project switch never stamps the outgoing pen onto the incoming key", () => {
+    const store = useStudioStore.getState();
+    store.setProjectContext("p1", null, "");
+    store.setActiveNib("ink-03");
+    expect(readBrushPrefs("p1")?.nib).toBe("ink-03");
+    // Navigation: projectId flips while the brush fields still hold p1's
+    // state (hydrateBrushPrefs for p2 has not run yet). That mid-swap state
+    // must not be written anywhere.
+    useStudioStore.setState({ projectId: "p2" });
+    expect(backing.has("ws-brush-prefs:p2")).toBe(false);
+    // p2 has nothing saved → hydrate is a no-op → the operator keeps drawing
+    // with p1's pen until they choose (defaults apply on a fresh reload).
+    useStudioStore.getState().hydrateBrushPrefs("p2");
+    expect(useStudioStore.getState().activeNib).toBe("ink-03");
+    // And the first choice on p2 lands under p2, leaving p1's record alone.
+    useStudioStore.getState().setBrushWidthOverride(14);
+    expect(readBrushPrefs("p2")?.widthPx).toBe(14);
+    expect(readBrushPrefs("p1")?.nib).toBe("ink-03");
+    expect(backing.get("ws-brush-prefs:p1")).not.toContain("14");
   });
 });

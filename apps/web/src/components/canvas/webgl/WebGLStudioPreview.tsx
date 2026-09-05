@@ -89,7 +89,7 @@ const SheetComposer = dynamic(
   { ssr: false },
 );
 import { OfficeTemplatePanel } from "./OfficeTemplatePanel";
-import { guideFirstSketch } from "./firstSketchGuide";
+import { createFirstSketchHintLatch, guideFirstSketch } from "./firstSketchGuide";
 import type { WebGLStudioProps } from "./WebGLStudio";
 import { placementsToItems, featuresOntoItems } from "../handoff/state/canvasBridge";
 import { buildScanChoreography } from "./scanChoreography";
@@ -427,6 +427,9 @@ export function WebGLStudioPreview({
    * resolves the camera and the instruments, not the active tool.
    */
   const modeEntryRef = useState({ done: false })[0];
+  // The first-sketch hint's retirement latch (created with the other
+  // persistent refs; observed at the design-content gate below).
+  const firstHintLatch = useState(createFirstSketchHintLatch)[0];
   useEffect(() => {
     if (modeEntryRef.done) return;
     modeEntryRef.done = true;
@@ -472,6 +475,9 @@ export function WebGLStudioPreview({
     store.setBoardScale(scaleM, boardAspect);
     store.setSelection([]);
     store.setProjectContext(projectId, null, projectAddress);
+    // Tier-1 — the project's last armed nib/material/width/opacity comes
+    // back after the store context lands (brushPrefs.ts; session-scoped).
+    store.hydrateBrushPrefs(projectId);
     if (initialSketchMode) store.setSketchMode(true);
   }, [initialStrokes, initialCanvases, initialSetbackLines, initialBuildingFootprints, initialPlacements, initialFeaturesProp, constructionTrenches, irrigationZones, initialPhotoElevations, projectId, projectAddress, initialSketchMode, boundaryPct, buildingPct, hydratedRef, scaleM, boardAspect]);
 
@@ -1629,10 +1635,15 @@ export function WebGLStudioPreview({
 
   // Design-content gate — true once any ink, placement, or feature exists.
   // Used by the guided first-sketch hint, which retires when content lands.
+  // The hint retires on first ink and must never resurrect (latched, not
+  // re-derived — see createFirstSketchHintLatch / handover §4.6). The latch
+  // is created with the other refs near the component head; observation
+  // happens here at the content gate.
   const hasDesignContent =
     strokes.length > 0 ||
     storePlacements.length > 0 ||
     storeFeatures.length > 0;
+  firstHintLatch.observe(hasDesignContent);
   // Guided first-sketch handoff: once the title boundary is set and the board
   // is still empty in Sketch, the studio arms the pen and shows a one-line
   // prompt (<first-move-hint>) instead of asking the operator to pick a move.
@@ -1644,7 +1655,7 @@ export function WebGLStudioPreview({
       hasDesignContent,
       mode: activeMode,
       isE2e: process.env.NEXT_PUBLIC_E2E === "1",
-    }) && studioReady;
+    }) && studioReady && !firstHintLatch.retired;
 
   return (
     <CanvasFirstLayout

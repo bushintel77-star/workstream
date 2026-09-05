@@ -81,6 +81,7 @@ import { ScanRevealDirector, scanReveal } from "./scanReveal";
 import { buildMetaChips } from "./metaChips";
 import { MeasureTapeLayer } from "./MeasureTapeLayer";
 import { DraftShapeLayer } from "./DraftShapeLayer";
+import { StraightedgeLayer } from "./StraightedgeLayer";
 import { TrenchLayer } from "./TrenchLayer";
 import { IrrigationZoneLayer } from "./IrrigationZoneLayer";
 import { AssetPlaceLayer } from "./AssetPlaceLayer";
@@ -1096,6 +1097,14 @@ export function StudioScene({
       {/* Precision drafting (Polyline / Area) — click-to-place vertices with
           the snap ladder; self-gates on draftSession so the pan law holds. */}
       <DraftShapeLayer
+        scaleM={scaleM}
+        boardAspect={boardAspect}
+        heightmapPoints={heightmapPoints}
+      />
+      {/* Straightedge (Trace ruler) — RULE places the edge; pen ink within
+          its proximity band projects onto it (FusedSketchLayer). Self-gates
+          on activeTool/straightedgeEdge so the pan law holds. */}
+      <StraightedgeLayer
         scaleM={scaleM}
         boardAspect={boardAspect}
         heightmapPoints={heightmapPoints}

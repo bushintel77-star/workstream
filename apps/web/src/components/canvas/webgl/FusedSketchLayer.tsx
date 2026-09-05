@@ -55,6 +55,7 @@ import {
   straightenStroke,
   type StabilizerState,
 } from "./strokeAssist";
+import { projectOntoStraightedge } from "./straightedge";
 import {
   SketchCanvasGroup,
   worldToCanvasPct,
@@ -389,25 +390,44 @@ export function FusedSketchLayer({
       const smoothing = useStudioStore.getState().strokeSmoothing;
       const sm = stabilizePoint({ x: snap.x, y: snap.z }, stabRef.current, smoothing);
 
+      // Straightedge (gap-analysis Phase 1, ground path only): a point
+      // within the placed ruler's proximity band projects onto the edge —
+      // projection IS the assist; beyond the band the stroke stays
+      // freehand. Applied after the stabilizer so the committed truth is
+      // exactly on the ruler (the chain can land a hair off).
+      const edge = useStudioStore.getState().straightedgeEdge;
+      let ex = sm.x;
+      let ez = sm.y;
+      let rulerM: number | undefined;
+      if (edge) {
+        const hit = projectOntoStraightedge({ x: sm.x, z: sm.y }, edge, scaleM, boardAspect);
+        if (hit) {
+          ex = hit.x;
+          ez = hit.z;
+          rulerM = hit.alongM;
+        }
+      }
+
       // E·N·Z chip source (2.6) — the effective draw point in world metres.
       // Chainage is derived from the SAME stationing the ruler uses (2.1):
       // world X runs along the bottom stationing edge, so
       // chainage = stationAtPct(x / scaleM * 100, scaleM) = x.
       useStudioStore.getState().setLiveCoord({
-        x: sm.x,
-        z: sm.y,
-        chainage: stationAtPct((sm.x / scaleM) * 100, scaleM),
+        x: ex,
+        z: ez,
+        chainage: stationAtPct((ex / scaleM) * 100, scaleM),
+        ...(rulerM !== undefined ? { rulerM } : {}),
       });
 
-      if (last && last.distanceTo(new THREE.Vector3(sm.x, FLAT_Y, sm.y)) < 0.15) return;
-      pointsRef.current.push(new THREE.Vector3(sm.x, FLAT_Y, sm.y));
+      if (last && last.distanceTo(new THREE.Vector3(ex, FLAT_Y, ez)) < 0.15) return;
+      pointsRef.current.push(new THREE.Vector3(ex, FLAT_Y, ez));
       lastMoveAtRef.current = performance.now();
       const tel = telemetryFromPointer(e.nativeEvent);
       telemetryRef.current.push(tel);
       setLiveTelemetry(tel);
       setLivePoints([...pointsRef.current]);
     },
-    [sketchMode, extrudeTarget, scaleM, snapVertices, setHover, setLiveTelemetry],
+    [sketchMode, extrudeTarget, scaleM, boardAspect, snapVertices, setHover, setLiveTelemetry],
   );
 
   const onPointerUp = useCallback((e?: ThreeEvent<PointerEvent>) => {

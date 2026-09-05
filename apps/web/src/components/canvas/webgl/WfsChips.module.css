@@ -37,6 +37,11 @@
   border: 1px solid var(--ws-line);
   box-shadow: var(--ws-shadow-2);
   max-width: min(300px, 100%);
+  /* Overflow strategy, tier 1 (2026-09-05): the primary chip is the flex
+     child that absorbs squeeze. min-width:0 unlocks its shrink so the
+     address name (already ellipsised) compresses first — at ~1280px a
+     crowded row used to clip the middle overlay pills instead. */
+  min-width: 0;
 }
 
 .primaryAccentSquare {
@@ -70,6 +75,8 @@
   white-space: nowrap;
   border-left: 1px solid var(--ws-line);
   padding-left: 8px;
+  /* The camera/north/scale readout stays whole while the name absorbs. */
+  flex-shrink: 0;
 }
 
 /* ---- Divider between primary chip and overlay pills ---- */
@@ -117,7 +124,10 @@
   background: var(--ws-panel);
   border: 1px solid var(--ws-line);
   margin-right: 4px;
-  flex-shrink: 0;
+  /* Tier 2 engages only when the row is over budget (the primary chip has
+     the larger basis and absorbs first). */
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 /* ---- Hazard pill — BAL / bushfire overlay (hazard colour + triangle) ---- */
@@ -146,6 +156,11 @@
   letter-spacing: 0.03em;
   color: var(--ws-ink-secondary);
   white-space: nowrap;
+  /* Tier 2 tail: compressing pills ellipsize their label (the pill's title
+     tooltip carries the full text) rather than overflowing the pill box. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .overlayPillHazard .overlayLabel {

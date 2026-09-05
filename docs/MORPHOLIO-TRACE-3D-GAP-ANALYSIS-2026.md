@@ -122,7 +122,7 @@ the 3D-native model beats Trace's underlay-only 3D.
 | Smooth curves (stabilizer) | None — raw freehand + Trace & Bake background vectorize | ❌ — the single most-felt drawing gap; a per-nib stabilizer is table stakes |
 | Hold-to-straighten | Snap vertices (stitch engine) snap to geometry, not to straightness | ❌ — cheap, high-leverage, pure "assist" DNA |
 | Live line length while drawing | LiveNibReadout (E/N/Z/STA/grade) | ✅ ours richer (grade/bearing/chainage) |
-| Super Ruler / Triangle / Protractor | None (straightedge assist only via stitch snap) | ❌ — see §5 Phase 1 |
+| Super Ruler / Triangle / Protractor | Straightedge rail tool shipped (RULE: placed edge + proximity projection + live length); no triangle/protractor instruments | 🟡 — the ruler verb is shipped, the instrument set is not; see §5 Phase 1 |
 | 1/2/3-point perspective grids | Elevation/photo-trace with calibrated camera frames (boundary-snapped) | 🟡 — different problem shape; ours is survey-anchored, Trace's is synthetic grid |
 | Scale grid underlay | Adaptive grid on ground plane | ✅ |
 | ScalePen (zoom-true lineweights) | Committed stroke width resolves through brush/material/template chain | 🟡 — px-based, not scale-true at print; ties into §5 Phase 3 sheet scale truth |
@@ -225,13 +225,21 @@ in non-gating shards. Every phase below therefore ships with its lock.
 - Gate: e2e stroke test + collision spec stay green; no new chrome tokens
   without tokens.css registration.
 
-**Status (2026-09-04): stabilizer + hold-to-straighten SHIPPED**
-(`strokeAssist.ts` — pull-chain with a follow floor, straighten gated on
-≥400ms hold AND ≥0.6 straightness so curves that pause stay curves; wired
-into BOTH draw paths — ground and canvas planes; SM slider in the brush
-flyout; 14 unit tests). Remaining: straightedge tool, per-nib smoothing
-defaults (technical pen ~5%, charcoal ~25%), hold-to-extend with typed
-length.
+**Status (2026-09-05): stabilizer + hold-to-straighten + straightedge
+SHIPPED.** Stabilizer and straighten 2026-09-04 (`strokeAssist.ts` —
+pull-chain with a follow floor, straighten gated on ≥400ms hold AND ≥0.6
+straightness so curves that pause stay curves; wired into BOTH draw paths —
+ground and canvas planes; SM slider in the brush flyout; per-nib smoothing
+defaults shipped with the Tier-1 batch). **Straightedge 2026-09-05**
+(`straightedge.ts` pure projection math + `StraightedgeLayer.tsx`): the RULE
+rail tile places an edge (drag, live length chip + RULER readout channel);
+pen ink within the proximity band (1.5% of board scale) projects onto the
+edge on the GROUND draw path — assist, never constrain; Esc clears; the
+edge is session view state (never persisted, nothing sited — no
+reconciliation event); `webgl-straightedge.spec.ts` proves wobbly raw input
+commits as collinear ink through the persisted canvas. Remaining: hold-to-
+extend with typed length, Super Ruler/Triangle/Protractor instruments,
+gesture/touch parity.
 
 ### Phase 1b — Polish locks: gate what polish you have
 Structural, do before further feature work — converts "looks worse than

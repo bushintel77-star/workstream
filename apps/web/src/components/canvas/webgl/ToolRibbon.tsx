@@ -49,6 +49,9 @@ const TOOL_GROUPS: ToolGroup[] = [
       { id: "pen", label: "PEN", hotkey: "P", glyph: "pen" },
       { id: "line", label: "LINE", hotkey: "L", glyph: "line" },
       { id: "spline", label: "SPLINE", hotkey: "S", glyph: "spline" },
+      // The Trace ruler — place an edge, draw along it (gap-analysis
+      // Phase 1). No flyout: the tool is the edge, not a parameter set.
+      { id: "straightedge", label: "RULE", hotkey: "R", glyph: "ruler" },
     ],
   },
   {
@@ -140,6 +143,16 @@ function ToolGlyph({ name, filled = false }: { name: string; filled?: boolean })
           <path d="M3 17c4-8 8-8 12-4s6 4 6 0" />
           <circle cx="3" cy="17" r="1.5" />
           <circle cx="21" cy="13" r="1.5" />
+        </svg>
+      );
+    case "ruler":
+      return (
+        <svg {...common}>
+          {/* The straightedge: a bar with tick marks, the engraver's ruler. */}
+          <rect x="2.5" y="9" width="19" height="6" rx="1" />
+          <line x1="7" y1="9" x2="7" y2="12" />
+          <line x1="12" y1="9" x2="12" y2="12" />
+          <line x1="17" y1="9" x2="17" y2="12" />
         </svg>
       );
     case "contour":

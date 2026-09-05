@@ -1328,3 +1328,45 @@ describe("office template binding", () => {
     });
   });
 });
+
+describe("project context — hold-last-good address (handover §4.6)", () => {
+  it("a re-hydrate without an address holds the last-good value", () => {
+    useStudioStore.getState().setProjectContext("p-1", null, "12 Example St");
+    // Slow refetch / empty-shell mount arrives with no address.
+    useStudioStore.getState().setProjectContext("p-1", null, "");
+    expect(useStudioStore.getState().projectAddress).toBe("12 Example St");
+  });
+
+  it("a real navigation (different project id) swaps unconditionally", () => {
+    useStudioStore.getState().setProjectContext("p-1", null, "12 Example St");
+    useStudioStore.getState().setProjectContext("p-2", null, "");
+    expect(useStudioStore.getState().projectAddress).toBe("");
+  });
+
+  it("a fresh address overwrites", () => {
+    useStudioStore.getState().setProjectContext("p-1", null, "12 Example St");
+    useStudioStore.getState().setProjectContext("p-1", null, "99 Other Rd");
+    expect(useStudioStore.getState().projectAddress).toBe("99 Other Rd");
+  });
+});
+
+describe("straightedge tool state (gap-analysis Phase 1)", () => {
+  it("the placed edge is session view state with a plain setter", () => {
+    const edge = { a: { x: 40, y: 50 }, b: { x: 60, y: 50 } };
+    useStudioStore.getState().setStraightedgeEdge(edge);
+    expect(useStudioStore.getState().straightedgeEdge).toEqual(edge);
+    useStudioStore.getState().setStraightedgeEdge(null);
+    expect(useStudioStore.getState().straightedgeEdge).toBeNull();
+  });
+
+  it("arming RULE does not arm the ink path (the edge is not a pen)", () => {
+    const store = useStudioStore.getState();
+    store.setActiveTool("straightedge");
+    const s = useStudioStore.getState();
+    expect(s.activeTool).toBe("straightedge");
+    expect(s.sketchMode).toBe(false);
+    // Back to the pen: the legacy bridge re-arms ink.
+    store.setActiveTool("pen");
+    expect(useStudioStore.getState().sketchMode).toBe(true);
+  });
+});

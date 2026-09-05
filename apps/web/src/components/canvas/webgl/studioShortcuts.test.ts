@@ -73,7 +73,7 @@ describe("resolveStudioShortcut", () => {
     });
   });
 
-  it("maps P/L/S/C/G to the ribbon tools (handoff §5.1)", () => {
+  it("maps P/L/S/R/C/G to the ribbon tools (handoff §5.1)", () => {
     expect(resolveStudioShortcut(key("p"))).toEqual({
       kind: "ribbon-tool",
       tool: "pen",
@@ -85,6 +85,10 @@ describe("resolveStudioShortcut", () => {
     expect(resolveStudioShortcut(key("s"))).toEqual({
       kind: "ribbon-tool",
       tool: "spline",
+    });
+    expect(resolveStudioShortcut(key("R"))).toEqual({
+      kind: "ribbon-tool",
+      tool: "straightedge",
     });
     expect(resolveStudioShortcut(key("c"))).toEqual({
       kind: "ribbon-tool",
@@ -120,6 +124,7 @@ describe("resolveStudioShortcut", () => {
     expect(keys).toContain("P / B");
     expect(keys).toContain("L");
     expect(keys).toContain("S");
+    expect(keys).toContain("R");
     expect(keys).toContain("C");
     expect(keys).toContain("G");
     expect(keys).toContain("?");

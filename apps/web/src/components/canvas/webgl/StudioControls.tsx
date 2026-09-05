@@ -319,8 +319,17 @@ export function StudioControls({
         measureActive: tapeArmed,
         armedSymbolId: assetArmed,
         draftSession,
+        activeTool,
       } = useSeasonalStore.getState();
-      if (inkArmed || tapeArmed || assetArmed != null || draftSession) {
+      // The straightedge owns ground drags while RULE is armed (edge
+      // placement) — same capture-layer contract as ink/tape/asset/draft.
+      if (
+        inkArmed ||
+        tapeArmed ||
+        assetArmed != null ||
+        draftSession ||
+        activeTool === "straightedge"
+      ) {
         return; // capture layer wins
       }
       e.stopPropagation();

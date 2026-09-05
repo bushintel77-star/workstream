@@ -15,6 +15,7 @@ const TOOL_LABELS: Partial<Record<ToolId, string>> = {
   pen: "PEN",
   line: "LINE",
   spline: "SPLINE",
+  straightedge: "RULE",
   contour: "CONTOUR",
   slope: "SLOPE",
   cutfill: "CUT/FILL",
@@ -33,6 +34,9 @@ export interface NibReadoutData {
   x: number;
   z: number;
   chainage?: number;
+  /** Straightedge channel — metres along the placed ruler edge (or of the
+   *  edge being dragged). Appended as `RULER {m} m`. */
+  rulerM?: number;
   zLabel: string;
   /** Grade percentage between origin and current point (rise/run × 100). */
   gradePct?: number;
@@ -49,6 +53,9 @@ export function formatNibReadout(data: NibReadoutData): string {
   parts.push(`Z ${data.zLabel}`);
   if (data.chainage !== undefined) {
     parts.push(`STA ${data.chainage.toFixed(1)}`);
+  }
+  if (data.rulerM !== undefined) {
+    parts.push(`RULER ${data.rulerM.toFixed(1)} m`);
   }
   if (data.gradePct !== undefined && isFinite(data.gradePct)) {
     parts.push(`${data.gradePct.toFixed(2)}p`);

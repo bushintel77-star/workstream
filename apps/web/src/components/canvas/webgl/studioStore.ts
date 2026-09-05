@@ -52,6 +52,7 @@ import {
   sunHatchAngleDeg,
 } from "./hatchSun";
 import { DEFAULT_NIB, NEUTRAL_TELEMETRY, NIBS, type StylusTelemetry } from "./nibs";
+import { readBrushPrefs, writeBrushPrefs } from "./brushPrefs";
 // sheetComposition imports only `type CameraPreset` back from here, so this
 // is a type-only cycle — erased at build, no runtime cycle.
 import { issueSheet, type Sheet, type SheetViewport } from "./sheetComposition";
@@ -82,6 +83,7 @@ import {
 } from "../handoff/features/sunGrowth/sunDatePreset";
 import type { AnnotationDialect } from "./annotations/model";
 import type { PctPoint } from "./coordTransform";
+import type { Straightedge } from "./straightedge";
 import { planeZ, type FixedPlaneId } from "./planeStack";
 import {
   AXO_PITCH_DEG,
@@ -242,7 +244,7 @@ export type DrawViewMode = "DRAW" | "VIEW";
  * Maps to the legacy tool flags via setActiveTool's bridge logic.
  */
 export type ToolId =
-  | "pen" | "line" | "spline"           // DRAW
+  | "pen" | "line" | "spline" | "straightedge" // DRAW
   | "contour" | "slope" | "cutfill"     // GRADE
   | "tree" | "bed"                      // PLANT
   | "mass" | "path"                     // BUILD
@@ -471,8 +473,10 @@ export interface StudioStoreState {
   activePlaneId: FixedPlaneId;
   /** Live pointer world XZ during a draw — the E·N·Z chip source (2.6).
    *  `chainage` is metres along the stationing edge, derived via the single
-   *  `stationAtPct` source (2.1) — never computed ad hoc. */
-  liveCoord: { x: number; z: number; chainage?: number } | null;
+   *  `stationAtPct` source (2.1) — never computed ad hoc. `rulerM` is the
+   *  straightedge channel: metres along the placed ruler edge (a→projection)
+   *  while the pen rides it, or of the forming edge while it is dragged. */
+  liveCoord: { x: number; z: number; chainage?: number; rulerM?: number } | null;
   /** Surveyed-plan communication layers (bearing/RL/tags/hatches/callouts/scope). */
   surveyedPlanLayers: SurveyedPlanLayers;
   /** Survey communication dialect on the Survey screen. */
@@ -1200,6 +1204,10 @@ export interface StudioStoreState {
   setBrushOpacity: (opacity: number | null) => void;
   /** Phase I — set the brush width override (px). Null = use nib default. */
   setBrushWidthOverride: (px: number | null) => void;
+  /** Tier-1 — restore the project's persisted armed brush state (session
+   *  storage; see brushPrefs.ts). Applied directly so restoring does not
+   *  rewrite the palette's recent/previous memory. */
+  hydrateBrushPrefs: (projectId: string) => void;
   /** Phase I — toggle the stroke-matching eraser. */
   toggleEraser: () => void;
   /** Phase I — set the eraser mode explicitly. */
@@ -1333,7 +1341,12 @@ export interface StudioStoreState {
     by: string,
   ) => void;
   setActivePlaneId: (id: FixedPlaneId) => void;
-  setLiveCoord: (v: { x: number; z: number; chainage?: number } | null) => void;
+  setLiveCoord: (v: { x: number; z: number; chainage?: number; rulerM?: number } | null) => void;
+  /** Straightedge (Trace ruler) — the placed edge, board-% (session view
+   *  state: visible until Esc/re-drag clears it; never persisted). Null =
+   *  no ruler; pen ink is then unconstrained. */
+  straightedgeEdge: Straightedge | null;
+  setStraightedgeEdge: (edge: Straightedge | null) => void;
   setSurveyedPlanLayers: (patch: Partial<SurveyedPlanLayers>) => void;
   setSurveyAnnotationDialect: (dialect: AnnotationDialect) => void;
   setCadAnnotationLayers: (patch: Partial<SurveyedPlanLayers>) => void;
@@ -1750,6 +1763,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
   templateBinding: createBinding("local", DEFAULT_TEMPLATE),
   activePlaneId: "ground",
   liveCoord: null,
+  straightedgeEdge: null,
   surveyedPlanLayers: {
     enabled: true,
     bearings: true,
@@ -2127,6 +2141,7 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     })),
   setActivePlaneId: (activePlaneId) => set({ activePlaneId }),
   setLiveCoord: (liveCoord) => set({ liveCoord }),
+  setStraightedgeEdge: (straightedgeEdge) => set({ straightedgeEdge }),
   setSurveyedPlanLayers: (patch) =>
     set((s) => ({
       surveyedPlanLayers: { ...s.surveyedPlanLayers, ...patch },
@@ -2425,6 +2440,25 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       brushWidthOverride:
         px == null ? null : Math.max(0.5, Math.min(40, px)),
     }),
+  hydrateBrushPrefs: (projectId) => {
+    const prefs = readBrushPrefs(projectId);
+    if (!prefs) return;
+    set((s) => ({
+      // The smoothing default follows the nib unless the operator owns the
+      // dial — same rule as setActiveNib.
+      ...(prefs.nib
+        ? {
+            activeNib: prefs.nib,
+            strokeSmoothing: s.smoothingTouched
+              ? s.strokeSmoothing
+              : NIBS[prefs.nib].defaultSmoothing,
+          }
+        : {}),
+      ...(prefs.materialId !== undefined ? { activeMaterialId: prefs.materialId } : {}),
+      ...(prefs.widthPx !== undefined ? { brushWidthOverride: prefs.widthPx } : {}),
+      ...(prefs.opacity !== undefined ? { brushOpacity: prefs.opacity } : {}),
+    }));
+  },
   // Gap-analysis Phase 1 — stroke assist dials (strokeAssist.ts).
   setStrokeSmoothing: (strength) =>
     set({
@@ -3371,7 +3405,20 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
     })),
 
   setProjectContext: (projectId, aerialUri, projectAddress) =>
-    set({ projectId, aerialUri, projectAddress: projectAddress ?? "" }),
+    set((s) => ({
+      projectId,
+      aerialUri,
+      // Hold last-good (handover §4.6): a re-hydrate that arrives without an
+      // address must not drop the chip to the "Untitled site" fallback while
+      // the project itself is unchanged. A different project id is a real
+      // navigation and the address swaps unconditionally.
+      projectAddress:
+        projectAddress
+          ? projectAddress
+          : projectId === s.projectId
+            ? s.projectAddress
+            : "",
+    })),
 
   setSaveStatus: (saveStatus, errorKind) =>
     set({ saveStatus, saveErrorKind: errorKind ?? null }),
@@ -3786,3 +3833,27 @@ export const useStudioStore = create<StudioStoreState>((set) => ({
       ]),
     })),
 }));
+
+// Tier-1 — persist the armed brush state per project (brushPrefs.ts). A
+// coarse (state, prev) compare is enough: the four fields are stable
+// references between unrelated updates. Writes are skipped while the
+// projectId itself changes — project switches apply the NEW project's saved
+// prefs via hydrateBrushPrefs, and persisting the mid-swap state would stamp
+// the outgoing project's pen onto the incoming project's storage key.
+useStudioStore.subscribe((s, prev) => {
+  if (s.projectId !== prev.projectId) return;
+  if (
+    s.activeNib === prev.activeNib &&
+    s.activeMaterialId === prev.activeMaterialId &&
+    s.brushWidthOverride === prev.brushWidthOverride &&
+    s.brushOpacity === prev.brushOpacity
+  ) {
+    return;
+  }
+  writeBrushPrefs(s.projectId, {
+    nib: s.activeNib,
+    materialId: s.activeMaterialId,
+    widthPx: s.brushWidthOverride,
+    opacity: s.brushOpacity,
+  });
+});

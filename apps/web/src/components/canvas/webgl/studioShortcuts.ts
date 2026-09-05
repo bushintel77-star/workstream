@@ -68,6 +68,7 @@ export const RIBBON_TOOL_BY_KEY: Record<string, ToolId> = {
   b: "pen", // Photoshop muscle memory (P stays primary; see SHORTCUT_ROWS)
   l: "line",
   s: "spline",
+  r: "straightedge",
   c: "contour",
   g: "slope",
 };
@@ -102,6 +103,7 @@ export const SHORTCUT_ROWS: Array<{
     { group: "Tool", keys: "P / B", action: "Pen sketch" },
     { group: "Tool", keys: "L", action: "Line" },
     { group: "Tool", keys: "S", action: "Spline" },
+    { group: "Tool", keys: "R", action: "Straightedge — place a ruler, draw along it" },
     { group: "Tool", keys: "C", action: "Contour" },
     { group: "Tool", keys: "G", action: "Slope" },
     { group: "Tool", keys: "E", action: "Eraser on/off" },

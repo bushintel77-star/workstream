@@ -63,6 +63,7 @@ export function LiveNibReadout() {
       x: liveCoord.x,
       z: liveCoord.z,
       chainage: liveCoord.chainage,
+      rulerM: liveCoord.rulerM,
       zLabel,
       gradePct: gradeInfo?.gradePct,
       bearingDeg: gradeInfo?.bearingDeg,

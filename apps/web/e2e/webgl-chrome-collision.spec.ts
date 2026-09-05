@@ -104,8 +104,24 @@ interface Probe {
   offscreen: { id: string; detail: string }[];
 }
 
-async function probeChrome(page: Page, ids: readonly string[]): Promise<Probe> {
-  return page.evaluate((testIds: string[]) => {
+/**
+ * Intra-bar overflow probe for the top chip bar (2026-09-05). Pairwise
+ * collision cannot see a bar clipping its OWN children: the pills are all
+ * inside one container, so the ancestor filter excuses them. The bar's
+ * overflow strategy (WfsChips.module.css) must absorb crowding — the
+ * primary chip's address name compresses first, then pills ellipsize —
+ * and `overflow: hidden` is only the last-resort guard, never the plan.
+ * A positive return means a pill is being clipped mid-silhouette.
+ */
+async function chipBarOverflowPx(page: Page): Promise<number | null> {
+  return page.evaluate(() => {
+    const bar = document.querySelector('[data-testid="wfs-chip-bar"]');
+    if (!bar) return null; // mode without the bar
+    return bar.scrollWidth - bar.clientWidth;
+  });
+}
+
+async function probeChrome(page: Page, ids: readonly string[]): Promise<Probe> {  return page.evaluate((testIds: string[]) => {
     const found: { id: string; el: Element; r: DOMRect }[] = [];
 
     for (const id of testIds) {
@@ -240,6 +256,17 @@ test.describe("WebGL floating chrome — pairwise collision", () => {
             `${label} — ${off.id} is pushed outside the viewport (${off.detail}); ` +
               `an instrument that has left the screen collides with nothing, ` +
               `and that is not a pass`,
+          );
+        }
+
+        // The chip bar degrades by squeeze (address name, then pill labels),
+        // never by clipping a pill mid-silhouette.
+        const barOverflow = await chipBarOverflowPx(page);
+        if (barOverflow != null && barOverflow > 1) {
+          failures.push(
+            `${label} — the WFS chip bar overflows its box by ${barOverflow}px ` +
+              `(scrollWidth > clientWidth): a chip is being clipped instead of ` +
+              `the row degrading through its overflow strategy`,
           );
         }
 

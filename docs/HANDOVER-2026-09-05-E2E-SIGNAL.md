@@ -7,7 +7,7 @@ is fully green (gate, secret-scan, stress, all 6 e2e shards, deploy; live
 (the Tier-1 design brief this session executed) and [`AGENTS.md`](AGENTS.md).
 
 **Outstanding work lives in §4 (threads) and §5 (the Trace-fluency feature
-backlog, itemized with status).** Between them they are the complete list.
+backlog, itemized with status). Between them they are the complete list.**
 
 ---
 
@@ -29,6 +29,16 @@ backlog, itemized with status).** Between them they are the complete list.
 
 Deploy is live and verified (web + API 200) through `dc21a32`; later commits
 are config/doc-only.
+
+### 1c. Shipped in the 2026-09-05 continuation session (threads #5 + #6 + the straightedge)
+
+| Content |
+|---|
+| **§4 #5 — brush-state session persistence**: `brushPrefs.ts` (pure sanitize/read/write over `sessionStorage` key `ws-brush-prefs:<projectId>`, the house per-project UI-state convention; every field validated against the nib/material canons + setter clamps), `studioStore.hydrateBrushPrefs` applied at the hydrate effect, and a store subscription persisting nib/material/width/opacity on change — with a skip while the projectId itself flips (a mid-swap write would stamp the outgoing project's pen onto the incoming key). Restoring does NOT rewrite the palette's recent/previous memory. Tests: `brushPrefs.test.ts` + a Tier-1 describe. |
+| **§4 #6a — first-move hint resurrection**: retirement is LATCHED, not re-derived — `createFirstSketchHintLatch` (pure, unit-tested in `firstSketchGuide.test.ts`) observed at the design-content gate in `WebGLStudioPreview`; once ink lands the hint can never resurrect, whatever a later HUD cycle does to the transient content gate. Note: e2e runs with `NEXT_PUBLIC_E2E=1`, where the hint never arms — the e2e assertion was vacuous all along; the unit tests carry this. |
+| **§4 #6b — chip-bar overflow strategy** (three degradation tiers in `WfsChips.module.css`): the primary chip absorbs squeeze first (`min-width: 0`; the address name already ellipsises), then overlay pills compress with ellipsised labels (`flex-shrink: 1` + label ellipsis; `title` carries the full text), `overflow: hidden` is only the last-resort guard. The collision spec now also probes intra-bar overflow (`scrollWidth − clientWidth ≤ 1`) at all 3 viewports × 4 modes — pairwise collision can't see a bar clipping its own children. |
+| **§4 #6c — hold-last-good address**: `setProjectContext` no longer drops the chip to "Untitled site" when a re-hydrate arrives without an address for the SAME project id; a different id (real navigation) swaps unconditionally. Tested in `studioStore.test.ts`. |
+| **§5 Phase 1 — the STRAIGHTEDGE rail tool** (the Trace ruler): `straightedge.ts` (pure: project-on-segment with a 1.5%-of-board proximity band, world-metre math, clamp-to-segment; session view state, nothing sited → no reconciliation event), `StraightedgeLayer.tsx` (RULE-armed ground drag places/re-places the edge; ruler furniture render with end ticks + metre hashes + live length chip; Esc clears), RULE tile in the DRAW group (hotkey R, no flyout), `LiveNibReadout` gained the RULER channel, pen ink on the GROUND draw path projects onto the edge after the stabilizer (`FusedSketchLayer` — assist, never constrain; canvas-plane strokes keep freehand + straighten). `StudioControls` yields the gesture while RULE is armed (capture-layer contract). e2e `webgl-straightedge.spec.ts` proves wobbly raw input persists as collinear ink; unit tests in `straightedge.test.ts`. Gap-analysis matrix + §5 Phase-1 status updated. |
 
 ## 2. The cad.ts Mimosa findings — status, and what is NOT done
 
@@ -97,18 +107,23 @@ historical workflow doc; updating it is doc hygiene, not a gate.
    tilted planes stating true plane measurements, model import as underlay,
    cinematic flythrough authoring, AR bridge.
 4. **cad.ts Mimosa findings** — user decision (see §2).
-5. **Tier-1 leftover (small):** session persistence of last nib/colour/width
-   per project (recents/swap/per-nib smoothing defaults shipped; the
-   persistence layer didn't).
-6. **Cosmetic, repro known:** first-move hint can resurrect after a second
-   stroke's HUD cycle (`guideFirstSketch` retires correctly on first ink;
-   resurrection path unwired); chip-bar middle pill truncates ~1280px
-   (`WfsChips.module.css` needs an overflow strategy); transient "Untitled
-   site" during slow refetches (hold last-good address).
+5. **Tier-1 leftover (small):** DONE 2026-09-05 continuation — session
+   persistence of last nib/colour/width (and opacity) per project via
+   `brushPrefs.ts` (see §1c).
+6. **Cosmetic, repro known:** DONE 2026-09-05 continuation (see §1c) —
+   first-move hint retirement is latched; chip bar degrades by squeeze with
+   a collision-gate overflow probe; the chip holds last-good address on
+   same-project re-hydrates.
 6. **Orphaned dev servers** recur on this Windows box (ports 3001/3002,
    `netstat -ano | findstr LISTEN`). Playwright reuses a half-dead one and
    produces a Next.js "Runtime Error" dev-overlay page that looks like a
    product crash — kill orphans before e2e batches.
+7. **Local dev API latency (new, observed 2026-09-05):** the dev API's
+   design-canvas GET/PUT can take **5–16 s** to complete on this box (first
+   hit compiles the route; sqlite write latency unknown). e2e specs that
+   read back persisted geometry must poll (`expect.poll`, 60 s) instead of
+   fixed waits — `webgl-straightedge.spec.ts` does. Worth a proper look if
+   it worsens.
 
 ## 5. Outstanding — the Trace-fluency feature backlog
 
@@ -119,10 +134,12 @@ session picks from. **2D leftovers first (cheapest felt value), then the
 trace-stack, then scale-true.**
 
 ### Phase 1 leftovers — 2D fluency (highest value per line of code)
-- ❌ **Straightedge rail tool** — draw-along-edge with live length via the
-  existing LiveNibReadout channel.
+- ✅ **Straightedge rail tool** — DONE 2026-09-05 continuation (see §1c):
+  RULE places an edge, pen ink within the proximity band projects onto it,
+  live length rides the RULER readout channel.
 - ❌ **Hold-to-extend** with typed length.
-- ❌ Super Ruler / Triangle / Protractor.
+- ❌ Super Ruler / Triangle / Protractor (the ruler VERB is shipped; the
+  instrument set is not).
 - 🟡 Gesture/touch parity (2-finger undo, hold-to-erase) — the field persona.
 
 ### Phase 2 — the trace-stack, vector-native (iteration feel)
@@ -161,6 +178,14 @@ trace-stack, then scale-true.**
 - Tier-1 widgets: `apps/web/src/components/canvas/webgl/{BrushWidget,PaletteWidget,useFlyoutAnchor,materialContrast}.tsx`
   (+ tests: `PaletteWidget.test.tsx`, `studioStoreTier1.test.ts`,
   `materialContrast.test.ts`)
+- Brush-state persistence: `apps/web/src/components/canvas/webgl/brushPrefs.ts`
+  (+ `studioStore.hydrateBrushPrefs` + the persist subscription at the foot
+  of `studioStore.ts`)
+- Straightedge: `apps/web/src/components/canvas/webgl/straightedge.ts` +
+  `StraightedgeLayer.tsx`
+  (+ `straightedge.test.ts`, e2e `webgl-straightedge.spec.ts`); projection
+  hook in `FusedSketchLayer.tsx` ground path; gesture yield in
+  `StudioControls.tsx`
 - Store additions: `studioStore.ts` — `brushOpacity`, `recentMaterialIds`,
   `previousMaterialId`, `paletteOpen`, `smoothingTouched`,
   `swapActiveMaterial`, per-nib `defaultSmoothing` in `nibs.ts`
